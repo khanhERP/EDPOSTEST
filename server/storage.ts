@@ -3,14 +3,17 @@ import {
   products, 
   transactions, 
   transactionItems,
+  employees,
   type Category, 
   type Product, 
   type Transaction, 
   type TransactionItem,
+  type Employee,
   type InsertCategory, 
   type InsertProduct, 
   type InsertTransaction, 
   type InsertTransactionItem,
+  type InsertEmployee,
   type Receipt
 } from "@shared/schema";
 import { db } from "./db";
@@ -37,6 +40,14 @@ export interface IStorage {
   getTransaction(id: number): Promise<Receipt | undefined>;
   getTransactionByTransactionId(transactionId: string): Promise<Receipt | undefined>;
   getTransactions(): Promise<Transaction[]>;
+
+  // Employees
+  getEmployees(): Promise<Employee[]>;
+  getEmployee(id: number): Promise<Employee | undefined>;
+  getEmployeeByEmployeeId(employeeId: string): Promise<Employee | undefined>;
+  createEmployee(employee: InsertEmployee): Promise<Employee>;
+  updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee | undefined>;
+  deleteEmployee(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -402,6 +413,52 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(transactions)
       .orderBy(transactions.createdAt);
+  }
+
+  async getEmployees(): Promise<Employee[]> {
+    return await db.select().from(employees).where(eq(employees.isActive, true));
+  }
+
+  async getEmployee(id: number): Promise<Employee | undefined> {
+    const [employee] = await db
+      .select()
+      .from(employees)
+      .where(and(eq(employees.id, id), eq(employees.isActive, true)));
+    return employee || undefined;
+  }
+
+  async getEmployeeByEmployeeId(employeeId: string): Promise<Employee | undefined> {
+    const [employee] = await db
+      .select()
+      .from(employees)
+      .where(and(eq(employees.employeeId, employeeId), eq(employees.isActive, true)));
+    return employee || undefined;
+  }
+
+  async createEmployee(insertEmployee: InsertEmployee): Promise<Employee> {
+    const [employee] = await db
+      .insert(employees)
+      .values(insertEmployee)
+      .returning();
+    return employee;
+  }
+
+  async updateEmployee(id: number, updateData: Partial<InsertEmployee>): Promise<Employee | undefined> {
+    const [employee] = await db
+      .update(employees)
+      .set(updateData)
+      .where(and(eq(employees.id, id), eq(employees.isActive, true)))
+      .returning();
+    return employee || undefined;
+  }
+
+  async deleteEmployee(id: number): Promise<boolean> {
+    const [employee] = await db
+      .update(employees)
+      .set({ isActive: false })
+      .where(eq(employees.id, id))
+      .returning();
+    return !!employee;
   }
 }
 

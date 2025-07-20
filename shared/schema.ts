@@ -43,6 +43,18 @@ export const transactionItems = pgTable("transaction_items", {
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
 });
 
+export const employees = pgTable("employees", {
+  id: serial("id").primaryKey(),
+  employeeId: text("employee_id").notNull().unique(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  phone: text("phone"),
+  role: text("role").notNull(), // "manager", "cashier", "admin"
+  isActive: boolean("is_active").notNull().default(true),
+  hireDate: timestamp("hire_date").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
 });
@@ -65,15 +77,27 @@ export const insertTransactionItemSchema = createInsertSchema(transactionItems).
   id: true,
 });
 
+export const insertEmployeeSchema = createInsertSchema(employees).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  role: z.enum(["manager", "cashier", "admin"], {
+    errorMap: () => ({ message: "Role must be manager, cashier, or admin" })
+  }),
+  email: z.string().email("Invalid email format"),
+});
+
 export type Category = typeof categories.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type TransactionItem = typeof transactionItems.$inferSelect;
+export type Employee = typeof employees.$inferSelect;
 
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type InsertTransactionItem = z.infer<typeof insertTransactionItemSchema>;
+export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
 
 // Cart item type for frontend use
 export type CartItem = {
