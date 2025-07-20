@@ -33,19 +33,16 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: products } = useQuery({
+  const { data: products, isLoading: productsLoading } = useQuery({
     queryKey: ['/api/products'],
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ['/api/categories'],
   });
 
   const createOrderMutation = useMutation({
-    mutationFn: (orderData: any) => apiRequest('/api/orders', {
-      method: 'POST',
-      body: JSON.stringify(orderData),
-    }),
+    mutationFn: (orderData: any) => apiRequest('/api/orders', orderData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
@@ -64,9 +61,9 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
     },
   });
 
-  const filteredProducts = products?.filter((product: Product) =>
+  const filteredProducts = products ? (products as Product[]).filter((product: Product) =>
     !selectedCategory || product.categoryId === selectedCategory
-  ) || [];
+  ) : [];
 
   const addToCart = (product: Product) => {
     setCart(prev => {
@@ -211,7 +208,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
               >
                 전체
               </Button>
-              {categories?.map((category: Category) => (
+              {categories && (categories as Category[]).map((category: Category) => (
                 <Button
                   key={category.id}
                   variant={selectedCategory === category.id ? "default" : "outline"}
@@ -231,7 +228,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                   <CardContent className="p-3" onClick={() => addToCart(product)}>
                     <div className="space-y-2">
                       <h4 className="font-medium text-sm">{product.name}</h4>
-                      <p className="text-xs text-gray-600 line-clamp-2">{product.description}</p>
+                      <p className="text-xs text-gray-600 line-clamp-2">{product.sku}</p>
                       <div className="flex justify-between items-center">
                         <span className="font-bold text-blue-600">₩{Number(product.price).toLocaleString()}</span>
                         <Badge variant={Number(product.stock) > 0 ? "default" : "destructive"}>
