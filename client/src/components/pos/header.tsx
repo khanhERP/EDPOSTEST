@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ScanBarcode, LogOut } from "lucide-react";
-import logoPath from "@assets/image_1753014739869.png";
+import logoPath from "@assets/image_1753015722799.png";
 
 export function POSHeader() {
   const [currentTime, setCurrentTime] = useState(new Date());
