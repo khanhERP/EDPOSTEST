@@ -58,11 +58,6 @@ export function POSHeader() {
             <div className="text-sm opacity-90">Time</div>
             <div className="font-medium">{formatTime(currentTime)}</div>
           </div>
-          <button className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-full transition-all duration-200 flex items-center">
-            <LogOut className="mr-2" size={16} />
-            Logout
-          </button>
-          
           {/* Navigation Menu */}
           <nav className="flex items-center space-x-4">
             <div className="relative pos-dropdown">
@@ -147,6 +142,11 @@ export function POSHeader() {
               )}
             </div>
           </nav>
+          
+          <button className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-full transition-all duration-200 flex items-center">
+            <LogOut className="mr-2" size={16} />
+            Logout
+          </button>
         </div>
       </div>
     </header>
