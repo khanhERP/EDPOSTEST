@@ -47,7 +47,7 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
         
         <div id="receipt-content" className="p-6 receipt-print bg-white">
           <div className="text-center mb-4">
-            <h2 className="text-lg font-bold">RetailPOS</h2>
+            <h2 className="text-lg font-bold">EDPOS</h2>
             <p className="text-sm">Main Store Location</p>
             <p className="text-sm">123 Commerce St, City, State 12345</p>
             <p className="text-sm">Phone: (555) 123-4567</p>

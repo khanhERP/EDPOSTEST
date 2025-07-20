@@ -1,4 +1,4 @@
-# RetailPOS System
+# EDPOS System
 
 ## Overview
 

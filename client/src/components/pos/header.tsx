@@ -26,7 +26,7 @@ export function POSHeader() {
         <div className="flex items-center space-x-4">
           <div className="text-2xl font-bold flex items-center">
             <ScanBarcode className="mr-2" />
-            RetailPOS
+            EDPOS
           </div>
           <div className="text-sm opacity-90">Main Store Location</div>
         </div>
