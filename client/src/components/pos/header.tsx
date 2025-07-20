@@ -46,7 +46,7 @@ export function POSHeader() {
           <div className="flex items-center">
             <img src={logoPath} alt="EDPOS Logo" className="h-12" />
           </div>
-          <div className="text-sm opacity-90">Main Store Location</div>
+          <div className="text-sm opacity-90">레스토랑 본점</div>
           
           {/* Navigation Menu */}
           <nav className="flex items-center space-x-4">
