@@ -42,7 +42,11 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
   });
 
   const createOrderMutation = useMutation({
-    mutationFn: (orderData: any) => apiRequest('/api/orders', orderData),
+    mutationFn: async (orderData: any) => {
+      console.log('Submitting order data:', JSON.stringify(orderData, null, 2));
+      const response = await apiRequest('POST', '/api/orders', orderData);
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
@@ -52,10 +56,12 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
       });
       handleClose();
     },
-    onError: () => {
+    onError: (error: any) => {
+      console.error('Order submission error:', error);
+      const errorMessage = error.message || "주문 접수에 실패했습니다.";
       toast({
         title: "주문 실패",
-        description: "주문 접수에 실패했습니다.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
