@@ -47,7 +47,11 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
         
         <div id="receipt-content" className="p-6 receipt-print bg-white">
           <div className="text-center mb-4">
-            <h2 className="text-lg font-bold">EDPOS</h2>
+            <div className="flex items-center justify-center mb-2">
+              <img src="@assets/image_1753014739869.png" alt="EDPOS Logo" className="h-8 mr-2" />
+              <h2 className="text-lg font-bold">EDPOS</h2>
+            </div>
+            <p className="text-sm">Easy Digital Point Of Sale Service</p>
             <p className="text-sm">Main Store Location</p>
             <p className="text-sm">123 Commerce St, City, State 12345</p>
             <p className="text-sm">Phone: (555) 123-4567</p>

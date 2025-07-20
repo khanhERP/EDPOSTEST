@@ -25,7 +25,7 @@ export function POSHeader() {
       <div className="px-6 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <div className="text-2xl font-bold flex items-center">
-            <ScanBarcode className="mr-2" />
+            <img src="@assets/image_1753014739869.png" alt="EDPOS Logo" className="mr-2 h-8" />
             EDPOS
           </div>
           <div className="text-sm opacity-90">Main Store Location</div>

@@ -96,7 +96,8 @@ export class MemStorage implements IStorage {
       const product: Product = { 
         ...prod, 
         id: this.productsCurrentId++, 
-        isActive: true 
+        isActive: true,
+        imageUrl: prod.imageUrl || null
       };
       this.products.set(product.id, product);
     });
@@ -143,7 +144,8 @@ export class MemStorage implements IStorage {
     const product: Product = { 
       ...insertProduct, 
       id: this.productsCurrentId++, 
-      isActive: true 
+      isActive: true,
+      imageUrl: insertProduct.imageUrl || null
     };
     this.products.set(product.id, product);
     return product;
@@ -180,7 +182,9 @@ export class MemStorage implements IStorage {
     const transaction: Transaction = { 
       ...insertTransaction, 
       id: this.transactionsCurrentId++,
-      createdAt: new Date()
+      createdAt: new Date(),
+      amountReceived: insertTransaction.amountReceived || null,
+      change: insertTransaction.change || null
     };
     this.transactions.set(transaction.id, transaction);
 
