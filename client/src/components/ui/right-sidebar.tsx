@@ -23,14 +23,14 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   {
-    icon: Utensils,
-    label: "테이블 관리",
-    href: "/",
-  },
-  {
     icon: Home,
     label: "기본 POS",
     href: "/pos",
+  },
+  {
+    icon: Utensils,
+    label: "테이블 관리",
+    href: "/",
   },
   {
     icon: BarChart3,
@@ -87,31 +87,37 @@ export function RightSidebar() {
 
       {/* Menu Items */}
       <nav className="py-4">
-        {menuItems.map((item) => {
+        {menuItems.map((item, index) => {
           const Icon = item.icon;
           const isActive = location === item.href;
           
           return (
-            <Link key={item.href} href={item.href}>
-              <Button
-                variant={isActive ? "secondary" : "ghost"}
-                className={cn(
-                  "w-full justify-start mb-1 mx-2",
-                  isExpanded ? "px-4" : "px-2",
-                  isActive && "bg-green-50 text-green-600 border-l-2 border-green-500"
-                )}
-              >
-                <Icon className={cn("w-5 h-5", isExpanded && "mr-3")} />
-                {isExpanded && (
-                  <span className="font-medium">{item.label}</span>
-                )}
-                {isExpanded && item.badge && (
-                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
-                    {item.badge}
-                  </span>
-                )}
-              </Button>
-            </Link>
+            <div key={item.href}>
+              <Link href={item.href}>
+                <Button
+                  variant={isActive ? "secondary" : "ghost"}
+                  className={cn(
+                    "w-full justify-start mb-1 mx-2",
+                    isExpanded ? "px-4" : "px-2",
+                    isActive && "bg-green-50 text-green-600 border-l-2 border-green-500"
+                  )}
+                >
+                  <Icon className={cn("w-5 h-5", isExpanded && "mr-3")} />
+                  {isExpanded && (
+                    <span className="font-medium">{item.label}</span>
+                  )}
+                  {isExpanded && item.badge && (
+                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                      {item.badge}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+              {/* Add separator after first item (기본 POS) and before employee section */}
+              {(index === 0 || index === 2) && isExpanded && (
+                <div className="border-t border-gray-200 my-3 mx-4"></div>
+              )}
+            </div>
           );
         })}
       </nav>
