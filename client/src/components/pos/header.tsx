@@ -47,6 +47,21 @@ export function POSHeader() {
             <img src={logoPath} alt="EDPOS Logo" className="h-12" />
           </div>
           <div className="text-sm opacity-90">레스토랑 본점</div>
+        </div>
+        
+        <div className="flex items-center space-x-6">
+          <div className="text-right">
+            <div className="text-sm opacity-90">Cashier</div>
+            <div className="font-medium">John Smith</div>
+          </div>
+          <div className="text-right">
+            <div className="text-sm opacity-90">Time</div>
+            <div className="font-medium">{formatTime(currentTime)}</div>
+          </div>
+          <button className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-full transition-all duration-200 flex items-center">
+            <LogOut className="mr-2" size={16} />
+            Logout
+          </button>
           
           {/* Navigation Menu */}
           <nav className="flex items-center space-x-4">
@@ -66,7 +81,7 @@ export function POSHeader() {
               
               {/* Dropdown Menu */}
               {posMenuOpen && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50">
+                <div className="absolute top-full right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50">
                   <Link href="/">
                     <button 
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
@@ -132,21 +147,6 @@ export function POSHeader() {
               )}
             </div>
           </nav>
-        </div>
-        
-        <div className="flex items-center space-x-6">
-          <div className="text-right">
-            <div className="text-sm opacity-90">Cashier</div>
-            <div className="font-medium">John Smith</div>
-          </div>
-          <div className="text-right">
-            <div className="text-sm opacity-90">Time</div>
-            <div className="font-medium">{formatTime(currentTime)}</div>
-          </div>
-          <button className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-full transition-all duration-200 flex items-center">
-            <LogOut className="mr-2" size={16} />
-            Logout
-          </button>
         </div>
       </div>
     </header>
