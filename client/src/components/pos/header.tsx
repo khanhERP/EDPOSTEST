@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { ScanBarcode, LogOut, Users, Home, Clock, Utensils, BarChart3 } from "lucide-react";
+import { ScanBarcode, LogOut, Users, Home, Clock, Utensils, BarChart3, ChevronDown } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import logoPath from "@assets/image_1753015722799.png";
 
 export function POSHeader() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [location] = useLocation();
+  const [posMenuOpen, setPosMenuOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -14,6 +15,21 @@ export function POSHeader() {
 
     return () => clearInterval(timer);
   }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.pos-dropdown')) {
+        setPosMenuOpen(false);
+      }
+    };
+
+    if (posMenuOpen) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [posMenuOpen]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
@@ -34,56 +50,87 @@ export function POSHeader() {
           
           {/* Navigation Menu */}
           <nav className="flex items-center space-x-4">
-            <Link href="/">
-              <button className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
-                location === "/" 
-                  ? "bg-white bg-opacity-20" 
-                  : "hover:bg-white hover:bg-opacity-10"
-              }`}>
-                <Utensils className="w-4 h-4 mr-2" />
-                테이블
+            <div className="relative pos-dropdown">
+              <button 
+                className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                  ["/", "/pos", "/reports", "/employees", "/attendance"].includes(location)
+                    ? "bg-white bg-opacity-20" 
+                    : "hover:bg-white hover:bg-opacity-10"
+                }`}
+                onClick={() => setPosMenuOpen(!posMenuOpen)}
+              >
+                <ScanBarcode className="w-4 h-4 mr-2" />
+                POS 시스템
+                <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${posMenuOpen ? 'rotate-180' : ''}`} />
               </button>
-            </Link>
-            <Link href="/pos">
-              <button className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
-                location === "/pos" 
-                  ? "bg-white bg-opacity-20" 
-                  : "hover:bg-white hover:bg-opacity-10"
-              }`}>
-                <Home className="w-4 h-4 mr-2" />
-                POS
-              </button>
-            </Link>
-            <Link href="/reports">
-              <button className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
-                location === "/reports" 
-                  ? "bg-white bg-opacity-20" 
-                  : "hover:bg-white hover:bg-opacity-10"
-              }`}>
-                <BarChart3 className="w-4 h-4 mr-2" />
-                리포트
-              </button>
-            </Link>
-            <Link href="/employees">
-              <button className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
-                location === "/employees" 
-                  ? "bg-white bg-opacity-20" 
-                  : "hover:bg-white hover:bg-opacity-10"
-              }`}>
-                <Users className="w-4 h-4 mr-2" />
-                직원 관리
-              </button>
-            </Link>
-            <Link href="/attendance">
-              <button className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
-                location === "/attendance" 
-                  ? "bg-white bg-opacity-20" 
-                  : "hover:bg-white hover:bg-opacity-10"
-              }`}>
-                <Clock className="w-4 h-4 mr-2" />
-                근태 관리
-              </button>
-            </Link>
+              
+              {/* Dropdown Menu */}
+              {posMenuOpen && (
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-48 z-50">
+                  <Link href="/">
+                    <button 
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
+                        location === "/" ? "bg-blue-50 text-blue-600" : "text-gray-700"
+                      }`}
+                      onClick={() => setPosMenuOpen(false)}
+                    >
+                      <Utensils className="w-4 h-4 mr-3" />
+                      테이블 관리
+                    </button>
+                  </Link>
+                  
+                  <Link href="/pos">
+                    <button 
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
+                        location === "/pos" ? "bg-blue-50 text-blue-600" : "text-gray-700"
+                      }`}
+                      onClick={() => setPosMenuOpen(false)}
+                    >
+                      <Home className="w-4 h-4 mr-3" />
+                      기본 POS
+                    </button>
+                  </Link>
+                  
+                  <Link href="/reports">
+                    <button 
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
+                        location === "/reports" ? "bg-blue-50 text-blue-600" : "text-gray-700"
+                      }`}
+                      onClick={() => setPosMenuOpen(false)}
+                    >
+                      <BarChart3 className="w-4 h-4 mr-3" />
+                      매출 분석
+                    </button>
+                  </Link>
+                  
+                  <div className="border-t border-gray-200 my-2"></div>
+                  
+                  <Link href="/employees">
+                    <button 
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
+                        location === "/employees" ? "bg-blue-50 text-blue-600" : "text-gray-700"
+                      }`}
+                      onClick={() => setPosMenuOpen(false)}
+                    >
+                      <Users className="w-4 h-4 mr-3" />
+                      직원 관리
+                    </button>
+                  </Link>
+                  
+                  <Link href="/attendance">
+                    <button 
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
+                        location === "/attendance" ? "bg-blue-50 text-blue-600" : "text-gray-700"
+                      }`}
+                      onClick={() => setPosMenuOpen(false)}
+                    >
+                      <Clock className="w-4 h-4 mr-3" />
+                      근태 관리
+                    </button>
+                  </Link>
+                </div>
+              )}
+            </div>
           </nav>
         </div>
         
