@@ -208,7 +208,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
               >
                 전체
               </Button>
-              {categories && (categories as Category[]).map((category: Category) => (
+              {Array.isArray(categories) && categories.map((category: Category) => (
                 <Button
                   key={category.id}
                   variant={selectedCategory === category.id ? "default" : "outline"}
