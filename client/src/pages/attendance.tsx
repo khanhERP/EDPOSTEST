@@ -22,7 +22,7 @@ export default function AttendancePage() {
       {/* Right Sidebar */}
       <RightSidebar />
       
-      <div className="pt-16 px-6 pr-20">
+      <div className="pt-16 px-6 pl-20">
         <div className="max-w-6xl mx-auto py-8">
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">

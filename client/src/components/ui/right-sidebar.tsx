@@ -55,7 +55,7 @@ export function RightSidebar() {
 
   return (
     <div className={cn(
-      "fixed right-0 top-16 bottom-0 bg-white border-l border-gray-200 shadow-lg transition-all duration-300 z-40",
+      "fixed left-0 top-16 bottom-0 bg-white border-r border-gray-200 shadow-lg transition-all duration-300 z-40",
       isExpanded ? "w-64" : "w-16"
     )}>
       {/* Toggle Button */}
@@ -68,7 +68,7 @@ export function RightSidebar() {
         >
           {isExpanded ? (
             <>
-              <ChevronRight className="w-4 h-4 mr-2" />
+              <ChevronLeft className="w-4 h-4 mr-2" />
               <span>접기</span>
             </>
           ) : (
@@ -90,7 +90,7 @@ export function RightSidebar() {
                 className={cn(
                   "w-full justify-start mb-1 mx-2",
                   isExpanded ? "px-4" : "px-2",
-                  isActive && "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
+                  isActive && "bg-blue-50 text-blue-600 border-l-2 border-blue-600"
                 )}
               >
                 <Icon className={cn("w-5 h-5", isExpanded && "mr-3")} />

@@ -40,7 +40,7 @@ export default function POSPage() {
       {/* Right Sidebar */}
       <RightSidebar />
       
-      <div className="flex h-screen pt-16 pr-16">
+      <div className="flex h-screen pt-16 pl-16">
         {/* Category Sidebar */}
         <CategorySidebar
           selectedCategory={selectedCategory}
