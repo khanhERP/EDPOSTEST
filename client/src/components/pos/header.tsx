@@ -77,18 +77,6 @@ export function POSHeader() {
               {/* Dropdown Menu */}
               {posMenuOpen && (
                 <div className="absolute top-full right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50">
-                  <Link href="/">
-                    <button 
-                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                        location === "/" ? "bg-green-50 text-green-600" : "text-gray-700"
-                      }`}
-                      onClick={() => setPosMenuOpen(false)}
-                    >
-                      <Utensils className="w-4 h-4 mr-3" />
-                      테이블 관리
-                    </button>
-                  </Link>
-                  
                   <Link href="/pos">
                     <button 
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
@@ -98,6 +86,18 @@ export function POSHeader() {
                     >
                       <Home className="w-4 h-4 mr-3" />
                       기본 POS
+                    </button>
+                  </Link>
+                  
+                  <Link href="/">
+                    <button 
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                        location === "/" ? "bg-green-50 text-green-600" : "text-gray-700"
+                      }`}
+                      onClick={() => setPosMenuOpen(false)}
+                    >
+                      <Utensils className="w-4 h-4 mr-3" />
+                      테이블 관리
                     </button>
                   </Link>
                   
