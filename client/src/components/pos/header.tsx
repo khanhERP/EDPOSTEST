@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ScanBarcode, LogOut, Users, Home, Clock } from "lucide-react";
+import { ScanBarcode, LogOut, Users, Home, Clock, Utensils } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import logoPath from "@assets/image_1753015722799.png";
 
@@ -37,6 +37,16 @@ export function POSHeader() {
             <Link href="/">
               <button className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
                 location === "/" 
+                  ? "bg-white bg-opacity-20" 
+                  : "hover:bg-white hover:bg-opacity-10"
+              }`}>
+                <Utensils className="w-4 h-4 mr-2" />
+                테이블
+              </button>
+            </Link>
+            <Link href="/pos">
+              <button className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                location === "/pos" 
                   ? "bg-white bg-opacity-20" 
                   : "hover:bg-white hover:bg-opacity-10"
               }`}>

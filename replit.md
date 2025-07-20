@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a modern Point of Sale (POS) system built for retail businesses. The application features a full-stack TypeScript architecture with a React frontend and Express backend, using PostgreSQL for data persistence and Drizzle ORM for database operations.
+This is a comprehensive restaurant management system (EDPOS) built for table-based dining operations. The application features a full-stack TypeScript architecture with a React frontend and Express backend, using PostgreSQL for data persistence and Drizzle ORM for database operations. The system focuses on table management, order processing, employee management, and attendance tracking specifically designed for restaurant operations.
 
 ## User Preferences
 
@@ -34,35 +34,45 @@ Preferred communication style: Simple, everyday language.
 ## Key Components
 
 ### Database Schema (shared/schema.ts)
-- **Categories**: Product categorization with icons
-- **Products**: Inventory items with SKU, pricing, stock tracking
-- **Transactions**: Sales records with payment details
-- **Transaction Items**: Line items for each transaction
+- **Categories**: Product categorization with icons for menu organization
+- **Products**: Menu items with SKU, pricing, stock tracking and descriptions
+- **Tables**: Restaurant table management with capacity, status, and QR codes
+- **Orders**: Table-based order system with customer info, status workflow, and payment tracking
+- **Order Items**: Individual menu items within each order with quantities and special requests
+- **Transactions**: Legacy POS sales records (maintained for compatibility)
+- **Transaction Items**: Legacy line items (maintained for compatibility)
 - **Employees**: Staff information with roles and contact details
 - **Attendance Records**: Employee clock-in/out, break times, and overtime tracking
 
 ### Frontend Components
-- **POS Interface**: Main point-of-sale interface with product grid and shopping cart
-- **Product Management**: Modal for adding/editing products
+- **Table Grid**: Visual table layout showing real-time status and occupancy
+- **Order Dialog**: Complete ordering interface with menu selection and cart management
+- **Order Management**: Kitchen and service staff order tracking with status updates
+- **Table Management**: Administrative interface for adding/editing tables
+- **POS Interface**: Legacy point-of-sale interface (maintained for compatibility)
+- **Product Management**: Menu item administration with categories and pricing
 - **Receipt System**: Print-ready receipt generation
-- **Category Navigation**: Sidebar for product filtering
 - **Employee Management**: CRUD operations for staff management with role-based access
 - **Attendance Management**: Time tracking with clock-in/out, break management, and statistics
 
 ### Backend Services
 - **Storage Layer**: Abstract storage interface with PostgreSQL database implementation
-- **API Routes**: RESTful endpoints for products, categories, transactions, employees, and attendance
-- **Data Validation**: Zod schemas for request/response validation
-- **Database Relations**: Proper foreign key relationships between entities
+- **API Routes**: RESTful endpoints for tables, orders, products, categories, employees, and attendance
+- **Order Workflow**: Automated status transitions and table management
+- **Data Validation**: Zod schemas for request/response validation with restaurant-specific rules
+- **Database Relations**: Proper foreign key relationships between tables, orders, products, and employees
 - **Time Tracking**: Automated calculation of work hours, overtime, and break time
+- **Table Status Management**: Real-time table availability and reservation system
 
 ## Data Flow
 
-1. **Product Display**: Frontend fetches products and categories from backend API
-2. **Cart Management**: Local state management for shopping cart with real-time updates
-3. **Transaction Processing**: Cart items sent to backend for transaction creation
-4. **Inventory Updates**: Stock levels automatically updated on successful transactions
-5. **Receipt Generation**: Transaction data formatted for receipt display and printing
+1. **Table Selection**: Staff selects available table from visual grid interface
+2. **Order Creation**: Menu items added to cart with special requests and customer information
+3. **Order Processing**: Order submitted with automatic table status update to "occupied"
+4. **Kitchen Workflow**: Orders progress through status stages (pending → confirmed → preparing → ready → served)
+5. **Payment Processing**: Orders marked as paid with automatic table status reset to "available"
+6. **Inventory Updates**: Stock levels automatically updated on successful orders
+7. **Employee Tracking**: Staff clock-in/out with automatic work hour calculations
 
 ## External Dependencies
 

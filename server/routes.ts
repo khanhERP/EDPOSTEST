@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertTransactionSchema, insertTransactionItemSchema, insertEmployeeSchema, insertAttendanceSchema } from "@shared/schema";
+import { insertProductSchema, insertTransactionSchema, insertTransactionItemSchema, insertEmployeeSchema, insertAttendanceSchema, insertTableSchema, insertOrderSchema, insertOrderItemSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -329,6 +329,159 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(record);
     } catch (error) {
       res.status(500).json({ message: "Failed to update attendance status" });
+    }
+  });
+
+  // Tables
+  app.get("/api/tables", async (req, res) => {
+    try {
+      const tables = await storage.getTables();
+      res.json(tables);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch tables" });
+    }
+  });
+
+  app.get("/api/tables/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const table = await storage.getTable(id);
+      
+      if (!table) {
+        return res.status(404).json({ message: "Table not found" });
+      }
+
+      res.json(table);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch table" });
+    }
+  });
+
+  app.post("/api/tables", async (req, res) => {
+    try {
+      const tableData = insertTableSchema.parse(req.body);
+      const table = await storage.createTable(tableData);
+      res.status(201).json(table);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to create table" });
+    }
+  });
+
+  app.put("/api/tables/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tableData = insertTableSchema.partial().parse(req.body);
+      const table = await storage.updateTable(id, tableData);
+      
+      if (!table) {
+        return res.status(404).json({ message: "Table not found" });
+      }
+
+      res.json(table);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update table" });
+    }
+  });
+
+  app.put("/api/tables/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      const table = await storage.updateTableStatus(id, status);
+      
+      if (!table) {
+        return res.status(404).json({ message: "Table not found" });
+      }
+
+      res.json(table);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update table status" });
+    }
+  });
+
+  app.delete("/api/tables/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteTable(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Table not found" });
+      }
+
+      res.json({ message: "Table deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete table" });
+    }
+  });
+
+  // Orders
+  app.get("/api/orders", async (req, res) => {
+    try {
+      const { tableId, status } = req.query;
+      const orders = await storage.getOrders(
+        tableId ? parseInt(tableId as string) : undefined,
+        status as string
+      );
+      res.json(orders);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
+
+  app.get("/api/orders/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const order = await storage.getOrder(id);
+      
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      const items = await storage.getOrderItems(id);
+      res.json({ ...order, items });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch order" });
+    }
+  });
+
+  app.post("/api/orders", async (req, res) => {
+    try {
+      const { order, items } = req.body;
+      const orderData = insertOrderSchema.parse(order);
+      const itemsData = items.map((item: any) => insertOrderItemSchema.parse(item));
+      
+      const newOrder = await storage.createOrder(orderData, itemsData);
+      res.status(201).json(newOrder);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to create order" });
+    }
+  });
+
+  app.put("/api/orders/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      const order = await storage.updateOrderStatus(id, status);
+      
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      res.json(order);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update order status" });
+    }
+  });
+
+  app.post("/api/orders/:id/items", async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const itemsData = req.body.map((item: any) => insertOrderItemSchema.parse(item));
+      
+      const items = await storage.addOrderItems(orderId, itemsData);
+      res.status(201).json(items);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to add order items" });
     }
   });
 

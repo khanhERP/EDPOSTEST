@@ -5,18 +5,27 @@ import {
   transactionItems,
   employees,
   attendanceRecords,
+  tables,
+  orders,
+  orderItems,
   type Category, 
   type Product, 
   type Transaction, 
   type TransactionItem,
   type Employee,
   type AttendanceRecord,
+  type Table,
+  type Order,
+  type OrderItem,
   type InsertCategory, 
   type InsertProduct, 
   type InsertTransaction, 
   type InsertTransactionItem,
   type InsertEmployee,
   type InsertAttendance,
+  type InsertTable,
+  type InsertOrder,
+  type InsertOrderItem,
   type Receipt
 } from "@shared/schema";
 import { db } from "./db";
@@ -61,6 +70,26 @@ export interface IStorage {
   startBreak(attendanceId: number): Promise<AttendanceRecord | undefined>;
   endBreak(attendanceId: number): Promise<AttendanceRecord | undefined>;
   updateAttendanceStatus(id: number, status: string): Promise<AttendanceRecord | undefined>;
+
+  // Tables
+  getTables(): Promise<Table[]>;
+  getTable(id: number): Promise<Table | undefined>;
+  getTableByNumber(tableNumber: string): Promise<Table | undefined>;
+  createTable(table: InsertTable): Promise<Table>;
+  updateTable(id: number, table: Partial<InsertTable>): Promise<Table | undefined>;
+  updateTableStatus(id: number, status: string): Promise<Table | undefined>;
+  deleteTable(id: number): Promise<boolean>;
+
+  // Orders
+  getOrders(tableId?: number, status?: string): Promise<Order[]>;
+  getOrder(id: number): Promise<Order | undefined>;
+  getOrderByNumber(orderNumber: string): Promise<Order | undefined>;
+  createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order>;
+  updateOrder(id: number, order: Partial<InsertOrder>): Promise<Order | undefined>;
+  updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
+  addOrderItems(orderId: number, items: InsertOrderItem[]): Promise<OrderItem[]>;
+  removeOrderItem(itemId: number): Promise<boolean>;
+  getOrderItems(orderId: number): Promise<OrderItem[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -599,6 +628,130 @@ export class DatabaseStorage implements IStorage {
       .where(eq(attendanceRecords.id, id))
       .returning();
     return record || undefined;
+  }
+
+  // Tables
+  async getTables(): Promise<Table[]> {
+    return await db.select().from(tables).orderBy(tables.tableNumber);
+  }
+
+  async getTable(id: number): Promise<Table | undefined> {
+    const [table] = await db.select().from(tables).where(eq(tables.id, id));
+    return table || undefined;
+  }
+
+  async getTableByNumber(tableNumber: string): Promise<Table | undefined> {
+    const [table] = await db.select().from(tables).where(eq(tables.tableNumber, tableNumber));
+    return table || undefined;
+  }
+
+  async createTable(table: InsertTable): Promise<Table> {
+    const [newTable] = await db.insert(tables).values(table).returning();
+    return newTable;
+  }
+
+  async updateTable(id: number, table: Partial<InsertTable>): Promise<Table | undefined> {
+    const [updatedTable] = await db
+      .update(tables)
+      .set(table)
+      .where(eq(tables.id, id))
+      .returning();
+    return updatedTable || undefined;
+  }
+
+  async updateTableStatus(id: number, status: string): Promise<Table | undefined> {
+    const [table] = await db
+      .update(tables)
+      .set({ status })
+      .where(eq(tables.id, id))
+      .returning();
+    return table || undefined;
+  }
+
+  async deleteTable(id: number): Promise<boolean> {
+    const result = await db.delete(tables).where(eq(tables.id, id));
+    return result.rowCount > 0;
+  }
+
+  // Orders
+  async getOrders(tableId?: number, status?: string): Promise<Order[]> {
+    let query = db.select().from(orders);
+    const conditions = [];
+
+    if (tableId) {
+      conditions.push(eq(orders.tableId, tableId));
+    }
+    if (status) {
+      conditions.push(eq(orders.status, status));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+
+    return await query.orderBy(orders.orderedAt);
+  }
+
+  async getOrder(id: number): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order || undefined;
+  }
+
+  async getOrderByNumber(orderNumber: string): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.orderNumber, orderNumber));
+    return order || undefined;
+  }
+
+  async createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
+    const [newOrder] = await db.insert(orders).values(order).returning();
+    
+    if (items.length > 0) {
+      const itemsWithOrderId = items.map(item => ({ ...item, orderId: newOrder.id }));
+      await db.insert(orderItems).values(itemsWithOrderId);
+    }
+
+    // Update table status to occupied
+    await this.updateTableStatus(newOrder.tableId, "occupied");
+
+    return newOrder;
+  }
+
+  async updateOrder(id: number, order: Partial<InsertOrder>): Promise<Order | undefined> {
+    const [updatedOrder] = await db
+      .update(orders)
+      .set(order)
+      .where(eq(orders.id, id))
+      .returning();
+    return updatedOrder || undefined;
+  }
+
+  async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
+    const [order] = await db
+      .update(orders)
+      .set({ status })
+      .where(eq(orders.id, id))
+      .returning();
+
+    // If order is paid, update table status to available
+    if (order && status === "paid") {
+      await this.updateTableStatus(order.tableId, "available");
+    }
+
+    return order || undefined;
+  }
+
+  async addOrderItems(orderId: number, items: InsertOrderItem[]): Promise<OrderItem[]> {
+    const itemsWithOrderId = items.map(item => ({ ...item, orderId }));
+    return await db.insert(orderItems).values(itemsWithOrderId).returning();
+  }
+
+  async removeOrderItem(itemId: number): Promise<boolean> {
+    const result = await db.delete(orderItems).where(eq(orderItems.id, itemId));
+    return result.rowCount > 0;
+  }
+
+  async getOrderItems(orderId: number): Promise<OrderItem[]> {
+    return await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
   }
 }
 

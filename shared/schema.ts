@@ -69,6 +69,44 @@ export const attendanceRecords = pgTable("attendance_records", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const tables = pgTable("tables", {
+  id: serial("id").primaryKey(),
+  tableNumber: text("table_number").notNull().unique(),
+  capacity: integer("capacity").notNull().default(4),
+  status: text("status").notNull().default("available"), // "available", "occupied", "reserved", "maintenance"
+  qrCode: text("qr_code"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  orderNumber: text("order_number").notNull().unique(),
+  tableId: integer("table_id").references(() => tables.id).notNull(),
+  employeeId: integer("employee_id").references(() => employees.id),
+  status: text("status").notNull().default("pending"), // "pending", "confirmed", "preparing", "ready", "served", "paid", "cancelled"
+  customerName: text("customer_name"),
+  customerCount: integer("customer_count").default(1),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  tax: decimal("tax", { precision: 10, scale: 2 }).notNull().default("0.00"),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: text("payment_method"), // "cash", "card", "mobile"
+  paymentStatus: text("payment_status").notNull().default("pending"), // "pending", "paid", "refunded"
+  notes: text("notes"),
+  orderedAt: timestamp("ordered_at").defaultNow().notNull(),
+  servedAt: timestamp("served_at"),
+  paidAt: timestamp("paid_at"),
+});
+
+export const orderItems = pgTable("order_items", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id").references(() => orders.id).notNull(),
+  productId: integer("product_id").references(() => products.id).notNull(),
+  quantity: integer("quantity").notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  notes: text("notes"), // special requests
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
 });
@@ -110,12 +148,41 @@ export const insertAttendanceSchema = createInsertSchema(attendanceRecords).omit
   }),
 });
 
+export const insertTableSchema = createInsertSchema(tables).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  status: z.enum(["available", "occupied", "reserved", "maintenance"], {
+    errorMap: () => ({ message: "Status must be available, occupied, reserved, or maintenance" })
+  }),
+});
+
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  orderedAt: true,
+}).extend({
+  status: z.enum(["pending", "confirmed", "preparing", "ready", "served", "paid", "cancelled"], {
+    errorMap: () => ({ message: "Invalid order status" })
+  }),
+  paymentMethod: z.enum(["cash", "card", "mobile"]).optional(),
+  paymentStatus: z.enum(["pending", "paid", "refunded"], {
+    errorMap: () => ({ message: "Invalid payment status" })
+  }),
+});
+
+export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
+  id: true,
+});
+
 export type Category = typeof categories.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type TransactionItem = typeof transactionItems.$inferSelect;
 export type Employee = typeof employees.$inferSelect;
 export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
+export type Table = typeof tables.$inferSelect;
+export type Order = typeof orders.$inferSelect;
+export type OrderItem = typeof orderItems.$inferSelect;
 
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
@@ -123,6 +190,9 @@ export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type InsertTransactionItem = z.infer<typeof insertTransactionItemSchema>;
 export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
 export type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
+export type InsertTable = z.infer<typeof insertTableSchema>;
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 
 // Cart item type for frontend use
 export type CartItem = {
@@ -171,6 +241,33 @@ export const attendanceRecordsRelations = relations(attendanceRecords, ({ one })
   employee: one(employees, {
     fields: [attendanceRecords.employeeId],
     references: [employees.id],
+  }),
+}));
+
+export const tablesRelations = relations(tables, ({ many }) => ({
+  orders: many(orders),
+}));
+
+export const ordersRelations = relations(orders, ({ one, many }) => ({
+  table: one(tables, {
+    fields: [orders.tableId],
+    references: [tables.id],
+  }),
+  employee: one(employees, {
+    fields: [orders.employeeId],
+    references: [employees.id],
+  }),
+  items: many(orderItems),
+}));
+
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderItems.orderId],
+    references: [orders.id],
+  }),
+  product: one(products, {
+    fields: [orderItems.productId],
+    references: [products.id],
   }),
 }));
 
