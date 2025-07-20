@@ -40,7 +40,7 @@ export function POSHeader() {
   };
 
   return (
-    <header className="bg-blue-500 text-white shadow-material-lg fixed top-0 left-0 right-0 z-50">
+    <header className="bg-green-500 text-white shadow-lg fixed top-0 left-0 right-0 z-50">
       <div className="px-6 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-6">
           <div className="flex items-center">
@@ -52,7 +52,7 @@ export function POSHeader() {
           <nav className="flex items-center space-x-4">
             <div className="relative pos-dropdown">
               <button 
-                className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                className={`flex items-center px-4 py-2 rounded-full transition-all duration-200 ${
                   ["/", "/pos", "/reports", "/employees", "/attendance"].includes(location)
                     ? "bg-white bg-opacity-20" 
                     : "hover:bg-white hover:bg-opacity-10"
@@ -66,11 +66,11 @@ export function POSHeader() {
               
               {/* Dropdown Menu */}
               {posMenuOpen && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-2 min-w-48 z-50">
+                <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50">
                   <Link href="/">
                     <button 
-                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
-                        location === "/" ? "bg-blue-50 text-blue-600" : "text-gray-700"
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                        location === "/" ? "bg-green-50 text-green-600" : "text-gray-700"
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >
@@ -81,8 +81,8 @@ export function POSHeader() {
                   
                   <Link href="/pos">
                     <button 
-                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
-                        location === "/pos" ? "bg-blue-50 text-blue-600" : "text-gray-700"
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                        location === "/pos" ? "bg-green-50 text-green-600" : "text-gray-700"
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >
@@ -93,8 +93,8 @@ export function POSHeader() {
                   
                   <Link href="/reports">
                     <button 
-                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
-                        location === "/reports" ? "bg-blue-50 text-blue-600" : "text-gray-700"
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                        location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >
@@ -107,8 +107,8 @@ export function POSHeader() {
                   
                   <Link href="/employees">
                     <button 
-                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
-                        location === "/employees" ? "bg-blue-50 text-blue-600" : "text-gray-700"
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                        location === "/employees" ? "bg-green-50 text-green-600" : "text-gray-700"
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >
@@ -119,8 +119,8 @@ export function POSHeader() {
                   
                   <Link href="/attendance">
                     <button 
-                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-gray-100 transition-colors ${
-                        location === "/attendance" ? "bg-blue-50 text-blue-600" : "text-gray-700"
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                        location === "/attendance" ? "bg-green-50 text-green-600" : "text-gray-700"
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >
@@ -143,7 +143,7 @@ export function POSHeader() {
             <div className="text-sm opacity-90">Time</div>
             <div className="font-medium">{formatTime(currentTime)}</div>
           </div>
-          <button className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all duration-200 flex items-center">
+          <button className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-full transition-all duration-200 flex items-center">
             <LogOut className="mr-2" size={16} />
             Logout
           </button>

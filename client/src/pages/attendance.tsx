@@ -15,7 +15,7 @@ export default function AttendancePage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-green-50 grocery-bg">
       {/* Header */}
       <POSHeader />
       

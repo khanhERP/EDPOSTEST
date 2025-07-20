@@ -147,7 +147,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
               return (
                 <div
                   key={product.id}
-                  className="bg-white rounded-lg shadow-material hover:shadow-material-lg transition-all duration-200 overflow-hidden cursor-pointer relative"
+                  className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 overflow-hidden cursor-pointer relative border border-gray-100"
                   onClick={() => handleAddToCart(product)}
                 >
                   {product.imageUrl ? (
@@ -166,7 +166,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                     <h3 className="font-medium pos-text-primary mb-1 line-clamp-2">{product.name}</h3>
                     <p className="text-sm pos-text-secondary mb-2">SKU: {product.sku}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-blue-600">${product.price}</span>
+                      <span className="text-lg font-bold text-green-600">${product.price}</span>
                       <span className={`text-xs font-medium ${stockStatus.color}`}>
                         {stockStatus.text}
                       </span>

@@ -13,7 +13,7 @@ export default function TablesPage() {
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-green-50 grocery-bg">
       {/* Header */}
       <POSHeader />
       

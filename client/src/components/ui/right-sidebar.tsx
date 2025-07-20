@@ -55,11 +55,11 @@ export function RightSidebar() {
 
   return (
     <div className={cn(
-      "fixed left-0 top-16 bottom-0 bg-white border-r border-gray-200 shadow-lg transition-all duration-300 z-40",
+      "fixed left-0 top-16 bottom-0 bg-white border-r border-green-200 shadow-lg transition-all duration-300 z-40",
       isExpanded ? "w-64" : "w-16"
     )}>
       {/* Toggle Button */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-green-200 bg-green-50">
         <Button
           variant="ghost"
           size="sm"
@@ -90,7 +90,7 @@ export function RightSidebar() {
                 className={cn(
                   "w-full justify-start mb-1 mx-2",
                   isExpanded ? "px-4" : "px-2",
-                  isActive && "bg-blue-50 text-blue-600 border-l-2 border-blue-600"
+                  isActive && "bg-green-50 text-green-600 border-l-2 border-green-500"
                 )}
               >
                 <Icon className={cn("w-5 h-5", isExpanded && "mr-3")} />
@@ -110,7 +110,7 @@ export function RightSidebar() {
 
       {/* Bottom Section */}
       {isExpanded && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-green-200 bg-green-50">
           <div className="text-sm text-gray-500 text-center">
             <div className="font-medium">EDPOS System</div>
             <div className="text-xs opacity-75">v1.0.0</div>

@@ -36,13 +36,13 @@ export function CategorySidebar({
     queryKey: ["/api/categories"],
   });
 
-  const { data: products = [] } = useQuery({
+  const { data: products = [] } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
 
   const getProductCountForCategory = (categoryId: number | "all") => {
     if (categoryId === "all") return products.length;
-    return products.filter((p: any) => p.categoryId === categoryId).length;
+    return products.filter((p: Product) => p.categoryId === categoryId).length;
   };
 
   const handleBarcodeScan = () => {
@@ -85,7 +85,7 @@ export function CategorySidebar({
         </div>
         <Button 
           onClick={handleBarcodeScan}
-          className="w-full btn-success flex items-center justify-center"
+          className="w-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center rounded-xl"
         >
           <BarChart3 className="mr-2" size={16} />
           Scan Barcode
@@ -98,10 +98,10 @@ export function CategorySidebar({
           <div className="space-y-2">
             <button
               onClick={() => onCategorySelect("all")}
-              className={`w-full text-left px-3 py-2 rounded-lg transition-colors duration-200 flex items-center justify-between ${
+              className={`w-full text-left px-3 py-2 rounded-xl transition-colors duration-200 flex items-center justify-between ${
                 selectedCategory === "all" 
-                  ? "bg-blue-50 text-blue-600 border-l-4 border-blue-600" 
-                  : "hover:bg-gray-100"
+                  ? "bg-green-50 text-green-600 border-l-4 border-green-500" 
+                  : "hover:bg-gray-50"
               }`}
             >
               <span className="flex items-center">
@@ -121,10 +121,10 @@ export function CategorySidebar({
                 <button
                   key={category.id}
                   onClick={() => onCategorySelect(category.id)}
-                  className={`w-full text-left px-3 py-2 rounded-lg transition-colors duration-200 flex items-center justify-between ${
+                  className={`w-full text-left px-3 py-2 rounded-xl transition-colors duration-200 flex items-center justify-between ${
                     isSelected 
-                      ? "bg-blue-50 text-blue-600 border-l-4 border-blue-600" 
-                      : "hover:bg-gray-100"
+                      ? "bg-green-50 text-green-600 border-l-4 border-green-500" 
+                      : "hover:bg-gray-50"
                   }`}
                 >
                   <span className="flex items-center">
@@ -133,7 +133,7 @@ export function CategorySidebar({
                   </span>
                   <span className={`text-xs px-2 py-1 rounded-full ${
                     isSelected 
-                      ? "bg-blue-600 text-white" 
+                      ? "bg-green-500 text-white" 
                       : "bg-gray-200 text-gray-600"
                   }`}>
                     {getProductCountForCategory(category.id)}
@@ -148,7 +148,7 @@ export function CategorySidebar({
       <div className="p-4 border-t pos-border">
         <Button 
           onClick={onOpenProductManager}
-          className="w-full btn-warning flex items-center justify-center"
+          className="w-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center rounded-xl"
         >
           <Settings className="mr-2" size={16} />
           Manage Products
