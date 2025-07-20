@@ -24,9 +24,8 @@ export function POSHeader() {
     <header className="bg-blue-500 text-white shadow-material-lg fixed top-0 left-0 right-0 z-50">
       <div className="px-6 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <div className="text-2xl font-bold flex items-center">
-            <img src="@assets/image_1753014739869.png" alt="EDPOS Logo" className="mr-2 h-8" />
-            EDPOS
+          <div className="flex items-center">
+            <img src="@assets/image_1753014739869.png" alt="EDPOS Logo" className="h-8" />
           </div>
           <div className="text-sm opacity-90">Main Store Location</div>
         </div>
