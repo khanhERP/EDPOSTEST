@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ScanBarcode, LogOut, Users, Home } from "lucide-react";
+import { ScanBarcode, LogOut, Users, Home, Clock } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import logoPath from "@assets/image_1753015722799.png";
 
@@ -52,6 +52,16 @@ export function POSHeader() {
               }`}>
                 <Users className="w-4 h-4 mr-2" />
                 직원 관리
+              </button>
+            </Link>
+            <Link href="/attendance">
+              <button className={`flex items-center px-3 py-2 rounded-lg transition-all duration-200 ${
+                location === "/attendance" 
+                  ? "bg-white bg-opacity-20" 
+                  : "hover:bg-white hover:bg-opacity-10"
+              }`}>
+                <Clock className="w-4 h-4 mr-2" />
+                근태 관리
               </button>
             </Link>
           </nav>

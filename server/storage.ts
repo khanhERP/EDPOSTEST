@@ -4,20 +4,23 @@ import {
   transactions, 
   transactionItems,
   employees,
+  attendanceRecords,
   type Category, 
   type Product, 
   type Transaction, 
   type TransactionItem,
   type Employee,
+  type AttendanceRecord,
   type InsertCategory, 
   type InsertProduct, 
   type InsertTransaction, 
   type InsertTransactionItem,
   type InsertEmployee,
+  type InsertAttendance,
   type Receipt
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, ilike, and } from "drizzle-orm";
+import { eq, ilike, and, gte, lte } from "drizzle-orm";
 
 export interface IStorage {
   // Categories
@@ -48,6 +51,16 @@ export interface IStorage {
   createEmployee(employee: InsertEmployee): Promise<Employee>;
   updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee | undefined>;
   deleteEmployee(id: number): Promise<boolean>;
+
+  // Attendance
+  getAttendanceRecords(employeeId?: number, date?: string): Promise<AttendanceRecord[]>;
+  getAttendanceRecord(id: number): Promise<AttendanceRecord | undefined>;
+  getTodayAttendance(employeeId: number): Promise<AttendanceRecord | undefined>;
+  clockIn(employeeId: number, notes?: string): Promise<AttendanceRecord>;
+  clockOut(attendanceId: number): Promise<AttendanceRecord | undefined>;
+  startBreak(attendanceId: number): Promise<AttendanceRecord | undefined>;
+  endBreak(attendanceId: number): Promise<AttendanceRecord | undefined>;
+  updateAttendanceStatus(id: number, status: string): Promise<AttendanceRecord | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -459,6 +472,133 @@ export class DatabaseStorage implements IStorage {
       .where(eq(employees.id, id))
       .returning();
     return !!employee;
+  }
+
+  async getAttendanceRecords(employeeId?: number, date?: string): Promise<AttendanceRecord[]> {
+    const conditions = [];
+    
+    if (employeeId) {
+      conditions.push(eq(attendanceRecords.employeeId, employeeId));
+    }
+    
+    if (date) {
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(date);
+      endDate.setHours(23, 59, 59, 999);
+      
+      conditions.push(
+        gte(attendanceRecords.clockIn, startDate),
+        lte(attendanceRecords.clockIn, endDate)
+      );
+    }
+    
+    let query = db.select().from(attendanceRecords);
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(attendanceRecords.clockIn);
+  }
+
+  async getAttendanceRecord(id: number): Promise<AttendanceRecord | undefined> {
+    const [record] = await db
+      .select()
+      .from(attendanceRecords)
+      .where(eq(attendanceRecords.id, id));
+    return record || undefined;
+  }
+
+  async getTodayAttendance(employeeId: number): Promise<AttendanceRecord | undefined> {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const [record] = await db
+      .select()
+      .from(attendanceRecords)
+      .where(
+        and(
+          eq(attendanceRecords.employeeId, employeeId),
+          gte(attendanceRecords.clockIn, today),
+          lte(attendanceRecords.clockIn, tomorrow)
+        )
+      );
+    return record || undefined;
+  }
+
+  async clockIn(employeeId: number, notes?: string): Promise<AttendanceRecord> {
+    const clockInTime = new Date();
+    const [record] = await db
+      .insert(attendanceRecords)
+      .values({
+        employeeId,
+        clockIn: clockInTime,
+        status: "present",
+        notes: notes || null,
+      })
+      .returning();
+    return record;
+  }
+
+  async clockOut(attendanceId: number): Promise<AttendanceRecord | undefined> {
+    const clockOutTime = new Date();
+    const record = await this.getAttendanceRecord(attendanceId);
+    if (!record) return undefined;
+
+    const clockInTime = new Date(record.clockIn);
+    const totalMinutes = (clockOutTime.getTime() - clockInTime.getTime()) / (1000 * 60);
+    let totalHours = totalMinutes / 60;
+
+    // Subtract break time if any
+    if (record.breakStart && record.breakEnd) {
+      const breakMinutes = (new Date(record.breakEnd).getTime() - new Date(record.breakStart).getTime()) / (1000 * 60);
+      totalHours -= breakMinutes / 60;
+    }
+
+    // Calculate overtime (assuming 8 hour work day)
+    const overtime = Math.max(0, totalHours - 8);
+
+    const [updatedRecord] = await db
+      .update(attendanceRecords)
+      .set({
+        clockOut: clockOutTime,
+        totalHours: totalHours.toFixed(2),
+        overtime: overtime.toFixed(2),
+      })
+      .where(eq(attendanceRecords.id, attendanceId))
+      .returning();
+
+    return updatedRecord || undefined;
+  }
+
+  async startBreak(attendanceId: number): Promise<AttendanceRecord | undefined> {
+    const [record] = await db
+      .update(attendanceRecords)
+      .set({ breakStart: new Date() })
+      .where(eq(attendanceRecords.id, attendanceId))
+      .returning();
+    return record || undefined;
+  }
+
+  async endBreak(attendanceId: number): Promise<AttendanceRecord | undefined> {
+    const [record] = await db
+      .update(attendanceRecords)
+      .set({ breakEnd: new Date() })
+      .where(eq(attendanceRecords.id, attendanceId))
+      .returning();
+    return record || undefined;
+  }
+
+  async updateAttendanceStatus(id: number, status: string): Promise<AttendanceRecord | undefined> {
+    const [record] = await db
+      .update(attendanceRecords)
+      .set({ status })
+      .where(eq(attendanceRecords.id, id))
+      .returning();
+    return record || undefined;
   }
 }
 

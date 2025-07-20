@@ -38,18 +38,23 @@ Preferred communication style: Simple, everyday language.
 - **Products**: Inventory items with SKU, pricing, stock tracking
 - **Transactions**: Sales records with payment details
 - **Transaction Items**: Line items for each transaction
+- **Employees**: Staff information with roles and contact details
+- **Attendance Records**: Employee clock-in/out, break times, and overtime tracking
 
 ### Frontend Components
 - **POS Interface**: Main point-of-sale interface with product grid and shopping cart
 - **Product Management**: Modal for adding/editing products
 - **Receipt System**: Print-ready receipt generation
 - **Category Navigation**: Sidebar for product filtering
+- **Employee Management**: CRUD operations for staff management with role-based access
+- **Attendance Management**: Time tracking with clock-in/out, break management, and statistics
 
 ### Backend Services
 - **Storage Layer**: Abstract storage interface with PostgreSQL database implementation
-- **API Routes**: RESTful endpoints for products, categories, and transactions
+- **API Routes**: RESTful endpoints for products, categories, transactions, employees, and attendance
 - **Data Validation**: Zod schemas for request/response validation
 - **Database Relations**: Proper foreign key relationships between entities
+- **Time Tracking**: Automated calculation of work hours, overtime, and break time
 
 ## Data Flow
 

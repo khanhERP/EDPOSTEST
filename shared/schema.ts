@@ -55,6 +55,20 @@ export const employees = pgTable("employees", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const attendanceRecords = pgTable("attendance_records", {
+  id: serial("id").primaryKey(),
+  employeeId: integer("employee_id").references(() => employees.id).notNull(),
+  clockIn: timestamp("clock_in").notNull(),
+  clockOut: timestamp("clock_out"),
+  breakStart: timestamp("break_start"),
+  breakEnd: timestamp("break_end"),
+  totalHours: decimal("total_hours", { precision: 4, scale: 2 }),
+  overtime: decimal("overtime", { precision: 4, scale: 2 }).default("0.00"),
+  status: text("status").notNull().default("present"), // "present", "absent", "late", "half_day"
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
 });
@@ -87,17 +101,28 @@ export const insertEmployeeSchema = createInsertSchema(employees).omit({
   email: z.string().email("Invalid email format"),
 });
 
+export const insertAttendanceSchema = createInsertSchema(attendanceRecords).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  status: z.enum(["present", "absent", "late", "half_day"], {
+    errorMap: () => ({ message: "Status must be present, absent, late, or half_day" })
+  }),
+});
+
 export type Category = typeof categories.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type TransactionItem = typeof transactionItems.$inferSelect;
 export type Employee = typeof employees.$inferSelect;
+export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
 
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type InsertTransactionItem = z.infer<typeof insertTransactionItemSchema>;
 export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
+export type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
 
 // Cart item type for frontend use
 export type CartItem = {
@@ -135,6 +160,17 @@ export const transactionItemsRelations = relations(transactionItems, ({ one }) =
   product: one(products, {
     fields: [transactionItems.productId],
     references: [products.id],
+  }),
+}));
+
+export const employeesRelations = relations(employees, ({ many }) => ({
+  attendanceRecords: many(attendanceRecords),
+}));
+
+export const attendanceRecordsRelations = relations(attendanceRecords, ({ one }) => ({
+  employee: one(employees, {
+    fields: [attendanceRecords.employeeId],
+    references: [employees.id],
   }),
 }));
 

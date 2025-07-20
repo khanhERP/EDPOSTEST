@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertTransactionSchema, insertTransactionItemSchema, insertEmployeeSchema } from "@shared/schema";
+import { insertProductSchema, insertTransactionSchema, insertTransactionItemSchema, insertEmployeeSchema, insertAttendanceSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -234,6 +234,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Employee deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete employee" });
+    }
+  });
+
+  // Attendance
+  app.get("/api/attendance", async (req, res) => {
+    try {
+      const { employeeId, date } = req.query;
+      const records = await storage.getAttendanceRecords(
+        employeeId ? parseInt(employeeId as string) : undefined,
+        date as string
+      );
+      res.json(records);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch attendance records" });
+    }
+  });
+
+  app.get("/api/attendance/today/:employeeId", async (req, res) => {
+    try {
+      const employeeId = parseInt(req.params.employeeId);
+      const record = await storage.getTodayAttendance(employeeId);
+      res.json(record);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch today's attendance" });
+    }
+  });
+
+  app.post("/api/attendance/clock-in", async (req, res) => {
+    try {
+      const { employeeId, notes } = req.body;
+      const record = await storage.clockIn(employeeId, notes);
+      res.status(201).json(record);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to clock in" });
+    }
+  });
+
+  app.post("/api/attendance/clock-out/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const record = await storage.clockOut(id);
+      
+      if (!record) {
+        return res.status(404).json({ message: "Attendance record not found" });
+      }
+
+      res.json(record);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to clock out" });
+    }
+  });
+
+  app.post("/api/attendance/break-start/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const record = await storage.startBreak(id);
+      
+      if (!record) {
+        return res.status(404).json({ message: "Attendance record not found" });
+      }
+
+      res.json(record);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to start break" });
+    }
+  });
+
+  app.post("/api/attendance/break-end/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const record = await storage.endBreak(id);
+      
+      if (!record) {
+        return res.status(404).json({ message: "Attendance record not found" });
+      }
+
+      res.json(record);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to end break" });
+    }
+  });
+
+  app.put("/api/attendance/:id/status", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { status } = req.body;
+      const record = await storage.updateAttendanceStatus(id, status);
+      
+      if (!record) {
+        return res.status(404).json({ message: "Attendance record not found" });
+      }
+
+      res.json(record);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update attendance status" });
     }
   });
 
