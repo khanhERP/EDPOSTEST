@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { POSHeader } from "@/components/pos/header";
+import { RightSidebar } from "@/components/ui/right-sidebar";
 import { CategorySidebar } from "@/components/pos/category-sidebar";
 import { ProductGrid } from "@/components/pos/product-grid";
 import { ShoppingCart } from "@/components/pos/shopping-cart";
@@ -36,7 +37,10 @@ export default function POSPage() {
       {/* Header */}
       <POSHeader />
       
-      <div className="flex h-screen pt-16">
+      {/* Right Sidebar */}
+      <RightSidebar />
+      
+      <div className="flex h-screen pt-16 pr-16">
         {/* Category Sidebar */}
         <CategorySidebar
           selectedCategory={selectedCategory}

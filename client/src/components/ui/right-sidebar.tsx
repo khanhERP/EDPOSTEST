@@ -1,0 +1,122 @@
+import { useState } from "react";
+import { Link, useLocation } from "wouter";
+import { 
+  Home, 
+  Utensils, 
+  Users, 
+  Clock, 
+  BarChart3, 
+  Settings, 
+  ChevronRight,
+  ChevronLeft,
+  Menu
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+interface MenuItem {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  href: string;
+  badge?: string;
+}
+
+const menuItems: MenuItem[] = [
+  {
+    icon: Utensils,
+    label: "테이블 관리",
+    href: "/",
+  },
+  {
+    icon: Home,
+    label: "기본 POS",
+    href: "/pos",
+  },
+  {
+    icon: BarChart3,
+    label: "매출 분석",
+    href: "/reports",
+  },
+  {
+    icon: Users,
+    label: "직원 관리",
+    href: "/employees",
+  },
+  {
+    icon: Clock,
+    label: "출퇴근 관리",
+    href: "/attendance",
+  },
+];
+
+export function RightSidebar() {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [location] = useLocation();
+
+  return (
+    <div className={cn(
+      "fixed right-0 top-16 bottom-0 bg-white border-l border-gray-200 shadow-lg transition-all duration-300 z-40",
+      isExpanded ? "w-64" : "w-16"
+    )}>
+      {/* Toggle Button */}
+      <div className="p-4 border-b border-gray-200">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full flex items-center justify-center"
+        >
+          {isExpanded ? (
+            <>
+              <ChevronRight className="w-4 h-4 mr-2" />
+              <span>접기</span>
+            </>
+          ) : (
+            <Menu className="w-4 h-4" />
+          )}
+        </Button>
+      </div>
+
+      {/* Menu Items */}
+      <nav className="py-4">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location === item.href;
+          
+          return (
+            <Link key={item.href} href={item.href}>
+              <Button
+                variant={isActive ? "secondary" : "ghost"}
+                className={cn(
+                  "w-full justify-start mb-1 mx-2",
+                  isExpanded ? "px-4" : "px-2",
+                  isActive && "bg-blue-50 text-blue-600 border-r-2 border-blue-600"
+                )}
+              >
+                <Icon className={cn("w-5 h-5", isExpanded && "mr-3")} />
+                {isExpanded && (
+                  <span className="font-medium">{item.label}</span>
+                )}
+                {isExpanded && item.badge && (
+                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                    {item.badge}
+                  </span>
+                )}
+              </Button>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Bottom Section */}
+      {isExpanded && (
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+          <div className="text-sm text-gray-500 text-center">
+            <div className="font-medium">EDPOS System</div>
+            <div className="text-xs opacity-75">v1.0.0</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

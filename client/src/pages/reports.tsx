@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { POSHeader } from "@/components/pos/header";
+import { RightSidebar } from "@/components/ui/right-sidebar";
 import { SalesReport } from "@/components/reports/sales-report";
 import { MenuReport } from "@/components/reports/menu-report";
 import { TableReport } from "@/components/reports/table-report";
@@ -15,8 +16,11 @@ export default function ReportsPage() {
       {/* Header */}
       <POSHeader />
       
-      <div className="pt-16 px-6">
-        <div className="max-w-7xl mx-auto py-8">
+      {/* Right Sidebar */}
+      <RightSidebar />
+      
+      <div className="pt-16 px-6 pr-20">
+        <div className="max-w-6xl mx-auto py-8">
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
