@@ -2,6 +2,7 @@ import { X, Printer, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Receipt } from "@shared/schema";
+import logoPath from "@assets/image_1753014739869.png";
 
 interface ReceiptModalProps {
   isOpen: boolean;
@@ -48,7 +49,7 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
         <div id="receipt-content" className="p-6 receipt-print bg-white">
           <div className="text-center mb-4">
             <div className="flex items-center justify-center mb-2">
-              <img src="@assets/image_1753014739869.png" alt="EDPOS Logo" className="h-8" />
+              <img src={logoPath} alt="EDPOS Logo" className="h-8" />
             </div>
             <p className="text-sm">Easy Digital Point Of Sale Service</p>
             <p className="text-sm">Main Store Location</p>

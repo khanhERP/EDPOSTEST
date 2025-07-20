@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { ScanBarcode, LogOut } from "lucide-react";
+import logoPath from "@assets/image_1753014739869.png";
 
 export function POSHeader() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -25,7 +26,7 @@ export function POSHeader() {
       <div className="px-6 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <div className="flex items-center">
-            <img src="@assets/image_1753014739869.png" alt="EDPOS Logo" className="h-8" />
+            <img src={logoPath} alt="EDPOS Logo" className="h-8" />
           </div>
           <div className="text-sm opacity-90">Main Store Location</div>
         </div>
