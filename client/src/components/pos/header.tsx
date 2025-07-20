@@ -44,7 +44,7 @@ export function POSHeader() {
       <div className="px-6 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-6">
           <div className="flex items-center">
-            <img src={logoPath} alt="EDPOS Logo" className="h-8" />
+            <img src={logoPath} alt="EDPOS Logo" className="h-12" />
           </div>
           <div className="text-sm opacity-90">Main Store Location</div>
           
