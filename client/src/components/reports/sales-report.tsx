@@ -1,0 +1,353 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { TrendingUp, Calendar, DollarSign } from "lucide-react";
+import type { Order } from "@shared/schema";
+
+export function SalesReport() {
+  const [dateRange, setDateRange] = useState("week");
+  const [startDate, setStartDate] = useState<string>(
+    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  );
+  const [endDate, setEndDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
+
+  const { data: orders } = useQuery({
+    queryKey: ['/api/orders'],
+  });
+
+  const getSalesData = () => {
+    if (!orders) return null;
+
+    const filteredOrders = orders.filter((order: Order) => {
+      const orderDate = new Date(order.orderedAt);
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      
+      return orderDate >= start && orderDate <= end && order.status === 'paid';
+    });
+
+    // Daily sales breakdown
+    const dailySales: { [date: string]: { revenue: number; orders: number; customers: number } } = {};
+    
+    filteredOrders.forEach((order: Order) => {
+      const date = new Date(order.orderedAt).toISOString().split('T')[0];
+      
+      if (!dailySales[date]) {
+        dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
+      }
+      
+      dailySales[date].revenue += Number(order.total);
+      dailySales[date].orders += 1;
+      dailySales[date].customers += order.customerCount || 0;
+    });
+
+    // Payment method breakdown
+    const paymentMethods: { [method: string]: { count: number; revenue: number } } = {};
+    
+    filteredOrders.forEach((order: Order) => {
+      const method = order.paymentMethod || 'cash';
+      if (!paymentMethods[method]) {
+        paymentMethods[method] = { count: 0, revenue: 0 };
+      }
+      paymentMethods[method].count += 1;
+      paymentMethods[method].revenue += Number(order.total);
+    });
+
+    // Hourly breakdown
+    const hourlySales: { [hour: number]: number } = {};
+    
+    filteredOrders.forEach((order: Order) => {
+      const hour = new Date(order.orderedAt).getHours();
+      hourlySales[hour] = (hourlySales[hour] || 0) + Number(order.total);
+    });
+
+    // Total stats
+    const totalRevenue = filteredOrders.reduce((sum: number, order: Order) => 
+      sum + Number(order.total), 0
+    );
+    const totalOrders = filteredOrders.length;
+    const totalCustomers = filteredOrders.reduce((sum: number, order: Order) => 
+      sum + (order.customerCount || 0), 0
+    );
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    return {
+      dailySales: Object.entries(dailySales).map(([date, data]) => ({
+        date,
+        ...data
+      })).sort((a, b) => a.date.localeCompare(b.date)),
+      paymentMethods: Object.entries(paymentMethods).map(([method, data]) => ({
+        method,
+        ...data
+      })),
+      hourlySales,
+      totalRevenue,
+      totalOrders,
+      totalCustomers,
+      averageOrderValue,
+    };
+  };
+
+  const handleDateRangeChange = (range: string) => {
+    setDateRange(range);
+    const today = new Date();
+    
+    switch (range) {
+      case "today":
+        setStartDate(today.toISOString().split('T')[0]);
+        setEndDate(today.toISOString().split('T')[0]);
+        break;
+      case "week":
+        setStartDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+        setEndDate(today.toISOString().split('T')[0]);
+        break;
+      case "month":
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        setStartDate(monthStart.toISOString().split('T')[0]);
+        setEndDate(today.toISOString().split('T')[0]);
+        break;
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ko-KR', {
+      style: 'currency',
+      currency: 'KRW'
+    }).format(amount);
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('ko-KR', {
+      month: '2-digit',
+      day: '2-digit',
+      weekday: 'short'
+    });
+  };
+
+  const getPaymentMethodLabel = (method: string) => {
+    const labels = {
+      cash: '현금',
+      card: '카드',
+      mobile: '모바일'
+    };
+    return labels[method as keyof typeof labels] || method;
+  };
+
+  const salesData = getSalesData();
+
+  if (!salesData) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="text-gray-500">매출 데이터를 불러오는 중...</div>
+      </div>
+    );
+  }
+
+  const peakHour = Object.entries(salesData.hourlySales).reduce((peak, [hour, revenue]) => 
+    revenue > (salesData.hourlySales[parseInt(peak)] || 0) ? hour : peak
+  , "12");
+
+  return (
+    <div className="space-y-6">
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                매출 분석
+              </CardTitle>
+              <CardDescription>기간별 매출 현황을 분석합니다.</CardDescription>
+            </div>
+            <div className="flex items-center gap-4">
+              <Select value={dateRange} onValueChange={handleDateRangeChange}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">오늘</SelectItem>
+                  <SelectItem value="week">최근 7일</SelectItem>
+                  <SelectItem value="month">이번 달</SelectItem>
+                  <SelectItem value="custom">사용자 정의</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {dateRange === "custom" && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Label>시작:</Label>
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-auto"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label>종료:</Label>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-auto"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">총 매출</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {formatCurrency(salesData.totalRevenue)}
+                </p>
+              </div>
+              <DollarSign className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">주문 건수</p>
+                <p className="text-2xl font-bold">{salesData.totalOrders}</p>
+              </div>
+              <Calendar className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div>
+              <p className="text-sm font-medium text-gray-600">평균 주문가</p>
+              <p className="text-2xl font-bold">{formatCurrency(salesData.averageOrderValue)}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div>
+              <p className="text-sm font-medium text-gray-600">총 고객 수</p>
+              <p className="text-2xl font-bold">{salesData.totalCustomers}</p>
+              <p className="text-xs text-gray-500 mt-1">피크: {peakHour}시</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Daily Sales */}
+        <Card>
+          <CardHeader>
+            <CardTitle>일별 매출</CardTitle>
+            <CardDescription>선택 기간의 일별 매출 현황입니다.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>날짜</TableHead>
+                  <TableHead>매출</TableHead>
+                  <TableHead>주문</TableHead>
+                  <TableHead>고객</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {salesData.dailySales.map((day) => (
+                  <TableRow key={day.date}>
+                    <TableCell>{formatDate(day.date)}</TableCell>
+                    <TableCell className="font-medium">
+                      {formatCurrency(day.revenue)}
+                    </TableCell>
+                    <TableCell>{day.orders}건</TableCell>
+                    <TableCell>{day.customers}명</TableCell>
+                  </TableRow>
+                ))}
+                {salesData.dailySales.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center text-gray-500">
+                      해당 기간에 매출 데이터가 없습니다.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Payment Methods */}
+        <Card>
+          <CardHeader>
+            <CardTitle>결제 수단별 분석</CardTitle>
+            <CardDescription>결제 방법별 매출 분포입니다.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {salesData.paymentMethods.map((payment) => {
+                const percentage = salesData.totalRevenue > 0 
+                  ? (payment.revenue / salesData.totalRevenue) * 100 
+                  : 0;
+                
+                return (
+                  <div key={payment.method} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">
+                          {getPaymentMethodLabel(payment.method)}
+                        </Badge>
+                        <span className="text-sm text-gray-600">
+                          {payment.count}건
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">
+                          {formatCurrency(payment.revenue)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {percentage.toFixed(1)}%
+                        </div>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-blue-500 h-2 rounded-full transition-all"
+                        style={{ width: `${percentage}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                );
+              })}
+              
+              {salesData.paymentMethods.length === 0 && (
+                <div className="text-center text-gray-500 py-4">
+                  결제 데이터가 없습니다.
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
