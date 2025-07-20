@@ -1,0 +1,147 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(20, 14.3%, 4.1%);
+  --muted: hsl(60, 4.8%, 95.9%);
+  --muted-foreground: hsl(25, 5.3%, 44.7%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(20, 14.3%, 4.1%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(20, 14.3%, 4.1%);
+  --border: hsl(20, 5.9%, 90%);
+  --input: hsl(20, 5.9%, 90%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(60, 4.8%, 95.9%);
+  --secondary-foreground: hsl(24, 9.8%, 10%);
+  --accent: hsl(60, 4.8%, 95.9%);
+  --accent-foreground: hsl(24, 9.8%, 10%);
+  --destructive: hsl(0, 84.2%, 60.2%);
+  --destructive-foreground: hsl(60, 9.1%, 97.8%);
+  --ring: hsl(20, 14.3%, 4.1%);
+  --radius: 0.5rem;
+
+  /* POS specific colors */
+  --primary-blue: hsl(207, 90%, 54%);
+  --primary-blue-light: hsl(207, 90%, 64%);
+  --primary-blue-dark: hsl(207, 90%, 44%);
+  --success-green: hsl(142, 76%, 36%);
+  --success-green-hover: hsl(142, 76%, 26%);
+  --warning-orange: hsl(32, 95%, 44%);
+  --warning-orange-hover: hsl(32, 95%, 34%);
+  --surface: hsl(0, 0%, 100%);
+  --background-gray: hsl(210, 20%, 98%);
+  --text-primary: hsl(210, 29%, 24%);
+  --text-secondary: hsl(215, 13%, 34%);
+  --text-tertiary: hsl(215, 20%, 65%);
+  --border-light: hsl(220, 13%, 91%);
+}
+
+.dark {
+  --background: hsl(240, 10%, 3.9%);
+  --foreground: hsl(0, 0%, 98%);
+  --muted: hsl(240, 3.7%, 15.9%);
+  --muted-foreground: hsl(240, 5%, 64.9%);
+  --popover: hsl(240, 10%, 3.9%);
+  --popover-foreground: hsl(0, 0%, 98%);
+  --card: hsl(240, 10%, 3.9%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --border: hsl(240, 3.7%, 15.9%);
+  --input: hsl(240, 3.7%, 15.9%);
+  --primary: hsl(207, 90%, 54%);
+  --primary-foreground: hsl(211, 100%, 99%);
+  --secondary: hsl(240, 3.7%, 15.9%);
+  --secondary-foreground: hsl(0, 0%, 98%);
+  --accent: hsl(240, 3.7%, 15.9%);
+  --accent-foreground: hsl(0, 0%, 98%);
+  --destructive: hsl(0, 62.8%, 30.6%);
+  --destructive-foreground: hsl(0, 0%, 98%);
+  --ring: hsl(240, 4.9%, 83.9%);
+  --radius: 0.5rem;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    font-family: 'Roboto', 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  .shadow-material {
+    box-shadow: 0 2px 4px -1px rgba(0,0,0,0.2), 0 4px 5px 0 rgba(0,0,0,0.14), 0 1px 10px 0 rgba(0,0,0,0.12);
+  }
+  
+  .shadow-material-lg {
+    box-shadow: 0 8px 10px -5px rgba(0,0,0,0.2), 0 16px 24px 2px rgba(0,0,0,0.14), 0 6px 30px 5px rgba(0,0,0,0.12);
+  }
+
+  .receipt-print {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+
+  .btn-primary {
+    @apply bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    background-color: var(--primary-blue);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-blue-dark);
+  }
+
+  .btn-success {
+    @apply text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    background-color: var(--success-green);
+  }
+
+  .btn-success:hover {
+    background-color: var(--success-green-hover);
+  }
+
+  .btn-warning {
+    @apply text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    background-color: var(--warning-orange);
+  }
+
+  .btn-warning:hover {
+    background-color: var(--warning-orange-hover);
+  }
+
+  .pos-surface {
+    background-color: var(--surface);
+  }
+
+  .pos-text-primary {
+    color: var(--text-primary);
+  }
+
+  .pos-text-secondary {
+    color: var(--text-secondary);
+  }
+
+  .pos-text-tertiary {
+    color: var(--text-tertiary);
+  }
+
+  .pos-border {
+    border-color: var(--border-light);
+  }
+}
+
+@layer utilities {
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+}

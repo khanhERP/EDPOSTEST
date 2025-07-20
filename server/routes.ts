@@ -1,0 +1,170 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { insertProductSchema, insertTransactionSchema, insertTransactionItemSchema } from "@shared/schema";
+import { z } from "zod";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Categories
+  app.get("/api/categories", async (req, res) => {
+    try {
+      const categories = await storage.getCategories();
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch categories" });
+    }
+  });
+
+  // Products
+  app.get("/api/products", async (req, res) => {
+    try {
+      const { category, search } = req.query;
+      let products;
+
+      if (search) {
+        products = await storage.searchProducts(search as string);
+      } else if (category && category !== "all") {
+        products = await storage.getProductsByCategory(parseInt(category as string));
+      } else {
+        products = await storage.getProducts();
+      }
+
+      res.json(products);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch products" });
+    }
+  });
+
+  app.get("/api/products/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const product = await storage.getProduct(id);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      res.json(product);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch product" });
+    }
+  });
+
+  app.post("/api/products", async (req, res) => {
+    try {
+      const validatedData = insertProductSchema.parse(req.body);
+      const product = await storage.createProduct(validatedData);
+      res.status(201).json(product);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid product data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create product" });
+    }
+  });
+
+  app.put("/api/products/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertProductSchema.partial().parse(req.body);
+      const product = await storage.updateProduct(id, validatedData);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      res.json(product);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid product data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update product" });
+    }
+  });
+
+  app.delete("/api/products/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteProduct(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      res.json({ message: "Product deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete product" });
+    }
+  });
+
+  app.get("/api/products/barcode/:sku", async (req, res) => {
+    try {
+      const sku = req.params.sku;
+      const product = await storage.getProductBySku(sku);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      res.json(product);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch product by SKU" });
+    }
+  });
+
+  // Transactions
+  app.post("/api/transactions", async (req, res) => {
+    try {
+      const { transaction, items } = req.body;
+      
+      const validatedTransaction = insertTransactionSchema.parse(transaction);
+      const validatedItems = z.array(insertTransactionItemSchema).parse(items);
+
+      // Validate stock availability
+      for (const item of validatedItems) {
+        const product = await storage.getProduct(item.productId);
+        if (!product) {
+          return res.status(400).json({ message: `Product with ID ${item.productId} not found` });
+        }
+        if (product.stock < item.quantity) {
+          return res.status(400).json({ message: `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}` });
+        }
+      }
+
+      const receipt = await storage.createTransaction(validatedTransaction, validatedItems);
+      res.status(201).json(receipt);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid transaction data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create transaction" });
+    }
+  });
+
+  app.get("/api/transactions", async (req, res) => {
+    try {
+      const transactions = await storage.getTransactions();
+      res.json(transactions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch transactions" });
+    }
+  });
+
+  app.get("/api/transactions/:transactionId", async (req, res) => {
+    try {
+      const transactionId = req.params.transactionId;
+      const receipt = await storage.getTransactionByTransactionId(transactionId);
+      
+      if (!receipt) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+
+      res.json(receipt);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch transaction" });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
