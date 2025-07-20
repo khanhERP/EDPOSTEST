@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   Home, 
@@ -52,6 +52,14 @@ const menuItems: MenuItem[] = [
 export function RightSidebar() {
   const [isExpanded, setIsExpanded] = useState(true);
   const [location] = useLocation();
+
+  // Update CSS custom property for responsive margin
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--sidebar-width', 
+      isExpanded ? '256px' : '64px'
+    );
+  }, [isExpanded]);
 
   return (
     <div className={cn(

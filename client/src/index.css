@@ -7,6 +7,15 @@
 }
 
 :root {
+  --sidebar-width: 256px;
+}
+
+.main-content {
+  margin-left: var(--sidebar-width);
+  transition: margin-left 0.3s ease;
+}
+
+:root {
   --background: hsl(120, 20%, 97%);
   --foreground: hsl(0, 0%, 20%);
   --muted: hsl(120, 10%, 94%);
