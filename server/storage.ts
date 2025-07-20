@@ -13,6 +13,8 @@ import {
   type InsertTransactionItem,
   type Receipt
 } from "@shared/schema";
+import { db } from "./db";
+import { eq, ilike, and } from "drizzle-orm";
 
 export interface IStorage {
   // Categories
@@ -234,4 +236,173 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database storage implementation
+export class DatabaseStorage implements IStorage {
+  async getCategories(): Promise<Category[]> {
+    return await db.select().from(categories);
+  }
+
+  async createCategory(insertCategory: InsertCategory): Promise<Category> {
+    const [category] = await db
+      .insert(categories)
+      .values(insertCategory)
+      .returning();
+    return category;
+  }
+
+  async getProducts(): Promise<Product[]> {
+    return await db.select().from(products).where(eq(products.isActive, true));
+  }
+
+  async getProductsByCategory(categoryId: number): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .where(and(eq(products.categoryId, categoryId), eq(products.isActive, true)));
+  }
+
+  async getProduct(id: number): Promise<Product | undefined> {
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(and(eq(products.id, id), eq(products.isActive, true)));
+    return product || undefined;
+  }
+
+  async getProductBySku(sku: string): Promise<Product | undefined> {
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(and(eq(products.sku, sku), eq(products.isActive, true)));
+    return product || undefined;
+  }
+
+  async searchProducts(query: string): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .where(
+        and(
+          eq(products.isActive, true),
+          ilike(products.name, `%${query}%`)
+        )
+      );
+  }
+
+  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+    const [product] = await db
+      .insert(products)
+      .values({
+        ...insertProduct,
+        imageUrl: insertProduct.imageUrl || null
+      })
+      .returning();
+    return product;
+  }
+
+  async updateProduct(id: number, updateData: Partial<InsertProduct>): Promise<Product | undefined> {
+    const [product] = await db
+      .update(products)
+      .set({
+        ...updateData,
+        imageUrl: updateData.imageUrl || null
+      })
+      .where(and(eq(products.id, id), eq(products.isActive, true)))
+      .returning();
+    return product || undefined;
+  }
+
+  async deleteProduct(id: number): Promise<boolean> {
+    const [product] = await db
+      .update(products)
+      .set({ isActive: false })
+      .where(eq(products.id, id))
+      .returning();
+    return !!product;
+  }
+
+  async updateProductStock(id: number, quantity: number): Promise<Product | undefined> {
+    const product = await this.getProduct(id);
+    if (!product) return undefined;
+
+    const newStock = Math.max(0, product.stock + quantity);
+    const [updatedProduct] = await db
+      .update(products)
+      .set({ stock: newStock })
+      .where(eq(products.id, id))
+      .returning();
+    return updatedProduct || undefined;
+  }
+
+  async createTransaction(insertTransaction: InsertTransaction, items: InsertTransactionItem[]): Promise<Receipt> {
+    const [transaction] = await db
+      .insert(transactions)
+      .values({
+        ...insertTransaction,
+        amountReceived: insertTransaction.amountReceived || null,
+        change: insertTransaction.change || null
+      })
+      .returning();
+
+    const transactionItemsWithIds: TransactionItem[] = [];
+    for (const item of items) {
+      const [transactionItem] = await db
+        .insert(transactionItems)
+        .values({
+          ...item,
+          transactionId: transaction.id
+        })
+        .returning();
+      
+      // Update product stock
+      await this.updateProductStock(item.productId, -item.quantity);
+      transactionItemsWithIds.push(transactionItem);
+    }
+
+    return {
+      ...transaction,
+      items: transactionItemsWithIds
+    };
+  }
+
+  async getTransaction(id: number): Promise<Receipt | undefined> {
+    const [transaction] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.id, id));
+    
+    if (!transaction) return undefined;
+
+    const items = await db
+      .select()
+      .from(transactionItems)
+      .where(eq(transactionItems.transactionId, id));
+
+    return { ...transaction, items };
+  }
+
+  async getTransactionByTransactionId(transactionId: string): Promise<Receipt | undefined> {
+    const [transaction] = await db
+      .select()
+      .from(transactions)
+      .where(eq(transactions.transactionId, transactionId));
+    
+    if (!transaction) return undefined;
+
+    const items = await db
+      .select()
+      .from(transactionItems)
+      .where(eq(transactionItems.transactionId, transaction.id));
+
+    return { ...transaction, items };
+  }
+
+  async getTransactions(): Promise<Transaction[]> {
+    return await db
+      .select()
+      .from(transactions)
+      .orderBy(transactions.createdAt);
+  }
+}
+
+export const storage = new DatabaseStorage();

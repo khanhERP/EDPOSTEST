@@ -1,5 +1,6 @@
 import { pgTable, text, serial, decimal, integer, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+import { relations } from "drizzle-orm";
 import { z } from "zod";
 
 export const categories = pgTable("categories", {
@@ -84,6 +85,34 @@ export type CartItem = {
   imageUrl?: string;
   stock: number;
 };
+
+// Relations
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  products: many(products),
+}));
+
+export const productsRelations = relations(products, ({ one, many }) => ({
+  category: one(categories, {
+    fields: [products.categoryId],
+    references: [categories.id],
+  }),
+  transactionItems: many(transactionItems),
+}));
+
+export const transactionsRelations = relations(transactions, ({ many }) => ({
+  items: many(transactionItems),
+}));
+
+export const transactionItemsRelations = relations(transactionItems, ({ one }) => ({
+  transaction: one(transactions, {
+    fields: [transactionItems.transactionId],
+    references: [transactions.id],
+  }),
+  product: one(products, {
+    fields: [transactionItems.productId],
+    references: [products.id],
+  }),
+}));
 
 // Receipt data type
 export type Receipt = Transaction & {

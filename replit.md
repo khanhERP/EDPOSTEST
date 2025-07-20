@@ -22,8 +22,9 @@ Preferred communication style: Simple, everyday language.
 - **Runtime**: Node.js with Express.js framework
 - **Language**: TypeScript with ES modules
 - **Database ORM**: Drizzle ORM for type-safe database operations
-- **Database**: PostgreSQL (configured for Neon serverless)
+- **Database**: PostgreSQL with persistent data storage
 - **Session Management**: PostgreSQL-based session storage
+- **Data Storage**: Migrated from in-memory to PostgreSQL database
 
 ### Development Environment
 - **Monorepo Structure**: Shared schema and types between frontend and backend
@@ -45,9 +46,10 @@ Preferred communication style: Simple, everyday language.
 - **Category Navigation**: Sidebar for product filtering
 
 ### Backend Services
-- **Storage Layer**: Abstract storage interface with in-memory implementation for development
+- **Storage Layer**: Abstract storage interface with PostgreSQL database implementation
 - **API Routes**: RESTful endpoints for products, categories, and transactions
 - **Data Validation**: Zod schemas for request/response validation
+- **Database Relations**: Proper foreign key relationships between entities
 
 ## Data Flow
 
