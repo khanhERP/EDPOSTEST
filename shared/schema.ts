@@ -69,6 +69,19 @@ export const attendanceRecords = pgTable("attendance_records", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const storeSettings = pgTable("store_settings", {
+  id: serial("id").primaryKey(),
+  storeName: text("store_name").notNull().default("EDPOS 레스토랑"),
+  storeCode: text("store_code"),
+  taxId: text("tax_id"),
+  address: text("address"),
+  phone: text("phone"),
+  email: text("email"),
+  openTime: text("open_time").default("09:00"),
+  closeTime: text("close_time").default("22:00"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const tables = pgTable("tables", {
   id: serial("id").primaryKey(),
   tableNumber: text("table_number").notNull().unique(),
@@ -175,6 +188,11 @@ export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
   orderId: true,
 });
 
+export const insertStoreSettingsSchema = createInsertSchema(storeSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 export type Category = typeof categories.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
@@ -184,6 +202,7 @@ export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
 export type Table = typeof tables.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
+export type StoreSettings = typeof storeSettings.$inferSelect;
 
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
@@ -194,6 +213,7 @@ export type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
 export type InsertTable = z.infer<typeof insertTableSchema>;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
+export type InsertStoreSettings = z.infer<typeof insertStoreSettingsSchema>;
 
 // Cart item type for frontend use
 export type CartItem = {

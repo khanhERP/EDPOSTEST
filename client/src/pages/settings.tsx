@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { type StoreSettings, type InsertStoreSettings } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Store, 
   Package, 
@@ -27,20 +31,63 @@ import {
 
 export default function Settings() {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("store");
   
+  // Fetch store settings
+  const { data: storeData, isLoading } = useQuery<StoreSettings>({
+    queryKey: ['/api/store-settings'],
+  });
+
   // Store settings state
   const [storeSettings, setStoreSettings] = useState({
-    name: "EDPOS 레스토랑",
-    code: "STORE001",
+    storeName: "EDPOS 레스토랑",
+    storeCode: "STORE001",
     address: "서울시 강남구 테헤란로 123",
     phone: "02-1234-5678",
     email: "contact@edpos.com",
     taxId: "123-45-67890",
-    businessHours: {
-      open: "09:00",
-      close: "22:00"
+    openTime: "09:00",
+    closeTime: "22:00"
+  });
+
+  // Update local state when data is loaded
+  useEffect(() => {
+    if (storeData) {
+      setStoreSettings({
+        storeName: storeData.storeName || "EDPOS 레스토랑",
+        storeCode: storeData.storeCode || "STORE001",
+        address: storeData.address || "",
+        phone: storeData.phone || "",
+        email: storeData.email || "",
+        taxId: storeData.taxId || "",
+        openTime: storeData.openTime || "09:00",
+        closeTime: storeData.closeTime || "22:00"
+      });
     }
+  }, [storeData]);
+
+  // Mutation to update store settings
+  const updateStoreSettingsMutation = useMutation({
+    mutationFn: async (settings: Partial<InsertStoreSettings>) => {
+      const response = await apiRequest("PUT", "/api/store-settings", settings);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/store-settings'] });
+      toast({
+        title: t('common.success'),
+        description: t('settings.storeUpdated'),
+      });
+    },
+    onError: () => {
+      toast({
+        title: t('common.error'),
+        description: t('settings.updateError'),
+        variant: "destructive",
+      });
+    },
   });
 
   // Payment methods state - Vietnamese market localized
@@ -57,21 +104,14 @@ export default function Settings() {
   ]);
 
   const handleStoreSettingChange = (field: string, value: string) => {
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      setStoreSettings(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent as keyof typeof prev],
-          [child]: value
-        }
-      }));
-    } else {
-      setStoreSettings(prev => ({
-        ...prev,
-        [field]: value
-      }));
-    }
+    setStoreSettings(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const saveStoreSettings = () => {
+    updateStoreSettingsMutation.mutate(storeSettings);
   };
 
   const togglePaymentMethod = (id: number) => {
@@ -172,8 +212,8 @@ export default function Settings() {
                     <Label htmlFor="storeName">{t('settings.storeName')}</Label>
                     <Input
                       id="storeName"
-                      value={storeSettings.name}
-                      onChange={(e) => handleStoreSettingChange('name', e.target.value)}
+                      value={storeSettings.storeName}
+                      onChange={(e) => handleStoreSettingChange('storeName', e.target.value)}
                       placeholder={t('settings.storeNamePlaceholder')}
                     />
                   </div>
@@ -181,8 +221,8 @@ export default function Settings() {
                     <Label htmlFor="storeCode">{t('settings.storeCode')}</Label>
                     <Input
                       id="storeCode"
-                      value={storeSettings.code}
-                      onChange={(e) => handleStoreSettingChange('code', e.target.value)}
+                      value={storeSettings.storeCode}
+                      onChange={(e) => handleStoreSettingChange('storeCode', e.target.value)}
                       placeholder={t('settings.storeCodePlaceholder')}
                     />
                   </div>
@@ -255,8 +295,8 @@ export default function Settings() {
                       <Input
                         id="openTime"
                         type="time"
-                        value={storeSettings.businessHours.open}
-                        onChange={(e) => handleStoreSettingChange('businessHours.open', e.target.value)}
+                        value={storeSettings.openTime}
+                        onChange={(e) => handleStoreSettingChange('openTime', e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
@@ -264,8 +304,8 @@ export default function Settings() {
                       <Input
                         id="closeTime"
                         type="time"
-                        value={storeSettings.businessHours.close}
-                        onChange={(e) => handleStoreSettingChange('businessHours.close', e.target.value)}
+                        value={storeSettings.closeTime}
+                        onChange={(e) => handleStoreSettingChange('closeTime', e.target.value)}
                       />
                     </div>
                   </div>
@@ -273,9 +313,13 @@ export default function Settings() {
               </Card>
 
               <div className="flex justify-end">
-                <Button className="bg-green-600 hover:bg-green-700">
+                <Button 
+                  onClick={saveStoreSettings}
+                  disabled={updateStoreSettingsMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                >
                   <Save className="w-4 h-4 mr-2" />
-                  {t('common.save')}
+                  {updateStoreSettingsMutation.isPending ? t('common.loading') : t('common.save')}
                 </Button>
               </div>
             </div>

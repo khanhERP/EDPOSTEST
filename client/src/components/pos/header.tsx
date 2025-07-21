@@ -1,15 +1,22 @@
 import { useState, useEffect } from "react";
 import { ScanBarcode, LogOut, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package, Settings as SettingsIcon } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import logoPath from "@assets/image_1753067088685.png";
 import { useTranslation } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import { type StoreSettings } from "@shared/schema";
 
 export function POSHeader() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [location] = useLocation();
   const [posMenuOpen, setPosMenuOpen] = useState(false);
   const { t } = useTranslation();
+
+  // Fetch store settings
+  const { data: storeSettings } = useQuery<StoreSettings>({
+    queryKey: ['/api/store-settings'],
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -49,7 +56,7 @@ export function POSHeader() {
           <div className="flex items-center">
             <img src={logoPath} alt="EDPOS Logo" className="h-12" />
           </div>
-          <div className="text-sm opacity-90">{t('common.restaurant')}</div>
+          <div className="text-sm opacity-90">{storeSettings?.storeName || t('common.restaurant')}</div>
         </div>
         
         <div className="flex items-center space-x-6">

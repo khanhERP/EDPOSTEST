@@ -8,6 +8,7 @@ import {
   tables,
   orders,
   orderItems,
+  storeSettings,
   type Category, 
   type Product, 
   type Transaction, 
@@ -17,6 +18,7 @@ import {
   type Table,
   type Order,
   type OrderItem,
+  type StoreSettings,
   type InsertCategory, 
   type InsertProduct, 
   type InsertTransaction, 
@@ -26,6 +28,7 @@ import {
   type InsertTable,
   type InsertOrder,
   type InsertOrderItem,
+  type InsertStoreSettings,
   type Receipt
 } from "@shared/schema";
 import { db } from "./db";
@@ -93,6 +96,10 @@ export interface IStorage {
   addOrderItems(orderId: number, items: InsertOrderItem[]): Promise<OrderItem[]>;
   removeOrderItem(itemId: number): Promise<boolean>;
   getOrderItems(orderId: number): Promise<OrderItem[]>;
+
+  // Store Settings
+  getStoreSettings(): Promise<StoreSettings>;
+  updateStoreSettings(settings: Partial<InsertStoreSettings>): Promise<StoreSettings>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -598,6 +605,39 @@ export class DatabaseStorage implements IStorage {
       .returning();
       
     return updatedProduct || undefined;
+  }
+
+  // Store Settings
+  async getStoreSettings(): Promise<StoreSettings> {
+    const [settings] = await db.select().from(storeSettings).limit(1);
+    
+    // If no settings exist, create default settings
+    if (!settings) {
+      const [newSettings] = await db
+        .insert(storeSettings)
+        .values({
+          storeName: "EDPOS 레스토랑",
+          storeCode: "STORE001",
+          openTime: "09:00",
+          closeTime: "22:00"
+        })
+        .returning();
+      return newSettings;
+    }
+    
+    return settings;
+  }
+
+  async updateStoreSettings(settings: Partial<InsertStoreSettings>): Promise<StoreSettings> {
+    const currentSettings = await this.getStoreSettings();
+    
+    const [updatedSettings] = await db
+      .update(storeSettings)
+      .set({ ...settings, updatedAt: new Date() })
+      .where(eq(storeSettings.id, currentSettings.id))
+      .returning();
+      
+    return updatedSettings;
   }
 }
 

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertTransactionSchema, insertTransactionItemSchema, insertEmployeeSchema, insertAttendanceSchema, insertTableSchema, insertOrderSchema, insertOrderItemSchema } from "@shared/schema";
+import { insertProductSchema, insertTransactionSchema, insertTransactionItemSchema, insertEmployeeSchema, insertAttendanceSchema, insertTableSchema, insertOrderSchema, insertOrderItemSchema, insertStoreSettingsSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -523,6 +523,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid stock update data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to update stock" });
+    }
+  });
+
+  // Store Settings
+  app.get("/api/store-settings", async (req, res) => {
+    try {
+      const settings = await storage.getStoreSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch store settings" });
+    }
+  });
+
+  app.put("/api/store-settings", async (req, res) => {
+    try {
+      const validatedData = insertStoreSettingsSchema.partial().parse(req.body);
+      const settings = await storage.updateStoreSettings(validatedData);
+      res.json(settings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid store settings data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update store settings" });
     }
   });
 

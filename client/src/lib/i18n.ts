@@ -200,7 +200,9 @@ export const translations = {
         shopeepay: 'ShopeePay',
         grabpay: 'GrabPay',
         newPayment: '새 결제 수단'
-      }
+      },
+      storeUpdated: '매장 설정이 업데이트되었습니다',
+      updateError: '설정 업데이트 중 오류가 발생했습니다'
     }
   },
   
