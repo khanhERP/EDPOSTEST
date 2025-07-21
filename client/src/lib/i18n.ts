@@ -285,7 +285,9 @@ export const translations = {
       productNotFound: '상품을 찾을 수 없습니다',
       categories: '카테고리',
       allProducts: '모든 상품',
-      manageProducts: '상품 관리'
+      manageProducts: '상품 관리',
+      searchProducts: '상품 검색...',
+      scanBarcode: '바코드 스캔'
     },
 
     // Tables
@@ -388,7 +390,9 @@ export const translations = {
       productNotFound: 'Product not found',
       categories: 'Categories',
       allProducts: 'All Products',
-      manageProducts: 'Manage Products'
+      manageProducts: 'Manage Products',
+      searchProducts: 'Search products...',
+      scanBarcode: 'Scan Barcode'
     },
 
 
@@ -877,7 +881,9 @@ export const translations = {
       productNotFound: 'Không tìm thấy sản phẩm',
       categories: 'Danh mục',
       allProducts: 'Tất cả sản phẩm',
-      manageProducts: 'Quản lý sản phẩm'
+      manageProducts: 'Quản lý sản phẩm',
+      searchProducts: 'Tìm kiếm sản phẩm...',
+      scanBarcode: 'Quét mã vạch'
     },
 
     // Tables
