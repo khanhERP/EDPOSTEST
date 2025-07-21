@@ -97,7 +97,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
   }
 
   const getCategoryName = () => {
-    if (selectedCategory === "all") return "All Products";
+    if (selectedCategory === "all") return t('pos.allProducts');
     // This would ideally come from the categories query
     const categoryNames: Record<number, string> = {
       1: "Beverages",
@@ -114,16 +114,16 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
       <div className="bg-white p-4 border-b pos-border flex items-center justify-between pt-[22px] pb-[22px]">
         <div>
           <h2 className="font-medium pos-text-primary text-[14px]">{getCategoryName()}</h2>
-          <p className="text-sm pos-text-secondary">{products.length} products available</p>
+          <p className="text-sm pos-text-secondary">{products.length} {t('pos.productsAvailable')}</p>
         </div>
         <div className="flex items-center space-x-3">
           <Button variant="outline" size="sm" className="flex items-center">
             <Grid3X3 className="mr-2" size={16} />
-            Grid View
+            {t('pos.gridView')}
           </Button>
           <Button variant="outline" size="sm" className="flex items-center">
             <ArrowUpDown className="mr-2" size={16} />
-            Sort by Name
+            {t('pos.sortByName')}
           </Button>
         </div>
       </div>
@@ -133,9 +133,9 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
             <div className="text-gray-400 mb-4">
               <Grid3X3 size={48} className="mx-auto" />
             </div>
-            <h3 className="text-lg font-medium pos-text-secondary mb-2">No products found</h3>
+            <h3 className="text-lg font-medium pos-text-secondary mb-2">{t('pos.noProductsFound')}</h3>
             <p className="pos-text-tertiary">
-              {searchQuery ? "Try adjusting your search terms" : "No products available in this category"}
+              {searchQuery ? t('pos.tryAdjustingSearch') : t('pos.noProductsInCategory')}
             </p>
           </div>
         ) : (
@@ -177,12 +177,12 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                   {/* Badges */}
                   {isPopular && (
                     <div className="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded-full">
-                      Popular
+                      {t('pos.popular')}
                     </div>
                   )}
                   {isLowStock && (
                     <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                      Low Stock
+                      {t('pos.lowStock')}
                     </div>
                   )}
                 </div>

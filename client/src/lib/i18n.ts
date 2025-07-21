@@ -287,7 +287,16 @@ export const translations = {
       allProducts: '모든 상품',
       manageProducts: '상품 관리',
       searchProducts: '상품 검색...',
-      scanBarcode: '바코드 스캔'
+      scanBarcode: '바코드 스캔',
+      inStock: '재고',
+      popular: '인기',
+      lowStock: '재고 부족',
+      productsAvailable: '개 상품 이용 가능',
+      gridView: '격자 보기',
+      sortByName: '이름순 정렬',
+      noProductsFound: '상품을 찾을 수 없습니다',
+      tryAdjustingSearch: '검색어를 조정해 보세요',
+      noProductsInCategory: '이 카테고리에는 상품이 없습니다'
     },
 
     // Tables
@@ -392,7 +401,16 @@ export const translations = {
       allProducts: 'All Products',
       manageProducts: 'Manage Products',
       searchProducts: 'Search products...',
-      scanBarcode: 'Scan Barcode'
+      scanBarcode: 'Scan Barcode',
+      inStock: 'in stock',
+      popular: 'Popular',
+      lowStock: 'Low Stock',
+      productsAvailable: 'products available',
+      gridView: 'Grid View',
+      sortByName: 'Sort by Name',
+      noProductsFound: 'No products found',
+      tryAdjustingSearch: 'Try adjusting your search terms',
+      noProductsInCategory: 'No products available in this category'
     },
 
 
@@ -883,7 +901,16 @@ export const translations = {
       allProducts: 'Tất cả sản phẩm',
       manageProducts: 'Quản lý sản phẩm',
       searchProducts: 'Tìm kiếm sản phẩm...',
-      scanBarcode: 'Quét mã vạch'
+      scanBarcode: 'Quét mã vạch',
+      inStock: 'còn hàng',
+      popular: 'Phổ biến',
+      lowStock: 'Sắp hết hàng',
+      productsAvailable: 'sản phẩm có sẵn',
+      gridView: 'Xem dạng lưới',
+      sortByName: 'Sắp xếp theo tên',
+      noProductsFound: 'Không tìm thấy sản phẩm',
+      tryAdjustingSearch: 'Thử điều chỉnh từ khóa tìm kiếm',
+      noProductsInCategory: 'Không có sản phẩm trong danh mục này'
     },
 
     // Tables
