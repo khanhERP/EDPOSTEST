@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n";
 
 interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;
@@ -22,42 +23,45 @@ interface MenuItem {
   badge?: string;
 }
 
-const menuItems: MenuItem[] = [
-  {
-    icon: Home,
-    label: "기본 POS",
-    href: "/pos",
-  },
-  {
-    icon: Utensils,
-    label: "테이블 관리",
-    href: "/",
-  },
-  {
-    icon: Package,
-    label: "재고 관리",
-    href: "/inventory",
-  },
-  {
-    icon: BarChart3,
-    label: "매출 분석",
-    href: "/reports",
-  },
-  {
-    icon: Users,
-    label: "직원 관리",
-    href: "/employees",
-  },
-  {
-    icon: Clock,
-    label: "출퇴근 관리",
-    href: "/attendance",
-  },
-];
+// Menu items will be translated using the hook inside the component
 
 export function RightSidebar() {
   const [isExpanded, setIsExpanded] = useState(true);
   const [location] = useLocation();
+  const { t } = useTranslation();
+
+  const menuItems: MenuItem[] = [
+    {
+      icon: Home,
+      label: t('nav.pos'),
+      href: "/pos",
+    },
+    {
+      icon: Utensils,
+      label: t('nav.tables'),
+      href: "/",
+    },
+    {
+      icon: Package,
+      label: t('nav.inventory'),
+      href: "/inventory",
+    },
+    {
+      icon: BarChart3,
+      label: t('nav.reports'),
+      href: "/reports",
+    },
+    {
+      icon: Users,
+      label: t('nav.employees'),
+      href: "/employees",
+    },
+    {
+      icon: Clock,
+      label: t('nav.attendance'),
+      href: "/attendance",
+    },
+  ];
 
   // Update CSS custom property for responsive margin
   useEffect(() => {
@@ -83,7 +87,7 @@ export function RightSidebar() {
           {isExpanded ? (
             <>
               <ChevronLeft className="w-4 h-4 mr-2" />
-              <span>접기</span>
+              <span>{t('common.collapse')}</span>
             </>
           ) : (
             <Menu className="w-4 h-4" />

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Grid3X3, List, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/lib/i18n";
 import type { Product } from "@shared/schema";
 
 interface ProductGridProps {
@@ -12,6 +13,7 @@ interface ProductGridProps {
 
 export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: ProductGridProps) {
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products", { category: selectedCategory, search: searchQuery }],
@@ -33,8 +35,8 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
   const handleAddToCart = (product: Product) => {
     if (product.stock <= 0) {
       toast({
-        title: "Out of Stock",
-        description: `${product.name} is currently out of stock`,
+        title: t('pos.outOfStock'),
+        description: `${product.name} ${t('pos.currentlyOutOfStock')}`,
         variant: "destructive",
       });
       return;
@@ -42,16 +44,16 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
 
     onAddToCart(product.id);
     toast({
-      title: "Added to Cart",
-      description: `${product.name} added to cart`,
+      title: t('pos.addedToCart'),
+      description: `${product.name} ${t('pos.addedToCart')}`,
     });
   };
 
   const getStockStatus = (stock: number) => {
-    if (stock === 0) return { text: "Out of Stock", color: "text-red-500" };
-    if (stock <= 5) return { text: `${stock} in stock`, color: "text-red-500" };
-    if (stock <= 10) return { text: `${stock} in stock`, color: "text-orange-500" };
-    return { text: `${stock} in stock`, color: "text-green-600" };
+    if (stock === 0) return { text: t('pos.outOfStock'), color: "text-red-500" };
+    if (stock <= 5) return { text: `${stock} ${t('pos.inStock')}`, color: "text-red-500" };
+    if (stock <= 10) return { text: `${stock} ${t('pos.inStock')}`, color: "text-orange-500" };
+    return { text: `${stock} ${t('pos.inStock')}`, color: "text-green-600" };
   };
 
   const getPopularBadge = (productName: string) => {

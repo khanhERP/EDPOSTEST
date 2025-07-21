@@ -58,15 +58,15 @@ export function CategorySidebar({
         if (product.id) {
           onAddToCart(product.id);
           toast({
-            title: "Product Scanned",
-            description: `${product.name} added to cart`,
+            title: t('pos.productScanned'),
+            description: `${product.name} ${t('pos.addedToCart')}`,
           });
         }
       })
       .catch(() => {
         toast({
-          title: "Scan Failed",
-          description: "Product not found",
+          title: t('pos.scanFailed'),
+          description: t('pos.productNotFound'),
           variant: "destructive",
         });
       });
@@ -78,7 +78,7 @@ export function CategorySidebar({
         <div className="relative mb-3">
           <Input
             type="text"
-            placeholder="Search products..."
+            placeholder={t('pos.searchProducts')}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-10"
@@ -90,13 +90,13 @@ export function CategorySidebar({
           className="w-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center rounded-xl"
         >
           <BarChart3 className="mr-2" size={16} />
-          Scan Barcode
+{t('pos.scanBarcode')}
         </Button>
       </div>
       
       <div className="flex-1 overflow-y-auto">
         <div className="p-4">
-          <h3 className="font-medium pos-text-primary mb-3">Categories</h3>
+          <h3 className="font-medium pos-text-primary mb-3">{t('pos.categories')}</h3>
           <div className="space-y-2">
             <button
               onClick={() => onCategorySelect("all")}
@@ -108,7 +108,7 @@ export function CategorySidebar({
             >
               <span className="flex items-center">
                 <Grid3X3 className="w-5 mr-2 text-gray-500" size={16} />
-                All Products
+{t('pos.allProducts')}
               </span>
               <span className="text-xs bg-gray-200 pos-text-secondary px-2 py-1 rounded-full">
                 {getProductCountForCategory("all")}

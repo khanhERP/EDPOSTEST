@@ -55,7 +55,8 @@ export const translations = {
       info: '정보',
       restaurant: '레스토랑 본점',
       logout: '로그아웃',
-      items: '개'
+      items: '개',
+      collapse: '접기'
     },
     
     // 네비게이션
@@ -94,7 +95,17 @@ export const translations = {
       stock: '재고',
       imageUrl: '이미지 URL',
       isActive: '활성 상태',
-      addProductsToStart: '시작하려면 상품을 추가하세요'
+      addProductsToStart: '시작하려면 상품을 추가하세요',
+      searchProducts: '상품 검색...',
+      scanBarcode: '바코드 스캔',
+      categories: '카테고리',
+      allProducts: '모든 상품',
+      productScanned: '상품 스캔됨',
+      scanFailed: '스캔 실패',
+      productNotFound: '상품을 찾을 수 없습니다',
+      currentlyOutOfStock: '현재 품절입니다',
+      inStock: '재고',
+      addItemsToCart: '상품을 장바구니에 추가하세요'
     }
   },
   
@@ -134,7 +145,8 @@ export const translations = {
       info: 'Info',
       restaurant: 'Main Restaurant',
       logout: 'Logout',
-      items: 'items'
+      items: 'items',
+      collapse: 'Collapse'
     },
     
     // Navigation
@@ -173,7 +185,17 @@ export const translations = {
       stock: 'Stock',
       imageUrl: 'Image URL',
       isActive: 'Active Status',
-      addProductsToStart: 'Add products to get started'
+      addProductsToStart: 'Add products to get started',
+      searchProducts: 'Search products...',
+      scanBarcode: 'Scan Barcode',
+      categories: 'Categories',
+      allProducts: 'All Products',
+      productScanned: 'Product Scanned',
+      scanFailed: 'Scan Failed',
+      productNotFound: 'Product not found',
+      currentlyOutOfStock: 'is currently out of stock',
+      inStock: 'in stock',
+      addItemsToCart: 'Add items to cart'
     }
   },
   
