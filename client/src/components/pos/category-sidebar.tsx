@@ -153,7 +153,7 @@ export function CategorySidebar({
           className="w-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center rounded-xl"
         >
           <Settings className="mr-2" size={16} />
-          Manage Products
+          {t('pos.manageProducts')}
         </Button>
       </div>
     </aside>

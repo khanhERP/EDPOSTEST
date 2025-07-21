@@ -282,7 +282,10 @@ export const translations = {
       currentlyOutOfStock: '현재 재고가 없습니다',
       productScanned: '상품 스캔됨',
       scanFailed: '스캔 실패',
-      productNotFound: '상품을 찾을 수 없습니다'
+      productNotFound: '상품을 찾을 수 없습니다',
+      categories: '카테고리',
+      allProducts: '모든 상품',
+      manageProducts: '상품 관리'
     },
 
     // Tables
@@ -382,7 +385,10 @@ export const translations = {
       currentlyOutOfStock: 'is currently out of stock',
       productScanned: 'Product Scanned',
       scanFailed: 'Scan Failed',
-      productNotFound: 'Product not found'
+      productNotFound: 'Product not found',
+      categories: 'Categories',
+      allProducts: 'All Products',
+      manageProducts: 'Manage Products'
     },
 
 
@@ -868,7 +874,10 @@ export const translations = {
       currentlyOutOfStock: 'hiện tại đã hết hàng',
       productScanned: 'Đã quét sản phẩm',
       scanFailed: 'Quét thất bại',
-      productNotFound: 'Không tìm thấy sản phẩm'
+      productNotFound: 'Không tìm thấy sản phẩm',
+      categories: 'Danh mục',
+      allProducts: 'Tất cả sản phẩm',
+      manageProducts: 'Quản lý sản phẩm'
     },
 
     // Tables
