@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { CustomerFormModal } from "@/components/customers/customer-form-modal";
 import { MembershipModal } from "@/components/membership/membership-modal";
+import { EmployeeFormModal } from "@/components/employees/employee-form-modal";
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -46,6 +47,10 @@ export default function Settings() {
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [showMembershipModal, setShowMembershipModal] = useState(false);
   
+  // Employee management state
+  const [showEmployeeForm, setShowEmployeeForm] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<any>(null);
+  
   // Fetch store settings
   const { data: storeData, isLoading } = useQuery<StoreSettings>({
     queryKey: ['/api/store-settings'],
@@ -54,6 +59,11 @@ export default function Settings() {
   // Fetch customers
   const { data: customersData, isLoading: customersLoading } = useQuery<Customer[]>({
     queryKey: ['/api/customers'],
+  });
+
+  // Fetch employees
+  const { data: employeesData, isLoading: employeesLoading } = useQuery({
+    queryKey: ['/api/employees'],
   });
 
   // Store settings state
@@ -652,89 +662,101 @@ export default function Settings() {
                         {t('common.search')}
                       </Button>
                     </div>
-                    <Button className="bg-green-600 hover:bg-green-700">
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => setShowEmployeeForm(true)}
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       {t('employees.addEmployee')}
                     </Button>
                   </div>
 
-                  <div className="rounded-md border">
-                    <div className="grid grid-cols-6 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                      <div>{t('employees.employeeId')}</div>
-                      <div>{t('employees.name')}</div>
-                      <div>{t('employees.role')}</div>
-                      <div>{t('employees.phone')}</div>
-                      <div>{t('employees.status')}</div>
-                      <div className="text-center">{t('common.actions')}</div>
+                  {employeesLoading ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">직원 데이터를 불러오는 중...</p>
                     </div>
-                    
-                    <div className="divide-y">
-                      {/* Employee rows will be populated here */}
-                      <div className="grid grid-cols-6 gap-4 p-4 items-center">
-                        <div className="font-mono text-sm">EMP001</div>
-                        <div className="font-medium">김직원</div>
-                        <div>
-                          <Badge variant="secondary">매니저</Badge>
-                        </div>
-                        <div className="text-sm text-gray-600">010-1234-5678</div>
-                        <div>
-                          <Badge variant="default" className="bg-green-100 text-green-800">활성</Badge>
-                        </div>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                  ) : !employeesData || employeesData.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-500">등록된 직원이 없습니다.</p>
+                      <p className="text-sm text-gray-400 mt-2">직원 추가 버튼을 클릭하여 새 직원을 등록하세요.</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-md border">
+                      <div className="grid grid-cols-6 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                        <div>{t('employees.employeeId')}</div>
+                        <div>{t('employees.name')}</div>
+                        <div>{t('employees.role')}</div>
+                        <div>{t('employees.phone')}</div>
+                        <div>{t('employees.status')}</div>
+                        <div className="text-center">{t('common.actions')}</div>
                       </div>
                       
-                      <div className="grid grid-cols-6 gap-4 p-4 items-center">
-                        <div className="font-mono text-sm">EMP002</div>
-                        <div className="font-medium">이서버</div>
-                        <div>
-                          <Badge variant="secondary">서버</Badge>
-                        </div>
-                        <div className="text-sm text-gray-600">010-2345-6789</div>
-                        <div>
-                          <Badge variant="default" className="bg-green-100 text-green-800">활성</Badge>
-                        </div>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-6 gap-4 p-4 items-center">
-                        <div className="font-mono text-sm">EMP003</div>
-                        <div className="font-medium">박주방</div>
-                        <div>
-                          <Badge variant="secondary">주방장</Badge>
-                        </div>
-                        <div className="text-sm text-gray-600">010-3456-7890</div>
-                        <div>
-                          <Badge variant="outline" className="text-gray-600">휴가</Badge>
-                        </div>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                      <div className="divide-y">
+                        {employeesData.map((employee: any) => (
+                          <div key={employee.id} className="grid grid-cols-6 gap-4 p-4 items-center">
+                            <div className="font-mono text-sm">{employee.employeeId}</div>
+                            <div className="font-medium">{employee.name}</div>
+                            <div>
+                              <Badge variant={employee.role === 'admin' ? 'destructive' : employee.role === 'manager' ? 'default' : 'secondary'}>
+                                {employee.role === 'admin' ? '관리자' : 
+                                 employee.role === 'manager' ? '매니저' : 
+                                 employee.role === 'cashier' ? '캐셔' : employee.role}
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-gray-600">{employee.phone || '-'}</div>
+                            <div>
+                              <Badge variant={employee.isActive ? "default" : "secondary"} className={employee.isActive ? "bg-green-100 text-green-800" : ""}>
+                                {employee.isActive ? "활성" : "비활성"}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center justify-center gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => {
+                                  setEditingEmployee(employee);
+                                  setShowEmployeeForm(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-500 hover:text-red-700"
+                                onClick={() => {
+                                  if (confirm(`정말로 ${employee.name} 직원을 삭제하시겠습니까?`)) {
+                                    fetch(`/api/employees/${employee.id}`, { method: 'DELETE' })
+                                      .then(() => {
+                                        queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+                                        toast({
+                                          title: '성공',
+                                          description: '직원이 삭제되었습니다.',
+                                        });
+                                      })
+                                      .catch(() => {
+                                        toast({
+                                          title: '오류',
+                                          description: '직원 삭제에 실패했습니다.',
+                                          variant: 'destructive',
+                                        });
+                                      });
+                                  }
+                                }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="flex justify-between items-center mt-6">
                     <div className="text-sm text-gray-600">
-                      총 3명의 직원이 등록되어 있습니다.
+                      총 {employeesData ? employeesData.length : 0}명의 직원이 등록되어 있습니다.
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm">
@@ -839,6 +861,17 @@ export default function Settings() {
       <MembershipModal
         isOpen={showMembershipModal}
         onClose={() => setShowMembershipModal(false)}
+      />
+
+      {/* Employee Form Modal */}
+      <EmployeeFormModal
+        isOpen={showEmployeeForm}
+        onClose={() => {
+          setShowEmployeeForm(false);
+          setEditingEmployee(null);
+        }}
+        mode={editingEmployee ? "edit" : "create"}
+        employee={editingEmployee}
       />
     </div>
   );
