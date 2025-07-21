@@ -27,9 +27,9 @@ import {
   Plus,
   Trash2,
   Edit,
-  Search,
   Clock,
-  UserCheck
+  UserCheck,
+  Search
 } from "lucide-react";
 import { EmployeeFormModal } from "@/components/employees/employee-form-modal";
 import { CustomerFormModal } from "@/components/customers/customer-form-modal";
@@ -61,19 +61,19 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("store");
   const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
-  
+
   // Product management state
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [productSearchTerm, setProductSearchTerm] = useState("");
-  
+
   // Customer management state
   const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
-  
+
   // Fetch store settings
   const { data: storeData, isLoading } = useQuery<StoreSettings>({
     queryKey: ['/api/store-settings'],
@@ -400,7 +400,7 @@ export default function Settings() {
       });
       return;
     }
-    
+
     if (confirm("정말로 이 카테고리를 삭제하시겠습니까?")) {
       deleteCategoryMutation.mutate(id);
     }
@@ -694,7 +694,7 @@ export default function Settings() {
                       <div>상태</div>
                       <div className="text-center">작업</div>
                     </div>
-                    
+
                     <div className="divide-y max-h-96 overflow-y-auto">
                       {filteredProductsForManagement.length > 0 ? (
                         filteredProductsForManagement.map((product) => {
@@ -834,554 +834,301 @@ export default function Settings() {
                                 size="sm"
                                 variant="ghost"
                                 onClick={() => handleDeleteCategory(category.id)}
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50>
                               >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          {category.description && (
-                            <p className="text-sm text-gray-600">{category.description}</p>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                                >
+                                  카테고리가 등록되어 있습니다.
+                                >
+                              >
+                            >
+                          >
+                        >
 
-                  <div className="flex justify-center mt-6">
-                    <div className="text-sm text-gray-600">
-                      총 {categories.length}개의 카테고리가 등록되어 있습니다.
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Employees Tab */}
-          <TabsContent value="employees">
-            <div className="space-y-6">
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-green-600" />
-                    {t('settings.employeeManagement')}
-                  </CardTitle>
-                  <CardDescription>{t('settings.employeeManagementDesc')}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-4">
-                      <Input
-                        placeholder="직원 검색..."
-                        className="w-64"
-                      />
-                      <Button variant="outline" size="sm">
-                        <Search className="w-4 h-4 mr-2" />
-                        검색
-                      </Button>
-                    </div>
-                    <Button 
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={() => setShowAddEmployeeModal(true)}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
+                      직원 관리
+                    
+                      직원 검색...
+                    
+                      검색
+                    
                       직원 추가
-                    </Button>
-                  </div>
-
-                  <div className="rounded-md border">
-                    <div className="grid grid-cols-6 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                      <div>직원 ID</div>
-                      <div>이름</div>
-                      <div>역할</div>
-                      <div>전화번호</div>
-                      <div>상태</div>
-                      <div className="text-center">작업</div>
-                    </div>
                     
-                    <div className="divide-y">
-                      {/* Employee rows will be populated here */}
-                      <div className="grid grid-cols-6 gap-4 p-4 items-center">
-                        <div className="font-mono text-sm">EMP001</div>
-                        <div className="font-medium">김직원</div>
-                        <div>
-                          <Badge variant="secondary">매니저</Badge>
-                        </div>
-                        <div className="text-sm text-gray-600">010-1234-5678</div>
-                        <div>
-                          <Badge variant="default" className="bg-green-100 text-green-800">활성</Badge>
-                        </div>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-6 gap-4 p-4 items-center">
-                        <div className="font-mono text-sm">EMP002</div>
-                        <div className="font-medium">이서버</div>
-                        <div>
-                          <Badge variant="secondary">서버</Badge>
-                        </div>
-                        <div className="text-sm text-gray-600">010-2345-6789</div>
-                        <div>
-                          <Badge variant="default" className="bg-green-100 text-green-800">활성</Badge>
-                        </div>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-6 gap-4 p-4 items-center">
-                        <div className="font-mono text-sm">EMP003</div>
-                        <div className="font-medium">박주방</div>
-                        <div>
-                          <Badge variant="secondary">주방장</Badge>
-                        </div>
-                        <div className="text-sm text-gray-600">010-3456-7890</div>
-                        <div>
-                          <Badge variant="outline" className="text-gray-600">휴가</Badge>
-                        </div>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="flex justify-between items-center mt-6">
-                    <div className="text-sm text-gray-600">
+                      직원 ID
+                      이름
+                      역할
+                      전화번호
+                      상태
+                      작업
+                    
+
+                      EMP001
+                      김직원
+                      매니저
+                      010-1234-5678
+                      활성
+                      
+                        
+                      
+                        
+                      
+
+                      EMP002
+                      이서버
+                      서버
+                      010-2345-6789
+                      활성
+                      
+                        
+                      
+                        
+                      
+
+                      EMP003
+                      박주방
+                      주방장
+                      010-3456-7890
+                      휴가
+                      
+                        
+                      
+                        
+                      
+
+                    
                       총 3명의 직원이 등록되어 있습니다.
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Users className="w-4 h-4 mr-2" />
-                        직원 관리로 이동
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Clock className="w-4 h-4 mr-2" />
-                        근태 관리
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Customers Tab */}
-          <TabsContent value="customers">
-            <div className="space-y-6">
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <UserCheck className="w-5 h-5 text-green-600" />
-                    고객 관리
-                  </CardTitle>
-                  <CardDescription>고객 정보를 등록하고 관리하세요</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-4">
-                      <Input
-                        placeholder="고객 검색..."
-                        className="w-64"
-                        value={customerSearchTerm}
-                        onChange={(e) => setCustomerSearchTerm(e.target.value)}
-                      />
-                      <Button variant="outline" size="sm">
-                        <Search className="w-4 h-4 mr-2" />
-                        검색
-                      </Button>
-                    </div>
-                    <Button 
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={() => setShowAddCustomerModal(true)}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      고객 등록
-                    </Button>
-                  </div>
-
-                  <div className="rounded-md border">
-                    <div className="grid grid-cols-7 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                      <div>고객 ID</div>
-                      <div>이름</div>
-                      <div>전화번호</div>
-                      <div>이메일</div>
-                      <div>등급</div>
-                      <div>총 주문 금액</div>
-                      <div className="text-center">작업</div>
-                    </div>
+                      
+                        
+                          직원 관리로 이동
+                        
+                        
+                          근태 관리
+                        
+                      
                     
-                    <div className="divide-y max-h-96 overflow-y-auto">
-                      {customers.length > 0 ? (
-                        customers.filter(customer => 
-                          customer.name?.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-                          customer.phone?.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-                          customer.email?.toLowerCase().includes(customerSearchTerm.toLowerCase())
-                        ).map((customer: any) => (
-                          <div key={customer.id} className="grid grid-cols-7 gap-4 p-4 items-center">
-                            <div className="font-mono text-sm">{customer.customerId || `CUS${customer.id.toString().padStart(3, '0')}`}</div>
-                            <div className="font-medium">{customer.name}</div>
-                            <div className="text-sm text-gray-600">{customer.phone}</div>
-                            <div className="text-sm text-gray-600">{customer.email || '-'}</div>
-                            <div>
-                              <Badge 
-                                variant={customer.grade === 'gold' ? 'default' : customer.grade === 'silver' ? 'secondary' : 'outline'}
-                                className={
-                                  customer.grade === 'gold' ? 'bg-amber-100 text-amber-800' :
-                                  customer.grade === 'silver' ? 'bg-gray-100 text-gray-800' :
-                                  customer.grade === 'vip' ? 'bg-purple-100 text-purple-800' :
-                                  'text-green-700 border-green-300'
-                                }
-                              >
-                                {customer.grade === 'gold' ? '골드' : 
+
+                  
+
+                  고객 관리
+                
+                  고객 정보를 등록하고 관리하세요
+                
+                  
+                    
+                      고객 검색...
+                      
+                        
+                          검색
+                        
+                      
+                      
+                        고객 등록
+                      
+                    
+
+                    
+                      고객 ID
+                      이름
+                      전화번호
+                      이메일
+                      등급
+                      총 주문 금액
+                      작업
+                    
+
+                    
+                      CUS${customer.id.toString().padStart(3, '0')}
+                      {customer.name}
+                      {customer.phone}
+                      {customer.email || '-'}
+                      {customer.grade === 'gold' ? '골드' : 
                                  customer.grade === 'silver' ? '실버' : 
                                  customer.grade === 'vip' ? 'VIP' : '브론즈'}
-                              </Badge>
-                            </div>
-                            <div className="font-medium">₩{(customer.totalSpent || 0).toLocaleString()}</div>
-                            <div className="flex items-center justify-center gap-2">
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => {
-                                  setEditingCustomer(customer);
-                                  setShowAddCustomerModal(true);
-                                }}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="text-red-500 hover:text-red-700"
-                                onClick={() => handleDeleteCustomer(customer.id)}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="text-center py-12">
-                          <UserCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <p className="text-gray-600">등록된 고객이 없습니다.</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                      ₩{(customer.totalSpent || 0).toLocaleString()}
+                      
+                        
+                        
+                      
+                        
+                        
+                      
 
-                  <div className="flex justify-between items-center mt-6">
-                    <div className="text-sm text-gray-600">
+                    
                       총 {customers.length}명의 고객이 등록되어 있습니다.
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <UserCheck className="w-4 h-4 mr-2" />
-                        고객 분석
-                      </Button>
-                      <Button variant="outline" size="sm">
-                        <Mail className="w-4 h-4 mr-2" />
-                        마케팅 메시지
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Payment Methods Tab */}
-          <TabsContent value="payments">
-            <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-green-600" />
-                  {t('settings.paymentMethods')}
-                </CardTitle>
-                <CardDescription>{t('settings.paymentMethodsDesc')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">{t('settings.availablePayments')}</h3>
-                    <Button 
-                      onClick={addPaymentMethod}
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      {t('settings.addPayment')}
-                    </Button>
-                  </div>
+                      
+                        
+                          고객 분석
+                        
+                        
+                          마케팅 메시지
+                        
+                      
+                    
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {paymentMethods.map((method) => (
-                      <div
-                        key={method.id}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          method.enabled
-                            ? 'border-green-200 bg-green-50'
-                            : 'border-gray-200 bg-gray-50'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-2xl">{method.icon}</span>
-                            <span className="font-medium">
-                              {method.nameKey ? t(`settings.payments.${method.nameKey}`) : method.name}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={method.enabled}
-                              onCheckedChange={() => togglePaymentMethod(method.id)}
-                            />
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removePaymentMethod(method.id)}
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        <Badge variant={method.enabled ? "default" : "secondary"}>
-                          {method.enabled ? t('settings.enabled') : t('settings.disabled')}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
 
-                  <div className="flex justify-end mt-6">
-                    <Button className="bg-green-600 hover:bg-green-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      {t('common.save')}
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+                
 
-      {/* Employee Add Modal */}
-      <EmployeeFormModal
-        isOpen={showAddEmployeeModal}
-        onClose={() => setShowAddEmployeeModal(false)}
-        mode="create"
-      />
+                지불 방법
+              
+                사용 가능한 지불
+                
+                  지불 방법 추가
+                
 
-      {/* Product Add/Edit Modal */}
-      <Dialog open={showAddProductModal} onOpenChange={setShowAddProductModal}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingProduct ? '상품 수정' : '새 상품 추가'}</DialogTitle>
-          </DialogHeader>
+                
+                  
+                    
+                      {method.icon}
+                      {method.nameKey ? t(`settings.payments.${method.nameKey}`) : method.name}
+                      
+                        
+                        
+                        
+                          
+                        
+                      
+                    
+
+                      {method.enabled ? t('settings.enabled') : t('settings.disabled')}
+                    
+                  
+                
+
+                
+                  
+                    {t('common.save')}
+                  
+                
+              
+
+            
+              모달
+            
+
+            
+              상품 수정
+            
+
+            
+
+              
+                상품명
+                
+                  
+                    
+                  
+                
+              
+
+              
+                SKU
+                
+                  
+                    
+                  
+                
+              
+
+            
+
+              
+                가격
+                
+                  
+                    
+                    
+                  
+                
+              
+
+              
+                재고
+                
+                  
+                    
+                    
+                  
+                
+              
+
+              
+                카테고리
+                
+                  
+                    
+                      선택
+                    
+                  
+                  
+                    {category.name}
+                  
+                
+              
+
+            
+
+              
+                이미지 URL (선택사항)
+                
+                  
+                    
+                  
+                
+              
+
+            
+
+              
+                취소
+                
+                  수정
+                
+              
+
+            
+
           
-          <Form {...productForm}>
-            <form onSubmit={productForm.handleSubmit(onProductSubmit)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={productForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>상품명</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="상품명 입력" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={productForm.control}
-                  name="sku"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>SKU</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="SKU 입력" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <FormField
-                  control={productForm.control}
-                  name="price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>가격</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="number" step="0.01" placeholder="0" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={productForm.control}
-                  name="stock"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>재고</FormLabel>
-                      <FormControl>
-                        <Input 
-                          {...field} 
-                          type="number" 
-                          placeholder="0"
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={productForm.control}
-                  name="categoryId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>카테고리</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value.toString()}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="선택" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map((category) => (
-                            <SelectItem key={category.id} value={category.id.toString()}>
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={productForm.control}
-                name="imageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>이미지 URL (선택사항)</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="https://..." />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={resetProductForm}>
-                  취소
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createProductMutation.isPending || updateProductMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {editingProduct ? '수정' : '추가'}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+        
 
-      {/* Category Add/Edit Modal */}
-      <Dialog open={showAddCategoryModal} onOpenChange={setShowAddCategoryModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editingCategory ? '카테고리 수정' : '새 카테고리 추가'}</DialogTitle>
-          </DialogHeader>
+        
+          모달
+        
+
+        
+          카테고리 수정
+        
+
+        
+
           
-          <Form {...categoryForm}>
-            <form onSubmit={categoryForm.handleSubmit(onCategorySubmit)} className="space-y-4">
-              <FormField
-                control={categoryForm.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>카테고리명</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="카테고리명 입력" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            카테고리명
+            
               
-              <FormField
-                control={categoryForm.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>설명 (선택사항)</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} placeholder="카테고리 설명" rows={3} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                
               
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button type="button" variant="outline" onClick={resetCategoryForm}>
-                  취소
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {editingCategory ? '수정' : '추가'}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
+            
+          
 
-      {/* Customer Add/Edit Modal */}
-      <CustomerFormModal
-        isOpen={showAddCustomerModal}
-        onClose={resetCustomerForm}
-        customer={editingCustomer}
-        mode={editingCustomer ? "edit" : "create"}
-      />
-    </div>
-  );
-}
+          
+            설명 (선택사항)
+            
+              
+                
+              
+            
+          
+
+          
+
+            취소
+            
+              수정
+            
+          
+
+        
+
+      
+
+      
+        모달

@@ -642,7 +642,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/customers", async (req, res) => {
     try {
-      const validatedData = insertSupplierSchema.parse(req.body);
+      const { insertCustomerSchema } = await import("@shared/schema");
+      const validatedData = insertCustomerSchema.parse(req.body);
       const customer = await storage.createCustomer(validatedData);
       res.status(201).json(customer);
     } catch (error) {
@@ -655,8 +656,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/customers/:id", async (req, res) => {
     try {
+      const { insertCustomerSchema } = await import("@shared/schema");
       const id = parseInt(req.params.id);
-      const validatedData = insertSupplierSchema.partial().parse(req.body);
+      const validatedData = insertCustomerSchema.partial().parse(req.body);
       const customer = await storage.updateCustomer(id, validatedData);
 
       if (!customer) {
