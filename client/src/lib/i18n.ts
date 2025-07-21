@@ -115,7 +115,13 @@ export const translations = {
       backToPOS: 'POS로 돌아가기',
       tableStatus: '테이블 현황',
       orderManagement: '주문 관리',
-      tableSettings: '테이블 설정'
+      tableSettings: '테이블 설정',
+      people: '명',
+      available: '사용 가능',
+      occupied: '사용 중',
+      reserved: '예약됨',
+      outOfService: '사용 불가',
+      cleanupComplete: '정리완료'
     }
   },
   
@@ -215,7 +221,13 @@ export const translations = {
       backToPOS: 'Back to POS',
       tableStatus: 'Table Status',
       orderManagement: 'Order Management',
-      tableSettings: 'Table Settings'
+      tableSettings: 'Table Settings',
+      people: 'people',
+      available: 'Available',
+      occupied: 'Occupied',
+      reserved: 'Reserved',
+      outOfService: 'Out of Service',
+      cleanupComplete: 'Cleanup Complete'
     }
   },
   
@@ -315,7 +327,13 @@ export const translations = {
       backToPOS: 'Quay lại POS',
       tableStatus: 'Tình trạng bàn',
       orderManagement: 'Quản lý đơn hàng',
-      tableSettings: 'Cài đặt bàn'
+      tableSettings: 'Cài đặt bàn',
+      people: 'người',
+      available: 'Có sẵn',
+      occupied: 'Đang sử dụng',
+      reserved: 'Đã đặt',
+      outOfService: 'Ngưng hoạt động',
+      cleanupComplete: 'Dọn dẹp xong'
     }
   }
 };

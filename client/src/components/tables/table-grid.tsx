@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { OrderDialog } from "@/components/orders/order-dialog";
 import { Users, Clock, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import type { Table, Order } from "@shared/schema";
 
@@ -19,6 +20,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [orderDialogOpen, setOrderDialogOpen] = useState(false);
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: tables, isLoading } = useQuery({
@@ -38,14 +40,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
       toast({
-        title: "테이블 상태 변경",
-        description: "테이블 상태가 성공적으로 변경되었습니다.",
+        title: t('tables.title'),
+        description: t('common.success'),
       });
     },
     onError: () => {
       toast({
-        title: "오류",
-        description: "테이블 상태 변경에 실패했습니다.",
+        title: t('common.error'),
+        description: t('common.error'),
         variant: "destructive",
       });
     },
@@ -53,10 +55,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const getTableStatus = (status: string) => {
     const statusConfig = {
-      available: { label: "이용 가능", variant: "default" as const, color: "bg-green-500" },
-      occupied: { label: "사용 중", variant: "destructive" as const, color: "bg-red-500" },
-      reserved: { label: "예약됨", variant: "secondary" as const, color: "bg-yellow-500" },
-      maintenance: { label: "정비 중", variant: "outline" as const, color: "bg-gray-500" },
+      available: { label: t('tables.available'), variant: "default" as const, color: "bg-green-500" },
+      occupied: { label: t('tables.occupied'), variant: "destructive" as const, color: "bg-red-500" },
+      reserved: { label: t('tables.reserved'), variant: "secondary" as const, color: "bg-yellow-500" },
+      maintenance: { label: t('tables.outOfService'), variant: "outline" as const, color: "bg-gray-500" },
     };
     
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.available;
@@ -126,7 +128,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   <div className="space-y-1">
                     <div className="flex items-center justify-center text-sm text-gray-600">
                       <Users className="w-3 h-3 mr-1" />
-                      {table.capacity}명
+                      {table.capacity}{t('tables.people')}
                     </div>
                     <Badge variant={statusConfig.variant} className="text-xs">
                       {statusConfig.label}
@@ -161,7 +163,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       }}
                     >
                       <CheckCircle2 className="w-3 h-3 mr-1" />
-                      정리완료
+                      {t('tables.cleanupComplete')}
                     </Button>
                   )}
                 </div>
