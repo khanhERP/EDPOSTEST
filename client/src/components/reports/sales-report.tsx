@@ -24,6 +24,13 @@ export function SalesReport() {
 
   const getSalesData = () => {
     if (!transactions || !Array.isArray(transactions)) return null;
+    
+    console.log('Sales Report Debug:', {
+      totalTransactions: transactions.length,
+      startDate,
+      endDate,
+      firstTransaction: transactions[0]
+    });
 
     const filteredTransactions = transactions.filter((transaction: any) => {
       const transactionDate = new Date(transaction.createdAt || transaction.created_at);
@@ -33,6 +40,8 @@ export function SalesReport() {
       
       return transactionDate >= start && transactionDate <= end;
     });
+    
+    console.log('Filtered Transactions:', filteredTransactions.length);
 
     // Daily sales breakdown
     const dailySales: { [date: string]: { revenue: number; orders: number; customers: number } } = {};

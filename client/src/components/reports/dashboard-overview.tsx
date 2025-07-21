@@ -22,12 +22,21 @@ export function DashboardOverview() {
 
   const getDashboardStats = () => {
     if (!transactions || !tables || !Array.isArray(transactions) || !Array.isArray(tables)) return null;
+    
+    console.log('Dashboard Debug:', {
+      totalTransactions: transactions.length,
+      selectedDate,
+      firstTransaction: transactions[0],
+      allTransactionDates: transactions.map((t: any) => new Date(t.createdAt).toDateString())
+    });
 
     const today = new Date(selectedDate);
     const todayTransactions = transactions.filter((transaction: any) => {
       const transactionDate = new Date(transaction.createdAt || transaction.created_at);
       return transactionDate.toDateString() === today.toDateString();
     });
+    
+    console.log('Today Transactions:', todayTransactions.length);
 
     // Today's stats
     const todayRevenue = todayTransactions.reduce((total: number, transaction: any) => 
