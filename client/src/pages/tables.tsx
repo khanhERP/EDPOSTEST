@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Utensils, Settings, ClipboardList } from "lucide-react";
 import { Link } from "wouter";
+import { useTranslation } from "@/lib/i18n";
 
 export default function TablesPage() {
   const [selectedTableId, setSelectedTableId] = useState<number | null>(null);
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-green-50 grocery-bg">
@@ -25,13 +27,13 @@ export default function TablesPage() {
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">테이블 관리</h1>
-              <p className="mt-2 text-gray-600">매장 테이블과 주문을 관리합니다.</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t('tables.title')}</h1>
+              <p className="mt-2 text-gray-600">{t('tables.description')}</p>
             </div>
             <div className="flex gap-4">
               <Link href="/">
                 <Button variant="outline">
-                  POS로 돌아가기
+                  {t('tables.backToPOS')}
                 </Button>
               </Link>
             </div>
@@ -41,15 +43,15 @@ export default function TablesPage() {
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="tables" className="flex items-center gap-2">
                 <Utensils className="w-4 h-4" />
-                테이블 현황
+                {t('tables.tableStatus')}
               </TabsTrigger>
               <TabsTrigger value="orders" className="flex items-center gap-2">
                 <ClipboardList className="w-4 h-4" />
-                주문 관리
+                {t('tables.orderManagement')}
               </TabsTrigger>
               <TabsTrigger value="management" className="flex items-center gap-2">
                 <Settings className="w-4 h-4" />
-                테이블 설정
+                {t('tables.tableSettings')}
               </TabsTrigger>
             </TabsList>
 

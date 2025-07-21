@@ -106,6 +106,16 @@ export const translations = {
       currentlyOutOfStock: '현재 품절입니다',
       inStock: '재고',
       addItemsToCart: '상품을 장바구니에 추가하세요'
+    },
+    
+    // 테이블 관리
+    tables: {
+      title: '테이블 관리',
+      description: '매장 테이블과 주문을 관리합니다.',
+      backToPOS: 'POS로 돌아가기',
+      tableStatus: '테이블 현황',
+      orderManagement: '주문 관리',
+      tableSettings: '테이블 설정'
     }
   },
   
@@ -196,6 +206,16 @@ export const translations = {
       currentlyOutOfStock: 'is currently out of stock',
       inStock: 'in stock',
       addItemsToCart: 'Add items to cart'
+    },
+    
+    // Table Management
+    tables: {
+      title: 'Table Management',
+      description: 'Manage restaurant tables and orders.',
+      backToPOS: 'Back to POS',
+      tableStatus: 'Table Status',
+      orderManagement: 'Order Management',
+      tableSettings: 'Table Settings'
     }
   },
   
@@ -235,7 +255,8 @@ export const translations = {
       info: 'Thông tin',
       restaurant: 'Nhà hàng chính',
       logout: 'Đăng xuất',
-      items: 'mặt hàng'
+      items: 'mặt hàng',
+      collapse: 'Thu gọn'
     },
     
     // Điều hướng
@@ -274,7 +295,27 @@ export const translations = {
       stock: 'Tồn kho',
       imageUrl: 'URL hình ảnh',
       isActive: 'Trạng thái hoạt động',
-      addProductsToStart: 'Thêm sản phẩm để bắt đầu'
+      addProductsToStart: 'Thêm sản phẩm để bắt đầu',
+      searchProducts: 'Tìm kiếm sản phẩm...',
+      scanBarcode: 'Quét mã vạch',
+      categories: 'Danh mục',
+      allProducts: 'Tất cả sản phẩm',
+      productScanned: 'Đã quét sản phẩm',
+      scanFailed: 'Quét thất bại',
+      productNotFound: 'Không tìm thấy sản phẩm',
+      currentlyOutOfStock: 'hiện đang hết hàng',
+      inStock: 'còn hàng',
+      addItemsToCart: 'Thêm sản phẩm vào giỏ hàng'
+    },
+    
+    // Quản lý bàn
+    tables: {
+      title: 'Quản lý bàn',
+      description: 'Quản lý bàn và đơn hàng trong nhà hàng.',
+      backToPOS: 'Quay lại POS',
+      tableStatus: 'Tình trạng bàn',
+      orderManagement: 'Quản lý đơn hàng',
+      tableSettings: 'Cài đặt bàn'
     }
   }
 };
