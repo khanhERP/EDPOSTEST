@@ -115,7 +115,7 @@ export default function InventoryPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">{t('common.total')} {t('common.products')}</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">{t('inventory.totalProducts')}</CardTitle>
                 <Package className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
@@ -145,7 +145,7 @@ export default function InventoryPage() {
 
             <Card className="border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">{t('common.total')} {t('inventory.stockValue')}</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">{t('inventory.totalValue')}</CardTitle>
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
