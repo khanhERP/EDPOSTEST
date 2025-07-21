@@ -31,6 +31,27 @@ import {
   Clock
 } from "lucide-react";
 import { EmployeeFormModal } from "@/components/employees/employee-form-modal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import type { Product, Category } from "@shared/schema";
+
+// Form schemas
+const productFormSchema = z.object({
+  name: z.string().min(1, "상품명은 필수입니다"),
+  sku: z.string().min(1, "SKU는 필수입니다"),
+  price: z.string().min(1, "가격은 필수입니다"),
+  stock: z.number().min(0, "재고는 0 이상이어야 합니다"),
+  categoryId: z.number().min(1, "카테고리를 선택해주세요"),
+  imageUrl: z.string().optional(),
+});
+
+const categoryFormSchema = z.object({
+  name: z.string().min(1, "카테고리명은 필수입니다"),
+  description: z.string().optional(),
+});
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -39,9 +60,25 @@ export default function Settings() {
   const [activeTab, setActiveTab] = useState("store");
   const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
   
+  // Product management state
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [productSearchTerm, setProductSearchTerm] = useState("");
+  
   // Fetch store settings
   const { data: storeData, isLoading } = useQuery<StoreSettings>({
     queryKey: ['/api/store-settings'],
+  });
+
+  // Fetch products and categories
+  const { data: products = [] } = useQuery<Product[]>({
+    queryKey: ['/api/products'],
+  });
+
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ['/api/categories'],
   });
 
   // Store settings state
@@ -142,6 +179,247 @@ export default function Settings() {
 
   const removePaymentMethod = (id: number) => {
     setPaymentMethods(prev => prev.filter(method => method.id !== id));
+  };
+
+  // Product management functions
+  const filteredProductsForManagement = products.filter(product => 
+    product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+    product.sku.toLowerCase().includes(productSearchTerm.toLowerCase())
+  );
+
+  // Product form
+  const productForm = useForm<z.infer<typeof productFormSchema>>({
+    resolver: zodResolver(productFormSchema),
+    defaultValues: {
+      name: "",
+      sku: "",
+      price: "",
+      stock: 0,
+      categoryId: 0,
+      imageUrl: "",
+    },
+  });
+
+  // Category form
+  const categoryForm = useForm<z.infer<typeof categoryFormSchema>>({
+    resolver: zodResolver(categoryFormSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+    },
+  });
+
+  // Product mutations
+  const createProductMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof productFormSchema>) => {
+      const response = await apiRequest("POST", "/api/products", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      setShowAddProductModal(false);
+      setEditingProduct(null);
+      productForm.reset();
+      toast({
+        title: '성공',
+        description: '상품이 성공적으로 등록되었습니다.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: '오류',
+        description: '상품 등록에 실패했습니다.',
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: z.infer<typeof productFormSchema> }) => {
+      const response = await apiRequest("PUT", `/api/products/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      setShowAddProductModal(false);
+      setEditingProduct(null);
+      productForm.reset();
+      toast({
+        title: '성공',
+        description: '상품이 성공적으로 수정되었습니다.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: '오류',
+        description: '상품 수정에 실패했습니다.',
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("DELETE", `/api/products/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      toast({
+        title: '성공',
+        description: '상품이 성공적으로 삭제되었습니다.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: '오류',
+        description: '상품 삭제에 실패했습니다.',
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Category mutations
+  const createCategoryMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof categoryFormSchema>) => {
+      const response = await apiRequest("POST", "/api/categories", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      setShowAddCategoryModal(false);
+      setEditingCategory(null);
+      categoryForm.reset();
+      toast({
+        title: '성공',
+        description: '카테고리가 성공적으로 등록되었습니다.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: '오류',
+        description: '카테고리 등록에 실패했습니다.',
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: z.infer<typeof categoryFormSchema> }) => {
+      const response = await apiRequest("PUT", `/api/categories/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      setShowAddCategoryModal(false);
+      setEditingCategory(null);
+      categoryForm.reset();
+      toast({
+        title: '성공',
+        description: '카테고리가 성공적으로 수정되었습니다.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: '오류',
+        description: '카테고리 수정에 실패했습니다.',
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("DELETE", `/api/categories/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      toast({
+        title: '성공',
+        description: '카테고리가 성공적으로 삭제되었습니다.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: '오류',
+        description: '카테고리 삭제에 실패했습니다.',
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Event handlers
+  const handleEditProduct = (product: Product) => {
+    setEditingProduct(product);
+    productForm.reset({
+      name: product.name,
+      sku: product.sku,
+      price: product.price,
+      stock: product.stock,
+      categoryId: product.categoryId,
+      imageUrl: product.imageUrl || "",
+    });
+    setShowAddProductModal(true);
+  };
+
+  const handleDeleteProduct = (id: number) => {
+    if (confirm("정말로 이 상품을 삭제하시겠습니까?")) {
+      deleteProductMutation.mutate(id);
+    }
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    categoryForm.reset({
+      name: category.name,
+      description: category.description || "",
+    });
+    setShowAddCategoryModal(true);
+  };
+
+  const handleDeleteCategory = (id: number) => {
+    const productCount = products.filter(p => p.categoryId === id).length;
+    if (productCount > 0) {
+      toast({
+        title: '삭제 불가',
+        description: '이 카테고리에 속한 상품이 있어 삭제할 수 없습니다.',
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (confirm("정말로 이 카테고리를 삭제하시겠습니까?")) {
+      deleteCategoryMutation.mutate(id);
+    }
+  };
+
+  const onProductSubmit = (data: z.infer<typeof productFormSchema>) => {
+    if (editingProduct) {
+      updateProductMutation.mutate({ id: editingProduct.id, data });
+    } else {
+      createProductMutation.mutate(data);
+    }
+  };
+
+  const onCategorySubmit = (data: z.infer<typeof categoryFormSchema>) => {
+    if (editingCategory) {
+      updateCategoryMutation.mutate({ id: editingCategory.id, data });
+    } else {
+      createCategoryMutation.mutate(data);
+    }
+  };
+
+  const resetProductForm = () => {
+    setShowAddProductModal(false);
+    setEditingProduct(null);
+    productForm.reset();
+  };
+
+  const resetCategoryForm = () => {
+    setShowAddCategoryModal(false);
+    setEditingCategory(null);
+    categoryForm.reset();
   };
 
   return (
@@ -331,27 +609,212 @@ export default function Settings() {
 
           {/* Categories Tab */}
           <TabsContent value="categories">
-            <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-green-600" />
-                  {t('settings.categoryManagement')}
-                </CardTitle>
-                <CardDescription>{t('settings.categoryManagementDesc')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Package className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-500 mb-4">{t('settings.categoriesRedirect')}</p>
-                  <Button 
-                    onClick={() => window.location.href = '/inventory'}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {t('settings.goToInventory')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              {/* Product Management Card */}
+              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="w-5 h-5 text-green-600" />
+                    품목 관리
+                  </CardTitle>
+                  <CardDescription>상품을 추가, 편집, 삭제할 수 있습니다.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center gap-4">
+                      <Input
+                        placeholder="상품 검색..."
+                        className="w-64"
+                        value={productSearchTerm}
+                        onChange={(e) => setProductSearchTerm(e.target.value)}
+                      />
+                      <Button variant="outline" size="sm">
+                        <Search className="w-4 h-4 mr-2" />
+                        검색
+                      </Button>
+                    </div>
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => setShowAddProductModal(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      상품 추가
+                    </Button>
+                  </div>
+
+                  <div className="rounded-md border">
+                    <div className="grid grid-cols-8 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                      <div>이미지</div>
+                      <div>상품명</div>
+                      <div>SKU</div>
+                      <div>카테고리</div>
+                      <div>가격</div>
+                      <div>재고</div>
+                      <div>상태</div>
+                      <div className="text-center">작업</div>
+                    </div>
+                    
+                    <div className="divide-y max-h-96 overflow-y-auto">
+                      {filteredProductsForManagement.length > 0 ? (
+                        filteredProductsForManagement.map((product) => {
+                          const category = categories.find(c => c.id === product.categoryId);
+                          return (
+                            <div key={product.id} className="grid grid-cols-8 gap-4 p-4 items-center">
+                              <div>
+                                {product.imageUrl ? (
+                                  <img 
+                                    src={product.imageUrl} 
+                                    alt={product.name}
+                                    className="w-10 h-10 object-cover rounded"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
+                                    <Package className="w-5 h-5 text-gray-400" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="font-medium">{product.name}</div>
+                              <div className="font-mono text-sm text-gray-600">{product.sku}</div>
+                              <div>
+                                <Badge variant="outline" className="text-green-700 border-green-300">
+                                  {category?.name || '미분류'}
+                                </Badge>
+                              </div>
+                              <div className="font-medium">₩{parseFloat(product.price).toLocaleString()}</div>
+                              <div>
+                                <span className={`px-2 py-1 text-xs rounded-full ${
+                                  product.stock > 10 ? "bg-green-100 text-green-800" :
+                                  product.stock > 5 ? "bg-yellow-100 text-yellow-800" :
+                                  product.stock > 0 ? "bg-red-100 text-red-800" :
+                                  "bg-gray-100 text-gray-800"
+                                }`}>
+                                  {product.stock}
+                                </span>
+                              </div>
+                              <div>
+                                <Badge variant={product.stock > 0 ? "default" : "secondary"} 
+                                       className={product.stock > 0 ? "bg-green-100 text-green-800" : ""}>
+                                  {product.stock > 0 ? '판매 중' : '품절'}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center justify-center gap-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleEditProduct(product)}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-red-500 hover:text-red-700"
+                                  onClick={() => handleDeleteProduct(product.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-12">
+                          <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-600">등록된 상품이 없습니다.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center mt-6">
+                    <div className="text-sm text-gray-600">
+                      총 {filteredProductsForManagement.length}개의 상품이 등록되어 있습니다.
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => window.location.href = '/inventory'}
+                      >
+                        <Package className="w-4 h-4 mr-2" />
+                        재고 관리로 이동
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Category Management Card */}
+              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="w-5 h-5 text-green-600" />
+                    카테고리 관리
+                  </CardTitle>
+                  <CardDescription>상품 카테고리를 관리합니다.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="text-sm text-gray-600">
+                      상품을 효율적으로 분류하기 위한 카테고리를 관리하세요.
+                    </div>
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => setShowAddCategoryModal(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      카테고리 추가
+                    </Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {categories.map((category) => {
+                      const productCount = products.filter(p => p.categoryId === category.id).length;
+                      return (
+                        <div
+                          key={category.id}
+                          className="p-4 rounded-lg border-2 border-green-200 bg-green-50 hover:bg-green-100 transition-colors"
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <h3 className="font-medium text-gray-900">{category.name}</h3>
+                              <p className="text-sm text-gray-600">{productCount}개 상품</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEditCategory(category)}
+                                className="text-green-600 hover:text-green-700 hover:bg-green-100"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteCategory(category.id)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          {category.description && (
+                            <p className="text-sm text-gray-600">{category.description}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex justify-center mt-6">
+                    <div className="text-sm text-gray-600">
+                      총 {categories.length}개의 카테고리가 등록되어 있습니다.
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Employees Tab */}
@@ -562,6 +1025,190 @@ export default function Settings() {
         onClose={() => setShowAddEmployeeModal(false)}
         mode="create"
       />
+
+      {/* Product Add/Edit Modal */}
+      <Dialog open={showAddProductModal} onOpenChange={setShowAddProductModal}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingProduct ? '상품 수정' : '새 상품 추가'}</DialogTitle>
+          </DialogHeader>
+          
+          <Form {...productForm}>
+            <form onSubmit={productForm.handleSubmit(onProductSubmit)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={productForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>상품명</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="상품명 입력" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={productForm.control}
+                  name="sku"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SKU</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="SKU 입력" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <FormField
+                  control={productForm.control}
+                  name="price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>가격</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" step="0.01" placeholder="0" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={productForm.control}
+                  name="stock"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>재고</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="number" 
+                          placeholder="0"
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={productForm.control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>카테고리</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="선택" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id.toString()}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={productForm.control}
+                name="imageUrl"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>이미지 URL (선택사항)</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="https://..." />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button type="button" variant="outline" onClick={resetProductForm}>
+                  취소
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={createProductMutation.isPending || updateProductMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {editingProduct ? '수정' : '추가'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Add/Edit Modal */}
+      <Dialog open={showAddCategoryModal} onOpenChange={setShowAddCategoryModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingCategory ? '카테고리 수정' : '새 카테고리 추가'}</DialogTitle>
+          </DialogHeader>
+          
+          <Form {...categoryForm}>
+            <form onSubmit={categoryForm.handleSubmit(onCategorySubmit)} className="space-y-4">
+              <FormField
+                control={categoryForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>카테고리명</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="카테고리명 입력" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={categoryForm.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>설명 (선택사항)</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} placeholder="카테고리 설명" rows={3} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="flex justify-end space-x-2 pt-4">
+                <Button type="button" variant="outline" onClick={resetCategoryForm}>
+                  취소
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={createCategoryMutation.isPending || updateCategoryMutation.isPending}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {editingCategory ? '수정' : '추가'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
