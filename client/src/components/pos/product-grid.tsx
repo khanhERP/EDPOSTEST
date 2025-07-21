@@ -1,9 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
-import { Grid3X3, List, ArrowUpDown } from "lucide-react";
+import { Grid3X3, List, ArrowUpDown, Package, Coffee, Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import type { Product } from "@shared/schema";
+// Import placeholders as data URLs since SVG imports are causing issues
+const placeholderFood = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmM2Y0ZjYiLz4KICA8Y2lyY2xlIGN4PSIxMDAiIGN5PSI5MCIgcj0iMzAiIGZpbGw9IiMxMGI5ODEiIG9wYWNpdHk9IjAuMiIvPgogIDxyZWN0IHg9IjcwIiB5PSI3MCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzEwYjk4MSIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iODUiIGN5PSI4NSIgcj0iNSIgZmlsbD0iIzEwYjk4MSIvPgogIDxjaXJjbGUgY3g9IjEwMCIgY3k9Ijg1IiByPSI1IiBmaWxsPSIjMTBiOTgxIi8+CiAgPGNpcmNsZSBjeD0iMTE1IiBjeT0iODUiIHI9IjUiIGZpbGw9IiMxMGI5ODEiLz4KICA8cmVjdCB4PSI4MCIgeT0iMTIwIiB3aWR0aD0iNDAiIGhlaWdodD0iMjAiIHJ4PSIxMCIgZmlsbD0iIzEwYjk4MSIgb3BhY2l0eT0iMC40Ii8+CiAgPHRleHQgeD0iMTAwIiB5PSIxNjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2YjcyODAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiI+7J2M7Iud7IqI7KK4PC90ZXh0Pgo8L3N2Zz4=";
+const placeholderBeverage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmM2Y0ZjYiLz4KICA8cmVjdCB4PSI4MCIgeT0iNTAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI4MCIgcng9IjUiIGZpbGw9IiMzYjgyZjYiIG9wYWNpdHk9IjAuMiIvPgogIDxyZWN0IHg9IjgyIiB5PSI1NSIgd2lkdGg9IjM2IiBoZWlnaHQ9IjUwIiBmaWxsPSIjM2I4MmY2IiBvcGFjaXR5PSIwLjQiLz4KICA8Y2lyY2xlIGN4PSIxMDAiIHk9IjQwIiByPSI4IiBmaWxsPSIjM2I4MmY2IiBvcGFjaXR5PSIwLjMiLz4KICA8cmVjdCB4PSI5NiIgeT0iMzAiIHdpZHRoPSI4IiBoZWlnaHQ9IjE1IiBmaWxsPSIjM2I4MmY2IiBvcGFjaXR5PSIwLjUiLz4KICA8dGV4dCB4PSIxMDAiIHk9IjE2MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzZiNzI4MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIj7smYzro4zsnbTrr7w8L3RleHQ+Cjwvc3ZnPg==";
+const placeholderSnack = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmM2Y0ZjYiLz4KICA8cmVjdCB4PSI2MCIgeT0iNzAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI1MCIgcng9IjEwIiBmaWxsPSIjZjU5ZTBiIiBvcGFjaXR5PSIwLjIiLz4KICA8cmVjdCB4PSI2NSIgeT0iNzUiIHdpZHRoPSI3MCIgaGVpZ2h0PSIxNSIgcng9IjMiIGZpbGw9IiNmNTllMGIiIG9wYWNpdHk9IjAuNCIvPgogIDxyZWN0IHg9IjY1IiB5PSI5NSIgd2lkdGg9IjcwIiBoZWlnaHQ9IjE1IiByeD0iMyIgZmlsbD0iI2Y1OWUwYiIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iNzUiIGN5PSI4MyIgcj0iMyIgZmlsbD0iI2Y1OWUwYiIvPgogIDxjaXJjbGUgY3g9IjkwIiBjeT0iODMiIHI9IjMiIGZpbGw9IiNmNTllMGIiLz4KICA8Y2lyY2xlIGN4PSIxMDUiIGN5PSI4MyIgcj0iMyIgZmlsbD0iI2Y1OWUwYiIvPgogIDxjaXJjbGUgY3g9IjEyMCIgY3k9IjgzIiByPSIzIiBmaWxsPSIjZjU5ZTBiIi8+CiAgPHRleHQgeD0iMTAwIiB5PSIxNjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2YjcyODAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiI+7Iqk64WN7J207Ja47KeAPC90ZXh0Pgo8L3N2Zz4=";
 
 interface ProductGridProps {
   selectedCategory: number | "all";
@@ -47,6 +51,31 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
       title: t('pos.addedToCart'),
       description: `${product.name} ${t('pos.addedToCart')}`,
     });
+  };
+
+  const getPlaceholderImage = (categoryId: number, productName: string) => {
+    // Determine the best placeholder based on category and product name
+    const name = productName.toLowerCase();
+    
+    if (categoryId === 1 || name.includes('coffee') || name.includes('tea') || name.includes('juice') || name.includes('drink') || name.includes('beverage')) {
+      return placeholderBeverage;
+    } else if (categoryId === 2 || name.includes('chip') || name.includes('snack') || name.includes('cookie')) {
+      return placeholderSnack;
+    } else {
+      return placeholderFood;
+    }
+  };
+
+  const getPlaceholderIcon = (categoryId: number, productName: string) => {
+    const name = productName.toLowerCase();
+    
+    if (categoryId === 1 || name.includes('coffee') || name.includes('tea') || name.includes('juice') || name.includes('drink') || name.includes('beverage')) {
+      return Coffee;
+    } else if (categoryId === 2 || name.includes('chip') || name.includes('snack') || name.includes('cookie')) {
+      return Cookie;
+    } else {
+      return Package;
+    }
   };
 
   const getStockStatus = (stock: number) => {
@@ -156,10 +185,30 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                       src={product.imageUrl} 
                       alt={product.name}
                       className="w-full h-32 object-cover"
+                      onError={(e) => {
+                        // If image fails to load, show placeholder
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const placeholder = target.nextElementSibling as HTMLElement;
+                        if (placeholder) placeholder.style.display = 'flex';
+                      }}
                     />
+                  ) : null}
+                  {!product.imageUrl ? (
+                    <div className="w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center">
+                      <img 
+                        src={getPlaceholderImage(product.categoryId, product.name)} 
+                        alt={`${product.name} placeholder`}
+                        className="w-20 h-20 opacity-60"
+                      />
+                    </div>
                   ) : (
-                    <div className="w-full h-32 bg-gray-200 flex items-center justify-center">
-                      <Grid3X3 className="text-gray-400" size={24} />
+                    <div className="w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 hidden flex-col items-center justify-center">
+                      <img 
+                        src={getPlaceholderImage(product.categoryId, product.name)} 
+                        alt={`${product.name} placeholder`}
+                        className="w-20 h-20 opacity-60"
+                      />
                     </div>
                   )}
                   
