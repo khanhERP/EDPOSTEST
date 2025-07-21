@@ -307,7 +307,8 @@ export const translations = {
       orderCompleted: '주문 완료',
       orderCompletedDesc: '주문이 성공적으로 접수되었습니다.',
       orderFailed: '주문 실패',
-      orderFailedDesc: '주문 접수에 실패했습니다.'
+      orderFailedDesc: '주문 접수에 실패했습니다.',
+      cleanupComplete: '정리 완료'
     }
   },
 
@@ -599,7 +600,8 @@ export const translations = {
       orderCompleted: 'Order Completed',
       orderCompletedDesc: 'Order has been successfully placed.',
       orderFailed: 'Order Failed',
-      orderFailedDesc: 'Failed to place order.'
+      orderFailedDesc: 'Failed to place order.',
+      cleanupComplete: 'Cleanup Complete'
     }
   },
 
@@ -891,7 +893,8 @@ export const translations = {
       orderCompleted: 'Đơn hàng hoàn thành',
       orderCompletedDesc: 'Đơn hàng đã được đặt thành công.',
       orderFailed: 'Đơn hàng thất bại',
-      orderFailedDesc: 'Không thể đặt đơn hàng.'
+      orderFailedDesc: 'Không thể đặt đơn hàng.',
+      cleanupComplete: 'Dọn dẹp hoàn tất'
     }
   }
 };
