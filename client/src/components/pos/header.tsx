@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ScanBarcode, LogOut, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package, Settings as SettingsIcon } from "lucide-react";
+import { ScanBarcode, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package, Settings as SettingsIcon } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import logoPath from "@assets/image_1753067088685.png";
@@ -182,11 +182,6 @@ export function POSHeader() {
           </nav>
           
           <LanguageSwitcher />
-          
-          <button className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-full transition-all duration-200 flex items-center">
-            <LogOut className="mr-2" size={16} />
-            {t('common.logout')}
-          </button>
         </div>
       </div>
     </header>
