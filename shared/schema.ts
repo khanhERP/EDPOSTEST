@@ -82,6 +82,23 @@ export const storeSettings = pgTable("store_settings", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const suppliers = pgTable("suppliers", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  code: text("code").notNull().unique(),
+  contactPerson: text("contact_person"),
+  phone: text("phone"),
+  email: text("email"),
+  address: text("address"),
+  taxId: text("tax_id"),
+  bankAccount: text("bank_account"),
+  paymentTerms: text("payment_terms").default("30일"), // "30일", "60일", "현금" 등
+  status: text("status").notNull().default("active"), // "active", "inactive"
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const tables = pgTable("tables", {
   id: serial("id").primaryKey(),
   tableNumber: text("table_number").notNull().unique(),
@@ -193,6 +210,17 @@ export const insertStoreSettingsSchema = createInsertSchema(storeSettings).omit(
   updatedAt: true,
 });
 
+export const insertSupplierSchema = createInsertSchema(suppliers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  status: z.enum(["active", "inactive"], {
+    errorMap: () => ({ message: "Status must be active or inactive" })
+  }),
+  email: z.string().email("Invalid email format").optional().or(z.literal("")),
+});
+
 export type Category = typeof categories.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
@@ -203,6 +231,7 @@ export type Table = typeof tables.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type OrderItem = typeof orderItems.$inferSelect;
 export type StoreSettings = typeof storeSettings.$inferSelect;
+export type Supplier = typeof suppliers.$inferSelect;
 
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
@@ -214,6 +243,7 @@ export type InsertTable = z.infer<typeof insertTableSchema>;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type InsertStoreSettings = z.infer<typeof insertStoreSettingsSchema>;
+export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 
 // Cart item type for frontend use
 export type CartItem = {

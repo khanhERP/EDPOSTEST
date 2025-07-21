@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ScanBarcode, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package, Settings as SettingsIcon } from "lucide-react";
+import { ScanBarcode, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package, Settings as SettingsIcon, Building2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import logoPath from "@assets/image_1753067088685.png";
@@ -73,7 +73,7 @@ export function POSHeader() {
             <div className="relative pos-dropdown">
               <button 
                 className={`flex items-center px-4 py-2 rounded-full transition-all duration-200 ${
-                  ["/", "/pos", "/tables", "/inventory", "/reports", "/employees", "/attendance", "/settings"].includes(location)
+                  ["/", "/pos", "/tables", "/inventory", "/reports", "/employees", "/attendance", "/suppliers", "/settings"].includes(location)
                     ? "bg-white bg-opacity-20" 
                     : "hover:bg-white hover:bg-opacity-10"
                 }`}
@@ -160,6 +160,18 @@ export function POSHeader() {
                     >
                       <Clock className="w-4 h-4 mr-3" />
                       {t('nav.attendance')}
+                    </button>
+                  </Link>
+                  
+                  <Link href="/suppliers">
+                    <button 
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                        location === "/suppliers" ? "bg-green-50 text-green-600" : "text-gray-700"
+                      }`}
+                      onClick={() => setPosMenuOpen(false)}
+                    >
+                      <Building2 className="w-4 h-4 mr-3" />
+                      {t('nav.suppliers')}
                     </button>
                   </Link>
                   

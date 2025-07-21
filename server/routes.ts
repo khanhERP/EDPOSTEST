@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertTransactionSchema, insertTransactionItemSchema, insertEmployeeSchema, insertAttendanceSchema, insertTableSchema, insertOrderSchema, insertOrderItemSchema, insertStoreSettingsSchema } from "@shared/schema";
+import { insertProductSchema, insertTransactionSchema, insertTransactionItemSchema, insertEmployeeSchema, insertAttendanceSchema, insertTableSchema, insertOrderSchema, insertOrderItemSchema, insertStoreSettingsSchema, insertSupplierSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -546,6 +546,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid store settings data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to update store settings" });
+    }
+  });
+
+  // Suppliers
+  app.get("/api/suppliers", async (req, res) => {
+    try {
+      const { status, search } = req.query;
+      let suppliers;
+
+      if (search) {
+        suppliers = await storage.searchSuppliers(search as string);
+      } else if (status && status !== "all") {
+        suppliers = await storage.getSuppliersByStatus(status as string);
+      } else {
+        suppliers = await storage.getSuppliers();
+      }
+
+      res.json(suppliers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch suppliers" });
+    }
+  });
+
+  app.get("/api/suppliers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const supplier = await storage.getSupplier(id);
+      
+      if (!supplier) {
+        return res.status(404).json({ message: "Supplier not found" });
+      }
+
+      res.json(supplier);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch supplier" });
+    }
+  });
+
+  app.post("/api/suppliers", async (req, res) => {
+    try {
+      const validatedData = insertSupplierSchema.parse(req.body);
+      const supplier = await storage.createSupplier(validatedData);
+      res.status(201).json(supplier);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid supplier data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create supplier" });
+    }
+  });
+
+  app.put("/api/suppliers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertSupplierSchema.partial().parse(req.body);
+      const supplier = await storage.updateSupplier(id, validatedData);
+      
+      if (!supplier) {
+        return res.status(404).json({ message: "Supplier not found" });
+      }
+
+      res.json(supplier);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid supplier data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update supplier" });
+    }
+  });
+
+  app.delete("/api/suppliers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteSupplier(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "Supplier not found" });
+      }
+
+      res.json({ message: "Supplier deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete supplier" });
     }
   });
 

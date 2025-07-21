@@ -9,6 +9,7 @@ import {
   orders,
   orderItems,
   storeSettings,
+  suppliers,
   type Category, 
   type Product, 
   type Transaction, 
@@ -29,10 +30,11 @@ import {
   type InsertOrder,
   type InsertOrderItem,
   type InsertStoreSettings,
-  type Receipt
+  type Receipt,
+  type InsertSupplier
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, ilike, and, gte, lte } from "drizzle-orm";
+import { eq, ilike, and, gte, lte, or } from "drizzle-orm";
 
 export interface IStorage {
   // Categories
@@ -49,7 +51,7 @@ export interface IStorage {
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<boolean>;
   updateProductStock(id: number, quantity: number): Promise<Product | undefined>;
-  
+
   // Inventory Management
   updateInventoryStock(productId: number, quantity: number, type: 'add' | 'subtract' | 'set', notes?: string): Promise<Product | undefined>;
 
@@ -100,6 +102,15 @@ export interface IStorage {
   // Store Settings
   getStoreSettings(): Promise<StoreSettings>;
   updateStoreSettings(settings: Partial<InsertStoreSettings>): Promise<StoreSettings>;
+
+  // Suppliers
+  getSuppliers(): Promise<any>;
+  getSupplier(id: number): Promise<any>;
+  getSuppliersByStatus(status: string): Promise<any>;
+  searchSuppliers(query: string): Promise<any>;
+  createSupplier(data: InsertSupplier): Promise<any>;
+  updateSupplier(id: number, data: Partial<InsertSupplier>): Promise<any>;
+  deleteSupplier(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -218,7 +229,7 @@ export class DatabaseStorage implements IStorage {
           transactionId: transaction.id
         })
         .returning();
-      
+
       // Update product stock
       await this.updateProductStock(item.productId, -item.quantity);
       transactionItemsWithIds.push(transactionItem);
@@ -235,7 +246,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(transactions)
       .where(eq(transactions.id, id));
-    
+
     if (!transaction) return undefined;
 
     const items = await db
@@ -251,7 +262,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(transactions)
       .where(eq(transactions.transactionId, transactionId));
-    
+
     if (!transaction) return undefined;
 
     const items = await db
@@ -317,23 +328,23 @@ export class DatabaseStorage implements IStorage {
 
   async getAttendanceRecords(employeeId?: number, date?: string): Promise<AttendanceRecord[]> {
     const conditions = [];
-    
+
     if (employeeId) {
       conditions.push(eq(attendanceRecords.employeeId, employeeId));
     }
-    
+
     if (date) {
       const startDate = new Date(date);
       startDate.setHours(0, 0, 0, 0);
       const endDate = new Date(date);
       endDate.setHours(23, 59, 59, 999);
-      
+
       conditions.push(
         gte(attendanceRecords.clockIn, startDate),
         lte(attendanceRecords.clockIn, endDate)
       );
     }
-    
+
     if (conditions.length > 0) {
       return await db
         .select()
@@ -341,7 +352,7 @@ export class DatabaseStorage implements IStorage {
         .where(and(...conditions))
         .orderBy(attendanceRecords.clockIn);
     }
-    
+
     return await db
       .select()
       .from(attendanceRecords)
@@ -527,7 +538,7 @@ export class DatabaseStorage implements IStorage {
 
   async createOrder(order: InsertOrder, items: InsertOrderItem[]): Promise<Order> {
     const [newOrder] = await db.insert(orders).values(order).returning();
-    
+
     if (items.length > 0) {
       const itemsWithOrderId = items.map(item => ({ ...item, orderId: newOrder.id }));
       await db.insert(orderItems).values(itemsWithOrderId);
@@ -583,7 +594,7 @@ export class DatabaseStorage implements IStorage {
     if (!product) return undefined;
 
     let newStock: number;
-    
+
     switch (type) {
       case 'add':
         newStock = product.stock + quantity;
@@ -603,14 +614,14 @@ export class DatabaseStorage implements IStorage {
       .set({ stock: newStock })
       .where(eq(products.id, productId))
       .returning();
-      
+
     return updatedProduct || undefined;
   }
 
   // Store Settings
   async getStoreSettings(): Promise<StoreSettings> {
     const [settings] = await db.select().from(storeSettings).limit(1);
-    
+
     // If no settings exist, create default settings
     if (!settings) {
       const [newSettings] = await db
@@ -624,20 +635,68 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return newSettings;
     }
-    
+
     return settings;
   }
 
   async updateStoreSettings(settings: Partial<InsertStoreSettings>): Promise<StoreSettings> {
     const currentSettings = await this.getStoreSettings();
-    
+
     const [updatedSettings] = await db
       .update(storeSettings)
       .set({ ...settings, updatedAt: new Date() })
       .where(eq(storeSettings.id, currentSettings.id))
       .returning();
-      
+
     return updatedSettings;
+  }
+
+  // Suppliers
+  async getSuppliers() {
+    return await db.select().from(suppliers).orderBy(suppliers.name);
+  }
+
+  async getSupplier(id: number) {
+    const [result] = await db.select().from(suppliers).where(eq(suppliers.id, id));
+    return result;
+  }
+
+  async getSuppliersByStatus(status: string) {
+    return await db.select().from(suppliers)
+      .where(eq(suppliers.status, status))
+      .orderBy(suppliers.name);
+  }
+
+  async searchSuppliers(query: string) {
+    return await db.select().from(suppliers)
+      .where(
+        or(
+          ilike(suppliers.name, `%${query}%`),
+          ilike(suppliers.code, `%${query}%`),
+          ilike(suppliers.contactPerson, `%${query}%`)
+        )
+      )
+      .orderBy(suppliers.name);
+  }
+
+  async createSupplier(data: InsertSupplier) {
+    const [result] = await db.insert(suppliers).values(data).returning();
+    return result;
+  }
+
+  async updateSupplier(id: number, data: Partial<InsertSupplier>) {
+    const [result] = await db
+      .update(suppliers)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(suppliers.id, id))
+      .returning();
+
+    return result;
+  }
+
+  async deleteSupplier(id: number) {
+    const result = await db.delete(suppliers).where(eq(suppliers.id, id)).returning();
+    return result.length > 0;
   }
 }
 

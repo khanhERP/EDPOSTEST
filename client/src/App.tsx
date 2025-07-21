@@ -10,7 +10,8 @@ import ReportsPage from "@/pages/reports";
 import EmployeesPage from "@/pages/employees";
 import AttendancePage from "@/pages/attendance";
 import SettingsPage from "@/pages/settings";
-import NotFound from "@/pages/not-found";
+import SuppliersPage from "@/pages/suppliers";
+import NotFoundPage from "@/pages/not-found";
 
 function Router() {
   return (
@@ -23,7 +24,8 @@ function Router() {
       <Route path="/employees" component={EmployeesPage} />
       <Route path="/attendance" component={AttendancePage} />
       <Route path="/settings" component={SettingsPage} />
-      <Route component={NotFound} />
+      <Route path="/suppliers" component={SuppliersPage} />
+      <Route component={NotFoundPage} />
     </Switch>
   );
 }

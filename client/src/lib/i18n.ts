@@ -73,10 +73,8 @@ export const translations = {
       reports: '매출 분석',
       employees: '직원 관리',
       attendance: '근태 관리',
-      settings: '시스템 설정'
+      suppliers: '거래처 관리'
     },
-
-
 
     // Not Found
     notFound: {
@@ -152,6 +150,56 @@ export const translations = {
       employeeSalesDesc: '직원별 판매 성과를 확인합니다',
       dailySalesDesc: '일별 매출 현황을 조회합니다',
       detailedSalesDesc: '상세한 판매 내역을 확인합니다'
+    },
+
+    // Suppliers
+    suppliers: {
+      title: '거래처 관리',
+      description: '공급업체와 거래처 정보를 관리합니다.',
+      addSupplier: '거래처 추가',
+      editSupplier: '거래처 수정',
+      addDescription: '새로운 거래처 정보를 입력하세요.',
+      editDescription: '거래처 정보를 수정하세요.',
+      searchPlaceholder: '거래처명, 코드, 담당자로 검색...',
+      noSuppliers: '등록된 거래처가 없습니다.',
+      name: '거래처명',
+      namePlaceholder: '거래처명을 입력하세요',
+      code: '거래처 코드',
+      codePlaceholder: '거래처 코드를 입력하세요',
+      contactPerson: '담당자',
+      contactPersonPlaceholder: '담당자명을 입력하세요',
+      phone: '전화번호',
+      phonePlaceholder: '전화번호를 입력하세요',
+      email: '이메일',
+      emailPlaceholder: '이메일 주소를 입력하세요',
+      address: '주소',
+      addressPlaceholder: '주소를 입력하세요',
+      taxId: '사업자등록번호',
+      taxIdPlaceholder: '사업자등록번호를 입력하세요',
+      bankAccount: '계좌번호',
+      bankAccountPlaceholder: '계좌번호를 입력하세요',
+      paymentTerms: '결제조건',
+      status: '상태',
+      notes: '비고',
+      notesPlaceholder: '추가 정보를 입력하세요',
+      active: '활성',
+      inactive: '비활성',
+      cash: '현금',
+      createSuccess: '거래처 등록 완료',
+      createSuccessDesc: '새로운 거래처가 성공적으로 등록되었습니다.',
+      createFailed: '거래처 등록 실패',
+      createFailedDesc: '거래처 등록 중 오류가 발생했습니다.',
+      updateSuccess: '거래처 수정 완료',
+      updateSuccessDesc: '거래처 정보가 성공적으로 수정되었습니다.',
+      updateFailed: '거래처 수정 실패',
+      updateFailedDesc: '거래처 수정 중 오류가 발생했습니다.',
+      deleteSuccess: '거래처 삭제 완료',
+      deleteSuccessDesc: '거래처가 성공적으로 삭제되었습니다.',
+      deleteFailed: '거래처 삭제 실패',
+      deleteFailedDesc: '거래처 삭제 중 오류가 발생했습니다.',
+      confirmDelete: '정말로 이 거래처를 삭제하시겠습니까?',
+      validationError: '입력 오류',
+      requiredFields: '거래처명과 코드는 필수 입력 항목입니다.',
     },
 
     // Settings
@@ -256,7 +304,7 @@ export const translations = {
       orderFailedDesc: '주문 접수에 실패했습니다.'
     }
   },
-  
+
   en: {
     // Common
     common: {
@@ -309,7 +357,7 @@ export const translations = {
       reports: 'Reports',
       employees: 'Employees',
       attendance: 'Attendance',
-      settings: 'System Settings'
+      suppliers: 'Suppliers'
     },
 
     // POS
@@ -407,6 +455,56 @@ export const translations = {
       detailedSalesDesc: 'Check detailed sales records'
     },
 
+    // Suppliers
+    suppliers: {
+      title: 'Supplier Management',
+      description: 'Manage suppliers and vendor information.',
+      addSupplier: 'Add Supplier',
+      editSupplier: 'Edit Supplier',
+      addDescription: 'Enter new supplier information.',
+      editDescription: 'Edit supplier information.',
+      searchPlaceholder: 'Search by supplier name, code, contact person...',
+      noSuppliers: 'No suppliers registered.',
+      name: 'Supplier Name',
+      namePlaceholder: 'Enter supplier name',
+      code: 'Supplier Code',
+      codePlaceholder: 'Enter supplier code',
+      contactPerson: 'Contact Person',
+      contactPersonPlaceholder: 'Enter contact person name',
+      phone: 'Phone',
+      phonePlaceholder: 'Enter phone number',
+      email: 'Email',
+      emailPlaceholder: 'Enter email address',
+      address: 'Address',
+      addressPlaceholder: 'Enter address',
+      taxId: 'Tax ID',
+      taxIdPlaceholder: 'Enter tax ID number',
+      bankAccount: 'Bank Account',
+      bankAccountPlaceholder: 'Enter bank account number',
+      paymentTerms: 'Payment Terms',
+      status: 'Status',
+      notes: 'Notes',
+      notesPlaceholder: 'Enter additional information',
+      active: 'Active',
+      inactive: 'Inactive',
+      cash: 'Cash',
+      createSuccess: 'Supplier Registration Complete',
+      createSuccessDesc: 'A new supplier has been successfully registered.',
+      createFailed: 'Supplier Registration Failed',
+      createFailedDesc: 'An error occurred during supplier registration.',
+      updateSuccess: 'Supplier Update Complete',
+      updateSuccessDesc: 'Supplier information has been successfully updated.',
+      updateFailed: 'Supplier Update Failed',
+      updateFailedDesc: 'An error occurred during supplier update.',
+      deleteSuccess: 'Supplier Deletion Complete',
+      deleteSuccessDesc: 'The supplier has been successfully deleted.',
+      deleteFailed: 'Supplier Deletion Failed',
+      deleteFailedDesc: 'An error occurred during supplier deletion.',
+      confirmDelete: 'Are you sure you want to delete this supplier?',
+      validationError: 'Input Error',
+      requiredFields: 'Supplier name and code are required fields.',
+    },
+
     // Settings
     settings: {
       title: 'System Settings',
@@ -492,7 +590,7 @@ export const translations = {
       orderFailedDesc: 'Failed to place order.'
     }
   },
-  
+
   vi: {
     // Chung
     common: {
@@ -545,7 +643,7 @@ export const translations = {
       reports: 'Báo cáo',
       employees: 'Nhân viên',
       attendance: 'Chấm công',
-      settings: 'Cài đặt hệ thống'
+      suppliers: 'Quản lý nhà cung cấp'
     },
 
 
@@ -624,6 +722,56 @@ export const translations = {
       employeeSalesDesc: 'Kiểm tra hiệu suất bán hàng theo nhân viên',
       dailySalesDesc: 'Xem tình trạng doanh thu hàng ngày',
       detailedSalesDesc: 'Kiểm tra hồ sơ bán hàng chi tiết'
+    },
+
+    // Suppliers
+    suppliers: {
+      title: 'Quản lý nhà cung cấp',
+      description: 'Quản lý thông tin nhà cung cấp và nhà cung cấp.',
+      addSupplier: 'Thêm nhà cung cấp',
+      editSupplier: 'Chỉnh sửa nhà cung cấp',
+      addDescription: 'Nhập thông tin nhà cung cấp mới.',
+      editDescription: 'Chỉnh sửa thông tin nhà cung cấp.',
+      searchPlaceholder: 'Tìm kiếm theo tên nhà cung cấp, mã, người liên hệ...',
+      noSuppliers: 'Không có nhà cung cấp nào được đăng ký.',
+      name: 'Tên nhà cung cấp',
+      namePlaceholder: 'Nhập tên nhà cung cấp',
+      code: 'Mã nhà cung cấp',
+      codePlaceholder: 'Nhập mã nhà cung cấp',
+      contactPerson: 'Người liên hệ',
+      contactPersonPlaceholder: 'Nhập tên người liên hệ',
+      phone: 'Điện thoại',
+      phonePlaceholder: 'Nhập số điện thoại',
+      email: 'Email',
+      emailPlaceholder: 'Nhập địa chỉ email',
+      address: 'Địa chỉ',
+      addressPlaceholder: 'Nhập địa chỉ',
+      taxId: 'Mã số thuế',
+      taxIdPlaceholder: 'Nhập mã số thuế',
+      bankAccount: 'Tài khoản ngân hàng',
+      bankAccountPlaceholder: 'Nhập số tài khoản ngân hàng',
+      paymentTerms: 'Điều khoản thanh toán',
+      status: 'Trạng thái',
+      notes: 'Ghi chú',
+      notesPlaceholder: 'Nhập thông tin bổ sung',
+      active: 'Hoạt động',
+      inactive: 'Không hoạt động',
+      cash: 'Tiền mặt',
+      createSuccess: 'Đăng ký nhà cung cấp hoàn tất',
+      createSuccessDesc: 'Một nhà cung cấp mới đã được đăng ký thành công.',
+      createFailed: 'Đăng ký nhà cung cấp thất bại',
+      createFailedDesc: 'Đã xảy ra lỗi khi đăng ký nhà cung cấp.',
+      updateSuccess: 'Cập nhật nhà cung cấp hoàn tất',
+      updateSuccessDesc: 'Thông tin nhà cung cấp đã được cập nhật thành công.',
+      updateFailed: 'Cập nhật nhà cung cấp thất bại',
+      updateFailedDesc: 'Đã xảy ra lỗi khi cập nhật nhà cung cấp.',
+      deleteSuccess: 'Xóa nhà cung cấp hoàn tất',
+      deleteSuccessDesc: 'Nhà cung cấp đã được xóa thành công.',
+      deleteFailed: 'Xóa nhà cung cấp thất bại',
+      deleteFailedDesc: 'Đã xảy ra lỗi khi xóa nhà cung cấp.',
+      confirmDelete: 'Bạn có chắc chắn muốn xóa nhà cung cấp này?',
+      validationError: 'Lỗi đầu vào',
+      requiredFields: 'Tên và mã nhà cung cấp là các trường bắt buộc.',
     },
 
     // Cài đặt
@@ -732,18 +880,18 @@ export const translations = {
 
 export const useTranslation = () => {
   const { currentLanguage } = useLanguageStore();
-  
+
   const t = (key: string): string => {
     const keys = key.split('.');
     let value: any = (translations as any)[currentLanguage];
-    
+
     for (const k of keys) {
       value = value?.[k];
     }
-    
+
     const result = value || key;
     return result;
   };
-  
+
   return { t, currentLanguage };
 };
