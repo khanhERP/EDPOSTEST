@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { type StoreSettings, type InsertStoreSettings } from "@shared/schema";
+import { type StoreSettings, type InsertStoreSettings, type Customer } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Store, 
@@ -41,7 +41,7 @@ export default function Settings() {
   
   // Customer management state
   const [showCustomerForm, setShowCustomerForm] = useState(false);
-  const [editingCustomer, setEditingCustomer] = useState<any>(null);
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   
   // Fetch store settings
@@ -50,7 +50,7 @@ export default function Settings() {
   });
 
   // Fetch customers
-  const { data: customersData, isLoading: customersLoading } = useQuery({
+  const { data: customersData, isLoading: customersLoading } = useQuery<Customer[]>({
     queryKey: ['/api/customers'],
   });
 
@@ -180,7 +180,7 @@ export default function Settings() {
     }
   };
 
-  const handleAddPoints = (customer: any) => {
+  const handleAddPoints = (customer: Customer) => {
     const points = prompt('추가할 포인트를 입력하세요:');
     if (points && !isNaN(Number(points))) {
       fetch(`/api/customers/${customer.id}/visit`, {
@@ -211,7 +211,7 @@ export default function Settings() {
   };
 
   // Filter customers based on search term
-  const filteredCustomers = customersData ? customersData.filter((customer: any) =>
+  const filteredCustomers = customersData ? customersData.filter((customer: Customer) =>
     customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
     customer.customerId.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
     (customer.phone && customer.phone.includes(customerSearchTerm))

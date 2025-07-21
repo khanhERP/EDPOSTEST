@@ -2,9 +2,13 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertProductSchema, insertTransactionSchema, insertTransactionItemSchema, insertEmployeeSchema, insertAttendanceSchema, insertTableSchema, insertOrderSchema, insertOrderItemSchema, insertStoreSettingsSchema, insertSupplierSchema } from "@shared/schema";
+import { initializeSampleData } from "./db";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Initialize sample data
+  await initializeSampleData();
+  
   // Categories
   app.get("/api/categories", async (req, res) => {
     try {
