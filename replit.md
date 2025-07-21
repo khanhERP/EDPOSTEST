@@ -118,7 +118,8 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### January 21, 2025 - Inventory Management System
+### January 21, 2025 - Logo Update and Inventory Management System
+- **Updated Logo**: Replaced application logo with new EDPOS branding across header and receipt components
 - **Added Inventory Management**: Complete inventory management system with stock tracking, low stock alerts, and stock value calculations
 - **Stock Update Functionality**: Added ability to add, subtract, or set stock levels with notes for audit trail
 - **Inventory Dashboard**: Created comprehensive inventory dashboard with real-time statistics and filtering options

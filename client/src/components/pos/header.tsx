@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ScanBarcode, LogOut, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import logoPath from "@assets/image_1753015722799.png";
+import logoPath from "@assets/image_1753067088685.png";
 
 export function POSHeader() {
   const [currentTime, setCurrentTime] = useState(new Date());
