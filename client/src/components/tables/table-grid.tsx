@@ -33,10 +33,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const updateTableStatusMutation = useMutation({
     mutationFn: ({ tableId, status }: { tableId: number; status: string }) =>
-      apiRequest(`/api/tables/${tableId}/status`, {
-        method: 'PUT',
-        body: JSON.stringify({ status }),
-      }),
+      apiRequest('PUT', `/api/tables/${tableId}/status`, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
       toast({

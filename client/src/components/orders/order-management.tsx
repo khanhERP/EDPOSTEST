@@ -1,21 +1,25 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Clock, User, CheckCircle2, XCircle, CreditCard } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Eye, Clock, CheckCircle2, DollarSign, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
-import type { Order, OrderItem, Product, Table as TableType } from "@shared/schema";
+import type { Order, Table, Product, OrderItem } from "@shared/schema";
 
 export function OrderManagement() {
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const { data: orders, isLoading } = useQuery({
+  const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
   });
 
@@ -29,241 +33,309 @@ export function OrderManagement() {
 
   const updateOrderStatusMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: number; status: string }) =>
-      apiRequest(`/api/orders/${orderId}/status`, {
-        method: 'PUT',
-        body: JSON.stringify({ status }),
-      }),
+      apiRequest('PUT', `/api/orders/${orderId}/status`, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
       toast({
-        title: "주문 상태 변경",
-        description: "주문 상태가 성공적으로 변경되었습니다.",
+        title: t('common.success'),
+        description: t('tables.orderCompleted'),
       });
     },
     onError: () => {
       toast({
-        title: "오류",
-        description: "주문 상태 변경에 실패했습니다.",
+        title: t('common.error'),
+        description: t('tables.orderFailed'),
         variant: "destructive",
       });
     },
   });
 
-  const getTableNumber = (tableId: number) => {
-    const table = tables?.find((t: TableType) => t.id === tableId);
-    return table?.tableNumber || "Unknown";
-  };
-
-  const getProductName = (productId: number) => {
-    const product = products?.find((p: Product) => p.id === productId);
-    return product?.name || "Unknown Product";
-  };
-
   const getOrderStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { label: "대기 중", variant: "secondary" as const, color: "bg-yellow-500" },
-      confirmed: { label: "주문 확인", variant: "default" as const, color: "bg-blue-500" },
-      preparing: { label: "조리 중", variant: "secondary" as const, color: "bg-orange-500" },
-      ready: { label: "준비 완료", variant: "default" as const, color: "bg-green-500" },
-      served: { label: "서빙 완료", variant: "outline" as const, color: "bg-purple-500" },
-      paid: { label: "결제 완료", variant: "default" as const, color: "bg-emerald-500" },
-      cancelled: { label: "취소", variant: "destructive" as const, color: "bg-red-500" },
+      pending: { label: '대기중', variant: "secondary" as const, color: "bg-yellow-500" },
+      confirmed: { label: '확인됨', variant: "default" as const, color: "bg-blue-500" },
+      preparing: { label: '조리중', variant: "destructive" as const, color: "bg-orange-500" },
+      ready: { label: '완료', variant: "outline" as const, color: "bg-green-500" },
+      served: { label: '서빙완료', variant: "outline" as const, color: "bg-green-600" },
+      paid: { label: '결제완료', variant: "outline" as const, color: "bg-gray-500" },
+      cancelled: { label: '취소됨', variant: "destructive" as const, color: "bg-red-500" },
     };
     
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
   };
 
-  const getPaymentStatusBadge = (status: string) => {
-    const statusConfig = {
-      pending: { label: "미결제", variant: "secondary" as const },
-      paid: { label: "결제 완료", variant: "default" as const },
-      refunded: { label: "환불", variant: "destructive" as const },
-    };
-    
-    return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+  const getTableInfo = (tableId: number) => {
+    if (!tables) return null;
+    return (tables as Table[]).find((table: Table) => table.id === tableId);
   };
 
-  const filteredOrders = orders?.filter((order: Order) => {
-    if (statusFilter === "all") return true;
-    if (statusFilter === "active") return !["paid", "cancelled"].includes(order.status);
-    return order.status === statusFilter;
-  }) || [];
+  const getProductInfo = (productId: number) => {
+    if (!products) return null;
+    return (products as Product[]).find((product: Product) => product.id === productId);
+  };
 
-  const handleStatusChange = (orderId: number, newStatus: string) => {
-    updateOrderStatusMutation.mutate({ orderId, status: newStatus });
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('ko-KR', {
+      style: 'currency',
+      currency: 'KRW'
+    }).format(amount);
   };
 
   const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString('ko-KR', {
-      month: '2-digit',
-      day: '2-digit',
+    return new Date(dateString).toLocaleTimeString('ko-KR', {
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
-  if (isLoading) {
+  const handleViewOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setOrderDetailsOpen(true);
+  };
+
+  const handleStatusUpdate = (orderId: number, newStatus: string) => {
+    updateOrderStatusMutation.mutate({ orderId, status: newStatus });
+  };
+
+  if (ordersLoading) {
     return (
-      <div className="flex justify-center py-8">
-        <div className="text-gray-500">주문 목록을 불러오는 중...</div>
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
 
+  const activeOrders = orders ? (orders as Order[]).filter((order: Order) => 
+    !["paid", "cancelled"].includes(order.status)
+  ) : [];
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              주문 관리
-            </CardTitle>
-            <CardDescription>
-              실시간 주문 현황을 확인하고 관리합니다.
-            </CardDescription>
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">전체 주문</SelectItem>
-              <SelectItem value="active">진행 중</SelectItem>
-              <SelectItem value="pending">대기 중</SelectItem>
-              <SelectItem value="confirmed">확인됨</SelectItem>
-              <SelectItem value="preparing">조리 중</SelectItem>
-              <SelectItem value="ready">준비 완료</SelectItem>
-              <SelectItem value="served">서빙 완료</SelectItem>
-              <SelectItem value="paid">결제 완료</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">{t('tables.orderManagement')}</h2>
+          <p className="text-gray-600">실시간 주문 현황을 확인하고 관리하세요</p>
         </div>
-      </CardHeader>
-      <CardContent>
-        {filteredOrders.length === 0 ? (
-          <div className="text-center py-8">
-            <Clock className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500">해당하는 주문이 없습니다.</p>
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>주문번호</TableHead>
-                <TableHead>테이블</TableHead>
-                <TableHead>고객</TableHead>
-                <TableHead>주문 시간</TableHead>
-                <TableHead>금액</TableHead>
-                <TableHead>주문 상태</TableHead>
-                <TableHead>결제 상태</TableHead>
-                <TableHead>액션</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredOrders.map((order: Order) => {
-                const statusConfig = getOrderStatusBadge(order.status);
-                const paymentConfig = getPaymentStatusBadge(order.paymentStatus);
-                
-                return (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.orderNumber}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${statusConfig.color}`}></div>
-                        {getTableNumber(order.tableId)}
+        <Badge variant="secondary" className="text-lg px-4 py-2">
+          {activeOrders.length}개 진행중
+        </Badge>
+      </div>
+
+      {/* Orders Grid */}
+      {activeOrders.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Clock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+            <p className="text-xl text-gray-500">진행중인 주문이 없습니다</p>
+            <p className="text-gray-400 mt-2">새로운 주문이 들어오면 여기에 표시됩니다</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {activeOrders.map((order: Order) => {
+            const tableInfo = getTableInfo(order.tableId);
+            const statusConfig = getOrderStatusBadge(order.status);
+            
+            return (
+              <Card key={order.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">
+                        {order.orderNumber}
+                      </CardTitle>
+                      <p className="text-sm text-gray-600">
+                        {tableInfo ? `${tableInfo.tableNumber} (${tableInfo.capacity}명)` : '테이블 정보 없음'}
+                      </p>
+                    </div>
+                    <Badge variant={statusConfig.variant}>
+                      {statusConfig.label}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">고객:</span>
+                    <span className="font-medium">{order.customerName || '미입력'}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">인원:</span>
+                    <span className="font-medium flex items-center gap-1">
+                      <Users className="w-3 h-3" />
+                      {order.customerCount}명
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">주문시간:</span>
+                    <span className="font-medium">{formatTime(order.createdAt)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">총액:</span>
+                    <span className="font-bold text-lg text-green-600">
+                      {formatCurrency(order.totalAmount)}
+                    </span>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleViewOrder(order)}
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      상세보기
+                    </Button>
+                    
+                    {order.status === 'pending' && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusUpdate(order.id, 'confirmed')}
+                        disabled={updateOrderStatusMutation.isPending}
+                      >
+                        확인
+                      </Button>
+                    )}
+                    
+                    {order.status === 'confirmed' && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusUpdate(order.id, 'preparing')}
+                        disabled={updateOrderStatusMutation.isPending}
+                      >
+                        조리시작
+                      </Button>
+                    )}
+                    
+                    {order.status === 'preparing' && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusUpdate(order.id, 'ready')}
+                        disabled={updateOrderStatusMutation.isPending}
+                      >
+                        완료
+                      </Button>
+                    )}
+                    
+                    {order.status === 'ready' && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusUpdate(order.id, 'served')}
+                        disabled={updateOrderStatusMutation.isPending}
+                      >
+                        서빙완료
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Order Details Dialog */}
+      <Dialog open={orderDetailsOpen} onOpenChange={setOrderDetailsOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>주문 상세 정보</DialogTitle>
+            <DialogDescription>
+              {selectedOrder && `주문번호: ${selectedOrder.orderNumber}`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedOrder && (
+            <ScrollArea className="max-h-[60vh]">
+              <div className="space-y-4">
+                {/* Order Info */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-medium mb-2">주문 정보</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>주문번호:</span>
+                        <span className="font-medium">{selectedOrder.orderNumber}</span>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <div>
-                          <div>{order.customerName || "고객"}</div>
-                          <div className="text-xs text-gray-500">{order.customerCount}명</div>
+                      <div className="flex justify-between">
+                        <span>테이블:</span>
+                        <span className="font-medium">
+                          {getTableInfo(selectedOrder.tableId)?.tableNumber || '알 수 없음'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>고객명:</span>
+                        <span className="font-medium">{selectedOrder.customerName || '미입력'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>인원:</span>
+                        <span className="font-medium">{selectedOrder.customerCount}명</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2">상태 및 시간</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>상태:</span>
+                        <Badge variant={getOrderStatusBadge(selectedOrder.status).variant}>
+                          {getOrderStatusBadge(selectedOrder.status).label}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>주문시간:</span>
+                        <span className="font-medium">{formatTime(selectedOrder.createdAt)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Order Items */}
+                <div>
+                  <h4 className="font-medium mb-3">주문 메뉴</h4>
+                  <div className="space-y-3">
+                    {selectedOrder.items && (selectedOrder.items as OrderItem[]).map((item: OrderItem, index: number) => {
+                      const productInfo = getProductInfo(item.productId);
+                      return (
+                        <div key={index} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
+                          <div className="flex-1">
+                            <h5 className="font-medium">{productInfo?.name || '알 수 없는 상품'}</h5>
+                            {item.notes && (
+                              <p className="text-sm text-gray-600 mt-1">메모: {item.notes}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <div className="font-medium">
+                              {item.quantity}개 × {formatCurrency(item.price)}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              = {formatCurrency(item.quantity * item.price)}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{formatTime(order.orderedAt)}</TableCell>
-                    <TableCell className="font-semibold">
-                      ₩{Number(order.total).toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={statusConfig.variant}>
-                        {statusConfig.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={paymentConfig.variant}>
-                        {paymentConfig.label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {order.status === "pending" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleStatusChange(order.id, "confirmed")}
-                          >
-                            확인
-                          </Button>
-                        )}
-                        {order.status === "confirmed" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleStatusChange(order.id, "preparing")}
-                          >
-                            조리시작
-                          </Button>
-                        )}
-                        {order.status === "preparing" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleStatusChange(order.id, "ready")}
-                          >
-                            완료
-                          </Button>
-                        )}
-                        {order.status === "ready" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleStatusChange(order.id, "served")}
-                          >
-                            <CheckCircle2 className="w-3 h-3 mr-1" />
-                            서빙
-                          </Button>
-                        )}
-                        {order.status === "served" && order.paymentStatus === "pending" && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleStatusChange(order.id, "paid")}
-                          >
-                            <CreditCard className="w-3 h-3 mr-1" />
-                            결제
-                          </Button>
-                        )}
-                        {!["paid", "cancelled"].includes(order.status) && (
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleStatusChange(order.id, "cancelled")}
-                          >
-                            <XCircle className="w-3 h-3" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Order Total */}
+                <div className="flex justify-between items-center text-lg font-bold">
+                  <span>총 금액:</span>
+                  <span className="text-green-600">{formatCurrency(selectedOrder.totalAmount)}</span>
+                </div>
+              </div>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

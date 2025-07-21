@@ -220,6 +220,31 @@ export const translations = {
       },
       storeUpdated: '매장 설정이 업데이트되었습니다',
       updateError: '설정 업데이트 중 오류가 발생했습니다'
+    },
+
+    // Tables
+    tables: {
+      title: '테이블 관리',
+      description: '레스토랑 테이블 상태와 주문을 관리합니다.',
+      backToPOS: 'POS로 돌아가기',
+      tableStatus: '테이블 상태',
+      orderManagement: '주문 관리',
+      tableSettings: '테이블 설정',
+      available: '사용 가능',
+      occupied: '사용 중',
+      reserved: '예약됨',
+      outOfService: '정비 중',
+      tableNumber: '테이블 번호',
+      capacity: '수용 인원',
+      currentOrder: '현재 주문',
+      orderTotal: '주문 총액',
+      selectTable: '테이블을 선택하세요',
+      newOrder: '새 주문',
+      viewOrder: '주문 보기',
+      orderCompleted: '주문 완료',
+      orderCompletedDesc: '주문이 성공적으로 접수되었습니다.',
+      orderFailed: '주문 실패',
+      orderFailedDesc: '주문 접수에 실패했습니다.'
     }
   },
   
@@ -419,7 +444,34 @@ export const translations = {
         shopeepay: 'ShopeePay',
         grabpay: 'GrabPay',
         newPayment: 'New Payment Method'
-      }
+      },
+      storeUpdated: 'Store settings have been updated',
+      updateError: 'An error occurred while updating settings'
+    },
+
+    // Tables
+    tables: {
+      title: 'Table Management',
+      description: 'Manage restaurant table status and orders.',
+      backToPOS: 'Back to POS',
+      tableStatus: 'Table Status',
+      orderManagement: 'Order Management',
+      tableSettings: 'Table Settings',
+      available: 'Available',
+      occupied: 'Occupied',
+      reserved: 'Reserved',
+      outOfService: 'Out of Service',
+      tableNumber: 'Table Number',
+      capacity: 'Capacity',
+      currentOrder: 'Current Order',
+      orderTotal: 'Order Total',
+      selectTable: 'Select a table',
+      newOrder: 'New Order',
+      viewOrder: 'View Order',
+      orderCompleted: 'Order Completed',
+      orderCompletedDesc: 'Order has been successfully placed.',
+      orderFailed: 'Order Failed',
+      orderFailedDesc: 'Failed to place order.'
     }
   },
   
@@ -619,7 +671,34 @@ export const translations = {
         shopeepay: 'ShopeePay',
         grabpay: 'GrabPay',
         newPayment: 'Phương thức thanh toán mới'
-      }
+      },
+      storeUpdated: 'Cài đặt cửa hàng đã được cập nhật',
+      updateError: 'Đã xảy ra lỗi khi cập nhật cài đặt'
+    },
+
+    // Tables
+    tables: {
+      title: 'Quản lý bàn',
+      description: 'Quản lý trạng thái bàn và đơn hàng nhà hàng.',
+      backToPOS: 'Quay lại POS',
+      tableStatus: 'Trạng thái bàn',
+      orderManagement: 'Quản lý đơn hàng',
+      tableSettings: 'Cài đặt bàn',
+      available: 'Có sẵn',
+      occupied: 'Đang sử dụng',
+      reserved: 'Đã đặt',
+      outOfService: 'Không hoạt động',
+      tableNumber: 'Số bàn',
+      capacity: 'Sức chứa',
+      currentOrder: 'Đơn hàng hiện tại',
+      orderTotal: 'Tổng đơn hàng',
+      selectTable: 'Chọn một bàn',
+      newOrder: 'Đơn hàng mới',
+      viewOrder: 'Xem đơn hàng',
+      orderCompleted: 'Đơn hàng hoàn thành',
+      orderCompletedDesc: 'Đơn hàng đã được đặt thành công.',
+      orderFailed: 'Đơn hàng thất bại',
+      orderFailedDesc: 'Không thể đặt đơn hàng.'
     }
   }
 };

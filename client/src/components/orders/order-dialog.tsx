@@ -12,6 +12,7 @@ import { Plus, Minus, ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { Table, Product, Category } from "@shared/schema";
+import { useTranslation } from "@/lib/i18n";
 
 interface OrderDialogProps {
   open: boolean;
@@ -31,6 +32,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
   const [customerCount, setCustomerCount] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: products, isLoading: productsLoading } = useQuery({
@@ -51,16 +53,16 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
       toast({
-        title: "주문 완료",
-        description: "주문이 성공적으로 접수되었습니다.",
+        title: t('tables.orderCompleted'),
+        description: t('tables.orderCompletedDesc'),
       });
       handleClose();
     },
     onError: (error: any) => {
       console.error('Order submission error:', error);
-      const errorMessage = error.message || "주문 접수에 실패했습니다.";
+      const errorMessage = error.message || t('tables.orderFailedDesc');
       toast({
-        title: "주문 실패",
+        title: t('tables.orderFailed'),
         description: errorMessage,
         variant: "destructive",
       });
