@@ -3,7 +3,8 @@ import { Search, BarChart3, Settings, Coffee, Cookie, Smartphone, Home, User, Gr
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import type { Category } from "@shared/schema";
+import { useTranslation } from "@/lib/i18n";
+import type { Category, Product } from "@shared/schema";
 
 interface CategorySidebarProps {
   selectedCategory: number | "all";
@@ -31,6 +32,7 @@ export function CategorySidebar({
   onAddToCart
 }: CategorySidebarProps) {
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],

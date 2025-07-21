@@ -2,11 +2,14 @@ import { useState, useEffect } from "react";
 import { ScanBarcode, LogOut, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import logoPath from "@assets/image_1753067088685.png";
+import { useTranslation } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 export function POSHeader() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [location] = useLocation();
   const [posMenuOpen, setPosMenuOpen] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -46,16 +49,17 @@ export function POSHeader() {
           <div className="flex items-center">
             <img src={logoPath} alt="EDPOS Logo" className="h-12" />
           </div>
-          <div className="text-sm opacity-90">레스토랑 본점</div>
+          <div className="text-sm opacity-90">{t('common.restaurant')}</div>
         </div>
         
         <div className="flex items-center space-x-6">
+          <LanguageSwitcher />
           <div className="text-right">
-            <div className="text-sm opacity-90">Cashier</div>
+            <div className="text-sm opacity-90">{t('pos.cashierName')}</div>
             <div className="font-medium">John Smith</div>
           </div>
           <div className="text-right">
-            <div className="text-sm opacity-90">Time</div>
+            <div className="text-sm opacity-90">{t('common.time')}</div>
             <div className="font-medium">{formatTime(currentTime)}</div>
           </div>
           {/* Navigation Menu */}
@@ -70,7 +74,7 @@ export function POSHeader() {
                 onClick={() => setPosMenuOpen(!posMenuOpen)}
               >
                 <ScanBarcode className="w-4 h-4 mr-2" />
-                POS 시스템
+                {t('nav.pos')}
                 <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${posMenuOpen ? 'rotate-180' : ''}`} />
               </button>
               
@@ -85,7 +89,7 @@ export function POSHeader() {
                       onClick={() => setPosMenuOpen(false)}
                     >
                       <Home className="w-4 h-4 mr-3" />
-                      기본 POS
+                      {t('nav.pos')}
                     </button>
                   </Link>
                   
@@ -99,7 +103,7 @@ export function POSHeader() {
                       onClick={() => setPosMenuOpen(false)}
                     >
                       <Utensils className="w-4 h-4 mr-3" />
-                      테이블 관리
+                      {t('nav.tables')}
                     </button>
                   </Link>
                   
@@ -111,7 +115,7 @@ export function POSHeader() {
                       onClick={() => setPosMenuOpen(false)}
                     >
                       <Package className="w-4 h-4 mr-3" />
-                      재고 관리
+                      {t('nav.inventory')}
                     </button>
                   </Link>
                   
@@ -123,7 +127,7 @@ export function POSHeader() {
                       onClick={() => setPosMenuOpen(false)}
                     >
                       <BarChart3 className="w-4 h-4 mr-3" />
-                      매출 분석
+                      {t('nav.reports')}
                     </button>
                   </Link>
                   
@@ -137,7 +141,7 @@ export function POSHeader() {
                       onClick={() => setPosMenuOpen(false)}
                     >
                       <Users className="w-4 h-4 mr-3" />
-                      직원 관리
+                      {t('nav.employees')}
                     </button>
                   </Link>
                   
@@ -149,7 +153,7 @@ export function POSHeader() {
                       onClick={() => setPosMenuOpen(false)}
                     >
                       <Clock className="w-4 h-4 mr-3" />
-                      근태 관리
+                      {t('nav.attendance')}
                     </button>
                   </Link>
                 </div>
@@ -159,7 +163,7 @@ export function POSHeader() {
           
           <button className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-full transition-all duration-200 flex items-center">
             <LogOut className="mr-2" size={16} />
-            Logout
+            {t('common.logout')}
           </button>
         </div>
       </div>

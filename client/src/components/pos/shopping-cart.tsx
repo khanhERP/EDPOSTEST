@@ -3,6 +3,7 @@ import { ShoppingCart as CartIcon, Minus, Plus, Trash2, CreditCard, Banknote } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "@/lib/i18n";
 import type { CartItem } from "@shared/schema";
 
 interface ShoppingCartProps {
@@ -24,6 +25,7 @@ export function ShoppingCart({
 }: ShoppingCartProps) {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
   const [amountReceived, setAmountReceived] = useState<string>("");
+  const { t } = useTranslation();
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const taxRate = 0.0825; // 8.25%
@@ -53,15 +55,15 @@ export function ShoppingCart({
   return (
     <aside className="w-96 bg-white shadow-material border-l pos-border flex flex-col">
       <div className="p-4 border-b pos-border">
-        <h2 className="text-xl font-medium pos-text-primary mb-2">Shopping Cart</h2>
+        <h2 className="text-xl font-medium pos-text-primary mb-2">{t('pos.cart')}</h2>
         <div className="flex items-center justify-between text-sm pos-text-secondary">
-          <span>{cart.length} items</span>
+          <span>{cart.length} {t('common.items')}</span>
           {cart.length > 0 && (
             <button 
               onClick={onClearCart}
               className="text-red-500 hover:text-red-700 transition-colors"
             >
-              Clear All
+              {t('pos.clearCart')}
             </button>
           )}
         </div>
@@ -71,8 +73,8 @@ export function ShoppingCart({
         {cart.length === 0 ? (
           <div className="text-center py-12">
             <CartIcon className="mx-auto text-gray-400 mb-4" size={48} />
-            <h3 className="text-lg font-medium pos-text-secondary mb-2">Cart is empty</h3>
-            <p className="pos-text-tertiary">Add products to get started</p>
+            <h3 className="text-lg font-medium pos-text-secondary mb-2">{t('pos.emptyCart')}</h3>
+            <p className="pos-text-tertiary">{t('pos.addProductsToStart')}</p>
           </div>
         ) : (
           cart.map((item) => (
