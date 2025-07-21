@@ -241,7 +241,7 @@ export const customers = pgTable('customers', {
   visitCount: integer('visit_count').default(0),
   totalSpent: decimal('total_spent', { precision: 10, scale: 2 }).default('0.00'),
   points: integer('points').default(0),
-  membershipLevel: varchar('membership_level', { length: 20 }).default('Bronze'),
+  membershipLevel: varchar('membership_level', { length: 20 }).default('SILVER'),
   notes: text('notes'),
   status: varchar('status', { length: 20 }).default('active'),
   createdAt: timestamp('created_at').defaultNow(),

@@ -32,6 +32,7 @@ import {
   UserCheck
 } from "lucide-react";
 import { CustomerFormModal } from "@/components/customers/customer-form-modal";
+import { MembershipModal } from "@/components/membership/membership-modal";
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -43,6 +44,7 @@ export default function Settings() {
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
+  const [showMembershipModal, setShowMembershipModal] = useState(false);
   
   // Fetch store settings
   const { data: storeData, isLoading } = useQuery<StoreSettings>({
@@ -535,14 +537,16 @@ export default function Settings() {
                               <Badge 
                                 variant="default" 
                                 className={`${
-                                  customer.membershipLevel === 'Diamond' ? 'bg-purple-500' :
-                                  customer.membershipLevel === 'Platinum' ? 'bg-gray-400' :
-                                  customer.membershipLevel === 'Gold' ? 'bg-yellow-500' :
-                                  customer.membershipLevel === 'Silver' ? 'bg-gray-300 text-black' :
-                                  'bg-amber-600'
+                                  customer.membershipLevel === 'VIP' ? 'bg-purple-500' :
+                                  customer.membershipLevel === 'GOLD' ? 'bg-yellow-500' :
+                                  customer.membershipLevel === 'SILVER' ? 'bg-gray-300 text-black' :
+                                  'bg-gray-400'
                                 } text-white`}
                               >
-                                {customer.membershipLevel}
+                                {customer.membershipLevel === 'VIP' ? 'VIP' :
+                                 customer.membershipLevel === 'GOLD' ? '골드' :
+                                 customer.membershipLevel === 'SILVER' ? '실버' :
+                                 customer.membershipLevel}
                               </Badge>
                             </div>
                             <div className="flex items-center justify-center gap-2">
@@ -581,7 +585,11 @@ export default function Settings() {
                       총 {customersData ? customersData.length : 0}명의 고객이 등록되어 있습니다.
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowMembershipModal(true)}
+                      >
                         <UserCheck className="w-4 h-4 mr-2" />
                         멤버십 관리
                       </Button>
@@ -825,6 +833,12 @@ export default function Settings() {
         isOpen={showCustomerForm}
         onClose={handleCloseCustomerForm}
         customer={editingCustomer}
+      />
+
+      {/* Membership Management Modal */}
+      <MembershipModal
+        isOpen={showMembershipModal}
+        onClose={() => setShowMembershipModal(false)}
       />
     </div>
   );
