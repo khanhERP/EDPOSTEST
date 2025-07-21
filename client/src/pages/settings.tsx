@@ -62,7 +62,7 @@ export default function Settings() {
   });
 
   // Fetch employees
-  const { data: employeesData, isLoading: employeesLoading } = useQuery({
+  const { data: employeesData, isLoading: employeesLoading } = useQuery<any[]>({
     queryKey: ['/api/employees'],
   });
 
