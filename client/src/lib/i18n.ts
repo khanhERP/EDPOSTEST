@@ -85,6 +85,13 @@ export const translations = {
       tableSettings: '테이블 설정'
     },
 
+    // Not Found
+    notFound: {
+      title: '페이지를 찾을 수 없습니다',
+      description: '요청하신 페이지가 존재하지 않거나 이동되었습니다.',
+      backToHome: '홈으로 돌아가기'
+    },
+
     // Settings
     settings: {
       title: '시스템 설정',
@@ -208,6 +215,13 @@ export const translations = {
       tableSettings: 'Table Settings'
     },
 
+    // Not Found
+    notFound: {
+      title: 'Page Not Found',
+      description: 'The page you requested does not exist or has been moved.',
+      backToHome: 'Back to Home'
+    },
+
     // Settings
     settings: {
       title: 'System Settings',
@@ -329,6 +343,13 @@ export const translations = {
       tableStatus: 'Trạng thái bàn',
       orderManagement: 'Quản lý đơn hàng',
       tableSettings: 'Cài đặt bàn'
+    },
+
+    // Not Found
+    notFound: {
+      title: 'Không tìm thấy trang',
+      description: 'Trang bạn yêu cầu không tồn tại hoặc đã được chuyển.',
+      backToHome: 'Về trang chủ'
     },
 
     // Cài đặt
