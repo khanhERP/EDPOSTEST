@@ -53,7 +53,6 @@ export function POSHeader() {
         </div>
         
         <div className="flex items-center space-x-6">
-          <LanguageSwitcher />
           <div className="text-right">
             <div className="text-sm opacity-90">{t('pos.cashierName')}</div>
             <div className="font-medium">John Smith</div>
@@ -160,6 +159,8 @@ export function POSHeader() {
               )}
             </div>
           </nav>
+          
+          <LanguageSwitcher />
           
           <button className="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-full transition-all duration-200 flex items-center">
             <LogOut className="mr-2" size={16} />
