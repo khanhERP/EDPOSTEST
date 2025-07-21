@@ -154,6 +154,8 @@ export const selectProductSchema = createSelectSchema(products);
 
 export type Product = typeof products.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
 // Customer table schema
 export const customers = pgTable("customers", {
