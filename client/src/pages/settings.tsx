@@ -31,6 +31,7 @@ import {
   Clock,
   UserCheck
 } from "lucide-react";
+import { CustomerFormModal } from "@/components/customers/customer-form-modal";
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -38,9 +39,19 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("store");
   
+  // Customer management state
+  const [showCustomerForm, setShowCustomerForm] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<any>(null);
+  const [customerSearchTerm, setCustomerSearchTerm] = useState("");
+  
   // Fetch store settings
   const { data: storeData, isLoading } = useQuery<StoreSettings>({
     queryKey: ['/api/store-settings'],
+  });
+
+  // Fetch customers
+  const { data: customersData, isLoading: customersLoading } = useQuery({
+    queryKey: ['/api/customers'],
   });
 
   // Store settings state
@@ -142,6 +153,69 @@ export default function Settings() {
   const removePaymentMethod = (id: number) => {
     setPaymentMethods(prev => prev.filter(method => method.id !== id));
   };
+
+  // Customer management functions
+  const handleEditCustomer = (customer: any) => {
+    setEditingCustomer(customer);
+    setShowCustomerForm(true);
+  };
+
+  const handleDeleteCustomer = (customerId: number) => {
+    if (confirm('정말로 이 고객을 삭제하시겠습니까?')) {
+      fetch(`/api/customers/${customerId}`, { method: 'DELETE' })
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+          toast({
+            title: '성공',
+            description: '고객이 삭제되었습니다.',
+          });
+        })
+        .catch(() => {
+          toast({
+            title: '오류',
+            description: '고객 삭제에 실패했습니다.',
+            variant: 'destructive',
+          });
+        });
+    }
+  };
+
+  const handleAddPoints = (customer: any) => {
+    const points = prompt('추가할 포인트를 입력하세요:');
+    if (points && !isNaN(Number(points))) {
+      fetch(`/api/customers/${customer.id}/visit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: 0, points: Number(points) })
+      })
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+          toast({
+            title: '성공',
+            description: '포인트가 추가되었습니다.',
+          });
+        })
+        .catch(() => {
+          toast({
+            title: '오류',
+            description: '포인트 추가에 실패했습니다.',
+            variant: 'destructive',
+          });
+        });
+    }
+  };
+
+  const handleCloseCustomerForm = () => {
+    setShowCustomerForm(false);
+    setEditingCustomer(null);
+  };
+
+  // Filter customers based on search term
+  const filteredCustomers = customersData ? customersData.filter((customer: any) =>
+    customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+    customer.customerId.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+    (customer.phone && customer.phone.includes(customerSearchTerm))
+  ) : [];
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20 relative">
@@ -342,7 +416,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">{t('customers.totalCustomers')}</p>
-                        <p className="text-2xl font-bold text-green-600">1,248</p>
+                        <p className="text-2xl font-bold text-green-600">{customersData ? customersData.length : 0}</p>
                       </div>
                       <UserCheck className="w-8 h-8 text-green-600" />
                     </div>
@@ -354,7 +428,9 @@ export default function Settings() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">{t('customers.activeCustomers')}</p>
-                        <p className="text-2xl font-bold text-blue-600">892</p>
+                        <p className="text-2xl font-bold text-blue-600">
+                          {customersData ? customersData.filter(c => c.status === 'active').length : 0}
+                        </p>
                       </div>
                       <Users className="w-8 h-8 text-blue-600" />
                     </div>
@@ -366,7 +442,9 @@ export default function Settings() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">{t('customers.pointsIssued')}</p>
-                        <p className="text-2xl font-bold text-purple-600">15,640</p>
+                        <p className="text-2xl font-bold text-purple-600">
+                          {customersData ? customersData.reduce((total, c) => total + (c.points || 0), 0).toLocaleString() : 0}
+                        </p>
                       </div>
                       <CreditCard className="w-8 h-8 text-purple-600" />
                     </div>
@@ -378,7 +456,11 @@ export default function Settings() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">{t('customers.averageSpent')}</p>
-                        <p className="text-2xl font-bold text-orange-600">₩84,500</p>
+                        <p className="text-2xl font-bold text-orange-600">
+                          ₩{customersData && customersData.length > 0 
+                            ? Math.round(customersData.reduce((total, c) => total + parseFloat(c.totalSpent || '0'), 0) / customersData.length).toLocaleString()
+                            : '0'}
+                        </p>
                       </div>
                       <CreditCard className="w-8 h-8 text-orange-600" />
                     </div>
@@ -401,112 +483,102 @@ export default function Settings() {
                       <Input
                         placeholder={t('customers.searchPlaceholder')}
                         className="w-64"
+                        value={customerSearchTerm}
+                        onChange={(e) => setCustomerSearchTerm(e.target.value)}
                       />
                       <Button variant="outline" size="sm">
                         <Search className="w-4 h-4 mr-2" />
                         {t('common.search')}
                       </Button>
                     </div>
-                    <Button className="bg-green-600 hover:bg-green-700">
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => setShowCustomerForm(true)}
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       {t('customers.addCustomer')}
                     </Button>
                   </div>
 
-                  <div className="rounded-md border">
-                    <div className="grid grid-cols-8 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                      <div>{t('customers.customerId')}</div>
-                      <div>{t('customers.name')}</div>
-                      <div>{t('customers.phone')}</div>
-                      <div>{t('customers.visitCount')}</div>
-                      <div>{t('customers.totalSpent')}</div>
-                      <div>{t('customers.points')}</div>
-                      <div>{t('customers.membershipLevel')}</div>
-                      <div className="text-center">{t('common.actions')}</div>
+                  {customersLoading ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">고객 데이터를 불러오는 중...</p>
                     </div>
-                    
-                    <div className="divide-y">
-                      {/* Sample customer data */}
-                      <div className="grid grid-cols-8 gap-4 p-4 items-center">
-                        <div className="font-mono text-sm">CUST001</div>
-                        <div className="font-medium">김고객</div>
-                        <div className="text-sm text-gray-600">010-1234-5678</div>
-                        <div className="text-center">15</div>
-                        <div className="text-sm font-medium">₩1,250,000</div>
-                        <div className="text-center font-medium text-purple-600">1,250</div>
-                        <div>
-                          <Badge variant="default" className="bg-yellow-500 text-white">
-                            {t('customers.membershipLevels.Diamond')}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-700">
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                  ) : filteredCustomers.length === 0 ? (
+                    <div className="text-center py-8">
+                      <UserCheck className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-500">등록된 고객이 없습니다.</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-md border">
+                      <div className="grid grid-cols-8 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                        <div>{t('customers.customerId')}</div>
+                        <div>{t('customers.name')}</div>
+                        <div>{t('customers.phone')}</div>
+                        <div>{t('customers.visitCount')}</div>
+                        <div>{t('customers.totalSpent')}</div>
+                        <div>{t('customers.points')}</div>
+                        <div>{t('customers.membershipLevel')}</div>
+                        <div className="text-center">{t('common.actions')}</div>
                       </div>
                       
-                      <div className="grid grid-cols-8 gap-4 p-4 items-center">
-                        <div className="font-mono text-sm">CUST002</div>
-                        <div className="font-medium">이단골</div>
-                        <div className="text-sm text-gray-600">010-2345-6789</div>
-                        <div className="text-center">8</div>
-                        <div className="text-sm font-medium">₩680,000</div>
-                        <div className="text-center font-medium text-purple-600">680</div>
-                        <div>
-                          <Badge variant="default" className="bg-gray-500 text-white">
-                            {t('customers.membershipLevels.Platinum')}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-700">
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-8 gap-4 p-4 items-center">
-                        <div className="font-mono text-sm">CUST003</div>
-                        <div className="font-medium">박회원</div>
-                        <div className="text-sm text-gray-600">010-3456-7890</div>
-                        <div className="text-center">12</div>
-                        <div className="text-sm font-medium">₩340,000</div>
-                        <div className="text-center font-medium text-purple-600">340</div>
-                        <div>
-                          <Badge variant="default" className="bg-yellow-600 text-white">
-                            {t('customers.membershipLevels.Gold')}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-700">
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                      <div className="divide-y">
+                        {filteredCustomers.map((customer) => (
+                          <div key={customer.id} className="grid grid-cols-8 gap-4 p-4 items-center">
+                            <div className="font-mono text-sm">{customer.customerId}</div>
+                            <div className="font-medium">{customer.name}</div>
+                            <div className="text-sm text-gray-600">{customer.phone || '-'}</div>
+                            <div className="text-center">{customer.visitCount || 0}</div>
+                            <div className="text-sm font-medium">₩{parseFloat(customer.totalSpent || '0').toLocaleString()}</div>
+                            <div className="text-center font-medium text-purple-600">{customer.points || 0}</div>
+                            <div>
+                              <Badge 
+                                variant="default" 
+                                className={`${
+                                  customer.membershipLevel === 'Diamond' ? 'bg-purple-500' :
+                                  customer.membershipLevel === 'Platinum' ? 'bg-gray-400' :
+                                  customer.membershipLevel === 'Gold' ? 'bg-yellow-500' :
+                                  customer.membershipLevel === 'Silver' ? 'bg-gray-300 text-black' :
+                                  'bg-amber-600'
+                                } text-white`}
+                              >
+                                {customer.membershipLevel}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center justify-center gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => handleEditCustomer(customer)}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-blue-500 hover:text-blue-700"
+                                onClick={() => handleAddPoints(customer)}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-500 hover:text-red-700"
+                                onClick={() => handleDeleteCustomer(customer.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  </div>
+                  )}
 
                   <div className="flex justify-between items-center mt-6">
                     <div className="text-sm text-gray-600">
-                      총 1,248명의 고객이 등록되어 있습니다.
+                      총 {customersData ? customersData.length : 0}명의 고객이 등록되어 있습니다.
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm">
@@ -747,6 +819,13 @@ export default function Settings() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Customer Form Modal */}
+      <CustomerFormModal
+        isOpen={showCustomerForm}
+        onClose={handleCloseCustomerForm}
+        customer={editingCustomer}
+      />
     </div>
   );
 }

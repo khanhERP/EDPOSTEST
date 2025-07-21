@@ -31,10 +31,13 @@ import {
   type InsertOrderItem,
   type InsertStoreSettings,
   type Receipt,
-  type InsertSupplier
+  type InsertSupplier,
+  customers,
+  type Customer,
+  type InsertCustomer,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, ilike, and, gte, lte, or } from "drizzle-orm";
+import { eq, ilike, and, gte, lte, or, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Categories
@@ -111,6 +114,16 @@ export interface IStorage {
   createSupplier(data: InsertSupplier): Promise<any>;
   updateSupplier(id: number, data: Partial<InsertSupplier>): Promise<any>;
   deleteSupplier(id: number): Promise<boolean>;
+
+  // Customers
+  getCustomers(): Promise<Customer[]>;
+  searchCustomers(query: string): Promise<Customer[]>;
+  getCustomer(id: number): Promise<Customer | undefined>;
+  getCustomerByCustomerId(customerId: string): Promise<Customer | undefined>;
+  createCustomer(customer: InsertCustomer): Promise<Customer>;
+  updateCustomer(id: number, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
+  deleteCustomer(id: number): Promise<boolean>;
+  updateCustomerVisit(id: number, amount: number, points: number): Promise<Customer | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -652,22 +665,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Suppliers
-  async getSuppliers() {
+  async getSuppliers(): Promise<any> {
     return await db.select().from(suppliers).orderBy(suppliers.name);
   }
 
-  async getSupplier(id: number) {
+  async getSupplier(id: number): Promise<any> {
     const [result] = await db.select().from(suppliers).where(eq(suppliers.id, id));
     return result;
   }
 
-  async getSuppliersByStatus(status: string) {
+  async getSuppliersByStatus(status: string): Promise<any> {
     return await db.select().from(suppliers)
       .where(eq(suppliers.status, status))
       .orderBy(suppliers.name);
   }
 
-  async searchSuppliers(query: string) {
+  async searchSuppliers(query: string): Promise<any> {
     return await db.select().from(suppliers)
       .where(
         or(
@@ -679,12 +692,12 @@ export class DatabaseStorage implements IStorage {
       .orderBy(suppliers.name);
   }
 
-  async createSupplier(data: InsertSupplier) {
+  async createSupplier(data: InsertSupplier): Promise<any> {
     const [result] = await db.insert(suppliers).values(data).returning();
     return result;
   }
 
-  async updateSupplier(id: number, data: Partial<InsertSupplier>) {
+  async updateSupplier(id: number, data: Partial<InsertSupplier>): Promise<any> {
     const [result] = await db
       .update(suppliers)
       .set({ ...data, updatedAt: new Date() })
@@ -694,9 +707,89 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async deleteSupplier(id: number) {
+  async deleteSupplier(id: number): Promise<boolean> {
     const result = await db.delete(suppliers).where(eq(suppliers.id, id)).returning();
     return result.length > 0;
+  }
+
+  // Customers
+  async getCustomers(): Promise<Customer[]> {
+    return await db.select().from(customers).orderBy(customers.name);
+  }
+
+  async searchCustomers(query: string): Promise<Customer[]> {
+    return await db.select().from(customers).where(
+      or(
+        ilike(customers.name, `%${query}%`),
+        ilike(customers.customerId, `%${query}%`),
+        ilike(customers.phone, `%${query}%`),
+        ilike(customers.email, `%${query}%`)
+      )
+    ).orderBy(customers.name);
+  }
+
+  async getCustomer(id: number): Promise<Customer | undefined> {
+    const [result] = await db.select().from(customers).where(eq(customers.id, id));
+    return result || undefined;
+  }
+
+  async getCustomerByCustomerId(customerId: string): Promise<Customer | undefined> {
+    const [result] = await db.select().from(customers).where(eq(customers.customerId, customerId));
+    return result || undefined;
+  }
+
+  async createCustomer(customerData: InsertCustomer): Promise<Customer> {
+    // Generate customer ID if not provided
+    if (!customerData.customerId) {
+      const count = await db.select({ count: sql<number>`count(*)` }).from(customers);
+      const customerCount = count[0]?.count || 0;
+      customerData.customerId = `CUST${String(customerCount + 1).padStart(3, '0')}`;
+    }
+
+    const [result] = await db.insert(customers).values(customerData).returning();
+    return result;
+  }
+
+  async updateCustomer(id: number, customerData: Partial<InsertCustomer>): Promise<Customer | undefined> {
+    const [result] = await db.update(customers)
+      .set({ ...customerData, updatedAt: new Date() })
+      .where(eq(customers.id, id))
+      .returning();
+    return result || undefined;
+  }
+
+  async deleteCustomer(id: number): Promise<boolean> {
+    const result = await db.delete(customers).where(eq(customers.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async updateCustomerVisit(id: number, amount: number, points: number): Promise<Customer | undefined> {
+    const customer = await this.getCustomer(id);
+    if (!customer) return undefined;
+
+    const newVisitCount = (customer.visitCount || 0) + 1;
+    const newTotalSpent = parseFloat(customer.totalSpent || '0') + amount;
+    const newPoints = (customer.points || 0) + points;
+
+    // Determine membership level based on total spent
+    let membershipLevel = 'Bronze';
+    if (newTotalSpent >= 1000000) membershipLevel = 'Diamond';
+    else if (newTotalSpent >= 500000) membershipLevel = 'Platinum';
+    else if (newTotalSpent >= 200000) membershipLevel = 'Gold';
+    else if (newTotalSpent >= 50000) membershipLevel = 'Silver';
+
+    const [result] = await db.update(customers)
+      .set({
+        visitCount: newVisitCount,
+        totalSpent: newTotalSpent.toFixed(2),
+        points: newPoints,
+        membershipLevel,
+        updatedAt: new Date()
+      })
+      .where(eq(customers.id, id))
+      .returning();
+
+    return result || undefined;
   }
 }
 
