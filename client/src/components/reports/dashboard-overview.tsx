@@ -9,8 +9,11 @@ import { TrendingUp, DollarSign, ShoppingCart, Users, Clock, Target, Search } fr
 import type { Order, Table as TableType } from "@shared/schema";
 
 export function DashboardOverview() {
-  const [selectedDate, setSelectedDate] = useState<string>(
-    "2025-01-20" // Set to a date that has sample data
+  const [startDate, setStartDate] = useState<string>(
+    "2025-01-15" // Set to a date that has sample data
+  );
+  const [endDate, setEndDate] = useState<string>(
+    "2025-01-20" // End date with sample data
   );
   const queryClient = useQueryClient();
 
@@ -34,26 +37,34 @@ export function DashboardOverview() {
     
     console.log('Dashboard Debug:', {
       totalTransactions: transactions.length,
-      selectedDate,
+      startDate,
+      endDate,
       firstTransaction: transactions[0],
       allTransactionDates: transactions.map((t: any) => new Date(t.createdAt).toDateString())
     });
 
-    const today = new Date(selectedDate);
-    const todayTransactions = transactions.filter((transaction: any) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999); // Include the entire end date
+    
+    const filteredTransactions = transactions.filter((transaction: any) => {
       const transactionDate = new Date(transaction.createdAt || transaction.created_at);
-      return transactionDate.toDateString() === today.toDateString();
+      return transactionDate >= start && transactionDate <= end;
     });
     
-    console.log('Today Transactions:', todayTransactions.length);
+    console.log('Filtered Transactions:', filteredTransactions.length);
 
-    // Today's stats
-    const todayRevenue = todayTransactions.reduce((total: number, transaction: any) => 
+    // Period stats
+    const periodRevenue = filteredTransactions.reduce((total: number, transaction: any) => 
       total + Number(transaction.total), 0
     );
     
-    const todayOrderCount = todayTransactions.length;
-    const todayCustomerCount = todayTransactions.length; // Each transaction represents customers
+    const periodOrderCount = filteredTransactions.length;
+    const periodCustomerCount = filteredTransactions.length; // Each transaction represents customers
+    
+    // Daily average for the period
+    const daysDiff = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+    const dailyAverageRevenue = periodRevenue / daysDiff;
 
     // Current status (for active orders, we need to check the orders table separately)
     const activeOrders = 0; // Will show 0 since we're using transactions data
@@ -75,13 +86,13 @@ export function DashboardOverview() {
     );
 
     // Average order value
-    const averageOrderValue = todayTransactions.length > 0 
-      ? todayRevenue / todayTransactions.length 
+    const averageOrderValue = periodOrderCount > 0 
+      ? periodRevenue / periodOrderCount 
       : 0;
 
-    // Peak hours analysis
+    // Peak hours analysis from filtered transactions
     const hourlyTransactions: { [key: number]: number } = {};
-    todayTransactions.forEach((transaction: any) => {
+    filteredTransactions.forEach((transaction: any) => {
       const hour = new Date(transaction.createdAt || transaction.created_at).getHours();
       hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
     });
@@ -91,9 +102,10 @@ export function DashboardOverview() {
     , "12");
 
     return {
-      todayRevenue,
-      todayOrderCount,
-      todayCustomerCount,
+      periodRevenue,
+      periodOrderCount,
+      periodCustomerCount,
+      dailyAverageRevenue,
       activeOrders: activeOrders,
       occupiedTables: occupiedTables.length,
       monthRevenue,
@@ -136,15 +148,23 @@ export function DashboardOverview() {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>매출 대시보드</CardTitle>
-              <CardDescription>선택한 날짜의 운영 현황을 확인합니다.</CardDescription>
+              <CardDescription>선택한 기간의 운영 현황을 확인합니다.</CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Label htmlFor="date-picker">날짜:</Label>
+              <Label htmlFor="start-date-picker">시작 날짜:</Label>
               <Input
-                id="date-picker"
+                id="start-date-picker"
                 type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-auto"
+              />
+              <Label htmlFor="end-date-picker">종료 날짜:</Label>
+              <Input
+                id="end-date-picker"
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
                 className="w-auto"
               />
               <Button
@@ -167,12 +187,12 @@ export function DashboardOverview() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">일일 매출</p>
+                <p className="text-sm font-medium text-gray-600">기간 매출</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(stats.todayRevenue)}
+                  {formatCurrency(stats.periodRevenue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {formatDate(selectedDate)}
+                  {startDate} ~ {endDate}
                 </p>
               </div>
               <DollarSign className="w-8 h-8 text-green-500" />
@@ -185,7 +205,7 @@ export function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">주문 건수</p>
-                <p className="text-2xl font-bold">{stats.todayOrderCount}</p>
+                <p className="text-2xl font-bold">{stats.periodOrderCount}</p>
                 <p className="text-xs text-gray-500 mt-1">
                   평균 주문가: {formatCurrency(stats.averageOrderValue)}
                 </p>
@@ -200,7 +220,7 @@ export function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">고객 수</p>
-                <p className="text-2xl font-bold">{stats.todayCustomerCount}</p>
+                <p className="text-2xl font-bold">{stats.periodCustomerCount}</p>
                 <p className="text-xs text-gray-500 mt-1">
                   피크 시간: {stats.peakHour}시
                 </p>
@@ -269,15 +289,15 @@ export function DashboardOverview() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>일 매출 목표 달성률</span>
+                <span>기간 매출 목표 달성률</span>
                 <span className="font-medium">
-                  {Math.round((stats.todayRevenue / 500000) * 100)}%
+                  {Math.round((stats.dailyAverageRevenue / 500000) * 100)}%
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
                   className="bg-green-500 h-2 rounded-full transition-all"
-                  style={{ width: `${Math.min((stats.todayRevenue / 500000) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((stats.dailyAverageRevenue / 500000) * 100, 100)}%` }}
                 ></div>
               </div>
             </div>
@@ -286,20 +306,20 @@ export function DashboardOverview() {
               <div className="flex justify-between text-sm">
                 <span>테이블 회전율</span>
                 <span className="font-medium">
-                  {stats.totalTables > 0 ? (stats.todayOrderCount / stats.totalTables).toFixed(1) : 0}회
+                  {stats.totalTables > 0 ? (stats.periodOrderCount / stats.totalTables).toFixed(1) : 0}회
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
                   className="bg-blue-500 h-2 rounded-full transition-all"
-                  style={{ width: `${Math.min((stats.todayOrderCount / stats.totalTables / 5) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((stats.periodOrderCount / stats.totalTables / 5) * 100, 100)}%` }}
                 ></div>
               </div>
             </div>
 
             <div className="pt-2 border-t">
               <div className="text-xs text-gray-500">
-                목표: 일매출 50만원, 테이블당 5회 회전
+                목표: 일평균 매출 50만원, 테이블당 5회 회전
               </div>
             </div>
           </CardContent>
