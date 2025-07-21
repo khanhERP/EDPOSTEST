@@ -55,7 +55,7 @@ export function ShoppingCart({
   return (
     <aside className="w-96 bg-white shadow-material border-l pos-border flex flex-col">
       <div className="p-4 border-b pos-border">
-        <h2 className="text-xl pos-text-primary mb-2 font-semibold">{t('pos.purchaseHistory')}</h2>
+        <h2 className="text-xl pos-text-primary font-semibold pt-[0px] pb-[0px] mt-[10px] mb-[10px]">{t('pos.purchaseHistory')}</h2>
         <div className="flex items-center justify-between text-sm pos-text-secondary">
           <span>{cart.length} {t('common.items')}</span>
           {cart.length > 0 && (
