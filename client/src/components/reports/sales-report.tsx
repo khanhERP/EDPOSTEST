@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Calendar, DollarSign } from "lucide-react";
-import type { Order } from "@shared/schema";
+import type { Transaction } from "@shared/schema";
 
 export function SalesReport() {
   const [dateRange, setDateRange] = useState("week");
