@@ -56,7 +56,8 @@ export const translations = {
       restaurant: '레스토랑 본점',
       logout: '로그아웃',
       items: '개',
-      collapse: '접기'
+      collapse: '접기',
+      products: '상품'
     },
     
     // 네비게이션
@@ -122,6 +123,49 @@ export const translations = {
       reserved: '예약됨',
       outOfService: '사용 불가',
       cleanupComplete: '정리완료'
+    },
+    
+    // 재고 관리
+    inventory: {
+      title: '재고 관리',
+      description: '상품 재고를 관리하고 재고 현황을 확인합니다.',
+      addProduct: '상품 추가',
+      searchProducts: '상품 검색...',
+      lowStock: '재고 부족',
+      outOfStock: '품절',
+      inStock: '재고 있음',
+      allStock: '전체',
+      stockUpdate: '재고 수정',
+      quantity: '수량',
+      notes: '메모'
+    },
+    
+    // 직원 관리
+    employees: {
+      title: '직원 관리',
+      description: '직원 정보를 관리하고 추가/수정할 수 있습니다.',
+      addEmployee: '직원 추가',
+      employeeManagement: '직원 관리'
+    },
+    
+    // 근태 관리
+    attendance: {
+      title: '근태 관리',
+      description: '직원 출퇴근 기록과 근무시간을 관리합니다.',
+      clockInOut: '출퇴근',
+      attendanceRecords: '근태 기록',
+      statistics: '통계'
+    },
+    
+    // 매출 분석
+    reports: {
+      title: '매출 분석',
+      description: '매출 현황과 운영 지표를 분석합니다.',
+      backToTables: '테이블로 돌아가기',
+      dashboard: '대시보드',
+      salesAnalysis: '매출 분석',
+      menuAnalysis: '메뉴 분석',
+      tableAnalysis: '테이블 분석'
     }
   },
   
@@ -162,7 +206,8 @@ export const translations = {
       restaurant: 'Main Restaurant',
       logout: 'Logout',
       items: 'items',
-      collapse: 'Collapse'
+      collapse: 'Collapse',
+      products: 'Products'
     },
     
     // Navigation
@@ -228,6 +273,49 @@ export const translations = {
       reserved: 'Reserved',
       outOfService: 'Out of Service',
       cleanupComplete: 'Cleanup Complete'
+    },
+    
+    // Inventory Management
+    inventory: {
+      title: 'Inventory Management',
+      description: 'Manage product inventory and check stock status.',
+      addProduct: 'Add Product',
+      searchProducts: 'Search products...',
+      lowStock: 'Low Stock',
+      outOfStock: 'Out of Stock',
+      inStock: 'In Stock',
+      allStock: 'All',
+      stockUpdate: 'Stock Update',
+      quantity: 'Quantity',
+      notes: 'Notes'
+    },
+    
+    // Employee Management
+    employees: {
+      title: 'Employee Management',
+      description: 'Manage employee information and add/edit staff.',
+      addEmployee: 'Add Employee',
+      employeeManagement: 'Employee Management'
+    },
+    
+    // Attendance Management
+    attendance: {
+      title: 'Attendance Management',
+      description: 'Manage employee clock-in/out records and work hours.',
+      clockInOut: 'Clock In/Out',
+      attendanceRecords: 'Attendance Records',
+      statistics: 'Statistics'
+    },
+    
+    // Sales Reports
+    reports: {
+      title: 'Sales Analysis',
+      description: 'Analyze sales performance and operational metrics.',
+      backToTables: 'Back to Tables',
+      dashboard: 'Dashboard',
+      salesAnalysis: 'Sales Analysis',
+      menuAnalysis: 'Menu Analysis',
+      tableAnalysis: 'Table Analysis'
     }
   },
   
@@ -268,7 +356,8 @@ export const translations = {
       restaurant: 'Nhà hàng chính',
       logout: 'Đăng xuất',
       items: 'mặt hàng',
-      collapse: 'Thu gọn'
+      collapse: 'Thu gọn',
+      products: 'Sản phẩm'
     },
     
     // Điều hướng
@@ -334,6 +423,49 @@ export const translations = {
       reserved: 'Đã đặt',
       outOfService: 'Ngưng hoạt động',
       cleanupComplete: 'Dọn dẹp xong'
+    },
+    
+    // Quản lý kho
+    inventory: {
+      title: 'Quản lý kho',
+      description: 'Quản lý kho hàng sản phẩm và kiểm tra tình trạng tồn kho.',
+      addProduct: 'Thêm sản phẩm',
+      searchProducts: 'Tìm kiếm sản phẩm...',
+      lowStock: 'Tồn kho thấp',
+      outOfStock: 'Hết hàng',
+      inStock: 'Còn hàng',
+      allStock: 'Tất cả',
+      stockUpdate: 'Cập nhật tồn kho',
+      quantity: 'Số lượng',
+      notes: 'Ghi chú'
+    },
+    
+    // Quản lý nhân viên
+    employees: {
+      title: 'Quản lý nhân viên',
+      description: 'Quản lý thông tin nhân viên và thêm/sửa nhân viên.',
+      addEmployee: 'Thêm nhân viên',
+      employeeManagement: 'Quản lý nhân viên'
+    },
+    
+    // Quản lý chấm công
+    attendance: {
+      title: 'Quản lý chấm công',
+      description: 'Quản lý bản ghi chấm công và giờ làm việc của nhân viên.',
+      clockInOut: 'Chấm công',
+      attendanceRecords: 'Bản ghi chấm công',
+      statistics: 'Thống kê'
+    },
+    
+    // Báo cáo bán hàng
+    reports: {
+      title: 'Phân tích doanh thu',
+      description: 'Phân tích hiệu suất bán hàng và chỉ số hoạt động.',
+      backToTables: 'Quay lại bàn',
+      dashboard: 'Bảng điều khiển',
+      salesAnalysis: 'Phân tích doanh thu',
+      menuAnalysis: 'Phân tích thực đơn',
+      tableAnalysis: 'Phân tích bàn'
     }
   }
 };

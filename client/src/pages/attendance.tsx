@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, Users } from "lucide-react";
 import { Link } from "wouter";
+import { useTranslation } from "@/lib/i18n";
 
 export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-green-50 grocery-bg">
@@ -27,19 +29,19 @@ export default function AttendancePage() {
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">근태 관리</h1>
-              <p className="mt-2 text-gray-600">직원 출퇴근 기록과 근무시간을 관리합니다.</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t('attendance.title')}</h1>
+              <p className="mt-2 text-gray-600">{t('attendance.description')}</p>
             </div>
             <div className="flex gap-4">
               <Link href="/employees">
                 <Button variant="outline">
                   <Users className="w-4 h-4 mr-2" />
-                  직원 관리
+                  {t('employees.employeeManagement')}
                 </Button>
               </Link>
               <Link href="/">
                 <Button variant="outline">
-                  POS로 돌아가기
+                  {t('tables.backToPOS')}
                 </Button>
               </Link>
             </div>
@@ -49,15 +51,15 @@ export default function AttendancePage() {
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="clock" className="flex items-center gap-2">
                 <Clock className="w-4 h-4" />
-                출퇴근
+                {t('attendance.clockInOut')}
               </TabsTrigger>
               <TabsTrigger value="records" className="flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
-                근태 기록
+                {t('attendance.attendanceRecords')}
               </TabsTrigger>
               <TabsTrigger value="stats" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                통계
+                {t('attendance.statistics')}
               </TabsTrigger>
             </TabsList>
 

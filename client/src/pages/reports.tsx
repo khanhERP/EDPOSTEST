@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, PieChart, TrendingUp, Utensils } from "lucide-react";
 import { Link } from "wouter";
+import { useTranslation } from "@/lib/i18n";
 
 export default function ReportsPage() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-green-50 grocery-bg">
       {/* Header */}
@@ -24,13 +26,13 @@ export default function ReportsPage() {
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">매출 분석</h1>
-              <p className="mt-2 text-gray-600">매출 현황과 운영 지표를 분석합니다.</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t('reports.title')}</h1>
+              <p className="mt-2 text-gray-600">{t('reports.description')}</p>
             </div>
             <div className="flex gap-4">
               <Link href="/">
                 <Button variant="outline">
-                  테이블로 돌아가기
+                  {t('reports.backToTables')}
                 </Button>
               </Link>
             </div>
@@ -40,19 +42,19 @@ export default function ReportsPage() {
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />
-                대시보드
+                {t('reports.dashboard')}
               </TabsTrigger>
               <TabsTrigger value="sales" className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
-                매출 분석
+                {t('reports.salesAnalysis')}
               </TabsTrigger>
               <TabsTrigger value="menu" className="flex items-center gap-2">
                 <PieChart className="w-4 h-4" />
-                메뉴 분석
+                {t('reports.menuAnalysis')}
               </TabsTrigger>
               <TabsTrigger value="table" className="flex items-center gap-2">
                 <Utensils className="w-4 h-4" />
-                테이블 분석
+                {t('reports.tableAnalysis')}
               </TabsTrigger>
             </TabsList>
 

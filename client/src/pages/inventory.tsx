@@ -13,12 +13,13 @@ import { z } from "zod";
 import { Plus, Package, AlertTriangle, TrendingUp, Search, Edit, RotateCcw } from "lucide-react";
 import { POSHeader } from "@/components/pos/header";
 import { RightSidebar } from "@/components/ui/right-sidebar";
+import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import type { Product, Category } from "@shared/schema";
 
 const stockUpdateSchema = z.object({
   productId: z.number(),
-  quantity: z.number().min(1, "수량은 1 이상이어야 합니다"),
+  quantity: z.number().min(1, "Quantity must be at least 1"),
   type: z.enum(["add", "subtract", "set"]),
   notes: z.string().optional(),
 });
@@ -26,6 +27,8 @@ const stockUpdateSchema = z.object({
 type StockUpdateForm = z.infer<typeof stockUpdateSchema>;
 
 export default function InventoryPage() {
+  const { t } = useTranslation();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [stockFilter, setStockFilter] = useState<string>("all");
@@ -88,9 +91,9 @@ export default function InventoryPage() {
   };
 
   const getStockStatus = (stock: number) => {
-    if (stock === 0) return { label: "품절", color: "bg-red-500" };
-    if (stock <= 10) return { label: "부족", color: "bg-yellow-500" };
-    return { label: "충분", color: "bg-green-500" };
+    if (stock === 0) return { label: t('inventory.outOfStock'), color: "bg-red-500" };
+    if (stock <= 10) return { label: t('inventory.lowStock'), color: "bg-yellow-500" };
+    return { label: t('inventory.inStock'), color: "bg-green-500" };
   };
 
   return (
@@ -103,8 +106,8 @@ export default function InventoryPage() {
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">재고 관리</h1>
-              <p className="text-gray-600 mt-2">상품 재고를 효율적으로 관리하세요</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t('inventory.title')}</h1>
+              <p className="text-gray-600 mt-2">{t('inventory.description')}</p>
             </div>
           </div>
 
@@ -112,7 +115,7 @@ export default function InventoryPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">총 상품 수</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">{t('common.total')} {t('common.products')}</CardTitle>
                 <Package className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
@@ -122,7 +125,7 @@ export default function InventoryPage() {
 
             <Card className="border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">재고 부족</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">{t('inventory.lowStock')}</CardTitle>
                 <AlertTriangle className="h-4 w-4 text-yellow-600" />
               </CardHeader>
               <CardContent>
@@ -132,7 +135,7 @@ export default function InventoryPage() {
 
             <Card className="border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">품절 상품</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">{t('inventory.outOfStock')} {t('common.products')}</CardTitle>
                 <AlertTriangle className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
@@ -142,7 +145,7 @@ export default function InventoryPage() {
 
             <Card className="border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">총 재고 가치</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">{t('common.total')} {t('inventory.stockValue', { defaultValue: '재고 가치' })}</CardTitle>
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
@@ -159,7 +162,7 @@ export default function InventoryPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder="상품명 또는 SKU로 검색..."
+                      placeholder={t('inventory.searchProducts')}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
@@ -168,10 +171,10 @@ export default function InventoryPage() {
                 </div>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                   <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="카테고리 선택" />
+                    <SelectValue placeholder={t('common.category')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">모든 카테고리</SelectItem>
+                    <SelectItem value="all">{t('pos.allCategories')}</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name}
@@ -181,13 +184,13 @@ export default function InventoryPage() {
                 </Select>
                 <Select value={stockFilter} onValueChange={setStockFilter}>
                   <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="재고 상태" />
+                    <SelectValue placeholder={t('inventory.stockStatus', { defaultValue: '재고 상태' })} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">모든 상품</SelectItem>
-                    <SelectItem value="in">재고 충분</SelectItem>
-                    <SelectItem value="low">재고 부족</SelectItem>
-                    <SelectItem value="out">품절</SelectItem>
+                    <SelectItem value="all">{t('inventory.allStock')}</SelectItem>
+                    <SelectItem value="in">{t('inventory.inStock')}</SelectItem>
+                    <SelectItem value="low">{t('inventory.lowStock')}</SelectItem>
+                    <SelectItem value="out">{t('inventory.outOfStock')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -197,7 +200,7 @@ export default function InventoryPage() {
           {/* Products Table */}
           <Card className="border-green-200">
             <CardHeader>
-              <CardTitle>상품 재고 현황</CardTitle>
+              <CardTitle>{t('inventory.stockStatus', { defaultValue: '상품 재고 현황' })}</CardTitle>
             </CardHeader>
             <CardContent>
               {productsLoading ? (
