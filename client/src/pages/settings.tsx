@@ -30,12 +30,14 @@ import {
   Search,
   Clock
 } from "lucide-react";
+import { EmployeeFormModal } from "@/components/employees/employee-form-modal";
 
 export default function Settings() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("store");
+  const [showAddEmployeeModal, setShowAddEmployeeModal] = useState(false);
   
   // Fetch store settings
   const { data: storeData, isLoading } = useQuery<StoreSettings>({
@@ -375,7 +377,10 @@ export default function Settings() {
                         검색
                       </Button>
                     </div>
-                    <Button className="bg-green-600 hover:bg-green-700">
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => setShowAddEmployeeModal(true)}
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       직원 추가
                     </Button>
@@ -550,6 +555,13 @@ export default function Settings() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Employee Add Modal */}
+      <EmployeeFormModal
+        isOpen={showAddEmployeeModal}
+        onClose={() => setShowAddEmployeeModal(false)}
+        mode="create"
+      />
     </div>
   );
 }
