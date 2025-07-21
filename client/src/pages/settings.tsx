@@ -43,14 +43,17 @@ export default function Settings() {
     }
   });
 
-  // Payment methods state
+  // Payment methods state - Vietnamese market localized
   const [paymentMethods, setPaymentMethods] = useState([
-    { id: 1, name: "현금", type: "cash", enabled: true, icon: "💵" },
-    { id: 2, name: "신용카드", type: "card", enabled: true, icon: "💳" },
-    { id: 3, name: "체크카드", type: "debit", enabled: true, icon: "💳" },
-    { id: 4, name: "카카오페이", type: "digital", enabled: true, icon: "📱" },
-    { id: 5, name: "네이버페이", type: "digital", enabled: false, icon: "📱" },
-    { id: 6, name: "페이코", type: "digital", enabled: false, icon: "📱" }
+    { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
+    { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
+    { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
+    { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
+    { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
+    { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
+    { id: 7, name: "Ngân hàng trực tuyến", nameKey: "banking", type: "banking", enabled: false, icon: "🏦" },
+    { id: 8, name: "ShopeePay", nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
+    { id: 9, name: "GrabPay", nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" }
   ]);
 
   const handleStoreSettingChange = (field: string, value: string) => {
@@ -84,7 +87,8 @@ export default function Settings() {
   const addPaymentMethod = () => {
     const newMethod = {
       id: paymentMethods.length + 1,
-      name: "새 결제 수단",
+      name: "Phương thức thanh toán mới",
+      nameKey: "newPayment",
       type: "custom",
       enabled: false,
       icon: "💳"
@@ -148,7 +152,7 @@ export default function Settings() {
             </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
-              {t('settings.payments')}
+              {t('settings.paymentMethods')}
             </TabsTrigger>
           </TabsList>
 
@@ -364,7 +368,9 @@ export default function Settings() {
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <span className="text-2xl">{method.icon}</span>
-                            <span className="font-medium">{method.name}</span>
+                            <span className="font-medium">
+                              {method.nameKey ? t(`settings.payments.${method.nameKey}`) : method.name}
+                            </span>
                           </div>
                           <div className="flex items-center gap-2">
                             <Switch
