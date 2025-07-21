@@ -92,6 +92,34 @@ export const translations = {
       backToHome: '홈으로 돌아가기'
     },
 
+    // Attendance
+    attendance: {
+      title: '근태 관리',
+      description: '직원 출퇴근 및 근무 시간을 관리합니다.',
+      clockInOut: '출퇴근',
+      attendanceRecords: '근태 기록',
+      statistics: '통계'
+    },
+
+    // Employees
+    employees: {
+      title: '직원 관리',
+      description: '직원 정보를 등록하고 관리합니다.',
+      employeeManagement: '직원 관리'
+    },
+
+    // Inventory
+    inventory: {
+      title: '재고 관리',
+      description: '제품 재고와 카테고리를 관리합니다.'
+    },
+
+    // Reports
+    reports: {
+      title: '매출 분석',
+      description: '매출 현황과 리포트를 확인합니다.'
+    },
+
     // Settings
     settings: {
       title: '시스템 설정',
@@ -222,6 +250,34 @@ export const translations = {
       backToHome: 'Back to Home'
     },
 
+    // Attendance
+    attendance: {
+      title: 'Attendance Management',
+      description: 'Manage employee clock-in/out and working hours.',
+      clockInOut: 'Clock In/Out',
+      attendanceRecords: 'Attendance Records',
+      statistics: 'Statistics'
+    },
+
+    // Employees
+    employees: {
+      title: 'Employee Management',
+      description: 'Register and manage employee information.',
+      employeeManagement: 'Employee Management'
+    },
+
+    // Inventory
+    inventory: {
+      title: 'Inventory Management',
+      description: 'Manage product inventory and categories.'
+    },
+
+    // Reports
+    reports: {
+      title: 'Sales Reports',
+      description: 'View sales status and reports.'
+    },
+
     // Settings
     settings: {
       title: 'System Settings',
@@ -350,6 +406,34 @@ export const translations = {
       title: 'Không tìm thấy trang',
       description: 'Trang bạn yêu cầu không tồn tại hoặc đã được chuyển.',
       backToHome: 'Về trang chủ'
+    },
+
+    // Attendance
+    attendance: {
+      title: 'Quản lý chấm công',
+      description: 'Quản lý giờ vào/ra và thời gian làm việc của nhân viên.',
+      clockInOut: 'Chấm công',
+      attendanceRecords: 'Bản ghi chấm công',
+      statistics: 'Thống kê'
+    },
+
+    // Employees
+    employees: {
+      title: 'Quản lý nhân viên',
+      description: 'Đăng ký và quản lý thông tin nhân viên.',
+      employeeManagement: 'Quản lý nhân viên'
+    },
+
+    // Inventory
+    inventory: {
+      title: 'Quản lý kho',
+      description: 'Quản lý tồn kho sản phẩm và danh mục.'
+    },
+
+    // Reports
+    reports: {
+      title: 'Báo cáo bán hàng',
+      description: 'Xem tình trạng bán hàng và báo cáo.'
     },
 
     // Cài đặt
