@@ -367,28 +367,28 @@ export default function Settings() {
                   <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
                       <Input
-                        placeholder={t('employees.searchPlaceholder')}
+                        placeholder="직원 검색..."
                         className="w-64"
                       />
                       <Button variant="outline" size="sm">
                         <Search className="w-4 h-4 mr-2" />
-                        {t('common.search')}
+                        검색
                       </Button>
                     </div>
                     <Button className="bg-green-600 hover:bg-green-700">
                       <Plus className="w-4 h-4 mr-2" />
-                      {t('employees.addEmployee')}
+                      직원 추가
                     </Button>
                   </div>
 
                   <div className="rounded-md border">
                     <div className="grid grid-cols-6 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                      <div>{t('employees.employeeId')}</div>
-                      <div>{t('employees.name')}</div>
-                      <div>{t('employees.role')}</div>
-                      <div>{t('employees.phone')}</div>
-                      <div>{t('employees.status')}</div>
-                      <div className="text-center">{t('common.actions')}</div>
+                      <div>직원 ID</div>
+                      <div>이름</div>
+                      <div>역할</div>
+                      <div>전화번호</div>
+                      <div>상태</div>
+                      <div className="text-center">작업</div>
                     </div>
                     
                     <div className="divide-y">
@@ -462,11 +462,11 @@ export default function Settings() {
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm">
                         <Users className="w-4 h-4 mr-2" />
-                        {t('settings.goToEmployees')}
+                        직원 관리로 이동
                       </Button>
                       <Button variant="outline" size="sm">
                         <Clock className="w-4 h-4 mr-2" />
-                        {t('attendance.title')}
+                        근태 관리
                       </Button>
                     </div>
                   </div>
