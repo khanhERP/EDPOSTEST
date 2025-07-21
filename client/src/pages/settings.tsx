@@ -28,7 +28,8 @@ import {
   Trash2,
   Edit,
   Search,
-  Clock
+  Clock,
+  UserCheck
 } from "lucide-react";
 import { EmployeeFormModal } from "@/components/employees/employee-form-modal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -459,7 +460,7 @@ export default function Settings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
             <TabsTrigger value="store" className="flex items-center gap-2">
               <Store className="w-4 h-4" />
               {t('settings.storeInfo')}
@@ -471,6 +472,10 @@ export default function Settings() {
             <TabsTrigger value="employees" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               {t('settings.employees')}
+            </TabsTrigger>
+            <TabsTrigger value="customers" className="flex items-center gap-2">
+              <UserCheck className="w-4 h-4" />
+              고객 관리
             </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
@@ -935,6 +940,126 @@ export default function Settings() {
                       <Button variant="outline" size="sm">
                         <Clock className="w-4 h-4 mr-2" />
                         근태 관리
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Customers Tab */}
+          <TabsContent value="customers">
+            <div className="space-y-6">
+              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserCheck className="w-5 h-5 text-green-600" />
+                    고객 관리
+                  </CardTitle>
+                  <CardDescription>고객 정보를 등록하고 관리하세요</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center gap-4">
+                      <Input
+                        placeholder="고객 검색..."
+                        className="w-64"
+                      />
+                      <Button variant="outline" size="sm">
+                        <Search className="w-4 h-4 mr-2" />
+                        검색
+                      </Button>
+                    </div>
+                    <Button className="bg-green-600 hover:bg-green-700">
+                      <Plus className="w-4 h-4 mr-2" />
+                      고객 등록
+                    </Button>
+                  </div>
+
+                  <div className="rounded-md border">
+                    <div className="grid grid-cols-7 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                      <div>고객 ID</div>
+                      <div>이름</div>
+                      <div>전화번호</div>
+                      <div>이메일</div>
+                      <div>등급</div>
+                      <div>총 주문 금액</div>
+                      <div className="text-center">작업</div>
+                    </div>
+                    
+                    <div className="divide-y">
+                      <div className="grid grid-cols-7 gap-4 p-4 items-center">
+                        <div className="font-mono text-sm">CUS001</div>
+                        <div className="font-medium">김고객</div>
+                        <div className="text-sm text-gray-600">010-1111-2222</div>
+                        <div className="text-sm text-gray-600">customer1@example.com</div>
+                        <div>
+                          <Badge variant="default" className="bg-amber-100 text-amber-800">골드</Badge>
+                        </div>
+                        <div className="font-medium">₩350,000</div>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-7 gap-4 p-4 items-center">
+                        <div className="font-mono text-sm">CUS002</div>
+                        <div className="font-medium">이단골</div>
+                        <div className="text-sm text-gray-600">010-2222-3333</div>
+                        <div className="text-sm text-gray-600">customer2@example.com</div>
+                        <div>
+                          <Badge variant="secondary" className="bg-gray-100 text-gray-800">실버</Badge>
+                        </div>
+                        <div className="font-medium">₩180,000</div>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-7 gap-4 p-4 items-center">
+                        <div className="font-mono text-sm">CUS003</div>
+                        <div className="font-medium">박신규</div>
+                        <div className="text-sm text-gray-600">010-3333-4444</div>
+                        <div className="text-sm text-gray-600">customer3@example.com</div>
+                        <div>
+                          <Badge variant="outline" className="text-green-700 border-green-300">브론즈</Badge>
+                        </div>
+                        <div className="font-medium">₩45,000</div>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center mt-6">
+                    <div className="text-sm text-gray-600">
+                      총 3명의 고객이 등록되어 있습니다.
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <UserCheck className="w-4 h-4 mr-2" />
+                        고객 분석
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Mail className="w-4 h-4 mr-2" />
+                        마케팅 메시지
                       </Button>
                     </div>
                   </div>
