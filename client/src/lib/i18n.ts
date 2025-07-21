@@ -218,7 +218,17 @@ export const translations = {
     pos: {
       title: 'POS 시스템',
       cashierName: '담당자',
-      defaultCashier: '김담당자'
+      defaultCashier: '김담당자',
+      cart: '장바구니',
+      emptyCart: '장바구니가 비어있습니다',
+      addProductsToStart: '상품을 추가해서 시작하세요',
+      clearCart: '장바구니 비우기',
+      addedToCart: '장바구니에 추가됨',
+      outOfStock: '재고 부족',
+      currentlyOutOfStock: '현재 재고가 없습니다',
+      productScanned: '상품 스캔됨',
+      scanFailed: '스캔 실패',
+      productNotFound: '상품을 찾을 수 없습니다'
     },
 
     // Tables
@@ -306,7 +316,17 @@ export const translations = {
     pos: {
       title: 'POS System',
       cashierName: 'Cashier',
-      defaultCashier: 'John Smith'
+      defaultCashier: 'John Smith',
+      cart: 'Cart',
+      emptyCart: 'Cart is empty',
+      addProductsToStart: 'Add products to get started',
+      clearCart: 'Clear Cart',
+      addedToCart: 'added to cart',
+      outOfStock: 'Out of Stock',
+      currentlyOutOfStock: 'is currently out of stock',
+      productScanned: 'Product Scanned',
+      scanFailed: 'Scan Failed',
+      productNotFound: 'Product not found'
     },
 
 
@@ -670,7 +690,17 @@ export const translations = {
     pos: {
       title: 'Hệ thống POS',
       cashierName: 'Thu ngân',
-      defaultCashier: 'Nguyễn Thu Ngân'
+      defaultCashier: 'Nguyễn Thu Ngân',
+      cart: 'Giỏ hàng',
+      emptyCart: 'Giỏ hàng trống',
+      addProductsToStart: 'Thêm sản phẩm để bắt đầu',
+      clearCart: 'Xóa giỏ hàng',
+      addedToCart: 'đã thêm vào giỏ hàng',
+      outOfStock: 'Hết hàng',
+      currentlyOutOfStock: 'hiện tại đã hết hàng',
+      productScanned: 'Đã quét sản phẩm',
+      scanFailed: 'Quét thất bại',
+      productNotFound: 'Không tìm thấy sản phẩm'
     },
 
     // Tables
