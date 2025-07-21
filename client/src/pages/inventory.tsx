@@ -145,7 +145,7 @@ export default function InventoryPage() {
 
             <Card className="border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">{t('common.total')} {t('inventory.stockValue', { defaultValue: '재고 가치' })}</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">{t('common.total')} {t('inventory.stockValue')}</CardTitle>
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
@@ -184,7 +184,7 @@ export default function InventoryPage() {
                 </Select>
                 <Select value={stockFilter} onValueChange={setStockFilter}>
                   <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder={t('inventory.stockStatus', { defaultValue: '재고 상태' })} />
+                    <SelectValue placeholder={t('inventory.stockStatus')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t('inventory.allStock')}</SelectItem>
@@ -200,27 +200,27 @@ export default function InventoryPage() {
           {/* Products Table */}
           <Card className="border-green-200">
             <CardHeader>
-              <CardTitle>{t('inventory.stockStatus', { defaultValue: '상품 재고 현황' })}</CardTitle>
+              <CardTitle>{t('inventory.stockStatus')}</CardTitle>
             </CardHeader>
             <CardContent>
               {productsLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
-                  <p className="mt-4 text-gray-600">재고 정보를 불러오는 중...</p>
+                  <p className="mt-4 text-gray-600">{t('inventory.loading')}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-green-200">
-                        <th className="text-left py-3 px-4 font-medium text-gray-700">상품명</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">{t('inventory.productName')}</th>
                         <th className="text-left py-3 px-4 font-medium text-gray-700">SKU</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-700">카테고리</th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">현재 재고</th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">상태</th>
-                        <th className="text-right py-3 px-4 font-medium text-gray-700">단가</th>
-                        <th className="text-right py-3 px-4 font-medium text-gray-700">재고 가치</th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">관리</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">{t('common.category')}</th>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">{t('inventory.currentStock')}</th>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">{t('common.status')}</th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-700">{t('inventory.unitPrice')}</th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-700">{t('inventory.stockValue')}</th>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">{t('inventory.management')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -237,7 +237,7 @@ export default function InventoryPage() {
                             <td className="py-4 px-4 text-gray-600">{product.sku}</td>
                             <td className="py-4 px-4">
                               <Badge variant="outline" className="text-green-700 border-green-300">
-                                {category?.name || "미분류"}
+                                {category?.name || t('inventory.uncategorized')}
                               </Badge>
                             </td>
                             <td className="py-4 px-4 text-center">
@@ -262,7 +262,7 @@ export default function InventoryPage() {
                                 className="text-green-600 border-green-300 hover:bg-green-50"
                               >
                                 <Edit className="h-4 w-4 mr-1" />
-                                수정
+                                {t('inventory.edit')}
                               </Button>
                             </td>
                           </tr>
@@ -274,7 +274,7 @@ export default function InventoryPage() {
                   {filteredProducts.length === 0 && (
                     <div className="text-center py-12">
                       <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600">조건에 맞는 상품이 없습니다.</p>
+                      <p className="text-gray-600">{t('inventory.noProducts')}</p>
                     </div>
                   )}
                 </div>
@@ -288,7 +288,7 @@ export default function InventoryPage() {
       <Dialog open={showStockDialog} onOpenChange={setShowStockDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>재고 수정</DialogTitle>
+            <DialogTitle>{t('inventory.stockUpdate')}</DialogTitle>
           </DialogHeader>
           
           {selectedProduct && (
@@ -296,7 +296,7 @@ export default function InventoryPage() {
               <form onSubmit={stockUpdateForm.handleSubmit(onStockUpdate)} className="space-y-4">
                 <div className="bg-green-50 p-4 rounded-lg">
                   <h3 className="font-medium text-gray-900">{selectedProduct.name}</h3>
-                  <p className="text-sm text-gray-600">현재 재고: {selectedProduct.stock}개</p>
+                  <p className="text-sm text-gray-600">{t('inventory.currentStockLabel')}: {selectedProduct.stock}{t('common.items')}</p>
                 </div>
 
                 <FormField
@@ -304,17 +304,17 @@ export default function InventoryPage() {
                   name="type"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>수정 유형</FormLabel>
+                      <FormLabel>{t('inventory.stockUpdateType')}</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="수정 유형 선택" />
+                            <SelectValue placeholder={t('inventory.selectUpdateType')} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="add">재고 추가</SelectItem>
-                          <SelectItem value="subtract">재고 차감</SelectItem>
-                          <SelectItem value="set">재고 설정</SelectItem>
+                          <SelectItem value="add">{t('inventory.addStock')}</SelectItem>
+                          <SelectItem value="subtract">{t('inventory.subtractStock')}</SelectItem>
+                          <SelectItem value="set">{t('inventory.setStock')}</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -327,12 +327,12 @@ export default function InventoryPage() {
                   name="quantity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>수량</FormLabel>
+                      <FormLabel>{t('inventory.quantity')}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min="1"
-                          placeholder="수량 입력"
+                          placeholder={t('inventory.quantityInput')}
                           {...field}
                           onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                         />
@@ -347,9 +347,9 @@ export default function InventoryPage() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>메모 (선택사항)</FormLabel>
+                      <FormLabel>{t('inventory.notesOptional')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="변경 사유나 메모" {...field} />
+                        <Input placeholder={t('inventory.changeReason')} {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -362,7 +362,7 @@ export default function InventoryPage() {
                     variant="outline"
                     onClick={() => setShowStockDialog(false)}
                   >
-                    취소
+                    {t('common.cancel')}
                   </Button>
                   <Button
                     type="submit"
@@ -372,10 +372,10 @@ export default function InventoryPage() {
                     {updateStockMutation.isPending ? (
                       <>
                         <RotateCcw className="h-4 w-4 mr-2 animate-spin" />
-                        처리중...
+                        {t('inventory.processing')}
                       </>
                     ) : (
-                      "재고 수정"
+                      t('inventory.stockUpdate')
                     )}
                   </Button>
                 </div>
