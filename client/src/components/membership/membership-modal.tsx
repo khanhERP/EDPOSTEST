@@ -113,7 +113,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
   const filteredCustomers = customers?.filter(customer => {
     const matchesSearch = customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          customer.customerId?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesTier = !selectedTier || customer.membershipLevel?.toLowerCase().includes(selectedTier.toLowerCase());
+    const matchesTier = !selectedTier || selectedTier === 'all' || customer.membershipLevel?.toLowerCase().includes(selectedTier.toLowerCase());
     return matchesSearch && matchesTier;
   }) || [];
 
@@ -221,7 +221,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
                   <SelectValue placeholder="등급별 필터" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">전체</SelectItem>
+                  <SelectItem value="all">전체</SelectItem>
                   <SelectItem value="silver">실버</SelectItem>
                   <SelectItem value="gold">골드</SelectItem>
                   <SelectItem value="vip">VIP</SelectItem>
