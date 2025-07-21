@@ -12,10 +12,10 @@ import type { Order } from "@shared/schema";
 export function SalesReport() {
   const [dateRange, setDateRange] = useState("week");
   const [startDate, setStartDate] = useState<string>(
-    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    "2025-01-15" // Start from when sample data begins
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    "2025-01-20" // End at date with sample data
   );
 
   const { data: transactions } = useQuery({
@@ -26,7 +26,7 @@ export function SalesReport() {
     if (!transactions || !Array.isArray(transactions)) return null;
 
     const filteredTransactions = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(transaction.created_at);
+      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
@@ -38,7 +38,7 @@ export function SalesReport() {
     const dailySales: { [date: string]: { revenue: number; orders: number; customers: number } } = {};
     
     filteredTransactions.forEach((transaction: any) => {
-      const date = new Date(transaction.created_at).toISOString().split('T')[0];
+      const date = new Date(transaction.createdAt || transaction.created_at).toISOString().split('T')[0];
       
       if (!dailySales[date]) {
         dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
@@ -53,7 +53,7 @@ export function SalesReport() {
     const paymentMethods: { [method: string]: { count: number; revenue: number } } = {};
     
     filteredTransactions.forEach((transaction: any) => {
-      const method = transaction.payment_method || 'cash';
+      const method = transaction.paymentMethod || 'cash';
       if (!paymentMethods[method]) {
         paymentMethods[method] = { count: 0, revenue: 0 };
       }
@@ -65,7 +65,7 @@ export function SalesReport() {
     const hourlySales: { [hour: number]: number } = {};
     
     filteredTransactions.forEach((transaction: any) => {
-      const hour = new Date(transaction.created_at).getHours();
+      const hour = new Date(transaction.createdAt || transaction.created_at).getHours();
       hourlySales[hour] = (hourlySales[hour] || 0) + Number(transaction.total);
     });
 

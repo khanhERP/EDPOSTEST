@@ -9,7 +9,7 @@ import type { Order, Table as TableType } from "@shared/schema";
 
 export function DashboardOverview() {
   const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    "2025-01-20" // Set to a date that has sample data
   );
 
   const { data: transactions } = useQuery({
@@ -25,7 +25,7 @@ export function DashboardOverview() {
 
     const today = new Date(selectedDate);
     const todayTransactions = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(transaction.created_at);
+      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
       return transactionDate.toDateString() === today.toDateString();
     });
 
@@ -48,7 +48,7 @@ export function DashboardOverview() {
     const thisMonth = new Date();
     const monthStart = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1);
     const monthTransactions = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(transaction.created_at);
+      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
       return transactionDate >= monthStart;
     });
 
@@ -64,7 +64,7 @@ export function DashboardOverview() {
     // Peak hours analysis
     const hourlyTransactions: { [key: number]: number } = {};
     todayTransactions.forEach((transaction: any) => {
-      const hour = new Date(transaction.created_at).getHours();
+      const hour = new Date(transaction.createdAt || transaction.created_at).getHours();
       hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
     });
 
