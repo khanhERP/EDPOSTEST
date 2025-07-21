@@ -1,5 +1,5 @@
 import { pgTable, text, serial, decimal, integer, timestamp, boolean } from "drizzle-orm/pg-core";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
 
@@ -150,42 +150,6 @@ export const insertProductSchema = createInsertSchema(products).omit({
   stock: z.number().min(0, "Stock cannot be negative"),
 });
 
-export const selectProductSchema = createSelectSchema(products);
-
-export type Product = typeof products.$inferSelect;
-export type InsertProduct = z.infer<typeof insertProductSchema>;
-export type Category = typeof categories.$inferSelect;
-export type InsertCategory = z.infer<typeof insertCategorySchema>;
-
-// Customer table schema
-export const customers = pgTable("customers", {
-  id: serial("id").primaryKey(),
-  customerId: text("customer_id").notNull().unique(),
-  name: text("name").notNull(),
-  phone: text("phone").notNull(),
-  email: text("email"),
-  address: text("address"),
-  birthDate: text("birth_date"),
-  grade: text("grade").notNull().default("bronze"), // bronze, silver, gold, vip
-  totalSpent: decimal("total_spent", { precision: 10, scale: 2 }).notNull().default("0"),
-  visitCount: integer("visit_count").notNull().default(0),
-  notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const insertCustomerSchema = createInsertSchema(customers).omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-    totalSpent: true,
-    visitCount: true,
-});
-export const selectCustomerSchema = createSelectSchema(customers);
-
-export type Customer = typeof customers.$inferSelect;
-export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
-
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
   id: true,
   createdAt: true,
@@ -257,6 +221,8 @@ export const insertSupplierSchema = createInsertSchema(suppliers).omit({
   email: z.string().email("Invalid email format").optional().or(z.literal("")),
 });
 
+export type Category = typeof categories.$inferSelect;
+export type Product = typeof products.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type TransactionItem = typeof transactionItems.$inferSelect;
 export type Employee = typeof employees.$inferSelect;
@@ -267,6 +233,8 @@ export type OrderItem = typeof orderItems.$inferSelect;
 export type StoreSettings = typeof storeSettings.$inferSelect;
 export type Supplier = typeof suppliers.$inferSelect;
 
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
+export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type InsertTransactionItem = z.infer<typeof insertTransactionItemSchema>;
 export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
