@@ -8,8 +8,14 @@ interface LanguageStore {
 }
 
 export const useLanguageStore = create<LanguageStore>((set) => ({
-  currentLanguage: 'ko' as Language,
-  setLanguage: (language: Language) => set({ currentLanguage: language }),
+  currentLanguage: (typeof window !== 'undefined' ? localStorage.getItem('language') as Language : null) || 'ko',
+  setLanguage: (language: Language) => {
+    console.log('🌐 언어 변경 실행:', language);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('language', language);
+    }
+    set({ currentLanguage: language });
+  },
 }));
 
 export const translations = {
@@ -262,7 +268,12 @@ export const useTranslation = () => {
       value = value?.[k];
     }
     
-    return value || key;
+    const result = value || key;
+    // 번역 결과 확인을 위한 디버그 로그 (일부 키만)
+    if (key.includes('nav.') || key.includes('common.logout')) {
+      console.log(`번역 [${currentLanguage}]: ${key} => ${result}`);
+    }
+    return result;
   };
   
   return { t, currentLanguage };

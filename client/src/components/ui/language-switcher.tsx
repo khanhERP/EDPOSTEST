@@ -19,6 +19,11 @@ export function LanguageSwitcher() {
   
   const currentLang = languages.find(lang => lang.code === currentLanguage);
 
+  const handleLanguageChange = (langCode: Language) => {
+    console.log('언어 변경 클릭:', langCode);
+    setLanguage(langCode);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -32,7 +37,7 @@ export function LanguageSwitcher() {
         {languages.map((language) => (
           <DropdownMenuItem
             key={language.code}
-            onClick={() => setLanguage(language.code)}
+            onClick={() => handleLanguageChange(language.code)}
             className={currentLanguage === language.code ? "bg-accent" : ""}
           >
             <span className="mr-2">{language.flag}</span>
