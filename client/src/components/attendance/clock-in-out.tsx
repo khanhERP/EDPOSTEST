@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Clock, LogIn, LogOut, Coffee, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useTranslation } from "@/lib/i18n";
 import type { Employee, AttendanceRecord } from "@shared/schema";
 
 export function ClockInOut() {
@@ -15,6 +16,7 @@ export function ClockInOut() {
   const [notes, setNotes] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const { data: employees } = useQuery({
     queryKey: ['/api/employees'],
@@ -35,14 +37,14 @@ export function ClockInOut() {
       refetchTodayAttendance();
       setNotes("");
       toast({
-        title: "출근 완료",
-        description: "출근이 기록되었습니다.",
+        title: t('attendance.clockInSuccess'),
+        description: t('attendance.clockInSuccessDesc'),
       });
     },
     onError: () => {
       toast({
-        title: "오류",
-        description: "출근 기록에 실패했습니다.",
+        title: t('common.error'),
+        description: t('attendance.clockInError'),
         variant: "destructive",
       });
     },
@@ -56,14 +58,14 @@ export function ClockInOut() {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
       toast({
-        title: "퇴근 완료",
-        description: "퇴근이 기록되었습니다.",
+        title: t('attendance.clockOutSuccess'),
+        description: t('attendance.clockOutSuccessDesc'),
       });
     },
     onError: () => {
       toast({
-        title: "오류",
-        description: "퇴근 기록에 실패했습니다.",
+        title: t('common.error'),
+        description: t('attendance.clockOutError'),
         variant: "destructive",
       });
     },
@@ -77,14 +79,14 @@ export function ClockInOut() {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
       toast({
-        title: "휴게 시작",
-        description: "휴게 시간이 시작되었습니다.",
+        title: t('attendance.breakStartSuccess'),
+        description: t('attendance.breakStartSuccessDesc'),
       });
     },
     onError: () => {
       toast({
-        title: "오류",
-        description: "휴게 시작 기록에 실패했습니다.",
+        title: t('common.error'),
+        description: t('attendance.breakStartError'),
         variant: "destructive",
       });
     },
@@ -98,14 +100,14 @@ export function ClockInOut() {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
       toast({
-        title: "휴게 종료",
-        description: "휴게 시간이 종료되었습니다.",
+        title: t('attendance.breakEndSuccess'),
+        description: t('attendance.breakEndSuccessDesc'),
       });
     },
     onError: () => {
       toast({
-        title: "오류",
-        description: "휴게 종료 기록에 실패했습니다.",
+        title: t('common.error'),
+        description: t('attendance.breakEndError'),
         variant: "destructive",
       });
     },
@@ -130,11 +132,11 @@ export function ClockInOut() {
   const getStatusBadge = (record: AttendanceRecord) => {
     if (!record.clockOut) {
       if (record.breakStart && !record.breakEnd) {
-        return <Badge variant="secondary">휴게 중</Badge>;
+        return <Badge variant="secondary">{t('attendance.status.onBreak')}</Badge>;
       }
-      return <Badge variant="default">근무 중</Badge>;
+      return <Badge variant="default">{t('attendance.status.working')}</Badge>;
     }
-    return <Badge variant="outline">퇴근 완료</Badge>;
+    return <Badge variant="outline">{t('attendance.status.clockedOut')}</Badge>;
   };
 
   return (
@@ -144,10 +146,10 @@ export function ClockInOut() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5" />
-            직원 선택
+            {t('attendance.employeeSelect')}
           </CardTitle>
           <CardDescription>
-            출퇴근을 기록할 직원을 선택하세요.
+            {t('attendance.selectEmployee')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -161,22 +163,22 @@ export function ClockInOut() {
               >
                 <div className="flex items-center justify-between w-full">
                   <span>{employee.name}</span>
-                  <Badge variant="secondary">{employee.role === 'manager' ? '매니저' : employee.role === 'admin' ? '관리자' : '캐셔'}</Badge>
+                  <Badge variant="secondary">{employee.role === 'manager' ? t('employees.manager') : employee.role === 'admin' ? t('employees.admin') : t('employees.cashier')}</Badge>
                 </div>
               </Button>
             )) || (
-              <p className="text-gray-500 text-center py-4">직원 정보를 불러오는 중...</p>
+              <p className="text-gray-500 text-center py-4">{t('common.loading')}</p>
             )}
           </div>
 
           {selectedEmployeeId && (
             <div className="space-y-2">
-              <Label htmlFor="notes">메모 (선택사항)</Label>
+              <Label htmlFor="notes">{t('attendance.notes')}</Label>
               <Input
                 id="notes"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="근무 관련 메모를 입력하세요..."
+                placeholder={t('attendance.notesPlaceholder')}
               />
             </div>
           )}
@@ -188,41 +190,41 @@ export function ClockInOut() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Clock className="w-5 h-5" />
-            출퇴근 기록
+            {t('attendance.clockInOut')}
           </CardTitle>
           <CardDescription>
-            {selectedEmployee ? `${selectedEmployee.name}님의 근태 관리` : "직원을 선택하세요"}
+            {selectedEmployee ? `${selectedEmployee.name}${t('attendance.workingTime')}` : t('attendance.selectEmployee')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {!selectedEmployee ? (
             <div className="text-center py-8">
               <Clock className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500">먼저 직원을 선택해주세요.</p>
+              <p className="text-gray-500">{t('attendance.selectEmployee')}</p>
             </div>
           ) : (
             <div className="space-y-4">
               {/* Today's Status */}
               {todayAttendance && (
                 <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">오늘의 근무 현황</h4>
+                  <h4 className="font-medium mb-2">{t('attendance.currentStatus')}</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
-                      <span>출근 시간:</span>
+                      <span>{t('attendance.clockInTime')}:</span>
                       <span className="font-medium">{formatTime(todayAttendance.clockIn)}</span>
                     </div>
                     {todayAttendance.clockOut && (
                       <div className="flex justify-between items-center">
-                        <span>퇴근 시간:</span>
+                        <span>{t('attendance.clockOutTime')}:</span>
                         <span className="font-medium">{formatTime(todayAttendance.clockOut)}</span>
                       </div>
                     )}
                     <div className="flex justify-between items-center">
-                      <span>근무 시간:</span>
-                      <span className="font-medium">{getWorkingHours(todayAttendance.clockIn, todayAttendance.clockOut)}시간</span>
+                      <span>{t('attendance.workingTime')}:</span>
+                      <span className="font-medium">{getWorkingHours(todayAttendance.clockIn, todayAttendance.clockOut)}{t('attendance.hours')}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span>상태:</span>
+                      <span>{t('common.status')}:</span>
                       {getStatusBadge(todayAttendance)}
                     </div>
                   </div>
@@ -238,7 +240,7 @@ export function ClockInOut() {
                     className="col-span-2"
                   >
                     <LogIn className="w-4 h-4 mr-2" />
-                    {clockInMutation.isPending ? "처리 중..." : "출근"}
+                    {clockInMutation.isPending ? t('common.loading') : t('attendance.clockIn')}
                   </Button>
                 ) : (
                   <>
@@ -251,7 +253,7 @@ export function ClockInOut() {
                             variant="outline"
                           >
                             <Play className="w-4 h-4 mr-2" />
-                            휴게 종료
+                            {t('attendance.endBreak')}
                           </Button>
                         ) : (
                           <Button
@@ -260,7 +262,7 @@ export function ClockInOut() {
                             variant="outline"
                           >
                             <Coffee className="w-4 h-4 mr-2" />
-                            휴게 시작
+                            {t('attendance.startBreak')}
                           </Button>
                         )}
                         <Button
@@ -268,7 +270,7 @@ export function ClockInOut() {
                           disabled={clockOutMutation.isPending}
                         >
                           <LogOut className="w-4 h-4 mr-2" />
-                          퇴근
+                          {t('attendance.clockOut')}
                         </Button>
                       </>
                     )}

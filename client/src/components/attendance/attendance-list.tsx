@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calendar, Clock, User } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 import type { AttendanceRecord, Employee } from "@shared/schema";
 
 interface AttendanceListProps {
@@ -13,6 +14,7 @@ interface AttendanceListProps {
 }
 
 export function AttendanceList({ selectedDate, onDateChange }: AttendanceListProps) {
+  const { t } = useTranslation();
   const { data: employees } = useQuery({
     queryKey: ['/api/employees'],
   });
@@ -23,7 +25,7 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
 
   const getEmployeeName = (employeeId: number) => {
     const employee = employees?.find((emp: Employee) => emp.id === employeeId);
-    return employee?.name || "알 수 없음";
+    return employee?.name || t('attendance.unknownEmployee');
   };
 
   const formatTime = (dateString: string | null) => {
@@ -40,10 +42,10 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      present: { label: "출근", variant: "default" as const },
-      absent: { label: "결근", variant: "destructive" as const },
-      late: { label: "지각", variant: "secondary" as const },
-      half_day: { label: "반차", variant: "outline" as const },
+      present: { label: t('attendance.status.present'), variant: "default" as const },
+      absent: { label: t('attendance.status.absent'), variant: "destructive" as const },
+      late: { label: t('attendance.status.late'), variant: "secondary" as const },
+      half_day: { label: t('attendance.status.halfDay'), variant: "outline" as const },
     };
     
     const config = statusConfig[status as keyof typeof statusConfig] || { label: status, variant: "outline" as const };
@@ -57,7 +59,7 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
     const minutes = (end.getTime() - start.getTime()) / (1000 * 60);
     const hours = Math.floor(minutes / 60);
     const mins = Math.floor(minutes % 60);
-    return hours > 0 ? `${hours}시간 ${mins}분` : `${mins}분`;
+    return hours > 0 ? `${hours}${t('attendance.hours')} ${mins}${t('attendance.minutes')}` : `${mins}${t('attendance.minutes')}`;
   };
 
   return (
@@ -67,14 +69,14 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
           <div>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              근태 기록
+              {t('attendance.attendanceRecords')}
             </CardTitle>
             <CardDescription>
-              직원들의 일별 근태 기록을 확인합니다.
+              {t('attendance.recordsDescription')}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Label htmlFor="date-picker">날짜 선택:</Label>
+            <Label htmlFor="date-picker">{t('attendance.selectedDate')}:</Label>
             <Input
               id="date-picker"
               type="date"
@@ -88,26 +90,26 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center py-8">
-            <div className="text-gray-500">근태 기록을 불러오는 중...</div>
+            <div className="text-gray-500">{t('common.loading')}</div>
           </div>
         ) : !attendanceRecords || attendanceRecords.length === 0 ? (
           <div className="text-center py-8">
             <Clock className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500">{formatDate(selectedDate)}의 근태 기록이 없습니다.</p>
-            <p className="text-sm text-gray-400 mt-2">다른 날짜를 선택해보세요.</p>
+            <p className="text-gray-500">{t('attendance.noRecords')}</p>
+            <p className="text-sm text-gray-400 mt-2">{t('attendance.selectOtherDate')}</p>
           </div>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>직원명</TableHead>
-                <TableHead>상태</TableHead>
-                <TableHead>출근 시간</TableHead>
-                <TableHead>퇴근 시간</TableHead>
-                <TableHead>휴게 시간</TableHead>
-                <TableHead>총 근무시간</TableHead>
-                <TableHead>초과근무</TableHead>
-                <TableHead>메모</TableHead>
+                <TableHead>{t('employees.name')}</TableHead>
+                <TableHead>{t('common.status')}</TableHead>
+                <TableHead>{t('attendance.clockInTime')}</TableHead>
+                <TableHead>{t('attendance.clockOutTime')}</TableHead>
+                <TableHead>{t('attendance.breakTime')}</TableHead>
+                <TableHead>{t('attendance.totalHours')}</TableHead>
+                <TableHead>{t('attendance.overtime')}</TableHead>
+                <TableHead>{t('attendance.notes')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -124,11 +126,11 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
                   <TableCell>{formatTime(record.clockOut)}</TableCell>
                   <TableCell>{calculateBreakTime(record.breakStart, record.breakEnd)}</TableCell>
                   <TableCell>
-                    {record.totalHours ? `${record.totalHours}시간` : "-"}
+                    {record.totalHours ? `${record.totalHours}${t('attendance.hours')}` : "-"}
                   </TableCell>
                   <TableCell>
                     {record.overtime && parseFloat(record.overtime) > 0 ? (
-                      <Badge variant="secondary">{record.overtime}시간</Badge>
+                      <Badge variant="secondary">{record.overtime}{t('attendance.hours')}</Badge>
                     ) : "-"}
                   </TableCell>
                   <TableCell className="max-w-xs">
