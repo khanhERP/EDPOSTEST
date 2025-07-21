@@ -139,6 +139,42 @@ export const translations = {
       cashier: '캐셔'
     },
 
+    // Customers
+    customers: {
+      title: '고객 관리',
+      description: '고객 정보와 멤버십을 관리합니다.',
+      customerManagement: '고객 관리',
+      customerId: '고객 ID',
+      name: '고객명',
+      phone: '전화번호',
+      email: '이메일',
+      address: '주소',
+      dateOfBirth: '생년월일',
+      visitCount: '방문 횟수',
+      totalSpent: '총 구매금액',
+      points: '포인트',
+      membershipLevel: '등급',
+      notes: '메모',
+      status: '상태',
+      addCustomer: '고객 추가',
+      editCustomer: '고객 수정',
+      searchPlaceholder: '고객을 검색하세요...',
+      membershipLevels: {
+        Bronze: '브론즈',
+        Silver: '실버',
+        Gold: '골드',
+        Platinum: '플래티넘',
+        Diamond: '다이아몬드'
+      },
+      addVisit: '방문 기록',
+      usePoints: '포인트 사용',
+      customerStats: '고객 통계',
+      totalCustomers: '총 고객수',
+      activeCustomers: '활성 고객',
+      pointsIssued: '발급된 포인트',
+      averageSpent: '평균 구매금액'
+    },
+
     // Inventory
     inventory: {
       title: '재고 관리',
@@ -514,6 +550,42 @@ export const translations = {
       cashier: 'Cashier'
     },
 
+    // Customers
+    customers: {
+      title: 'Customer Management',
+      description: 'Manage customer information and membership.',
+      customerManagement: 'Customer Management',
+      customerId: 'Customer ID',
+      name: 'Customer Name',
+      phone: 'Phone',
+      email: 'Email',
+      address: 'Address',
+      dateOfBirth: 'Date of Birth',
+      visitCount: 'Visit Count',
+      totalSpent: 'Total Spent',
+      points: 'Points',
+      membershipLevel: 'Membership Level',
+      notes: 'Notes',
+      status: 'Status',
+      addCustomer: 'Add Customer',
+      editCustomer: 'Edit Customer',
+      searchPlaceholder: 'Search customers...',
+      membershipLevels: {
+        Bronze: 'Bronze',
+        Silver: 'Silver',
+        Gold: 'Gold',
+        Platinum: 'Platinum',
+        Diamond: 'Diamond'
+      },
+      addVisit: 'Add Visit',
+      usePoints: 'Use Points',
+      customerStats: 'Customer Statistics',
+      totalCustomers: 'Total Customers',
+      activeCustomers: 'Active Customers',
+      pointsIssued: 'Points Issued',
+      averageSpent: 'Average Spent'
+    },
+
     // Inventory
     inventory: {
       title: 'Inventory Management',
@@ -823,6 +895,42 @@ export const translations = {
       manager: 'Quản lý',
       admin: 'Quản trị viên',
       cashier: 'Thu ngân'
+    },
+
+    // Customers
+    customers: {
+      title: 'Quản lý khách hàng',
+      description: 'Quản lý thông tin khách hàng và thành viên.',
+      customerManagement: 'Quản lý khách hàng',
+      customerId: 'Mã khách hàng',
+      name: 'Tên khách hàng',
+      phone: 'Điện thoại',
+      email: 'Email',
+      address: 'Địa chỉ',
+      dateOfBirth: 'Ngày sinh',
+      visitCount: 'Số lần ghé thăm',
+      totalSpent: 'Tổng chi tiêu',
+      points: 'Điểm',
+      membershipLevel: 'Cấp thành viên',
+      notes: 'Ghi chú',
+      status: 'Trạng thái',
+      addCustomer: 'Thêm khách hàng',
+      editCustomer: 'Sửa khách hàng',
+      searchPlaceholder: 'Tìm kiếm khách hàng...',
+      membershipLevels: {
+        Bronze: 'Đồng',
+        Silver: 'Bạc',
+        Gold: 'Vàng',
+        Platinum: 'Bạch kim',
+        Diamond: 'Kim cương'
+      },
+      addVisit: 'Thêm lần ghé thăm',
+      usePoints: 'Sử dụng điểm',
+      customerStats: 'Thống kê khách hàng',
+      totalCustomers: 'Tổng khách hàng',
+      activeCustomers: 'Khách hàng hoạt động',
+      pointsIssued: 'Điểm đã phát hành',
+      averageSpent: 'Chi tiêu trung bình'
     },
 
     // Inventory

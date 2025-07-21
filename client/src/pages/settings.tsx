@@ -28,7 +28,8 @@ import {
   Trash2,
   Edit,
   Search,
-  Clock
+  Clock,
+  UserCheck
 } from "lucide-react";
 
 export default function Settings() {
@@ -179,10 +180,14 @@ export default function Settings() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
             <TabsTrigger value="store" className="flex items-center gap-2">
               <Store className="w-4 h-4" />
               {t('settings.storeInfo')}
+            </TabsTrigger>
+            <TabsTrigger value="customers" className="flex items-center gap-2">
+              <UserCheck className="w-4 h-4" />
+              {t('customers.title')}
             </TabsTrigger>
             <TabsTrigger value="categories" className="flex items-center gap-2">
               <Package className="w-4 h-4" />
@@ -324,6 +329,198 @@ export default function Settings() {
                   {updateStoreSettingsMutation.isPending ? t('common.loading') : t('common.save')}
                 </Button>
               </div>
+            </div>
+          </TabsContent>
+
+          {/* Customers Tab */}
+          <TabsContent value="customers">
+            <div className="space-y-6">
+              {/* Customer Statistics */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('customers.totalCustomers')}</p>
+                        <p className="text-2xl font-bold text-green-600">1,248</p>
+                      </div>
+                      <UserCheck className="w-8 h-8 text-green-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('customers.activeCustomers')}</p>
+                        <p className="text-2xl font-bold text-blue-600">892</p>
+                      </div>
+                      <Users className="w-8 h-8 text-blue-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('customers.pointsIssued')}</p>
+                        <p className="text-2xl font-bold text-purple-600">15,640</p>
+                      </div>
+                      <CreditCard className="w-8 h-8 text-purple-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('customers.averageSpent')}</p>
+                        <p className="text-2xl font-bold text-orange-600">₩84,500</p>
+                      </div>
+                      <CreditCard className="w-8 h-8 text-orange-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Customer Management */}
+              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <UserCheck className="w-5 h-5 text-green-600" />
+                    {t('customers.customerManagement')}
+                  </CardTitle>
+                  <CardDescription>{t('customers.description')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center gap-4">
+                      <Input
+                        placeholder={t('customers.searchPlaceholder')}
+                        className="w-64"
+                      />
+                      <Button variant="outline" size="sm">
+                        <Search className="w-4 h-4 mr-2" />
+                        {t('common.search')}
+                      </Button>
+                    </div>
+                    <Button className="bg-green-600 hover:bg-green-700">
+                      <Plus className="w-4 h-4 mr-2" />
+                      {t('customers.addCustomer')}
+                    </Button>
+                  </div>
+
+                  <div className="rounded-md border">
+                    <div className="grid grid-cols-8 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                      <div>{t('customers.customerId')}</div>
+                      <div>{t('customers.name')}</div>
+                      <div>{t('customers.phone')}</div>
+                      <div>{t('customers.visitCount')}</div>
+                      <div>{t('customers.totalSpent')}</div>
+                      <div>{t('customers.points')}</div>
+                      <div>{t('customers.membershipLevel')}</div>
+                      <div className="text-center">{t('common.actions')}</div>
+                    </div>
+                    
+                    <div className="divide-y">
+                      {/* Sample customer data */}
+                      <div className="grid grid-cols-8 gap-4 p-4 items-center">
+                        <div className="font-mono text-sm">CUST001</div>
+                        <div className="font-medium">김고객</div>
+                        <div className="text-sm text-gray-600">010-1234-5678</div>
+                        <div className="text-center">15</div>
+                        <div className="text-sm font-medium">₩1,250,000</div>
+                        <div className="text-center font-medium text-purple-600">1,250</div>
+                        <div>
+                          <Badge variant="default" className="bg-yellow-500 text-white">
+                            {t('customers.membershipLevels.Diamond')}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-700">
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-8 gap-4 p-4 items-center">
+                        <div className="font-mono text-sm">CUST002</div>
+                        <div className="font-medium">이단골</div>
+                        <div className="text-sm text-gray-600">010-2345-6789</div>
+                        <div className="text-center">8</div>
+                        <div className="text-sm font-medium">₩680,000</div>
+                        <div className="text-center font-medium text-purple-600">680</div>
+                        <div>
+                          <Badge variant="default" className="bg-gray-500 text-white">
+                            {t('customers.membershipLevels.Platinum')}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-700">
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-8 gap-4 p-4 items-center">
+                        <div className="font-mono text-sm">CUST003</div>
+                        <div className="font-medium">박회원</div>
+                        <div className="text-sm text-gray-600">010-3456-7890</div>
+                        <div className="text-center">12</div>
+                        <div className="text-sm font-medium">₩340,000</div>
+                        <div className="text-center font-medium text-purple-600">340</div>
+                        <div>
+                          <Badge variant="default" className="bg-yellow-600 text-white">
+                            {t('customers.membershipLevels.Gold')}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-700">
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center mt-6">
+                    <div className="text-sm text-gray-600">
+                      총 1,248명의 고객이 등록되어 있습니다.
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <UserCheck className="w-4 h-4 mr-2" />
+                        멤버십 관리
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        포인트 관리
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 

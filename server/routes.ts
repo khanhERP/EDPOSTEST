@@ -39,7 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const product = await storage.getProduct(id);
-      
+
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
       }
@@ -68,7 +68,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const validatedData = insertProductSchema.partial().parse(req.body);
       const product = await storage.updateProduct(id, validatedData);
-      
+
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
       }
@@ -86,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteProduct(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Product not found" });
       }
@@ -101,7 +101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const sku = req.params.sku;
       const product = await storage.getProductBySku(sku);
-      
+
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
       }
@@ -116,7 +116,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/transactions", async (req, res) => {
     try {
       const { transaction, items } = req.body;
-      
+
       const validatedTransaction = insertTransactionSchema.parse(transaction);
       const validatedItems = z.array(insertTransactionItemSchema).parse(items);
 
@@ -154,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const transactionId = req.params.transactionId;
       const receipt = await storage.getTransactionByTransactionId(transactionId);
-      
+
       if (!receipt) {
         return res.status(404).json({ message: "Transaction not found" });
       }
@@ -179,7 +179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const employee = await storage.getEmployee(id);
-      
+
       if (!employee) {
         return res.status(404).json({ message: "Employee not found" });
       }
@@ -208,7 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const validatedData = insertEmployeeSchema.partial().parse(req.body);
       const employee = await storage.updateEmployee(id, validatedData);
-      
+
       if (!employee) {
         return res.status(404).json({ message: "Employee not found" });
       }
@@ -226,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteEmployee(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Employee not found" });
       }
@@ -275,7 +275,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const record = await storage.clockOut(id);
-      
+
       if (!record) {
         return res.status(404).json({ message: "Attendance record not found" });
       }
@@ -290,7 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const record = await storage.startBreak(id);
-      
+
       if (!record) {
         return res.status(404).json({ message: "Attendance record not found" });
       }
@@ -305,7 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const record = await storage.endBreak(id);
-      
+
       if (!record) {
         return res.status(404).json({ message: "Attendance record not found" });
       }
@@ -321,7 +321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { status } = req.body;
       const record = await storage.updateAttendanceStatus(id, status);
-      
+
       if (!record) {
         return res.status(404).json({ message: "Attendance record not found" });
       }
@@ -346,7 +346,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const table = await storage.getTable(id);
-      
+
       if (!table) {
         return res.status(404).json({ message: "Table not found" });
       }
@@ -372,7 +372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const tableData = insertTableSchema.partial().parse(req.body);
       const table = await storage.updateTable(id, tableData);
-      
+
       if (!table) {
         return res.status(404).json({ message: "Table not found" });
       }
@@ -388,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { status } = req.body;
       const table = await storage.updateTableStatus(id, status);
-      
+
       if (!table) {
         return res.status(404).json({ message: "Table not found" });
       }
@@ -403,7 +403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteTable(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Table not found" });
       }
@@ -432,7 +432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const order = await storage.getOrder(id);
-      
+
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
@@ -448,12 +448,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { order, items } = req.body;
       console.log('Received order data:', JSON.stringify({ order, items }, null, 2));
-      
+
       const orderData = insertOrderSchema.parse(order);
       const itemsData = items.map((item: any) => insertOrderItemSchema.parse(item));
-      
+
       console.log('Parsed order data:', JSON.stringify({ orderData, itemsData }, null, 2));
-      
+
       const newOrder = await storage.createOrder(orderData, itemsData);
       res.status(201).json(newOrder);
     } catch (error) {
@@ -477,7 +477,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { status } = req.body;
       const order = await storage.updateOrderStatus(id, status);
-      
+
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
@@ -492,7 +492,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const orderId = parseInt(req.params.id);
       const itemsData = req.body.map((item: any) => insertOrderItemSchema.parse(item));
-      
+
       const items = await storage.addOrderItems(orderId, itemsData);
       res.status(201).json(items);
     } catch (error) {
@@ -509,10 +509,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: z.enum(['add', 'subtract', 'set']),
         notes: z.string().optional(),
       });
-      
+
       const { productId, quantity, type, notes } = stockUpdateSchema.parse(req.body);
       const product = await storage.updateInventoryStock(productId, quantity, type, notes);
-      
+
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
       }
@@ -573,7 +573,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const supplier = await storage.getSupplier(id);
-      
+
       if (!supplier) {
         return res.status(404).json({ message: "Supplier not found" });
       }
@@ -602,7 +602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const validatedData = insertSupplierSchema.partial().parse(req.body);
       const supplier = await storage.updateSupplier(id, validatedData);
-      
+
       if (!supplier) {
         return res.status(404).json({ message: "Supplier not found" });
       }
@@ -620,7 +620,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteSupplier(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "Supplier not found" });
       }
@@ -628,6 +628,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Supplier deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete supplier" });
+    }
+  });
+
+  // Customer management routes - Added Here
+  app.get("/api/customers", async (req, res) => {
+    try {
+      const customers = await storage.getCustomers();
+      res.json(customers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customers" });
+    }
+  });
+
+  app.get("/api/customers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const customer = await storage.getCustomer(id);
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      res.json(customer);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer" });
+    }
+  });
+
+  app.post("/api/customers", async (req, res) => {
+    try {
+      const customerData = req.body;
+      const customer = await storage.createCustomer(customerData);
+      res.status(201).json(customer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid customer data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create customer" });
+    }
+  });
+
+  app.put("/api/customers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const customerData = req.body;
+      const customer = await storage.updateCustomer(id, customerData);
+      if (!customer) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      res.json(customer);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid customer data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update customer" });
+    }
+  });
+
+  app.delete("/api/customers/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteCustomer(id);
+      if (!deleted) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      res.json({ message: "Customer deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete customer" });
+    }
+  });
+
+  app.post("/api/customers/:id/visit", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { amount, points } = req.body;
+
+      const customer = await storage.getCustomer(id);
+      if (!customer) {
+        return res.status(404).json({ message: 'Customer not found' });
+      }
+
+      const updatedCustomer = await storage.updateCustomerVisit(id, amount, points);
+      res.json(updatedCustomer);
+
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update customer visit" });
     }
   });
 

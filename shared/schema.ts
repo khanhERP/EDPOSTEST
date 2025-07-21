@@ -1,7 +1,8 @@
-import { pgTable, text, serial, decimal, integer, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, decimal, integer, timestamp, boolean, varchar, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
+import { InferSelectModel, InferInsertModel } from 'drizzle-orm';
 
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
@@ -225,7 +226,30 @@ export type Category = typeof categories.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type TransactionItem = typeof transactionItems.$inferSelect;
-export type Employee = typeof employees.$inferSelect;
+export type Employee = InferSelectModel<typeof employees>;
+export type InsertEmployee = InferInsertModel<typeof employees>;
+
+// Customers table
+export const customers = pgTable('customers', {
+  id: serial('id').primaryKey(),
+  customerId: varchar('customer_id', { length: 20 }).unique().notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  phone: varchar('phone', { length: 20 }),
+  email: varchar('email', { length: 100 }),
+  address: text('address'),
+  dateOfBirth: date('date_of_birth'),
+  visitCount: integer('visit_count').default(0),
+  totalSpent: decimal('total_spent', { precision: 10, scale: 2 }).default('0.00'),
+  points: integer('points').default(0),
+  membershipLevel: varchar('membership_level', { length: 20 }).default('Bronze'),
+  notes: text('notes'),
+  status: varchar('status', { length: 20 }).default('active'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+});
+
+export type Customer = InferSelectModel<typeof customers>;
+export type InsertCustomer = InferInsertModel<typeof customers>;
 export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
 export type Table = typeof tables.$inferSelect;
 export type Order = typeof orders.$inferSelect;
@@ -237,7 +261,6 @@ export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 export type InsertTransactionItem = z.infer<typeof insertTransactionItemSchema>;
-export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
 export type InsertAttendance = z.infer<typeof insertAttendanceSchema>;
 export type InsertTable = z.infer<typeof insertTableSchema>;
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
