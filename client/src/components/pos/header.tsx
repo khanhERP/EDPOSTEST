@@ -54,7 +54,12 @@ export function POSHeader() {
       <div className="px-6 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-6">
           <div className="flex items-center">
-            <img src={logoPath} alt="EDPOS Logo" className="h-12" />
+            <img 
+              src={logoPath} 
+              alt="EDPOS Logo" 
+              className="h-12 cursor-pointer" 
+              onClick={() => window.location.href = '/pos'}
+            />
           </div>
           <div className="opacity-90 font-semibold text-[20px]">{storeSettings?.storeName || t('common.restaurant')}</div>
         </div>
