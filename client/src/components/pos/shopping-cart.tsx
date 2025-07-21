@@ -55,7 +55,7 @@ export function ShoppingCart({
   return (
     <aside className="w-96 bg-white shadow-material border-l pos-border flex flex-col">
       <div className="p-4 border-b pos-border">
-        <h2 className="text-xl font-medium pos-text-primary mb-2">{t('pos.cart')}</h2>
+        <h2 className="text-xl pos-text-primary mb-2 font-semibold">{t('pos.purchaseHistory')}</h2>
         <div className="flex items-center justify-between text-sm pos-text-secondary">
           <span>{cart.length} {t('common.items')}</span>
           {cart.length > 0 && (
@@ -68,7 +68,6 @@ export function ShoppingCart({
           )}
         </div>
       </div>
-      
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {cart.length === 0 ? (
           <div className="text-center py-12">
@@ -130,7 +129,6 @@ export function ShoppingCart({
           ))
         )}
       </div>
-      
       {/* Cart Summary */}
       {cart.length > 0 && (
         <div className="border-t pos-border p-4 space-y-4">
