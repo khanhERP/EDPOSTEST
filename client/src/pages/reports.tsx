@@ -54,11 +54,6 @@ export default function ReportsPage() {
                   {t('reports.itemSalesDesc')}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full">
-                  {t('common.viewReport')}
-                </Button>
-              </CardContent>
             </Card>
 
             {/* Employee Sales Report */}
@@ -74,11 +69,6 @@ export default function ReportsPage() {
                   {t('reports.employeeSalesDesc')}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full">
-                  {t('common.viewReport')}
-                </Button>
-              </CardContent>
             </Card>
 
             {/* Daily Sales Report */}
@@ -94,11 +84,6 @@ export default function ReportsPage() {
                   {t('reports.dailySalesDesc')}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full">
-                  {t('common.viewReport')}
-                </Button>
-              </CardContent>
             </Card>
 
             {/* Detailed Sales Report */}
@@ -114,11 +99,6 @@ export default function ReportsPage() {
                   {t('reports.detailedSalesDesc')}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full">
-                  {t('common.viewReport')}
-                </Button>
-              </CardContent>
             </Card>
           </div>
 
