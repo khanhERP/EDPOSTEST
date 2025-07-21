@@ -9,7 +9,8 @@ import {
   Settings, 
   ChevronRight,
   ChevronLeft,
-  Menu
+  Menu,
+  Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,11 @@ const menuItems: MenuItem[] = [
     icon: Utensils,
     label: "테이블 관리",
     href: "/",
+  },
+  {
+    icon: Package,
+    label: "재고 관리",
+    href: "/inventory",
   },
   {
     icon: BarChart3,
@@ -114,7 +120,7 @@ export function RightSidebar() {
                 </Button>
               </Link>
               {/* Add separator after first item (기본 POS) and before employee section */}
-              {(index === 0 || index === 2) && isExpanded && (
+              {(index === 0 || index === 3) && isExpanded && (
                 <div className="border-t border-gray-200 my-3 mx-4"></div>
               )}
             </div>

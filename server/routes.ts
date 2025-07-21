@@ -500,6 +500,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Inventory Management
+  app.post("/api/inventory/update-stock", async (req, res) => {
+    try {
+      const stockUpdateSchema = z.object({
+        productId: z.number(),
+        quantity: z.number().min(1),
+        type: z.enum(['add', 'subtract', 'set']),
+        notes: z.string().optional(),
+      });
+      
+      const { productId, quantity, type, notes } = stockUpdateSchema.parse(req.body);
+      const product = await storage.updateInventoryStock(productId, quantity, type, notes);
+      
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+
+      res.json(product);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid stock update data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update stock" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

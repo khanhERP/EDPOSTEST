@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ScanBarcode, LogOut, Users, Home, Clock, Utensils, BarChart3, ChevronDown } from "lucide-react";
+import { ScanBarcode, LogOut, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import logoPath from "@assets/image_1753015722799.png";
 
@@ -63,7 +63,7 @@ export function POSHeader() {
             <div className="relative pos-dropdown">
               <button 
                 className={`flex items-center px-4 py-2 rounded-full transition-all duration-200 ${
-                  ["/", "/pos", "/reports", "/employees", "/attendance"].includes(location)
+                  ["/", "/pos", "/inventory", "/reports", "/employees", "/attendance"].includes(location)
                     ? "bg-white bg-opacity-20" 
                     : "hover:bg-white hover:bg-opacity-10"
                 }`}
@@ -100,6 +100,18 @@ export function POSHeader() {
                     >
                       <Utensils className="w-4 h-4 mr-3" />
                       테이블 관리
+                    </button>
+                  </Link>
+                  
+                  <Link href="/inventory">
+                    <button 
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                        location === "/inventory" ? "bg-green-50 text-green-600" : "text-gray-700"
+                      }`}
+                      onClick={() => setPosMenuOpen(false)}
+                    >
+                      <Package className="w-4 h-4 mr-3" />
+                      재고 관리
                     </button>
                   </Link>
                   

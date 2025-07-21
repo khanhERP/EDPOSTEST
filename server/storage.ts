@@ -46,6 +46,9 @@ export interface IStorage {
   updateProduct(id: number, product: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<boolean>;
   updateProductStock(id: number, quantity: number): Promise<Product | undefined>;
+  
+  // Inventory Management
+  updateInventoryStock(productId: number, quantity: number, type: 'add' | 'subtract' | 'set', notes?: string): Promise<Product | undefined>;
 
   // Transactions
   createTransaction(transaction: InsertTransaction, items: InsertTransactionItem[]): Promise<Receipt>;
@@ -565,6 +568,36 @@ export class DatabaseStorage implements IStorage {
 
   async getOrderItems(orderId: number): Promise<OrderItem[]> {
     return await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+  }
+
+  // Inventory Management
+  async updateInventoryStock(productId: number, quantity: number, type: 'add' | 'subtract' | 'set', notes?: string): Promise<Product | undefined> {
+    const product = await this.getProduct(productId);
+    if (!product) return undefined;
+
+    let newStock: number;
+    
+    switch (type) {
+      case 'add':
+        newStock = product.stock + quantity;
+        break;
+      case 'subtract':
+        newStock = Math.max(0, product.stock - quantity);
+        break;
+      case 'set':
+        newStock = quantity;
+        break;
+      default:
+        return undefined;
+    }
+
+    const [updatedProduct] = await db
+      .update(products)
+      .set({ stock: newStock })
+      .where(eq(products.id, productId))
+      .returning();
+      
+    return updatedProduct || undefined;
   }
 }
 

@@ -118,6 +118,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### January 21, 2025 - Inventory Management System
+- **Added Inventory Management**: Complete inventory management system with stock tracking, low stock alerts, and stock value calculations
+- **Stock Update Functionality**: Added ability to add, subtract, or set stock levels with notes for audit trail
+- **Inventory Dashboard**: Created comprehensive inventory dashboard with real-time statistics and filtering options
+- **API Integration**: Built RESTful API endpoints for inventory operations and stock updates
+- **Navigation Updates**: Added inventory management to both left sidebar and top navigation menu
+
 ### January 20, 2025 - UI Theme Transformation
 - **Transformed UI to Modern Green Theme**: Changed from blue theme to green grocery shop style inspired by provided design
 - **Updated Color Scheme**: Changed primary colors from blue to green throughout the application (#10b981)
