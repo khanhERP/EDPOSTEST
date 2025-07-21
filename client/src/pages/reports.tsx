@@ -39,68 +39,7 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          {/* Reports Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {/* Item Sales Report */}
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-white rounded-2xl border-green-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-3 text-lg">
-                  <div className="p-2 bg-green-100 rounded-xl">
-                    <Package className="w-5 h-5 text-green-600" />
-                  </div>
-                  {t('reports.itemSalesReport')}
-                </CardTitle>
-                <CardDescription className="text-sm text-gray-600">
-                  {t('reports.itemSalesDesc')}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            {/* Employee Sales Report */}
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-white rounded-2xl border-green-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-3 text-lg">
-                  <div className="p-2 bg-blue-100 rounded-xl">
-                    <Users className="w-5 h-5 text-blue-600" />
-                  </div>
-                  {t('reports.employeeSalesReport')}
-                </CardTitle>
-                <CardDescription className="text-sm text-gray-600">
-                  {t('reports.employeeSalesDesc')}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            {/* Daily Sales Report */}
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-white rounded-2xl border-green-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-3 text-lg">
-                  <div className="p-2 bg-orange-100 rounded-xl">
-                    <Calendar className="w-5 h-5 text-orange-600" />
-                  </div>
-                  {t('reports.dailySalesReport')}
-                </CardTitle>
-                <CardDescription className="text-sm text-gray-600">
-                  {t('reports.dailySalesDesc')}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-
-            {/* Detailed Sales Report */}
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-white rounded-2xl border-green-200">
-              <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-3 text-lg">
-                  <div className="p-2 bg-purple-100 rounded-xl">
-                    <FileText className="w-5 h-5 text-purple-600" />
-                  </div>
-                  {t('reports.detailedSalesReport')}
-                </CardTitle>
-                <CardDescription className="text-sm text-gray-600">
-                  {t('reports.detailedSalesDesc')}
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
+          
 
           <Tabs defaultValue="overview" className="space-y-6">
             <TabsList className="grid w-full grid-cols-4">
