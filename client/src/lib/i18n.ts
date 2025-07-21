@@ -293,7 +293,8 @@ export const translations = {
       availablePayments: '사용 가능한 결제 수단',
       addPayment: '결제 수단 추가',
       enabled: '사용 중',
-      disabled: '사용 안함'
+      disabled: '사용 안함',
+      backToPos: 'POS로 돌아가기'
     }
   },
   
@@ -571,7 +572,8 @@ export const translations = {
       availablePayments: 'Available Payment Methods',
       addPayment: 'Add Payment Method',
       enabled: 'Enabled',
-      disabled: 'Disabled'
+      disabled: 'Disabled',
+      backToPos: 'Back to POS'
     }
   },
   
@@ -849,7 +851,8 @@ export const translations = {
       availablePayments: 'Phương thức thanh toán có sẵn',
       addPayment: 'Thêm phương thức thanh toán',
       enabled: 'Đã bật',
-      disabled: 'Đã tắt'
+      disabled: 'Đã tắt',
+      backToPos: 'Quay về POS'
     }
   }
 };

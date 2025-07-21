@@ -72,24 +72,19 @@ export default function Settings() {
   };
 
   const togglePaymentMethod = (id: number) => {
-    setPaymentMethods(prev => 
-      prev.map(method => 
-        method.id === id 
-          ? { ...method, enabled: !method.enabled }
-          : method
+    setPaymentMethods(prev =>
+      prev.map(method =>
+        method.id === id ? { ...method, enabled: !method.enabled } : method
       )
     );
   };
 
   const addPaymentMethod = () => {
-    const newMethod = {
-      id: paymentMethods.length + 1,
-      name: "새 결제 수단",
-      type: "custom",
-      enabled: false,
-      icon: "💳"
-    };
-    setPaymentMethods(prev => [...prev, newMethod]);
+    const newId = Math.max(...paymentMethods.map(m => m.id)) + 1;
+    setPaymentMethods(prev => [
+      ...prev,
+      { id: newId, name: "새 결제수단", type: "other", enabled: false, icon: "💰" }
+    ]);
   };
 
   const removePaymentMethod = (id: number) => {
@@ -97,15 +92,11 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 relative">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 relative">
       {/* Background Pattern */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div 
-          className="absolute inset-0 opacity-5"
-          style={{
-            backgroundImage: `radial-gradient(circle at 25% 25%, #10b981 0%, transparent 50%),
-                           radial-gradient(circle at 75% 25%, #059669 0%, transparent 50%),
-                           radial-gradient(circle at 25% 75%, #065f46 0%, transparent 50%),
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `radial-gradient(circle at 25% 25%, #10b981 0%, transparent 50%), 
                            radial-gradient(circle at 75% 75%, #059669 0%, transparent 50%)`,
           backgroundSize: '100px 100px'
         }}></div>
