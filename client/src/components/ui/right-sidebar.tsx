@@ -61,6 +61,11 @@ export function RightSidebar() {
       label: t('nav.attendance'),
       href: "/attendance",
     },
+    {
+      icon: Settings,
+      label: t('settings.title'),
+      href: "/settings",
+    },
   ];
 
   // Update CSS custom property for responsive margin
