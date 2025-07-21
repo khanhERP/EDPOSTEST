@@ -56,7 +56,7 @@ export function POSHeader() {
           <div className="flex items-center">
             <img src={logoPath} alt="EDPOS Logo" className="h-12" />
           </div>
-          <div className="text-sm opacity-90">{storeSettings?.storeName || t('common.restaurant')}</div>
+          <div className="opacity-90 font-semibold text-[20px]">{storeSettings?.storeName || t('common.restaurant')}</div>
         </div>
         
         <div className="flex items-center space-x-6">
