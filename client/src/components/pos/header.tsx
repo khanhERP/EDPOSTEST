@@ -62,7 +62,7 @@ export function POSHeader() {
         <div className="flex items-center space-x-6">
           <div className="text-right">
             <div className="text-sm opacity-90">{t('pos.cashierName')}</div>
-            <div className="font-medium">John Smith</div>
+            <div className="font-medium">{t('pos.defaultCashier')}</div>
           </div>
           <div className="text-right">
             <div className="text-sm opacity-90">{t('common.time')}</div>

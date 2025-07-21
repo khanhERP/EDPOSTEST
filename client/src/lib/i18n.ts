@@ -76,15 +76,7 @@ export const translations = {
       settings: '시스템 설정'
     },
 
-    // Tables
-    tables: {
-      title: '테이블 관리',
-      description: '레스토랑 테이블 상태와 주문을 관리합니다.',
-      backToPOS: 'POS로 돌아가기',
-      tableStatus: '테이블 현황',
-      orderManagement: '주문 관리',
-      tableSettings: '테이블 설정'
-    },
+
 
     // Not Found
     notFound: {
@@ -222,6 +214,13 @@ export const translations = {
       updateError: '설정 업데이트 중 오류가 발생했습니다'
     },
 
+    // POS
+    pos: {
+      title: 'POS 시스템',
+      cashierName: '담당자',
+      defaultCashier: '김담당자'
+    },
+
     // Tables
     tables: {
       title: '테이블 관리',
@@ -303,15 +302,14 @@ export const translations = {
       settings: 'System Settings'
     },
 
-    // Tables
-    tables: {
-      title: 'Table Management',
-      description: 'Manage restaurant table status and orders.',
-      backToPOS: 'Back to POS',
-      tableStatus: 'Table Status',
-      orderManagement: 'Order Management',
-      tableSettings: 'Table Settings'
+    // POS
+    pos: {
+      title: 'POS System',
+      cashierName: 'Cashier',
+      defaultCashier: 'John Smith'
     },
+
+
 
     // Not Found
     notFound: {
@@ -530,15 +528,7 @@ export const translations = {
       settings: 'Cài đặt hệ thống'
     },
 
-    // Tables
-    tables: {
-      title: 'Quản lý bàn',
-      description: 'Quản lý trạng thái bàn và đơn hàng nhà hàng.',
-      backToPOS: 'Quay về POS',
-      tableStatus: 'Trạng thái bàn',
-      orderManagement: 'Quản lý đơn hàng',
-      tableSettings: 'Cài đặt bàn'
-    },
+
 
     // Not Found
     notFound: {
@@ -674,6 +664,13 @@ export const translations = {
       },
       storeUpdated: 'Cài đặt cửa hàng đã được cập nhật',
       updateError: 'Đã xảy ra lỗi khi cập nhật cài đặt'
+    },
+
+    // POS
+    pos: {
+      title: 'Hệ thống POS',
+      cashierName: 'Thu ngân',
+      defaultCashier: 'Nguyễn Thu Ngân'
     },
 
     // Tables
