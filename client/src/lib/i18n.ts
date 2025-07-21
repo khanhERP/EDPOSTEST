@@ -61,7 +61,8 @@ export const translations = {
       hour: '시간',
       minute: '분',
       collapse: '축소',
-      expand: '확장'
+      expand: '확장',
+      viewReport: '보고서 보기'
     },
 
     // Navigation
@@ -133,7 +134,15 @@ export const translations = {
     // Reports
     reports: {
       title: '매출 분석',
-      description: '매출 현황과 리포트를 확인합니다.'
+      description: '매출 현황과 리포트를 확인합니다.',
+      itemSalesReport: '품목별 판매 보고서',
+      employeeSalesReport: '직원별 판매 보고서',
+      dailySalesReport: '일일 매출 보고서',
+      detailedSalesReport: '자세한 판매 보고서',
+      itemSalesDesc: '제품별 판매량과 매출을 분석합니다',
+      employeeSalesDesc: '직원별 판매 성과를 확인합니다',
+      dailySalesDesc: '일별 매출 현황을 조회합니다',
+      detailedSalesDesc: '상세한 판매 내역을 확인합니다'
     },
 
     // Settings
@@ -235,7 +244,8 @@ export const translations = {
       hour: 'Hour',
       minute: 'Minute',
       collapse: 'Collapse',
-      expand: 'Expand'
+      expand: 'Expand',
+      viewReport: 'View Report'
     },
 
     // Navigation
@@ -307,7 +317,15 @@ export const translations = {
     // Reports
     reports: {
       title: 'Sales Reports',
-      description: 'View sales status and reports.'
+      description: 'View sales status and reports.',
+      itemSalesReport: 'Item Sales Report',
+      employeeSalesReport: 'Employee Sales Report',
+      dailySalesReport: 'Daily Sales Report',
+      detailedSalesReport: 'Detailed Sales Report',
+      itemSalesDesc: 'Analyze sales volume and revenue by product',
+      employeeSalesDesc: 'Check sales performance by employee',
+      dailySalesDesc: 'View daily sales status',
+      detailedSalesDesc: 'Check detailed sales records'
     },
 
     // Settings
@@ -409,7 +427,8 @@ export const translations = {
       hour: 'Giờ',
       minute: 'Phút',
       collapse: 'Thu gọn',
-      expand: 'Mở rộng'
+      expand: 'Mở rộng',
+      viewReport: 'Xem báo cáo'
     },
 
     // Điều hướng
@@ -481,7 +500,15 @@ export const translations = {
     // Reports
     reports: {
       title: 'Báo cáo bán hàng',
-      description: 'Xem tình trạng bán hàng và báo cáo.'
+      description: 'Xem tình trạng bán hàng và báo cáo.',
+      itemSalesReport: 'Báo cáo bán hàng theo sản phẩm',
+      employeeSalesReport: 'Báo cáo bán hàng theo nhân viên',
+      dailySalesReport: 'Báo cáo doanh thu hàng ngày',
+      detailedSalesReport: 'Báo cáo bán hàng chi tiết',
+      itemSalesDesc: 'Phân tích doanh số và doanh thu theo sản phẩm',
+      employeeSalesDesc: 'Kiểm tra hiệu suất bán hàng theo nhân viên',
+      dailySalesDesc: 'Xem tình trạng doanh thu hàng ngày',
+      detailedSalesDesc: 'Kiểm tra hồ sơ bán hàng chi tiết'
     },
 
     // Cài đặt

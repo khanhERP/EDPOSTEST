@@ -6,8 +6,9 @@ import { MenuReport } from "@/components/reports/menu-report";
 import { TableReport } from "@/components/reports/table-report";
 import { DashboardOverview } from "@/components/reports/dashboard-overview";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, PieChart, TrendingUp, Utensils } from "lucide-react";
+import { BarChart3, PieChart, TrendingUp, Utensils, Package, Users, Calendar, FileText } from "lucide-react";
 import { Link } from "wouter";
 import { useTranslation } from "@/lib/i18n";
 
@@ -36,6 +37,89 @@ export default function ReportsPage() {
                 </Button>
               </Link>
             </div>
+          </div>
+
+          {/* Reports Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Item Sales Report */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-white rounded-2xl border-green-200">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3 text-lg">
+                  <div className="p-2 bg-green-100 rounded-xl">
+                    <Package className="w-5 h-5 text-green-600" />
+                  </div>
+                  {t('reports.itemSalesReport')}
+                </CardTitle>
+                <CardDescription className="text-sm text-gray-600">
+                  {t('reports.itemSalesDesc')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full">
+                  {t('common.viewReport')}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Employee Sales Report */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-white rounded-2xl border-green-200">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3 text-lg">
+                  <div className="p-2 bg-blue-100 rounded-xl">
+                    <Users className="w-5 h-5 text-blue-600" />
+                  </div>
+                  {t('reports.employeeSalesReport')}
+                </CardTitle>
+                <CardDescription className="text-sm text-gray-600">
+                  {t('reports.employeeSalesDesc')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full">
+                  {t('common.viewReport')}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Daily Sales Report */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-white rounded-2xl border-green-200">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3 text-lg">
+                  <div className="p-2 bg-orange-100 rounded-xl">
+                    <Calendar className="w-5 h-5 text-orange-600" />
+                  </div>
+                  {t('reports.dailySalesReport')}
+                </CardTitle>
+                <CardDescription className="text-sm text-gray-600">
+                  {t('reports.dailySalesDesc')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full">
+                  {t('common.viewReport')}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Detailed Sales Report */}
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer bg-white rounded-2xl border-green-200">
+              <CardHeader className="pb-4">
+                <CardTitle className="flex items-center gap-3 text-lg">
+                  <div className="p-2 bg-purple-100 rounded-xl">
+                    <FileText className="w-5 h-5 text-purple-600" />
+                  </div>
+                  {t('reports.detailedSalesReport')}
+                </CardTitle>
+                <CardDescription className="text-sm text-gray-600">
+                  {t('reports.detailedSalesDesc')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" className="w-full">
+                  {t('common.viewReport')}
+                </Button>
+              </CardContent>
+            </Card>
           </div>
 
           <Tabs defaultValue="overview" className="space-y-6">
