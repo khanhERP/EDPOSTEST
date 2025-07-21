@@ -1,16 +1,18 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, DollarSign, ShoppingCart, Users, Clock, Target } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, DollarSign, ShoppingCart, Users, Clock, Target, Search } from "lucide-react";
 import type { Order, Table as TableType } from "@shared/schema";
 
 export function DashboardOverview() {
   const [selectedDate, setSelectedDate] = useState<string>(
     "2025-01-20" // Set to a date that has sample data
   );
+  const queryClient = useQueryClient();
 
   const { data: transactions } = useQuery({
     queryKey: ['/api/transactions'],
@@ -19,6 +21,13 @@ export function DashboardOverview() {
   const { data: tables } = useQuery({
     queryKey: ['/api/tables'],
   });
+
+  const handleRefresh = () => {
+    // Refresh the queries to get the latest data for the selected date
+    queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+  };
 
   const getDashboardStats = () => {
     if (!transactions || !tables || !Array.isArray(transactions) || !Array.isArray(tables)) return null;
@@ -138,6 +147,15 @@ export function DashboardOverview() {
                 onChange={(e) => setSelectedDate(e.target.value)}
                 className="w-auto"
               />
+              <Button
+                onClick={handleRefresh}
+                size="sm"
+                variant="outline"
+                className="ml-2"
+              >
+                <Search className="w-4 h-4 mr-1" />
+                조회
+              </Button>
             </div>
           </div>
         </CardHeader>
