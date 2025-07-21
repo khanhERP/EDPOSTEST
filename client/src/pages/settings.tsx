@@ -26,7 +26,9 @@ import {
   Save,
   Plus,
   Trash2,
-  Edit
+  Edit,
+  Search,
+  Clock
 } from "lucide-react";
 
 export default function Settings() {
@@ -352,27 +354,125 @@ export default function Settings() {
 
           {/* Employees Tab */}
           <TabsContent value="employees">
-            <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-green-600" />
-                  {t('settings.employeeManagement')}
-                </CardTitle>
-                <CardDescription>{t('settings.employeeManagementDesc')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-500 mb-4">{t('settings.employeesRedirect')}</p>
-                  <Button 
-                    onClick={() => window.location.href = '/employees'}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {t('settings.goToEmployees')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-green-600" />
+                    {t('settings.employeeManagement')}
+                  </CardTitle>
+                  <CardDescription>{t('settings.employeeManagementDesc')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center gap-4">
+                      <Input
+                        placeholder={t('employees.searchPlaceholder')}
+                        className="w-64"
+                      />
+                      <Button variant="outline" size="sm">
+                        <Search className="w-4 h-4 mr-2" />
+                        {t('common.search')}
+                      </Button>
+                    </div>
+                    <Button className="bg-green-600 hover:bg-green-700">
+                      <Plus className="w-4 h-4 mr-2" />
+                      {t('employees.addEmployee')}
+                    </Button>
+                  </div>
+
+                  <div className="rounded-md border">
+                    <div className="grid grid-cols-6 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                      <div>{t('employees.employeeId')}</div>
+                      <div>{t('employees.name')}</div>
+                      <div>{t('employees.role')}</div>
+                      <div>{t('employees.phone')}</div>
+                      <div>{t('employees.status')}</div>
+                      <div className="text-center">{t('common.actions')}</div>
+                    </div>
+                    
+                    <div className="divide-y">
+                      {/* Employee rows will be populated here */}
+                      <div className="grid grid-cols-6 gap-4 p-4 items-center">
+                        <div className="font-mono text-sm">EMP001</div>
+                        <div className="font-medium">김직원</div>
+                        <div>
+                          <Badge variant="secondary">매니저</Badge>
+                        </div>
+                        <div className="text-sm text-gray-600">010-1234-5678</div>
+                        <div>
+                          <Badge variant="default" className="bg-green-100 text-green-800">활성</Badge>
+                        </div>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-6 gap-4 p-4 items-center">
+                        <div className="font-mono text-sm">EMP002</div>
+                        <div className="font-medium">이서버</div>
+                        <div>
+                          <Badge variant="secondary">서버</Badge>
+                        </div>
+                        <div className="text-sm text-gray-600">010-2345-6789</div>
+                        <div>
+                          <Badge variant="default" className="bg-green-100 text-green-800">활성</Badge>
+                        </div>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-6 gap-4 p-4 items-center">
+                        <div className="font-mono text-sm">EMP003</div>
+                        <div className="font-medium">박주방</div>
+                        <div>
+                          <Badge variant="secondary">주방장</Badge>
+                        </div>
+                        <div className="text-sm text-gray-600">010-3456-7890</div>
+                        <div>
+                          <Badge variant="outline" className="text-gray-600">휴가</Badge>
+                        </div>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center mt-6">
+                    <div className="text-sm text-gray-600">
+                      총 3명의 직원이 등록되어 있습니다.
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm">
+                        <Users className="w-4 h-4 mr-2" />
+                        {t('settings.goToEmployees')}
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <Clock className="w-4 h-4 mr-2" />
+                        {t('attendance.title')}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Payment Methods Tab */}
