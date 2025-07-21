@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ScanBarcode, LogOut, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package } from "lucide-react";
+import { ScanBarcode, LogOut, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package, Settings as SettingsIcon } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import logoPath from "@assets/image_1753067088685.png";
 import { useTranslation } from "@/lib/i18n";
@@ -66,7 +66,7 @@ export function POSHeader() {
             <div className="relative pos-dropdown">
               <button 
                 className={`flex items-center px-4 py-2 rounded-full transition-all duration-200 ${
-                  ["/", "/pos", "/inventory", "/reports", "/employees", "/attendance"].includes(location)
+                  ["/", "/pos", "/inventory", "/reports", "/employees", "/attendance", "/settings"].includes(location)
                     ? "bg-white bg-opacity-20" 
                     : "hover:bg-white hover:bg-opacity-10"
                 }`}
@@ -153,6 +153,20 @@ export function POSHeader() {
                     >
                       <Clock className="w-4 h-4 mr-3" />
                       {t('nav.attendance')}
+                    </button>
+                  </Link>
+                  
+                  <div className="border-t border-gray-200 my-2"></div>
+                  
+                  <Link href="/settings">
+                    <button 
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                        location === "/settings" ? "bg-green-50 text-green-600" : "text-gray-700"
+                      }`}
+                      onClick={() => setPosMenuOpen(false)}
+                    >
+                      <SettingsIcon className="w-4 h-4 mr-3" />
+                      {t('settings.title')}
                     </button>
                   </Link>
                 </div>

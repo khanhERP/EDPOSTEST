@@ -9,6 +9,7 @@ import InventoryPage from "@/pages/inventory";
 import ReportsPage from "@/pages/reports";
 import EmployeesPage from "@/pages/employees";
 import AttendancePage from "@/pages/attendance";
+import SettingsPage from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/reports" component={ReportsPage} />
       <Route path="/employees" component={EmployeesPage} />
       <Route path="/attendance" component={AttendancePage} />
+      <Route path="/settings" component={SettingsPage} />
       <Route component={NotFound} />
     </Switch>
   );
