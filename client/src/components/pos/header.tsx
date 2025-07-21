@@ -73,7 +73,7 @@ export function POSHeader() {
             <div className="relative pos-dropdown">
               <button 
                 className={`flex items-center px-4 py-2 rounded-full transition-all duration-200 ${
-                  ["/", "/pos", "/inventory", "/reports", "/employees", "/attendance", "/settings"].includes(location)
+                  ["/", "/pos", "/tables", "/inventory", "/reports", "/employees", "/attendance", "/settings"].includes(location)
                     ? "bg-white bg-opacity-20" 
                     : "hover:bg-white hover:bg-opacity-10"
                 }`}
@@ -101,10 +101,10 @@ export function POSHeader() {
                   
                   <div className="border-t border-gray-200 my-2"></div>
                   
-                  <Link href="/">
+                  <Link href="/tables">
                     <button 
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                        location === "/" ? "bg-green-50 text-green-600" : "text-gray-700"
+                        location === "/tables" ? "bg-green-50 text-green-600" : "text-gray-700"
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >

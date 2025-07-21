@@ -39,7 +39,7 @@ export function RightSidebar() {
     {
       icon: Utensils,
       label: t('nav.tables'),
-      href: "/",
+      href: "/tables",
     },
     {
       icon: Package,
