@@ -31,7 +31,7 @@ export function MenuReport() {
   });
 
   const getMenuData = async () => {
-    if (!orders || !products || !categories) return null;
+    if (!orders || !products || !categories || !Array.isArray(orders) || !Array.isArray(products) || !Array.isArray(categories)) return null;
 
     const filteredOrders = orders.filter((order: Order) => {
       const orderDate = new Date(order.orderedAt);
@@ -69,7 +69,7 @@ export function MenuReport() {
     } } = {};
 
     allOrderItems.forEach((item: OrderItem) => {
-      const product = products.find((p: Product) => p.id === item.productId);
+      const product = Array.isArray(products) ? products.find((p: Product) => p.id === item.productId) : undefined;
       if (!product) return;
 
       if (!productStats[item.productId]) {
@@ -96,7 +96,7 @@ export function MenuReport() {
 
     Object.values(productStats).forEach(({ product, quantity, revenue }) => {
       if (!categoryStats[product.categoryId]) {
-        const category = categories.find((c: Category) => c.id === product.categoryId);
+        const category = Array.isArray(categories) ? categories.find((c: Category) => c.id === product.categoryId) : undefined;
         if (category) {
           categoryStats[product.categoryId] = {
             category,
