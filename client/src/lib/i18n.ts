@@ -149,7 +149,12 @@ export const translations = {
       itemSalesDesc: '제품별 판매량과 매출을 분석합니다',
       employeeSalesDesc: '직원별 판매 성과를 확인합니다',
       dailySalesDesc: '일별 매출 현황을 조회합니다',
-      detailedSalesDesc: '상세한 판매 내역을 확인합니다'
+      detailedSalesDesc: '상세한 판매 내역을 확인합니다',
+      backToTables: '테이블로 돌아가기',
+      dashboard: '대시보드',
+      salesAnalysis: '매출 분석',
+      menuAnalysis: '메뉴 분석',
+      tableAnalysis: '테이블 분석'
     },
 
     // Suppliers
@@ -269,7 +274,7 @@ export const translations = {
       defaultCashier: '김담당자',
       cart: '장바구니',
       purchaseHistory: '구매 내역',
-      emptyCart: '장바구니가 비어있습니다',
+      emptyCart: '주문내역이 비어있습니다',
       addProductsToStart: '상품을 추가해서 시작하세요',
       clearCart: '장바구니 비우기',
       addedToCart: '장바구니에 추가됨',
@@ -368,7 +373,7 @@ export const translations = {
       defaultCashier: 'John Smith',
       cart: 'Cart',
       purchaseHistory: 'Purchase History',
-      emptyCart: 'Cart is empty',
+      emptyCart: 'Order history is empty',
       addProductsToStart: 'Add products to get started',
       clearCart: 'Clear Cart',
       addedToCart: 'added to cart',
@@ -454,7 +459,12 @@ export const translations = {
       itemSalesDesc: 'Analyze sales volume and revenue by product',
       employeeSalesDesc: 'Check sales performance by employee',
       dailySalesDesc: 'View daily sales status',
-      detailedSalesDesc: 'Check detailed sales records'
+      detailedSalesDesc: 'Check detailed sales records',
+      backToTables: 'Back to Tables',
+      dashboard: 'Dashboard',
+      salesAnalysis: 'Sales Analysis',
+      menuAnalysis: 'Menu Analysis',
+      tableAnalysis: 'Table Analysis'
     },
 
     // Suppliers
@@ -723,7 +733,12 @@ export const translations = {
       itemSalesDesc: 'Phân tích doanh số và doanh thu theo sản phẩm',
       employeeSalesDesc: 'Kiểm tra hiệu suất bán hàng theo nhân viên',
       dailySalesDesc: 'Xem tình trạng doanh thu hàng ngày',
-      detailedSalesDesc: 'Kiểm tra hồ sơ bán hàng chi tiết'
+      detailedSalesDesc: 'Kiểm tra hồ sơ bán hàng chi tiết',
+      backToTables: 'Quay lại bàn',
+      dashboard: 'Bảng điều khiển',
+      salesAnalysis: 'Phân tích bán hàng',
+      menuAnalysis: 'Phân tích thực đơn',
+      tableAnalysis: 'Phân tích bàn'
     },
 
     // Suppliers
@@ -843,7 +858,7 @@ export const translations = {
       defaultCashier: 'Nguyễn Thu Ngân',
       cart: 'Giỏ hàng',
       purchaseHistory: 'Lịch sử mua hàng',
-      emptyCart: 'Giỏ hàng trống',
+      emptyCart: 'Lịch sử đặt hàng trống',
       addProductsToStart: 'Thêm sản phẩm để bắt đầu',
       clearCart: 'Xóa giỏ hàng',
       addedToCart: 'đã thêm vào giỏ hàng',
