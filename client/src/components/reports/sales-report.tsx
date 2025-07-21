@@ -18,65 +18,63 @@ export function SalesReport() {
     new Date().toISOString().split('T')[0]
   );
 
-  const { data: orders } = useQuery({
-    queryKey: ['/api/orders'],
+  const { data: transactions } = useQuery({
+    queryKey: ['/api/transactions'],
   });
 
   const getSalesData = () => {
-    if (!orders) return null;
+    if (!transactions || !Array.isArray(transactions)) return null;
 
-    const filteredOrders = orders.filter((order: Order) => {
-      const orderDate = new Date(order.orderedAt);
+    const filteredTransactions = transactions.filter((transaction: any) => {
+      const transactionDate = new Date(transaction.created_at);
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
       
-      return orderDate >= start && orderDate <= end && order.status === 'paid';
+      return transactionDate >= start && transactionDate <= end;
     });
 
     // Daily sales breakdown
     const dailySales: { [date: string]: { revenue: number; orders: number; customers: number } } = {};
     
-    filteredOrders.forEach((order: Order) => {
-      const date = new Date(order.orderedAt).toISOString().split('T')[0];
+    filteredTransactions.forEach((transaction: any) => {
+      const date = new Date(transaction.created_at).toISOString().split('T')[0];
       
       if (!dailySales[date]) {
         dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
       }
       
-      dailySales[date].revenue += Number(order.total);
+      dailySales[date].revenue += Number(transaction.total);
       dailySales[date].orders += 1;
-      dailySales[date].customers += order.customerCount || 0;
+      dailySales[date].customers += 1; // Each transaction represents one customer
     });
 
     // Payment method breakdown
     const paymentMethods: { [method: string]: { count: number; revenue: number } } = {};
     
-    filteredOrders.forEach((order: Order) => {
-      const method = order.paymentMethod || 'cash';
+    filteredTransactions.forEach((transaction: any) => {
+      const method = transaction.payment_method || 'cash';
       if (!paymentMethods[method]) {
         paymentMethods[method] = { count: 0, revenue: 0 };
       }
       paymentMethods[method].count += 1;
-      paymentMethods[method].revenue += Number(order.total);
+      paymentMethods[method].revenue += Number(transaction.total);
     });
 
     // Hourly breakdown
     const hourlySales: { [hour: number]: number } = {};
     
-    filteredOrders.forEach((order: Order) => {
-      const hour = new Date(order.orderedAt).getHours();
-      hourlySales[hour] = (hourlySales[hour] || 0) + Number(order.total);
+    filteredTransactions.forEach((transaction: any) => {
+      const hour = new Date(transaction.created_at).getHours();
+      hourlySales[hour] = (hourlySales[hour] || 0) + Number(transaction.total);
     });
 
     // Total stats
-    const totalRevenue = filteredOrders.reduce((sum: number, order: Order) => 
-      sum + Number(order.total), 0
+    const totalRevenue = filteredTransactions.reduce((sum: number, transaction: any) => 
+      sum + Number(transaction.total), 0
     );
-    const totalOrders = filteredOrders.length;
-    const totalCustomers = filteredOrders.reduce((sum: number, order: Order) => 
-      sum + (order.customerCount || 0), 0
-    );
+    const totalOrders = filteredTransactions.length;
+    const totalCustomers = filteredTransactions.length; // Each transaction is one customer
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     return {
