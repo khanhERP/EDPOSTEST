@@ -28,9 +28,9 @@ export function ClockInOut() {
   });
 
   const clockInMutation = useMutation({
-    mutationFn: () => apiRequest('/api/attendance/clock-in', { 
-      method: 'POST', 
-      body: JSON.stringify({ employeeId: selectedEmployeeId, notes }) 
+    mutationFn: () => apiRequest('POST', '/api/attendance/clock-in', { 
+      employeeId: selectedEmployeeId, 
+      notes 
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
@@ -51,9 +51,7 @@ export function ClockInOut() {
   });
 
   const clockOutMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/attendance/clock-out/${todayAttendance?.id}`, { 
-      method: 'POST' 
-    }),
+    mutationFn: () => apiRequest('POST', `/api/attendance/clock-out/${(todayAttendance as AttendanceRecord)?.id}`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
@@ -72,9 +70,7 @@ export function ClockInOut() {
   });
 
   const breakStartMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/attendance/break-start/${todayAttendance?.id}`, { 
-      method: 'POST' 
-    }),
+    mutationFn: () => apiRequest('POST', `/api/attendance/break-start/${(todayAttendance as AttendanceRecord)?.id}`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
@@ -93,9 +89,7 @@ export function ClockInOut() {
   });
 
   const breakEndMutation = useMutation({
-    mutationFn: () => apiRequest(`/api/attendance/break-end/${todayAttendance?.id}`, { 
-      method: 'POST' 
-    }),
+    mutationFn: () => apiRequest('POST', `/api/attendance/break-end/${(todayAttendance as AttendanceRecord)?.id}`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
@@ -113,16 +107,16 @@ export function ClockInOut() {
     },
   });
 
-  const selectedEmployee = employees?.find((emp: Employee) => emp.id === selectedEmployeeId);
+  const selectedEmployee = (employees as Employee[] | undefined)?.find((emp: Employee) => emp.id === selectedEmployeeId);
 
-  const formatTime = (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('ko-KR', {
+  const formatTime = (dateInput: Date | string) => {
+    return new Date(dateInput).toLocaleTimeString('ko-KR', {
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
-  const getWorkingHours = (clockIn: string, clockOut?: string) => {
+  const getWorkingHours = (clockIn: Date | string, clockOut?: Date | string | null) => {
     const start = new Date(clockIn);
     const end = clockOut ? new Date(clockOut) : new Date();
     const diff = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
@@ -154,7 +148,7 @@ export function ClockInOut() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-2">
-            {employees?.map((employee: Employee) => (
+            {(employees as Employee[] | undefined)?.map((employee: Employee) => (
               <Button
                 key={employee.id}
                 variant={selectedEmployeeId === employee.id ? "default" : "outline"}
@@ -205,27 +199,27 @@ export function ClockInOut() {
           ) : (
             <div className="space-y-4">
               {/* Today's Status */}
-              {todayAttendance && (
+              {todayAttendance && (todayAttendance as AttendanceRecord) && (
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <h4 className="font-medium mb-2">{t('attendance.currentStatus')}</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span>{t('attendance.clockInTime')}:</span>
-                      <span className="font-medium">{formatTime(todayAttendance.clockIn)}</span>
+                      <span className="font-medium">{formatTime((todayAttendance as AttendanceRecord).clockIn)}</span>
                     </div>
-                    {todayAttendance.clockOut && (
+                    {(todayAttendance as AttendanceRecord).clockOut && (
                       <div className="flex justify-between items-center">
                         <span>{t('attendance.clockOutTime')}:</span>
-                        <span className="font-medium">{formatTime(todayAttendance.clockOut)}</span>
+                        <span className="font-medium">{formatTime((todayAttendance as AttendanceRecord).clockOut!)}</span>
                       </div>
                     )}
                     <div className="flex justify-between items-center">
                       <span>{t('attendance.workingTime')}:</span>
-                      <span className="font-medium">{getWorkingHours(todayAttendance.clockIn, todayAttendance.clockOut)}{t('attendance.hours')}</span>
+                      <span className="font-medium">{getWorkingHours((todayAttendance as AttendanceRecord).clockIn, (todayAttendance as AttendanceRecord).clockOut)}{t('attendance.hours')}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span>{t('common.status')}:</span>
-                      {getStatusBadge(todayAttendance)}
+                      {getStatusBadge(todayAttendance as AttendanceRecord)}
                     </div>
                   </div>
                 </div>
@@ -244,9 +238,9 @@ export function ClockInOut() {
                   </Button>
                 ) : (
                   <>
-                    {!todayAttendance.clockOut && (
+                    {!(todayAttendance as AttendanceRecord).clockOut && (
                       <>
-                        {todayAttendance.breakStart && !todayAttendance.breakEnd ? (
+                        {(todayAttendance as AttendanceRecord).breakStart && !(todayAttendance as AttendanceRecord).breakEnd ? (
                           <Button
                             onClick={() => breakEndMutation.mutate()}
                             disabled={breakEndMutation.isPending}

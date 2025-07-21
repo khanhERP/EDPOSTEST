@@ -112,7 +112,24 @@ export const translations = {
       startBreak: '휴식 시작',
       endBreak: '휴식 종료',
       notes: '메모',
-      notesPlaceholder: '근무 메모를 입력하세요'
+      notesPlaceholder: '근무 메모를 입력하세요',
+      status: {
+        working: '근무 중',
+        onBreak: '휴식 중',
+        clockedOut: '퇴근 완료'
+      },
+      clockInSuccess: '출근 완료',
+      clockInSuccessDesc: '출근이 성공적으로 기록되었습니다',
+      clockInError: '출근 처리 중 오류가 발생했습니다',
+      clockOutSuccess: '퇴근 완료',
+      clockOutSuccessDesc: '퇴근이 성공적으로 기록되었습니다',
+      clockOutError: '퇴근 처리 중 오류가 발생했습니다',
+      breakStartSuccess: '휴식 시작',
+      breakStartSuccessDesc: '휴식 시간이 시작되었습니다',
+      breakStartError: '휴식 시작 처리 중 오류가 발생했습니다',
+      breakEndSuccess: '휴식 종료',
+      breakEndSuccessDesc: '휴식 시간이 종료되었습니다',
+      breakEndError: '휴식 종료 처리 중 오류가 발생했습니다'
     },
 
     // Employees
@@ -297,7 +314,24 @@ export const translations = {
       startBreak: 'Start Break',
       endBreak: 'End Break',
       notes: 'Notes',
-      notesPlaceholder: 'Enter work notes'
+      notesPlaceholder: 'Enter work notes',
+      status: {
+        working: 'Working',
+        onBreak: 'On Break',
+        clockedOut: 'Clocked Out'
+      },
+      clockInSuccess: 'Clocked In',
+      clockInSuccessDesc: 'Clock-in has been recorded successfully',
+      clockInError: 'Error occurred during clock-in',
+      clockOutSuccess: 'Clocked Out',
+      clockOutSuccessDesc: 'Clock-out has been recorded successfully',
+      clockOutError: 'Error occurred during clock-out',
+      breakStartSuccess: 'Break Started',
+      breakStartSuccessDesc: 'Break time has started',
+      breakStartError: 'Error occurred during break start',
+      breakEndSuccess: 'Break Ended',
+      breakEndSuccessDesc: 'Break time has ended',
+      breakEndError: 'Error occurred during break end'
     },
 
     // Employees
@@ -480,7 +514,24 @@ export const translations = {
       startBreak: 'Bắt đầu nghỉ',
       endBreak: 'Kết thúc nghỉ',
       notes: 'Ghi chú',
-      notesPlaceholder: 'Nhập ghi chú công việc'
+      notesPlaceholder: 'Nhập ghi chú công việc',
+      status: {
+        working: 'Đang làm việc',
+        onBreak: 'Đang nghỉ',
+        clockedOut: 'Đã chấm công ra'
+      },
+      clockInSuccess: 'Đã chấm công vào',
+      clockInSuccessDesc: 'Chấm công vào đã được ghi nhận thành công',
+      clockInError: 'Lỗi xảy ra trong quá trình chấm công vào',
+      clockOutSuccess: 'Đã chấm công ra',
+      clockOutSuccessDesc: 'Chấm công ra đã được ghi nhận thành công',
+      clockOutError: 'Lỗi xảy ra trong quá trình chấm công ra',
+      breakStartSuccess: 'Đã bắt đầu nghỉ',
+      breakStartSuccessDesc: 'Thời gian nghỉ đã bắt đầu',
+      breakStartError: 'Lỗi xảy ra trong quá trình bắt đầu nghỉ',
+      breakEndSuccess: 'Đã kết thúc nghỉ',
+      breakEndSuccessDesc: 'Thời gian nghỉ đã kết thúc',
+      breakEndError: 'Lỗi xảy ra trong quá trình kết thúc nghỉ'
     },
 
     // Employees
