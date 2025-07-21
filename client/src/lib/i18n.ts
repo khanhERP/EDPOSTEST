@@ -98,14 +98,30 @@ export const translations = {
       description: '직원 출퇴근 및 근무 시간을 관리합니다.',
       clockInOut: '출퇴근',
       attendanceRecords: '근태 기록',
-      statistics: '통계'
+      statistics: '통계',
+      employeeSelect: '직원 선택',
+      selectEmployee: '출퇴근할 직원을 선택하세요',
+      workingTime: '의 근무 시간',
+      currentStatus: '현재 상태',
+      clockInTime: '출근 시간',
+      clockOutTime: '퇴근 시간',
+      hours: '시간',
+      clockIn: '출근',
+      clockOut: '퇴근',
+      startBreak: '휴식 시작',
+      endBreak: '휴식 종료',
+      notes: '메모',
+      notesPlaceholder: '근무 메모를 입력하세요'
     },
 
     // Employees
     employees: {
       title: '직원 관리',
       description: '직원 정보를 등록하고 관리합니다.',
-      employeeManagement: '직원 관리'
+      employeeManagement: '직원 관리',
+      manager: '매니저',
+      admin: '관리자',
+      cashier: '캐셔'
     },
 
     // Inventory
@@ -256,14 +272,30 @@ export const translations = {
       description: 'Manage employee clock-in/out and working hours.',
       clockInOut: 'Clock In/Out',
       attendanceRecords: 'Attendance Records',
-      statistics: 'Statistics'
+      statistics: 'Statistics',
+      employeeSelect: 'Employee Selection',
+      selectEmployee: 'Select an employee to clock in/out',
+      workingTime: '\'s working time',
+      currentStatus: 'Current Status',
+      clockInTime: 'Clock In Time',
+      clockOutTime: 'Clock Out Time',
+      hours: ' hours',
+      clockIn: 'Clock In',
+      clockOut: 'Clock Out',
+      startBreak: 'Start Break',
+      endBreak: 'End Break',
+      notes: 'Notes',
+      notesPlaceholder: 'Enter work notes'
     },
 
     // Employees
     employees: {
       title: 'Employee Management',
       description: 'Register and manage employee information.',
-      employeeManagement: 'Employee Management'
+      employeeManagement: 'Employee Management',
+      manager: 'Manager',
+      admin: 'Admin',
+      cashier: 'Cashier'
     },
 
     // Inventory
@@ -414,14 +446,30 @@ export const translations = {
       description: 'Quản lý giờ vào/ra và thời gian làm việc của nhân viên.',
       clockInOut: 'Chấm công',
       attendanceRecords: 'Bản ghi chấm công',
-      statistics: 'Thống kê'
+      statistics: 'Thống kê',
+      employeeSelect: 'Chọn nhân viên',
+      selectEmployee: 'Chọn nhân viên để chấm công',
+      workingTime: ' thời gian làm việc',
+      currentStatus: 'Trạng thái hiện tại',
+      clockInTime: 'Giờ vào',
+      clockOutTime: 'Giờ ra',
+      hours: ' giờ',
+      clockIn: 'Chấm công vào',
+      clockOut: 'Chấm công ra',
+      startBreak: 'Bắt đầu nghỉ',
+      endBreak: 'Kết thúc nghỉ',
+      notes: 'Ghi chú',
+      notesPlaceholder: 'Nhập ghi chú công việc'
     },
 
     // Employees
     employees: {
       title: 'Quản lý nhân viên',
       description: 'Đăng ký và quản lý thông tin nhân viên.',
-      employeeManagement: 'Quản lý nhân viên'
+      employeeManagement: 'Quản lý nhân viên',
+      manager: 'Quản lý',
+      admin: 'Quản trị viên',
+      cashier: 'Thu ngân'
     },
 
     // Inventory
