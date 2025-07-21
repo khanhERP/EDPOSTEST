@@ -113,7 +113,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
     <main className="flex-1 flex flex-col">
       <div className="bg-white p-4 border-b pos-border flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-medium pos-text-primary">{getCategoryName()}</h2>
+          <h2 className="font-medium pos-text-primary text-[14px]">{getCategoryName()}</h2>
           <p className="text-sm pos-text-secondary">{products.length} products available</p>
         </div>
         <div className="flex items-center space-x-3">
@@ -127,7 +127,6 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
           </Button>
         </div>
       </div>
-      
       <div className="flex-1 overflow-y-auto p-4">
         {products.length === 0 ? (
           <div className="text-center py-12">
