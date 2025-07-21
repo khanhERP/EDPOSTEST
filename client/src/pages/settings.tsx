@@ -32,6 +32,7 @@ import {
   UserCheck
 } from "lucide-react";
 import { EmployeeFormModal } from "@/components/employees/employee-form-modal";
+import { CustomerFormModal } from "@/components/customers/customer-form-modal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
@@ -68,6 +69,11 @@ export default function Settings() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [productSearchTerm, setProductSearchTerm] = useState("");
   
+  // Customer management state
+  const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+  const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
+  const [customerSearchTerm, setCustomerSearchTerm] = useState("");
+  
   // Fetch store settings
   const { data: storeData, isLoading } = useQuery<StoreSettings>({
     queryKey: ['/api/store-settings'],
@@ -80,6 +86,11 @@ export default function Settings() {
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['/api/categories'],
+  });
+
+  // Fetch customers
+  const { data: customers = [] } = useQuery<any[]>({
+    queryKey: ['/api/customers'],
   });
 
   // Store settings state
@@ -421,6 +432,31 @@ export default function Settings() {
     setShowAddCategoryModal(false);
     setEditingCategory(null);
     categoryForm.reset();
+  };
+
+  // Customer management functions
+  const handleDeleteCustomer = async (id: number) => {
+    if (confirm("정말로 이 고객을 삭제하시겠습니까?")) {
+      try {
+        await apiRequest("DELETE", `/api/customers/${id}`);
+        queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+        toast({
+          title: '성공',
+          description: '고객이 성공적으로 삭제되었습니다.',
+        });
+      } catch (error) {
+        toast({
+          title: '오류',
+          description: '고객 삭제에 실패했습니다.',
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const resetCustomerForm = () => {
+    setShowAddCustomerModal(false);
+    setEditingCustomer(null);
   };
 
   return (
@@ -965,13 +1001,18 @@ export default function Settings() {
                       <Input
                         placeholder="고객 검색..."
                         className="w-64"
+                        value={customerSearchTerm}
+                        onChange={(e) => setCustomerSearchTerm(e.target.value)}
                       />
                       <Button variant="outline" size="sm">
                         <Search className="w-4 h-4 mr-2" />
                         검색
                       </Button>
                     </div>
-                    <Button className="bg-green-600 hover:bg-green-700">
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => setShowAddCustomerModal(true)}
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       고객 등록
                     </Button>
@@ -988,69 +1029,68 @@ export default function Settings() {
                       <div className="text-center">작업</div>
                     </div>
                     
-                    <div className="divide-y">
-                      <div className="grid grid-cols-7 gap-4 p-4 items-center">
-                        <div className="font-mono text-sm">CUS001</div>
-                        <div className="font-medium">김고객</div>
-                        <div className="text-sm text-gray-600">010-1111-2222</div>
-                        <div className="text-sm text-gray-600">customer1@example.com</div>
-                        <div>
-                          <Badge variant="default" className="bg-amber-100 text-amber-800">골드</Badge>
+                    <div className="divide-y max-h-96 overflow-y-auto">
+                      {customers.length > 0 ? (
+                        customers.filter(customer => 
+                          customer.name?.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+                          customer.phone?.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
+                          customer.email?.toLowerCase().includes(customerSearchTerm.toLowerCase())
+                        ).map((customer: any) => (
+                          <div key={customer.id} className="grid grid-cols-7 gap-4 p-4 items-center">
+                            <div className="font-mono text-sm">{customer.customerId || `CUS${customer.id.toString().padStart(3, '0')}`}</div>
+                            <div className="font-medium">{customer.name}</div>
+                            <div className="text-sm text-gray-600">{customer.phone}</div>
+                            <div className="text-sm text-gray-600">{customer.email || '-'}</div>
+                            <div>
+                              <Badge 
+                                variant={customer.grade === 'gold' ? 'default' : customer.grade === 'silver' ? 'secondary' : 'outline'}
+                                className={
+                                  customer.grade === 'gold' ? 'bg-amber-100 text-amber-800' :
+                                  customer.grade === 'silver' ? 'bg-gray-100 text-gray-800' :
+                                  customer.grade === 'vip' ? 'bg-purple-100 text-purple-800' :
+                                  'text-green-700 border-green-300'
+                                }
+                              >
+                                {customer.grade === 'gold' ? '골드' : 
+                                 customer.grade === 'silver' ? '실버' : 
+                                 customer.grade === 'vip' ? 'VIP' : '브론즈'}
+                              </Badge>
+                            </div>
+                            <div className="font-medium">₩{(customer.totalSpent || 0).toLocaleString()}</div>
+                            <div className="flex items-center justify-center gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => {
+                                  setEditingCustomer(customer);
+                                  setShowAddCustomerModal(true);
+                                }}
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="text-red-500 hover:text-red-700"
+                                onClick={() => handleDeleteCustomer(customer.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-12">
+                          <UserCheck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-600">등록된 고객이 없습니다.</p>
                         </div>
-                        <div className="font-medium">₩350,000</div>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-7 gap-4 p-4 items-center">
-                        <div className="font-mono text-sm">CUS002</div>
-                        <div className="font-medium">이단골</div>
-                        <div className="text-sm text-gray-600">010-2222-3333</div>
-                        <div className="text-sm text-gray-600">customer2@example.com</div>
-                        <div>
-                          <Badge variant="secondary" className="bg-gray-100 text-gray-800">실버</Badge>
-                        </div>
-                        <div className="font-medium">₩180,000</div>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-7 gap-4 p-4 items-center">
-                        <div className="font-mono text-sm">CUS003</div>
-                        <div className="font-medium">박신규</div>
-                        <div className="text-sm text-gray-600">010-3333-4444</div>
-                        <div className="text-sm text-gray-600">customer3@example.com</div>
-                        <div>
-                          <Badge variant="outline" className="text-green-700 border-green-300">브론즈</Badge>
-                        </div>
-                        <div className="font-medium">₩45,000</div>
-                        <div className="flex items-center justify-center gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
+                      )}
                     </div>
                   </div>
 
                   <div className="flex justify-between items-center mt-6">
                     <div className="text-sm text-gray-600">
-                      총 3명의 고객이 등록되어 있습니다.
+                      총 {customers.length}명의 고객이 등록되어 있습니다.
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm">
@@ -1334,6 +1374,14 @@ export default function Settings() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Customer Add/Edit Modal */}
+      <CustomerFormModal
+        isOpen={showAddCustomerModal}
+        onClose={resetCustomerForm}
+        customer={editingCustomer}
+        mode={editingCustomer ? "edit" : "create"}
+      />
     </div>
   );
 }
