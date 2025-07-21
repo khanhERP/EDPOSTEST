@@ -135,7 +135,7 @@ export default function InventoryPage() {
 
             <Card className="border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">{t('inventory.outOfStock')} {t('common.products')}</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">{t('inventory.outOfStock')}</CardTitle>
                 <AlertTriangle className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
