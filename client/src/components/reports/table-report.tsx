@@ -18,18 +18,18 @@ export function TableReport() {
     new Date().toISOString().split('T')[0]
   );
 
-  const { data: orders } = useQuery({
+  const { data: orders = [] } = useQuery({
     queryKey: ['/api/orders'],
   });
 
-  const { data: tables } = useQuery({
+  const { data: tables = [] } = useQuery({
     queryKey: ['/api/tables'],
   });
 
   const getTableData = () => {
     if (!orders || !tables) return null;
 
-    const filteredOrders = orders.filter((order: Order) => {
+    const filteredOrders = (orders as Order[]).filter((order: Order) => {
       const orderDate = new Date(order.orderedAt);
       const start = new Date(startDate);
       const end = new Date(endDate);
@@ -50,7 +50,7 @@ export function TableReport() {
     } } = {};
 
     // Initialize stats for all tables
-    tables.forEach((table: TableType) => {
+    (tables as TableType[]).forEach((table: TableType) => {
       tableStats[table.id] = {
         table,
         orderCount: 0,
@@ -88,9 +88,7 @@ export function TableReport() {
 
     // Sort tables by different metrics
     const tableList = Object.values(tableStats);
-    const topRevenueT
-
-= [...tableList].sort((a, b) => b.revenue - a.revenue);
+    const topRevenueTables = [...tableList].sort((a, b) => b.revenue - a.revenue);
     const topTurnoverTables = [...tableList].sort((a, b) => b.turnoverRate - a.turnoverRate);
     const topUtilizationTables = [...tableList].sort((a, b) => b.orderCount - a.orderCount);
 
@@ -365,7 +363,7 @@ export function TableReport() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {tableData.topRevenueTables.slice(0, 5).map((stats, index) => (
+              {tableData.topRevenueTables.slice(0, 5).map((stats: any, index: number) => (
                 <div key={stats.table.id} className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
                   <div className="flex items-center gap-2">
                     <Badge variant={index < 3 ? "default" : "outline"} className="text-xs">
@@ -392,7 +390,7 @@ export function TableReport() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {tableData.topTurnoverTables.slice(0, 5).map((stats, index) => (
+              {tableData.topTurnoverTables.slice(0, 5).map((stats: any, index: number) => (
                 <div key={stats.table.id} className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
                   <div className="flex items-center gap-2">
                     <Badge variant={index < 3 ? "default" : "outline"} className="text-xs">
@@ -419,7 +417,7 @@ export function TableReport() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {tableData.topUtilizationTables.slice(0, 5).map((stats, index) => (
+              {tableData.topUtilizationTables.slice(0, 5).map((stats: any, index: number) => (
                 <div key={stats.table.id} className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
                   <div className="flex items-center gap-2">
                     <Badge variant={index < 3 ? "default" : "outline"} className="text-xs">
