@@ -2,7 +2,7 @@ import { X, Printer, Mail } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Receipt } from "@shared/schema";
-import logoPath from "@assets/image_1753067088685.png";
+import logoPath from "@assets/EDPOS_1753091767028.png";
 
 interface ReceiptModalProps {
   isOpen: boolean;

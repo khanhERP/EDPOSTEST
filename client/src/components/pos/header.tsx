@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ScanBarcode, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package, Settings as SettingsIcon, Building2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import logoPath from "@assets/image_1753067088685.png";
+import logoPath from "@assets/EDPOS_1753091767028.png";
 import { useTranslation } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { type StoreSettings } from "@shared/schema";

@@ -118,8 +118,13 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### January 21, 2025 - Logo Update and Inventory Management System
-- **Updated Logo**: Replaced application logo with new EDPOS branding across header and receipt components
+### January 21, 2025 - Logo Update and System Improvements
+- **Updated EDPOS Logo**: Replaced application logo with new EDPOS branding (EDPOS_1753091767028.png) across header and receipt components
+- **Hardcoded Text Elimination**: Completed removal of hardcoded text including cashier names, replaced with proper multi-language support
+- **Translation System Enhancement**: Added comprehensive POS translations across Korean, English, and Vietnamese languages
+- **Navigation System Fix**: Resolved table management navigation issues with proper sidebar and header menu integration
+- **Duplicate Key Cleanup**: Eliminated duplicate translation keys causing syntax errors in i18n system
+- **Multi-language Cashier Names**: Added default cashier names for each language (김담당자, John Smith, Nguyễn Thu Ngân)
 - **Added Inventory Management**: Complete inventory management system with stock tracking, low stock alerts, and stock value calculations
 - **Stock Update Functionality**: Added ability to add, subtract, or set stock levels with notes for audit trail
 - **Inventory Dashboard**: Created comprehensive inventory dashboard with real-time statistics and filtering options
