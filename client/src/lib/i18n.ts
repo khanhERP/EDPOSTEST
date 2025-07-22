@@ -1211,7 +1211,23 @@ export const translations = {
       orderCompletedDesc: 'Đơn hàng đã được đặt thành công.',
       orderFailed: 'Đơn hàng thất bại',
       orderFailedDesc: 'Không thể đặt đơn hàng.',
-      cleanupComplete: 'Dọn dẹp hoàn tất'
+      cleanupComplete: 'Dọn dẹp hoàn tất',
+      noTables: 'Không có bàn nào được đăng ký',
+      addTable: 'Thêm bàn',
+      editTable: 'Chỉnh sửa bàn',
+      addTableDesc: 'Thêm bàn mới vào hệ thống',
+      editTableDesc: 'Chỉnh sửa thông tin bàn',
+      tableNumberLabel: 'Số bàn',
+      tableNumberPlaceholder: 'T1, A1, 1번, v.v...',
+      capacityLabel: 'Sức chứa',
+      statusLabel: 'Trạng thái',
+      statusPlaceholder: 'Chọn trạng thái',
+      qrCodeLabel: 'Mã QR (tùy chọn)',
+      qrCodePlaceholder: 'Dữ liệu mã QR...',
+      none: 'Không có',
+      people: 'người',
+      actions: 'Thao tác',
+      createdDate: 'Ngày tạo'
     },
 
     // Orders

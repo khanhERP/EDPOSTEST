@@ -188,12 +188,12 @@ export function TableManagement() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>테이블 번호</TableHead>
-                <TableHead>수용 인원</TableHead>
-                <TableHead>상태</TableHead>
-                <TableHead>QR 코드</TableHead>
-                <TableHead>생성일</TableHead>
-                <TableHead>작업</TableHead>
+                <TableHead>{t('tables.tableNumberLabel')}</TableHead>
+                <TableHead>{t('tables.capacityLabel')}</TableHead>
+                <TableHead>{t('tables.statusLabel')}</TableHead>
+                <TableHead>{t('tables.qrCodeLabel')}</TableHead>
+                <TableHead>{t('tables.createdDate')}</TableHead>
+                <TableHead>{t('tables.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -206,7 +206,7 @@ export function TableManagement() {
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Users className="w-4 h-4" />
-                          {table.capacity}명
+                          {table.capacity} {t('tables.people')}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -221,7 +221,7 @@ export function TableManagement() {
                             <span className="text-xs">{table.qrCode.substring(0, 10)}...</span>
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-400">없음</span>
+                          <span className="text-xs text-gray-400">{t('tables.none')}</span>
                         )}
                       </TableCell>
                       <TableCell>
@@ -251,7 +251,7 @@ export function TableManagement() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                    등록된 테이블이 없습니다
+                    {t('tables.noTables')}
                   </TableCell>
                 </TableRow>
               )}
@@ -265,12 +265,12 @@ export function TableManagement() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingTable ? "테이블 수정" : "테이블 추가"}
+              {editingTable ? t('tables.editTable') : t('tables.addTable')}
             </DialogTitle>
             <DialogDescription>
               {editingTable 
-                ? "테이블 정보를 수정하세요" 
-                : "새로운 테이블을 추가하세요"
+                ? t('tables.editTableDesc') 
+                : t('tables.addTableDesc')
               }
             </DialogDescription>
           </DialogHeader>
@@ -282,9 +282,9 @@ export function TableManagement() {
                 name="tableNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>테이블 번호</FormLabel>
+                    <FormLabel>{t('tables.tableNumberLabel')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="T1, A1, 1번 등..." {...field} />
+                      <Input placeholder={t('tables.tableNumberPlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -296,7 +296,7 @@ export function TableManagement() {
                 name="capacity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>수용 인원</FormLabel>
+                    <FormLabel>{t('tables.capacityLabel')}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -315,11 +315,11 @@ export function TableManagement() {
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>상태</FormLabel>
+                    <FormLabel>{t('tables.statusLabel')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="상태를 선택하세요" />
+                          <SelectValue placeholder={t('tables.statusPlaceholder')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -339,9 +339,9 @@ export function TableManagement() {
                 name="qrCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>QR 코드 (선택사항)</FormLabel>
+                    <FormLabel>{t('tables.qrCodeLabel')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="QR 코드 데이터..." {...field} />
+                      <Input placeholder={t('tables.qrCodePlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
