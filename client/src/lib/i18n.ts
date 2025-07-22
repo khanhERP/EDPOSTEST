@@ -1212,6 +1212,55 @@ export const translations = {
       orderFailed: 'Đơn hàng thất bại',
       orderFailedDesc: 'Không thể đặt đơn hàng.',
       cleanupComplete: 'Dọn dẹp hoàn tất'
+    },
+
+    // Orders
+    orders: {
+      title: 'Quản lý đơn hàng',
+      description: 'Theo dõi và quản lý đơn hàng của nhà hàng.',
+      orderManagement: 'Quản lý đơn hàng',
+      activeOrders: 'Đơn hàng đang hoạt động',
+      orderHistory: 'Lịch sử đơn hàng',
+      orderNumber: 'Số đơn hàng',
+      table: 'Bàn',
+      customer: 'Khách hàng',
+      customerCount: 'Số người',
+      items: 'Món',
+      total: 'Tổng tiền',
+      orderStatus: 'Trạng thái',
+      time: 'Thời gian',
+      actions: 'Hành động',
+      viewDetails: 'Xem chi tiết',
+      confirm: 'Xác nhận',
+      startCooking: 'Bắt đầu nấu',
+      ready: 'Hoàn thành',
+      served: 'Đã phục vụ',
+      orderDetails: 'Chi tiết đơn hàng',
+      orderInfo: 'Thông tin đơn hàng',
+      statusAndTime: 'Trạng thái và thời gian',
+      orderTime: 'Thời gian đặt',
+      orderItems: 'Món đã đặt',
+      notes: 'Ghi chú',
+      quantity: 'Số lượng',
+      price: 'Giá',
+      totalAmount: 'Tổng tiền',
+      unknownProduct: 'Sản phẩm không xác định',
+      unknownTable: 'Không rõ',
+      noCustomerName: 'Chưa nhập',
+      people: 'người',
+      memo: 'Ghi chú',
+      noActiveOrders: 'Không có đơn hàng nào đang hoạt động',
+      orderStatusUpdated: 'Trạng thái đơn hàng đã được cập nhật',
+      orderStatusUpdateFailed: 'Không thể cập nhật trạng thái đơn hàng',
+      status: {
+        pending: 'Chờ xử lý',
+        confirmed: 'Đã xác nhận',
+        preparing: 'Đang chuẩn bị',
+        ready: 'Sẵn sàng',
+        served: 'Đã phục vụ',
+        paid: 'Đã thanh toán',
+        cancelled: 'Đã hủy'
+      }
     }
   }
 };

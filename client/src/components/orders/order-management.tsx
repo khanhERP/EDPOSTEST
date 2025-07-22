@@ -39,13 +39,13 @@ export function OrderManagement() {
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
       toast({
         title: t('common.success'),
-        description: t('tables.orderCompleted'),
+        description: t('orders.orderStatusUpdated'),
       });
     },
     onError: () => {
       toast({
         title: t('common.error'),
-        description: t('tables.orderFailed'),
+        description: t('orders.orderStatusUpdateFailed'),
         variant: "destructive",
       });
     },
@@ -53,13 +53,13 @@ export function OrderManagement() {
 
   const getOrderStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { label: '대기중', variant: "secondary" as const, color: "bg-yellow-500" },
-      confirmed: { label: '확인됨', variant: "default" as const, color: "bg-blue-500" },
-      preparing: { label: '조리중', variant: "destructive" as const, color: "bg-orange-500" },
-      ready: { label: '완료', variant: "outline" as const, color: "bg-green-500" },
-      served: { label: '서빙완료', variant: "outline" as const, color: "bg-green-600" },
-      paid: { label: '결제완료', variant: "outline" as const, color: "bg-gray-500" },
-      cancelled: { label: '취소됨', variant: "destructive" as const, color: "bg-red-500" },
+      pending: { label: t('orders.status.pending'), variant: "secondary" as const, color: "bg-yellow-500" },
+      confirmed: { label: t('orders.status.confirmed'), variant: "default" as const, color: "bg-blue-500" },
+      preparing: { label: t('orders.status.preparing'), variant: "destructive" as const, color: "bg-orange-500" },
+      ready: { label: t('orders.status.ready'), variant: "outline" as const, color: "bg-green-500" },
+      served: { label: t('orders.status.served'), variant: "outline" as const, color: "bg-green-600" },
+      paid: { label: t('orders.status.paid'), variant: "outline" as const, color: "bg-gray-500" },
+      cancelled: { label: t('orders.status.cancelled'), variant: "destructive" as const, color: "bg-red-500" },
     };
     
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
@@ -188,7 +188,7 @@ export function OrderManagement() {
                       onClick={() => handleViewOrder(order)}
                     >
                       <Eye className="w-3 h-3 mr-1" />
-                      상세보기
+                      {t('orders.viewDetails')}
                     </Button>
                     
                     {order.status === 'pending' && (
@@ -197,7 +197,7 @@ export function OrderManagement() {
                         onClick={() => handleStatusUpdate(order.id, 'confirmed')}
                         disabled={updateOrderStatusMutation.isPending}
                       >
-                        확인
+                        {t('orders.confirm')}
                       </Button>
                     )}
                     
@@ -207,7 +207,7 @@ export function OrderManagement() {
                         onClick={() => handleStatusUpdate(order.id, 'preparing')}
                         disabled={updateOrderStatusMutation.isPending}
                       >
-                        조리시작
+                        {t('orders.startCooking')}
                       </Button>
                     )}
                     
@@ -217,7 +217,7 @@ export function OrderManagement() {
                         onClick={() => handleStatusUpdate(order.id, 'ready')}
                         disabled={updateOrderStatusMutation.isPending}
                       >
-                        완료
+                        {t('orders.ready')}
                       </Button>
                     )}
                     
@@ -227,7 +227,7 @@ export function OrderManagement() {
                         onClick={() => handleStatusUpdate(order.id, 'served')}
                         disabled={updateOrderStatusMutation.isPending}
                       >
-                        서빙완료
+                        {t('orders.served')}
                       </Button>
                     )}
                   </div>
@@ -242,9 +242,9 @@ export function OrderManagement() {
       <Dialog open={orderDetailsOpen} onOpenChange={setOrderDetailsOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle>주문 상세 정보</DialogTitle>
+            <DialogTitle>{t('orders.orderDetails')}</DialogTitle>
             <DialogDescription>
-              {selectedOrder && `주문번호: ${selectedOrder.orderNumber}`}
+              {selectedOrder && `${t('orders.orderNumber')}: ${selectedOrder.orderNumber}`}
             </DialogDescription>
           </DialogHeader>
           
@@ -254,40 +254,40 @@ export function OrderManagement() {
                 {/* Order Info */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <h4 className="font-medium mb-2">주문 정보</h4>
+                    <h4 className="font-medium mb-2">{t('orders.orderInfo')}</h4>
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
-                        <span>주문번호:</span>
+                        <span>{t('orders.orderNumber')}:</span>
                         <span className="font-medium">{selectedOrder.orderNumber}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>테이블:</span>
+                        <span>{t('orders.table')}:</span>
                         <span className="font-medium">
-                          {getTableInfo(selectedOrder.tableId)?.tableNumber || '알 수 없음'}
+                          {getTableInfo(selectedOrder.tableId)?.tableNumber || t('orders.unknownTable')}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span>고객명:</span>
-                        <span className="font-medium">{selectedOrder.customerName || '미입력'}</span>
+                        <span>{t('orders.customer')}:</span>
+                        <span className="font-medium">{selectedOrder.customerName || t('orders.noCustomerName')}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>인원:</span>
-                        <span className="font-medium">{selectedOrder.customerCount}명</span>
+                        <span>{t('orders.customerCount')}:</span>
+                        <span className="font-medium">{selectedOrder.customerCount} {t('orders.people')}</span>
                       </div>
                     </div>
                   </div>
                   
                   <div>
-                    <h4 className="font-medium mb-2">상태 및 시간</h4>
+                    <h4 className="font-medium mb-2">{t('orders.statusAndTime')}</h4>
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
-                        <span>상태:</span>
+                        <span>{t('orders.orderStatus')}:</span>
                         <Badge variant={getOrderStatusBadge(selectedOrder.status).variant}>
                           {getOrderStatusBadge(selectedOrder.status).label}
                         </Badge>
                       </div>
                       <div className="flex justify-between">
-                        <span>주문시간:</span>
+                        <span>{t('orders.orderTime')}:</span>
                         <span className="font-medium">{formatTime(selectedOrder.createdAt)}</span>
                       </div>
                     </div>
@@ -298,16 +298,16 @@ export function OrderManagement() {
 
                 {/* Order Items */}
                 <div>
-                  <h4 className="font-medium mb-3">주문 메뉴</h4>
+                  <h4 className="font-medium mb-3">{t('orders.orderItems')}</h4>
                   <div className="space-y-3">
                     {selectedOrder.items && (selectedOrder.items as OrderItem[]).map((item: OrderItem, index: number) => {
                       const productInfo = getProductInfo(item.productId);
                       return (
                         <div key={index} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
                           <div className="flex-1">
-                            <h5 className="font-medium">{productInfo?.name || '알 수 없는 상품'}</h5>
+                            <h5 className="font-medium">{productInfo?.name || t('orders.unknownProduct')}</h5>
                             {item.notes && (
-                              <p className="text-sm text-gray-600 mt-1">메모: {item.notes}</p>
+                              <p className="text-sm text-gray-600 mt-1">{t('orders.memo')}: {item.notes}</p>
                             )}
                           </div>
                           <div className="text-right">
@@ -328,7 +328,7 @@ export function OrderManagement() {
 
                 {/* Order Total */}
                 <div className="flex justify-between items-center text-lg font-bold">
-                  <span>총 금액:</span>
+                  <span>{t('orders.totalAmount')}:</span>
                   <span className="text-green-600">{formatCurrency(selectedOrder.totalAmount)}</span>
                 </div>
               </div>
