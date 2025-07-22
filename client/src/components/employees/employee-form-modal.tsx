@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { insertEmployeeSchema, type Employee, type InsertEmployee } from "@shared/schema";
+import { useTranslation } from "@/lib/i18n";
 
 interface EmployeeFormModalProps {
   isOpen: boolean;
@@ -20,6 +21,7 @@ interface EmployeeFormModalProps {
 export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeFormModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const form = useForm<InsertEmployee>({
     resolver: zodResolver(insertEmployeeSchema),
@@ -27,7 +29,7 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
       employeeId: employee?.employeeId || "",
       name: employee?.name || "",
       email: employee?.email || "",
-      phone: employee?.phone || "",
+      phone: employee?.phone || null,
       role: employee?.role || "cashier",
       isActive: employee?.isActive ?? true,
       hireDate: employee?.hireDate ? new Date(employee.hireDate) : new Date(),
@@ -42,16 +44,16 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
       toast({
-        title: "성공",
-        description: "새 직원이 추가되었습니다.",
+        title: t('common.success'),
+        description: t('employees.addEmployeeSuccess'),
       });
       onClose();
       form.reset();
     },
     onError: () => {
       toast({
-        title: "오류",
-        description: "직원 추가에 실패했습니다.",
+        title: t('common.error'),
+        description: t('employees.addEmployeeError'),
         variant: "destructive",
       });
     },
@@ -65,15 +67,15 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
       toast({
-        title: "성공",
-        description: "직원 정보가 업데이트되었습니다.",
+        title: t('common.success'),
+        description: t('employees.updateEmployeeSuccess'),
       });
       onClose();
     },
     onError: () => {
       toast({
-        title: "오류",
-        description: "직원 정보 업데이트에 실패했습니다.",
+        title: t('common.error'),
+        description: t('employees.updateEmployeeError'),
         variant: "destructive",
       });
     },
@@ -94,12 +96,12 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? "새 직원 추가" : "직원 정보 수정"}
+            {mode === "create" ? t('employees.addEmployee') : t('employees.editEmployee')}
           </DialogTitle>
           <DialogDescription>
             {mode === "create" 
-              ? "새 직원의 정보를 입력하여 등록하세요." 
-              : "직원 정보를 수정하고 저장하세요."}
+              ? t('employees.addEmployeeDesc') 
+              : t('employees.editEmployeeDesc')}
           </DialogDescription>
         </DialogHeader>
 
@@ -110,7 +112,7 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
               name="employeeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>직원 ID</FormLabel>
+                  <FormLabel>{t('employees.employeeId')}</FormLabel>
                   <FormControl>
                     <Input placeholder="EMP001" {...field} />
                   </FormControl>
@@ -124,7 +126,7 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>이름</FormLabel>
+                  <FormLabel>{t('employees.name')}</FormLabel>
                   <FormControl>
                     <Input placeholder="홍길동" {...field} />
                   </FormControl>
@@ -138,7 +140,7 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>이메일</FormLabel>
+                  <FormLabel>{t('employees.email')}</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="hong@company.com" {...field} />
                   </FormControl>
@@ -152,9 +154,16 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>전화번호</FormLabel>
+                  <FormLabel>{t('employees.phone')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="010-1234-5678" {...field} />
+                    <Input 
+                      placeholder="010-1234-5678" 
+                      value={field.value || ""} 
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -166,17 +175,17 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>직급</FormLabel>
+                  <FormLabel>{t('employees.role')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="직급을 선택하세요" />
+                        <SelectValue placeholder={t('employees.selectRole')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="cashier">캐셔</SelectItem>
-                      <SelectItem value="manager">매니저</SelectItem>
-                      <SelectItem value="admin">관리자</SelectItem>
+                      <SelectItem value="cashier">{t('employees.roles.cashier')}</SelectItem>
+                      <SelectItem value="manager">{t('employees.roles.manager')}</SelectItem>
+                      <SelectItem value="admin">{t('employees.roles.admin')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -191,10 +200,10 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
                 onClick={onClose}
                 disabled={isLoading}
               >
-                취소
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "저장 중..." : mode === "create" ? "추가" : "수정"}
+                {isLoading ? t('common.saving') : mode === "create" ? t('common.add') : t('common.save')}
               </Button>
             </div>
           </form>

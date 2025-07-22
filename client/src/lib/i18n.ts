@@ -848,7 +848,8 @@ export const translations = {
       minute: 'Phút',
       collapse: 'Thu gọn',
       expand: 'Mở rộng',
-      viewReport: 'Xem báo cáo'
+      viewReport: 'Xem báo cáo',
+      saving: 'Đang lưu...'
     },
 
     // Điều hướng
@@ -935,6 +936,13 @@ export const translations = {
       confirmDelete: 'Bạn có chắc chắn muốn xóa nhân viên {{name}}?',
       deleteSuccess: 'Nhân viên đã được xóa.',
       deleteError: 'Không thể xóa nhân viên.',
+      addEmployeeSuccess: 'Nhân viên mới đã được thêm.',
+      addEmployeeError: 'Không thể thêm nhân viên.',
+      addEmployeeDesc: 'Nhập thông tin nhân viên mới.',
+      editEmployeeDesc: 'Chỉnh sửa thông tin nhân viên.',
+      updateEmployeeSuccess: 'Thông tin nhân viên đã được cập nhật.',
+      updateEmployeeError: 'Không thể cập nhật thông tin nhân viên.',
+      selectRole: 'Chọn vai trò',
       roles: {
         manager: 'Quản lý',
         admin: 'Quản trị viên',
