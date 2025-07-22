@@ -1227,7 +1227,12 @@ export const translations = {
       none: 'Không có',
       people: 'người',
       actions: 'Thao tác',
-      createdDate: 'Ngày tạo'
+      createdDate: 'Ngày tạo',
+      tableList: 'Danh sách bàn',
+      tableSettingsDesc: 'Bạn có thể thêm, chỉnh sửa và xóa bàn.',
+      confirmDelete: 'Bạn có thực sự muốn xóa bàn này không?',
+      tableNumberRequired: 'Số bàn là bắt buộc',
+      capacityMinimum: 'Sức chứa phải ít nhất 1 người'
     },
 
     // Orders

@@ -18,14 +18,20 @@ import { apiRequest } from "@/lib/queryClient";
 import type { Table as TableType } from "@shared/schema";
 import { z } from "zod";
 
-const tableFormSchema = z.object({
-  tableNumber: z.string().min(1, "테이블 번호는 필수입니다"),
-  capacity: z.number().min(1, "수용 인원은 1명 이상이어야 합니다"),
+// We'll create the schema inside the component to access translations
+const createTableFormSchema = (t: any) => z.object({
+  tableNumber: z.string().min(1, t('tables.tableNumberRequired')),
+  capacity: z.number().min(1, t('tables.capacityMinimum')),
   status: z.enum(["available", "occupied", "reserved", "maintenance"]),
   qrCode: z.string().optional(),
 });
 
-type TableFormData = z.infer<typeof tableFormSchema>;
+type TableFormData = {
+  tableNumber: string;
+  capacity: number;
+  status: "available" | "occupied" | "reserved" | "maintenance";
+  qrCode?: string;
+};
 
 export function TableManagement() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -38,6 +44,8 @@ export function TableManagement() {
     queryKey: ['/api/tables'],
   });
 
+  const tableFormSchema = createTableFormSchema(t);
+  
   const form = useForm<TableFormData>({
     resolver: zodResolver(tableFormSchema),
     defaultValues: {
@@ -141,7 +149,7 @@ export function TableManagement() {
   };
 
   const handleDelete = (id: number) => {
-    if (confirm("정말로 이 테이블을 삭제하시겠습니까?")) {
+    if (confirm(t('tables.confirmDelete'))) {
       deleteTableMutation.mutate(id);
     }
   };
@@ -171,18 +179,18 @@ export function TableManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">{t('tables.tableSettings')}</h2>
-          <p className="text-gray-600">테이블을 추가, 수정, 삭제할 수 있습니다</p>
+          <p className="text-gray-600">{t('tables.tableSettingsDesc')}</p>
         </div>
         <Button onClick={() => handleOpenDialog()}>
           <Plus className="w-4 h-4 mr-2" />
-          테이블 추가
+          {t('tables.addTable')}
         </Button>
       </div>
 
       {/* Tables List */}
       <Card>
         <CardHeader>
-          <CardTitle>테이블 목록</CardTitle>
+          <CardTitle>{t('tables.tableList')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
