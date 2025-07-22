@@ -127,16 +127,31 @@ export const translations = {
       title: '직원 관리',
       description: '직원 정보를 등록하고 관리합니다.',
       employeeManagement: '직원 관리',
+      employeeList: '직원 목록',
       employeeId: '직원 ID',
       name: '이름',
-      role: '직책',
+      email: '이메일',
+      role: '직급',
       phone: '전화번호',
+      hireDate: '입사일',
       status: '상태',
+      management: '관리',
+      active: '활성',
+      inactive: '비활성',
       addEmployee: '직원 추가',
+      editEmployee: '직원 수정',
       searchPlaceholder: '직원을 검색하세요...',
-      manager: '매니저',
-      admin: '관리자',
-      cashier: '캐셔'
+      noEmployeesFound: '등록된 직원이 없습니다.',
+      addEmployeeHint: '직원 추가 버튼을 클릭하여 새 직원을 등록하세요.',
+      currentEmployeeCount: '현재 등록된 직원은 총 {{count}}명입니다.',
+      confirmDelete: '정말로 {{name}} 직원을 삭제하시겠습니까?',
+      deleteSuccess: '직원이 삭제되었습니다.',
+      deleteError: '직원 삭제에 실패했습니다.',
+      roles: {
+        manager: '매니저',
+        admin: '관리자',
+        cashier: '캐셔'
+      }
     },
 
     // Customers
@@ -538,16 +553,31 @@ export const translations = {
       title: 'Employee Management',
       description: 'Register and manage employee information.',
       employeeManagement: 'Employee Management',
+      employeeList: 'Employee List',
       employeeId: 'Employee ID',
       name: 'Name',
+      email: 'Email',
       role: 'Role',
       phone: 'Phone',
+      hireDate: 'Hire Date',
       status: 'Status',
+      management: 'Management',
+      active: 'Active',
+      inactive: 'Inactive',
       addEmployee: 'Add Employee',
+      editEmployee: 'Edit Employee',
       searchPlaceholder: 'Search employees...',
-      manager: 'Manager',
-      admin: 'Admin',
-      cashier: 'Cashier'
+      noEmployeesFound: 'No employees registered.',
+      addEmployeeHint: 'Click the add employee button to register a new employee.',
+      currentEmployeeCount: 'Currently {{count}} employees are registered.',
+      confirmDelete: 'Are you sure you want to delete employee {{name}}?',
+      deleteSuccess: 'Employee has been deleted.',
+      deleteError: 'Failed to delete employee.',
+      roles: {
+        manager: 'Manager',
+        admin: 'Admin',
+        cashier: 'Cashier'
+      }
     },
 
     // Customers
@@ -885,16 +915,31 @@ export const translations = {
       title: 'Quản lý nhân viên',
       description: 'Đăng ký và quản lý thông tin nhân viên.',
       employeeManagement: 'Quản lý nhân viên',
+      employeeList: 'Danh sách nhân viên',
       employeeId: 'Mã nhân viên',
       name: 'Tên',
+      email: 'Email',
       role: 'Vai trò',
       phone: 'Điện thoại',
+      hireDate: 'Ngày thuê',
       status: 'Trạng thái',
+      management: 'Quản lý',
+      active: 'Hoạt động',
+      inactive: 'Không hoạt động',
       addEmployee: 'Thêm nhân viên',
+      editEmployee: 'Sửa nhân viên',
       searchPlaceholder: 'Tìm kiếm nhân viên...',
-      manager: 'Quản lý',
-      admin: 'Quản trị viên',
-      cashier: 'Thu ngân'
+      noEmployeesFound: 'Không có nhân viên nào được đăng ký.',
+      addEmployeeHint: 'Nhấp vào nút thêm nhân viên để đăng ký nhân viên mới.',
+      currentEmployeeCount: 'Hiện tại có {{count}} nhân viên được đăng ký.',
+      confirmDelete: 'Bạn có chắc chắn muốn xóa nhân viên {{name}}?',
+      deleteSuccess: 'Nhân viên đã được xóa.',
+      deleteError: 'Không thể xóa nhân viên.',
+      roles: {
+        manager: 'Quản lý',
+        admin: 'Quản trị viên',
+        cashier: 'Thu ngân'
+      }
     },
 
     // Customers

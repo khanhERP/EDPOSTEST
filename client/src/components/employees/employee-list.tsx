@@ -8,6 +8,7 @@ import { Edit, Trash2, User, Mail, Phone, Calendar } from "lucide-react";
 import { EmployeeFormModal } from "./employee-form-modal";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { useTranslation } from "@/lib/i18n";
 import type { Employee } from "@shared/schema";
 
 export function EmployeeList() {
@@ -15,24 +16,28 @@ export function EmployeeList() {
   const [showEditModal, setShowEditModal] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
-  const { data: employees, isLoading } = useQuery({
+  const { data: employees, isLoading } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/employees/${id}`, { method: 'DELETE' }),
+    mutationFn: async (id: number) => {
+      const response = await apiRequest('DELETE', `/api/employees/${id}`);
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
       toast({
-        title: "성공",
-        description: "직원이 삭제되었습니다.",
+        title: t('common.success'),
+        description: t('employees.deleteSuccess'),
       });
     },
     onError: () => {
       toast({
-        title: "오류",
-        description: "직원 삭제에 실패했습니다.",
+        title: t('common.error'),
+        description: t('employees.deleteError'),
         variant: "destructive",
       });
     },
@@ -44,24 +49,25 @@ export function EmployeeList() {
   };
 
   const handleDelete = (employee: Employee) => {
-    if (confirm(`정말로 ${employee.name} 직원을 삭제하시겠습니까?`)) {
+    if (confirm(t('employees.confirmDelete').replace('{{name}}', employee.name))) {
       deleteMutation.mutate(employee.id);
     }
   };
 
   const getRoleBadge = (role: string) => {
     const roleConfig = {
-      admin: { label: "관리자", variant: "destructive" as const },
-      manager: { label: "매니저", variant: "default" as const },
-      cashier: { label: "캐셔", variant: "secondary" as const },
+      admin: { variant: "destructive" as const },
+      manager: { variant: "default" as const },
+      cashier: { variant: "secondary" as const },
     };
     
-    const config = roleConfig[role as keyof typeof roleConfig] || { label: role, variant: "outline" as const };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    const config = roleConfig[role as keyof typeof roleConfig] || { variant: "outline" as const };
+    const label = t(`employees.roles.${role}` as any) || role;
+    return <Badge variant={config.variant}>{label}</Badge>;
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR');
+  const formatDate = (date: string | Date) => {
+    return new Date(date).toLocaleDateString('ko-KR');
   };
 
   if (isLoading) {
@@ -69,7 +75,7 @@ export function EmployeeList() {
       <Card>
         <CardContent className="p-6">
           <div className="flex justify-center">
-            <div className="text-gray-500">직원 목록을 불러오는 중...</div>
+            <div className="text-gray-500">{t('common.loading')}</div>
           </div>
         </CardContent>
       </Card>
@@ -82,31 +88,31 @@ export function EmployeeList() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
-            직원 목록
+            {t('employees.employeeList')}
           </CardTitle>
           <CardDescription>
-            현재 등록된 직원은 총 {employees?.length || 0}명입니다.
+            {t('employees.currentEmployeeCount').replace('{{count}}', String(employees?.length || 0))}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {!employees || employees.length === 0 ? (
             <div className="text-center py-8">
               <User className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500">등록된 직원이 없습니다.</p>
-              <p className="text-sm text-gray-400 mt-2">직원 추가 버튼을 클릭하여 새 직원을 등록하세요.</p>
+              <p className="text-gray-500">{t('employees.noEmployeesFound')}</p>
+              <p className="text-sm text-gray-400 mt-2">{t('employees.addEmployeeHint')}</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>직원 ID</TableHead>
-                  <TableHead>이름</TableHead>
-                  <TableHead>이메일</TableHead>
-                  <TableHead>전화번호</TableHead>
-                  <TableHead>직급</TableHead>
-                  <TableHead>입사일</TableHead>
-                  <TableHead>상태</TableHead>
-                  <TableHead>관리</TableHead>
+                  <TableHead>{t('employees.employeeId')}</TableHead>
+                  <TableHead>{t('employees.name')}</TableHead>
+                  <TableHead>{t('employees.email')}</TableHead>
+                  <TableHead>{t('employees.phone')}</TableHead>
+                  <TableHead>{t('employees.role')}</TableHead>
+                  <TableHead>{t('employees.hireDate')}</TableHead>
+                  <TableHead>{t('employees.status')}</TableHead>
+                  <TableHead>{t('employees.management')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -144,7 +150,7 @@ export function EmployeeList() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={employee.isActive ? "default" : "secondary"}>
-                        {employee.isActive ? "활성" : "비활성"}
+                        {employee.isActive ? t('employees.active') : t('employees.inactive')}
                       </Badge>
                     </TableCell>
                     <TableCell>
