@@ -90,7 +90,7 @@ export function CategorySidebar({
           className="w-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center rounded-xl"
         >
           <BarChart3 className="mr-2" size={16} />
-{t('pos.scanBarcode')}
+          {t('pos.scanBarcode')}
         </Button>
       </div>
       
@@ -108,7 +108,7 @@ export function CategorySidebar({
             >
               <span className="flex items-center">
                 <Grid3X3 className="w-5 mr-2 text-gray-500" size={16} />
-{t('pos.allProducts')}
+                {t('pos.allProducts')}
               </span>
               <span className="text-xs bg-gray-200 pos-text-secondary px-2 py-1 rounded-full">
                 {getProductCountForCategory("all")}
