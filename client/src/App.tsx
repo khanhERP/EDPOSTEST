@@ -23,6 +23,8 @@ function Router() {
       <Route path="/inventory" component={InventoryPage} />
       <Route path="/reports" component={ReportsPage} />
       <Route path="/employees" component={EmployeesPage} />
+      <Route path="/settings" component={SettingsPage} />
+      <Route path="/suppliers" component={SuppliersPage} />
       <Route path="/attendance" component={AttendancePage} />
       <Route path="/attendance-qr" component={AttendanceQRPage} />
       <Route component={NotFoundPage} />

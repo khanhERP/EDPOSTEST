@@ -335,6 +335,7 @@ const translations = {
       title: '페이지를 찾을 수 없습니다',
       description: '죄송합니다. 요청하신 페이지를 찾을 수 없습니다.',
       backHome: '홈으로 돌아가기',
+      backToHome: 'POS로 돌아가기',
     },
   },
   en: {
@@ -632,6 +633,7 @@ const translations = {
       title: 'Page Not Found',
       description: 'Sorry, we could not find the page you are looking for.',
       backHome: 'Back to Home',
+      backToHome: 'Back to POS',
     },
   },
   vi: {
@@ -947,6 +949,7 @@ const translations = {
       title: 'Không tìm thấy trang',
       description: 'Xin lỗi, chúng tôi không thể tìm thấy trang bạn đang tìm kiếm.',
       backHome: 'Về trang chủ',
+      backToHome: 'Quay lại POS',
     },
   },
 };
@@ -960,12 +963,6 @@ export function useTranslation() {
     
     for (const k of keys) {
       value = value?.[k];
-    }
-    
-    // Debug logging
-    if (!value) {
-      console.log(`Translation missing for key: ${key} in language: ${currentLanguage}`);
-      console.log('Available translations:', translations[currentLanguage]);
     }
     
     return value || key;
