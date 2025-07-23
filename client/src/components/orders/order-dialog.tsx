@@ -184,16 +184,16 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
               <CardContent className="p-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="customerName">고객명 (선택사항)</Label>
+                    <Label htmlFor="customerName">{t('tables.customerName')} ({t('tables.optional')})</Label>
                     <Input
                       id="customerName"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="고객명을 입력하세요"
+                      placeholder={t('tables.customerNamePlaceholder')}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="customerCount">인원수</Label>
+                    <Label htmlFor="customerCount">{t('tables.customerCount')}</Label>
                     <Input
                       id="customerCount"
                       type="number"
@@ -214,7 +214,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                 size="sm"
                 onClick={() => setSelectedCategory(null)}
               >
-                전체
+                {t('tables.allCategories')}
               </Button>
               {Array.isArray(categories) && categories.map((category: Category) => (
                 <Button
@@ -240,7 +240,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                       <div className="flex justify-between items-center">
                         <span className="font-bold text-blue-600">₩{Number(product.price).toLocaleString()}</span>
                         <Badge variant={Number(product.stock) > 0 ? "default" : "destructive"}>
-                          재고 {product.stock}
+                          {t('tables.stockCount')} {product.stock}
                         </Badge>
                       </div>
                     </div>
@@ -253,14 +253,14 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
           {/* Cart */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">주문 내역</h3>
-              <Badge variant="secondary">{cart.length}개 상품</Badge>
+              <h3 className="text-lg font-semibold">{t('tables.orderHistory')}</h3>
+              <Badge variant="secondary">{cart.length}{t('tables.itemsSelected')}</Badge>
             </div>
 
             {cart.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>선택된 메뉴가 없습니다</p>
+                <p>{t('tables.noItemsSelected')}</p>
               </div>
             ) : (
               <div className="space-y-3 overflow-y-auto max-h-80">
@@ -303,7 +303,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                         </div>
 
                         <Textarea
-                          placeholder="특별 요청사항"
+                          placeholder={t('tables.specialRequests')}
                           value={item.notes || ""}
                           onChange={(e) => updateItemNotes(item.product.id, e.target.value)}
                           className="text-xs h-16"
@@ -320,16 +320,16 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                 <Separator />
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span>소계</span>
+                    <span>{t('tables.subtotalLabel')}</span>
                     <span>₩{calculateTotal().toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>세금 (10%)</span>
+                    <span>{t('tables.taxLabel')}</span>
                     <span>₩{Math.round(calculateTotal() * 0.1).toLocaleString()}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold">
-                    <span>총합</span>
+                    <span>{t('tables.totalLabel')}</span>
                     <span>₩{Math.round(calculateTotal() * 1.1).toLocaleString()}</span>
                   </div>
                 </div>
@@ -339,7 +339,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                   className="w-full"
                   disabled={createOrderMutation.isPending}
                 >
-                  {createOrderMutation.isPending ? "주문 중..." : "주문하기"}
+                  {createOrderMutation.isPending ? t('tables.placing') : t('tables.placeOrder')}
                 </Button>
               </>
             )}
