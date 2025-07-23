@@ -85,7 +85,7 @@ export default function InventoryPage() {
     stockUpdateForm.setValue("productId", product.id);
     setShowStockDialog(true);
   };
-  
+
   const onStockUpdate = (data: StockUpdateForm) => {
     updateStockMutation.mutate(data);
   };
@@ -199,18 +199,8 @@ export default function InventoryPage() {
 
           {/* Products Table */}
           <Card className="border-green-200">
-            <CardHeader className="flex justify-between items-center">
-              <CardTitle className="text-left">{t('inventory.stockStatus')}</CardTitle>
-              <div className="ml-auto"> {/* Use ml-auto to push the button to the right */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleStockUpdate()} // Open the add item dialog
-                  className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                >
-                  Thêm mặt hàng
-                </Button>
-              </div>
+            <CardHeader>
+              <CardTitle>{t('inventory.stockStatus')}    </CardTitle>
             </CardHeader>
             <CardContent>
               {productsLoading ? (

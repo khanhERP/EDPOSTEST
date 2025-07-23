@@ -15,10 +15,16 @@ export async function apiRequest(
   const res = await fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    body: data
+      ? JSON.stringify(data, (key, value) => {
+          if (value instanceof Date) {
+            return { __type: "Date", value: value.toISOString() };
+          }
+          return value;
+        })
+      : undefined,
     credentials: "include",
   });
-
   await throwIfResNotOk(res);
   return res;
 }

@@ -1,14 +1,37 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { insertEmployeeSchema, type Employee, type InsertEmployee } from "@shared/schema";
+import {
+  insertEmployeeSchema,
+  type Employee,
+  type InsertEmployee,
+} from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 
 interface EmployeeFormModalProps {
@@ -18,7 +41,12 @@ interface EmployeeFormModalProps {
   employee?: Employee;
 }
 
-export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeFormModalProps) {
+export function EmployeeFormModal({
+  isOpen,
+  onClose,
+  mode,
+  employee,
+}: EmployeeFormModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
@@ -38,22 +66,22 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertEmployee) => {
-      const response = await apiRequest('POST', '/api/employees', data);
+      const response = await apiRequest("POST", "/api/employees", data);
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
       toast({
-        title: t('common.success'),
-        description: t('employees.addEmployeeSuccess'),
+        title: t("common.success"),
+        description: t("employees.addEmployeeSuccess"),
       });
       onClose();
       form.reset();
     },
     onError: () => {
       toast({
-        title: t('common.error'),
-        description: t('employees.addEmployeeError'),
+        title: t("common.error"),
+        description: t("employees.addEmployeeError"),
         variant: "destructive",
       });
     },
@@ -61,21 +89,25 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
 
   const updateMutation = useMutation({
     mutationFn: async (data: InsertEmployee) => {
-      const response = await apiRequest('PUT', `/api/employees/${employee?.id}`, data);
+      const response = await apiRequest(
+        "PUT",
+        `/api/employees/${employee?.id}`,
+        data,
+      );
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/employees"] });
       toast({
-        title: t('common.success'),
-        description: t('employees.updateEmployeeSuccess'),
+        title: t("common.success"),
+        description: t("employees.updateEmployeeSuccess"),
       });
       onClose();
     },
     onError: () => {
       toast({
-        title: t('common.error'),
-        description: t('employees.updateEmployeeError'),
+        title: t("common.error"),
+        description: t("employees.updateEmployeeError"),
         variant: "destructive",
       });
     },
@@ -96,12 +128,14 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" ? t('employees.addEmployee') : t('employees.editEmployee')}
+            {mode === "create"
+              ? t("employees.addEmployee")
+              : t("employees.editEmployee")}
           </DialogTitle>
           <DialogDescription>
-            {mode === "create" 
-              ? t('employees.addEmployeeDesc') 
-              : t('employees.editEmployeeDesc')}
+            {mode === "create"
+              ? t("employees.addEmployeeDesc")
+              : t("employees.editEmployeeDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -112,7 +146,7 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
               name="employeeId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('employees.employeeId')}</FormLabel>
+                  <FormLabel>{t("employees.employeeId")}</FormLabel>
                   <FormControl>
                     <Input placeholder="EMP001" {...field} />
                   </FormControl>
@@ -126,7 +160,7 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('employees.name')}</FormLabel>
+                  <FormLabel>{t("employees.name")}</FormLabel>
                   <FormControl>
                     <Input placeholder="홍길동" {...field} />
                   </FormControl>
@@ -140,9 +174,13 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('employees.email')}</FormLabel>
+                  <FormLabel>{t("employees.email")}</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="hong@company.com" {...field} />
+                    <Input
+                      type="email"
+                      placeholder="hong@company.com"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -154,11 +192,11 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('employees.phone')}</FormLabel>
+                  <FormLabel>{t("employees.phone")}</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="010-1234-5678" 
-                      value={field.value || ""} 
+                    <Input
+                      placeholder="010-1234-5678"
+                      value={field.value || ""}
                       onChange={field.onChange}
                       onBlur={field.onBlur}
                       name={field.name}
@@ -175,17 +213,26 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t('employees.role')}</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormLabel>{t("employees.role")}</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder={t('employees.selectRole')} />
+                        <SelectValue placeholder={t("employees.selectRole")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="cashier">{t('employees.roles.cashier')}</SelectItem>
-                      <SelectItem value="manager">{t('employees.roles.manager')}</SelectItem>
-                      <SelectItem value="admin">{t('employees.roles.admin')}</SelectItem>
+                      <SelectItem value="cashier">
+                        {t("employees.roles.cashier")}
+                      </SelectItem>
+                      <SelectItem value="manager">
+                        {t("employees.roles.manager")}
+                      </SelectItem>
+                      <SelectItem value="admin">
+                        {t("employees.roles.admin")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -200,10 +247,14 @@ export function EmployeeFormModal({ isOpen, onClose, mode, employee }: EmployeeF
                 onClick={onClose}
                 disabled={isLoading}
               >
-                {t('common.cancel')}
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? t('common.saving') : mode === "create" ? t('common.add') : t('common.save')}
+                {isLoading
+                  ? t("common.saving")
+                  : mode === "create"
+                    ? t("common.add")
+                    : t("common.save")}
               </Button>
             </div>
           </form>

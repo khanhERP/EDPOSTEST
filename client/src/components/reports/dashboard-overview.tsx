@@ -1,105 +1,163 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, DollarSign, ShoppingCart, Users, Clock, Target, Search } from "lucide-react";
+import {
+  TrendingUp,
+  DollarSign,
+  ShoppingCart,
+  Users,
+  Clock,
+  Target,
+  Search,
+} from "lucide-react";
 import type { Order, Table as TableType } from "@shared/schema";
+import { useTranslation } from "@/lib/i18n";
+
+export function formatDateToYYYYMMDD(date) {
+  const d = new Date(date); // Ensure input is a Date
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function subtractMonths(date, months) {
+  const newDate = new Date(date);
+  newDate.setMonth(newDate.getMonth() - months);
+  return newDate;
+}
 
 export function DashboardOverview() {
+  const { t } = useTranslation();
+
+  const startDateNow = subtractMonths(new Date(), 1);
   const [startDate, setStartDate] = useState<string>(
-    "2025-01-15" // Set to a date that has sample data
+    formatDateToYYYYMMDD(startDateNow), // Set to a date that has sample data
   );
   const [endDate, setEndDate] = useState<string>(
-    "2025-01-20" // End date with sample data
+    formatDateToYYYYMMDD(new Date()), // End date with sample data
   );
   const queryClient = useQueryClient();
 
   const { data: transactions } = useQuery({
-    queryKey: ['/api/transactions'],
+    queryKey: ["/api/transactions"],
   });
 
   const { data: tables } = useQuery({
-    queryKey: ['/api/tables'],
+    queryKey: ["/api/tables"],
   });
 
   const handleRefresh = () => {
     // Refresh the queries to get the latest data for the selected date
-    queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+    queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
   };
 
   const getDashboardStats = () => {
-    if (!transactions || !tables || !Array.isArray(transactions) || !Array.isArray(tables)) return null;
-    
-    console.log('Dashboard Debug:', {
+    if (
+      !transactions ||
+      !tables ||
+      !Array.isArray(transactions) ||
+      !Array.isArray(tables)
+    )
+      return null;
+
+    console.log("Dashboard Debug:", {
       totalTransactions: transactions.length,
       startDate,
       endDate,
       firstTransaction: transactions[0],
-      allTransactionDates: transactions.map((t: any) => new Date(t.createdAt).toDateString())
+      allTransactionDates: transactions.map((t: any) =>
+        new Date(t.createdAt).toDateString(),
+      ),
     });
 
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999); // Include the entire end date
-    
+
     const filteredTransactions = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
       return transactionDate >= start && transactionDate <= end;
     });
-    
-    console.log('Filtered Transactions:', filteredTransactions.length);
+
+    console.log("Filtered Transactions:", filteredTransactions.length);
 
     // Period stats
-    const periodRevenue = filteredTransactions.reduce((total: number, transaction: any) => 
-      total + Number(transaction.total), 0
+    const periodRevenue = filteredTransactions.reduce(
+      (total: number, transaction: any) => total + Number(transaction.total),
+      0,
     );
-    
+
     const periodOrderCount = filteredTransactions.length;
     const periodCustomerCount = filteredTransactions.length; // Each transaction represents customers
-    
+
     // Daily average for the period
-    const daysDiff = Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+    const daysDiff = Math.max(
+      1,
+      Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+    );
     const dailyAverageRevenue = periodRevenue / daysDiff;
 
     // Current status (for active orders, we need to check the orders table separately)
     const activeOrders = 0; // Will show 0 since we're using transactions data
-    
-    const occupiedTables = tables.filter((table: TableType) => 
-      table.status === 'occupied'
+
+    const occupiedTables = tables.filter(
+      (table: TableType) => table.status === "occupied",
     );
 
     // This month stats
     const thisMonth = new Date();
-    const monthStart = new Date(thisMonth.getFullYear(), thisMonth.getMonth(), 1);
+    const monthStart = new Date(
+      thisMonth.getFullYear(),
+      thisMonth.getMonth(),
+      1,
+    );
     const monthTransactions = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
       return transactionDate >= monthStart;
     });
 
-    const monthRevenue = monthTransactions.reduce((total: number, transaction: any) => 
-      total + Number(transaction.total), 0
+    const monthRevenue = monthTransactions.reduce(
+      (total: number, transaction: any) => total + Number(transaction.total),
+      0,
     );
 
     // Average order value
-    const averageOrderValue = periodOrderCount > 0 
-      ? periodRevenue / periodOrderCount 
-      : 0;
+    const averageOrderValue =
+      periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
 
     // Peak hours analysis from filtered transactions
     const hourlyTransactions: { [key: number]: number } = {};
     filteredTransactions.forEach((transaction: any) => {
-      const hour = new Date(transaction.createdAt || transaction.created_at).getHours();
+      const hour = new Date(
+        transaction.createdAt || transaction.created_at,
+      ).getHours();
       hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
     });
 
-    const peakHour = Object.keys(hourlyTransactions).reduce((peak, hour) => 
-      (hourlyTransactions[parseInt(hour)] > hourlyTransactions[parseInt(peak)]) ? hour : peak
-    , "12");
+    const peakHour = Object.keys(hourlyTransactions).reduce(
+      (peak, hour) =>
+        hourlyTransactions[parseInt(hour)] > hourlyTransactions[parseInt(peak)]
+          ? hour
+          : peak,
+      "12",
+    );
 
     return {
       periodRevenue,
@@ -118,24 +176,24 @@ export function DashboardOverview() {
   const stats = getDashboardStats();
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR', {
-      style: 'currency',
-      currency: 'KRW'
+    return new Intl.NumberFormat("ko-KR", {
+      style: "currency",
+      currency: "KRW",
     }).format(amount);
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateStr).toLocaleDateString("ko-KR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   if (!stats) {
     return (
       <div className="flex justify-center py-8">
-        <div className="text-gray-500">대시보드 데이터를 불러오는 중...</div>
+        <div className="text-gray-500">{t("loadingData")}</div>
       </div>
     );
   }
@@ -147,11 +205,15 @@ export function DashboardOverview() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>매출 대시보드</CardTitle>
-              <CardDescription>선택한 기간의 운영 현황을 확인합니다.</CardDescription>
+              <CardTitle>{t("reports.dashboard")}</CardTitle>
+              <CardDescription>
+                {t("reports.dashboardDescription")}
+              </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Label htmlFor="start-date-picker">시작 날짜:</Label>
+              <Label htmlFor="start-date-picker">
+                {t("reports.startDate")}
+              </Label>
               <Input
                 id="start-date-picker"
                 type="date"
@@ -159,7 +221,7 @@ export function DashboardOverview() {
                 onChange={(e) => setStartDate(e.target.value)}
                 className="w-auto"
               />
-              <Label htmlFor="end-date-picker">종료 날짜:</Label>
+              <Label htmlFor="end-date-picker">{t("reports.endDate")}</Label>
               <Input
                 id="end-date-picker"
                 type="date"
@@ -174,7 +236,7 @@ export function DashboardOverview() {
                 className="ml-2"
               >
                 <Search className="w-4 h-4 mr-1" />
-                조회
+                {t("reports.refresh")}
               </Button>
             </div>
           </div>
@@ -187,7 +249,9 @@ export function DashboardOverview() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">기간 매출</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.periodRevenue")}
+                </p>
                 <p className="text-2xl font-bold text-green-600">
                   {formatCurrency(stats.periodRevenue)}
                 </p>
@@ -204,10 +268,13 @@ export function DashboardOverview() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">주문 건수</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.orderCount")}
+                </p>
                 <p className="text-2xl font-bold">{stats.periodOrderCount}</p>
                 <p className="text-xs text-gray-500 mt-1">
-                  평균 주문가: {formatCurrency(stats.averageOrderValue)}
+                  {t("reports.averageOrderValue")}{" "}
+                  {formatCurrency(stats.averageOrderValue)}
                 </p>
               </div>
               <ShoppingCart className="w-8 h-8 text-blue-500" />
@@ -219,10 +286,15 @@ export function DashboardOverview() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">고객 수</p>
-                <p className="text-2xl font-bold">{stats.periodCustomerCount}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.customerCount")}
+                </p>
+                <p className="text-2xl font-bold">
+                  {stats.periodCustomerCount}
+                </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  피크 시간: {stats.peakHour}시
+                  {t("reports.peakHour")} {stats.peakHour}{" "}
+                  <span>{t("reports.hour")}</span>
                 </p>
               </div>
               <Users className="w-8 h-8 text-purple-500" />
@@ -234,12 +306,14 @@ export function DashboardOverview() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">월 매출</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.monthRevenue")}
+                </p>
                 <p className="text-2xl font-bold text-blue-600">
                   {formatCurrency(stats.monthRevenue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  이번 달 누적
+                  {t("reports.monthAccumulated")}
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-blue-500" />
@@ -254,26 +328,34 @@ export function DashboardOverview() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Clock className="w-5 h-5" />
-              실시간 현황
+              {t("reports.realTimeStatus")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">진행 중인 주문</span>
+              <span className="text-gray-600">
+                {t("reports.pendingOrders")}
+              </span>
               <Badge variant={stats.activeOrders > 0 ? "default" : "outline"}>
-                {stats.activeOrders}건
+                {stats.activeOrders} {t("reports.count")}
               </Badge>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">사용 중인 테이블</span>
-              <Badge variant={stats.occupiedTables > 0 ? "destructive" : "outline"}>
+              <span className="text-gray-600">
+                {t("reports.occupiedTables")}
+              </span>
+              <Badge
+                variant={stats.occupiedTables > 0 ? "destructive" : "outline"}
+              >
                 {stats.occupiedTables} / {stats.totalTables}
               </Badge>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">테이블 이용률</span>
+              <span className="text-gray-600">
+                {t("reports.tableUtilization")}
+              </span>
               <Badge variant="secondary">
-                {Math.round((stats.occupiedTables / stats.totalTables) * 100)}%
+                {Math.round((stats.occupiedTables / stats.totalTables) * 100)} %
               </Badge>
             </div>
           </CardContent>
@@ -283,43 +365,52 @@ export function DashboardOverview() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Target className="w-5 h-5" />
-              성과 지표
+              {t("reports.performanceMetrics")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>기간 매출 목표 달성률</span>
+                <span>{t("reports.salesAchievementRate")}</span>
                 <span className="font-medium">
                   {Math.round((stats.dailyAverageRevenue / 500000) * 100)}%
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
+                <div
                   className="bg-green-500 h-2 rounded-full transition-all"
-                  style={{ width: `${Math.min((stats.dailyAverageRevenue / 500000) * 100, 100)}%` }}
+                  style={{
+                    width: `${Math.min((stats.dailyAverageRevenue / 500000) * 100, 100)}%`,
+                  }}
                 ></div>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span>테이블 회전율</span>
+                <span>{t("reports.tableTurnoverRate")}</span>
                 <span className="font-medium">
-                  {stats.totalTables > 0 ? (stats.periodOrderCount / stats.totalTables).toFixed(1) : 0}회
+                  {stats.totalTables > 0
+                    ? (stats.periodOrderCount / stats.totalTables).toFixed(1)
+                    : 0}{" "}
+                  {t("reports.times")}
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
+                <div
                   className="bg-blue-500 h-2 rounded-full transition-all"
-                  style={{ width: `${Math.min((stats.periodOrderCount / stats.totalTables / 5) * 100, 100)}%` }}
+                  style={{
+                    width: `${Math.min((stats.periodOrderCount / stats.totalTables / 5) * 100, 100)}%`,
+                  }}
                 ></div>
               </div>
             </div>
 
             <div className="pt-2 border-t">
               <div className="text-xs text-gray-500">
-                목표: 일평균 매출 50만원, 테이블당 5회 회전
+                {t("reports.targetAverageDailySales")
+                  .replace("{amount}", formatCurrency(500000))
+                  .replace("{turnovers}", "5")}
               </div>
             </div>
           </CardContent>

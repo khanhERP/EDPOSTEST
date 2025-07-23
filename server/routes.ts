@@ -1,14 +1,25 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertTransactionSchema, insertTransactionItemSchema, insertEmployeeSchema, insertAttendanceSchema, insertTableSchema, insertOrderSchema, insertOrderItemSchema, insertStoreSettingsSchema, insertSupplierSchema } from "@shared/schema";
+import {
+  insertProductSchema,
+  insertTransactionSchema,
+  insertTransactionItemSchema,
+  insertEmployeeSchema,
+  insertAttendanceSchema,
+  insertTableSchema,
+  insertOrderSchema,
+  insertOrderItemSchema,
+  insertStoreSettingsSchema,
+  insertSupplierSchema,
+} from "@shared/schema";
 import { initializeSampleData } from "./db";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize sample data
   await initializeSampleData();
-  
+
   // Categories
   app.get("/api/categories", async (req, res) => {
     try {
@@ -28,7 +39,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (search) {
         products = await storage.searchProducts(search as string);
       } else if (category && category !== "all") {
-        products = await storage.getProductsByCategory(parseInt(category as string));
+        products = await storage.getProductsByCategory(
+          parseInt(category as string),
+        );
       } else {
         products = await storage.getProducts();
       }
@@ -61,7 +74,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(product);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid product data", errors: error.errors });
+        return res
+          .status(400)
+          .json({ message: "Invalid product data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create product" });
     }
@@ -80,7 +95,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(product);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid product data", errors: error.errors });
+        return res
+          .status(400)
+          .json({ message: "Invalid product data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to update product" });
     }
@@ -128,18 +145,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const item of validatedItems) {
         const product = await storage.getProduct(item.productId);
         if (!product) {
-          return res.status(400).json({ message: `Product with ID ${item.productId} not found` });
+          return res
+            .status(400)
+            .json({ message: `Product with ID ${item.productId} not found` });
         }
         if (product.stock < item.quantity) {
-          return res.status(400).json({ message: `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}` });
+          return res.status(400).json({
+            message: `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
+          });
         }
       }
 
-      const receipt = await storage.createTransaction(validatedTransaction, validatedItems);
+      const receipt = await storage.createTransaction(
+        validatedTransaction,
+        validatedItems,
+      );
       res.status(201).json(receipt);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid transaction data", errors: error.errors });
+        return res
+          .status(400)
+          .json({ message: "Invalid transaction data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create transaction" });
     }
@@ -157,7 +183,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/transactions/:transactionId", async (req, res) => {
     try {
       const transactionId = req.params.transactionId;
-      const receipt = await storage.getTransactionByTransactionId(transactionId);
+      const receipt =
+        await storage.getTransactionByTransactionId(transactionId);
 
       if (!receipt) {
         return res.status(404).json({ message: "Transaction not found" });
@@ -200,8 +227,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const employee = await storage.createEmployee(validatedData);
       res.status(201).json(employee);
     } catch (error) {
+      console.log("error: ", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid employee data", errors: error.errors });
+        return res
+          .status(400)
+          .json({ message: "Invalid employee data", errors: error });
       }
       res.status(500).json({ message: "Failed to create employee" });
     }
@@ -220,7 +250,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(employee);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid employee data", errors: error.errors });
+        return res
+          .status(400)
+          .json({ message: "Invalid employee data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to update employee" });
     }
@@ -247,7 +279,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { employeeId, date } = req.query;
       const records = await storage.getAttendanceRecords(
         employeeId ? parseInt(employeeId as string) : undefined,
-        date as string
+        date as string,
       );
       res.json(records);
     } catch (error) {
@@ -424,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { tableId, status } = req.query;
       const orders = await storage.getOrders(
         tableId ? parseInt(tableId as string) : undefined,
-        status as string
+        status as string,
       );
       res.json(orders);
     } catch (error) {
@@ -451,27 +483,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/orders", async (req, res) => {
     try {
       const { order, items } = req.body;
-      console.log('Received order data:', JSON.stringify({ order, items }, null, 2));
+      console.log(
+        "Received order data:",
+        JSON.stringify({ order, items }, null, 2),
+      );
 
       const orderData = insertOrderSchema.parse(order);
-      const itemsData = items.map((item: any) => insertOrderItemSchema.parse(item));
+      const itemsData = items.map((item: any) =>
+        insertOrderItemSchema.parse(item),
+      );
 
-      console.log('Parsed order data:', JSON.stringify({ orderData, itemsData }, null, 2));
+      console.log(
+        "Parsed order data:",
+        JSON.stringify({ orderData, itemsData }, null, 2),
+      );
 
       const newOrder = await storage.createOrder(orderData, itemsData);
       res.status(201).json(newOrder);
     } catch (error) {
-      console.error('Order creation error:', error);
+      console.error("Order creation error:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Invalid order data", 
+        return res.status(400).json({
+          message: "Invalid order data",
           errors: error.errors,
-          details: error.format()
+          details: error.format(),
         });
       }
-      res.status(500).json({ 
-        message: "Failed to create order", 
-        error: error instanceof Error ? error.message : String(error)
+      res.status(500).json({
+        message: "Failed to create order",
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   });
@@ -495,7 +535,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/orders/:id/items", async (req, res) => {
     try {
       const orderId = parseInt(req.params.id);
-      const itemsData = req.body.map((item: any) => insertOrderItemSchema.parse(item));
+      const itemsData = req.body.map((item: any) =>
+        insertOrderItemSchema.parse(item),
+      );
 
       const items = await storage.addOrderItems(orderId, itemsData);
       res.status(201).json(items);
@@ -510,12 +552,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const stockUpdateSchema = z.object({
         productId: z.number(),
         quantity: z.number().min(1),
-        type: z.enum(['add', 'subtract', 'set']),
+        type: z.enum(["add", "subtract", "set"]),
         notes: z.string().optional(),
       });
 
-      const { productId, quantity, type, notes } = stockUpdateSchema.parse(req.body);
-      const product = await storage.updateInventoryStock(productId, quantity, type, notes);
+      const { productId, quantity, type, notes } = stockUpdateSchema.parse(
+        req.body,
+      );
+      const product = await storage.updateInventoryStock(
+        productId,
+        quantity,
+        type,
+        notes,
+      );
 
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
@@ -524,7 +573,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(product);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid stock update data", errors: error.errors });
+        return res
+          .status(400)
+          .json({ message: "Invalid stock update data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to update stock" });
     }
@@ -547,7 +598,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(settings);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid store settings data", errors: error.errors });
+        return res.status(400).json({
+          message: "Invalid store settings data",
+          errors: error.errors,
+        });
       }
       res.status(500).json({ message: "Failed to update store settings" });
     }
@@ -595,7 +649,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(supplier);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid supplier data", errors: error.errors });
+        return res
+          .status(400)
+          .json({ message: "Invalid supplier data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create supplier" });
     }
@@ -614,7 +670,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(supplier);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid supplier data", errors: error.errors });
+        return res
+          .status(400)
+          .json({ message: "Invalid supplier data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to update supplier" });
     }
@@ -665,7 +723,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(customer);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid customer data", errors: error.errors });
+        return res
+          .status(400)
+          .json({ message: "Invalid customer data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create customer" });
     }
@@ -682,7 +742,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(customer);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid customer data", errors: error.errors });
+        return res
+          .status(400)
+          .json({ message: "Invalid customer data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to update customer" });
     }
@@ -708,12 +770,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const customer = await storage.getCustomer(id);
       if (!customer) {
-        return res.status(404).json({ message: 'Customer not found' });
+        return res.status(404).json({ message: "Customer not found" });
       }
 
-      const updatedCustomer = await storage.updateCustomerVisit(id, amount, points);
+      const updatedCustomer = await storage.updateCustomerVisit(
+        id,
+        amount,
+        points,
+      );
       res.json(updatedCustomer);
-
     } catch (error) {
       res.status(500).json({ message: "Failed to update customer visit" });
     }

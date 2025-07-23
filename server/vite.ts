@@ -83,3 +83,18 @@ export function serveStatic(app: Express) {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
+
+export function convertDatesInBody(keys = []) {
+    return (req, res, next) => {
+      keys.forEach((key) => {
+        const value = req.body[key];
+        if (typeof value === 'string') {
+          const parsed = new Date(value);
+          if (!isNaN(parsed)) {
+            req.body[key] = parsed;
+          }
+        }
+      });
+      next();
+    };
+}
