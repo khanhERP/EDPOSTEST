@@ -272,7 +272,14 @@ export const translations = {
       salesAchievementRate: "기간 매출 목표 달성률",
       tableTurnoverRate: "테이블 회전율",
       targetAverageDailySales: "목표: 일평균 매출 {amount} 만원, 테이블당 {turnovers} 회 회전",
-      times: "회회"
+      times: "회회",
+      analyzeRevenue: "기간별 매출 현황을 분석합니다.",
+      toDay: "오늘",
+      lastWeek: "최근 7일",
+      lastMonth: "이번 달",
+      custom: "사용자 정의",
+      dailySales: "일별 매출",
+      dailySalesDescription: "선택 기간의 일별 매출 현황입니다.",
     },
 
     // Suppliers
@@ -729,7 +736,14 @@ export const translations = {
       salesAchievementRate: "Sales Achievement Rate",
       tableTurnoverRate: "Table Turnover Rate",
       targetAverageDailySales: "Target: Average Daily Sales {amount} won, {turnovers} turnovers per table",
-      times: "times"
+      times: "times",
+      analyzeRevenue: "Analyze revenue status by period.",
+      toDay: "Today",
+      lastWeek: "Last 7 days",
+      lastMonth: "This month",
+      custom: "Custom",
+      dailySales: "Daily Sales",
+      dailySalesDescription: "Daily sales status for the selected period.",
     },
 
     // Suppliers
@@ -1082,8 +1096,8 @@ export const translations = {
       loadingData: "Đang tải dữ liệu bảng điều khiển...",
       dashboardDescription:
         "Xem tình hình hoạt động trong khoảng thời gian đã chọn.",
-      startDate: "Ngày bắt đầu",
-      endDate: "Ngày kết thúc",
+      startDate: "Từ ngày",
+      endDate: "Đến ngày",
       refresh: "Tra cứu",
       periodRevenue: "Doanh thu theo kỳ",
       orderCount: "Số đơn hàng",
@@ -1102,7 +1116,14 @@ export const translations = {
       salesAchievementRate: "Tỷ lệ đạt doanh số",
       tableTurnoverRate: "Tỷ lệ quay vòng bàn",
       targetAverageDailySales: "Mục tiêu: Doanh số trung bình hàng ngày {amount} won, {turnovers} lần quay vòng mỗi bàn",
-      times: "lần"
+      times: "lần",
+      analyzeRevenue: "Phân tích tình trạng doanh thu theo khoảng thời gian.",
+      toDay: "Hôm nay",
+      lastWeek: "7 ngày gần đây",
+      lastMonth: "Tháng này",
+      custom: "Tùy chọn người dùng",
+      dailySales: "Doanh thu theo ngày",
+      dailySalesDescription: "Tình trạng doanh thu theo ngày cho khoảng thời gian đã chọn.",
     },
 
     // Suppliers

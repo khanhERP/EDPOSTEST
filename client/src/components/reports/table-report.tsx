@@ -8,8 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Utensils, Clock, Users, TrendingUp } from "lucide-react";
 import type { Order, Table as TableType } from "@shared/schema";
+import { useTranslation } from "@/lib/i18n";
 
 export function TableReport() {
+  const { t } = useTranslation();
+  
   const [dateRange, setDateRange] = useState("week");
   const [startDate, setStartDate] = useState<string>(
     new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -190,17 +193,17 @@ export function TableReport() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="today">오늘</SelectItem>
-                  <SelectItem value="week">최근 7일</SelectItem>
-                  <SelectItem value="month">이번 달</SelectItem>
-                  <SelectItem value="custom">사용자 정의</SelectItem>
+                  <SelectItem value="today">{t("reports.toDay")}</SelectItem>
+                  <SelectItem value="week">{t("reports.lastWeek")}</SelectItem>
+                  <SelectItem value="month">{t("reports.lastMonth")}</SelectItem>
+                  <SelectItem value="custom">{t("reports.custom")}</SelectItem>
                 </SelectContent>
               </Select>
               
               {dateRange === "custom" && (
                 <>
                   <div className="flex items-center gap-2">
-                    <Label>시작:</Label>
+                    <Label>{t("reports.startDate")}:</Label>
                     <Input
                       type="date"
                       value={startDate}
@@ -209,7 +212,7 @@ export function TableReport() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label>종료:</Label>
+                    <Label>{t("reports.endDate")}:</Label>
                     <Input
                       type="date"
                       value={endDate}

@@ -212,7 +212,7 @@ export function DashboardOverview() {
             </div>
             <div className="flex items-center gap-2">
               <Label htmlFor="start-date-picker">
-                {t("reports.startDate")}
+                {t("reports.startDate")}:
               </Label>
               <Input
                 id="start-date-picker"
@@ -221,7 +221,7 @@ export function DashboardOverview() {
                 onChange={(e) => setStartDate(e.target.value)}
                 className="w-auto"
               />
-              <Label htmlFor="end-date-picker">{t("reports.endDate")}</Label>
+              <Label htmlFor="end-date-picker">{t("reports.endDate")}:</Label>
               <Input
                 id="end-date-picker"
                 type="date"
