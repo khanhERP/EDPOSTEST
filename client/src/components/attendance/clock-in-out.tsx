@@ -18,6 +18,7 @@ export function ClockInOut() {
   const [notes, setNotes] = useState("");
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
@@ -245,11 +246,15 @@ export function ClockInOut() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => refetchTodayAttendance()}
+                      onClick={() => {
+                        setIsRefreshing(true);
+                        refetchTodayAttendance();
+                        setTimeout(() => setIsRefreshing(false), 1000);
+                      }}
                       className="h-6 w-6 p-0"
                       title="새로고침"
                     >
-                      <RefreshCw className="w-4 h-4" />
+                      <RefreshCw className={`w-4 h-4 transition-transform duration-1000 ${isRefreshing ? 'rotate-180' : ''}`} />
                     </Button>
                   </div>
                   <div className="space-y-2">
