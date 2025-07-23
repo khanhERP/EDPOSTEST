@@ -131,6 +131,11 @@ const translations = {
       popular: '인기',
       lowStock: '재고 부족',
       productScanned: '상품 스캔됨',
+      searchProducts: '상품 검색',
+      scanBarcode: '바코드 스캔',
+      manageProducts: '상품 관리',
+      scanFailed: '스캔 실패',
+      productNotFound: '상품을 찾을 수 없습니다',
     },
     // Tables
     tables: {
@@ -406,6 +411,11 @@ const translations = {
       popular: 'Popular',
       lowStock: 'Low Stock',
       productScanned: 'Product Scanned',
+      searchProducts: 'Search Products',
+      scanBarcode: 'Scan Barcode',
+      manageProducts: 'Manage Products',
+      scanFailed: 'Scan Failed',
+      productNotFound: 'Product not found',
     },
     // Tables
     tables: {
@@ -663,6 +673,11 @@ const translations = {
       popular: 'Phổ biến',
       lowStock: 'Sắp hết hàng',
       productScanned: 'Sản phẩm đã quét',
+      searchProducts: 'Tìm kiếm sản phẩm',
+      scanBarcode: 'Quét mã vạch',
+      manageProducts: 'Quản lý sản phẩm',
+      scanFailed: 'Quét thất bại',
+      productNotFound: 'Không tìm thấy sản phẩm',
     },
     // Tables
     tables: {
