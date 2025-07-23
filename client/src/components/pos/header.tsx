@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import logoPath from "@assets/EDPOS_1753091767028.png";
 import { useTranslation } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
-import { type StoreSettings } from "@shared/schema";
+import { type StoreSettings, type Employee, type AttendanceRecord } from "@shared/schema";
 
 export function POSHeader() {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -17,6 +17,42 @@ export function POSHeader() {
   const { data: storeSettings } = useQuery<StoreSettings>({
     queryKey: ['/api/store-settings'],
   });
+
+  // Fetch employees
+  const { data: employees } = useQuery<Employee[]>({
+    queryKey: ['/api/employees'],
+  });
+
+  // Fetch today's attendance records  
+  const todayDate = new Date().toISOString().split('T')[0];
+  const { data: todayAttendance } = useQuery<AttendanceRecord[]>({
+    queryKey: ['/api/attendance', todayDate],
+    queryFn: async () => {
+      const response = await fetch(`/api/attendance?date=${todayDate}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch attendance records');
+      }
+      return response.json();
+    },
+  });
+
+  // Find current working cashier
+  const getCurrentCashier = () => {
+    if (!employees || !todayAttendance) return null;
+    
+    // Get cashiers who are currently clocked in (have clock in but no clock out)
+    const workingCashiers = todayAttendance
+      .filter(record => record.clockIn && !record.clockOut)
+      .map(record => {
+        const employee = employees.find(emp => emp.id === record.employeeId);
+        return employee && employee.role === 'cashier' ? employee : null;
+      })
+      .filter(Boolean);
+    
+    return workingCashiers.length > 0 ? workingCashiers[0] : null;
+  };
+
+  const currentCashier = getCurrentCashier();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -67,7 +103,9 @@ export function POSHeader() {
         <div className="flex items-center space-x-6">
           <div className="text-right">
             <div className="text-sm opacity-90">{t('pos.cashierName')}</div>
-            <div className="font-medium">{t('pos.defaultCashier')}</div>
+            <div className="font-medium">
+              {currentCashier ? currentCashier.name : t('pos.beforeWork')}
+            </div>
           </div>
           <div className="text-right">
             <div className="text-sm opacity-90">{t('common.time')}</div>

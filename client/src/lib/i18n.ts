@@ -76,6 +76,7 @@ const translations = {
       orderComplete: '주문 완료',
       printReceipt: '영수증 출력',
       newOrder: '새 주문',
+      beforeWork: '근무자 출근전',
     },
     // Tables
     tables: {
@@ -238,6 +239,7 @@ const translations = {
       orderComplete: 'Order Complete',
       printReceipt: 'Print Receipt',
       newOrder: 'New Order',
+      beforeWork: 'Before Work Hours',
     },
     // Tables
     tables: {
@@ -400,6 +402,7 @@ const translations = {
       orderComplete: 'Hoàn thành đơn hàng',
       printReceipt: 'In hóa đơn',
       newOrder: 'Đơn hàng mới',
+      beforeWork: 'Trước giờ làm việc',
     },
     // Tables
     tables: {
