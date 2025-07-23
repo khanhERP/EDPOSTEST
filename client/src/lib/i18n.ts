@@ -88,6 +88,7 @@ const translations = {
       reserved: '예약됨',
       maintenance: '점검 중',
       table: '테이블',
+      cleanupComplete: '정리 완료',
     },
     // Employees
     employees: {
@@ -249,6 +250,7 @@ const translations = {
       reserved: 'Reserved',
       maintenance: 'Maintenance',
       table: 'Table',
+      cleanupComplete: 'Cleanup Complete',
     },
     // Employees
     employees: {
@@ -410,6 +412,7 @@ const translations = {
       reserved: 'Đã đặt',
       maintenance: 'Bảo trì',
       table: 'Bàn',
+      cleanupComplete: 'Hoàn thành dọn dẹp',
     },
     // Employees
     employees: {
