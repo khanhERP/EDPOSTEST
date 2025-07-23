@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Clock, LogIn, LogOut, Coffee, Play, QrCode } from "lucide-react";
+import { Clock, LogIn, LogOut, Coffee, Play, QrCode, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useTranslation } from "@/lib/i18n";
@@ -240,7 +240,18 @@ export function ClockInOut() {
               {/* Today's Status */}
               {todayAttendance && (todayAttendance as AttendanceRecord) && (
                 <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="font-medium mb-2">{t('attendance.currentStatus')}</h4>
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-medium">{t('attendance.currentStatus')}</h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => refetchTodayAttendance()}
+                      className="h-6 w-6 p-0"
+                      title="새로고침"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </Button>
+                  </div>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span>{t('attendance.clockInTime')}:</span>
