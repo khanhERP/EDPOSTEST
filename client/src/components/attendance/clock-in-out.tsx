@@ -157,7 +157,7 @@ export function ClockInOut() {
               >
                 <div className="flex items-center justify-between w-full">
                   <span>{employee.name}</span>
-                  <Badge variant="secondary">{employee.role === 'manager' ? t('employees.manager') : employee.role === 'admin' ? t('employees.admin') : t('employees.cashier')}</Badge>
+                  <Badge variant="secondary">{t(`employees.roles.${employee.role}`)}</Badge>
                 </div>
               </Button>
             )) || (
