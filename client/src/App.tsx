@@ -5,13 +5,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import POSPage from "@/pages/pos";
 import TablesPage from "@/pages/tables";
+import EmployeesPage from "@/pages/employees";
 import InventoryPage from "@/pages/inventory";
 import ReportsPage from "@/pages/reports";
-import EmployeesPage from "@/pages/employees";
-import AttendancePage from "@/pages/attendance";
 import SettingsPage from "@/pages/settings";
 import SuppliersPage from "@/pages/suppliers";
-import NotFoundPage from "@/pages/not-found";
+import AttendancePage from "@/pages/attendance";
+import AttendanceQRPage from "./pages/attendance-qr";
+import NotFoundPage from "./pages/not-found";
 
 function Router() {
   return (
@@ -23,8 +24,7 @@ function Router() {
       <Route path="/reports" component={ReportsPage} />
       <Route path="/employees" component={EmployeesPage} />
       <Route path="/attendance" component={AttendancePage} />
-      <Route path="/settings" component={SettingsPage} />
-      <Route path="/suppliers" component={SuppliersPage} />
+      <Route path="/attendance-qr" component={AttendanceQRPage} />
       <Route component={NotFoundPage} />
     </Switch>
   );

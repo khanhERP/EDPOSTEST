@@ -1,19 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Clock, LogIn, LogOut, Coffee, Play } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Clock, LogIn, LogOut, Coffee, Play, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useTranslation } from "@/lib/i18n";
+import QRCode from "qrcode";
 import type { Employee, AttendanceRecord } from "@shared/schema";
 
 export function ClockInOut() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
   const [notes, setNotes] = useState("");
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
@@ -133,18 +137,53 @@ export function ClockInOut() {
     return <Badge variant="outline">{t('attendance.status.clockedOut')}</Badge>;
   };
 
+  const generateQRCode = async () => {
+    try {
+      const attendanceUrl = `${window.location.origin}/attendance-qr`;
+      const qrDataURL = await QRCode.toDataURL(attendanceUrl, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeUrl(qrDataURL);
+      setIsQRModalOpen(true);
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: "QR 코드 생성에 실패했습니다.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Employee Selection */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="w-5 h-5" />
-            {t('attendance.employeeSelect')}
-          </CardTitle>
-          <CardDescription>
-            {t('attendance.selectEmployee')}
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                {t('attendance.employeeSelect')}
+              </CardTitle>
+              <CardDescription>
+                {t('attendance.selectEmployee')}
+              </CardDescription>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={generateQRCode}
+              className="flex items-center gap-2"
+            >
+              <QrCode className="w-4 h-4" />
+              QR 근태 기록
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-2">
@@ -275,6 +314,61 @@ export function ClockInOut() {
           )}
         </CardContent>
       </Card>
+
+      {/* QR Code Modal */}
+      <Dialog open={isQRModalOpen} onOpenChange={setIsQRModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode className="w-5 h-5" />
+              QR 코드 근태 기록
+            </DialogTitle>
+            <DialogDescription>
+              직원들이 이 QR 코드를 스캔하여 근태 정보를 기록할 수 있습니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center space-y-4 py-4">
+            {qrCodeUrl && (
+              <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
+                <img 
+                  src={qrCodeUrl} 
+                  alt="QR Code for Attendance" 
+                  className="w-64 h-64"
+                />
+              </div>
+            )}
+            <div className="text-center space-y-2">
+              <p className="text-sm text-gray-600">
+                직원들이 QR 코드를 스캔하면 출근/퇴근을 기록할 수 있는 페이지로 이동합니다.
+              </p>
+              <p className="text-xs text-gray-500">
+                URL: {window.location.origin}/attendance-qr
+              </p>
+            </div>
+            <div className="flex gap-2 w-full">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/attendance-qr`);
+                  toast({
+                    title: "복사 완료",
+                    description: "QR 코드 URL이 클립보드에 복사되었습니다.",
+                  });
+                }}
+                className="flex-1"
+              >
+                URL 복사
+              </Button>
+              <Button
+                onClick={() => setIsQRModalOpen(false)}
+                className="flex-1"
+              >
+                닫기
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
