@@ -433,7 +433,7 @@ export const translations = {
       orderFailed: "주문 실패",
       orderFailedDesc: "주문 접수에 실패했습니다.",
       cleanupComplete: "정리 완료",
-    }
+    },
   },
 
   en: {
