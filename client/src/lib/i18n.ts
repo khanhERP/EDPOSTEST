@@ -121,6 +121,16 @@ const translations = {
       thisWeek: '이번 주',
       thisMonth: '이번 달',
       thisYear: '올해',
+      productsAvailable: '개 상품 사용 가능',
+      gridView: '그리드 보기',
+      sortByName: '이름순 정렬',
+      noProductsFound: '상품을 찾을 수 없습니다',
+      allProducts: '전체 상품',
+      tryAdjustingSearch: '검색어를 조정해보세요',
+      noProductsInCategory: '이 카테고리에 상품이 없습니다',
+      popular: '인기',
+      lowStock: '재고 부족',
+      productScanned: '상품 스캔됨',
     },
     // Tables
     tables: {
@@ -134,6 +144,9 @@ const translations = {
       maintenance: '점검 중',
       table: '테이블',
       cleanupComplete: '정리 완료',
+      tableStatus: '테이블 상태',
+      orderManagement: '주문 관리',
+      tableSettings: '테이블 설정',
     },
     // Employees
     employees: {
@@ -156,6 +169,8 @@ const translations = {
       addEmployeeError: '직원 추가 중 오류가 발생했습니다',
       updateEmployeeSuccess: '직원 정보가 성공적으로 업데이트되었습니다',
       updateEmployeeError: '직원 정보 업데이트 중 오류가 발생했습니다',
+      addEmployeeDesc: '새 직원 정보를 입력하세요',
+      editEmployeeDesc: '직원 정보를 수정하세요',
     },
     // Attendance
     attendance: {
@@ -275,6 +290,12 @@ const translations = {
       saveSettings: '설정 저장',
       resetSettings: '설정 초기화',
     },
+    // Not Found Page
+    notFound: {
+      title: '페이지를 찾을 수 없습니다',
+      description: '죄송합니다. 요청하신 페이지를 찾을 수 없습니다.',
+      backHome: '홈으로 돌아가기',
+    },
   },
   en: {
     // Common
@@ -375,6 +396,16 @@ const translations = {
       thisWeek: 'This Week',
       thisMonth: 'This Month',
       thisYear: 'This Year',
+      productsAvailable: 'products available',
+      gridView: 'Grid View',
+      sortByName: 'Sort by Name',
+      noProductsFound: 'No products found',
+      allProducts: 'All Products',
+      tryAdjustingSearch: 'Try adjusting your search',
+      noProductsInCategory: 'No products in this category',
+      popular: 'Popular',
+      lowStock: 'Low Stock',
+      productScanned: 'Product Scanned',
     },
     // Tables
     tables: {
@@ -388,6 +419,9 @@ const translations = {
       maintenance: 'Maintenance',
       table: 'Table',
       cleanupComplete: 'Cleanup Complete',
+      tableStatus: 'Table Status',
+      orderManagement: 'Order Management',
+      tableSettings: 'Table Settings',
     },
     // Employees
     employees: {
@@ -410,6 +444,8 @@ const translations = {
       addEmployeeError: 'Error adding employee',
       updateEmployeeSuccess: 'Employee updated successfully',
       updateEmployeeError: 'Error updating employee',
+      addEmployeeDesc: 'Enter new employee information',
+      editEmployeeDesc: 'Edit employee information',
     },
     // Attendance
     attendance: {
@@ -511,6 +547,12 @@ const translations = {
       saveSettings: 'Save Settings',
       resetSettings: 'Reset Settings',
     },
+    // Not Found Page
+    notFound: {
+      title: 'Page Not Found',
+      description: 'Sorry, we could not find the page you are looking for.',
+      backHome: 'Back to Home',
+    },
   },
   vi: {
     // Common
@@ -611,6 +653,16 @@ const translations = {
       thisWeek: 'Tuần này',
       thisMonth: 'Tháng này',
       thisYear: 'Năm nay',
+      productsAvailable: 'sản phẩm có sẵn',
+      gridView: 'Xem lưới',
+      sortByName: 'Sắp xếp theo tên',
+      noProductsFound: 'Không tìm thấy sản phẩm',
+      allProducts: 'Tất cả sản phẩm',
+      tryAdjustingSearch: 'Thử điều chỉnh tìm kiếm',
+      noProductsInCategory: 'Không có sản phẩm trong danh mục này',
+      popular: 'Phổ biến',
+      lowStock: 'Sắp hết hàng',
+      productScanned: 'Sản phẩm đã quét',
     },
     // Tables
     tables: {
@@ -624,6 +676,9 @@ const translations = {
       maintenance: 'Bảo trì',
       table: 'Bàn',
       cleanupComplete: 'Hoàn thành dọn dẹp',
+      tableStatus: 'Trạng thái bàn',
+      orderManagement: 'Quản lý đơn hàng',
+      tableSettings: 'Cài đặt bàn',
     },
     // Employees
     employees: {
@@ -646,6 +701,8 @@ const translations = {
       addEmployeeError: 'Lỗi khi thêm nhân viên',
       updateEmployeeSuccess: 'Cập nhật nhân viên thành công',
       updateEmployeeError: 'Lỗi khi cập nhật nhân viên',
+      addEmployeeDesc: 'Nhập thông tin nhân viên mới',
+      editEmployeeDesc: 'Chỉnh sửa thông tin nhân viên',
     },
     // Attendance
     attendance: {
@@ -764,6 +821,12 @@ const translations = {
       receiptFooter: 'Tin nhắn chân hóa đơn',
       saveSettings: 'Lưu cài đặt',
       resetSettings: 'Đặt lại cài đặt',
+    },
+    // Not Found Page
+    notFound: {
+      title: 'Không tìm thấy trang',
+      description: 'Xin lỗi, chúng tôi không thể tìm thấy trang bạn đang tìm kiếm.',
+      backHome: 'Về trang chủ',
     },
   },
 };
