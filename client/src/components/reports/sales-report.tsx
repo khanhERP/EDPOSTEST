@@ -8,8 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Calendar, DollarSign } from "lucide-react";
 import type { Transaction } from "@shared/schema";
+import { useTranslation } from "@/lib/i18n";
 
 export function SalesReport() {
+  const { t } = useTranslation();
+  
   const [dateRange, setDateRange] = useState("week");
   const [startDate, setStartDate] = useState<string>(
     "2025-01-15" // Start from when sample data begins
@@ -153,7 +156,7 @@ export function SalesReport() {
   if (!salesData) {
     return (
       <div className="flex justify-center py-8">
-        <div className="text-gray-500">매출 데이터를 불러오는 중...</div>
+        <div className="text-gray-500">{t("loadingData")}</div>
       </div>
     );
   }
@@ -171,7 +174,7 @@ export function SalesReport() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                매출 분석
+                {t("reports.salesAnalysis")}
               </CardTitle>
               <CardDescription>기간별 매출 현황을 분석합니다.</CardDescription>
             </div>
