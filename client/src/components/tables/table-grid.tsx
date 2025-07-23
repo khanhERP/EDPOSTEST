@@ -62,7 +62,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   };
 
   const getActiveOrder = (tableId: number) => {
-    if (!orders) return null;
+    if (!orders || !Array.isArray(orders)) return null;
     return orders.find((order: Order) => 
       order.tableId === tableId && !["paid", "cancelled"].includes(order.status)
     );
@@ -96,7 +96,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   return (
     <>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {tables?.map((table: Table) => {
+        {Array.isArray(tables) && tables.map((table: Table) => {
           const statusConfig = getTableStatus(table.status);
           const activeOrder = getActiveOrder(table.id);
           const isSelected = selectedTableId === table.id;
@@ -125,7 +125,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   <div className="space-y-1">
                     <div className="flex items-center justify-center text-sm text-gray-600">
                       <Users className="w-3 h-3 mr-1" />
-                      {table.capacity}{t('tables.people')}
+                      {activeOrder ? (
+                        <span>
+                          {activeOrder.customerCount || 1}/{table.capacity}{t('tables.people')}
+                        </span>
+                      ) : (
+                        <span>{table.capacity}{t('tables.people')}</span>
+                      )}
                     </div>
                     <Badge variant={statusConfig.variant} className="text-xs">
                       {statusConfig.label}
