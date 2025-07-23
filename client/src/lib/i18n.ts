@@ -962,6 +962,12 @@ export function useTranslation() {
       value = value?.[k];
     }
     
+    // Debug logging
+    if (!value) {
+      console.log(`Translation missing for key: ${key} in language: ${currentLanguage}`);
+      console.log('Available translations:', translations[currentLanguage]);
+    }
+    
     return value || key;
   };
 
