@@ -176,7 +176,7 @@ export function SalesReport() {
                 <TrendingUp className="w-5 h-5" />
                 {t("reports.salesAnalysis")}
               </CardTitle>
-              <CardDescription>기간별 매출 현황을 분석합니다.</CardDescription>
+              <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
             </div>
             <div className="flex items-center gap-4">
               <Select value={dateRange} onValueChange={handleDateRangeChange}>
