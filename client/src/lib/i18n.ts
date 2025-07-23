@@ -120,6 +120,14 @@ export const translations = {
       breakEndSuccess: "휴식 종료",
       breakEndSuccessDesc: "휴식 시간이 종료되었습니다",
       breakEndError: "휴식 종료 처리 중 오류가 발생했습니다",
+      qrAttendance: "QR 근태 기록",
+      qrCodeTitle: "QR 코드 근태 기록",
+      qrCodeDescription: "직원들이 이 QR 코드를 스캔하여 근태 정보를 기록할 수 있습니다.",
+      qrCodeInstructions: "직원들이 QR 코드를 스캔하면 출근/퇴근을 기록할 수 있는 페이지로 이동합니다.",
+      urlCopy: "URL 복사",
+      copySuccess: "복사 완료",
+      copySuccessDesc: "QR 코드 URL이 클립보드에 복사되었습니다.",
+      refresh: "새로고침",
     },
 
     // Employees
@@ -567,6 +575,14 @@ export const translations = {
       breakEndSuccess: "Break Ended",
       breakEndSuccessDesc: "Break time has ended",
       breakEndError: "Error occurred during break end",
+      qrAttendance: "QR Attendance",
+      qrCodeTitle: "QR Code Attendance",
+      qrCodeDescription: "Employees can scan this QR code to record their attendance.",
+      qrCodeInstructions: "When employees scan the QR code, they will be redirected to a page where they can record their clock-in/out.",
+      urlCopy: "Copy URL",
+      copySuccess: "Copied",
+      copySuccessDesc: "QR code URL has been copied to clipboard.",
+      refresh: "Refresh",
     },
 
     // Employees
@@ -955,6 +971,14 @@ export const translations = {
       breakEndSuccess: "Đã kết thúc nghỉ",
       breakEndSuccessDesc: "Thời gian nghỉ đã kết thúc",
       breakEndError: "Lỗi xảy ra trong quá trình kết thúc nghỉ",
+      qrAttendance: "Chấm công QR",
+      qrCodeTitle: "Chấm công bằng mã QR",
+      qrCodeDescription: "Nhân viên có thể quét mã QR này để ghi nhận chấm công.",
+      qrCodeInstructions: "Khi nhân viên quét mã QR, họ sẽ được chuyển đến trang có thể ghi nhận chấm công vào/ra.",
+      urlCopy: "Sao chép URL",
+      copySuccess: "Đã sao chép",
+      copySuccessDesc: "URL mã QR đã được sao chép vào clipboard.",
+      refresh: "Làm mới",
     },
 
     // Employees

@@ -182,7 +182,7 @@ export function ClockInOut() {
               className="flex items-center gap-2"
             >
               <QrCode className="w-4 h-4" />
-              QR 근태 기록
+              {t('attendance.qrAttendance')}
             </Button>
           </div>
         </CardHeader>
@@ -252,7 +252,7 @@ export function ClockInOut() {
                         setTimeout(() => setIsRefreshing(false), 1000);
                       }}
                       className="h-6 w-6 p-0"
-                      title="새로고침"
+                      title={t('attendance.refresh')}
                     >
                       <RefreshCw className={`w-4 h-4 transition-transform duration-1000 ${isRefreshing ? 'rotate-180' : ''}`} />
                     </Button>
@@ -337,10 +337,10 @@ export function ClockInOut() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <QrCode className="w-5 h-5" />
-              QR 코드 근태 기록
+              {t('attendance.qrCodeTitle')}
             </DialogTitle>
             <DialogDescription>
-              직원들이 이 QR 코드를 스캔하여 근태 정보를 기록할 수 있습니다.
+              {t('attendance.qrCodeDescription')}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center space-y-4 py-4">
@@ -355,7 +355,7 @@ export function ClockInOut() {
             )}
             <div className="text-center space-y-2">
               <p className="text-sm text-gray-600">
-                직원들이 QR 코드를 스캔하면 출근/퇴근을 기록할 수 있는 페이지로 이동합니다.
+                {t('attendance.qrCodeInstructions')}
               </p>
               <p className="text-xs text-gray-500">
                 URL: {window.location.origin}/attendance-qr
@@ -367,19 +367,19 @@ export function ClockInOut() {
                 onClick={() => {
                   navigator.clipboard.writeText(`${window.location.origin}/attendance-qr`);
                   toast({
-                    title: "복사 완료",
-                    description: "QR 코드 URL이 클립보드에 복사되었습니다.",
+                    title: t('attendance.copySuccess'),
+                    description: t('attendance.copySuccessDesc'),
                   });
                 }}
                 className="flex-1"
               >
-                URL 복사
+                {t('attendance.urlCopy')}
               </Button>
               <Button
                 onClick={() => setIsQRModalOpen(false)}
                 className="flex-1"
               >
-                닫기
+                {t('common.close')}
               </Button>
             </div>
           </div>
