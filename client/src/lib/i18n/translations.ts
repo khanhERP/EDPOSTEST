@@ -7,6 +7,7 @@ import { ordersTranslations } from './modules/orders';
 import { customersTranslations } from './modules/customers';
 import { employeesTranslations } from './modules/employees';
 import { attendanceTranslations } from './modules/attendance';
+import { inventoryTranslations } from './modules/inventory';
 import type { LanguageTranslations } from './types';
 
 export const translations: LanguageTranslations = {
@@ -20,6 +21,7 @@ export const translations: LanguageTranslations = {
     customers: customersTranslations.ko,
     employees: employeesTranslations.ko,
     attendance: attendanceTranslations.ko,
+    inventory: inventoryTranslations.ko,
   },
   en: {
     common: commonTranslations.en,
@@ -31,6 +33,7 @@ export const translations: LanguageTranslations = {
     customers: customersTranslations.en,
     employees: employeesTranslations.en,
     attendance: attendanceTranslations.en,
+    inventory: inventoryTranslations.en,
   },
   vi: {
     common: commonTranslations.vi,
@@ -42,5 +45,6 @@ export const translations: LanguageTranslations = {
     customers: customersTranslations.vi,
     employees: employeesTranslations.vi,
     attendance: attendanceTranslations.vi,
+    inventory: inventoryTranslations.vi,
   },
 };

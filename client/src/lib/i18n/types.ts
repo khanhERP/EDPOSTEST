@@ -67,7 +67,7 @@ export interface ReportsTranslations {
   menuAnalysis: string;
   tableAnalysis: string;
   backToTables: string;
-  
+
   // Date and time filters
   startDate: string;
   endDate: string;
@@ -76,7 +76,7 @@ export interface ReportsTranslations {
   lastWeek: string;
   lastMonth: string;
   custom: string;
-  
+
   // Dashboard metrics
   totalRevenue: string;
   totalOrders: string;
@@ -86,7 +86,7 @@ export interface ReportsTranslations {
   activeOrders: string;
   occupiedTables: string;
   monthlyRevenue: string;
-  
+
   // Sales analysis
   analyzeRevenue: string;
   dailySales: string;
@@ -97,7 +97,7 @@ export interface ReportsTranslations {
   customers: string;
   cash: string;
   card: string;
-  
+
   // Menu analysis
   productPerformance: string;
   categoryPerformance: string;
@@ -106,7 +106,7 @@ export interface ReportsTranslations {
   totalSold: string;
   orderCount: string;
   performance: string;
-  
+
   // Table analysis
   tablePerformance: string;
   utilizationRate: string;
@@ -116,14 +116,14 @@ export interface ReportsTranslations {
   tableUtilization: string;
   revenuePerTable: string;
   ordersPerTable: string;
-  
+
   // Common report elements
   period: string;
   thisMonth: string;
   noData: string;
   noDataDescription: string;
   loading: string;
-  
+
   // Additional dashboard keys
   periodRevenue: string;
   customerCount: string;
@@ -148,7 +148,6 @@ export interface SettingsTranslations {
   storeInfo: string;
   categories: string;
   employees: string;
-  payments: string;
   basicInfo: string;
   basicInfoDesc: string;
   contactInfo: string;
@@ -372,6 +371,40 @@ export interface OrdersTranslations {
   };
 }
 
+export interface InventoryTranslations {
+  title: string;
+  description: string;
+  totalProducts: string;
+  lowStock: string;
+  outOfStock: string;
+  totalValue: string;
+  searchProducts: string;
+  stockStatus: string;
+  allStock: string;
+  inStock: string;
+  productName: string;
+  currentStock: string;
+  unitPrice: string;
+  stockValue: string;
+  management: string;
+  edit: string;
+  stockUpdate: string;
+  loading: string;
+  noProducts: string;
+  uncategorized: string;
+  currentStockLabel: string;
+  stockUpdateType: string;
+  quantity: string;
+  notesOptional: string;
+  selectUpdateType: string;
+  addStock: string;
+  subtractStock: string;
+  setStock: string;
+  quantityInput: string;
+  changeReason: string;
+  processing: string;
+}
+
 export interface Translations {
   common: CommonTranslations;
   nav: NavigationTranslations;
@@ -382,6 +415,7 @@ export interface Translations {
   customers: CustomersTranslations;
   employees: EmployeesTranslations;
   attendance: AttendanceTranslations;
+  inventory: InventoryTranslations;
 }
 
 // Type-safe translation keys
