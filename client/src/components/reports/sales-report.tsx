@@ -128,10 +128,7 @@ export function SalesReport() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR', {
-      style: 'currency',
-      currency: 'KRW'
-    }).format(amount);
+    return `${amount.toLocaleString()} ₫`;
   };
 
   const formatDate = (dateStr: string) => {

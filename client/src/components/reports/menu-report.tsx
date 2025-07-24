@@ -157,10 +157,7 @@ export function MenuReport() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR', {
-      style: 'currency',
-      currency: 'KRW'
-    }).format(amount);
+    return `${amount.toLocaleString()} ₫`;
   };
 
   const [menuData, setMenuData] = useState<any>(null);
