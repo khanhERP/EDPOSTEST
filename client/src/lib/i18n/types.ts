@@ -67,7 +67,7 @@ export interface ReportsTranslations {
   menuAnalysis: string;
   tableAnalysis: string;
   backToTables: string;
-  
+
   // Date and time filters
   startDate: string;
   endDate: string;
@@ -76,7 +76,7 @@ export interface ReportsTranslations {
   lastWeek: string;
   lastMonth: string;
   custom: string;
-  
+
   // Dashboard metrics
   totalRevenue: string;
   totalOrders: string;
@@ -86,7 +86,7 @@ export interface ReportsTranslations {
   activeOrders: string;
   occupiedTables: string;
   monthlyRevenue: string;
-  
+
   // Sales analysis
   analyzeRevenue: string;
   dailySales: string;
@@ -97,7 +97,7 @@ export interface ReportsTranslations {
   customers: string;
   cash: string;
   card: string;
-  
+
   // Menu analysis
   productPerformance: string;
   categoryPerformance: string;
@@ -106,7 +106,7 @@ export interface ReportsTranslations {
   totalSold: string;
   orderCount: string;
   performance: string;
-  
+
   // Table analysis
   tablePerformance: string;
   utilizationRate: string;
@@ -116,14 +116,14 @@ export interface ReportsTranslations {
   tableUtilization: string;
   revenuePerTable: string;
   ordersPerTable: string;
-  
+
   // Common report elements
   period: string;
   thisMonth: string;
   noData: string;
   noDataDescription: string;
   loading: string;
-  
+
   // Additional dashboard keys
   periodRevenue: string;
   customerCount: string;
@@ -371,6 +371,44 @@ export interface OrdersTranslations {
   };
 }
 
+export interface InventoryTranslations {
+  title: string;
+  description: string;
+  inventoryManagement: string;
+  productList: string;
+  stockAdjustments: string;
+  addNew: string;
+  productName: string;
+  sku: string;
+  category: string;
+  price: string;
+  stock: string;
+  actions: string;
+  adjustStock: string;
+  quantityChange: string;
+  currentStock: string;
+  newStock: string;
+  changeReason: string;
+  processing: string;
+  addNewItem: string;
+  newProduct: string;
+  productNameLabel: string;
+  productNamePlaceholder: string;
+  skuLabel: string;
+  skuPlaceholder: string;
+  priceLabel: string;
+  pricePlaceholder: string;
+  categoryLabel: string;
+  categoryPlaceholder: string;
+  initialStockQuantity: string;
+  initialStockPlaceholder: string;
+  stockQuantity: string;
+  editReason: string;
+  addNewStock: string;
+  save: string;
+  updateType: string;
+}
+
 export interface Translations {
   common: CommonTranslations;
   nav: NavigationTranslations;
@@ -381,6 +419,7 @@ export interface Translations {
   customers: CustomersTranslations;
   employees: EmployeesTranslations;
   attendance: AttendanceTranslations;
+  inventory: InventoryTranslations;
 }
 
 // Type-safe translation keys
@@ -392,6 +431,16 @@ export type TranslationKey =
   | `notFound.${keyof NotFoundTranslations}`;
 
 // Language-specific translations type
-export type LanguageTranslations = {
-  [K in Language]: Translations;
-};
+type Join<K, P> = K extends string ? P extends string ? `${K}.${P}` : never : never;
+
+type RecursiveKeyOf<T> = {
+  [K in keyof T]: T[K] extends string
+    ? K
+    : T[K] extends Record<string, any>
+      ? K | Join<K, keyof T[K]> | {
+          [K2 in keyof T[K]]: T[K][K2] extends Record<string, any>
+            ? Join<K, Join<K2, keyof T[K][K2]>>
+            : never;
+        }[keyof T[K]]
+      : K
+}[keyof T];

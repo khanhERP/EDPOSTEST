@@ -281,7 +281,7 @@ export default function InventoryPage() {
                 className="text-blue-600 border-blue-300 hover:bg-blue-50"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Thêm mặt hàng
+                {t('inventory.addNewItem')}
               </Button>
             </CardHeader>
             <CardContent>
@@ -371,7 +371,7 @@ export default function InventoryPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {selectedProduct?.id === 0 ? "Thêm mới tồn kho" : t('inventory.stockUpdate')}
+              {selectedProduct?.id === 0 ? t('inventory.addNewStock') : t('inventory.stockUpdate')}
             </DialogTitle>
           </DialogHeader>
 
@@ -379,7 +379,7 @@ export default function InventoryPage() {
             <Form {...stockUpdateForm}>
               <form onSubmit={stockUpdateForm.handleSubmit(onStockUpdate)} className="space-y-4">
                 <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-gray-900">{selectedProduct.name || "Sản phẩm mới"}</h3>
+                  <h3 className="font-medium text-gray-900">{selectedProduct.name || t('inventory.newProduct')}</h3>
                   <p className="text-sm text-gray-600">{t('inventory.currentStockLabel')}: {selectedProduct.stock}{t('common.items')}</p>
                 </div>
 
@@ -390,9 +390,9 @@ export default function InventoryPage() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tên sản phẩm</FormLabel>
+                          <FormLabel>{t('inventory.productNameLabel')}</FormLabel>
                           <FormControl>
-                            <Input placeholder="Nhập tên sản phẩm" {...field} />
+                            <Input placeholder={t('inventory.productNamePlaceholder')} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -404,9 +404,9 @@ export default function InventoryPage() {
                       name="sku"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>SKU</FormLabel>
+                          <FormLabel>{t('inventory.skuLabel')}</FormLabel>
                           <FormControl>
-                            <Input placeholder="Nhập mã SKU" {...field} />
+                            <Input placeholder={t('inventory.skuPlaceholder')} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -418,9 +418,9 @@ export default function InventoryPage() {
                       name="price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Giá</FormLabel>
+                          <FormLabel>{t('inventory.priceLabel')}</FormLabel>
                           <FormControl>
-                            <Input placeholder="Nhập giá sản phẩm" {...field} />
+                            <Input placeholder={t('inventory.pricePlaceholder')} {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -432,11 +432,11 @@ export default function InventoryPage() {
                       name="categoryId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Danh mục</FormLabel>
+                          <FormLabel>{t('inventory.categoryLabel')}</FormLabel>
                           <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Chọn danh mục" />
+                                <SelectValue placeholder={t('inventory.categoryPlaceholder')} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -460,7 +460,7 @@ export default function InventoryPage() {
                     name="type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Loại cập nhật</FormLabel>
+                        <FormLabel>{t('inventory.updateType')}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -484,12 +484,12 @@ export default function InventoryPage() {
                   name="quantity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{selectedProduct?.id === 0 ? "Số lượng tồn kho ban đầu" : "số lượng tồn kho"}</FormLabel>
+                      <FormLabel>{selectedProduct?.id === 0 ? t('inventory.initialStockQuantity') : t('inventory.stockQuantity')}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min="0"
-                          placeholder={selectedProduct?.id === 0 ? "Nhập số lượng ban đầu" : t('inventory.quantityInput')}
+                          placeholder={selectedProduct?.id === 0 ? t('inventory.initialStockPlaceholder') : t('inventory.quantityInput')}
                           {...field}
                           onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                         />
@@ -505,7 +505,7 @@ export default function InventoryPage() {
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Lí do chỉnh sửa</FormLabel>
+                        <FormLabel>{t('inventory.editReason')}</FormLabel>
                         <FormControl>
                           <Input placeholder={t('inventory.changeReason')} {...field} />
                         </FormControl>
@@ -534,7 +534,7 @@ export default function InventoryPage() {
                         {t('inventory.processing')}
                       </>
                     ) : (
-                      selectedProduct?.id === 0 ? "Lưu" : t('inventory.stockUpdate')
+                      selectedProduct?.id === 0 ? t('inventory.save') : t('inventory.stockUpdate')
                     )}
                   </Button>
                 </div>
