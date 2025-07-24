@@ -7,8 +7,8 @@ import { ordersTranslations } from './modules/orders';
 import { customersTranslations } from './modules/customers';
 import { employeesTranslations } from './modules/employees';
 import { attendanceTranslations } from './modules/attendance';
-import { inventoryTranslations } from './modules/inventory';
 import { tablesTranslations } from './modules/tables';
+import { inventoryTranslations } from './modules/inventory';
 import type { LanguageTranslations } from './types';
 
 export const translations: LanguageTranslations = {

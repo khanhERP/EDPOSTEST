@@ -360,11 +360,6 @@ export interface OrdersTranslations {
   noTableInfo: string;
   noInput: string;
   payment: string;
-  orderPlaced: string;
-  orderPlacedSuccess: string;
-  orderFailed: string;
-  tableOrder: string;
-  tableCapacity: string;
   status: {
     pending: string;
     confirmed: string;
@@ -374,44 +369,6 @@ export interface OrdersTranslations {
     paid: string;
     cancelled: string;
   };
-}
-
-export interface InventoryTranslations {
-  title: string;
-  description: string;
-  inventoryManagement: string;
-  productList: string;
-  stockAdjustments: string;
-  addNew: string;
-  productName: string;
-  sku: string;
-  category: string;
-  price: string;
-  stock: string;
-  actions: string;
-  adjustStock: string;
-  quantityChange: string;
-  currentStock: string;
-  newStock: string;
-  changeReason: string;
-  processing: string;
-  addNewItem: string;
-  newProduct: string;
-  productNameLabel: string;
-  productNamePlaceholder: string;
-  skuLabel: string;
-  skuPlaceholder: string;
-  priceLabel: string;
-  pricePlaceholder: string;
-  categoryLabel: string;
-  categoryPlaceholder: string;
-  initialStockQuantity: string;
-  initialStockPlaceholder: string;
-  stockQuantity: string;
-  editReason: string;
-  addNewStock: string;
-  save: string;
-  updateType: string;
 }
 
 export interface Translations {
@@ -424,43 +381,28 @@ export interface Translations {
   customers: CustomersTranslations;
   employees: EmployeesTranslations;
   attendance: AttendanceTranslations;
-  inventory: InventoryTranslations;
 }
 
 // Type-safe translation keys
 export type TranslationKey =
-  | `common.${RecursiveKeyOf<CommonTranslations>}`
-  | `nav.${RecursiveKeyOf<NavigationTranslations>}`
-  | `reports.${RecursiveKeyOf<ReportsTranslations>}`
-  | `settings.${RecursiveKeyOf<SettingsTranslations>}`
-  | `notFound.${RecursiveKeyOf<NotFoundTranslations>}`
-  | `orders.${RecursiveKeyOf<OrdersTranslations>}`
-  | `customers.${RecursiveKeyOf<CustomersTranslations>}`
-  | `employees.${RecursiveKeyOf<EmployeesTranslations>}`
-  | `attendance.${RecursiveKeyOf<AttendanceTranslations>}`;
+  | `common.${keyof CommonTranslations}`
+  | `nav.${keyof NavigationTranslations}`
+  | `reports.${keyof ReportsTranslations}`
+  | `settings.${keyof SettingsTranslations}`
+  | `notFound.${keyof NotFoundTranslations}`;
 
 // Language-specific translations type
-type Join<K, P> = K extends string | number
-  ? P extends string | number
-    ? `${K}.${P}`
-    : never
-  : never;
+export type LanguageTranslations = {
+  [K in Language]: Translations;
+};
+orderPlaced: string;
+orderPlacedSuccess: string;
+orderFailed: string;
+tableOrder: string;
+tableCapacity: string;
 
-type TwoLevelKeys<T> = {
-  [K in keyof T]: T[K] extends object ? Join<K, keyof T[K]> : never;
-}[keyof T];
-
-type ThreeLevelKeys<T> = {
-  [K in keyof T]: T[K] extends object
-    ? {
-        [K2 in keyof T[K]]: T[K][K2] extends object
-          ? Join<K, Join<K2, keyof T[K][K2]>>
-          : never;
-      }[keyof T[K]]
-    : never;
-}[keyof T];
-
-type RecursiveKeyOf<T> =
-  | (keyof T & string) // cấp 1
-  | TwoLevelKeys<T> // cấp 2
-  | ThreeLevelKeys<T>; // cấp 3
+export interface LanguageTranslations {
+  ko: { [key: string]: any };
+  en: { [key: string]: any };
+  vi: { [key: string]: any };
+}
