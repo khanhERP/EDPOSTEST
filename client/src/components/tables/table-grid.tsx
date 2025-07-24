@@ -37,15 +37,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const { data: orderItems, isLoading: orderItemsLoading } = useQuery({
     queryKey: ['/api/order-items', selectedOrder?.id],
-    enabled: !!selectedOrder?.id,
+    enabled: !!selectedOrder?.id && orderDetailsOpen,
     queryFn: async () => {
+      const orderId = selectedOrder?.id;
+      if (!orderId) {
+        console.log('No order ID available for fetching items');
+        return [];
+      }
+      
       console.log('=== FETCHING ORDER ITEMS ===');
-      console.log('Fetching order items for order ID:', selectedOrder?.id);
-      console.log('API URL will be:', `/api/order-items/${selectedOrder?.id}`);
+      console.log('Fetching order items for order ID:', orderId);
+      console.log('API URL will be:', `/api/order-items/${orderId}`);
       
-      const response = await apiRequest('GET', `/api/order-items/${selectedOrder?.id}`);
+      const response = await apiRequest('GET', `/api/order-items/${orderId}`);
       
-      console.log('Raw order items response for order', selectedOrder?.id, ':', response);
+      console.log('Raw order items response for order', orderId, ':', response);
       console.log('Response type:', typeof response, 'Length:', response?.length);
       console.log('Is array?', Array.isArray(response));
       
@@ -186,8 +192,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     console.log('Order ID:', order.id, 'Table ID:', order.tableId, 'Ordered at:', order.orderedAt);
     console.log('Order status:', order.status, 'Order number:', order.orderNumber);
     console.log('=== END ORDER DETAILS ===');
+    
+    // Set the selected order first
     setSelectedOrder(order);
-    setOrderDetailsOpen(true);
+    
+    // Then open the dialog - this ensures selectedOrder is set when the query runs
+    setTimeout(() => {
+      setOrderDetailsOpen(true);
+    }, 0);
   };
 
   const handlePayment = (paymentMethod: string) => {
@@ -383,7 +395,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <>
                       {/* Debug info always visible */}
                       <div className="text-xs text-blue-600 p-2 bg-blue-50 rounded mb-2">
+                        <p>Debug - Selected Order: {selectedOrder ? 'SET' : 'NULL'}</p>
                         <p>Debug - Order ID: {selectedOrder?.id}</p>
+                        <p>Debug - Dialog Open: {orderDetailsOpen ? 'yes' : 'no'}</p>
+                        <p>Debug - Query Enabled: {!!(selectedOrder?.id && orderDetailsOpen) ? 'yes' : 'no'}</p>
+                        <p>Debug - Items Loading: {orderItemsLoading ? 'yes' : 'no'}</p>
                         <p>Debug - Items loaded: {orderItems ? 'yes' : 'no'}</p>
                         <p>Debug - Items count: {orderItems?.length || 0}</p>
                         <p>Debug - Is array: {Array.isArray(orderItems) ? 'yes' : 'no'}</p>
