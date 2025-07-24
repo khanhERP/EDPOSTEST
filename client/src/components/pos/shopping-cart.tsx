@@ -36,13 +36,17 @@ export function ShoppingCart({
   const handleCheckout = () => {
     if (cart.length === 0) return;
     
-    if (paymentMethod === "cash" && parseFloat(amountReceived || "0") < total) {
-      return;
+    if (paymentMethod === "cash") {
+      const receivedAmount = parseFloat(amountReceived || "0");
+      if (receivedAmount < total) {
+        alert(`Số tiền nhận được không đủ. Cần: ${total.toLocaleString()} ₫`);
+        return;
+      }
     }
 
     const paymentData = {
       paymentMethod,
-      amountReceived: paymentMethod === "cash" ? parseFloat(amountReceived) : total,
+      amountReceived: paymentMethod === "cash" ? parseFloat(amountReceived || "0") : total,
       change: paymentMethod === "cash" ? change : 0,
     };
 
@@ -176,7 +180,7 @@ export function ShoppingCart({
               />
               <div className="flex justify-between text-sm">
                 <span className="pos-text-secondary">Change:</span>
-                <span className="font-bold text-green-600">${change.toFixed(2)}</span>
+                <span className="font-bold text-green-600">{change.toLocaleString()} ₫</span>
               </div>
             </div>
           )}
