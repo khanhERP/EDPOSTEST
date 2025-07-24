@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { type Customer } from "@shared/schema";
 import { 
   CreditCard, 
@@ -44,6 +45,7 @@ interface PointTransaction {
 export function PointsManagementModal({ isOpen, onClose }: PointsManagementModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   
   // State for point operations
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -210,18 +212,18 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CreditCard className="w-6 h-6 text-blue-600" />
-            포인트 관리
+            {t("customers.pointsManagementTitle")}
           </DialogTitle>
           <DialogDescription>
-            고객 포인트를 관리하고 사용 내역을 확인하세요
+            {t("customers.pointsManagementDesc")}
           </DialogDescription>
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="management">포인트 조정</TabsTrigger>
-            <TabsTrigger value="payment">포인트 결제</TabsTrigger>
-            <TabsTrigger value="history">사용 내역</TabsTrigger>
+            <TabsTrigger value="management">{t("customers.pointsAdjustment")}</TabsTrigger>
+            <TabsTrigger value="payment">{t("customers.pointsPayment")}</TabsTrigger>
+            <TabsTrigger value="history">{t("customers.history")}</TabsTrigger>
           </TabsList>
 
           {/* Points Statistics */}
@@ -230,7 +232,7 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">총 포인트</p>
+                    <p className="text-sm font-medium text-gray-600">{t("customers.totalPoints")}</p>
                     <p className="text-2xl font-bold text-blue-600">{totalPoints.toLocaleString()}P</p>
                   </div>
                   <CreditCard className="w-8 h-8 text-blue-600" />
@@ -242,7 +244,7 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">평균 포인트</p>
+                    <p className="text-sm font-medium text-gray-600">{t("customers.averagePoints")}</p>
                     <p className="text-2xl font-bold text-green-600">{avgPoints.toLocaleString()}P</p>
                   </div>
                   <Calculator className="w-8 h-8 text-green-600" />
@@ -254,8 +256,8 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">보유 고객</p>
-                    <p className="text-2xl font-bold text-purple-600">{customers?.length || 0}명</p>
+                    <p className="text-sm font-medium text-gray-600">{t("customers.total")} {t("customers.customers")}</p>
+                    <p className="text-2xl font-bold text-purple-600">{customers?.length || 0}{t("customers.customers")}</p>
                   </div>
                   <Gift className="w-8 h-8 text-purple-600" />
                 </div>
@@ -268,9 +270,9 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Calculator className="w-5 h-5 text-blue-600" />
-                  포인트 편집 및 조정
+                  {t("customers.pointsEditTitle")}
                 </CardTitle>
-                <CardDescription>고객의 포인트를 추가, 차감 또는 설정할 수 있습니다</CardDescription>
+                <CardDescription>{t("customers.pointsEditDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
