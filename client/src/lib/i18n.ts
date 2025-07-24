@@ -6,6 +6,7 @@ export type Language = "ko" | "en" | "vi";
 
 interface LanguageStore {
   currentLanguage: Language;
+  renderTrigger: number;
   setLanguage: (language: Language) => void;
 }
 
@@ -13,7 +14,11 @@ export const useLanguageStore = create<LanguageStore>()(
   persist(
     (set) => ({
       currentLanguage: "ko",
-      setLanguage: (language: Language) => set({ currentLanguage: language }),
+      renderTrigger: 0,
+      setLanguage: (language: Language) => set((state) => ({ 
+        currentLanguage: language,
+        renderTrigger: state.renderTrigger + 1
+      })),
     }),
     {
       name: "pos-language",
