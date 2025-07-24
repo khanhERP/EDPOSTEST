@@ -77,18 +77,7 @@ export function ShoppingCart({
           </div>
         ) : (
           cart.map((item) => (
-            <div key={item.id} className="bg-gray-50 rounded-lg p-3 flex items-start space-x-3">
-              {item.imageUrl ? (
-                <img 
-                  src={item.imageUrl} 
-                  alt={item.name}
-                  className="w-12 h-12 object-cover rounded"
-                />
-              ) : (
-                <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
-                  <CartIcon className="text-gray-400" size={16} />
-                </div>
-              )}
+            <div key={item.id} className="bg-gray-50 rounded-lg p-3">
               <div className="flex-1">
                 <h4 className="font-medium pos-text-primary">{item.name}</h4>
                 <p className="text-sm pos-text-secondary">{parseFloat(item.price).toLocaleString()} ₫ each</p>
