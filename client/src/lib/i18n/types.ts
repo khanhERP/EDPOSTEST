@@ -141,6 +141,39 @@ export interface ReportsTranslations {
   targetAverageDailySales: string;
 }
 
+// Membership translations interface
+export interface MembershipTranslations {
+  title: string;
+  description: string;
+  tierGuide: string;
+  customerManagement: string;
+  autoUpgrade: string;
+  filterByTier: string;
+  all: string;
+  silver: string;
+  gold: string;
+  vip: string;
+  silverDesc: string;
+  goldDesc: string;
+  vipDesc: string;
+  minSpent: string;
+  benefits: string;
+  basicPointsEarn: string;
+  birthdayDiscount5: string;
+  pointsEarn15x: string;
+  birthdayDiscount10: string;
+  monthlyFreeDrink1: string;
+  pointsEarn2x: string;
+  birthdayDiscount20: string;
+  monthlyFreeDrink2: string;
+  exclusiveLounge: string;
+  upgradeAvailable: string;
+  membershipUpdated: string;
+  updateFailed: string;
+  people: string;
+  close: string;
+}
+
 // Settings translations interface
 export interface SettingsTranslations {
   title: string;
@@ -390,6 +423,7 @@ export type TranslationKey =
   | `nav.${keyof NavigationTranslations}`
   | `reports.${keyof ReportsTranslations}`
   | `settings.${keyof SettingsTranslations}`
+  | `membership.${keyof MembershipTranslations}`
   | `notFound.${keyof NotFoundTranslations}`;
 
 // Language-specific translations type
