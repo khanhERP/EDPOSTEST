@@ -32,7 +32,7 @@ function getNestedTranslation(obj: any, key: string): string | undefined {
 }
 
 export function useTranslation() {
-  const { currentLanguage } = useLanguageStore();
+  const { currentLanguage, setLanguage } = useLanguageStore();
 
   const t = (key: TranslationKey): string => {
     const value = getNestedTranslation(translations[currentLanguage], key);
@@ -45,7 +45,7 @@ export function useTranslation() {
     return value || key;
   };
 
-  return { t, currentLanguage };
+  return { t, currentLanguage, setLanguage };
 }
 
 // Re-export types for convenience
