@@ -499,7 +499,7 @@ export default function InventoryPage() {
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>lí do chỉnh sửa</FormLabel>
+                        <FormLabel>Lí do chỉnh sửa</FormLabel>
                         <FormControl>
                           <Input placeholder={t('inventory.changeReason')} {...field} />
                         </FormControl>
