@@ -87,8 +87,8 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
       queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
       queryClient.invalidateQueries({ queryKey: ['/api/point-transactions'] });
       toast({
-        title: '포인트 조정 완료',
-        description: '포인트가 성공적으로 조정되었습니다.',
+        title: t("customers.customerUpdated"),
+        description: t("customers.pointsManagementDesc"),
       });
       setPointsAmount('');
       setAdjustmentReason('');
@@ -96,8 +96,8 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
     },
     onError: () => {
       toast({
-        title: '오류',
-        description: '포인트 조정 중 오류가 발생했습니다.',
+        title: t("common.error"),
+        description: t("customers.customerError"),
         variant: 'destructive',
       });
     },
@@ -116,16 +116,16 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
       queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
       queryClient.invalidateQueries({ queryKey: ['/api/point-transactions'] });
       toast({
-        title: '포인트 사용 완료',
-        description: '포인트가 성공적으로 사용되었습니다.',
+        title: t("common.success"),
+        description: t("customers.processPayment"),
       });
       setPointsAmount('');
       setSelectedCustomer(null);
     },
     onError: () => {
       toast({
-        title: '오류',
-        description: '포인트 사용 중 오류가 발생했습니다.',
+        title: t("common.error"),
+        description: t("customers.customerError"),
         variant: 'destructive',
       });
     },
@@ -134,8 +134,8 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
   const handlePointsAdjustment = () => {
     if (!selectedCustomer || !pointsAmount || !adjustmentReason) {
       toast({
-        title: '입력 오류',
-        description: '모든 필드를 입력해주세요.',
+        title: t("common.error"),
+        description: t("customers.customerFormDesc"),
         variant: 'destructive',
       });
       return;
@@ -169,8 +169,8 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
   const handlePointsPayment = () => {
     if (!selectedCustomer || !pointsAmount) {
       toast({
-        title: '입력 오류',
-        description: '고객과 포인트를 선택해주세요.',
+        title: t("common.error"),
+        description: t("customers.customerSelection"),
         variant: 'destructive',
       });
       return;
@@ -181,8 +181,8 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
     
     if (points > currentPoints) {
       toast({
-        title: '포인트 부족',
-        description: '사용 가능한 포인트가 부족합니다.',
+        title: t("customers.insufficientPoints"),
+        description: t("customers.insufficientPoints"),
         variant: 'destructive',
       });
       return;
@@ -278,10 +278,10 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Customer Selection */}
                   <div className="space-y-4">
-                    <Label>고객 선택</Label>
+                    <Label>{t("customers.customerSelection")}</Label>
                     <div className="space-y-2">
                       <Input
-                        placeholder="고객명, ID, 전화번호로 검색..."
+                        placeholder={t("customers.searchCustomers")}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
@@ -311,47 +311,47 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
 
                   {/* Point Adjustment */}
                   <div className="space-y-4">
-                    <Label>포인트 조정</Label>
+                    <Label>{t("customers.pointsAdjustment")}</Label>
                     {selectedCustomer && (
                       <div className="p-4 bg-blue-50 rounded-lg">
                         <p className="font-medium">{selectedCustomer.name}</p>
-                        <p className="text-sm text-gray-600">현재 포인트: {(selectedCustomer.points || 0).toLocaleString()}P</p>
+                        <p className="text-sm text-gray-600">{t("customers.currentPoints")}: {(selectedCustomer.points || 0).toLocaleString()}P</p>
                       </div>
                     )}
                     
                     <div className="space-y-3">
                       <div>
-                        <Label>조정 유형</Label>
+                        <Label>{t("customers.adjustmentType")}</Label>
                         <Select value={operationType} onValueChange={(value: 'add' | 'subtract' | 'set') => setOperationType(value)}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="add">포인트 추가</SelectItem>
-                            <SelectItem value="subtract">포인트 차감</SelectItem>
-                            <SelectItem value="set">포인트 설정</SelectItem>
+                            <SelectItem value="add">{t("customers.addPoints")}</SelectItem>
+                            <SelectItem value="subtract">{t("customers.subtractPoints")}</SelectItem>
+                            <SelectItem value="set">{t("customers.setPoints")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
                       <div>
                         <Label>
-                          {operationType === 'add' ? '추가할 포인트' : 
-                           operationType === 'subtract' ? '차감할 포인트' : 
-                           '설정할 포인트'}
+                          {operationType === 'add' ? t("customers.pointsToAdd") : 
+                           operationType === 'subtract' ? t("customers.pointsToSubtract") : 
+                           t("customers.pointsToSet")}
                         </Label>
                         <Input
                           type="number"
-                          placeholder="포인트 입력"
+                          placeholder={t("customers.pointsToUsePlaceholder")}
                           value={pointsAmount}
                           onChange={(e) => setPointsAmount(e.target.value)}
                         />
                       </div>
 
                       <div>
-                        <Label>조정 사유</Label>
+                        <Label>{t("customers.adjustmentReason")}</Label>
                         <Textarea
-                          placeholder="포인트 조정 사유를 입력하세요"
+                          placeholder={t("customers.adjustmentReasonPlaceholder")}
                           value={adjustmentReason}
                           onChange={(e) => setAdjustmentReason(e.target.value)}
                         />
@@ -362,13 +362,13 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
                         className="w-full"
                         disabled={!selectedCustomer || !pointsAmount || !adjustmentReason || adjustPointsMutation.isPending}
                       >
-                        {adjustPointsMutation.isPending ? '처리 중...' : 
+                        {adjustPointsMutation.isPending ? t("customers.processing") : 
                          operationType === 'add' ? <Plus className="w-4 h-4 mr-2" /> : 
                          operationType === 'subtract' ? <Minus className="w-4 h-4 mr-2" /> : 
                          <Calculator className="w-4 h-4 mr-2" />}
-                        {operationType === 'add' ? '포인트 추가' : 
-                         operationType === 'subtract' ? '포인트 차감' : 
-                         '포인트 설정'}
+                        {operationType === 'add' ? t("customers.addPoints") : 
+                         operationType === 'subtract' ? t("customers.subtractPoints") : 
+                         t("customers.setPoints")}
                       </Button>
                     </div>
                   </div>
@@ -382,18 +382,18 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="w-5 h-5 text-green-600" />
-                  포인트 결제
+                  {t("customers.pointsPaymentTitle")}
                 </CardTitle>
-                <CardDescription>고객의 포인트를 사용하여 결제를 처리합니다</CardDescription>
+                <CardDescription>{t("customers.pointsPaymentDesc")}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Customer Selection for Payment */}
                   <div className="space-y-4">
-                    <Label>결제 고객 선택</Label>
+                    <Label>{t("customers.paymentCustomerSelection")}</Label>
                     <div className="space-y-2">
                       <Input
-                        placeholder="고객명, ID, 전화번호로 검색..."
+                        placeholder={t("customers.searchCustomers")}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                       />
@@ -427,27 +427,27 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
 
                   {/* Payment Processing */}
                   <div className="space-y-4">
-                    <Label>포인트 결제</Label>
+                    <Label>{t("customers.pointsPayment")}</Label>
                     {selectedCustomer && (
                       <div className="p-4 bg-green-50 rounded-lg">
                         <p className="font-medium">{selectedCustomer.name}</p>
-                        <p className="text-sm text-gray-600">사용 가능 포인트: {(selectedCustomer.points || 0).toLocaleString()}P</p>
+                        <p className="text-sm text-gray-600">{t("customers.availablePoints")}: {(selectedCustomer.points || 0).toLocaleString()}P</p>
                       </div>
                     )}
                     
                     <div className="space-y-3">
                       <div>
-                        <Label>사용할 포인트</Label>
+                        <Label>{t("customers.pointsToUse")}</Label>
                         <Input
                           type="number"
-                          placeholder="사용할 포인트 입력"
+                          placeholder={t("customers.pointsToUsePlaceholder")}
                           value={pointsAmount}
                           onChange={(e) => setPointsAmount(e.target.value)}
                         />
                         {selectedCustomer && pointsAmount && parseInt(pointsAmount) > (selectedCustomer.points || 0) && (
                           <p className="text-sm text-red-600 flex items-center gap-1 mt-1">
                             <AlertCircle className="w-4 h-4" />
-                            포인트가 부족합니다
+                            {t("customers.insufficientPoints")}
                           </p>
                         )}
                       </div>
@@ -455,7 +455,7 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
                       {pointsAmount && selectedCustomer && (
                         <div className="p-3 bg-gray-50 rounded-lg">
                           <div className="flex justify-between text-sm">
-                            <span>결제 후 남은 포인트:</span>
+                            <span>{t("customers.pointsAfterPayment")}:</span>
                             <span className="font-medium">
                               {Math.max(0, (selectedCustomer.points || 0) - parseInt(pointsAmount || '0')).toLocaleString()}P
                             </span>
@@ -468,10 +468,10 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
                         className="w-full bg-green-600 hover:bg-green-700"
                         disabled={!selectedCustomer || !pointsAmount || parseInt(pointsAmount || '0') > (selectedCustomer?.points || 0) || processPaymentMutation.isPending}
                       >
-                        {processPaymentMutation.isPending ? '처리 중...' : 
+                        {processPaymentMutation.isPending ? t("customers.processing") : 
                          <>
                            <CreditCard className="w-4 h-4 mr-2" />
-                           포인트 결제 처리
+                           {t("customers.processPayment")}
                          </>}
                       </Button>
                     </div>
@@ -486,19 +486,19 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <History className="w-5 h-5 text-purple-600" />
-                  포인트 사용 내역
+                  {t("customers.historyTitle")}
                 </CardTitle>
-                <CardDescription>모든 포인트 거래 내역을 확인할 수 있습니다</CardDescription>
+                <CardDescription>{t("customers.historyDesc")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {transactionsLoading ? (
                   <div className="text-center py-8">
-                    <p className="text-gray-500">내역을 불러오는 중...</p>
+                    <p className="text-gray-500">{t("customers.loadingHistory")}</p>
                   </div>
                 ) : !pointTransactions || pointTransactions.length === 0 ? (
                   <div className="text-center py-8">
                     <History className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                    <p className="text-gray-500">포인트 사용 내역이 없습니다</p>
+                    <p className="text-gray-500">{t("customers.noHistory")}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -519,7 +519,7 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
                                <AlertCircle className="w-5 h-5 text-gray-600" />}
                             </div>
                             <div>
-                              <p className="font-medium">{customer?.name || '알 수 없음'}</p>
+                              <p className="font-medium">{customer?.name || t("customers.unknown")}</p>
                               <p className="text-sm text-gray-600">{transaction.description}</p>
                               <p className="text-xs text-gray-400">
                                 {new Date(transaction.createdAt).toLocaleDateString('ko-KR', {
@@ -539,10 +539,10 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
                               {transaction.points > 0 ? '+' : ''}{transaction.points.toLocaleString()}P
                             </p>
                             <Badge variant="outline" className="mt-1">
-                              {transaction.type === 'earned' ? '적립' :
-                               transaction.type === 'redeemed' ? '사용' :
-                               transaction.type === 'adjusted' ? '조정' :
-                               '만료'}
+                              {transaction.type === 'earned' ? t("customers.earned") :
+                               transaction.type === 'redeemed' ? t("customers.redeemed") :
+                               transaction.type === 'adjusted' ? t("customers.adjusted") :
+                               t("customers.expired")}
                             </Badge>
                           </div>
                         </div>
