@@ -9,7 +9,6 @@ import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "@/lib/i18n";
 import { type Customer } from "@shared/schema";
 import { 
   Crown, 
@@ -29,44 +28,41 @@ interface MembershipModalProps {
   onClose: () => void;
 }
 
-export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
-  const { toast } = useToast();
-  const { t } = useTranslation();
-  const queryClient = useQueryClient();
-  const [selectedTier, setSelectedTier] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState('');
-
 const membershipTiers = [
   {
     level: 'SILVER',
-    name: t('membership.silver'),
+    name: '실버',
     icon: Medal,
     color: 'bg-gray-100 text-gray-800 border-gray-200',
-    benefits: [t('membership.basicPointsEarn'), t('membership.birthdayDiscount5')],
+    benefits: ['기본 포인트 적립', '생일 할인 5%'],
     minSpent: 0,
-    description: t('membership.silverDesc')
+    description: '신규 고객을 위한 기본 등급'
   },
   {
     level: 'GOLD',
-    name: t('membership.gold'),
+    name: '골드',
     icon: Award,
     color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    benefits: [t('membership.pointsEarn15x'), t('membership.birthdayDiscount10'), t('membership.monthlyFreeDrink1')],
+    benefits: ['포인트 1.5배 적립', '생일 할인 10%', '월 1회 무료 음료'],
     minSpent: 300000,
-    description: t('membership.goldDesc')
+    description: '단골 고객을 위한 프리미엄 등급'
   },
   {
     level: 'VIP',
-    name: t('membership.vip'),
+    name: 'VIP',
     icon: Crown,
     color: 'bg-purple-100 text-purple-800 border-purple-200',
-    benefits: [t('membership.pointsEarn2x'), t('membership.birthdayDiscount20'), t('membership.monthlyFreeDrink2'), t('membership.exclusiveLounge')],
+    benefits: ['포인트 2배 적립', '생일 할인 20%', '월 2회 무료 음료', '전용 라운지 이용'],
     minSpent: 1000000,
-    description: t('membership.vipDesc')
+    description: 'VIP 고객을 위한 최고 등급'
   }
 ];
 
-
+export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [selectedTier, setSelectedTier] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch customers
   const { data: customers, isLoading } = useQuery<Customer[]>({
@@ -89,14 +85,14 @@ const membershipTiers = [
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
       toast({
-        title: t('common.success'),
-        description: t('membership.membershipUpdated'),
+        title: '성공',
+        description: '멤버십 등급이 업데이트되었습니다.',
       });
     },
     onError: () => {
       toast({
-        title: t('common.error'),
-        description: t('membership.updateFailed'),
+        title: '오류',
+        description: '멤버십 등급 업데이트에 실패했습니다.',
         variant: 'destructive',
       });
     },
@@ -135,10 +131,10 @@ const membershipTiers = [
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Crown className="w-6 h-6 text-purple-600" />
-            {t('membership.title')}
+            멤버십 관리
           </DialogTitle>
           <DialogDescription>
-            {t('membership.description')}
+            고객 멤버십 등급을 관리하고 혜택을 제공하세요
           </DialogDescription>
         </DialogHeader>
 
@@ -147,7 +143,7 @@ const membershipTiers = [
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Star className="w-5 h-5 text-yellow-500" />
-              {t('membership.tierGuide')}
+              멤버십 등급 안내
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {membershipTiers.map((tier) => {
@@ -161,16 +157,16 @@ const membershipTiers = [
                         <IconComponent className="w-5 h-5" />
                         {tier.name}
                         <Badge variant="outline" className="ml-auto">
-                          {count}{t('membership.people')}
+                          {count}명
                         </Badge>
                       </CardTitle>
                       <CardDescription>{tier.description}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        <div className="text-sm font-medium">{t('membership.minSpent')}: ₩{tier.minSpent.toLocaleString()}</div>
+                        <div className="text-sm font-medium">최소 구매금액: ₩{tier.minSpent.toLocaleString()}</div>
                         <div className="space-y-1">
-                          <div className="text-sm font-medium">{t('membership.benefits')}:</div>
+                          <div className="text-sm font-medium">혜택:</div>
                           {tier.benefits.map((benefit, index) => (
                             <div key={index} className="text-xs text-gray-600 flex items-center gap-1">
                               <Gift className="w-3 h-3" />
@@ -191,7 +187,7 @@ const membershipTiers = [
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Users className="w-5 h-5 text-blue-500" />
-                {t('membership.customerManagement')}
+                고객 멤버십 관리
               </h3>
               <div className="flex gap-2">
                 <Button
@@ -205,7 +201,7 @@ const membershipTiers = [
                   size="sm"
                 >
                   <TrendingUp className="w-4 h-4 mr-2" />
-                  {t('membership.autoUpgrade')}
+                  자동 등급 조정
                 </Button>
               </div>
             </div>
@@ -214,7 +210,7 @@ const membershipTiers = [
             <div className="flex gap-4 mb-4">
               <div className="flex-1">
                 <Input
-                  placeholder={t('customers.searchPlaceholder')}
+                  placeholder="고객명 또는 고객ID로 검색..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="max-w-md"
@@ -222,13 +218,13 @@ const membershipTiers = [
               </div>
               <Select value={selectedTier} onValueChange={setSelectedTier}>
                 <SelectTrigger className="w-48">
-                  <SelectValue placeholder={t('membership.filterByTier')} />
+                  <SelectValue placeholder="등급별 필터" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t('membership.all')}</SelectItem>
-                  <SelectItem value="silver">{t('membership.silver')}</SelectItem>
-                  <SelectItem value="gold">{t('membership.gold')}</SelectItem>
-                  <SelectItem value="vip">{t('membership.vip')}</SelectItem>
+                  <SelectItem value="all">전체</SelectItem>
+                  <SelectItem value="silver">실버</SelectItem>
+                  <SelectItem value="gold">골드</SelectItem>
+                  <SelectItem value="vip">VIP</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -236,18 +232,18 @@ const membershipTiers = [
             {/* Customer List */}
             {isLoading ? (
               <div className="text-center py-8">
-                <p className="text-gray-500">{t('common.loading')}</p>
+                <p className="text-gray-500">로딩 중...</p>
               </div>
             ) : (
               <div className="border rounded-lg">
                 <div className="grid grid-cols-7 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                  <div>{t('customers.customerId')}</div>
-                  <div>{t('customers.name')}</div>
-                  <div>{t('customers.membershipLevel')}</div>
-                  <div>{t('customers.totalSpent')}</div>
-                  <div>{t('customers.visitCount')}</div>
-                  <div>{t('customers.points')}</div>
-                  <div className="text-center">{t('common.actions')}</div>
+                  <div>고객ID</div>
+                  <div>고객명</div>
+                  <div>현재 등급</div>
+                  <div>총 구매금액</div>
+                  <div>방문횟수</div>
+                  <div>포인트</div>
+                  <div className="text-center">액션</div>
                 </div>
                 <div className="divide-y max-h-96 overflow-y-auto">
                   {filteredCustomers.map((customer) => {
@@ -266,12 +262,12 @@ const membershipTiers = [
                           </Badge>
                           {needsUpgrade && (
                             <Badge variant="outline" className="ml-1 text-orange-600">
-                              {t('membership.upgradeAvailable')}
+                              승급 가능
                             </Badge>
                           )}
                         </div>
                         <div className="text-sm">{totalSpent.toLocaleString()} ₫</div>
-                        <div className="text-sm">{customer.visitCount || 0}{t('attendance.times')}</div>
+                        <div className="text-sm">{customer.visitCount || 0}회</div>
                         <div className="text-sm">{customer.points || 0}P</div>
                         <div className="flex items-center justify-center gap-2">
                           <Select
@@ -282,9 +278,9 @@ const membershipTiers = [
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="SILVER">{t('membership.silver')}</SelectItem>
-                              <SelectItem value="GOLD">{t('membership.gold')}</SelectItem>
-                              <SelectItem value="VIP">{t('membership.vip')}</SelectItem>
+                              <SelectItem value="SILVER">실버</SelectItem>
+                              <SelectItem value="GOLD">골드</SelectItem>
+                              <SelectItem value="VIP">VIP</SelectItem>
                             </SelectContent>
                           </Select>
                           {needsUpgrade && (
@@ -310,7 +306,7 @@ const membershipTiers = [
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" onClick={onClose}>
             <X className="w-4 h-4 mr-2" />
-            {t('membership.close')}
+            닫기
           </Button>
         </div>
       </DialogContent>

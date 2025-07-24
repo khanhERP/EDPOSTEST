@@ -3,7 +3,7 @@ import type { NavigationTranslations } from '../types';
 export const navigationTranslations: { [key: string]: NavigationTranslations } = {
   ko: {
     pos: 'POS',
-    tables: '테이블 판매',
+    tables: '테이블',
     inventory: '재고',
     reports: '보고서',
     employees: '직원',
