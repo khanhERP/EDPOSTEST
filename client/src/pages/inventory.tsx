@@ -311,14 +311,16 @@ export default function InventoryPage() {
       <Dialog open={showStockDialog} onOpenChange={setShowStockDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{t('inventory.stockUpdate')}</DialogTitle>
+            <DialogTitle>
+              {selectedProduct?.id === 0 ? "Thêm mới tồn kho" : t('inventory.stockUpdate')}
+            </DialogTitle>
           </DialogHeader>
           
           {selectedProduct && (
             <Form {...stockUpdateForm}>
               <form onSubmit={stockUpdateForm.handleSubmit(onStockUpdate)} className="space-y-4">
                 <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-gray-900">{selectedProduct.name}</h3>
+                  <h3 className="font-medium text-gray-900">{selectedProduct.name || "Sản phẩm mới"}</h3>
                   <p className="text-sm text-gray-600">{t('inventory.currentStockLabel')}: {selectedProduct.stock}{t('common.items')}</p>
                 </div>
 
@@ -398,7 +400,7 @@ export default function InventoryPage() {
                         {t('inventory.processing')}
                       </>
                     ) : (
-                      t('inventory.stockUpdate')
+                      selectedProduct?.id === 0 ? "Lưu" : t('inventory.stockUpdate')
                     )}
                   </Button>
                 </div>
