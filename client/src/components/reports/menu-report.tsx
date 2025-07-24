@@ -178,7 +178,7 @@ export function MenuReport() {
   if (loading || !menuData) {
     return (
       <div className="flex justify-center py-8">
-        <div className="text-gray-500">메뉴 분석 데이터를 불러오는 중...</div>
+        <div className="text-gray-500">{t("reports.loading")}</div>
       </div>
     );
   }
@@ -192,9 +192,9 @@ export function MenuReport() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <PieChart className="w-5 h-5" />
-                메뉴 분석
+{t("reports.menuAnalysis")}
               </CardTitle>
-              <CardDescription>메뉴별 판매 현황과 인기도를 분석합니다.</CardDescription>
+              <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
             </div>
             <div className="flex items-center gap-4">
               <Select value={dateRange} onValueChange={handleDateRangeChange}>
@@ -239,8 +239,8 @@ export function MenuReport() {
       {/* Category Performance */}
       <Card>
         <CardHeader>
-          <CardTitle>카테고리별 성과</CardTitle>
-          <CardDescription>메뉴 카테고리별 판매량과 매출을 비교합니다.</CardDescription>
+          <CardTitle>{t("reports.categoryPerformance")}</CardTitle>
+          <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">

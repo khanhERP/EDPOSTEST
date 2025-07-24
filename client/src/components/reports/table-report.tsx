@@ -145,10 +145,10 @@ export function TableReport() {
 
   const getTableStatusBadge = (status: string) => {
     const statusConfig = {
-      available: { label: "이용가능", variant: "default" as const },
-      occupied: { label: "사용중", variant: "destructive" as const },
-      reserved: { label: "예약됨", variant: "secondary" as const },
-      maintenance: { label: "정비중", variant: "outline" as const },
+      available: { label: t("common.available"), variant: "default" as const },
+      occupied: { label: t("common.occupied"), variant: "destructive" as const },
+      reserved: { label: t("common.reserved"), variant: "secondary" as const },
+      maintenance: { label: t("common.maintenance"), variant: "outline" as const },
     };
     
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.available;
@@ -169,7 +169,7 @@ export function TableReport() {
   if (!tableData) {
     return (
       <div className="flex justify-center py-8">
-        <div className="text-gray-500">테이블 분석 데이터를 불러오는 중...</div>
+        <div className="text-gray-500">{t("reports.loading")}</div>
       </div>
     );
   }
@@ -183,9 +183,9 @@ export function TableReport() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Utensils className="w-5 h-5" />
-                테이블 분석
+                {t("reports.tableAnalysis")}
               </CardTitle>
-              <CardDescription>테이블별 이용률과 매출 성과를 분석합니다.</CardDescription>
+              <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
             </div>
             <div className="flex items-center gap-4">
               <Select value={dateRange} onValueChange={handleDateRangeChange}>

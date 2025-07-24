@@ -41,6 +41,10 @@ export interface CommonTranslations {
   noRecords: string;
   selectOtherDate: string;
   category: string;
+  available: string;
+  occupied: string;
+  reserved: string;
+  maintenance: string;
 }
 
 // Navigation translations interface
@@ -119,6 +123,22 @@ export interface ReportsTranslations {
   noData: string;
   noDataDescription: string;
   loading: string;
+  
+  // Additional dashboard keys
+  periodRevenue: string;
+  customerCount: string;
+  monthRevenue: string;
+  monthAccumulated: string;
+  realTimeStatus: string;
+  pendingOrders: string;
+  count: string;
+  performanceMetrics: string;
+  salesAchievementRate: string;
+  hour: string;
+  peakHour: string;
+  tableTurnoverRate: string;
+  times: string;
+  targetAverageDailySales: string;
 }
 
 // Settings translations interface

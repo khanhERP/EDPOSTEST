@@ -41,6 +41,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     noRecords: '기록이 없습니다',
     selectOtherDate: '다른 날짜를 선택해보세요',
     category: '카테고리',
+    available: '이용가능',
+    occupied: '사용중',
+    reserved: '예약됨',
+    maintenance: '정비중',
   },
   en: {
     loading: 'Loading...',
@@ -82,6 +86,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     noRecords: 'No records found',
     selectOtherDate: 'Please select another date',
     category: 'Category',
+    available: 'Available',
+    occupied: 'Occupied',
+    reserved: 'Reserved',
+    maintenance: 'Maintenance',
   },
   vi: {
     loading: 'Đang tải...',
@@ -123,5 +131,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     noRecords: 'Không có bản ghi',
     selectOtherDate: 'Vui lòng chọn ngày khác',
     category: 'Danh mục',
+    available: 'Có sẵn',
+    occupied: 'Đang sử dụng',
+    reserved: 'Đã đặt',
+    maintenance: 'Bảo trì',
   },
 };

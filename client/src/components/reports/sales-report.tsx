@@ -144,9 +144,9 @@ export function SalesReport() {
 
   const getPaymentMethodLabel = (method: string) => {
     const labels = {
-      cash: '현금',
-      card: '카드',
-      mobile: '모바일'
+      cash: t("reports.cash"),
+      card: t("reports.card"),
+      mobile: 'Mobile'
     };
     return labels[method as keyof typeof labels] || method;
   };
@@ -156,7 +156,7 @@ export function SalesReport() {
   if (!salesData) {
     return (
       <div className="flex justify-center py-8">
-        <div className="text-gray-500">{t("loadingData")}</div>
+        <div className="text-gray-500">{t("reports.loading")}</div>
       </div>
     );
   }
@@ -224,7 +224,7 @@ export function SalesReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">총 매출</p>
+                <p className="text-sm font-medium text-gray-600">{t("reports.totalRevenue")}</p>
                 <p className="text-2xl font-bold text-green-600">
                   {formatCurrency(salesData.totalRevenue)}
                 </p>
@@ -238,7 +238,7 @@ export function SalesReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">주문 건수</p>
+                <p className="text-sm font-medium text-gray-600">{t("reports.totalOrders")}</p>
                 <p className="text-2xl font-bold">{salesData.totalOrders}</p>
               </div>
               <Calendar className="w-8 h-8 text-blue-500" />
@@ -249,7 +249,7 @@ export function SalesReport() {
         <Card>
           <CardContent className="p-6">
             <div>
-              <p className="text-sm font-medium text-gray-600">평균 주문가</p>
+              <p className="text-sm font-medium text-gray-600">{t("reports.averageOrderValue")}</p>
               <p className="text-2xl font-bold">{formatCurrency(salesData.averageOrderValue)}</p>
             </div>
           </CardContent>
@@ -258,9 +258,9 @@ export function SalesReport() {
         <Card>
           <CardContent className="p-6">
             <div>
-              <p className="text-sm font-medium text-gray-600">총 고객 수</p>
+              <p className="text-sm font-medium text-gray-600">{t("reports.totalCustomers")}</p>
               <p className="text-2xl font-bold">{salesData.totalCustomers}</p>
-              <p className="text-xs text-gray-500 mt-1">피크: {peakHour}시</p>
+              <p className="text-xs text-gray-500 mt-1">{t("reports.peakHour")}: {peakHour}{t("reports.hour")}</p>
             </div>
           </CardContent>
         </Card>
@@ -270,17 +270,17 @@ export function SalesReport() {
         {/* Daily Sales */}
         <Card>
           <CardHeader>
-            <CardTitle>일별 매출</CardTitle>
-            <CardDescription>선택 기간의 일별 매출 현황입니다.</CardDescription>
+            <CardTitle>{t("reports.dailySales")}</CardTitle>
+            <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>날짜</TableHead>
-                  <TableHead>매출</TableHead>
-                  <TableHead>주문</TableHead>
-                  <TableHead>고객</TableHead>
+                  <TableHead>{t("common.date")}</TableHead>
+                  <TableHead>{t("reports.revenue")}</TableHead>
+                  <TableHead>{t("reports.orders")}</TableHead>
+                  <TableHead>{t("reports.customers")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -290,14 +290,14 @@ export function SalesReport() {
                     <TableCell className="font-medium">
                       {formatCurrency(day.revenue)}
                     </TableCell>
-                    <TableCell>{day.orders}건</TableCell>
-                    <TableCell>{day.customers}명</TableCell>
+                    <TableCell>{day.orders} {t("reports.count")}</TableCell>
+                    <TableCell>{day.customers} {t("reports.count")}</TableCell>
                   </TableRow>
                 ))}
                 {salesData.dailySales.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center text-gray-500">
-                      해당 기간에 매출 데이터가 없습니다.
+{t("reports.noDataDescription")}
                     </TableCell>
                   </TableRow>
                 )}
