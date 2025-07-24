@@ -1,7 +1,4 @@
-Adding i18n support for success, error, warning, and info messages to the common translations.
-```
 
-```replit_final_file
 import type { CommonTranslations } from "../types";
 
 export const commonTranslations: { [key: string]: CommonTranslations } = {
@@ -247,28 +244,5 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     error: "Lỗi",
     warning: "Cảnh báo",
     info: "Thông tin",
-  },
-  tables: {
-    occupied: "Đang sử dụng",
-    reserved: "Đã đặt",
-    outOfService: "Ngừng hoạt động",
-    people: " người",
-    tableCapacity: "Sức chứa bàn",
-    selectMenuToOrder: "Chọn menu để đặt hàng",
-    customerName: "Tên khách hàng",
-    optional: "Tùy chọn",
-    customerNamePlaceholder: "Nhập tên khách hàng",
-    customerCount: "Số lượng khách",
-    allCategories: "Tất cả danh mục",
-    stockCount: "Số lượng tồn kho",
-    orderHistory: "Lịch sử đơn hàng",
-    itemsSelected: "mục đã chọn",
-    noItemsSelected: "Không có mục nào được chọn",
-    specialRequests: "Yêu cầu đặc biệt",
-    subtotalLabel: "Tạm tính",
-    taxLabel: "Thuế",
-    totalLabel: "Tổng cộng",
-    placing: "Đang đặt hàng...",
-    placeOrder: "Đặt hàng",
   },
 };
