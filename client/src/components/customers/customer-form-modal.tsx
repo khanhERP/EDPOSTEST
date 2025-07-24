@@ -23,7 +23,7 @@ const customerFormSchema = z.object({
   email: z.string().email("올바른 이메일 형식이 아닙니다").optional().or(z.literal("")),
   address: z.string().optional(),
   dateOfBirth: z.string().optional(),
-  membershipLevel: z.enum(["Bronze", "Silver", "Gold", "Platinum", "Diamond"]).optional(),
+  membershipLevel: z.enum(["Silver", "Gold", "VIP"]).optional(),
   notes: z.string().optional(),
   status: z.enum(["active", "inactive"]).optional(),
 });
@@ -50,7 +50,7 @@ export function CustomerFormModal({ isOpen, onClose, customer }: CustomerFormMod
       email: customer?.email || "",
       address: customer?.address || "",
       dateOfBirth: customer?.dateOfBirth || "",
-      membershipLevel: customer?.membershipLevel || "Bronze",
+      membershipLevel: customer?.membershipLevel || "Silver",
       notes: customer?.notes || "",
       status: customer?.status || "active",
     },
@@ -66,7 +66,7 @@ export function CustomerFormModal({ isOpen, onClose, customer }: CustomerFormMod
         email: customer.email || "",
         address: customer.address || "",
         dateOfBirth: customer.dateOfBirth || "",
-        membershipLevel: customer.membershipLevel || "Bronze",
+        membershipLevel: customer.membershipLevel || "Silver",
         notes: customer.notes || "",
         status: customer.status || "active",
       });
@@ -78,7 +78,7 @@ export function CustomerFormModal({ isOpen, onClose, customer }: CustomerFormMod
         email: "",
         address: "",
         dateOfBirth: "",
-        membershipLevel: "Bronze",
+        membershipLevel: "Silver",
         notes: "",
         status: "active",
       });
@@ -250,7 +250,7 @@ export function CustomerFormModal({ isOpen, onClose, customer }: CustomerFormMod
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t('customers.membershipLevel')}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder={t('common.select')} />
