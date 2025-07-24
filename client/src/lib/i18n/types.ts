@@ -67,6 +67,7 @@ export interface ReportsTranslations {
   menuAnalysis: string;
   tableAnalysis: string;
   backToTables: string;
+  noPaymentData: string;
 
   // Date and time filters
   startDate: string;

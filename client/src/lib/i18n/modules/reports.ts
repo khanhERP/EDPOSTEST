@@ -10,6 +10,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     menuAnalysis: '메뉴 분석',
     tableAnalysis: '테이블 분석',
     backToTables: '테이블로 돌아가기',
+    noPaymentData: "결제 데이터가 없습니다.",
     
     // Date and time filters
     startDate: '시작일',
@@ -148,6 +149,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noData: 'No data available',
     noDataDescription: 'No data available for the selected period. Please try a different date range.',
     loading: 'Loading data...',
+    noPaymentData: "There is no payment data.",
     
     // Additional dashboard keys
     periodRevenue: 'Period Revenue',
@@ -230,6 +232,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noData: 'Không có dữ liệu',
     noDataDescription: 'Không có dữ liệu cho khoảng thời gian đã chọn. Vui lòng thử khoảng thời gian khác.',
     loading: 'Đang tải dữ liệu...',
+    noPaymentData: 'Không có dữ liệu thanh toán.',
     
     // Additional dashboard keys
     periodRevenue: 'Doanh thu kỳ',

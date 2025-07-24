@@ -306,8 +306,8 @@ export function SalesReport() {
         {/* Payment Methods */}
         <Card>
           <CardHeader>
-            <CardTitle>결제 수단별 분석</CardTitle>
-            <CardDescription>결제 방법별 매출 분포입니다.</CardDescription>
+            <CardTitle>{t("reports.paymentMethods")}</CardTitle>
+            <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -324,7 +324,7 @@ export function SalesReport() {
                           {getPaymentMethodLabel(payment.method)}
                         </Badge>
                         <span className="text-sm text-gray-600">
-                          {payment.count}건
+                          {payment.count} {t("reports.count")}
                         </span>
                       </div>
                       <div className="text-right">
@@ -348,7 +348,7 @@ export function SalesReport() {
               
               {salesData.paymentMethods.length === 0 && (
                 <div className="text-center text-gray-500 py-4">
-                  결제 데이터가 없습니다.
+                  {t("reports.noPaymentData")}
                 </div>
               )}
             </div>
