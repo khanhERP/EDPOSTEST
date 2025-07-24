@@ -514,12 +514,12 @@ export default function Settings() {
 
                   {customersLoading ? (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">고객 데이터를 불러오는 중...</p>
+                      <p className="text-gray-500">{t('customers.loadingCustomerData')}</p>
                     </div>
                   ) : filteredCustomers.length === 0 ? (
                     <div className="text-center py-8">
                       <UserCheck className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-500">등록된 고객이 없습니다.</p>
+                      <p className="text-gray-500">{t('customers.noRegisteredCustomers')}</p>
                     </div>
                   ) : (
                     <div className="rounded-md border">
@@ -553,9 +553,9 @@ export default function Settings() {
                                   'bg-gray-400'
                                 } text-white`}
                               >
-                                {customer.membershipLevel === 'VIP' ? 'VIP' :
-                                 customer.membershipLevel === 'GOLD' ? '골드' :
-                                 customer.membershipLevel === 'SILVER' ? '실버' :
+                                {customer.membershipLevel === 'VIP' ? t('customers.vip') :
+                                 customer.membershipLevel === 'GOLD' ? t('customers.gold') :
+                                 customer.membershipLevel === 'SILVER' ? t('customers.silver') :
                                  customer.membershipLevel}
                               </Badge>
                             </div>
@@ -592,7 +592,7 @@ export default function Settings() {
 
                   <div className="flex justify-between items-center mt-6">
                     <div className="text-sm text-gray-600">
-                      총 {customersData ? customersData.length : 0}명의 고객이 등록되어 있습니다.
+                      {t('employeesSettings.total')} {customersData ? customersData.length : 0}{t('customers.totalCustomersRegistered')}
                     </div>
                     <div className="flex gap-2">
                       <Button 
@@ -601,11 +601,11 @@ export default function Settings() {
                         onClick={() => setShowMembershipModal(true)}
                       >
                         <UserCheck className="w-4 h-4 mr-2" />
-                        멤버십 관리
+                        {t('customers.membershipManagement')}
                       </Button>
                       <Button variant="outline" size="sm">
                         <CreditCard className="w-4 h-4 mr-2" />
-                        포인트 관리
+                        {t('customers.pointsManagement')}
                       </Button>
                     </div>
                   </div>
@@ -673,13 +673,13 @@ export default function Settings() {
 
                   {employeesLoading ? (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">직원 데이터를 불러오는 중...</p>
+                      <p className="text-gray-500">{t('employeesSettings.loadingEmployeeData')}</p>
                     </div>
                   ) : !employeesData || employeesData.length === 0 ? (
                     <div className="text-center py-8">
                       <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-500">등록된 직원이 없습니다.</p>
-                      <p className="text-sm text-gray-400 mt-2">직원 추가 버튼을 클릭하여 새 직원을 등록하세요.</p>
+                      <p className="text-gray-500">{t('employeesSettings.noRegisteredEmployees')}</p>
+                      <p className="text-sm text-gray-400 mt-2">{t('employeesSettings.addEmployeeToStart')}</p>
                     </div>
                   ) : (
                     <div className="rounded-md border">
@@ -699,15 +699,15 @@ export default function Settings() {
                             <div className="font-medium">{employee.name}</div>
                             <div>
                               <Badge variant={employee.role === 'admin' ? 'destructive' : employee.role === 'manager' ? 'default' : 'secondary'}>
-                                {employee.role === 'admin' ? '관리자' : 
-                                 employee.role === 'manager' ? '매니저' : 
-                                 employee.role === 'cashier' ? '캐셔' : employee.role}
+                                {employee.role === 'admin' ? t('employeesSettings.admin') : 
+                                 employee.role === 'manager' ? t('employeesSettings.manager') : 
+                                 employee.role === 'cashier' ? t('employeesSettings.cashier') : employee.role}
                               </Badge>
                             </div>
                             <div className="text-sm text-gray-600">{employee.phone || '-'}</div>
                             <div>
                               <Badge variant={employee.isActive ? "default" : "secondary"} className={employee.isActive ? "bg-green-100 text-green-800" : ""}>
-                                {employee.isActive ? "활성" : "비활성"}
+                                {employee.isActive ? t('employeesSettings.active') : t('employeesSettings.inactive')}
                               </Badge>
                             </div>
                             <div className="flex items-center justify-center gap-2">
@@ -726,19 +726,19 @@ export default function Settings() {
                                 size="sm" 
                                 className="text-red-500 hover:text-red-700"
                                 onClick={() => {
-                                  if (confirm(`정말로 ${employee.name} 직원을 삭제하시겠습니까?`)) {
+                                  if (confirm(`${t('employeesSettings.deleteConfirm')} ${employee.name} ${t('employeesSettings.employeeDeleteConfirm')}`)) {
                                     fetch(`/api/employees/${employee.id}`, { method: 'DELETE' })
                                       .then(() => {
                                         queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
                                         toast({
-                                          title: '성공',
-                                          description: '직원이 삭제되었습니다.',
+                                          title: t('employeesSettings.deleteSuccess'),
+                                          description: t('employeesSettings.employeeDeleted'),
                                         });
                                       })
                                       .catch(() => {
                                         toast({
-                                          title: '오류',
-                                          description: '직원 삭제에 실패했습니다.',
+                                          title: t('employeesSettings.deleteError'),
+                                          description: t('employeesSettings.employeeDeleteFailed'),
                                           variant: 'destructive',
                                         });
                                       });
@@ -756,7 +756,7 @@ export default function Settings() {
 
                   <div className="flex justify-between items-center mt-6">
                     <div className="text-sm text-gray-600">
-                      총 {employeesData ? employeesData.length : 0}명의 직원이 등록되어 있습니다.
+                      {t('employeesSettings.total')} {employeesData ? employeesData.length : 0}{t('employeesSettings.totalEmployeesRegistered')}
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm">
