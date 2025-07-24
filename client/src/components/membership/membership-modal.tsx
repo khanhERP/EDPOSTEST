@@ -31,30 +31,30 @@ interface MembershipModalProps {
 const membershipTiers = [
   {
     level: 'SILVER',
-    name: '실버',
+    name: 'Bạc',
     icon: Medal,
     color: 'bg-gray-100 text-gray-800 border-gray-200',
-    benefits: ['기본 포인트 적립', '생일 할인 5%'],
+    benefits: ['Tích điểm cơ bản', 'Giảm giá sinh nhật 5%'],
     minSpent: 0,
-    description: '신규 고객을 위한 기본 등급'
+    description: 'Cấp độ cơ bản cho khách hàng mới'
   },
   {
     level: 'GOLD',
-    name: '골드',
+    name: 'Vàng',
     icon: Award,
     color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    benefits: ['포인트 1.5배 적립', '생일 할인 10%', '월 1회 무료 음료'],
+    benefits: ['Tích điểm x1.5', 'Giảm giá sinh nhật 10%', 'Đồ uống miễn phí 1 lần/tháng'],
     minSpent: 300000,
-    description: '단골 고객을 위한 프리미엄 등급'
+    description: 'Cấp độ cao cấp cho khách hàng thân thiết'
   },
   {
     level: 'VIP',
     name: 'VIP',
     icon: Crown,
     color: 'bg-purple-100 text-purple-800 border-purple-200',
-    benefits: ['포인트 2배 적립', '생일 할인 20%', '월 2회 무료 음료', '전용 라운지 이용'],
+    benefits: ['Tích điểm x2', 'Giảm giá sinh nhật 20%', 'Đồ uống miễn phí 2 lần/tháng', 'Sử dụng phòng VIP'],
     minSpent: 1000000,
-    description: 'VIP 고객을 위한 최고 등급'
+    description: 'Cấp độ cao nhất cho khách hàng VIP'
   }
 ];
 
