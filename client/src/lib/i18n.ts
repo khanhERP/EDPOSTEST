@@ -63,6 +63,7 @@ const translations = {
       restaurant: '레스토랑',
       noRecords: '기록이 없습니다',
       selectOtherDate: '다른 날짜를 선택해보세요',
+      category: '카테고리',
     },
     // Navigation
     nav: {
@@ -147,11 +148,22 @@ const translations = {
       occupied: '사용 중',
       reserved: '예약됨',
       maintenance: '점검 중',
+      outOfService: '사용 불가',
       table: '테이블',
       cleanupComplete: '정리 완료',
       tableStatus: '테이블 상태',
       orderManagement: '주문 관리',
       tableSettings: '테이블 설정',
+      people: '명',
+      customerName: '고객명',
+      optional: '(선택사항)',
+      customerNamePlaceholder: '고객명을 입력하세요',
+      customerCount: '고객 수',
+      allCategories: '전체 카테고리',
+      stockCount: '재고 수량',
+      orderHistory: '주문 내역',
+      itemsSelected: '개 선택됨',
+      noItemsSelected: '선택된 항목 없음',
     },
     // Employees
     employees: {
@@ -379,6 +391,7 @@ const translations = {
       restaurant: 'Restaurant',
       noRecords: 'No records found',
       selectOtherDate: 'Please select another date',
+      category: 'Category',
     },
     // Navigation
     nav: {
@@ -463,11 +476,22 @@ const translations = {
       occupied: 'Occupied',
       reserved: 'Reserved',
       maintenance: 'Maintenance',
+      outOfService: 'Out of Service',
       table: 'Table',
       cleanupComplete: 'Cleanup Complete',
       tableStatus: 'Table Status',
       orderManagement: 'Order Management',
       tableSettings: 'Table Settings',
+      people: 'people',
+      customerName: 'Customer Name',
+      optional: '(optional)',
+      customerNamePlaceholder: 'Enter customer name',
+      customerCount: 'Customer Count',
+      allCategories: 'All Categories',
+      stockCount: 'Stock Count',
+      orderHistory: 'Order History',
+      itemsSelected: 'items selected',
+      noItemsSelected: 'No items selected',
     },
     // Employees
     employees: {
@@ -677,6 +701,7 @@ const translations = {
       restaurant: 'Nhà hàng',
       noRecords: 'Không có bản ghi',
       selectOtherDate: 'Vui lòng chọn ngày khác',
+      category: 'Danh mục',
     },
     // Navigation
     nav: {
@@ -761,11 +786,22 @@ const translations = {
       occupied: 'Đã sử dụng',
       reserved: 'Đã đặt',
       maintenance: 'Bảo trì',
+      outOfService: 'Ngưng hoạt động',
       table: 'Bàn',
       cleanupComplete: 'Hoàn thành dọn dẹp',
       tableStatus: 'Trạng thái bàn',
       orderManagement: 'Quản lý đơn hàng',
       tableSettings: 'Cài đặt bàn',
+      people: 'người',
+      customerName: 'Tên khách hàng',
+      optional: '(tùy chọn)',
+      customerNamePlaceholder: 'Nhập tên khách hàng',
+      customerCount: 'Số lượng khách',
+      allCategories: 'Tất cả danh mục',
+      stockCount: 'Số lượng tồn kho',
+      orderHistory: 'Lịch sử đơn hàng',
+      itemsSelected: 'mục đã chọn',
+      noItemsSelected: 'Không có mục nào được chọn',
     },
     // Employees
     employees: {
@@ -871,6 +907,16 @@ const translations = {
       inStock: 'Còn hàng',
       stockLevel: 'Mức tồn kho',
       updateStock: 'Cập nhật tồn kho',
+      searchProducts: 'Tìm kiếm sản phẩm...',
+      stockStatus: 'Trạng thái tồn kho',
+      allStock: 'Tất cả tồn kho',
+      productName: 'Tên sản phẩm',
+      currentStock: 'Tồn kho hiện tại',
+      unitPrice: 'Đơn giá',
+      stockValue: 'Giá trị tồn kho',
+      management: 'Quản lý',
+      edit: 'Chỉnh sửa',
+      stockUpdate: 'Cập nhật tồn kho',
     },
     // Suppliers
     suppliers: {
@@ -967,10 +1013,7 @@ export function useTranslation() {
       value = value?.[k];
     }
     
-    // Debug: log missing keys only in development
-    if (!value && process.env.NODE_ENV === 'development') {
-      console.warn(`Missing translation key: ${key} in language: ${currentLanguage}`);
-    }
+
     
     return value || key;
   };
