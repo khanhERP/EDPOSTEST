@@ -183,7 +183,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
             {table.tableNumber} 테이블 주문
           </DialogTitle>
           <DialogDescription>
-            테이블 정원: {table.capacity}명 | 메뉴를 선택하여 주문하세요
+            {t('tables.tableCapacity')}: {table.capacity}{t('orders.people')} | {t('tables.selectMenuToOrder')}
           </DialogDescription>
         </DialogHeader>
 

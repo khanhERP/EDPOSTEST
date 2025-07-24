@@ -1,4 +1,3 @@
-
 import type { OrdersTranslations } from '../types';
 
 export const ordersTranslations: OrdersTranslations = {
@@ -34,7 +33,10 @@ export const ordersTranslations: OrdersTranslations = {
     newOrdersWillAppearHere: '새로운 주문이 들어오면 여기에 표시됩니다',
     noTableInfo: '테이블 정보 없음',
     noInput: '미입력',
-    payment: '결제',</old_str>
+    payment: '결제',
+    orderPlaced: '주문 완료',
+    orderPlacedSuccess: '주문이 성공적으로 접수되었습니다',
+    orderFailed: '주문 접수에 실패했습니다',
     status: {
       pending: '대기중',
       confirmed: '확인됨',
@@ -77,7 +79,10 @@ export const ordersTranslations: OrdersTranslations = {
     newOrdersWillAppearHere: 'New orders will appear here',
     noTableInfo: 'No table information',
     noInput: 'Not entered',
-    payment: 'Payment',</old_str>
+    payment: 'Payment',
+    orderPlaced: 'Order Placed',
+    orderPlacedSuccess: 'Order has been successfully placed',
+    orderFailed: 'Failed to place order',
     status: {
       pending: 'Pending',
       confirmed: 'Confirmed',
@@ -120,7 +125,10 @@ export const ordersTranslations: OrdersTranslations = {
     newOrdersWillAppearHere: 'Đơn hàng mới sẽ xuất hiện ở đây',
     noTableInfo: 'Không có thông tin bàn',
     noInput: 'Chưa nhập',
-    payment: 'Thanh toán',</old_str>
+    payment: 'Thanh toán',
+    orderPlaced: 'Đặt hàng',
+    orderPlacedSuccess: 'Đơn hàng đã được đặt thành công',
+    orderFailed: 'Đặt hàng thất bại',
     status: {
       pending: 'Chờ xử lý',
       confirmed: 'Đã xác nhận',
