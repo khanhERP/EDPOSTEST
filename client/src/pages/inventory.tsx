@@ -1,17 +1,43 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Package, AlertTriangle, TrendingUp, Search, Edit, RotateCcw } from "lucide-react";
+import {
+  Plus,
+  Package,
+  AlertTriangle,
+  TrendingUp,
+  Search,
+  Edit,
+  RotateCcw,
+} from "lucide-react";
 import { POSHeader } from "@/components/pos/header";
 import { RightSidebar } from "@/components/ui/right-sidebar";
 import { useTranslation } from "@/lib/i18n/index";
@@ -43,7 +69,9 @@ export default function InventoryPage() {
 
   const queryClient = useQueryClient();
 
-  const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
+  const { data: products = [], isLoading: productsLoading } = useQuery<
+    Product[]
+  >({
     queryKey: ["/api/products"],
   });
 
@@ -61,7 +89,7 @@ export default function InventoryPage() {
 
   const updateStockMutation = useMutation({
     mutationFn: async (data: StockUpdateForm) => {
-      return await apiRequest('/api/inventory/update-stock', 'POST', data);
+      return await apiRequest("/api/inventory/update-stock", "POST", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -72,7 +100,7 @@ export default function InventoryPage() {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest('/api/products', 'POST', data);
+      return await apiRequest("/api/products", "POST", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -81,21 +109,30 @@ export default function InventoryPage() {
     },
   });
 
-  const filteredProducts = products.filter(product => {
-    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || product.categoryId.toString() === selectedCategory;
-    const matchesStock = stockFilter === "all" || 
-                        (stockFilter === "low" && product.stock <= 10) ||
-                        (stockFilter === "out" && product.stock === 0) ||
-                        (stockFilter === "in" && product.stock > 10);
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" ||
+      product.categoryId.toString() === selectedCategory;
+    const matchesStock =
+      stockFilter === "all" ||
+      (stockFilter === "low" && product.stock <= 10) ||
+      (stockFilter === "out" && product.stock === 0) ||
+      (stockFilter === "in" && product.stock > 10);
 
     return matchesSearch && matchesCategory && matchesStock;
   });
 
-  const lowStockCount = products.filter(p => p.stock <= 10 && p.stock > 0).length;
-  const outOfStockCount = products.filter(p => p.stock === 0).length;
-  const totalValue = products.reduce((sum, p) => sum + (parseFloat(p.price) * p.stock), 0);
+  const lowStockCount = products.filter(
+    (p) => p.stock <= 10 && p.stock > 0,
+  ).length;
+  const outOfStockCount = products.filter((p) => p.stock === 0).length;
+  const totalValue = products.reduce(
+    (sum, p) => sum + parseFloat(p.price) * p.stock,
+    0,
+  );
 
   const handleStockUpdate = (product: Product) => {
     setSelectedProduct(product);
@@ -135,7 +172,7 @@ export default function InventoryPage() {
         stock: data.quantity,
         categoryId: data.categoryId,
         imageUrl: null,
-        isActive: true
+        isActive: true,
       };
       createProductMutation.mutate(newProductData);
     } else {
@@ -145,9 +182,11 @@ export default function InventoryPage() {
   };
 
   const getStockStatus = (stock: number) => {
-    if (stock === 0) return { label: t('inventory.outOfStock'), color: "bg-red-500" };
-    if (stock <= 10) return { label: t('inventory.lowStock'), color: "bg-yellow-500" };
-    return { label: t('inventory.inStock'), color: "bg-green-500" };
+    if (stock === 0)
+      return { label: t("inventory.outOfStock"), color: "bg-red-500" };
+    if (stock <= 10)
+      return { label: t("inventory.lowStock"), color: "bg-yellow-500" };
+    return { label: t("inventory.inStock"), color: "bg-green-500" };
   };
 
   return (
@@ -160,8 +199,10 @@ export default function InventoryPage() {
           {/* Page Header */}
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{t('inventory.title')}</h1>
-              <p className="text-gray-600 mt-2">{t('inventory.description')}</p>
+              <h1 className="text-3xl font-bold text-gray-900">
+                {t("inventory.title")}
+              </h1>
+              <p className="text-gray-600 mt-2">{t("inventory.description")}</p>
             </div>
           </div>
 
@@ -169,41 +210,57 @@ export default function InventoryPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <Card className="border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">{t('inventory.totalProducts')}</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  {t("inventory.totalProducts")}
+                </CardTitle>
                 <Package className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-900">{products.length}</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {products.length}
+                </div>
               </CardContent>
             </Card>
 
             <Card className="border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">{t('inventory.lowStock')}</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  {t("inventory.lowStock")}
+                </CardTitle>
                 <AlertTriangle className="h-4 w-4 text-yellow-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">{lowStockCount}</div>
+                <div className="text-2xl font-bold text-yellow-600">
+                  {lowStockCount}
+                </div>
               </CardContent>
             </Card>
 
             <Card className="border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">{t('inventory.outOfStock')}</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  {t("inventory.outOfStock")}
+                </CardTitle>
                 <AlertTriangle className="h-4 w-4 text-red-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600">{outOfStockCount}</div>
+                <div className="text-2xl font-bold text-red-600">
+                  {outOfStockCount}
+                </div>
               </CardContent>
             </Card>
 
             <Card className="border-green-200">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">{t('inventory.totalValue')}</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">
+                  {t("inventory.totalValue")}
+                </CardTitle>
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{totalValue.toLocaleString()} ₫</div>
+                <div className="text-2xl font-bold text-green-600">
+                  {totalValue.toLocaleString()} ₫
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -216,21 +273,27 @@ export default function InventoryPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
-                      placeholder={t('inventory.searchProducts')}
+                      placeholder={t("inventory.searchProducts")}
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       className="pl-10"
                     />
                   </div>
                 </div>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <Select
+                  value={selectedCategory}
+                  onValueChange={setSelectedCategory}
+                >
                   <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder={t('common.category')} />
+                    <SelectValue placeholder={t("common.category")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t('pos.allCategories')}</SelectItem>
+                    <SelectItem value="all">{t("common.category")}</SelectItem>
                     {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
+                      <SelectItem
+                        key={category.id}
+                        value={category.id.toString()}
+                      >
                         {category.name}
                       </SelectItem>
                     ))}
@@ -238,13 +301,19 @@ export default function InventoryPage() {
                 </Select>
                 <Select value={stockFilter} onValueChange={setStockFilter}>
                   <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder={t('inventory.stockStatus')} />
+                    <SelectValue placeholder={t("inventory.stockStatus")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t('inventory.allStock')}</SelectItem>
-                    <SelectItem value="in">{t('inventory.inStock')}</SelectItem>
-                    <SelectItem value="low">{t('inventory.lowStock')}</SelectItem>
-                    <SelectItem value="out">{t('inventory.outOfStock')}</SelectItem>
+                    <SelectItem value="all">
+                      {t("inventory.allStock")}
+                    </SelectItem>
+                    <SelectItem value="in">{t("inventory.inStock")}</SelectItem>
+                    <SelectItem value="low">
+                      {t("inventory.lowStock")}
+                    </SelectItem>
+                    <SelectItem value="out">
+                      {t("inventory.outOfStock")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -254,7 +323,9 @@ export default function InventoryPage() {
           {/* Products Table */}
           <Card className="border-green-200">
             <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-left">{t('inventory.stockStatus')}</CardTitle>
+              <CardTitle className="text-left">
+                {t("inventory.stockStatus")}
+              </CardTitle>
               <Button
                 variant="outline"
                 size="sm"
@@ -268,56 +339,87 @@ export default function InventoryPage() {
                     price: "0",
                     stock: 0,
                     imageUrl: null,
-                    isActive: true
+                    isActive: true,
                   };
                   handleStockUpdate(newProduct);
                 }}
                 className="text-blue-600 border-blue-300 hover:bg-blue-50"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                {t('inventory.addNewItem')}
+                {t("inventory.addNewItem")}
               </Button>
             </CardHeader>
             <CardContent>
               {productsLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto"></div>
-                  <p className="mt-4 text-gray-600">{t('inventory.loading')}</p>
+                  <p className="mt-4 text-gray-600">{t("inventory.loading")}</p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-green-200">
-                        <th className="text-left py-3 px-4 font-medium text-gray-700">{t('inventory.productName')}</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-700">SKU</th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-700">{t('common.category')}</th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">{t('inventory.currentStock')}</th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">{t('common.status')}</th>
-                        <th className="text-right py-3 px-4 font-medium text-gray-700">{t('inventory.unitPrice')}</th>
-                        <th className="text-right py-3 px-4 font-medium text-gray-700">{t('inventory.stockValue')}</th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">{t('inventory.management')}</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">
+                          {t("inventory.productName")}
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">
+                          SKU
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">
+                          {t("common.category")}
+                        </th>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">
+                          {t("inventory.currentStock")}
+                        </th>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">
+                          {t("common.status")}
+                        </th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-700">
+                          {t("inventory.unitPrice")}
+                        </th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-700">
+                          {t("inventory.stockValue")}
+                        </th>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">
+                          {t("inventory.management")}
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredProducts.map((product) => {
-                        const category = categories.find(c => c.id === product.categoryId);
+                        const category = categories.find(
+                          (c) => c.id === product.categoryId,
+                        );
                         const status = getStockStatus(product.stock);
-                        const stockValue = parseFloat(product.price) * product.stock;
+                        const stockValue =
+                          parseFloat(product.price) * product.stock;
 
                         return (
-                          <tr key={product.id} className="border-b border-gray-100 hover:bg-green-50/50">
+                          <tr
+                            key={product.id}
+                            className="border-b border-gray-100 hover:bg-green-50/50"
+                          >
                             <td className="py-4 px-4">
-                              <div className="font-medium text-gray-900">{product.name}</div>
+                              <div className="font-medium text-gray-900">
+                                {product.name}
+                              </div>
                             </td>
-                            <td className="py-4 px-4 text-gray-600">{product.sku}</td>
+                            <td className="py-4 px-4 text-gray-600">
+                              {product.sku}
+                            </td>
                             <td className="py-4 px-4">
-                              <Badge variant="outline" className="text-green-700 border-green-300">
-                                {category?.name || t('inventory.uncategorized')}
+                              <Badge
+                                variant="outline"
+                                className="text-green-700 border-green-300"
+                              >
+                                {category?.name || t("inventory.uncategorized")}
                               </Badge>
                             </td>
                             <td className="py-4 px-4 text-center">
-                              <span className="text-lg font-semibold">{product.stock}</span>
+                              <span className="text-lg font-semibold">
+                                {product.stock}
+                              </span>
                             </td>
                             <td className="py-4 px-4 text-center">
                               <Badge className={`${status.color} text-white`}>
@@ -338,7 +440,7 @@ export default function InventoryPage() {
                                 className="text-green-600 border-green-300 hover:bg-green-50"
                               >
                                 <Edit className="h-4 w-4 mr-1" />
-                                {t('inventory.edit')}
+                                {t("inventory.edit")}
                               </Button>
                             </td>
                           </tr>
@@ -350,7 +452,9 @@ export default function InventoryPage() {
                   {filteredProducts.length === 0 && (
                     <div className="text-center py-12">
                       <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600">{t('inventory.noProducts')}</p>
+                      <p className="text-gray-600">
+                        {t("inventory.noProducts")}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -365,16 +469,26 @@ export default function InventoryPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {selectedProduct?.id === 0 ? t('inventory.addNewStock') : t('inventory.stockUpdate')}
+              {selectedProduct?.id === 0
+                ? t("inventory.addNewStock")
+                : t("inventory.stockUpdate")}
             </DialogTitle>
           </DialogHeader>
 
           {selectedProduct && (
             <Form {...stockUpdateForm}>
-              <form onSubmit={stockUpdateForm.handleSubmit(onStockUpdate)} className="space-y-4">
+              <form
+                onSubmit={stockUpdateForm.handleSubmit(onStockUpdate)}
+                className="space-y-4"
+              >
                 <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-gray-900">{selectedProduct.name || t('inventory.newProduct')}</h3>
-                  <p className="text-sm text-gray-600">{t('inventory.currentStockLabel')}: {selectedProduct.stock}{t('common.items')}</p>
+                  <h3 className="font-medium text-gray-900">
+                    {selectedProduct.name || t("inventory.newProduct")}
+                  </h3>
+                  <p className="text-sm text-gray-600">
+                    {t("inventory.currentStockLabel")}: {selectedProduct.stock}
+                    {t("common.items")}
+                  </p>
                 </div>
 
                 {selectedProduct?.id === 0 && (
@@ -384,9 +498,16 @@ export default function InventoryPage() {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('inventory.productNameLabel')}</FormLabel>
+                          <FormLabel>
+                            {t("inventory.productNameLabel")}
+                          </FormLabel>
                           <FormControl>
-                            <Input placeholder={t('inventory.productNamePlaceholder')} {...field} />
+                            <Input
+                              placeholder={t(
+                                "inventory.productNamePlaceholder",
+                              )}
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -398,9 +519,12 @@ export default function InventoryPage() {
                       name="sku"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('inventory.skuLabel')}</FormLabel>
+                          <FormLabel>{t("inventory.skuLabel")}</FormLabel>
                           <FormControl>
-                            <Input placeholder={t('inventory.skuPlaceholder')} {...field} />
+                            <Input
+                              placeholder={t("inventory.skuPlaceholder")}
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -412,9 +536,12 @@ export default function InventoryPage() {
                       name="price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('inventory.priceLabel')}</FormLabel>
+                          <FormLabel>{t("inventory.priceLabel")}</FormLabel>
                           <FormControl>
-                            <Input placeholder={t('inventory.pricePlaceholder')} {...field} />
+                            <Input
+                              placeholder={t("inventory.pricePlaceholder")}
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -426,16 +553,28 @@ export default function InventoryPage() {
                       name="categoryId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('inventory.categoryLabel')}</FormLabel>
-                          <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                          <FormLabel>{t("inventory.categoryLabel")}</FormLabel>
+                          <Select
+                            onValueChange={(value) =>
+                              field.onChange(parseInt(value))
+                            }
+                            value={field.value?.toString()}
+                          >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder={t('inventory.categoryPlaceholder')} />
+                                <SelectValue
+                                  placeholder={t(
+                                    "inventory.categoryPlaceholder",
+                                  )}
+                                />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               {categories.map((category) => (
-                                <SelectItem key={category.id} value={category.id.toString()}>
+                                <SelectItem
+                                  key={category.id}
+                                  value={category.id.toString()}
+                                >
                                   {category.name}
                                 </SelectItem>
                               ))}
@@ -454,17 +593,28 @@ export default function InventoryPage() {
                     name="type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('inventory.updateType')}</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormLabel>{t("inventory.updateType")}</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder={t('inventory.selectUpdateType')} />
+                              <SelectValue
+                                placeholder={t("inventory.selectUpdateType")}
+                              />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="add">{t('inventory.addStock')}</SelectItem>
-                            <SelectItem value="subtract">{t('inventory.subtractStock')}</SelectItem>
-                            <SelectItem value="set">{t('inventory.setStock')}</SelectItem>
+                            <SelectItem value="add">
+                              {t("inventory.addStock")}
+                            </SelectItem>
+                            <SelectItem value="subtract">
+                              {t("inventory.subtractStock")}
+                            </SelectItem>
+                            <SelectItem value="set">
+                              {t("inventory.setStock")}
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -478,14 +628,24 @@ export default function InventoryPage() {
                   name="quantity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{selectedProduct?.id === 0 ? t('inventory.initialStockQuantity') : t('inventory.stockQuantity')}</FormLabel>
+                      <FormLabel>
+                        {selectedProduct?.id === 0
+                          ? t("inventory.initialStockQuantity")
+                          : t("inventory.stockQuantity")}
+                      </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min="0"
-                          placeholder={selectedProduct?.id === 0 ? t('inventory.initialStockPlaceholder') : t('inventory.quantityInput')}
+                          placeholder={
+                            selectedProduct?.id === 0
+                              ? t("inventory.initialStockPlaceholder")
+                              : t("inventory.quantityInput")
+                          }
                           {...field}
-                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value) || 0)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
@@ -499,9 +659,12 @@ export default function InventoryPage() {
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('inventory.editReason')}</FormLabel>
+                        <FormLabel>{t("inventory.editReason")}</FormLabel>
                         <FormControl>
-                          <Input placeholder={t('inventory.changeReason')} {...field} />
+                          <Input
+                            placeholder={t("inventory.changeReason")}
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -515,20 +678,26 @@ export default function InventoryPage() {
                     variant="outline"
                     onClick={() => setShowStockDialog(false)}
                   >
-                    {t('common.cancel')}
+                    {t("common.cancel")}
                   </Button>
                   <Button
                     type="submit"
-                    disabled={updateStockMutation.isPending || createProductMutation.isPending}
+                    disabled={
+                      updateStockMutation.isPending ||
+                      createProductMutation.isPending
+                    }
                     className="bg-green-600 hover:bg-green-700"
                   >
-                    {(updateStockMutation.isPending || createProductMutation.isPending) ? (
+                    {updateStockMutation.isPending ||
+                    createProductMutation.isPending ? (
                       <>
                         <RotateCcw className="h-4 w-4 mr-2 animate-spin" />
-                        {t('inventory.processing')}
+                        {t("inventory.processing")}
                       </>
+                    ) : selectedProduct?.id === 0 ? (
+                      t("inventory.save")
                     ) : (
-                      selectedProduct?.id === 0 ? t('inventory.save') : t('inventory.stockUpdate')
+                      t("inventory.stockUpdate")
                     )}
                   </Button>
                 </div>
