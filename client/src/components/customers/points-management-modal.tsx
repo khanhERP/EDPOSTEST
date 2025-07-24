@@ -132,7 +132,7 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
   });
 
   const handlePointsAdjustment = () => {
-    if (!selectedCustomer || !pointsAmount || !adjustmentReason) {
+    if (!selectedCustomer || !pointsAmount || (activeTab === 'management' && !adjustmentReason)) {
       toast({
         title: t("common.error"),
         description: t("customers.customerFormDesc"),
@@ -162,7 +162,7 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
       customerId: selectedCustomer.id,
       points: finalPoints,
       type,
-      description: adjustmentReason
+      description: adjustmentReason || (operationType === 'add' ? 'Points added' : operationType === 'subtract' ? 'Points subtracted' : 'Points adjusted')
     });
   };
 
@@ -360,7 +360,7 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
                       <Button 
                         onClick={handlePointsAdjustment}
                         className="w-full"
-                        disabled={!selectedCustomer || !pointsAmount || !adjustmentReason || adjustPointsMutation.isPending}
+                        disabled={!selectedCustomer || !pointsAmount || (!adjustmentReason && activeTab === 'management') || adjustPointsMutation.isPending}
                       >
                         {adjustPointsMutation.isPending ? t("customers.processing") : 
                          operationType === 'add' ? <Plus className="w-4 h-4 mr-2" /> : 
