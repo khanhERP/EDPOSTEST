@@ -967,6 +967,11 @@ export function useTranslation() {
       value = value?.[k];
     }
     
+    // Debug: log missing keys only in development
+    if (!value && process.env.NODE_ENV === 'development') {
+      console.warn(`Missing translation key: ${key} in language: ${currentLanguage}`);
+    }
+    
     return value || key;
   };
 
