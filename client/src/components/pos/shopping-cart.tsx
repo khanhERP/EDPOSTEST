@@ -77,34 +77,36 @@ export function ShoppingCart({
           </div>
         ) : (
           cart.map((item) => (
-            <div key={item.id} className="bg-gray-50 rounded-lg p-3">
-              <div className="flex-1">
-                <h4 className="font-medium pos-text-primary">{item.name}</h4>
-                <p className="text-sm pos-text-secondary">{parseFloat(item.price).toLocaleString()} ₫ each</p>
-                <div className="flex items-center justify-between mt-2">
-                  <div className="flex items-center space-x-2">
+            <div key={item.id} className="bg-gray-50 rounded-lg p-2">
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-medium pos-text-primary text-sm truncate">{item.name}</h4>
+                  <p className="text-xs pos-text-secondary">{parseFloat(item.price).toLocaleString()} ₫ each</p>
+                </div>
+                <div className="flex items-center space-x-2 ml-2">
+                  <div className="flex items-center space-x-1">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                      className="w-8 h-8 p-0"
+                      className="w-6 h-6 p-0"
                       disabled={item.quantity <= 1}
                     >
-                      <Minus size={12} />
+                      <Minus size={10} />
                     </Button>
-                    <span className="w-8 text-center font-medium">{item.quantity}</span>
+                    <span className="w-6 text-center font-medium text-xs">{item.quantity}</span>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                      className="w-8 h-8 p-0"
+                      className="w-6 h-6 p-0"
                       disabled={item.quantity >= item.stock}
                     >
-                      <Plus size={12} />
+                      <Plus size={10} />
                     </Button>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold pos-text-primary">{item.total.toLocaleString()} ₫</div>
+                    <div className="font-bold pos-text-primary text-sm">{item.total.toLocaleString()} ₫</div>
                     <button 
                       onClick={() => onRemoveItem(item.id)}
                       className="text-xs text-red-500 hover:text-red-700 transition-colors"
