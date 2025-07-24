@@ -1,4 +1,4 @@
-export type Language = "ko" | "en" | "vi";
+export type Language = 'ko' | 'en' | 'vi';
 
 // Common translations interface
 export interface CommonTranslations {
@@ -67,7 +67,7 @@ export interface ReportsTranslations {
   menuAnalysis: string;
   tableAnalysis: string;
   backToTables: string;
-
+  
   // Date and time filters
   startDate: string;
   endDate: string;
@@ -76,7 +76,7 @@ export interface ReportsTranslations {
   lastWeek: string;
   lastMonth: string;
   custom: string;
-
+  
   // Dashboard metrics
   totalRevenue: string;
   totalOrders: string;
@@ -86,7 +86,7 @@ export interface ReportsTranslations {
   activeOrders: string;
   occupiedTables: string;
   monthlyRevenue: string;
-
+  
   // Sales analysis
   analyzeRevenue: string;
   dailySales: string;
@@ -97,7 +97,7 @@ export interface ReportsTranslations {
   customers: string;
   cash: string;
   card: string;
-
+  
   // Menu analysis
   productPerformance: string;
   categoryPerformance: string;
@@ -106,7 +106,7 @@ export interface ReportsTranslations {
   totalSold: string;
   orderCount: string;
   performance: string;
-
+  
   // Table analysis
   tablePerformance: string;
   utilizationRate: string;
@@ -116,14 +116,14 @@ export interface ReportsTranslations {
   tableUtilization: string;
   revenuePerTable: string;
   ordersPerTable: string;
-
+  
   // Common report elements
   period: string;
   thisMonth: string;
   noData: string;
   noDataDescription: string;
   loading: string;
-
+  
   // Additional dashboard keys
   periodRevenue: string;
   customerCount: string;
@@ -384,7 +384,7 @@ export interface Translations {
 }
 
 // Type-safe translation keys
-export type TranslationKey =
+export type TranslationKey = 
   | `common.${keyof CommonTranslations}`
   | `nav.${keyof NavigationTranslations}`
   | `reports.${keyof ReportsTranslations}`
