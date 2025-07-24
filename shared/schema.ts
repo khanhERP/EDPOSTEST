@@ -158,6 +158,7 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
 
 export const insertTransactionItemSchema = createInsertSchema(transactionItems).omit({
   id: true,
+  transactionId: true,
 });
 
 export const insertEmployeeSchema = createInsertSchema(employees).omit({
