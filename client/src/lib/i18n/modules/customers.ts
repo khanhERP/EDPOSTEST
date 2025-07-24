@@ -118,5 +118,8 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     female: 'Nữ',
     other: 'Khác',
     address: 'Địa chỉ',
+    customers: {
+      gold: ''
+    }
   },
 };

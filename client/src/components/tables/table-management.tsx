@@ -3,28 +3,55 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus, Edit2, Trash2, Users, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { apiRequest } from "@/lib/queryClient";
 import type { Table as TableType } from "@shared/schema";
 import { z } from "zod";
 
 // We'll create the schema inside the component to access translations
-const createTableFormSchema = (t: any) => z.object({
-  tableNumber: z.string().min(1, t('tables.tableNumberRequired')),
-  capacity: z.number().min(1, t('tables.capacityMinimum')),
-  status: z.enum(["available", "occupied", "reserved", "maintenance"]),
-  qrCode: z.string().optional(),
-});
+const createTableFormSchema = (t: any) =>
+  z.object({
+    tableNumber: z.string().min(1, t("tables.tableNumberRequired")),
+    capacity: z.number().min(1, t("tables.capacityMinimum")),
+    status: z.enum(["available", "occupied", "reserved", "maintenance"]),
+    qrCode: z.string().optional(),
+  });
 
 type TableFormData = {
   tableNumber: string;
@@ -41,11 +68,11 @@ export function TableManagement() {
   const queryClient = useQueryClient();
 
   const { data: tables, isLoading } = useQuery({
-    queryKey: ['/api/tables'],
+    queryKey: ["/api/tables"],
   });
 
   const tableFormSchema = createTableFormSchema(t);
-  
+
   const form = useForm<TableFormData>({
     resolver: zodResolver(tableFormSchema),
     defaultValues: {
@@ -57,18 +84,19 @@ export function TableManagement() {
   });
 
   const createTableMutation = useMutation({
-    mutationFn: (data: TableFormData) => apiRequest('POST', '/api/tables', data),
+    mutationFn: (data: TableFormData) =>
+      apiRequest("POST", "/api/tables", data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       toast({
-        title: t('common.success'),
+        title: t("common.success"),
         description: "테이블이 성공적으로 추가되었습니다.",
       });
       handleCloseDialog();
     },
     onError: () => {
       toast({
-        title: t('common.error'),
+        title: t("common.error"),
         description: "테이블 추가에 실패했습니다.",
         variant: "destructive",
       });
@@ -77,18 +105,18 @@ export function TableManagement() {
 
   const updateTableMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: TableFormData }) =>
-      apiRequest('PUT', `/api/tables/${id}`, data),
+      apiRequest("PUT", `/api/tables/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       toast({
-        title: t('common.success'),
+        title: t("common.success"),
         description: "테이블이 성공적으로 수정되었습니다.",
       });
       handleCloseDialog();
     },
     onError: () => {
       toast({
-        title: t('common.error'),
+        title: t("common.error"),
         description: "테이블 수정에 실패했습니다.",
         variant: "destructive",
       });
@@ -96,17 +124,17 @@ export function TableManagement() {
   });
 
   const deleteTableMutation = useMutation({
-    mutationFn: (id: number) => apiRequest('DELETE', `/api/tables/${id}`, {}),
+    mutationFn: (id: number) => apiRequest("DELETE", `/api/tables/${id}`, {}),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       toast({
-        title: t('common.success'),
+        title: t("common.success"),
         description: "테이블이 성공적으로 삭제되었습니다.",
       });
     },
     onError: () => {
       toast({
-        title: t('common.error'),
+        title: t("common.error"),
         description: "테이블 삭제에 실패했습니다.",
         variant: "destructive",
       });
@@ -119,7 +147,11 @@ export function TableManagement() {
       form.reset({
         tableNumber: table.tableNumber,
         capacity: table.capacity,
-        status: table.status as "available" | "occupied" | "reserved" | "maintenance",
+        status: table.status as
+          | "available"
+          | "occupied"
+          | "reserved"
+          | "maintenance",
         qrCode: table.qrCode || "",
       });
     } else {
@@ -149,20 +181,29 @@ export function TableManagement() {
   };
 
   const handleDelete = (id: number) => {
-    if (confirm(t('tables.confirmDelete'))) {
+    if (confirm(t("tables.confirmDelete"))) {
       deleteTableMutation.mutate(id);
     }
   };
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      available: { label: t('tables.available'), variant: "default" as const },
-      occupied: { label: t('tables.occupied'), variant: "destructive" as const },
-      reserved: { label: t('tables.reserved'), variant: "secondary" as const },
-      maintenance: { label: t('tables.outOfService'), variant: "outline" as const },
+      available: { label: t("tables.available"), variant: "default" as const },
+      occupied: {
+        label: t("tables.occupied"),
+        variant: "destructive" as const,
+      },
+      reserved: { label: t("tables.reserved"), variant: "secondary" as const },
+      maintenance: {
+        label: t("tables.outOfService"),
+        variant: "outline" as const,
+      },
     };
-    
-    return statusConfig[status as keyof typeof statusConfig] || statusConfig.available;
+
+    return (
+      statusConfig[status as keyof typeof statusConfig] ||
+      statusConfig.available
+    );
   };
 
   if (isLoading) {
@@ -178,30 +219,32 @@ export function TableManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t('tables.tableSettings')}</h2>
-          <p className="text-gray-600">{t('tables.tableSettingsDesc')}</p>
+          <h2 className="text-2xl font-bold text-gray-900">
+            {t("tables.tableSettings")}
+          </h2>
+          <p className="text-gray-600">{t("tables.tableSettingsDesc")}</p>
         </div>
         <Button onClick={() => handleOpenDialog()}>
           <Plus className="w-4 h-4 mr-2" />
-          {t('tables.addTable')}
+          {t("tables.addTable")}
         </Button>
       </div>
 
       {/* Tables List */}
       <Card>
         <CardHeader>
-          <CardTitle>{t('tables.tableList')}</CardTitle>
+          <CardTitle>{t("tables.tableList")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('tables.tableNumberLabel')}</TableHead>
-                <TableHead>{t('tables.capacityLabel')}</TableHead>
-                <TableHead>{t('tables.statusLabel')}</TableHead>
-                <TableHead>{t('tables.qrCodeLabel')}</TableHead>
-                <TableHead>{t('tables.createdDate')}</TableHead>
-                <TableHead>{t('tables.actions')}</TableHead>
+                <TableHead>{t("tables.tableNumberLabel")}</TableHead>
+                <TableHead>{t("tables.capacityLabel")}</TableHead>
+                <TableHead>{t("tables.statusLabel")}</TableHead>
+                <TableHead>{t("tables.qrCodeLabel")}</TableHead>
+                <TableHead>{t("tables.createdDate")}</TableHead>
+                <TableHead>{t("tables.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -210,11 +253,13 @@ export function TableManagement() {
                   const statusConfig = getStatusBadge(table.status);
                   return (
                     <TableRow key={table.id}>
-                      <TableCell className="font-medium">{table.tableNumber}</TableCell>
+                      <TableCell className="font-medium">
+                        {table.tableNumber}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
                           <Users className="w-4 h-4" />
-                          {table.capacity} {t('tables.people')}
+                          {table.capacity} {t("orders.people")}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -226,14 +271,18 @@ export function TableManagement() {
                         {table.qrCode ? (
                           <div className="flex items-center gap-1">
                             <QrCode className="w-4 h-4" />
-                            <span className="text-xs">{table.qrCode.substring(0, 10)}...</span>
+                            <span className="text-xs">
+                              {table.qrCode.substring(0, 10)}...
+                            </span>
                           </div>
                         ) : (
-                          <span className="text-xs text-gray-400">{t('tables.none')}</span>
+                          <span className="text-xs text-gray-400">
+                            {t("tables.none")}
+                          </span>
                         )}
                       </TableCell>
                       <TableCell>
-                        {new Date(table.createdAt).toLocaleDateString('ko-KR')}
+                        {new Date(table.createdAt).toLocaleDateString("ko-KR")}
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2">
@@ -258,8 +307,11 @@ export function TableManagement() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                    {t('tables.noTables')}
+                  <TableCell
+                    colSpan={6}
+                    className="text-center py-8 text-gray-500"
+                  >
+                    {t("tables.noTables")}
                   </TableCell>
                 </TableRow>
               )}
@@ -273,13 +325,12 @@ export function TableManagement() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {editingTable ? t('tables.editTable') : t('tables.addTable')}
+              {editingTable ? t("tables.editTable") : t("tables.addTable")}
             </DialogTitle>
             <DialogDescription>
-              {editingTable 
-                ? t('tables.editTableDesc') 
-                : t('tables.addTableDesc')
-              }
+              {editingTable
+                ? t("tables.editTableDesc")
+                : t("tables.addTableDesc")}
             </DialogDescription>
           </DialogHeader>
 
@@ -290,9 +341,12 @@ export function TableManagement() {
                 name="tableNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('tables.tableNumberLabel')}</FormLabel>
+                    <FormLabel>{t("tables.tableNumberLabel")}</FormLabel>
                     <FormControl>
-                      <Input placeholder={t('tables.tableNumberPlaceholder')} {...field} />
+                      <Input
+                        placeholder={t("tables.tableNumberPlaceholder")}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -304,13 +358,15 @@ export function TableManagement() {
                 name="capacity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('tables.capacityLabel')}</FormLabel>
+                    <FormLabel>{t("tables.capacityLabel")}</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         min="1"
                         {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        onChange={(e) =>
+                          field.onChange(parseInt(e.target.value) || 1)
+                        }
                       />
                     </FormControl>
                     <FormMessage />
@@ -323,18 +379,31 @@ export function TableManagement() {
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('tables.statusLabel')}</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormLabel>{t("tables.statusLabel")}</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder={t('tables.statusPlaceholder')} />
+                          <SelectValue
+                            placeholder={t("tables.statusPlaceholder")}
+                          />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="available">{t('tables.available')}</SelectItem>
-                        <SelectItem value="occupied">{t('tables.occupied')}</SelectItem>
-                        <SelectItem value="reserved">{t('tables.reserved')}</SelectItem>
-                        <SelectItem value="maintenance">{t('tables.outOfService')}</SelectItem>
+                        <SelectItem value="available">
+                          {t("tables.available")}
+                        </SelectItem>
+                        <SelectItem value="occupied">
+                          {t("tables.occupied")}
+                        </SelectItem>
+                        <SelectItem value="reserved">
+                          {t("tables.reserved")}
+                        </SelectItem>
+                        <SelectItem value="maintenance">
+                          {t("tables.outOfService")}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -347,9 +416,12 @@ export function TableManagement() {
                 name="qrCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('tables.qrCodeLabel')}</FormLabel>
+                    <FormLabel>{t("tables.qrCodeLabel")}</FormLabel>
                     <FormControl>
-                      <Input placeholder={t('tables.qrCodePlaceholder')} {...field} />
+                      <Input
+                        placeholder={t("tables.qrCodePlaceholder")}
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -357,17 +429,26 @@ export function TableManagement() {
               />
 
               <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={handleCloseDialog}>
-                  {t('common.cancel')}
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={createTableMutation.isPending || updateTableMutation.isPending}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCloseDialog}
                 >
-                  {createTableMutation.isPending || updateTableMutation.isPending 
-                    ? t('common.loading') 
-                    : editingTable ? t('common.edit') : t('common.add')
+                  {t("common.cancel")}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={
+                    createTableMutation.isPending ||
+                    updateTableMutation.isPending
                   }
+                >
+                  {createTableMutation.isPending ||
+                  updateTableMutation.isPending
+                    ? t("common.loading")
+                    : editingTable
+                      ? t("common.edit")
+                      : t("common.add")}
                 </Button>
               </div>
             </form>
