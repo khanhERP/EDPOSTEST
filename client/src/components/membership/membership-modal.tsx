@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/lib/i18n";
 import { type Customer } from "@shared/schema";
 import { 
   Crown, 
@@ -28,41 +29,44 @@ interface MembershipModalProps {
   onClose: () => void;
 }
 
-const membershipTiers = [
-  {
-    level: 'SILVER',
-    name: 'Bạc',
-    icon: Medal,
-    color: 'bg-gray-100 text-gray-800 border-gray-200',
-    benefits: ['Tích điểm cơ bản', 'Giảm giá sinh nhật 5%'],
-    minSpent: 0,
-    description: 'Cấp độ cơ bản cho khách hàng mới'
-  },
-  {
-    level: 'GOLD',
-    name: 'Vàng',
-    icon: Award,
-    color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    benefits: ['Tích điểm x1.5', 'Giảm giá sinh nhật 10%', 'Đồ uống miễn phí 1 lần/tháng'],
-    minSpent: 300000,
-    description: 'Cấp độ cao cấp cho khách hàng thân thiết'
-  },
-  {
-    level: 'VIP',
-    name: 'VIP',
-    icon: Crown,
-    color: 'bg-purple-100 text-purple-800 border-purple-200',
-    benefits: ['Tích điểm x2', 'Giảm giá sinh nhật 20%', 'Đồ uống miễn phí 2 lần/tháng', 'Sử dụng phòng VIP'],
-    minSpent: 1000000,
-    description: 'Cấp độ cao nhất cho khách hàng VIP'
-  }
-];
-
 export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [selectedTier, setSelectedTier] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
+
+  const membershipTiers = [
+    {
+      level: 'SILVER',
+      name: t("customers.silver"),
+      icon: Medal,
+      color: 'bg-gray-100 text-gray-800 border-gray-200',
+      benefits: [t("customers.basicPointsEarning"), t("customers.birthdayDiscount5")],
+      minSpent: 0,
+      description: t("customers.basicLevelDesc")
+    },
+    {
+      level: 'GOLD', 
+      name: t("customers.gold"),
+      icon: Award,
+      color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      benefits: [t("customers.pointsEarning15"), t("customers.birthdayDiscount10"), t("customers.freeDrinkMonthly")],
+      minSpent: 300000,
+      description: t("customers.premiumLevelDesc")
+    },
+    {
+      level: 'VIP',
+      name: t("customers.vip"),
+      icon: Crown,
+      color: 'bg-purple-100 text-purple-800 border-purple-200',
+      benefits: [t("customers.pointsEarning2x"), t("customers.birthdayDiscount20"), t("customers.freeDrink2Monthly"), t("customers.vipRoomAccess")],
+      minSpent: 1000000,
+      description: t("customers.vipLevelDesc")
+    }
+  ];
+
+
 
   // Fetch customers
   const { data: customers, isLoading } = useQuery<Customer[]>({
@@ -85,14 +89,14 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
       toast({
-        title: '성공',
-        description: '멤버십 등급이 업데이트되었습니다.',
+        title: t("common.success"),
+        description: t("customers.customerUpdated"),
       });
     },
     onError: () => {
       toast({
-        title: '오류',
-        description: '멤버십 등급 업데이트에 실패했습니다.',
+        title: t("common.error"),
+        description: t("customers.customerError"),
         variant: 'destructive',
       });
     },
@@ -131,10 +135,10 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Crown className="w-6 h-6 text-purple-600" />
-            멤버십 관리
+            {t("customers.membershipManagementTitle")}
           </DialogTitle>
           <DialogDescription>
-            고객 멤버십 등급을 관리하고 혜택을 제공하세요
+            {t("customers.membershipManagementDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -143,7 +147,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
           <div>
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <Star className="w-5 h-5 text-yellow-500" />
-              멤버십 등급 안내
+              {t("customers.membershipTierGuide")}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {membershipTiers.map((tier) => {
@@ -164,9 +168,9 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        <div className="text-sm font-medium">최소 구매금액: ₩{tier.minSpent.toLocaleString()}</div>
+                        <div className="text-sm font-medium">{t("customers.minPurchaseAmount")}: ₩{tier.minSpent.toLocaleString()}</div>
                         <div className="space-y-1">
-                          <div className="text-sm font-medium">혜택:</div>
+                          <div className="text-sm font-medium">{t("customers.membershipBenefits")}:</div>
                           {tier.benefits.map((benefit, index) => (
                             <div key={index} className="text-xs text-gray-600 flex items-center gap-1">
                               <Gift className="w-3 h-3" />
@@ -187,7 +191,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold flex items-center gap-2">
                 <Users className="w-5 h-5 text-blue-500" />
-                고객 멤버십 관리
+                {t("customers.customerMembershipManagement")}
               </h3>
               <div className="flex gap-2">
                 <Button
@@ -201,7 +205,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
                   size="sm"
                 >
                   <TrendingUp className="w-4 h-4 mr-2" />
-                  자동 등급 조정
+                  {t("customers.autoUpgrade")}
                 </Button>
               </div>
             </div>
@@ -210,7 +214,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
             <div className="flex gap-4 mb-4">
               <div className="flex-1">
                 <Input
-                  placeholder="고객명 또는 고객ID로 검색..."
+                  placeholder={t("customers.searchPlaceholder")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="max-w-md"
@@ -218,13 +222,13 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
               </div>
               <Select value={selectedTier} onValueChange={setSelectedTier}>
                 <SelectTrigger className="w-48">
-                  <SelectValue placeholder="등급별 필터" />
+                  <SelectValue placeholder={t("customers.filterByTier")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">전체</SelectItem>
-                  <SelectItem value="silver">실버</SelectItem>
-                  <SelectItem value="gold">골드</SelectItem>
-                  <SelectItem value="vip">VIP</SelectItem>
+                  <SelectItem value="all">{t("customers.allTiers")}</SelectItem>
+                  <SelectItem value="silver">{t("customers.silver")}</SelectItem>
+                  <SelectItem value="gold">{t("customers.gold")}</SelectItem>
+                  <SelectItem value="vip">{t("customers.vip")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -232,18 +236,18 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
             {/* Customer List */}
             {isLoading ? (
               <div className="text-center py-8">
-                <p className="text-gray-500">로딩 중...</p>
+                <p className="text-gray-500">{t("common.loading")}</p>
               </div>
             ) : (
               <div className="border rounded-lg">
                 <div className="grid grid-cols-7 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                  <div>고객ID</div>
-                  <div>고객명</div>
-                  <div>현재 등급</div>
-                  <div>총 구매금액</div>
-                  <div>방문횟수</div>
-                  <div>포인트</div>
-                  <div className="text-center">액션</div>
+                  <div>{t("customers.customerId")}</div>
+                  <div>{t("customers.name")}</div>
+                  <div>{t("customers.membershipLevel")}</div>
+                  <div>{t("customers.totalSpent")}</div>
+                  <div>{t("customers.visitCount")}</div>
+                  <div>{t("customers.points")}</div>
+                  <div className="text-center">{t("common.actions")}</div>
                 </div>
                 <div className="divide-y max-h-96 overflow-y-auto">
                   {filteredCustomers.map((customer) => {
@@ -262,7 +266,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
                           </Badge>
                           {needsUpgrade && (
                             <Badge variant="outline" className="ml-1 text-orange-600">
-                              승급 가능
+                              {t("customers.upgradeAvailable")}
                             </Badge>
                           )}
                         </div>
@@ -278,9 +282,9 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="SILVER">실버</SelectItem>
-                              <SelectItem value="GOLD">골드</SelectItem>
-                              <SelectItem value="VIP">VIP</SelectItem>
+                              <SelectItem value="SILVER">{t("customers.silver")}</SelectItem>
+                              <SelectItem value="GOLD">{t("customers.gold")}</SelectItem>
+                              <SelectItem value="VIP">{t("customers.vip")}</SelectItem>
                             </SelectContent>
                           </Select>
                           {needsUpgrade && (
@@ -306,7 +310,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" onClick={onClose}>
             <X className="w-4 h-4 mr-2" />
-            닫기
+            {t("customers.close")}
           </Button>
         </div>
       </DialogContent>

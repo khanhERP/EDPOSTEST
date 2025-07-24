@@ -296,6 +296,34 @@ export interface CustomersTranslations {
   adjusted: string;
   expired: string;
   unknown: string;
+  // Membership management
+  membershipManagementTitle: string;
+  membershipManagementDesc: string;
+  membershipTierGuide: string;
+  membershipLevel: string;
+  membershipBenefits: string;
+  minPurchaseAmount: string;
+  basicLevel: string;
+  basicLevelDesc: string;
+  premiumLevel: string;
+  premiumLevelDesc: string;
+  vipLevel: string;
+  vipLevelDesc: string;
+  basicPointsEarning: string;
+  birthdayDiscount5: string;
+  pointsEarning15: string;
+  birthdayDiscount10: string;
+  freeDrinkMonthly: string;
+  pointsEarning2x: string;
+  birthdayDiscount20: string;
+  freeDrink2Monthly: string;
+  vipRoomAccess: string;
+  customerMembershipManagement: string;
+  autoUpgrade: string;
+  filterByTier: string;
+  upgradeAvailable: string;
+  allTiers: string;
+  close: string;
 }
 
 // Employees translations interface

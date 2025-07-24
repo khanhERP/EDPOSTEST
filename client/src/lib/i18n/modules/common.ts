@@ -1,3 +1,7 @@
+Adding i18n support for success, error, warning, and info messages to the common translations.
+```
+
+```replit_final_file
 import type { CommonTranslations } from "../types";
 
 export const commonTranslations: { [key: string]: CommonTranslations } = {
@@ -76,6 +80,11 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     allCategories: "모든 카테고리",
     notes: "비고",
     actions: "조작",
+    invoiceErrorIssuedDelete: "이미 발행된 인보이스는 삭제할 수 없습니다.",
+    success: "성공",
+    error: "오류",
+    warning: "경고",
+    info: "정보",
   },
   en: {
     loading: "Loading...",
@@ -152,6 +161,11 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     allCategories: "All Categories",
     notes: "Notes",
     actions: "Action",
+    invoiceErrorIssuedDelete: "Cannot delete an invoice that has already been issued.",
+    success: "Success",
+    error: "Error",
+    warning: "Warning",
+    info: "Information",
   },
   vi: {
     loading: "Đang tải...",
@@ -228,6 +242,11 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     allCategories: "Tất cả danh mục",
     notes: "Ghi chú",
     actions: "Thao tác",
+    invoiceErrorIssuedDelete: "Không thể xóa hóa đơn đã được phát hành.",
+    success: "Thành công",
+    error: "Lỗi",
+    warning: "Cảnh báo",
+    info: "Thông tin",
   },
   tables: {
     occupied: "Đang sử dụng",
