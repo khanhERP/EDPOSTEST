@@ -35,9 +35,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     queryKey: ['/api/orders'],
   });
 
-  const { data: orderItems, isLoading: orderItemsLoading } = useQuery({
+  const { data: orderItems, isLoading: orderItemsLoading, refetch: refetchOrderItems } = useQuery({
     queryKey: ['/api/order-items', selectedOrder?.id],
     enabled: !!selectedOrder?.id && orderDetailsOpen,
+    refetchOnWindowFocus: false,
+    staleTime: 0, // Always fetch fresh data
     queryFn: async () => {
       const orderId = selectedOrder?.id;
       if (!orderId) {
@@ -48,6 +50,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       console.log('=== FETCHING ORDER ITEMS ===');
       console.log('Fetching order items for order ID:', orderId);
       console.log('API URL will be:', `/api/order-items/${orderId}`);
+      console.log('Query enabled conditions:', {
+        hasOrderId: !!selectedOrder?.id,
+        dialogOpen: orderDetailsOpen,
+        bothTrue: !!selectedOrder?.id && orderDetailsOpen
+      });
       
       const response = await apiRequest('GET', `/api/order-items/${orderId}`);
       
@@ -76,6 +83,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       // Ensure we return an array
       const items = Array.isArray(response) ? response : [];
       console.log('Final processed items count:', items.length);
+      console.log('About to return items:', items);
       console.log('=== END FETCHING ORDER ITEMS ===');
 
       return items;
@@ -408,38 +416,51 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         )}
                       </div>
 
-                      {orderItems && Array.isArray(orderItems) && orderItems.length > 0 ? (
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-green-600">
-                            Tìm thấy {orderItems.length} món ăn trong order ID {selectedOrder?.id}:
-                          </p>
-                          {orderItems.map((item: any, index: number) => (
-                            <div key={item.id || index} className="flex justify-between items-center p-3 bg-white border rounded-lg">
-                              <div className="flex-1">
-                                <p className="font-medium">{item.productName || getProductName(item.productId) || 'Unknown Product'}</p>
-                                <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
-                                <p className="text-xs text-gray-500">Product ID: {item.productId} | Item ID: {item.id}</p>
-                                {item.notes && (
-                                  <p className="text-xs text-gray-500 italic">Ghi chú: {item.notes}</p>
-                                )}
-                              </div>
-                              <div className="text-right">
-                                <p className="font-medium">₩{Number(item.total || 0).toLocaleString()}</p>
-                                <p className="text-sm text-gray-600">₩{Number(item.unitPrice || 0).toLocaleString()}/món</p>
-                              </div>
+                      {(() => {
+                        console.log('=== RENDER CHECK ===');
+                        console.log('orderItems exists:', !!orderItems);
+                        console.log('orderItems is array:', Array.isArray(orderItems));
+                        console.log('orderItems length:', orderItems?.length);
+                        console.log('orderItems data:', orderItems);
+                        console.log('=== END RENDER CHECK ===');
+                        
+                        if (orderItems && Array.isArray(orderItems) && orderItems.length > 0) {
+                          return (
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium text-green-600">
+                                Tìm thấy {orderItems.length} món ăn trong order ID {selectedOrder?.id}:
+                              </p>
+                              {orderItems.map((item: any, index: number) => (
+                                <div key={item.id || index} className="flex justify-between items-center p-3 bg-white border rounded-lg">
+                                  <div className="flex-1">
+                                    <p className="font-medium">{item.productName || getProductName(item.productId) || 'Unknown Product'}</p>
+                                    <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
+                                    <p className="text-xs text-gray-500">Product ID: {item.productId} | Item ID: {item.id}</p>
+                                    {item.notes && (
+                                      <p className="text-xs text-gray-500 italic">Ghi chú: {item.notes}</p>
+                                    )}
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-medium">₩{Number(item.total || 0).toLocaleString()}</p>
+                                    <p className="text-sm text-gray-600">₩{Number(item.unitPrice || 0).toLocaleString()}/món</p>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="text-center py-4">
-                          <p className="text-red-500">Không có món ăn nào trong đơn hàng (Order ID: {selectedOrder?.id})</p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            Debug: Items loaded = {orderItems ? 'yes' : 'no'}, 
-                            Count = {orderItems?.length || 0}, 
-                            Is Array = {Array.isArray(orderItems) ? 'yes' : 'no'}
-                          </p>
-                        </div>
-                      )}
+                          );
+                        } else {
+                          return (
+                            <div className="text-center py-4">
+                              <p className="text-red-500">Không có món ăn nào trong đơn hàng (Order ID: {selectedOrder?.id})</p>
+                              <p className="text-xs text-gray-400 mt-1">
+                                Debug: Items loaded = {orderItems ? 'yes' : 'no'}, 
+                                Count = {orderItems?.length || 0}, 
+                                Is Array = {Array.isArray(orderItems) ? 'yes' : 'no'}
+                              </p>
+                            </div>
+                          );
+                        }
+                      })()}
                     </>
                   )}
                 </div>
