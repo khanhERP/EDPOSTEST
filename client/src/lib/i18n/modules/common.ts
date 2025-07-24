@@ -223,15 +223,4 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     placing: 'Đang đặt...',
     placeOrder: 'Đặt hàng'
   }
-    collapse: 'Thu gọn',
-    expand: 'Mở rộng',
-    restaurant: 'Nhà hàng',
-    noRecords: 'Không có bản ghi',
-    selectOtherDate: 'Vui lòng chọn ngày khác',
-    category: 'Danh mục',
-    available: 'Có sẵn',
-    occupied: 'Đang sử dụng',
-    reserved: 'Đã đặt',
-    maintenance: 'Bảo trì',
-  },
 };
