@@ -126,9 +126,33 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const getActiveOrder = (tableId: number) => {
     if (!orders || !Array.isArray(orders)) return null;
-    return orders.find((order: Order) => 
+    
+    // Get all active orders for this table and sort by orderedAt descending to get the latest
+    const activeOrders = orders.filter((order: Order) => 
       order.tableId === tableId && !["paid", "cancelled"].includes(order.status)
     );
+    
+    console.log(`Active orders for table ${tableId}:`, activeOrders.map(o => ({
+      id: o.id,
+      orderNumber: o.orderNumber,
+      orderedAt: o.orderedAt,
+      status: o.status
+    })));
+    
+    if (activeOrders.length === 0) return null;
+    
+    // Sort by orderedAt descending and return the most recent order
+    const latestOrder = activeOrders.sort((a: Order, b: Order) => 
+      new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
+    )[0];
+    
+    console.log(`Latest order for table ${tableId}:`, {
+      id: latestOrder.id,
+      orderNumber: latestOrder.orderNumber,
+      orderedAt: latestOrder.orderedAt
+    });
+    
+    return latestOrder;
   };
 
   const handleTableClick = (table: Table) => {
@@ -145,6 +169,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   };
 
   const handleViewOrderDetails = (order: Order) => {
+    console.log('Selected order for details:', order);
+    console.log('Order ID:', order.id, 'Table ID:', order.tableId, 'Ordered at:', order.orderedAt);
     setSelectedOrder(order);
     setOrderDetailsOpen(true);
   };
