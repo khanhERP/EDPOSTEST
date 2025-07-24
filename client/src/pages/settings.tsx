@@ -35,6 +35,7 @@ import {
   ShoppingCart
 } from "lucide-react";
 import { CustomerFormModal } from "@/components/customers/customer-form-modal";
+import { CustomerPointsModal } from "@/components/customers/customer-points-modal";
 import { MembershipModal } from "@/components/membership/membership-modal";
 import { EmployeeFormModal } from "@/components/employees/employee-form-modal";
 
@@ -49,6 +50,8 @@ export default function Settings() {
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [showPointsModal, setShowPointsModal] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   
   // Employee management state
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
@@ -222,29 +225,9 @@ export default function Settings() {
     }
   };
 
-  const handleAddPoints = (customer: Customer) => {
-    const points = prompt('추가할 포인트를 입력하세요:');
-    if (points && !isNaN(Number(points))) {
-      fetch(`/api/customers/${customer.id}/visit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: 0, points: Number(points) })
-      })
-        .then(() => {
-          queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
-          toast({
-            title: '성공',
-            description: '포인트가 추가되었습니다.',
-          });
-        })
-        .catch(() => {
-          toast({
-            title: '오류',
-            description: '포인트 추가에 실패했습니다.',
-            variant: 'destructive',
-          });
-        });
-    }
+  const handleManagePoints = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setShowPointsModal(true);
   };
 
   const handleCloseCustomerForm = () => {
@@ -783,9 +766,9 @@ export default function Settings() {
                                 variant="ghost" 
                                 size="sm" 
                                 className="text-blue-500 hover:text-blue-700"
-                                onClick={() => handleAddPoints(customer)}
+                                onClick={() => handleManagePoints(customer)}
                               >
-                                <Plus className="w-4 h-4" />
+                                <CreditCard className="w-4 h-4" />
                               </Button>
                               <Button 
                                 variant="ghost" 
@@ -1295,6 +1278,16 @@ export default function Settings() {
         onClose={handleCloseCustomerForm}
         customer={editingCustomer}
       />
+
+      {/* Customer Points Modal */}
+      {selectedCustomer && (
+        <CustomerPointsModal
+          open={showPointsModal}
+          onOpenChange={setShowPointsModal}
+          customerId={selectedCustomer.id}
+          customerName={selectedCustomer.name}
+        />
+      )}
 
       {/* Membership Management Modal */}
       <MembershipModal

@@ -249,8 +249,41 @@ export const customers = pgTable('customers', {
   updatedAt: timestamp('updated_at').defaultNow()
 });
 
+// Point transactions table for tracking point history
+export const pointTransactions = pgTable('point_transactions', {
+  id: serial('id').primaryKey(),
+  customerId: integer('customer_id').references(() => customers.id).notNull(),
+  type: varchar('type', { length: 20 }).notNull(), // 'earned', 'redeemed', 'adjusted', 'expired'
+  points: integer('points').notNull(), // positive for earned, negative for redeemed
+  description: text('description').notNull(),
+  orderId: integer('order_id').references(() => orders.id), // when points are earned/redeemed from order
+  employeeId: integer('employee_id').references(() => employees.id), // who processed the transaction
+  previousBalance: integer('previous_balance').notNull(),
+  newBalance: integer('new_balance').notNull(),
+  createdAt: timestamp('created_at').defaultNow()
+});
+
+export const insertCustomerSchema = createInsertSchema(customers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  email: z.string().email("Invalid email format").optional().or(z.literal("")),
+  membershipLevel: z.enum(["BRONZE", "SILVER", "GOLD", "PLATINUM"]).optional(),
+  status: z.enum(["active", "inactive"]).optional(),
+});
+
+export const insertPointTransactionSchema = createInsertSchema(pointTransactions).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  type: z.enum(["earned", "redeemed", "adjusted", "expired"], {
+    errorMap: () => ({ message: "Type must be earned, redeemed, adjusted, or expired" })
+  }),
+});
+
 export type Customer = InferSelectModel<typeof customers>;
-export type InsertCustomer = InferInsertModel<typeof customers>;
+export type PointTransaction = typeof pointTransactions.$inferSelect;
 export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
 export type Table = typeof tables.$inferSelect;
 export type Order = typeof orders.$inferSelect;
@@ -268,6 +301,8 @@ export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type InsertStoreSettings = z.infer<typeof insertStoreSettingsSchema>;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
+export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
+export type InsertPointTransaction = z.infer<typeof insertPointTransactionSchema>;
 
 // Cart item type for frontend use
 export type CartItem = {
@@ -343,6 +378,25 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
   product: one(products, {
     fields: [orderItems.productId],
     references: [products.id],
+  }),
+}));
+
+export const customersRelations = relations(customers, ({ many }) => ({
+  pointTransactions: many(pointTransactions),
+}));
+
+export const pointTransactionsRelations = relations(pointTransactions, ({ one }) => ({
+  customer: one(customers, {
+    fields: [pointTransactions.customerId],
+    references: [customers.id],
+  }),
+  order: one(orders, {
+    fields: [pointTransactions.orderId],
+    references: [orders.id],
+  }),
+  employee: one(employees, {
+    fields: [pointTransactions.employeeId],
+    references: [employees.id],
   }),
 }));
 

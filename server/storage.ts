@@ -33,8 +33,11 @@ import {
   type Receipt,
   type InsertSupplier,
   customers,
+  pointTransactions,
   type Customer,
   type InsertCustomer,
+  type PointTransaction,
+  type InsertPointTransaction,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, ilike, and, gte, lte, or, sql } from "drizzle-orm";
@@ -124,6 +127,11 @@ export interface IStorage {
   updateCustomer(id: number, customer: Partial<InsertCustomer>): Promise<Customer | undefined>;
   deleteCustomer(id: number): Promise<boolean>;
   updateCustomerVisit(id: number, amount: number, points: number): Promise<Customer | undefined>;
+
+  // Point Management
+  getCustomerPoints(customerId: number): Promise<{ points: number } | undefined>;
+  updateCustomerPoints(customerId: number, points: number, description: string, type: 'earned' | 'redeemed' | 'adjusted', employeeId?: number, orderId?: number): Promise<PointTransaction>;
+  getPointHistory(customerId: number, limit?: number): Promise<PointTransaction[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -811,6 +819,72 @@ export class DatabaseStorage implements IStorage {
       .returning();
 
     return result || undefined;
+  }
+
+  // Point Management Methods
+  async getCustomerPoints(customerId: number): Promise<{ points: number } | undefined> {
+    const customer = await this.getCustomer(customerId);
+    if (!customer) return undefined;
+    return { points: customer.points || 0 };
+  }
+
+  async updateCustomerPoints(
+    customerId: number, 
+    points: number, 
+    description: string, 
+    type: 'earned' | 'redeemed' | 'adjusted', 
+    employeeId?: number, 
+    orderId?: number
+  ): Promise<PointTransaction> {
+    const customer = await this.getCustomer(customerId);
+    if (!customer) throw new Error('Customer not found');
+
+    const previousBalance = customer.points || 0;
+    let pointChange = points;
+    
+    // For redeemed points, make sure it's negative
+    if (type === 'redeemed' && pointChange > 0) {
+      pointChange = -pointChange;
+    }
+
+    const newBalance = previousBalance + pointChange;
+    
+    // Ensure customer doesn't go below 0 points for redemption
+    if (newBalance < 0) {
+      throw new Error('Insufficient points balance');
+    }
+
+    // Update customer points
+    await db.update(customers)
+      .set({ 
+        points: newBalance,
+        updatedAt: new Date()
+      })
+      .where(eq(customers.id, customerId));
+
+    // Create point transaction record
+    const [pointTransaction] = await db.insert(pointTransactions)
+      .values({
+        customerId,
+        type,
+        points: pointChange,
+        description,
+        orderId,
+        employeeId,
+        previousBalance,
+        newBalance
+      })
+      .returning();
+
+    return pointTransaction;
+  }
+
+  async getPointHistory(customerId: number, limit: number = 50): Promise<PointTransaction[]> {
+    return await db.select()
+      .from(pointTransactions)
+      .where(eq(pointTransactions.customerId, customerId))
+      .orderBy(sql`${pointTransactions.createdAt} DESC`)
+      .limit(limit);
   }
 }
 

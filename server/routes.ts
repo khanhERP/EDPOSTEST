@@ -12,6 +12,8 @@ import {
   insertOrderItemSchema,
   insertStoreSettingsSchema,
   insertSupplierSchema,
+  insertCustomerSchema,
+  insertPointTransactionSchema,
 } from "@shared/schema";
 import { initializeSampleData } from "./db";
 import { z } from "zod";
@@ -796,6 +798,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedCustomer);
     } catch (error) {
       res.status(500).json({ message: "Failed to update customer visit" });
+    }
+  });
+
+  // Point Management API
+  app.get("/api/customers/:id/points", async (req, res) => {
+    try {
+      const customerId = parseInt(req.params.id);
+      const pointsData = await storage.getCustomerPoints(customerId);
+      
+      if (!pointsData) {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      
+      res.json(pointsData);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer points" });
+    }
+  });
+
+  app.post("/api/customers/:id/points", async (req, res) => {
+    try {
+      const customerId = parseInt(req.params.id);
+      const pointUpdateSchema = z.object({
+        points: z.number().int().min(1),
+        description: z.string().min(1),
+        type: z.enum(['earned', 'redeemed', 'adjusted']),
+        employeeId: z.number().optional(),
+        orderId: z.number().optional()
+      });
+
+      const { points, description, type, employeeId, orderId } = pointUpdateSchema.parse(req.body);
+      
+      const pointTransaction = await storage.updateCustomerPoints(
+        customerId, 
+        points, 
+        description, 
+        type, 
+        employeeId, 
+        orderId
+      );
+      
+      res.status(201).json(pointTransaction);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid point update data",
+          errors: error.errors
+        });
+      }
+      if (error instanceof Error && error.message === 'Customer not found') {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      if (error instanceof Error && error.message === 'Insufficient points balance') {
+        return res.status(400).json({ message: "Insufficient points balance" });
+      }
+      res.status(500).json({ message: "Failed to update customer points" });
+    }
+  });
+
+  app.get("/api/customers/:id/point-history", async (req, res) => {
+    try {
+      const customerId = parseInt(req.params.id);
+      const limit = parseInt(req.query.limit as string) || 50;
+      
+      const pointHistory = await storage.getPointHistory(customerId, limit);
+      res.json(pointHistory);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch point history" });
     }
   });
 
