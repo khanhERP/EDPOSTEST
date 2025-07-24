@@ -66,12 +66,6 @@ export default function InventoryPage() {
   const [stockFilter, setStockFilter] = useState<string>("all");
   const [showStockDialog, setShowStockDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [renderKey, setRenderKey] = useState(0);
-
-  // Force component to re-render when language changes
-  useEffect(() => {
-    setRenderKey(prev => prev + 1);
-  }, [currentLanguage]);
 
   const queryClient = useQueryClient();
 

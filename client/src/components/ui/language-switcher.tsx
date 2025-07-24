@@ -21,7 +21,9 @@ export function LanguageSwitcher() {
 
   const handleLanguageChange = (langCode: Language) => {
     console.log('언어 변경 클릭:', langCode);
+    console.log('이전 언어:', currentLanguage);
     setLanguage(langCode);
+    console.log('언어 변경 완료:', langCode);
   };
 
   return (
