@@ -718,51 +718,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrderItems(orderId: number): Promise<OrderItem[]> {
-    console.log("🗄️ DATABASE: getOrderItems called with orderId:", orderId);
-    
-    try {
-      const items = await db
-        .select({
-          id: orderItems.id,
-          orderId: orderItems.orderId,
-          productId: orderItems.productId,
-          quantity: orderItems.quantity,
-          unitPrice: orderItems.unitPrice,
-          total: orderItems.total,
-          notes: orderItems.notes,
-          productName: products.name,
-          productSku: products.sku,
-        })
-        .from(orderItems)
-        .leftJoin(products, eq(orderItems.productId, products.id))
-        .where(eq(orderItems.orderId, orderId));
-        
-      console.log("🗄️ DATABASE: Raw query result:", items);
-      console.log("🗄️ DATABASE: Query returned", items.length, "items");
+    const items = await db
+      .select({
+        id: orderItems.id,
+        orderId: orderItems.orderId,
+        productId: orderItems.productId,
+        quantity: orderItems.quantity,
+        unitPrice: orderItems.unitPrice,
+        total: orderItems.total,
+        notes: orderItems.notes,
+        productName: products.name,
+        productSku: products.sku,
+      })
+      .from(orderItems)
+      .leftJoin(products, eq(orderItems.productId, products.id))
+      .where(eq(orderItems.orderId, orderId));
       
-      if (items.length > 0) {
-        console.log("🗄️ DATABASE: First item details:", JSON.stringify(items[0], null, 2));
-      } else {
-        console.log("🗄️ DATABASE: No items found in database for orderId:", orderId);
-        
-        // Let's also check if the order exists
-        const orderExists = await db
-          .select({ id: orders.id })
-          .from(orders)
-          .where(eq(orders.id, orderId))
-          .limit(1);
-          
-        console.log("🗄️ DATABASE: Order exists check:", orderExists.length > 0 ? "YES" : "NO");
-        if (orderExists.length === 0) {
-          console.log("🗄️ DATABASE: Order with ID", orderId, "does not exist!");
-        }
-      }
-      
-      return items as OrderItem[];
-    } catch (error) {
-      console.error("🗄️ DATABASE ERROR in getOrderItems:", error);
-      throw error;
-    }
+    return items as OrderItem[];
   }
 
   // Inventory Management
