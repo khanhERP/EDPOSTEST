@@ -116,11 +116,21 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
     return cart.reduce((total, item) => total + (Number(item.product.price) * item.quantity), 0);
   };
 
+  const calculateTax = () => {
+    return calculateTotal() * 0.1;
+  };
+
+  const calculateGrandTotal = () => {
+    return calculateTotal() + calculateTax();
+  };
+
   const handlePlaceOrder = () => {
     if (!table || cart.length === 0) return;
 
     const orderNumber = `ORD-${Date.now()}`;
-    const totalAmount = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const subtotalAmount = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const taxAmount = subtotalAmount * 0.1; // 10% tax
+    const totalAmount = subtotalAmount + taxAmount;
 
     const order = {
       orderNumber,
@@ -128,8 +138,11 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
       employeeId: 1, // Default employee ID
       customerName: customerName || null,
       customerCount,
+      subtotal: subtotalAmount.toString(), // Add required subtotal field
+      tax: taxAmount.toString(), // Add tax field
       total: totalAmount.toString(), // Convert to string as expected by schema
       status: "pending",
+      paymentStatus: "pending", // Add required paymentStatus field
       orderedAt: new Date().toISOString(),
     };
 
@@ -323,12 +336,12 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>{t('tables.taxLabel')}</span>
-                    <span>₩{Math.round(calculateTotal() * 0.1).toLocaleString()}</span>
+                    <span>₩{Math.round(calculateTax()).toLocaleString()}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold">
                     <span>{t('tables.totalLabel')}</span>
-                    <span>₩{Math.round(calculateTotal() * 1.1).toLocaleString()}</span>
+                    <span>₩{Math.round(calculateGrandTotal()).toLocaleString()}</span>
                   </div>
                 </div>
 
