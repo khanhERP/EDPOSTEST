@@ -866,6 +866,8 @@ const translations = {
       description: 'Quản lý tồn kho sản phẩm',
       lowStock: 'Tồn kho thấp',
       outOfStock: 'Hết hàng',
+      totalValue: 'Giá trị tổng cộng',
+      totalProducts: 'Tổng sản phẩm',
       inStock: 'Còn hàng',
       stockLevel: 'Mức tồn kho',
       updateStock: 'Cập nhật tồn kho',
