@@ -180,56 +180,77 @@ export function OrderManagement() {
                   
                   <Separator />
                   
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleViewOrder(order)}
-                    >
-                      <Eye className="w-3 h-3 mr-1" />
-                      {t('orders.viewDetails')}
-                    </Button>
-                    
-                    {order.status === 'pending' && (
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
-                        onClick={() => handleStatusUpdate(order.id, 'confirmed')}
-                        disabled={updateOrderStatusMutation.isPending}
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => handleViewOrder(order)}
                       >
-                        {t('orders.confirm')}
+                        <Eye className="w-3 h-3 mr-1" />
+                        {t('orders.viewDetails')}
                       </Button>
-                    )}
+                      
+                      {order.status === 'served' && (
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="bg-green-600 hover:bg-green-700"
+                          onClick={() => handleStatusUpdate(order.id, 'paid')}
+                          disabled={updateOrderStatusMutation.isPending}
+                        >
+                          <DollarSign className="w-3 h-3 mr-1" />
+                          Thanh toán
+                        </Button>
+                      )}
+                    </div>
                     
-                    {order.status === 'confirmed' && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleStatusUpdate(order.id, 'preparing')}
-                        disabled={updateOrderStatusMutation.isPending}
-                      >
-                        {t('orders.startCooking')}
-                      </Button>
-                    )}
-                    
-                    {order.status === 'preparing' && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleStatusUpdate(order.id, 'ready')}
-                        disabled={updateOrderStatusMutation.isPending}
-                      >
-                        {t('orders.ready')}
-                      </Button>
-                    )}
-                    
-                    {order.status === 'ready' && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleStatusUpdate(order.id, 'served')}
-                        disabled={updateOrderStatusMutation.isPending}
-                      >
-                        {t('orders.served')}
-                      </Button>
-                    )}
+                    <div className="flex gap-2">
+                      {order.status === 'pending' && (
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleStatusUpdate(order.id, 'confirmed')}
+                          disabled={updateOrderStatusMutation.isPending}
+                        >
+                          {t('orders.confirm')}
+                        </Button>
+                      )}
+                      
+                      {order.status === 'confirmed' && (
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleStatusUpdate(order.id, 'preparing')}
+                          disabled={updateOrderStatusMutation.isPending}
+                        >
+                          {t('orders.startCooking')}
+                        </Button>
+                      )}
+                      
+                      {order.status === 'preparing' && (
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleStatusUpdate(order.id, 'ready')}
+                          disabled={updateOrderStatusMutation.isPending}
+                        >
+                          {t('orders.ready')}
+                        </Button>
+                      )}
+                      
+                      {order.status === 'ready' && (
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleStatusUpdate(order.id, 'served')}
+                          disabled={updateOrderStatusMutation.isPending}
+                        >
+                          {t('orders.served')}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -298,24 +319,45 @@ export function OrderManagement() {
 
                 {/* Order Items */}
                 <div>
-                  <h4 className="font-medium mb-3">{t('orders.orderItems')}</h4>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="font-medium">{t('orders.orderItems')}</h4>
+                    <Badge variant="secondary">
+                      {selectedOrder.items ? (selectedOrder.items as OrderItem[]).length : 0} món
+                    </Badge>
+                  </div>
                   <div className="space-y-3">
                     {selectedOrder.items && (selectedOrder.items as OrderItem[]).map((item: OrderItem, index: number) => {
                       const productInfo = getProductInfo(item.productId);
                       return (
-                        <div key={index} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
+                        <div key={index} className="flex justify-between items-start p-4 bg-gray-50 rounded-lg border border-gray-200">
                           <div className="flex-1">
-                            <h5 className="font-medium">{productInfo?.name || t('orders.unknownProduct')}</h5>
-                            {item.notes && (
-                              <p className="text-sm text-gray-600 mt-1">{t('orders.memo')}: {item.notes}</p>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <div className="font-medium">
-                              {item.quantity}개 × {formatCurrency(item.price)}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              = {formatCurrency(item.quantity * item.price)}
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <h5 className="font-semibold text-gray-900">
+                                  {productInfo?.name || t('orders.unknownProduct')}
+                                </h5>
+                                {productInfo?.sku && (
+                                  <p className="text-xs text-gray-500 mt-1">SKU: {productInfo.sku}</p>
+                                )}
+                                {item.notes && (
+                                  <div className="mt-2 p-2 bg-blue-50 rounded border-l-4 border-blue-300">
+                                    <p className="text-sm text-blue-800">
+                                      <strong>{t('orders.memo')}:</strong> {item.notes}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-right ml-4">
+                                <div className="font-bold text-lg text-gray-900">
+                                  {formatCurrency(item.quantity * item.price)}
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  {item.quantity}개 × {formatCurrency(item.price)}
+                                </div>
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Đơn giá: {formatCurrency(item.price)}
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -326,10 +368,50 @@ export function OrderManagement() {
 
                 <Separator />
 
-                {/* Order Total */}
-                <div className="flex justify-between items-center text-lg font-bold">
-                  <span>{t('orders.totalAmount')}:</span>
-                  <span className="text-green-600">{formatCurrency(selectedOrder.totalAmount)}</span>
+                {/* Order Summary */}
+                <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                  <h4 className="font-medium text-gray-900">Tổng quan đơn hàng</h4>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">Tạm tính:</span>
+                      <span className="font-medium">{formatCurrency(selectedOrder.totalAmount / 1.1)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">Thuế (10%):</span>
+                      <span className="font-medium">{formatCurrency(selectedOrder.totalAmount * 0.1 / 1.1)}</span>
+                    </div>
+                    <Separator />
+                    <div className="flex justify-between items-center text-lg font-bold">
+                      <span className="text-gray-900">{t('orders.totalAmount')}:</span>
+                      <span className="text-green-600">{formatCurrency(selectedOrder.totalAmount)}</span>
+                    </div>
+                  </div>
+
+                  {/* Payment Status */}
+                  <div className="flex justify-between items-center pt-2 border-t">
+                    <span className="text-sm text-gray-600">Trạng thái thanh toán:</span>
+                    <Badge 
+                      variant={selectedOrder.status === 'paid' ? 'default' : 'secondary'}
+                      className={selectedOrder.status === 'paid' ? 'bg-green-100 text-green-800' : ''}
+                    >
+                      {selectedOrder.status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                    </Badge>
+                  </div>
+
+                  {/* Action Buttons */}
+                  {selectedOrder.status === 'served' && (
+                    <div className="pt-2">
+                      <Button
+                        onClick={() => handleStatusUpdate(selectedOrder.id, 'paid')}
+                        disabled={updateOrderStatusMutation.isPending}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        <DollarSign className="w-4 h-4 mr-2" />
+                        Xác nhận thanh toán
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </ScrollArea>
