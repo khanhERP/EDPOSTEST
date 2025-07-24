@@ -423,7 +423,8 @@ export type TranslationKey =
   | `common.${keyof CommonTranslations}`
   | `nav.${keyof NavigationTranslations}`
   | `reports.${keyof ReportsTranslations}`
-  | `settings.${keyof SettingsTranslations}`
+  | `settings.${Exclude<keyof SettingsTranslations, 'payments'>}`
+  | `settings.payments.${keyof SettingsTranslations['payments']}`
   | `notFound.${keyof NotFoundTranslations}`;
 
 // Language-specific translations type
