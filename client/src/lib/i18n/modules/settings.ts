@@ -5,7 +5,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     title: '설정',
     description: '시스템 설정을 관리합니다',
     storeInfo: '매장 정보',
-    categories: '카테고리',
+    categories: '품목관리',
     employees: '직원',
     payments: '결제',
     basicInfo: '기본 정보',
