@@ -371,6 +371,58 @@ export interface OrdersTranslations {
   };
 }
 
+// Inventory translations interface
+interface InventoryTranslations {
+  title: string;
+  description: string;
+  totalProducts: string;
+  lowStock: string;
+  outOfStock: string;
+  totalValue: string;
+  searchProducts: string;
+  stockStatus: string;
+  allStock: string;
+  inStock: string;
+  productName: string;
+  currentStock: string;
+  unitPrice: string;
+  stockValue: string;
+  management: string;
+  edit: string;
+  stockUpdate: string;
+  loading: string;
+  noProducts: string;
+  uncategorized: string;
+  currentStockLabel: string;
+  stockUpdateType: string;
+  quantity: string;
+  notesOptional: string;
+  selectUpdateType: string;
+  addStock: string;
+  subtractStock: string;
+  setStock: string;
+  quantityInput: string;
+  changeReason: string;
+  processing: string;
+  addNewItem: string;
+  newProduct: string;
+  productNameLabel: string;
+  productNamePlaceholder: string;
+  skuLabel: string;
+  skuPlaceholder: string;
+  priceLabel: string;
+  pricePlaceholder: string;
+  categoryLabel: string;
+  categoryPlaceholder: string;
+  initialStockQuantity: string;
+  initialStockPlaceholder: string;
+  stockQuantity: string;
+  editReason: string;
+  addNewStock: string;
+  save: string;
+  updateType: string;
+}
+
 export interface Translations {
   common: CommonTranslations;
   nav: NavigationTranslations;
@@ -381,6 +433,7 @@ export interface Translations {
   customers: CustomersTranslations;
   employees: EmployeesTranslations;
   attendance: AttendanceTranslations;
+  inventory: InventoryTranslations;
 }
 
 // Type-safe translation keys
@@ -389,7 +442,12 @@ export type TranslationKey =
   | `nav.${keyof NavigationTranslations}`
   | `reports.${keyof ReportsTranslations}`
   | `settings.${keyof SettingsTranslations}`
-  | `notFound.${keyof NotFoundTranslations}`;
+  | `notFound.${keyof NotFoundTranslations}`
+  | `orders.${keyof OrdersTranslations}`
+  | `customers.${keyof CustomersTranslations}`
+  | `employees.${keyof EmployeesTranslations}`
+  | `attendance.${keyof AttendanceTranslations}`
+  | `inventory.${keyof InventoryTranslations}`;
 
 // Language-specific translations type
 export interface LanguageTranslations {
