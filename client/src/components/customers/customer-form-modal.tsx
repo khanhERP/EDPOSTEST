@@ -257,11 +257,9 @@ export function CustomerFormModal({ isOpen, onClose, customer }: CustomerFormMod
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Bronze">Bronze</SelectItem>
                         <SelectItem value="Silver">Silver</SelectItem>
                         <SelectItem value="Gold">Gold</SelectItem>
                         <SelectItem value="Platinum">Platinum</SelectItem>
-                        <SelectItem value="Diamond">Diamond</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
