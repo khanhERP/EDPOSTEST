@@ -75,6 +75,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     orderManagement: "주문 관리",
     allCategories: "모든 카테고리",
     notes: "비고",
+    actions: "조작",
   },
   en: {
     loading: "Loading...",
@@ -150,6 +151,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     orderManagement: "Order Management",
     allCategories: "All Categories",
     notes: "Notes",
+    actions: "Action",
   },
   vi: {
     loading: "Đang tải...",
@@ -225,6 +227,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     orderManagement: "Quản lý đơn hàng",
     allCategories: "Tất cả danh mục",
     notes: "Ghi chú",
+    actions: "Thao tác",
   },
   tables: {
     occupied: "Đang sử dụng",
