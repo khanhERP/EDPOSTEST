@@ -22,12 +22,16 @@ export function LanguageSwitcher() {
   const handleLanguageChange = (langCode: Language) => {
     console.log('🌐 Language change clicked:', langCode);
     console.log('🌐 Previous language:', currentLanguage);
+    console.log('🌐 Store state before change:', useLanguageStore.getState());
+    
     setLanguage(langCode);
     
     // Force a small delay to ensure state propagation
     setTimeout(() => {
+      const newState = useLanguageStore.getState();
       console.log('🌐 Language change completed:', langCode);
-      console.log('🌐 Store state after change:', useLanguageStore.getState().currentLanguage);
+      console.log('🌐 Store state after change:', newState);
+      console.log('🌐 Render trigger value:', newState.renderTrigger);
     }, 100);
   };
 

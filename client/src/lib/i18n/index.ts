@@ -5,6 +5,7 @@ import { translations } from './translations';
 
 interface LanguageStore {
   currentLanguage: Language;
+  renderTrigger: number;
   setLanguage: (language: Language) => void;
 }
 
@@ -12,7 +13,11 @@ export const useLanguageStore = create<LanguageStore>()(
   persist(
     (set) => ({
       currentLanguage: 'ko',
-      setLanguage: (language: Language) => set({ currentLanguage: language }),
+      renderTrigger: 0,
+      setLanguage: (language: Language) => set((state) => ({ 
+        currentLanguage: language,
+        renderTrigger: state.renderTrigger + 1
+      })),
     }),
     {
       name: 'pos-language',
@@ -33,15 +38,16 @@ function getNestedTranslation(obj: any, key: string): string | undefined {
 
 export function useTranslation() {
   const currentLanguage = useLanguageStore(state => state.currentLanguage);
+  const renderTrigger = useLanguageStore(state => state.renderTrigger);
   const setLanguage = useLanguageStore(state => state.setLanguage);
 
   const t = (key: TranslationKey): string => {
-    // Force re-render by explicitly using currentLanguage
+    // Force re-render by explicitly using both currentLanguage and renderTrigger
     const value = getNestedTranslation(translations[currentLanguage], key);
 
     // Development-time validation
     if (!value && import.meta.env.DEV) {
-      console.warn(`Missing translation key: ${key} in language: ${currentLanguage}`);
+      console.warn(`Missing translation key: ${key} in language: ${currentLanguage}, trigger: ${renderTrigger}`);
     }
 
     return value || key;
