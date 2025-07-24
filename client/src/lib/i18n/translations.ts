@@ -11,7 +11,7 @@ import { tablesTranslations } from './modules/tables';
 import { inventoryTranslations } from './modules/inventory';
 import type { LanguageTranslations } from './types';
 
-export const translations2: LanguageTranslations = {
+export const translations: LanguageTranslations = {
   ko: {
     common: commonTranslations.ko,
     nav: navigationTranslations.ko,
