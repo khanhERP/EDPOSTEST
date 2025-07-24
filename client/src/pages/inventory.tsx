@@ -199,7 +199,7 @@ export default function InventoryPage() {
 
           {/* Products Table */}
           <Card className="border-green-200">
-            <CardHeader className="flex ml-auto items-center">
+            <CardHeader className="flex ml-auto">
               <CardTitle className="text-left">{t('inventory.stockStatus')}</CardTitle>
               <div className="ml-auto"> {/* Use ml-auto to push the button to the right */}
                 <Button
