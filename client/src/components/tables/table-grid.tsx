@@ -44,10 +44,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       console.log('Raw order items response for order', selectedOrder?.id, ':', response);
       console.log('Response type:', typeof response, 'Length:', response?.length);
       console.log('Is array?', Array.isArray(response));
+      
+      // Log each item in detail
+      if (Array.isArray(response) && response.length > 0) {
+        console.log('Order items details:', response.map(item => ({
+          id: item.id,
+          productId: item.productId, 
+          productName: item.productName,
+          quantity: item.quantity,
+          total: item.total
+        })));
+      }
 
       // Ensure we return an array
       const items = Array.isArray(response) ? response : [];
-      console.log('Processed items:', items);
+      console.log('Final processed items count:', items.length);
 
       return items;
     },
@@ -327,36 +338,42 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <div className="space-y-2">
                   {orderItemsLoading ? (
                     <p className="text-gray-500 text-center py-4">Đang tải dữ liệu...</p>
-                  ) : orderItems && orderItems.length > 0 ? (
-                    orderItems.map((item: any) => (
-                      <div key={item.id} className="flex justify-between items-center p-3 bg-white border rounded-lg">
-                        <div>
-                          <p className="font-medium">{item.productName || getProductName(item.productId)}</p>
-                          <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
-                          {item.notes && (
-                            <p className="text-xs text-gray-500 italic">Ghi chú: {item.notes}</p>
-                          )}
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">₩{Number(item.total).toLocaleString()}</p>
-                          <p className="text-sm text-gray-600">₩{Number(item.unitPrice).toLocaleString()}/món</p>
-                        </div>
-                      </div>
-                    ))
                   ) : (
-                    <div className="text-center py-4">
-                      <p className="text-gray-500">Không có món ăn nào trong đơn hàng</p>
-                      {selectedOrder && (
-                        <div className="text-xs text-gray-400 mt-2 space-y-1">
-                          <p>Order ID: {selectedOrder.id}</p>
-                          <p>Order Number: {selectedOrder.orderNumber}</p>
-                          <p>Debug - orderItems: {JSON.stringify(orderItems)}</p>
-                          <p>Debug - orderItems type: {typeof orderItems}</p>
-                          <p>Debug - orderItems length: {orderItems?.length || 'undefined'}</p>
-                          <p>Debug - orderItems is array: {Array.isArray(orderItems) ? 'yes' : 'no'}</p>
+                    <>
+                      {/* Debug info always visible */}
+                      <div className="text-xs text-blue-600 p-2 bg-blue-50 rounded mb-2">
+                        <p>Debug - Order ID: {selectedOrder?.id}</p>
+                        <p>Debug - Items loaded: {orderItems ? 'yes' : 'no'}</p>
+                        <p>Debug - Items count: {orderItems?.length || 0}</p>
+                        <p>Debug - Is array: {Array.isArray(orderItems) ? 'yes' : 'no'}</p>
+                        {orderItems && orderItems.length > 0 && (
+                          <p>Debug - First item: {JSON.stringify(orderItems[0])}</p>
+                        )}
+                      </div>
+
+                      {orderItems && Array.isArray(orderItems) && orderItems.length > 0 ? (
+                        orderItems.map((item: any, index: number) => (
+                          <div key={item.id || index} className="flex justify-between items-center p-3 bg-white border rounded-lg">
+                            <div>
+                              <p className="font-medium">{item.productName || getProductName(item.productId) || 'Unknown Product'}</p>
+                              <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
+                              <p className="text-xs text-gray-500">Product ID: {item.productId}</p>
+                              {item.notes && (
+                                <p className="text-xs text-gray-500 italic">Ghi chú: {item.notes}</p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium">₩{Number(item.total || 0).toLocaleString()}</p>
+                              <p className="text-sm text-gray-600">₩{Number(item.unitPrice || 0).toLocaleString()}/món</p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-gray-500">Không có món ăn nào trong đơn hàng</p>
                         </div>
                       )}
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
