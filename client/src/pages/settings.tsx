@@ -1,24 +1,47 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useTranslation } from "@/lib/i18n";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { type StoreSettings, type InsertStoreSettings, type Customer } from "@shared/schema";
+import {
+  type StoreSettings,
+  type InsertStoreSettings,
+  type Customer,
+} from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Store, 
-  Package, 
-  Users, 
-  CreditCard, 
+import {
+  Store,
+  Package,
+  Users,
+  CreditCard,
   Settings as SettingsIcon,
   Home,
   MapPin,
@@ -32,7 +55,7 @@ import {
   Clock,
   UserCheck,
   Tag,
-  ShoppingCart
+  ShoppingCart,
 } from "lucide-react";
 import { CustomerFormModal } from "@/components/customers/customer-form-modal";
 import { CustomerPointsModal } from "@/components/customers/customer-points-modal";
@@ -45,60 +68,71 @@ export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("store");
-  
+
   // Customer management state
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [showMembershipModal, setShowMembershipModal] = useState(false);
   const [showPointsModal, setShowPointsModal] = useState(false);
-  const [showPointsManagementModal, setShowPointsManagementModal] = useState(false);
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  
+  const [showPointsManagementModal, setShowPointsManagementModal] =
+    useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null,
+  );
+
   // Employee management state
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
-  
+
   // Product management state
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [editingProduct, setEditingProduct] = useState<any>(null);
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
+  const [selectedCategoryFilter, setSelectedCategoryFilter] =
+    useState<string>("all");
   const [productSearchTerm, setProductSearchTerm] = useState("");
-  const [categoryForm, setCategoryForm] = useState({ name: '', icon: 'fas fa-utensils' });
-  const [productForm, setProductForm] = useState({ 
-    name: '', 
-    sku: '', 
-    price: '', 
-    stock: '0', 
-    categoryId: '',
-    description: '' 
+  const [categoryForm, setCategoryForm] = useState({
+    name: "",
+    icon: "fas fa-utensils",
   });
-  
+  const [productForm, setProductForm] = useState({
+    name: "",
+    sku: "",
+    price: "",
+    stock: "0",
+    categoryId: "",
+    description: "",
+  });
+
   // Fetch store settings
   const { data: storeData, isLoading } = useQuery<StoreSettings>({
-    queryKey: ['/api/store-settings'],
+    queryKey: ["/api/store-settings"],
   });
 
   // Fetch customers
-  const { data: customersData, isLoading: customersLoading } = useQuery<Customer[]>({
-    queryKey: ['/api/customers'],
+  const { data: customersData, isLoading: customersLoading } = useQuery<
+    Customer[]
+  >({
+    queryKey: ["/api/customers"],
   });
 
   // Fetch employees
   const { data: employeesData, isLoading: employeesLoading } = useQuery<any[]>({
-    queryKey: ['/api/employees'],
+    queryKey: ["/api/employees"],
   });
-  
+
   // Fetch categories
-  const { data: categoriesData, isLoading: categoriesLoading } = useQuery<any[]>({
-    queryKey: ['/api/categories'],
+  const { data: categoriesData, isLoading: categoriesLoading } = useQuery<
+    any[]
+  >({
+    queryKey: ["/api/categories"],
   });
-  
+
   // Fetch products
   const { data: productsData, isLoading: productsLoading } = useQuery<any[]>({
-    queryKey: ['/api/products'],
+    queryKey: ["/api/products"],
   });
 
   // Store settings state
@@ -110,7 +144,7 @@ export default function Settings() {
     email: "contact@edpos.com",
     taxId: "123-45-67890",
     openTime: "09:00",
-    closeTime: "22:00"
+    closeTime: "22:00",
   });
 
   // Update local state when data is loaded
@@ -124,7 +158,7 @@ export default function Settings() {
         email: storeData.email || "",
         taxId: storeData.taxId || "",
         openTime: storeData.openTime || "09:00",
-        closeTime: storeData.closeTime || "22:00"
+        closeTime: storeData.closeTime || "22:00",
       });
     }
   }, [storeData]);
@@ -136,16 +170,16 @@ export default function Settings() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/store-settings'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/store-settings"] });
       toast({
-        title: t('common.success'),
-        description: t('settings.storeUpdated'),
+        title: t("common.success"),
+        description: t("settings.storeUpdated"),
       });
     },
     onError: () => {
       toast({
-        title: t('common.error'),
-        description: t('settings.updateError'),
+        title: t("common.error"),
+        description: t("settings.updateError"),
         variant: "destructive",
       });
     },
@@ -153,21 +187,84 @@ export default function Settings() {
 
   // Payment methods state - Vietnamese market localized
   const [paymentMethods, setPaymentMethods] = useState([
-    { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
-    { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
-    { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
-    { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
-    { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
-    { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
-    { id: 7, name: "Ngân hàng trực tuyến", nameKey: "banking", type: "banking", enabled: false, icon: "🏦" },
-    { id: 8, name: "ShopeePay", nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
-    { id: 9, name: "GrabPay", nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" }
+    {
+      id: 1,
+      name: "Tiền mặt",
+      nameKey: "cash",
+      type: "cash",
+      enabled: true,
+      icon: "💵",
+    },
+    {
+      id: 2,
+      name: "Thẻ tín dụng",
+      nameKey: "creditCard",
+      type: "card",
+      enabled: true,
+      icon: "💳",
+    },
+    {
+      id: 3,
+      name: "Thẻ ghi nợ",
+      nameKey: "debitCard",
+      type: "debit",
+      enabled: true,
+      icon: "💳",
+    },
+    {
+      id: 4,
+      name: "MoMo",
+      nameKey: "momo",
+      type: "digital",
+      enabled: true,
+      icon: "📱",
+    },
+    {
+      id: 5,
+      name: "ZaloPay",
+      nameKey: "zalopay",
+      type: "digital",
+      enabled: true,
+      icon: "📱",
+    },
+    {
+      id: 6,
+      name: "VNPay",
+      nameKey: "vnpay",
+      type: "digital",
+      enabled: true,
+      icon: "💳",
+    },
+    {
+      id: 7,
+      name: "Ngân hàng trực tuyến",
+      nameKey: "banking",
+      type: "banking",
+      enabled: false,
+      icon: "🏦",
+    },
+    {
+      id: 8,
+      name: "ShopeePay",
+      nameKey: "shopeepay",
+      type: "digital",
+      enabled: false,
+      icon: "🛒",
+    },
+    {
+      id: 9,
+      name: "GrabPay",
+      nameKey: "grabpay",
+      type: "digital",
+      enabled: false,
+      icon: "🚗",
+    },
   ]);
 
   const handleStoreSettingChange = (field: string, value: string) => {
-    setStoreSettings(prev => ({
+    setStoreSettings((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -176,12 +273,10 @@ export default function Settings() {
   };
 
   const togglePaymentMethod = (id: number) => {
-    setPaymentMethods(prev => 
-      prev.map(method => 
-        method.id === id 
-          ? { ...method, enabled: !method.enabled }
-          : method
-      )
+    setPaymentMethods((prev) =>
+      prev.map((method) =>
+        method.id === id ? { ...method, enabled: !method.enabled } : method,
+      ),
     );
   };
 
@@ -192,13 +287,13 @@ export default function Settings() {
       nameKey: "newPayment",
       type: "custom",
       enabled: false,
-      icon: "💳"
+      icon: "💳",
     };
-    setPaymentMethods(prev => [...prev, newMethod]);
+    setPaymentMethods((prev) => [...prev, newMethod]);
   };
 
   const removePaymentMethod = (id: number) => {
-    setPaymentMethods(prev => prev.filter(method => method.id !== id));
+    setPaymentMethods((prev) => prev.filter((method) => method.id !== id));
   };
 
   // Customer management functions
@@ -208,20 +303,20 @@ export default function Settings() {
   };
 
   const handleDeleteCustomer = (customerId: number) => {
-    if (confirm('정말로 이 고객을 삭제하시겠습니까?')) {
-      fetch(`/api/customers/${customerId}`, { method: 'DELETE' })
+    if (confirm("정말로 이 고객을 t��제하시겠습니까?")) {
+      fetch(`/api/customers/${customerId}`, { method: "DELETE" })
         .then(() => {
-          queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+          queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
           toast({
-            title: '성공',
-            description: '고객이 삭제되었습니다.',
+            title: "성공",
+            description: "고객이 삭제되었습니다.",
           });
         })
         .catch(() => {
           toast({
-            title: '오류',
-            description: '고객 삭제에 실패했습니다.',
-            variant: 'destructive',
+            title: "오류",
+            description: "고객 삭제에 실패했습니다.",
+            variant: "destructive",
           });
         });
     }
@@ -238,162 +333,196 @@ export default function Settings() {
   };
 
   // Filter customers based on search term
-  const filteredCustomers = customersData ? customersData.filter((customer: Customer) =>
-    customer.name.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-    customer.customerId.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
-    (customer.phone && customer.phone.includes(customerSearchTerm))
-  ) : [];
+  const filteredCustomers = customersData
+    ? customersData.filter(
+        (customer: Customer) =>
+          customer.name
+            .toLowerCase()
+            .includes(customerSearchTerm.toLowerCase()) ||
+          customer.customerId
+            .toLowerCase()
+            .includes(customerSearchTerm.toLowerCase()) ||
+          (customer.phone && customer.phone.includes(customerSearchTerm)),
+      )
+    : [];
 
   // Product management functions
   const resetCategoryForm = () => {
-    setCategoryForm({ name: '', icon: 'fas fa-utensils' });
+    setCategoryForm({ name: "", icon: "fas fa-utensils" });
     setEditingCategory(null);
   };
 
   const resetProductForm = () => {
-    setProductForm({ 
-      name: '', 
-      sku: '', 
-      price: '', 
-      stock: '0', 
-      categoryId: '',
-      description: '' 
+    setProductForm({
+      name: "",
+      sku: "",
+      price: "",
+      stock: "0",
+      categoryId: "",
+      description: "",
     });
     setEditingProduct(null);
   };
 
   const handleCreateCategory = async () => {
     if (!categoryForm.name.trim()) return;
-    
+
     try {
-      const response = await apiRequest('POST', '/api/categories', categoryForm);
-      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      const response = await apiRequest(
+        "POST",
+        "/api/categories",
+        categoryForm,
+      );
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       toast({
-        title: t('common.success'),
-        description: t('productManagement.categoryCreateSuccess'),
+        title: t("common.success"),
+        description: t("productManagement.categoryCreateSuccess"),
       });
       setShowCategoryForm(false);
       resetCategoryForm();
     } catch (error) {
       toast({
-        title: t('common.error'),
-        description: t('common.error'),
-        variant: 'destructive',
+        title: t("common.error"),
+        description: t("common.error"),
+        variant: "destructive",
       });
     }
   };
 
   const handleUpdateCategory = async () => {
     if (!categoryForm.name.trim() || !editingCategory) return;
-    
+
     try {
-      const response = await apiRequest('PUT', `/api/categories/${editingCategory.id}`, categoryForm);
-      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      const response = await apiRequest(
+        "PUT",
+        `/api/categories/${editingCategory.id}`,
+        categoryForm,
+      );
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       toast({
-        title: t('common.success'),
-        description: t('productManagement.categoryUpdateSuccess'),
+        title: t("common.success"),
+        description: t("productManagement.categoryUpdateSuccess"),
       });
       setShowCategoryForm(false);
       resetCategoryForm();
     } catch (error) {
       toast({
-        title: t('common.error'),
-        description: t('common.error'),
-        variant: 'destructive',
+        title: t("common.error"),
+        description: t("common.error"),
+        variant: "destructive",
       });
     }
   };
 
   const handleDeleteCategory = async (categoryId: number) => {
-    if (confirm(`${t('productManagement.deleteConfirm')} ${t('productManagement.categoryDeleteConfirm')}`)) {
+    if (
+      confirm(
+        `${t("productManagement.deleteConfirm")} ${t("productManagement.categoryDeleteConfirm")}`,
+      )
+    ) {
       try {
-        await apiRequest('DELETE', `/api/categories/${categoryId}`);
-        queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+        await apiRequest("DELETE", `/api/categories/${categoryId}`);
+        queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/products"] });
         toast({
-          title: t('common.success'),
-          description: t('productManagement.categoryDeleteSuccess'),
+          title: t("common.success"),
+          description: t("productManagement.categoryDeleteSuccess"),
         });
       } catch (error) {
         toast({
-          title: t('common.error'),
-          description: t('common.error'),
-          variant: 'destructive',
+          title: t("common.error"),
+          description: t("common.error"),
+          variant: "destructive",
         });
       }
     }
   };
 
   const handleCreateProduct = async () => {
-    if (!productForm.name.trim() || !productForm.sku.trim() || !productForm.categoryId) return;
-    
+    if (
+      !productForm.name.trim() ||
+      !productForm.sku.trim() ||
+      !productForm.categoryId
+    )
+      return;
+
     try {
       const productData = {
         ...productForm,
         price: productForm.price,
         stock: parseInt(productForm.stock) || 0,
-        categoryId: parseInt(productForm.categoryId)
+        categoryId: parseInt(productForm.categoryId),
       };
-      
-      const response = await apiRequest('POST', '/api/products', productData);
-      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+
+      const response = await apiRequest("POST", "/api/products", productData);
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
-        title: t('common.success'),
-        description: t('productManagement.productCreateSuccess'),
+        title: t("common.success"),
+        description: t("productManagement.productCreateSuccess"),
       });
       setShowProductForm(false);
       resetProductForm();
     } catch (error) {
       toast({
-        title: t('common.error'),
-        description: t('common.error'),
-        variant: 'destructive',
+        title: t("common.error"),
+        description: t("common.error"),
+        variant: "destructive",
       });
     }
   };
 
   const handleUpdateProduct = async () => {
-    if (!productForm.name.trim() || !productForm.sku.trim() || !productForm.categoryId || !editingProduct) return;
-    
+    if (
+      !productForm.name.trim() ||
+      !productForm.sku.trim() ||
+      !productForm.categoryId ||
+      !editingProduct
+    )
+      return;
+
     try {
       const productData = {
         ...productForm,
         price: productForm.price,
         stock: parseInt(productForm.stock) || 0,
-        categoryId: parseInt(productForm.categoryId)
+        categoryId: parseInt(productForm.categoryId),
       };
-      
-      const response = await apiRequest('PUT', `/api/products/${editingProduct.id}`, productData);
-      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+
+      const response = await apiRequest(
+        "PUT",
+        `/api/products/${editingProduct.id}`,
+        productData,
+      );
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
-        title: t('common.success'),
-        description: t('productManagement.productUpdateSuccess'),
+        title: t("common.success"),
+        description: t("productManagement.productUpdateSuccess"),
       });
       setShowProductForm(false);
       resetProductForm();
     } catch (error) {
       toast({
-        title: t('common.error'),
-        description: t('common.error'),
-        variant: 'destructive',
+        title: t("common.error"),
+        description: t("common.error"),
+        variant: "destructive",
       });
     }
   };
 
   const handleDeleteProduct = async (productId: number) => {
-    if (confirm(t('productManagement.deleteConfirm'))) {
+    if (confirm(t("productManagement.deleteConfirm"))) {
       try {
-        await apiRequest('DELETE', `/api/products/${productId}`);
-        queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+        await apiRequest("DELETE", `/api/products/${productId}`);
+        queryClient.invalidateQueries({ queryKey: ["/api/products"] });
         toast({
-          title: t('common.success'),
-          description: t('productManagement.productDeleteSuccess'),
+          title: t("common.success"),
+          description: t("productManagement.productDeleteSuccess"),
         });
       } catch (error) {
         toast({
-          title: t('common.error'),
-          description: t('common.error'),
-          variant: 'destructive',
+          title: t("common.error"),
+          description: t("common.error"),
+          variant: "destructive",
         });
       }
     }
@@ -412,33 +541,41 @@ export default function Settings() {
       price: product.price.toString(),
       stock: product.stock.toString(),
       categoryId: product.categoryId.toString(),
-      description: product.description || ''
+      description: product.description || "",
     });
     setEditingProduct(product);
     setShowProductForm(true);
   };
 
   // Filter products based on category and search term
-  const filteredProducts = productsData ? productsData.filter((product: any) => {
-    const matchesCategory = selectedCategoryFilter === 'all' || product.categoryId.toString() === selectedCategoryFilter;
-    const matchesSearch = product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(productSearchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
-  }) : [];
+  const filteredProducts = productsData
+    ? productsData.filter((product: any) => {
+        const matchesCategory =
+          selectedCategoryFilter === "all" ||
+          product.categoryId.toString() === selectedCategoryFilter;
+        const matchesSearch =
+          product.name
+            .toLowerCase()
+            .includes(productSearchTerm.toLowerCase()) ||
+          product.sku.toLowerCase().includes(productSearchTerm.toLowerCase());
+        return matchesCategory && matchesSearch;
+      })
+    : [];
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20 relative">
       {/* Background Pattern */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div 
+        <div
           className="absolute inset-0 opacity-5"
           style={{
             backgroundImage: `radial-gradient(circle at 25% 25%, #10b981 0%, transparent 50%),
                            radial-gradient(circle at 75% 25%, #059669 0%, transparent 50%),
                            radial-gradient(circle at 25% 75%, #065f46 0%, transparent 50%),
                            radial-gradient(circle at 75% 75%, #059669 0%, transparent 50%)`,
-          backgroundSize: '100px 100px'
-        }}></div>
+            backgroundSize: "100px 100px",
+          }}
+        ></div>
       </div>
 
       <div className="relative z-10 container mx-auto p-6">
@@ -447,42 +584,46 @@ export default function Settings() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
                 <SettingsIcon className="w-8 h-8 text-green-600" />
-                {t('settings.title')}
+                {t("settings.title")}
               </h1>
-              <p className="text-gray-600">{t('settings.description')}</p>
+              <p className="text-gray-600">{t("settings.description")}</p>
             </div>
             <Button
-              onClick={() => window.location.href = '/pos'}
+              onClick={() => (window.location.href = "/pos")}
               variant="outline"
               className="bg-white hover:bg-green-50 border-green-200 text-green-700 hover:text-green-800"
             >
               <Home className="w-4 h-4 mr-2" />
-              {t('settings.backToPos')}
+              {t("settings.backToPos")}
             </Button>
           </div>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
           <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
             <TabsTrigger value="store" className="flex items-center gap-2">
               <Store className="w-4 h-4" />
-              {t('settings.storeInfo')}
+              {t("settings.storeInfo")}
             </TabsTrigger>
             <TabsTrigger value="customers" className="flex items-center gap-2">
               <UserCheck className="w-4 h-4" />
-              {t('customers.title')}
+              {t("customers.title")}
             </TabsTrigger>
             <TabsTrigger value="categories" className="flex items-center gap-2">
               <Package className="w-4 h-4" />
-              {t('settings.categories')}
+              {t("settings.categories")}
             </TabsTrigger>
             <TabsTrigger value="employees" className="flex items-center gap-2">
               <Users className="w-4 h-4" />
-              {t('settings.employees')}
+              {t("settings.employees")}
             </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="w-4 h-4" />
-              {t('settings.paymentMethods')}
+              {t("settings.paymentMethods")}
             </TabsTrigger>
           </TabsList>
 
@@ -493,36 +634,44 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Store className="w-5 h-5 text-green-600" />
-                    {t('settings.basicInfo')}
+                    {t("settings.basicInfo")}
                   </CardTitle>
-                  <CardDescription>{t('settings.basicInfoDesc')}</CardDescription>
+                  <CardDescription>
+                    {t("settings.basicInfoDesc")}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="storeName">{t('settings.storeName')}</Label>
+                    <Label htmlFor="storeName">{t("settings.storeName")}</Label>
                     <Input
                       id="storeName"
                       value={storeSettings.storeName}
-                      onChange={(e) => handleStoreSettingChange('storeName', e.target.value)}
-                      placeholder={t('settings.storeNamePlaceholder')}
+                      onChange={(e) =>
+                        handleStoreSettingChange("storeName", e.target.value)
+                      }
+                      placeholder={t("settings.storeNamePlaceholder")}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="storeCode">{t('settings.storeCode')}</Label>
+                    <Label htmlFor="storeCode">{t("settings.storeCode")}</Label>
                     <Input
                       id="storeCode"
                       value={storeSettings.storeCode}
-                      onChange={(e) => handleStoreSettingChange('storeCode', e.target.value)}
-                      placeholder={t('settings.storeCodePlaceholder')}
+                      onChange={(e) =>
+                        handleStoreSettingChange("storeCode", e.target.value)
+                      }
+                      placeholder={t("settings.storeCodePlaceholder")}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="taxId">{t('settings.taxId')}</Label>
+                    <Label htmlFor="taxId">{t("settings.taxId")}</Label>
                     <Input
                       id="taxId"
                       value={storeSettings.taxId}
-                      onChange={(e) => handleStoreSettingChange('taxId', e.target.value)}
-                      placeholder={t('settings.taxIdPlaceholder')}
+                      onChange={(e) =>
+                        handleStoreSettingChange("taxId", e.target.value)
+                      }
+                      placeholder={t("settings.taxIdPlaceholder")}
                     />
                   </div>
                 </CardContent>
@@ -532,39 +681,47 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <MapPin className="w-5 h-5 text-green-600" />
-                    {t('settings.contactInfo')}
+                    {t("settings.contactInfo")}
                   </CardTitle>
-                  <CardDescription>{t('settings.contactInfoDesc')}</CardDescription>
+                  <CardDescription>
+                    {t("settings.contactInfoDesc")}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="address">{t('settings.address')}</Label>
+                    <Label htmlFor="address">{t("settings.address")}</Label>
                     <Textarea
                       id="address"
                       value={storeSettings.address}
-                      onChange={(e) => handleStoreSettingChange('address', e.target.value)}
-                      placeholder={t('settings.addressPlaceholder')}
+                      onChange={(e) =>
+                        handleStoreSettingChange("address", e.target.value)
+                      }
+                      placeholder={t("settings.addressPlaceholder")}
                       rows={3}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">{t('settings.phone')}</Label>
+                    <Label htmlFor="phone">{t("settings.phone")}</Label>
                     <Input
                       id="phone"
                       type="tel"
                       value={storeSettings.phone}
-                      onChange={(e) => handleStoreSettingChange('phone', e.target.value)}
-                      placeholder={t('settings.phonePlaceholder')}
+                      onChange={(e) =>
+                        handleStoreSettingChange("phone", e.target.value)
+                      }
+                      placeholder={t("settings.phonePlaceholder")}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">{t('settings.email')}</Label>
+                    <Label htmlFor="email">{t("settings.email")}</Label>
                     <Input
                       id="email"
                       type="email"
                       value={storeSettings.email}
-                      onChange={(e) => handleStoreSettingChange('email', e.target.value)}
-                      placeholder={t('settings.emailPlaceholder')}
+                      onChange={(e) =>
+                        handleStoreSettingChange("email", e.target.value)
+                      }
+                      placeholder={t("settings.emailPlaceholder")}
                     />
                   </div>
                 </CardContent>
@@ -574,28 +731,36 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <SettingsIcon className="w-5 h-5 text-green-600" />
-                    {t('settings.operationHours')}
+                    {t("settings.operationHours")}
                   </CardTitle>
-                  <CardDescription>{t('settings.operationHoursDesc')}</CardDescription>
+                  <CardDescription>
+                    {t("settings.operationHoursDesc")}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="openTime">{t('settings.openTime')}</Label>
+                      <Label htmlFor="openTime">{t("settings.openTime")}</Label>
                       <Input
                         id="openTime"
                         type="time"
                         value={storeSettings.openTime}
-                        onChange={(e) => handleStoreSettingChange('openTime', e.target.value)}
+                        onChange={(e) =>
+                          handleStoreSettingChange("openTime", e.target.value)
+                        }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="closeTime">{t('settings.closeTime')}</Label>
+                      <Label htmlFor="closeTime">
+                        {t("settings.closeTime")}
+                      </Label>
                       <Input
                         id="closeTime"
                         type="time"
                         value={storeSettings.closeTime}
-                        onChange={(e) => handleStoreSettingChange('closeTime', e.target.value)}
+                        onChange={(e) =>
+                          handleStoreSettingChange("closeTime", e.target.value)
+                        }
                       />
                     </div>
                   </div>
@@ -603,13 +768,15 @@ export default function Settings() {
               </Card>
 
               <div className="flex justify-end">
-                <Button 
+                <Button
                   onClick={saveStoreSettings}
                   disabled={updateStoreSettingsMutation.isPending}
                   className="bg-green-600 hover:bg-green-700"
                 >
                   <Save className="w-4 h-4 mr-2" />
-                  {updateStoreSettingsMutation.isPending ? t('common.loading') : t('common.save')}
+                  {updateStoreSettingsMutation.isPending
+                    ? t("common.loading")
+                    : t("common.save")}
                 </Button>
               </div>
             </div>
@@ -624,51 +791,78 @@ export default function Settings() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">{t('customers.totalCustomers')}</p>
-                        <p className="text-2xl font-bold text-green-600">{customersData ? customersData.length : 0}</p>
+                        <p className="text-sm font-medium text-gray-600">
+                          {t("customers.totalCustomers")}
+                        </p>
+                        <p className="text-2xl font-bold text-green-600">
+                          {customersData ? customersData.length : 0}
+                        </p>
                       </div>
                       <UserCheck className="w-8 h-8 text-green-600" />
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-white/80 backdrop-blur-sm border-white/20">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">{t('customers.activeCustomers')}</p>
+                        <p className="text-sm font-medium text-gray-600">
+                          {t("customers.activeCustomers")}
+                        </p>
                         <p className="text-2xl font-bold text-blue-600">
-                          {customersData ? customersData.filter(c => c.status === 'active').length : 0}
+                          {customersData
+                            ? customersData.filter((c) => c.status === "active")
+                                .length
+                            : 0}
                         </p>
                       </div>
                       <Users className="w-8 h-8 text-blue-600" />
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-white/80 backdrop-blur-sm border-white/20">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">{t('customers.pointsIssued')}</p>
+                        <p className="text-sm font-medium text-gray-600">
+                          {t("customers.pointsIssued")}
+                        </p>
                         <p className="text-2xl font-bold text-purple-600">
-                          {customersData ? customersData.reduce((total, c) => total + (c.points || 0), 0).toLocaleString() : 0}
+                          {customersData
+                            ? customersData
+                                .reduce(
+                                  (total, c) => total + (c.points || 0),
+                                  0,
+                                )
+                                .toLocaleString()
+                            : 0}
                         </p>
                       </div>
                       <CreditCard className="w-8 h-8 text-purple-600" />
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-white/80 backdrop-blur-sm border-white/20">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">{t('customers.averageSpent')}</p>
+                        <p className="text-sm font-medium text-gray-600">
+                          {t("customers.averageSpent")}
+                        </p>
                         <p className="text-2xl font-bold text-orange-600">
-                          {customersData && customersData.length > 0 
-                            ? Math.round(customersData.reduce((total, c) => total + parseFloat(c.totalSpent || '0'), 0) / customersData.length).toLocaleString()
-                            : '0'} ₫
+                          {customersData && customersData.length > 0
+                            ? Math.round(
+                                customersData.reduce(
+                                  (total, c) =>
+                                    total + parseFloat(c.totalSpent || "0"),
+                                  0,
+                                ) / customersData.length,
+                              ).toLocaleString()
+                            : "0"}{" "}
+                          ₫
                         </p>
                       </div>
                       <CreditCard className="w-8 h-8 text-orange-600" />
@@ -682,101 +876,131 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <UserCheck className="w-5 h-5 text-green-600" />
-                    {t('customers.customerManagement')}
+                    {t("customers.customerManagement")}
                   </CardTitle>
-                  <CardDescription>{t('customers.description')}</CardDescription>
+                  <CardDescription>
+                    {t("customers.description")}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
                       <Input
-                        placeholder={t('customers.searchPlaceholder')}
+                        placeholder={t("customers.searchPlaceholder")}
                         className="w-64"
                         value={customerSearchTerm}
                         onChange={(e) => setCustomerSearchTerm(e.target.value)}
                       />
                       <Button variant="outline" size="sm">
                         <Search className="w-4 h-4 mr-2" />
-                        {t('common.search')}
+                        {t("common.search")}
                       </Button>
                     </div>
-                    <Button 
+                    <Button
                       className="bg-green-600 hover:bg-green-700"
                       onClick={() => setShowCustomerForm(true)}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      {t('customers.addCustomer')}
+                      {t("customers.addCustomer")}
                     </Button>
                   </div>
 
                   {customersLoading ? (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">{t('customers.loadingCustomerData')}</p>
+                      <p className="text-gray-500">
+                        {t("customers.loadingCustomerData")}
+                      </p>
                     </div>
                   ) : filteredCustomers.length === 0 ? (
                     <div className="text-center py-8">
                       <UserCheck className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-500">{t('customers.noRegisteredCustomers')}</p>
+                      <p className="text-gray-500">
+                        {t("customers.noRegisteredCustomers")}
+                      </p>
                     </div>
                   ) : (
                     <div className="rounded-md border">
                       <div className="grid grid-cols-8 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                        <div>{t('customers.customerId')}</div>
-                        <div>{t('customers.name')}</div>
-                        <div>{t('customers.phone')}</div>
-                        <div>{t('customers.visitCount')}</div>
-                        <div>{t('customers.totalSpent')}</div>
-                        <div>{t('customers.points')}</div>
-                        <div>{t('customers.membershipLevel')}</div>
-                        <div className="text-center">{t('common.actions')}</div>
+                        <div>{t("customers.customerId")}</div>
+                        <div>{t("customers.name")}</div>
+                        <div>{t("customers.phone")}</div>
+                        <div>{t("customers.visitCount")}</div>
+                        <div>{t("customers.totalSpent")}</div>
+                        <div>{t("customers.points")}</div>
+                        <div>{t("customers.membershipLevel")}</div>
+                        <div className="text-center">{t("common.actions")}</div>
                       </div>
-                      
+
                       <div className="divide-y">
                         {filteredCustomers.map((customer) => (
-                          <div key={customer.id} className="grid grid-cols-8 gap-4 p-4 items-center">
-                            <div className="font-mono text-sm">{customer.customerId}</div>
+                          <div
+                            key={customer.id}
+                            className="grid grid-cols-8 gap-4 p-4 items-center"
+                          >
+                            <div className="font-mono text-sm">
+                              {customer.customerId}
+                            </div>
                             <div className="font-medium">{customer.name}</div>
-                            <div className="text-sm text-gray-600">{customer.phone || '-'}</div>
-                            <div className="text-center">{customer.visitCount || 0}</div>
-                            <div className="text-sm font-medium">{parseFloat(customer.totalSpent || '0').toLocaleString()} ₫</div>
-                            <div className="text-center font-medium text-purple-600">{customer.points || 0}</div>
+                            <div className="text-sm text-gray-600">
+                              {customer.phone || "-"}
+                            </div>
+                            <div className="text-center">
+                              {customer.visitCount || 0}
+                            </div>
+                            <div className="text-sm font-medium">
+                              {parseFloat(
+                                customer.totalSpent || "0",
+                              ).toLocaleString()}{" "}
+                              ₫
+                            </div>
+                            <div className="text-center font-medium text-purple-600">
+                              {customer.points || 0}
+                            </div>
                             <div>
-                              <Badge 
-                                variant="default" 
+                              <Badge
+                                variant="default"
                                 className={`${
-                                  customer.membershipLevel === 'VIP' ? 'bg-purple-500' :
-                                  customer.membershipLevel === 'GOLD' ? 'bg-yellow-500' :
-                                  customer.membershipLevel === 'SILVER' ? 'bg-gray-300 text-black' :
-                                  'bg-gray-400'
+                                  customer.membershipLevel === "VIP"
+                                    ? "bg-purple-500"
+                                    : customer.membershipLevel === "GOLD"
+                                      ? "bg-yellow-500"
+                                      : customer.membershipLevel === "SILVER"
+                                        ? "bg-gray-300 text-black"
+                                        : "bg-gray-400"
                                 } text-white`}
                               >
-                                {customer.membershipLevel === 'VIP' ? t('customers.vip') :
-                                 customer.membershipLevel === 'GOLD' ? t('customers.gold') :
-                                 customer.membershipLevel === 'SILVER' ? t('customers.silver') :
-                                 customer.membershipLevel}
+                                {customer.membershipLevel === "VIP"
+                                  ? t("customers.vip")
+                                  : customer.membershipLevel === "GOLD"
+                                    ? t("customers.gold")
+                                    : customer.membershipLevel === "SILVER"
+                                      ? t("customers.silver")
+                                      : customer.membershipLevel}
                               </Badge>
                             </div>
                             <div className="flex items-center justify-center gap-2">
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => handleEditCustomer(customer)}
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 className="text-blue-500 hover:text-blue-700"
                                 onClick={() => handleManagePoints(customer)}
                               >
                                 <CreditCard className="w-4 h-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 className="text-red-500 hover:text-red-700"
-                                onClick={() => handleDeleteCustomer(customer.id)}
+                                onClick={() =>
+                                  handleDeleteCustomer(customer.id)
+                                }
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -789,24 +1013,26 @@ export default function Settings() {
 
                   <div className="flex justify-between items-center mt-6">
                     <div className="text-sm text-gray-600">
-                      {t('employeesSettings.total')} {customersData ? customersData.length : 0}{t('customers.totalCustomersRegistered')}
+                      {t("employeesSettings.total")}{" "}
+                      {customersData ? customersData.length : 0}
+                      {t("customers.totalCustomersRegistered")}
                     </div>
                     <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => setShowMembershipModal(true)}
                       >
                         <UserCheck className="w-4 h-4 mr-2" />
-                        {t('customers.membershipManagement')}
+                        {t("customers.membershipManagement")}
                       </Button>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => setShowPointsManagementModal(true)}
                       >
                         <CreditCard className="w-4 h-4 mr-2" />
-                        {t('customers.pointsManagement')}
+                        {t("customers.pointsManagement")}
                       </Button>
                     </div>
                   </div>
@@ -824,33 +1050,49 @@ export default function Settings() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">{t('productManagement.totalCategories')}</p>
-                        <p className="text-2xl font-bold text-green-600">{categoriesData ? categoriesData.length : 0}</p>
+                        <p className="text-sm font-medium text-gray-600">
+                          {t("productManagement.totalCategories")}
+                        </p>
+                        <p className="text-2xl font-bold text-green-600">
+                          {categoriesData ? categoriesData.length : 0}
+                        </p>
                       </div>
                       <Tag className="w-8 h-8 text-green-600" />
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-white/80 backdrop-blur-sm border-white/20">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">{t('productManagement.totalProducts')}</p>
-                        <p className="text-2xl font-bold text-blue-600">{productsData ? productsData.length : 0}</p>
+                        <p className="text-sm font-medium text-gray-600">
+                          {t("productManagement.totalProducts")}
+                        </p>
+                        <p className="text-2xl font-bold text-blue-600">
+                          {productsData ? productsData.length : 0}
+                        </p>
                       </div>
                       <ShoppingCart className="w-8 h-8 text-blue-600" />
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 <Card className="bg-white/80 backdrop-blur-sm border-white/20">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-gray-600">재고 총량</p>
+                        <p className="text-sm font-medium text-gray-600">
+                          재고 총량
+                        </p>
                         <p className="text-2xl font-bold text-purple-600">
-                          {productsData ? productsData.reduce((total: number, product: any) => total + (product.stock || 0), 0) : 0}
+                          {productsData
+                            ? productsData.reduce(
+                                (total: number, product: any) =>
+                                  total + (product.stock || 0),
+                                0,
+                              )
+                            : 0}
                         </p>
                       </div>
                       <Package className="w-8 h-8 text-purple-600" />
@@ -864,23 +1106,22 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Tag className="w-5 h-5 text-green-600" />
-                    {t('productManagement.categoryTitle')}
+                    {t("productManagement.categoryTitle")}
                   </CardTitle>
-                  <CardDescription>{t('productManagement.categoryDescription')}</CardDescription>
+                  <CardDescription>
+                    {t("productManagement.categoryDescription")}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
-                      <Input
-                        placeholder="품목군 검색..."
-                        className="w-64"
-                      />
+                      <Input placeholder="품목군 검색..." className="w-64" />
                       <Button variant="outline" size="sm">
                         <Search className="w-4 h-4 mr-2" />
-                        {t('common.search')}
+                        {t("common.search")}
                       </Button>
                     </div>
-                    <Button 
+                    <Button
                       className="bg-green-600 hover:bg-green-700"
                       onClick={() => {
                         resetCategoryForm();
@@ -888,33 +1129,48 @@ export default function Settings() {
                       }}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      {t('productManagement.addCategory')}
+                      {t("productManagement.addCategory")}
                     </Button>
                   </div>
 
                   {categoriesLoading ? (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">{t('common.loading')}</p>
+                      <p className="text-gray-500">{t("common.loading")}</p>
                     </div>
                   ) : !categoriesData || categoriesData.length === 0 ? (
                     <div className="text-center py-8">
                       <Tag className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-500">{t('productManagement.noCategories')}</p>
+                      <p className="text-gray-500">
+                        {t("productManagement.noCategories")}
+                      </p>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {categoriesData.map((category: any) => (
-                        <Card key={category.id} className="border-2 hover:border-green-300 transition-colors">
+                        <Card
+                          key={category.id}
+                          className="border-2 hover:border-green-300 transition-colors"
+                        >
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                  <i className={`${category.icon} text-green-600`}></i>
+                                  <i
+                                    className={`${category.icon} text-green-600`}
+                                  ></i>
                                 </div>
                                 <div>
-                                  <h3 className="font-semibold">{category.name}</h3>
+                                  <h3 className="font-semibold">
+                                    {category.name}
+                                  </h3>
                                   <p className="text-sm text-gray-500">
-                                    {productsData ? productsData.filter((p: any) => p.categoryId === category.id).length : 0} 품목
+                                    {productsData
+                                      ? productsData.filter(
+                                          (p: any) =>
+                                            p.categoryId === category.id,
+                                        ).length
+                                      : 0}{" "}
+                                    품목
                                   </p>
                                 </div>
                               </div>
@@ -930,7 +1186,9 @@ export default function Settings() {
                                   variant="ghost"
                                   size="sm"
                                   className="text-red-500 hover:text-red-700"
-                                  onClick={() => handleDeleteCategory(category.id)}
+                                  onClick={() =>
+                                    handleDeleteCategory(category.id)
+                                  }
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -949,27 +1207,41 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <ShoppingCart className="w-5 h-5 text-green-600" />
-                    {t('productManagement.productTitle')}
+                    {t("productManagement.productTitle")}
                   </CardTitle>
-                  <CardDescription>{t('productManagement.productDescription')}</CardDescription>
+                  <CardDescription>
+                    {t("productManagement.productDescription")}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
                       <Input
-                        placeholder={t('productManagement.productNamePlaceholder')}
+                        placeholder={t(
+                          "productManagement.productNamePlaceholder",
+                        )}
                         className="w-64"
                         value={productSearchTerm}
                         onChange={(e) => setProductSearchTerm(e.target.value)}
                       />
-                      <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+                      <Select
+                        value={selectedCategoryFilter}
+                        onValueChange={setSelectedCategoryFilter}
+                      >
                         <SelectTrigger className="w-48">
-                          <SelectValue placeholder={t('productManagement.selectCategory')} />
+                          <SelectValue
+                            placeholder={t("productManagement.selectCategory")}
+                          />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">{t('productManagement.allCategories')}</SelectItem>
+                          <SelectItem value="all">
+                            {t("productManagement.allCategories")}
+                          </SelectItem>
                           {categoriesData?.map((category: any) => (
-                            <SelectItem key={category.id} value={category.id.toString()}>
+                            <SelectItem
+                              key={category.id}
+                              value={category.id.toString()}
+                            >
                               {category.name}
                             </SelectItem>
                           ))}
@@ -977,10 +1249,10 @@ export default function Settings() {
                       </Select>
                       <Button variant="outline" size="sm">
                         <Search className="w-4 h-4 mr-2" />
-                        {t('common.search')}
+                        {t("common.search")}
                       </Button>
                     </div>
-                    <Button 
+                    <Button
                       className="bg-green-600 hover:bg-green-700"
                       onClick={() => {
                         resetProductForm();
@@ -988,64 +1260,92 @@ export default function Settings() {
                       }}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      {t('productManagement.addProduct')}
+                      {t("productManagement.addProduct")}
                     </Button>
                   </div>
 
                   {productsLoading ? (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">{t('common.loading')}</p>
+                      <p className="text-gray-500">{t("common.loading")}</p>
                     </div>
                   ) : filteredProducts.length === 0 ? (
                     <div className="text-center py-8">
                       <ShoppingCart className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-500">{t('productManagement.noProducts')}</p>
+                      <p className="text-gray-500">
+                        {t("productManagement.noProducts")}
+                      </p>
                     </div>
                   ) : (
                     <div className="rounded-md border">
                       <div className="grid grid-cols-7 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                        <div>{t('productManagement.productName')}</div>
-                        <div>{t('productManagement.productSku')}</div>
-                        <div>{t('productManagement.productCategory')}</div>
-                        <div>{t('productManagement.productPrice')}</div>
-                        <div>{t('productManagement.productStock')}</div>
+                        <div>{t("productManagement.productName")}</div>
+                        <div>{t("productManagement.productSku")}</div>
+                        <div>{t("productManagement.productCategory")}</div>
+                        <div>{t("productManagement.productPrice")}</div>
+                        <div>{t("productManagement.productStock")}</div>
                         <div>상태</div>
-                        <div className="text-center">{t('common.actions')}</div>
+                        <div className="text-center">{t("common.actions")}</div>
                       </div>
-                      
+
                       <div className="divide-y">
                         {filteredProducts.map((product: any) => {
-                          const category = categoriesData?.find((c: any) => c.id === product.categoryId);
+                          const category = categoriesData?.find(
+                            (c: any) => c.id === product.categoryId,
+                          );
                           return (
-                            <div key={product.id} className="grid grid-cols-7 gap-4 p-4 items-center">
+                            <div
+                              key={product.id}
+                              className="grid grid-cols-7 gap-4 p-4 items-center"
+                            >
                               <div className="font-medium">{product.name}</div>
-                              <div className="font-mono text-sm">{product.sku}</div>
-                              <div className="text-sm">
-                                <Badge variant="outline">{category?.name || 'N/A'}</Badge>
+                              <div className="font-mono text-sm">
+                                {product.sku}
                               </div>
-                              <div className="font-medium">{parseFloat(product.price || '0').toLocaleString()} ₫</div>
-                              <div className="text-center">{product.stock || 0}</div>
+                              <div className="text-sm">
+                                <Badge variant="outline">
+                                  {category?.name || "N/A"}
+                                </Badge>
+                              </div>
+                              <div className="font-medium">
+                                {parseFloat(
+                                  product.price || "0",
+                                ).toLocaleString()}{" "}
+                                ₫
+                              </div>
+                              <div className="text-center">
+                                {product.stock || 0}
+                              </div>
                               <div>
-                                <Badge 
-                                  variant={product.stock > 0 ? "default" : "destructive"}
-                                  className={product.stock > 0 ? "bg-green-100 text-green-800" : ""}
+                                <Badge
+                                  variant={
+                                    product.stock > 0
+                                      ? "default"
+                                      : "destructive"
+                                  }
+                                  className={
+                                    product.stock > 0
+                                      ? "bg-green-100 text-green-800"
+                                      : ""
+                                  }
                                 >
-                                  {product.stock > 0 ? '재고있음' : '품절'}
+                                  {product.stock > 0 ? "재고있음" : "품절"}
                                 </Badge>
                               </div>
                               <div className="flex items-center justify-center gap-2">
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
                                   onClick={() => handleEditProduct(product)}
                                 >
                                   <Edit className="w-4 h-4" />
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
                                   className="text-red-500 hover:text-red-700"
-                                  onClick={() => handleDeleteProduct(product.id)}
+                                  onClick={() =>
+                                    handleDeleteProduct(product.id)
+                                  }
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
@@ -1059,7 +1359,8 @@ export default function Settings() {
 
                   <div className="flex justify-between items-center mt-6">
                     <div className="text-sm text-gray-600">
-                      {t('employeesSettings.total')} {filteredProducts.length}개 품목 표시 중
+                      {t("employeesSettings.total")} {filteredProducts.length}개
+                      품목 표시 중
                     </div>
                   </div>
                 </CardContent>
@@ -1074,73 +1375,111 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="w-5 h-5 text-green-600" />
-                    {t('settings.employeeManagement')}
+                    {t("settings.employeeManagement")}
                   </CardTitle>
-                  <CardDescription>{t('settings.employeeManagementDesc')}</CardDescription>
+                  <CardDescription>
+                    {t("settings.employeeManagementDesc")}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
                       <Input
-                        placeholder={t('employees.searchPlaceholder')}
+                        placeholder={t("employees.searchPlaceholder")}
                         className="w-64"
                       />
                       <Button variant="outline" size="sm">
                         <Search className="w-4 h-4 mr-2" />
-                        {t('common.search')}
+                        {t("common.search")}
                       </Button>
                     </div>
-                    <Button 
+                    <Button
                       className="bg-green-600 hover:bg-green-700"
                       onClick={() => setShowEmployeeForm(true)}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      {t('employees.addEmployee')}
+                      {t("employees.addEmployee")}
                     </Button>
                   </div>
 
                   {employeesLoading ? (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">{t('employeesSettings.loadingEmployeeData')}</p>
+                      <p className="text-gray-500">
+                        {t("employeesSettings.loadingEmployeeData")}
+                      </p>
                     </div>
                   ) : !employeesData || employeesData.length === 0 ? (
                     <div className="text-center py-8">
                       <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-500">{t('employeesSettings.noRegisteredEmployees')}</p>
-                      <p className="text-sm text-gray-400 mt-2">{t('employeesSettings.addEmployeeToStart')}</p>
+                      <p className="text-gray-500">
+                        {t("employeesSettings.noRegisteredEmployees")}
+                      </p>
+                      <p className="text-sm text-gray-400 mt-2">
+                        {t("employeesSettings.addEmployeeToStart")}
+                      </p>
                     </div>
                   ) : (
                     <div className="rounded-md border">
                       <div className="grid grid-cols-6 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                        <div>{t('employees.employeeId')}</div>
-                        <div>{t('employees.name')}</div>
-                        <div>{t('employees.role')}</div>
-                        <div>{t('employees.phone')}</div>
-                        <div>{t('employees.status')}</div>
-                        <div className="text-center">{t('common.actions')}</div>
+                        <div>{t("employees.employeeId")}</div>
+                        <div>{t("employees.name")}</div>
+                        <div>{t("employees.role")}</div>
+                        <div>{t("employees.phone")}</div>
+                        <div>{t("employees.status")}</div>
+                        <div className="text-center">{t("common.actions")}</div>
                       </div>
-                      
+
                       <div className="divide-y">
                         {employeesData.map((employee: any) => (
-                          <div key={employee.id} className="grid grid-cols-6 gap-4 p-4 items-center">
-                            <div className="font-mono text-sm">{employee.employeeId}</div>
+                          <div
+                            key={employee.id}
+                            className="grid grid-cols-6 gap-4 p-4 items-center"
+                          >
+                            <div className="font-mono text-sm">
+                              {employee.employeeId}
+                            </div>
                             <div className="font-medium">{employee.name}</div>
                             <div>
-                              <Badge variant={employee.role === 'admin' ? 'destructive' : employee.role === 'manager' ? 'default' : 'secondary'}>
-                                {employee.role === 'admin' ? t('employeesSettings.admin') : 
-                                 employee.role === 'manager' ? t('employeesSettings.manager') : 
-                                 employee.role === 'cashier' ? t('employeesSettings.cashier') : employee.role}
+                              <Badge
+                                variant={
+                                  employee.role === "admin"
+                                    ? "destructive"
+                                    : employee.role === "manager"
+                                      ? "default"
+                                      : "secondary"
+                                }
+                              >
+                                {employee.role === "admin"
+                                  ? t("employeesSettings.admin")
+                                  : employee.role === "manager"
+                                    ? t("employeesSettings.manager")
+                                    : employee.role === "cashier"
+                                      ? t("employeesSettings.cashier")
+                                      : employee.role}
                               </Badge>
                             </div>
-                            <div className="text-sm text-gray-600">{employee.phone || '-'}</div>
+                            <div className="text-sm text-gray-600">
+                              {employee.phone || "-"}
+                            </div>
                             <div>
-                              <Badge variant={employee.isActive ? "default" : "secondary"} className={employee.isActive ? "bg-green-100 text-green-800" : ""}>
-                                {employee.isActive ? t('employeesSettings.active') : t('employeesSettings.inactive')}
+                              <Badge
+                                variant={
+                                  employee.isActive ? "default" : "secondary"
+                                }
+                                className={
+                                  employee.isActive
+                                    ? "bg-green-100 text-green-800"
+                                    : ""
+                                }
+                              >
+                                {employee.isActive
+                                  ? t("employeesSettings.active")
+                                  : t("employeesSettings.inactive")}
                               </Badge>
                             </div>
                             <div className="flex items-center justify-center gap-2">
-                              <Button 
-                                variant="ghost" 
+                              <Button
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => {
                                   setEditingEmployee(employee);
@@ -1149,25 +1488,41 @@ export default function Settings() {
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 className="text-red-500 hover:text-red-700"
                                 onClick={() => {
-                                  if (confirm(`${t('employeesSettings.deleteConfirm')} ${employee.name} ${t('employeesSettings.employeeDeleteConfirm')}`)) {
-                                    fetch(`/api/employees/${employee.id}`, { method: 'DELETE' })
+                                  if (
+                                    confirm(
+                                      `${t("employeesSettings.deleteConfirm")} ${employee.name} ${t("employeesSettings.employeeDeleteConfirm")}`,
+                                    )
+                                  ) {
+                                    fetch(`/api/employees/${employee.id}`, {
+                                      method: "DELETE",
+                                    })
                                       .then(() => {
-                                        queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+                                        queryClient.invalidateQueries({
+                                          queryKey: ["/api/employees"],
+                                        });
                                         toast({
-                                          title: t('employeesSettings.deleteSuccess'),
-                                          description: t('employeesSettings.employeeDeleted'),
+                                          title: t(
+                                            "employeesSettings.deleteSuccess",
+                                          ),
+                                          description: t(
+                                            "employeesSettings.employeeDeleted",
+                                          ),
                                         });
                                       })
                                       .catch(() => {
                                         toast({
-                                          title: t('employeesSettings.deleteError'),
-                                          description: t('employeesSettings.employeeDeleteFailed'),
-                                          variant: 'destructive',
+                                          title: t(
+                                            "employeesSettings.deleteError",
+                                          ),
+                                          description: t(
+                                            "employeesSettings.employeeDeleteFailed",
+                                          ),
+                                          variant: "destructive",
                                         });
                                       });
                                   }
@@ -1184,16 +1539,18 @@ export default function Settings() {
 
                   <div className="flex justify-between items-center mt-6">
                     <div className="text-sm text-gray-600">
-                      {t('employeesSettings.total')} {employeesData ? employeesData.length : 0}{t('employeesSettings.totalEmployeesRegistered')}
+                      {t("employeesSettings.total")}{" "}
+                      {employeesData ? employeesData.length : 0}
+                      {t("employeesSettings.totalEmployeesRegistered")}
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm">
                         <Users className="w-4 h-4 mr-2" />
-                        {t('settings.goToEmployees')}
+                        {t("settings.goToEmployees")}
                       </Button>
                       <Button variant="outline" size="sm">
                         <Clock className="w-4 h-4 mr-2" />
-                        {t('attendance.title')}
+                        {t("attendance.title")}
                       </Button>
                     </div>
                   </div>
@@ -1208,32 +1565,36 @@ export default function Settings() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="w-5 h-5 text-green-600" />
-                  {t('settings.paymentMethods')}
+                  {t("settings.paymentMethods")}
                 </CardTitle>
-                <CardDescription>{t('settings.paymentMethodsDesc')}</CardDescription>
+                <CardDescription>
+                  {t("settings.paymentMethodsDesc")}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">{t('settings.availablePayments')}</h3>
-                    <Button 
+                    <h3 className="text-lg font-medium">
+                      {t("settings.availablePayments")}
+                    </h3>
+                    <Button
                       onClick={addPaymentMethod}
                       size="sm"
                       className="bg-green-600 hover:bg-green-700"
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      {t('settings.addPayment')}
+                      {t("settings.addPayment")}
                     </Button>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {paymentMethods.map((method) => (
                       <div
                         key={method.id}
                         className={`p-4 rounded-lg border-2 transition-all ${
                           method.enabled
-                            ? 'border-green-200 bg-green-50'
-                            : 'border-gray-200 bg-gray-50'
+                            ? "border-green-200 bg-green-50"
+                            : "border-gray-200 bg-gray-50"
                         }`}
                       >
                         <div className="flex items-center justify-between mb-3">
@@ -1246,7 +1607,9 @@ export default function Settings() {
                           <div className="flex items-center gap-2">
                             <Switch
                               checked={method.enabled}
-                              onCheckedChange={() => togglePaymentMethod(method.id)}
+                              onCheckedChange={() =>
+                                togglePaymentMethod(method.id)
+                              }
                             />
                             <Button
                               size="sm"
@@ -1258,8 +1621,12 @@ export default function Settings() {
                             </Button>
                           </div>
                         </div>
-                        <Badge variant={method.enabled ? "default" : "secondary"}>
-                          {method.enabled ? t('settings.enabled') : t('settings.disabled')}
+                        <Badge
+                          variant={method.enabled ? "default" : "secondary"}
+                        >
+                          {method.enabled
+                            ? t("settings.enabled")
+                            : t("settings.disabled")}
                         </Badge>
                       </div>
                     ))}
@@ -1268,7 +1635,7 @@ export default function Settings() {
                   <div className="flex justify-end mt-6">
                     <Button className="bg-green-600 hover:bg-green-700">
                       <Save className="w-4 h-4 mr-2" />
-                      {t('common.save')}
+                      {t("common.save")}
                     </Button>
                   </div>
                 </div>
@@ -1323,32 +1690,38 @@ export default function Settings() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
-              {editingCategory ? t('productManagement.editCategory') : t('productManagement.addCategory')}
+              {editingCategory
+                ? t("productManagement.editCategory")
+                : t("productManagement.addCategory")}
             </DialogTitle>
             <DialogDescription>
-              {t('productManagement.categoryDescription')}
+              {t("productManagement.categoryDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="categoryName" className="text-right">
-                {t('productManagement.categoryName')}
+                {t("productManagement.categoryName")}
               </Label>
               <Input
                 id="categoryName"
                 value={categoryForm.name}
-                onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setCategoryForm((prev) => ({ ...prev, name: e.target.value }))
+                }
                 className="col-span-3"
-                placeholder={t('productManagement.categoryNamePlaceholder')}
+                placeholder={t("productManagement.categoryNamePlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="categoryIcon" className="text-right">
-                {t('productManagement.categoryIcon')}
+                {t("productManagement.categoryIcon")}
               </Label>
-              <Select 
-                value={categoryForm.icon} 
-                onValueChange={(value) => setCategoryForm(prev => ({ ...prev, icon: value }))}
+              <Select
+                value={categoryForm.icon}
+                onValueChange={(value) =>
+                  setCategoryForm((prev) => ({ ...prev, icon: value }))
+                }
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue />
@@ -1365,14 +1738,19 @@ export default function Settings() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCategoryForm(false)}>
-              {t('common.cancel')}
+            <Button
+              variant="outline"
+              onClick={() => setShowCategoryForm(false)}
+            >
+              {t("common.cancel")}
             </Button>
-            <Button 
-              onClick={editingCategory ? handleUpdateCategory : handleCreateCategory}
+            <Button
+              onClick={
+                editingCategory ? handleUpdateCategory : handleCreateCategory
+              }
               className="bg-green-600 hover:bg-green-700"
             >
-              {editingCategory ? t('common.update') : t('common.create')}
+              {editingCategory ? t("common.update") : t("common.create")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1383,51 +1761,64 @@ export default function Settings() {
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
-              {editingProduct ? t('productManagement.editProduct') : t('productManagement.addProduct')}
+              {editingProduct
+                ? t("productManagement.editProduct")
+                : t("productManagement.addProduct")}
             </DialogTitle>
             <DialogDescription>
-              {t('productManagement.productDescription')}
+              {t("productManagement.productDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productName" className="text-right">
-                {t('productManagement.productName')}
+                {t("productManagement.productName")}
               </Label>
               <Input
                 id="productName"
                 value={productForm.name}
-                onChange={(e) => setProductForm(prev => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setProductForm((prev) => ({ ...prev, name: e.target.value }))
+                }
                 className="col-span-3"
-                placeholder={t('productManagement.productNamePlaceholder')}
+                placeholder={t("productManagement.productNamePlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productSku" className="text-right">
-                {t('productManagement.productSku')}
+                {t("productManagement.productSku")}
               </Label>
               <Input
                 id="productSku"
                 value={productForm.sku}
-                onChange={(e) => setProductForm(prev => ({ ...prev, sku: e.target.value }))}
+                onChange={(e) =>
+                  setProductForm((prev) => ({ ...prev, sku: e.target.value }))
+                }
                 className="col-span-3"
-                placeholder={t('productManagement.productSkuPlaceholder')}
+                placeholder={t("productManagement.productSkuPlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productCategory" className="text-right">
-                {t('productManagement.productCategory')}
+                {t("productManagement.productCategory")}
               </Label>
-              <Select 
-                value={productForm.categoryId} 
-                onValueChange={(value) => setProductForm(prev => ({ ...prev, categoryId: value }))}
+              <Select
+                value={productForm.categoryId}
+                onValueChange={(value) =>
+                  setProductForm((prev) => ({ ...prev, categoryId: value }))
+                }
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder={t('productManagement.selectCategory')} />
+                  <SelectValue
+                    placeholder={t("productManagement.selectCategory")}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {categoriesData?.map((category: any) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
+                    <SelectItem
+                      key={category.id}
+                      value={category.id.toString()}
+                    >
                       {category.name}
                     </SelectItem>
                   ))}
@@ -1436,29 +1827,33 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productPrice" className="text-right">
-                {t('productManagement.productPrice')}
+                {t("productManagement.productPrice")}
               </Label>
               <Input
                 id="productPrice"
                 type="number"
                 step="0.01"
                 value={productForm.price}
-                onChange={(e) => setProductForm(prev => ({ ...prev, price: e.target.value }))}
+                onChange={(e) =>
+                  setProductForm((prev) => ({ ...prev, price: e.target.value }))
+                }
                 className="col-span-3"
-                placeholder={t('productManagement.productPricePlaceholder')}
+                placeholder={t("productManagement.productPricePlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productStock" className="text-right">
-                {t('productManagement.productStock')}
+                {t("productManagement.productStock")}
               </Label>
               <Input
                 id="productStock"
                 type="number"
                 value={productForm.stock}
-                onChange={(e) => setProductForm(prev => ({ ...prev, stock: e.target.value }))}
+                onChange={(e) =>
+                  setProductForm((prev) => ({ ...prev, stock: e.target.value }))
+                }
                 className="col-span-3"
-                placeholder={t('productManagement.productStockPlaceholder')}
+                placeholder={t("productManagement.productStockPlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -1468,7 +1863,12 @@ export default function Settings() {
               <Textarea
                 id="productDescription"
                 value={productForm.description}
-                onChange={(e) => setProductForm(prev => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setProductForm((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
                 className="col-span-3"
                 placeholder="품목 설명을 입력하세요 (선택사항)"
                 rows={3}
@@ -1477,13 +1877,15 @@ export default function Settings() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowProductForm(false)}>
-              {t('common.cancel')}
+              {t("common.cancel")}
             </Button>
-            <Button 
-              onClick={editingProduct ? handleUpdateProduct : handleCreateProduct}
+            <Button
+              onClick={
+                editingProduct ? handleUpdateProduct : handleCreateProduct
+              }
               className="bg-green-600 hover:bg-green-700"
             >
-              {editingProduct ? t('common.update') : t('common.create')}
+              {editingProduct ? t("common.update") : t("common.create")}
             </Button>
           </DialogFooter>
         </DialogContent>
