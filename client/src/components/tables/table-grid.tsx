@@ -399,31 +399,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <p className="text-gray-500 text-center py-4">Đang tải dữ liệu...</p>
                   ) : (
                     <>
-                      {/* Debug info and refetch button */}
-                      <div className="text-xs text-blue-600 p-2 bg-blue-50 rounded mb-2">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <p>Debug - Order ID: {selectedOrder?.id}</p>
-                            <p>Debug - Items Loading: {orderItemsLoading ? 'yes' : 'no'}</p>
-                            <p>Debug - Items count: {orderItems?.length || 0}</p>
-                          </div>
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => {
-                              console.log('Manual refetch triggered for order:', selectedOrder?.id);
-                              refetchOrderItems();
-                            }}
-                            disabled={orderItemsLoading}
-                          >
-                            {orderItemsLoading ? 'Loading...' : 'Tải lại'}
-                          </Button>
-                        </div>
-                        {orderItems && orderItems.length > 0 && (
-                          <p>Debug - First item: {orderItems[0]?.productName || 'No name'}</p>
-                        )}
-                      </div>
-
                       {(() => {
                         console.log('=== RENDER CHECK ULTRA DETAILED ===');
                         console.log('Raw orderItems data:', orderItems);
