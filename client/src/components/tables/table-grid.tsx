@@ -24,7 +24,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [paymentMethodsOpen, setPaymentMethodsOpen] = useState(false);
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
 
   const { data: tables, isLoading } = useQuery({
@@ -307,10 +307,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <div className="space-y-1 text-xs text-gray-600">
                       <div className="flex items-center justify-center">
                         <Clock className="w-3 h-3 mr-1" />
-                        {new Date(activeOrder.orderedAt).toLocaleTimeString('ko-KR', {
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
+                        {new Date(activeOrder.orderedAt).toLocaleTimeString(
+                          currentLanguage === 'ko' ? 'ko-KR' :
+                          currentLanguage === 'en' ? 'en-US' :
+                          'vi-VN',
+                          {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }
+                        )}
                       </div>
                       <div className="font-medium">
                         ₩{Number(activeOrder.total).toLocaleString()}
@@ -377,10 +382,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <div>
                   <p className="text-sm text-gray-600">Thời gian:</p>
                   <p className="font-medium">
-                    {new Date(selectedOrder.orderedAt).toLocaleTimeString('vi-VN', {
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
+                    {new Date(selectedOrder.orderedAt).toLocaleTimeString(
+                      currentLanguage === 'ko' ? 'ko-KR' :
+                      currentLanguage === 'en' ? 'en-US' :
+                      'vi-VN',
+                      {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }
+                    )}
                   </p>
                 </div>
                 <div>
