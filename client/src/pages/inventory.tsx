@@ -200,31 +200,29 @@ export default function InventoryPage() {
 
           {/* Products Table */}
           <Card className="border-green-200">
-            <CardHeader className="flex ml-auto">
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-left">{t('inventory.stockStatus')}</CardTitle>
-              <div className="ml-auto"> {/* Use ml-auto to push the button to the right */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    // Create a placeholder product for adding new items
-                    const newProduct: Product = {
-                      id: 0,
-                      name: "",
-                      sku: "",
-                      categoryId: 1,
-                      price: "0",
-                      stock: 0,
-                      imageUrl: null,
-                      isActive: true
-                    };
-                    handleStockUpdate(newProduct);
-                  }}
-                  className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                >
-                  Thêm mặt hàng
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Create a placeholder product for adding new items
+                  const newProduct: Product = {
+                    id: 0,
+                    name: "",
+                    sku: "",
+                    categoryId: 1,
+                    price: "0",
+                    stock: 0,
+                    imageUrl: null,
+                    isActive: true
+                  };
+                  handleStockUpdate(newProduct);
+                }}
+                className="text-blue-600 border-blue-300 hover:bg-blue-50"
+              >
+                Thêm mặt hàng
+              </Button>
             </CardHeader>
             <CardContent>
               {productsLoading ? (
