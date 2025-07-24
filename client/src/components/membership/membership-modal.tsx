@@ -266,7 +266,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
                             </Badge>
                           )}
                         </div>
-                        <div className="text-sm">₩{totalSpent.toLocaleString()}</div>
+                        <div className="text-sm">{totalSpent.toLocaleString()} ₫</div>
                         <div className="text-sm">{customer.visitCount || 0}회</div>
                         <div className="text-sm">{customer.points || 0}P</div>
                         <div className="flex items-center justify-center gap-2">

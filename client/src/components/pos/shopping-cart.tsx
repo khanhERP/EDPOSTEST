@@ -91,7 +91,7 @@ export function ShoppingCart({
               )}
               <div className="flex-1">
                 <h4 className="font-medium pos-text-primary">{item.name}</h4>
-                <p className="text-sm pos-text-secondary">${item.price} each</p>
+                <p className="text-sm pos-text-secondary">{parseFloat(item.price).toLocaleString()} ₫ each</p>
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center space-x-2">
                     <Button
@@ -115,7 +115,7 @@ export function ShoppingCart({
                     </Button>
                   </div>
                   <div className="text-right">
-                    <div className="font-bold pos-text-primary">${item.total}</div>
+                    <div className="font-bold pos-text-primary">{item.total.toLocaleString()} ₫</div>
                     <button 
                       onClick={() => onRemoveItem(item.id)}
                       className="text-xs text-red-500 hover:text-red-700 transition-colors"
@@ -135,16 +135,16 @@ export function ShoppingCart({
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="pos-text-secondary">Subtotal:</span>
-              <span className="font-medium">${subtotal.toFixed(2)}</span>
+              <span className="font-medium">{subtotal.toLocaleString()} ₫</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="pos-text-secondary">Tax (8.25%):</span>
-              <span className="font-medium">${tax.toFixed(2)}</span>
+              <span className="font-medium">{tax.toLocaleString()} ₫</span>
             </div>
             <div className="border-t pt-2">
               <div className="flex justify-between">
                 <span className="text-lg font-bold pos-text-primary">Total:</span>
-                <span className="text-lg font-bold text-blue-600">${total.toFixed(2)}</span>
+                <span className="text-lg font-bold text-blue-600">{total.toLocaleString()} ₫</span>
               </div>
             </div>
           </div>

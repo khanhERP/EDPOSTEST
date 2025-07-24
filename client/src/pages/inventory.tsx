@@ -150,7 +150,7 @@ export default function InventoryPage() {
                 <TrendingUp className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">₩{totalValue.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-green-600">{totalValue.toLocaleString()} ₫</div>
               </CardContent>
             </Card>
           </div>
@@ -273,10 +273,10 @@ export default function InventoryPage() {
                               </Badge>
                             </td>
                             <td className="py-4 px-4 text-right text-gray-900">
-                              ₩{parseFloat(product.price).toLocaleString()}
+                              {parseFloat(product.price).toLocaleString()} ₫
                             </td>
                             <td className="py-4 px-4 text-right font-medium text-gray-900">
-                              ₩{stockValue.toLocaleString()}
+                              {stockValue.toLocaleString()} ₫
                             </td>
                             <td className="py-4 px-4 text-center">
                               <Button

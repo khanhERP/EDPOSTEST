@@ -664,9 +664,9 @@ export default function Settings() {
                       <div>
                         <p className="text-sm font-medium text-gray-600">{t('customers.averageSpent')}</p>
                         <p className="text-2xl font-bold text-orange-600">
-                          ₩{customersData && customersData.length > 0 
+                          {customersData && customersData.length > 0 
                             ? Math.round(customersData.reduce((total, c) => total + parseFloat(c.totalSpent || '0'), 0) / customersData.length).toLocaleString()
-                            : '0'}
+                            : '0'} ₫
                         </p>
                       </div>
                       <CreditCard className="w-8 h-8 text-orange-600" />
@@ -736,7 +736,7 @@ export default function Settings() {
                             <div className="font-medium">{customer.name}</div>
                             <div className="text-sm text-gray-600">{customer.phone || '-'}</div>
                             <div className="text-center">{customer.visitCount || 0}</div>
-                            <div className="text-sm font-medium">₩{parseFloat(customer.totalSpent || '0').toLocaleString()}</div>
+                            <div className="text-sm font-medium">{parseFloat(customer.totalSpent || '0').toLocaleString()} ₫</div>
                             <div className="text-center font-medium text-purple-600">{customer.points || 0}</div>
                             <div>
                               <Badge 
@@ -1017,7 +1017,7 @@ export default function Settings() {
                               <div className="text-sm">
                                 <Badge variant="outline">{category?.name || 'N/A'}</Badge>
                               </div>
-                              <div className="font-medium">₩{parseFloat(product.price || '0').toLocaleString()}</div>
+                              <div className="font-medium">{parseFloat(product.price || '0').toLocaleString()} ₫</div>
                               <div className="text-center">{product.stock || 0}</div>
                               <div>
                                 <Badge 

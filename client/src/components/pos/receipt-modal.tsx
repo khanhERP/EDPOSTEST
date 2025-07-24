@@ -79,10 +79,10 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
                   <div className="flex-1">
                     <div>{item.productName}</div>
                     <div className="text-xs text-gray-600">
-                      {item.quantity} x ${item.price}
+                      {item.quantity} x {item.price} ₫
                     </div>
                   </div>
-                  <div>${item.total}</div>
+                  <div>{item.total} ₫</div>
                 </div>
               </div>
             ))}
@@ -91,15 +91,15 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
           <div className="border-t border-gray-300 pt-2 space-y-1">
             <div className="flex justify-between text-sm">
               <span>Subtotal:</span>
-              <span>${receipt.subtotal}</span>
+              <span>{receipt.subtotal} ₫</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Tax (8.25%):</span>
-              <span>${receipt.tax}</span>
+              <span>{receipt.tax} ₫</span>
             </div>
             <div className="flex justify-between font-bold">
               <span>Total:</span>
-              <span>${receipt.total}</span>
+              <span>{receipt.total} ₫</span>
             </div>
             <div className="flex justify-between text-sm mt-2">
               <span>Payment Method:</span>
@@ -108,13 +108,13 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
             {receipt.amountReceived && (
               <div className="flex justify-between text-sm">
                 <span>Amount Received:</span>
-                <span>${receipt.amountReceived}</span>
+                <span>{receipt.amountReceived} ₫</span>
               </div>
             )}
             {receipt.change && parseFloat(receipt.change) > 0 && (
               <div className="flex justify-between text-sm">
                 <span>Change:</span>
-                <span>${receipt.change}</span>
+                <span>{receipt.change} ₫</span>
               </div>
             )}
           </div>

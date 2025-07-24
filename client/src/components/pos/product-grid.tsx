@@ -216,7 +216,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                     <h3 className="font-medium pos-text-primary mb-1 line-clamp-2">{product.name}</h3>
                     <p className="text-sm pos-text-secondary mb-2">SKU: {product.sku}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-green-600">${product.price}</span>
+                      <span className="text-lg font-bold text-green-600">{parseFloat(product.price).toLocaleString()} ₫</span>
                       <span className={`text-xs font-medium ${stockStatus.color}`}>
                         {stockStatus.text}
                       </span>

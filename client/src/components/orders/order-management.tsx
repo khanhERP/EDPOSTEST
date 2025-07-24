@@ -76,10 +76,7 @@ export function OrderManagement() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ko-KR', {
-      style: 'currency',
-      currency: 'KRW'
-    }).format(amount);
+    return `${amount.toLocaleString()} ₫`;
   };
 
   const formatTime = (dateString: string | Date) => {
@@ -328,16 +325,16 @@ export function OrderManagement() {
                   <div className="space-y-1 text-sm">
                     <div className="flex justify-between">
                       <span>Subtotal:</span>
-                      <span>₩{Number(selectedOrder.subtotal).toLocaleString()}</span>
+                      <span>{Number(selectedOrder.subtotal).toLocaleString()} ₫</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Tax:</span>
-                      <span>₩{Number(selectedOrder.tax).toLocaleString()}</span>
+                      <span>{Number(selectedOrder.tax).toLocaleString()} ₫</span>
                     </div>
                     <Separator />
                     <div className="flex justify-between font-medium">
                       <span>{t('orders.totalAmount')}:</span>
-                      <span>₩{Number(selectedOrder.total).toLocaleString()}</span>
+                      <span>{Number(selectedOrder.total).toLocaleString()} ₫</span>
                     </div>
                   </div>
                 </div>
