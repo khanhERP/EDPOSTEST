@@ -247,6 +247,9 @@ export interface CustomersTranslations {
   female: string;
   other: string;
   address: string;
+  gold: string;
+  silver: string;
+  vip: string;
 }
 
 // Employees translations interface
