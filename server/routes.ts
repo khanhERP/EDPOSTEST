@@ -142,28 +142,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Received transaction data:", JSON.stringify({ transaction, items }, null, 2));
 
-      // Transform string numbers to actual numbers for validation
-      const transformedTransaction = {
-        ...transaction,
-        subtotal: parseFloat(transaction.subtotal),
-        tax: parseFloat(transaction.tax),
-        total: parseFloat(transaction.total),
-        amountReceived: transaction.amountReceived ? parseFloat(transaction.amountReceived) : undefined,
-        change: transaction.change ? parseFloat(transaction.change) : undefined,
-      };
+      // Validate with original string format, then transform
+      const validatedTransaction = insertTransactionSchema.parse(transaction);
+      const validatedItems = z.array(insertTransactionItemSchema).parse(items);
 
-      const transformedItems = items.map((item: any) => ({
-        productId: item.productId,
-        productName: item.productName,
-        price: parseFloat(item.price),
-        quantity: parseInt(item.quantity),
-        total: parseFloat(item.total),
-      }));
-
-      console.log("Transformed data:", JSON.stringify({ transformedTransaction, transformedItems }, null, 2));
-
-      const validatedTransaction = insertTransactionSchema.parse(transformedTransaction);
-      const validatedItems = z.array(insertTransactionItemSchema).parse(transformedItems);
+      console.log("Validated data:", JSON.stringify({ validatedTransaction, validatedItems }, null, 2));
 
       // Validate stock availability
       for (const item of validatedItems) {
