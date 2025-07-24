@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { POSHeader } from "@/components/pos/header";
 import { RightSidebar } from "@/components/ui/right-sidebar";
-import { useTranslation } from "@/lib/i18n/index";
+import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import type { Product, Category } from "@shared/schema";
 
@@ -59,19 +59,13 @@ const stockUpdateSchema = z.object({
 type StockUpdateForm = z.infer<typeof stockUpdateSchema>;
 
 export default function InventoryPage() {
-  const { t, currentLanguage } = useTranslation();
+  const { t } = useTranslation();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [stockFilter, setStockFilter] = useState<string>("all");
   const [showStockDialog, setShowStockDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [renderKey, setRenderKey] = useState(0);
-
-  // Force component to re-render when language changes
-  useEffect(() => {
-    setRenderKey(prev => prev + 1);
-  }, [currentLanguage]);
 
   const queryClient = useQueryClient();
 
