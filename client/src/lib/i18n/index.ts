@@ -32,16 +32,16 @@ function getNestedTranslation(obj: any, key: string): string | undefined {
 }
 
 export function useTranslation() {
-  const { currentLanguage, setLanguage } = useLanguageStore();
+  const currentLanguage = useLanguageStore(state => state.currentLanguage);
+  const setLanguage = useLanguageStore(state => state.setLanguage);
 
   const t = (key: TranslationKey): string => {
-    // Force dependency on currentLanguage for proper reactivity
-    const lang = currentLanguage;
-    const value = getNestedTranslation(translations[lang], key);
+    // Force re-render by explicitly using currentLanguage
+    const value = getNestedTranslation(translations[currentLanguage], key);
 
     // Development-time validation
     if (!value && import.meta.env.DEV) {
-      console.warn(`Missing translation key: ${key} in language: ${lang}`);
+      console.warn(`Missing translation key: ${key} in language: ${currentLanguage}`);
     }
 
     return value || key;

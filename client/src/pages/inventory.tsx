@@ -59,7 +59,7 @@ const stockUpdateSchema = z.object({
 type StockUpdateForm = z.infer<typeof stockUpdateSchema>;
 
 export default function InventoryPage() {
-  const { t, currentLanguage } = useTranslation();
+  const { t } = useTranslation();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");

@@ -20,10 +20,15 @@ export function LanguageSwitcher() {
   const currentLang = languages.find(lang => lang.code === currentLanguage);
 
   const handleLanguageChange = (langCode: Language) => {
-    console.log('언어 변경 클릭:', langCode);
-    console.log('이전 언어:', currentLanguage);
+    console.log('🌐 Language change clicked:', langCode);
+    console.log('🌐 Previous language:', currentLanguage);
     setLanguage(langCode);
-    console.log('언어 변경 완료:', langCode);
+    
+    // Force a small delay to ensure state propagation
+    setTimeout(() => {
+      console.log('🌐 Language change completed:', langCode);
+      console.log('🌐 Store state after change:', useLanguageStore.getState().currentLanguage);
+    }, 100);
   };
 
   return (
