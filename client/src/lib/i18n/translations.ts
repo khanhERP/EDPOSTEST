@@ -3,6 +3,7 @@ import { navigationTranslations } from './modules/navigation';
 import { reportsTranslations } from './modules/reports';
 import { settingsTranslations } from './modules/settings';
 import { notFoundTranslations } from './modules/notFound';
+import { ordersTranslations } from './modules/orders';
 import type { LanguageTranslations } from './types';
 
 export const translations: LanguageTranslations = {
@@ -12,6 +13,7 @@ export const translations: LanguageTranslations = {
     reports: reportsTranslations.ko,
     settings: settingsTranslations.ko,
     notFound: notFoundTranslations.ko,
+    orders: ordersTranslations.ko,
   },
   en: {
     common: commonTranslations.en,
@@ -19,6 +21,7 @@ export const translations: LanguageTranslations = {
     reports: reportsTranslations.en,
     settings: settingsTranslations.en,
     notFound: notFoundTranslations.en,
+    orders: ordersTranslations.en,
   },
   vi: {
     common: commonTranslations.vi,
@@ -26,5 +29,6 @@ export const translations: LanguageTranslations = {
     reports: reportsTranslations.vi,
     settings: settingsTranslations.vi,
     notFound: notFoundTranslations.vi,
+    orders: ordersTranslations.vi,
   },
 };

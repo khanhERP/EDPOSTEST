@@ -188,12 +188,50 @@ export interface NotFoundTranslations {
 }
 
 // Main translations interface
+export interface OrdersTranslations {
+  orderManagement: string;
+  orderDetails: string;
+  orderNumber: string;
+  orderInfo: string;
+  orderItems: string;
+  orderStatus: string;
+  orderTime: string;
+  orderStatusUpdated: string;
+  orderStatusUpdateFailed: string;
+  viewDetails: string;
+  confirm: string;
+  startCooking: string;
+  ready: string;
+  served: string;
+  table: string;
+  customer: string;
+  customerCount: string;
+  customerName: string;
+  noCustomerName: string;
+  people: string;
+  unknownTable: string;
+  unknownProduct: string;
+  memo: string;
+  totalAmount: string;
+  statusAndTime: string;
+  status: {
+    pending: string;
+    confirmed: string;
+    preparing: string;
+    ready: string;
+    served: string;
+    paid: string;
+    cancelled: string;
+  };
+}
+
 export interface Translations {
   common: CommonTranslations;
   nav: NavigationTranslations;
   reports: ReportsTranslations;
   settings: SettingsTranslations;
   notFound: NotFoundTranslations;
+  orders: OrdersTranslations;
 }
 
 // Type-safe translation keys

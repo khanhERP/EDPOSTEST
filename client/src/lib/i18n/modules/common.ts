@@ -46,6 +46,15 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     reserved: '예약됨',
     maintenance: '정비중',
   },
+  tables: {
+    orderManagement: '주문 관리',
+    available: '사용 가능',
+    occupied: '사용중',
+    reserved: '예약됨', 
+    outOfService: '정비중',
+    people: '명'
+  }
+},
   en: {
     loading: 'Loading...',
     save: 'Save',
@@ -91,6 +100,15 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     reserved: 'Reserved',
     maintenance: 'Maintenance',
   },
+  tables: {
+    orderManagement: 'Order Management',
+    available: 'Available',
+    occupied: 'Occupied', 
+    reserved: 'Reserved',
+    outOfService: 'Out of Service',
+    people: ' people'
+  }
+},
   vi: {
     loading: 'Đang tải...',
     save: 'Lưu',
@@ -125,6 +143,25 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     price: 'Giá',
     quantity: 'Số lượng',
     actions: 'Thao tác',
+    collapse: 'Thu gọn',
+    expand: 'Mở rộng',
+    restaurant: 'Nhà hàng',
+    noRecords: 'Không tìm thấy dữ liệu',
+    selectOtherDate: 'Vui lòng chọn ngày khác',
+    category: 'Danh mục',
+    available: 'Có sẵn',
+    occupied: 'Đang sử dụng',
+    reserved: 'Đã đặt',
+    maintenance: 'Bảo trì',
+  },
+  tables: {
+    orderManagement: 'Quản lý đơn hàng',
+    available: 'Có sẵn',
+    occupied: 'Đang sử dụng',
+    reserved: 'Đã đặt',
+    outOfService: 'Ngừng hoạt động',
+    people: ' người'
+  }
     collapse: 'Thu gọn',
     expand: 'Mở rộng',
     restaurant: 'Nhà hàng',
