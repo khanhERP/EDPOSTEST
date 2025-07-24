@@ -22,6 +22,11 @@ const stockUpdateSchema = z.object({
   quantity: z.number().min(1, "Quantity must be at least 1"),
   type: z.enum(["add", "subtract", "set"]),
   notes: z.string().optional(),
+  // Fields for new product creation
+  name: z.string().optional(),
+  sku: z.string().optional(),
+  price: z.string().optional(),
+  categoryId: z.number().optional(),
 });
 
 type StockUpdateForm = z.infer<typeof stockUpdateSchema>;
@@ -65,6 +70,17 @@ export default function InventoryPage() {
     },
   });
 
+  const createProductMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest('/api/products', 'POST', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setShowStockDialog(false);
+      stockUpdateForm.reset();
+    },
+  });
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.sku.toLowerCase().includes(searchTerm.toLowerCase());
@@ -84,11 +100,38 @@ export default function InventoryPage() {
   const handleStockUpdate = (product: Product) => {
     setSelectedProduct(product);
     stockUpdateForm.setValue("productId", product.id);
+    if (product.id === 0) {
+      // Reset form for new product
+      stockUpdateForm.reset({
+        productId: 0,
+        quantity: 0,
+        type: "set",
+        name: "",
+        sku: "",
+        price: "0",
+        categoryId: categories[0]?.id || 1,
+      });
+    }
     setShowStockDialog(true);
   };
   
   const onStockUpdate = (data: StockUpdateForm) => {
-    updateStockMutation.mutate(data);
+    if (selectedProduct?.id === 0) {
+      // Creating new product
+      const newProductData = {
+        name: data.name,
+        sku: data.sku,
+        price: data.price,
+        stock: data.quantity,
+        categoryId: data.categoryId,
+        imageUrl: null,
+        isActive: true
+      };
+      createProductMutation.mutate(newProductData);
+    } else {
+      // Updating existing product stock
+      updateStockMutation.mutate(data);
+    }
   };
 
   const getStockStatus = (stock: number) => {
@@ -324,40 +367,113 @@ export default function InventoryPage() {
                   <p className="text-sm text-gray-600">{t('inventory.currentStockLabel')}: {selectedProduct.stock}{t('common.items')}</p>
                 </div>
 
-                <FormField
-                  control={stockUpdateForm.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('inventory.stockUpdateType')}</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={t('inventory.selectUpdateType')} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="add">{t('inventory.addStock')}</SelectItem>
-                          <SelectItem value="subtract">{t('inventory.subtractStock')}</SelectItem>
-                          <SelectItem value="set">{t('inventory.setStock')}</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {selectedProduct?.id === 0 && (
+                  <>
+                    <FormField
+                      control={stockUpdateForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tên sản phẩm</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nhập tên sản phẩm" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={stockUpdateForm.control}
+                      name="sku"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SKU</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nhập mã SKU" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={stockUpdateForm.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Giá</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Nhập giá sản phẩm" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={stockUpdateForm.control}
+                      name="categoryId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Danh mục</FormLabel>
+                          <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Chọn danh mục" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {categories.map((category) => (
+                                <SelectItem key={category.id} value={category.id.toString()}>
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+
+                {selectedProduct?.id !== 0 && (
+                  <FormField
+                    control={stockUpdateForm.control}
+                    name="type"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('inventory.stockUpdateType')}</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={t('inventory.selectUpdateType')} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="add">{t('inventory.addStock')}</SelectItem>
+                            <SelectItem value="subtract">{t('inventory.subtractStock')}</SelectItem>
+                            <SelectItem value="set">{t('inventory.setStock')}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={stockUpdateForm.control}
                   name="quantity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('inventory.quantity')}</FormLabel>
+                      <FormLabel>{selectedProduct?.id === 0 ? "Số lượng tồn kho ban đầu" : t('inventory.quantity')}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          min="1"
-                          placeholder={t('inventory.quantityInput')}
+                          min="0"
+                          placeholder={selectedProduct?.id === 0 ? "Nhập số lượng ban đầu" : t('inventory.quantityInput')}
                           {...field}
                           onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                         />
@@ -367,19 +483,21 @@ export default function InventoryPage() {
                   )}
                 />
 
-                <FormField
-                  control={stockUpdateForm.control}
-                  name="notes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('inventory.notesOptional')}</FormLabel>
-                      <FormControl>
-                        <Input placeholder={t('inventory.changeReason')} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {selectedProduct?.id !== 0 && (
+                  <FormField
+                    control={stockUpdateForm.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('inventory.notesOptional')}</FormLabel>
+                        <FormControl>
+                          <Input placeholder={t('inventory.changeReason')} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <div className="flex justify-end space-x-2 pt-4">
                   <Button
@@ -391,10 +509,10 @@ export default function InventoryPage() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={updateStockMutation.isPending}
+                    disabled={updateStockMutation.isPending || createProductMutation.isPending}
                     className="bg-green-600 hover:bg-green-700"
                   >
-                    {updateStockMutation.isPending ? (
+                    {(updateStockMutation.isPending || createProductMutation.isPending) ? (
                       <>
                         <RotateCcw className="h-4 w-4 mr-2 animate-spin" />
                         {t('inventory.processing')}
