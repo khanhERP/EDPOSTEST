@@ -180,7 +180,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5" />
-            {table.tableNumber} 테이블 주문
+            {table.tableNumber} {t('orders.tableOrder')}
           </DialogTitle>
           <DialogDescription>
             {t('tables.tableCapacity')}: {table.capacity}{t('orders.people')} | {t('tables.selectMenuToOrder')}
