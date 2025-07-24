@@ -31,6 +31,17 @@ export function OrderManagement() {
     queryKey: ['/api/products'],
   });
 
+  const { data: orderItems, isLoading: orderItemsLoading } = useQuery({
+    queryKey: ['/api/order-items', selectedOrder?.id],
+    enabled: !!selectedOrder?.id && orderDetailsOpen,
+    queryFn: async () => {
+      if (!selectedOrder?.id) return [];
+      const response = await apiRequest('GET', `/api/order-items/${selectedOrder.id}`);
+      const data = await response.json();
+      return Array.isArray(data) ? data : [];
+    },
+  });
+
   const updateOrderStatusMutation = useMutation({
     mutationFn: ({ orderId, status }: { orderId: number; status: string }) =>
       apiRequest('PUT', `/api/orders/${orderId}/status`, { status }),
@@ -310,10 +321,46 @@ export function OrderManagement() {
                 <div>
                   <h4 className="font-medium mb-3">{t('orders.orderItems')}</h4>
                   <div className="space-y-2">
-                    {/* This would typically fetch order items separately */}
-                    <div className="text-center py-4 text-gray-500">
-                      {t('orders.orderItems')} loading...
-                    </div>
+                    {orderItemsLoading ? (
+                      <div className="text-center py-4 text-gray-500">
+                        Đang tải danh sách món...
+                      </div>
+                    ) : orderItems && orderItems.length > 0 ? (
+                      orderItems.map((item: any, index: number) => {
+                        const product = getProductInfo(item.productId);
+                        return (
+                          <div key={item.id} className="flex justify-between items-center p-3 bg-white border rounded-lg">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-gray-900">
+                                  {product?.name || 'Unknown Product'}
+                                </span>
+                                <span className="text-xs text-gray-500">
+                                  x{item.quantity}
+                                </span>
+                              </div>
+                              <div className="text-xs text-gray-600 mt-1">
+                                ₩{Number(item.unitPrice || 0).toLocaleString()}/món
+                              </div>
+                              {item.notes && (
+                                <div className="text-xs text-blue-600 italic mt-1">
+                                  Ghi chú: {item.notes}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-green-600">
+                                ₩{Number(item.total || 0).toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-4 text-gray-500">
+                        Không có món nào trong đơn hàng này
+                      </div>
+                    )}
                   </div>
                 </div>
 
