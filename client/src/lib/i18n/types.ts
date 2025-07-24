@@ -209,6 +209,124 @@ export interface NotFoundTranslations {
   backToHome: string;
 }
 
+// Customers translations interface
+export interface CustomersTranslations {
+  title: string;
+  description: string;
+  customerManagement: string;
+  addCustomer: string;
+  editCustomer: string;
+  deleteCustomer: string;
+  searchPlaceholder: string;
+  customerId: string;
+  name: string;
+  phone: string;
+  email: string;
+  visitCount: string;
+  totalSpent: string;
+  points: string;
+  membershipLevel: string;
+  status: string;
+  totalCustomers: string;
+  activeCustomers: string;
+  pointsIssued: string;
+  averageSpent: string;
+  customerFormTitle: string;
+  customerFormDesc: string;
+  customerAdded: string;
+  customerUpdated: string;
+  customerDeleted: string;
+  customerError: string;
+  namePlaceholder: string;
+  phonePlaceholder: string;
+  emailPlaceholder: string;
+  addressPlaceholder: string;
+  birthday: string;
+  birthdayPlaceholder: string;
+  gender: string;
+  male: string;
+  female: string;
+  other: string;
+  address: string;
+}
+
+// Employees translations interface
+export interface EmployeesTranslations {
+  title: string;
+  description: string;
+  employeeManagement: string;
+  addEmployee: string;
+  editEmployee: string;
+  deleteEmployee: string;
+  searchPlaceholder: string;
+  employeeId: string;
+  name: string;
+  role: string;
+  phone: string;
+  email: string;
+  status: string;
+  hireDate: string;
+  salary: string;
+  department: string;
+  position: string;
+  employeeFormTitle: string;
+  employeeFormDesc: string;
+  employeeAdded: string;
+  employeeUpdated: string;
+  employeeDeleted: string;
+  employeeError: string;
+  namePlaceholder: string;
+  phonePlaceholder: string;
+  emailPlaceholder: string;
+  salaryPlaceholder: string;
+  roles: {
+    admin: string;
+    manager: string;
+    cashier: string;
+    kitchen: string;
+    server: string;
+  };
+  active: string;
+  inactive: string;
+}
+
+// Attendance translations interface
+export interface AttendanceTranslations {
+  title: string;
+  description: string;
+  clockInOut: string;
+  attendanceRecords: string;
+  statistics: string;
+  clockIn: string;
+  clockOut: string;
+  breakStart: string;
+  breakEnd: string;
+  selectEmployee: string;
+  notes: string;
+  recordsDescription: string;
+  selectedDate: string;
+  unknownEmployee: string;
+  status: {
+    present: string;
+    absent: string;
+    late: string;
+    halfDay: string;
+  };
+  clockInSuccess: string;
+  clockInSuccessDesc: string;
+  clockInError: string;
+  clockOutSuccess: string;
+  clockOutSuccessDesc: string;
+  clockOutError: string;
+  breakStartSuccess: string;
+  breakStartSuccessDesc: string;
+  breakStartError: string;
+  hours: string;
+  minutes: string;
+  notesPlaceholder: string;
+  workingTime: string;
+}
+
 // Main translations interface
 export interface OrdersTranslations {
   orderManagement: string;
@@ -261,6 +379,9 @@ export interface Translations {
   settings: SettingsTranslations;
   notFound: NotFoundTranslations;
   orders: OrdersTranslations;
+  customers: CustomersTranslations;
+  employees: EmployeesTranslations;
+  attendance: AttendanceTranslations;
 }
 
 // Type-safe translation keys

@@ -4,6 +4,9 @@ import { reportsTranslations } from './modules/reports';
 import { settingsTranslations } from './modules/settings';
 import { notFoundTranslations } from './modules/notFound';
 import { ordersTranslations } from './modules/orders';
+import { customersTranslations } from './modules/customers';
+import { employeesTranslations } from './modules/employees';
+import { attendanceTranslations } from './modules/attendance';
 import type { LanguageTranslations } from './types';
 
 export const translations: LanguageTranslations = {
@@ -14,6 +17,9 @@ export const translations: LanguageTranslations = {
     settings: settingsTranslations.ko,
     notFound: notFoundTranslations.ko,
     orders: ordersTranslations.ko,
+    customers: customersTranslations.ko,
+    employees: employeesTranslations.ko,
+    attendance: attendanceTranslations.ko,
   },
   en: {
     common: commonTranslations.en,
@@ -22,6 +28,9 @@ export const translations: LanguageTranslations = {
     settings: settingsTranslations.en,
     notFound: notFoundTranslations.en,
     orders: ordersTranslations.en,
+    customers: customersTranslations.en,
+    employees: employeesTranslations.en,
+    attendance: attendanceTranslations.en,
   },
   vi: {
     common: commonTranslations.vi,
@@ -30,5 +39,8 @@ export const translations: LanguageTranslations = {
     settings: settingsTranslations.vi,
     notFound: notFoundTranslations.vi,
     orders: ordersTranslations.vi,
+    customers: customersTranslations.vi,
+    employees: employeesTranslations.vi,
+    attendance: attendanceTranslations.vi,
   },
 };
