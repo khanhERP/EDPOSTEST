@@ -99,7 +99,6 @@ export default function InventoryPage() {
 
   const handleStockUpdate = (product: Product) => {
     setSelectedProduct(product);
-    stockUpdateForm.setValue("productId", product.id);
     if (product.id === 0) {
       // Reset form for new product
       stockUpdateForm.reset({
@@ -110,6 +109,17 @@ export default function InventoryPage() {
         sku: "",
         price: "0",
         categoryId: categories[0]?.id || 1,
+      });
+    } else {
+      // Load existing product data for editing
+      stockUpdateForm.reset({
+        productId: product.id,
+        quantity: 1,
+        type: "add",
+        name: product.name,
+        sku: product.sku,
+        price: product.price,
+        categoryId: product.categoryId,
       });
     }
     setShowStockDialog(true);
