@@ -1,4 +1,4 @@
-export type Language = 'ko' | 'en' | 'vi';
+export type Language = "ko" | "en" | "vi";
 
 // Common translations interface
 export interface CommonTranslations {
@@ -371,40 +371,6 @@ export interface OrdersTranslations {
   };
 }
 
-export interface InventoryTranslations {
-  title: string;
-  description: string;
-  totalProducts: string;
-  lowStock: string;
-  outOfStock: string;
-  totalValue: string;
-  searchProducts: string;
-  stockStatus: string;
-  allStock: string;
-  inStock: string;
-  productName: string;
-  currentStock: string;
-  unitPrice: string;
-  stockValue: string;
-  management: string;
-  edit: string;
-  stockUpdate: string;
-  loading: string;
-  noProducts: string;
-  uncategorized: string;
-  currentStockLabel: string;
-  stockUpdateType: string;
-  quantity: string;
-  notesOptional: string;
-  selectUpdateType: string;
-  addStock: string;
-  subtractStock: string;
-  setStock: string;
-  quantityInput: string;
-  changeReason: string;
-  processing: string;
-}
-
 export interface Translations {
   common: CommonTranslations;
   nav: NavigationTranslations;
@@ -415,16 +381,14 @@ export interface Translations {
   customers: CustomersTranslations;
   employees: EmployeesTranslations;
   attendance: AttendanceTranslations;
-  inventory: InventoryTranslations;
 }
 
 // Type-safe translation keys
-export type TranslationKey = 
+export type TranslationKey =
   | `common.${keyof CommonTranslations}`
   | `nav.${keyof NavigationTranslations}`
   | `reports.${keyof ReportsTranslations}`
-  | `settings.${Exclude<keyof SettingsTranslations, 'payments'>}`
-  | `settings.payments.${keyof SettingsTranslations['payments']}`
+  | `settings.${keyof SettingsTranslations}`
   | `notFound.${keyof NotFoundTranslations}`;
 
 // Language-specific translations type

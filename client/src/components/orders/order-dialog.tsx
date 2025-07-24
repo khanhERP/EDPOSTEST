@@ -198,7 +198,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
             {table.tableNumber}
           </DialogTitle>
           <DialogDescription>
-            {t("tables.tableCapacity")}: {table.capacity}
+            {t("orders.tableCapacity")}: {table.capacity}
             {t("orders.people")} | {t("tables.selectMenuToOrder")}
           </DialogDescription>
         </DialogHeader>
