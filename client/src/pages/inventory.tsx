@@ -41,6 +41,8 @@ export default function InventoryPage() {
     queryKey: ["/api/products"],
   });
 
+  const [currentProduct] = useState<Product>();
+  
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
