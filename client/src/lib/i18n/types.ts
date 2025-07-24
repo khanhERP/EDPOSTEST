@@ -327,54 +327,6 @@ export interface AttendanceTranslations {
   workingTime: string;
 }
 
-// Membership translations interface
-export interface MembershipTranslations {
-  title: string;
-  description: string;
-  tierGuide: string;
-  customerManagement: string;
-  autoUpgrade: string;
-  filterByTier: string;
-  all: string;
-  customerId: string;
-  customerName: string;
-  currentTier: string;
-  totalSpent: string;
-  visitCount: string;
-  points: string;
-  actions: string;
-  upgradeAvailable: string;
-  close: string;
-  searchPlaceholder: string;
-  loading: string;
-  tiers: {
-    silver: string;
-    gold: string;
-    vip: string;
-  };
-  tierDetails: {
-    silver: {
-      name: string;
-      description: string;
-      minSpent: string;
-      benefits: string[];
-    };
-    gold: {
-      name: string;
-      description: string;
-      minSpent: string;
-      benefits: string[];
-    };
-    vip: {
-      name: string;
-      description: string;
-      minSpent: string;
-      benefits: string[];
-    };
-  };
-  benefitsLabel: string;
-}
-
 // Main translations interface
 export interface OrdersTranslations {
   orderManagement: string;
@@ -430,7 +382,6 @@ export interface Translations {
   customers: CustomersTranslations;
   employees: EmployeesTranslations;
   attendance: AttendanceTranslations;
-  membership: MembershipTranslations;
 }
 
 // Type-safe translation keys
