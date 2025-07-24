@@ -910,6 +910,89 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // New endpoints for points management modal
+  app.post("/api/customers/adjust-points", async (req, res) => {
+    try {
+      const pointUpdateSchema = z.object({
+        customerId: z.number().int().min(1),
+        points: z.number().int(),
+        type: z.enum(["earned", "redeemed", "adjusted"]),
+        description: z.string().min(1),
+      });
+
+      const { customerId, points, type, description } = pointUpdateSchema.parse(req.body);
+
+      const pointTransaction = await storage.updateCustomerPoints(
+        customerId,
+        points,
+        description,
+        type,
+      );
+
+      res.status(201).json(pointTransaction);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid point adjustment data",
+          errors: error.errors,
+        });
+      }
+      if (error instanceof Error && error.message === "Customer not found") {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      if (error instanceof Error && error.message === "Insufficient points balance") {
+        return res.status(400).json({ message: "Insufficient points balance" });
+      }
+      res.status(500).json({ message: "Failed to adjust customer points" });
+    }
+  });
+
+  app.post("/api/customers/redeem-points", async (req, res) => {
+    try {
+      const redeemSchema = z.object({
+        customerId: z.number().int().min(1),
+        points: z.number().int().min(1),
+      });
+
+      const { customerId, points } = redeemSchema.parse(req.body);
+
+      const pointTransaction = await storage.updateCustomerPoints(
+        customerId,
+        -points,
+        "포인트 결제 사용",
+        "redeemed",
+      );
+
+      res.status(201).json(pointTransaction);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid point redemption data",
+          errors: error.errors,
+        });
+      }
+      if (error instanceof Error && error.message === "Customer not found") {
+        return res.status(404).json({ message: "Customer not found" });
+      }
+      if (error instanceof Error && error.message === "Insufficient points balance") {
+        return res.status(400).json({ message: "Insufficient points balance" });
+      }
+      res.status(500).json({ message: "Failed to redeem customer points" });
+    }
+  });
+
+  app.get("/api/point-transactions", async (req, res) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 100;
+      // For now, get all point transactions across all customers
+      // In a real app, you might want pagination and filtering
+      const allTransactions = await storage.getAllPointTransactions(limit);
+      res.json(allTransactions);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch point transactions" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

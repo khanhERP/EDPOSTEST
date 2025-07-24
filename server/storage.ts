@@ -1050,6 +1050,14 @@ export class DatabaseStorage implements IStorage {
       .orderBy(sql`${pointTransactions.createdAt} DESC`)
       .limit(limit);
   }
+
+  async getAllPointTransactions(limit: number = 100): Promise<PointTransaction[]> {
+    return await db
+      .select()
+      .from(pointTransactions)
+      .orderBy(sql`${pointTransactions.createdAt} DESC`)
+      .limit(limit);
+  }
 }
 
 export const storage = new DatabaseStorage();

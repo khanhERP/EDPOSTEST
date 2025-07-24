@@ -37,6 +37,7 @@ import {
 import { CustomerFormModal } from "@/components/customers/customer-form-modal";
 import { CustomerPointsModal } from "@/components/customers/customer-points-modal";
 import { MembershipModal } from "@/components/membership/membership-modal";
+import { PointsManagementModal } from "@/components/customers/points-management-modal";
 import { EmployeeFormModal } from "@/components/employees/employee-form-modal";
 
 export default function Settings() {
@@ -51,6 +52,7 @@ export default function Settings() {
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [showMembershipModal, setShowMembershipModal] = useState(false);
   const [showPointsModal, setShowPointsModal] = useState(false);
+  const [showPointsManagementModal, setShowPointsManagementModal] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   
   // Employee management state
@@ -798,7 +800,11 @@ export default function Settings() {
                         <UserCheck className="w-4 h-4 mr-2" />
                         {t('customers.membershipManagement')}
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowPointsManagementModal(true)}
+                      >
                         <CreditCard className="w-4 h-4 mr-2" />
                         {t('customers.pointsManagement')}
                       </Button>
@@ -1293,6 +1299,12 @@ export default function Settings() {
       <MembershipModal
         isOpen={showMembershipModal}
         onClose={() => setShowMembershipModal(false)}
+      />
+
+      {/* Points Management Modal */}
+      <PointsManagementModal
+        isOpen={showPointsManagementModal}
+        onClose={() => setShowPointsManagementModal(false)}
       />
 
       {/* Employee Form Modal */}
