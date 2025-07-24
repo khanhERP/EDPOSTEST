@@ -119,9 +119,9 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     other: 'Khác',
     address: 'Địa chỉ',
     customers :  {
-      gold:'',
-      silver: '',
-      vip: ''
+      gold: 'Vàng',
+      silver: 'Bạc',
+      vip: 'Vip'
     }
   },
 };
