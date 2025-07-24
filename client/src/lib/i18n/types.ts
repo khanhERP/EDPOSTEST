@@ -247,11 +247,9 @@ export interface CustomersTranslations {
   female: string;
   other: string;
   address: string;
-  customers: {
-    gold: string;
-    silver: string;
-    vip: string;
-  };
+  gold: string;
+  silver: string;
+  vip: string;
 }
 
 // Employees translations interface
