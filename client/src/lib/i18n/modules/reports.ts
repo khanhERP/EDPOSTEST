@@ -176,8 +176,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     backToTables: 'Quay lại bàn',
     
     // Date and time filters
-    startDate: 'Ngày bắt đầu',
-    endDate: 'Ngày kết thúc',
+    startDate: 'Từ ngày',
+    endDate: 'Đến ngày',
     refresh: 'Làm mới',
     toDay: 'Hôm nay',
     lastWeek: 'Tuần trước',
