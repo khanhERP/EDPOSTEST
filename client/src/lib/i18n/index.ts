@@ -32,10 +32,11 @@ function getNestedTranslation(obj: any, key: string): string | undefined {
 }
 
 export function useTranslation() {
-  const { currentLanguage, setLanguage } = useLanguageStore();
+  const currentLanguage = useLanguageStore((state) => state.currentLanguage);
+  const setLanguage = useLanguageStore((state) => state.setLanguage);
 
   const t = (key: TranslationKey): string => {
-    // Force component to re-render by accessing currentLanguage in the render cycle
+    // Explicitly use currentLanguage to ensure component re-renders when it changes
     const value = getNestedTranslation(translations[currentLanguage], key);
 
     // Development-time validation

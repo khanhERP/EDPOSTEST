@@ -59,13 +59,19 @@ const stockUpdateSchema = z.object({
 type StockUpdateForm = z.infer<typeof stockUpdateSchema>;
 
 export default function InventoryPage() {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [stockFilter, setStockFilter] = useState<string>("all");
   const [showStockDialog, setShowStockDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [renderKey, setRenderKey] = useState(0);
+
+  // Force component to re-render when language changes
+  useEffect(() => {
+    setRenderKey(prev => prev + 1);
+  }, [currentLanguage]);
 
   const queryClient = useQueryClient();
 
