@@ -57,16 +57,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       });
       
       const response = await apiRequest('GET', `/api/order-items/${orderId}`);
-      const data = await response.json();
       
-      console.log('Raw order items response for order', orderId, ':', data);
-      console.log('Response type:', typeof data, 'Length:', data?.length);
-      console.log('Is array?', Array.isArray(data));
+      console.log('Raw order items response for order', orderId, ':', response);
+      console.log('Response type:', typeof response, 'Length:', response?.length);
+      console.log('Is array?', Array.isArray(response));
       
       // Log each item in detail
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(response) && response.length > 0) {
         console.log('Order items details:');
-        data.forEach((item, index) => {
+        response.forEach((item, index) => {
           console.log(`  Item ${index + 1}:`, {
             id: item.id,
             orderId: item.orderId,
@@ -82,7 +81,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       }
 
       // Ensure we return an array
-      const items = Array.isArray(data) ? data : [];
+      const items = Array.isArray(response) ? response : [];
       console.log('Final processed items count:', items.length);
       console.log('About to return items:', items);
       console.log('=== END FETCHING ORDER ITEMS ===');
@@ -436,44 +435,78 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       </div>
 
                       {(() => {
-                        console.log('=== RENDER CHECK ===');
-                        console.log('orderItems exists:', !!orderItems);
+                        console.log('=== RENDER CHECK DETAILED ===');
+                        console.log('orderItems raw:', orderItems);
+                        console.log('orderItems type:', typeof orderItems);
+                        console.log('orderItems constructor:', orderItems?.constructor?.name);
                         console.log('orderItems is array:', Array.isArray(orderItems));
                         console.log('orderItems length:', orderItems?.length);
-                        console.log('orderItems raw data:', orderItems);
-                        console.log('orderItemsLoading status:', orderItemsLoading);
+                        console.log('orderItemsLoading:', orderItemsLoading);
                         console.log('selectedOrder?.id:', selectedOrder?.id);
-                        console.log('=== END RENDER CHECK ===');
                         
-                        // Force check if we have valid data
-                        const hasValidItems = orderItems && Array.isArray(orderItems) && orderItems.length > 0;
+                        // Try to access each item individually
+                        if (orderItems) {
+                          console.log('Attempting to iterate orderItems:');
+                          try {
+                            for (let i = 0; i < (orderItems.length || 0); i++) {
+                              console.log(`Item ${i}:`, orderItems[i]);
+                            }
+                          } catch (e) {
+                            console.log('Error iterating orderItems:', e);
+                          }
+                        }
+                        console.log('=== END RENDER CHECK DETAILED ===');
                         
-                        if (hasValidItems) {
-                          console.log('✅ Rendering items list with', orderItems.length, 'items');
+                        // More robust check for valid items
+                        const isValidArray = Array.isArray(orderItems);
+                        const hasItems = isValidArray && orderItems.length > 0;
+                        
+                        console.log('Final checks:', {
+                          isValidArray,
+                          hasItems,
+                          itemCount: orderItems?.length || 0
+                        });
+                        
+                        if (hasItems) {
+                          console.log('✅ SUCCESSFULLY RENDERING ITEMS LIST');
                           return (
                             <div className="space-y-2">
-                              <p className="text-sm font-medium text-green-600">
-                                ✅ Hiển thị {orderItems.length} món ăn cho đơn hàng {selectedOrder?.id}:
+                              <p className="text-sm font-medium text-green-600 mb-3">
+                                ✅ Hiển thị {orderItems.length} món ăn cho đơn hàng #{selectedOrder?.id}
                               </p>
                               {orderItems.map((item: any, index: number) => {
-                                console.log(`Rendering item ${index + 1}:`, item);
+                                console.log(`📦 Rendering item ${index + 1}:`, {
+                                  id: item.id,
+                                  productId: item.productId,
+                                  productName: item.productName,
+                                  quantity: item.quantity,
+                                  unitPrice: item.unitPrice,
+                                  total: item.total
+                                });
+                                
                                 return (
-                                  <div key={item.id || index} className="flex justify-between items-center p-3 bg-white border rounded-lg">
+                                  <div key={`item-${item.id || index}`} className="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm">
                                     <div className="flex-1">
-                                      <p className="font-medium">
-                                        {item.productName || getProductName(item.productId) || `Product #${item.productId}`}
+                                      <p className="font-medium text-gray-900">
+                                        {item.productName || getProductName(item.productId) || `Sản phẩm #${item.productId}`}
                                       </p>
-                                      <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
-                                      <p className="text-xs text-gray-500">
-                                        Product ID: {item.productId} | Order Item ID: {item.id}
+                                      <p className="text-sm text-gray-600">
+                                        Số lượng: <span className="font-medium">{item.quantity}</span>
+                                      </p>
+                                      <p className="text-xs text-gray-400">
+                                        ID: {item.id} | ProductID: {item.productId}
                                       </p>
                                       {item.notes && (
-                                        <p className="text-xs text-gray-500 italic">Ghi chú: {item.notes}</p>
+                                        <p className="text-xs text-blue-600 italic mt-1">
+                                          Ghi chú: {item.notes}
+                                        </p>
                                       )}
                                     </div>
-                                    <div className="text-right">
-                                      <p className="font-medium">₩{Number(item.total || 0).toLocaleString()}</p>
-                                      <p className="text-sm text-gray-600">
+                                    <div className="text-right ml-4">
+                                      <p className="font-bold text-lg text-green-600">
+                                        ₩{Number(item.total || 0).toLocaleString()}
+                                      </p>
+                                      <p className="text-sm text-gray-500">
                                         ₩{Number(item.unitPrice || 0).toLocaleString()}/món
                                       </p>
                                     </div>
@@ -483,17 +516,30 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             </div>
                           );
                         } else {
-                          console.log('❌ No valid items to render');
+                          console.log('❌ NO VALID ITEMS TO RENDER');
+                          const debugInfo = {
+                            orderItemsExists: !!orderItems,
+                            orderItemsType: typeof orderItems,
+                            isArray: Array.isArray(orderItems),
+                            length: orderItems?.length,
+                            loading: orderItemsLoading,
+                            orderId: selectedOrder?.id
+                          };
+                          console.log('Debug info for empty state:', debugInfo);
+                          
                           return (
-                            <div className="text-center py-4">
-                              <p className="text-red-500 mb-2">
-                                ❌ Không tìm thấy món ăn cho đơn hàng #{selectedOrder?.id}
+                            <div className="text-center py-6 bg-red-50 rounded-lg border border-red-200">
+                              <p className="text-red-600 font-medium mb-3">
+                                ❌ Không có món ăn nào cho đơn hàng #{selectedOrder?.id}
                               </p>
-                              <div className="text-xs text-gray-400 space-y-1">
-                                <p>Trạng thái: {orderItemsLoading ? 'Đang tải...' : 'Đã tải xong'}</p>
-                                <p>Dữ liệu: {orderItems ? 'Có' : 'Không có'}</p>
-                                <p>Là mảng: {Array.isArray(orderItems) ? 'Có' : 'Không'}</p>
-                                <p>Số lượng: {orderItems?.length || 0}</p>
+                              <div className="text-xs text-gray-500 space-y-1 bg-white p-3 rounded border">
+                                <p><strong>Debug:</strong></p>
+                                <p>Loading: {orderItemsLoading ? 'Có' : 'Không'}</p>
+                                <p>Data exists: {orderItems ? 'Có' : 'Không'}</p>
+                                <p>Is array: {Array.isArray(orderItems) ? 'Có' : 'Không'}</p>
+                                <p>Length: {orderItems?.length || 0}</p>
+                                <p>Type: {typeof orderItems}</p>
+                                <p>Order ID: {selectedOrder?.id}</p>
                               </div>
                             </div>
                           );
