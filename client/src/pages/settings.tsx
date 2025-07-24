@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTranslation } from "@/lib/i18n";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -29,7 +30,9 @@ import {
   Edit,
   Search,
   Clock,
-  UserCheck
+  UserCheck,
+  Tag,
+  ShoppingCart
 } from "lucide-react";
 import { CustomerFormModal } from "@/components/customers/customer-form-modal";
 import { MembershipModal } from "@/components/membership/membership-modal";
@@ -51,6 +54,23 @@ export default function Settings() {
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   
+  // Product management state
+  const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [showProductForm, setShowProductForm] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
+  const [productSearchTerm, setProductSearchTerm] = useState("");
+  const [categoryForm, setCategoryForm] = useState({ name: '', icon: 'fas fa-utensils' });
+  const [productForm, setProductForm] = useState({ 
+    name: '', 
+    sku: '', 
+    price: '', 
+    stock: '0', 
+    categoryId: '',
+    description: '' 
+  });
+  
   // Fetch store settings
   const { data: storeData, isLoading } = useQuery<StoreSettings>({
     queryKey: ['/api/store-settings'],
@@ -64,6 +84,16 @@ export default function Settings() {
   // Fetch employees
   const { data: employeesData, isLoading: employeesLoading } = useQuery<any[]>({
     queryKey: ['/api/employees'],
+  });
+  
+  // Fetch categories
+  const { data: categoriesData, isLoading: categoriesLoading } = useQuery<any[]>({
+    queryKey: ['/api/categories'],
+  });
+  
+  // Fetch products
+  const { data: productsData, isLoading: productsLoading } = useQuery<any[]>({
+    queryKey: ['/api/products'],
   });
 
   // Store settings state
@@ -228,6 +258,188 @@ export default function Settings() {
     customer.customerId.toLowerCase().includes(customerSearchTerm.toLowerCase()) ||
     (customer.phone && customer.phone.includes(customerSearchTerm))
   ) : [];
+
+  // Product management functions
+  const resetCategoryForm = () => {
+    setCategoryForm({ name: '', icon: 'fas fa-utensils' });
+    setEditingCategory(null);
+  };
+
+  const resetProductForm = () => {
+    setProductForm({ 
+      name: '', 
+      sku: '', 
+      price: '', 
+      stock: '0', 
+      categoryId: '',
+      description: '' 
+    });
+    setEditingProduct(null);
+  };
+
+  const handleCreateCategory = async () => {
+    if (!categoryForm.name.trim()) return;
+    
+    try {
+      const response = await apiRequest('POST', '/api/categories', categoryForm);
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      toast({
+        title: t('common.success'),
+        description: t('productManagement.categoryCreateSuccess'),
+      });
+      setShowCategoryForm(false);
+      resetCategoryForm();
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('common.error'),
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUpdateCategory = async () => {
+    if (!categoryForm.name.trim() || !editingCategory) return;
+    
+    try {
+      const response = await apiRequest('PUT', `/api/categories/${editingCategory.id}`, categoryForm);
+      queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      toast({
+        title: t('common.success'),
+        description: t('productManagement.categoryUpdateSuccess'),
+      });
+      setShowCategoryForm(false);
+      resetCategoryForm();
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('common.error'),
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: number) => {
+    if (confirm(`${t('productManagement.deleteConfirm')} ${t('productManagement.categoryDeleteConfirm')}`)) {
+      try {
+        await apiRequest('DELETE', `/api/categories/${categoryId}`);
+        queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+        toast({
+          title: t('common.success'),
+          description: t('productManagement.categoryDeleteSuccess'),
+        });
+      } catch (error) {
+        toast({
+          title: t('common.error'),
+          description: t('common.error'),
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
+  const handleCreateProduct = async () => {
+    if (!productForm.name.trim() || !productForm.sku.trim() || !productForm.categoryId) return;
+    
+    try {
+      const productData = {
+        ...productForm,
+        price: productForm.price,
+        stock: parseInt(productForm.stock) || 0,
+        categoryId: parseInt(productForm.categoryId)
+      };
+      
+      const response = await apiRequest('POST', '/api/products', productData);
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      toast({
+        title: t('common.success'),
+        description: t('productManagement.productCreateSuccess'),
+      });
+      setShowProductForm(false);
+      resetProductForm();
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('common.error'),
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleUpdateProduct = async () => {
+    if (!productForm.name.trim() || !productForm.sku.trim() || !productForm.categoryId || !editingProduct) return;
+    
+    try {
+      const productData = {
+        ...productForm,
+        price: productForm.price,
+        stock: parseInt(productForm.stock) || 0,
+        categoryId: parseInt(productForm.categoryId)
+      };
+      
+      const response = await apiRequest('PUT', `/api/products/${editingProduct.id}`, productData);
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      toast({
+        title: t('common.success'),
+        description: t('productManagement.productUpdateSuccess'),
+      });
+      setShowProductForm(false);
+      resetProductForm();
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: t('common.error'),
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteProduct = async (productId: number) => {
+    if (confirm(t('productManagement.deleteConfirm'))) {
+      try {
+        await apiRequest('DELETE', `/api/products/${productId}`);
+        queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+        toast({
+          title: t('common.success'),
+          description: t('productManagement.productDeleteSuccess'),
+        });
+      } catch (error) {
+        toast({
+          title: t('common.error'),
+          description: t('common.error'),
+          variant: 'destructive',
+        });
+      }
+    }
+  };
+
+  const handleEditCategory = (category: any) => {
+    setCategoryForm({ name: category.name, icon: category.icon });
+    setEditingCategory(category);
+    setShowCategoryForm(true);
+  };
+
+  const handleEditProduct = (product: any) => {
+    setProductForm({
+      name: product.name,
+      sku: product.sku,
+      price: product.price.toString(),
+      stock: product.stock.toString(),
+      categoryId: product.categoryId.toString(),
+      description: product.description || ''
+    });
+    setEditingProduct(product);
+    setShowProductForm(true);
+  };
+
+  // Filter products based on category and search term
+  const filteredProducts = productsData ? productsData.filter((product: any) => {
+    const matchesCategory = selectedCategoryFilter === 'all' || product.categoryId.toString() === selectedCategoryFilter;
+    const matchesSearch = product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+                         product.sku.toLowerCase().includes(productSearchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  }) : [];
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20 relative">
@@ -614,29 +826,256 @@ export default function Settings() {
             </div>
           </TabsContent>
 
-          {/* Categories Tab */}
+          {/* Categories Tab - Product Management */}
           <TabsContent value="categories">
-            <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-green-600" />
-                  {t('settings.categoryManagement')}
-                </CardTitle>
-                <CardDescription>{t('settings.categoryManagementDesc')}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Package className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                  <p className="text-gray-500 mb-4">{t('settings.categoriesRedirect')}</p>
-                  <Button 
-                    onClick={() => window.location.href = '/inventory'}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    {t('settings.goToInventory')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('productManagement.totalCategories')}</p>
+                        <p className="text-2xl font-bold text-green-600">{categoriesData ? categoriesData.length : 0}</p>
+                      </div>
+                      <Tag className="w-8 h-8 text-green-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">{t('productManagement.totalProducts')}</p>
+                        <p className="text-2xl font-bold text-blue-600">{productsData ? productsData.length : 0}</p>
+                      </div>
+                      <ShoppingCart className="w-8 h-8 text-blue-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">재고 총량</p>
+                        <p className="text-2xl font-bold text-purple-600">
+                          {productsData ? productsData.reduce((total: number, product: any) => total + (product.stock || 0), 0) : 0}
+                        </p>
+                      </div>
+                      <Package className="w-8 h-8 text-purple-600" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Category Management */}
+              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Tag className="w-5 h-5 text-green-600" />
+                    {t('productManagement.categoryTitle')}
+                  </CardTitle>
+                  <CardDescription>{t('productManagement.categoryDescription')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center gap-4">
+                      <Input
+                        placeholder="품목군 검색..."
+                        className="w-64"
+                      />
+                      <Button variant="outline" size="sm">
+                        <Search className="w-4 h-4 mr-2" />
+                        {t('common.search')}
+                      </Button>
+                    </div>
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => {
+                        resetCategoryForm();
+                        setShowCategoryForm(true);
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      {t('productManagement.addCategory')}
+                    </Button>
+                  </div>
+
+                  {categoriesLoading ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">{t('common.loading')}</p>
+                    </div>
+                  ) : !categoriesData || categoriesData.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Tag className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-500">{t('productManagement.noCategories')}</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {categoriesData.map((category: any) => (
+                        <Card key={category.id} className="border-2 hover:border-green-300 transition-colors">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                  <i className={`${category.icon} text-green-600`}></i>
+                                </div>
+                                <div>
+                                  <h3 className="font-semibold">{category.name}</h3>
+                                  <p className="text-sm text-gray-500">
+                                    {productsData ? productsData.filter((p: any) => p.categoryId === category.id).length : 0} 품목
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditCategory(category)}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-500 hover:text-red-700"
+                                  onClick={() => handleDeleteCategory(category.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Product Management */}
+              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ShoppingCart className="w-5 h-5 text-green-600" />
+                    {t('productManagement.productTitle')}
+                  </CardTitle>
+                  <CardDescription>{t('productManagement.productDescription')}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex justify-between items-center mb-6">
+                    <div className="flex items-center gap-4">
+                      <Input
+                        placeholder={t('productManagement.productNamePlaceholder')}
+                        className="w-64"
+                        value={productSearchTerm}
+                        onChange={(e) => setProductSearchTerm(e.target.value)}
+                      />
+                      <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+                        <SelectTrigger className="w-48">
+                          <SelectValue placeholder={t('productManagement.selectCategory')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{t('productManagement.allCategories')}</SelectItem>
+                          {categoriesData?.map((category: any) => (
+                            <SelectItem key={category.id} value={category.id.toString()}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button variant="outline" size="sm">
+                        <Search className="w-4 h-4 mr-2" />
+                        {t('common.search')}
+                      </Button>
+                    </div>
+                    <Button 
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => {
+                        resetProductForm();
+                        setShowProductForm(true);
+                      }}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      {t('productManagement.addProduct')}
+                    </Button>
+                  </div>
+
+                  {productsLoading ? (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">{t('common.loading')}</p>
+                    </div>
+                  ) : filteredProducts.length === 0 ? (
+                    <div className="text-center py-8">
+                      <ShoppingCart className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                      <p className="text-gray-500">{t('productManagement.noProducts')}</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-md border">
+                      <div className="grid grid-cols-7 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                        <div>{t('productManagement.productName')}</div>
+                        <div>{t('productManagement.productSku')}</div>
+                        <div>{t('productManagement.productCategory')}</div>
+                        <div>{t('productManagement.productPrice')}</div>
+                        <div>{t('productManagement.productStock')}</div>
+                        <div>상태</div>
+                        <div className="text-center">{t('common.actions')}</div>
+                      </div>
+                      
+                      <div className="divide-y">
+                        {filteredProducts.map((product: any) => {
+                          const category = categoriesData?.find((c: any) => c.id === product.categoryId);
+                          return (
+                            <div key={product.id} className="grid grid-cols-7 gap-4 p-4 items-center">
+                              <div className="font-medium">{product.name}</div>
+                              <div className="font-mono text-sm">{product.sku}</div>
+                              <div className="text-sm">
+                                <Badge variant="outline">{category?.name || 'N/A'}</Badge>
+                              </div>
+                              <div className="font-medium">₩{parseFloat(product.price || '0').toLocaleString()}</div>
+                              <div className="text-center">{product.stock || 0}</div>
+                              <div>
+                                <Badge 
+                                  variant={product.stock > 0 ? "default" : "destructive"}
+                                  className={product.stock > 0 ? "bg-green-100 text-green-800" : ""}
+                                >
+                                  {product.stock > 0 ? '재고있음' : '품절'}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center justify-center gap-2">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => handleEditProduct(product)}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-red-500 hover:text-red-700"
+                                  onClick={() => handleDeleteProduct(product.id)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center mt-6">
+                    <div className="text-sm text-gray-600">
+                      {t('employeesSettings.total')} {filteredProducts.length}개 품목 표시 중
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Employees Tab */}
@@ -873,6 +1312,177 @@ export default function Settings() {
         mode={editingEmployee ? "edit" : "create"}
         employee={editingEmployee}
       />
+
+      {/* Category Form Modal */}
+      <Dialog open={showCategoryForm} onOpenChange={setShowCategoryForm}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingCategory ? t('productManagement.editCategory') : t('productManagement.addCategory')}
+            </DialogTitle>
+            <DialogDescription>
+              {t('productManagement.categoryDescription')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="categoryName" className="text-right">
+                {t('productManagement.categoryName')}
+              </Label>
+              <Input
+                id="categoryName"
+                value={categoryForm.name}
+                onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
+                className="col-span-3"
+                placeholder={t('productManagement.categoryNamePlaceholder')}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="categoryIcon" className="text-right">
+                {t('productManagement.categoryIcon')}
+              </Label>
+              <Select 
+                value={categoryForm.icon} 
+                onValueChange={(value) => setCategoryForm(prev => ({ ...prev, icon: value }))}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fas fa-utensils">🍽️ 식사</SelectItem>
+                  <SelectItem value="fas fa-coffee">☕ 음료</SelectItem>
+                  <SelectItem value="fas fa-cookie">🍪 간식</SelectItem>
+                  <SelectItem value="fas fa-ice-cream">🍨 디저트</SelectItem>
+                  <SelectItem value="fas fa-beer">🍺 주류</SelectItem>
+                  <SelectItem value="fas fa-apple-alt">🍎 과일</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCategoryForm(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button 
+              onClick={editingCategory ? handleUpdateCategory : handleCreateCategory}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {editingCategory ? t('common.update') : t('common.create')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Product Form Modal */}
+      <Dialog open={showProductForm} onOpenChange={setShowProductForm}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingProduct ? t('productManagement.editProduct') : t('productManagement.addProduct')}
+            </DialogTitle>
+            <DialogDescription>
+              {t('productManagement.productDescription')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="productName" className="text-right">
+                {t('productManagement.productName')}
+              </Label>
+              <Input
+                id="productName"
+                value={productForm.name}
+                onChange={(e) => setProductForm(prev => ({ ...prev, name: e.target.value }))}
+                className="col-span-3"
+                placeholder={t('productManagement.productNamePlaceholder')}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="productSku" className="text-right">
+                {t('productManagement.productSku')}
+              </Label>
+              <Input
+                id="productSku"
+                value={productForm.sku}
+                onChange={(e) => setProductForm(prev => ({ ...prev, sku: e.target.value }))}
+                className="col-span-3"
+                placeholder={t('productManagement.productSkuPlaceholder')}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="productCategory" className="text-right">
+                {t('productManagement.productCategory')}
+              </Label>
+              <Select 
+                value={productForm.categoryId} 
+                onValueChange={(value) => setProductForm(prev => ({ ...prev, categoryId: value }))}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder={t('productManagement.selectCategory')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoriesData?.map((category: any) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="productPrice" className="text-right">
+                {t('productManagement.productPrice')}
+              </Label>
+              <Input
+                id="productPrice"
+                type="number"
+                step="0.01"
+                value={productForm.price}
+                onChange={(e) => setProductForm(prev => ({ ...prev, price: e.target.value }))}
+                className="col-span-3"
+                placeholder={t('productManagement.productPricePlaceholder')}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="productStock" className="text-right">
+                {t('productManagement.productStock')}
+              </Label>
+              <Input
+                id="productStock"
+                type="number"
+                value={productForm.stock}
+                onChange={(e) => setProductForm(prev => ({ ...prev, stock: e.target.value }))}
+                className="col-span-3"
+                placeholder={t('productManagement.productStockPlaceholder')}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="productDescription" className="text-right">
+                설명
+              </Label>
+              <Textarea
+                id="productDescription"
+                value={productForm.description}
+                onChange={(e) => setProductForm(prev => ({ ...prev, description: e.target.value }))}
+                className="col-span-3"
+                placeholder="품목 설명을 입력하세요 (선택사항)"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowProductForm(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button 
+              onClick={editingProduct ? handleUpdateProduct : handleCreateProduct}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {editingProduct ? t('common.update') : t('common.create')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
