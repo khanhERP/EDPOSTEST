@@ -1013,8 +1013,8 @@ export default function Settings() {
 
                   <div className="flex justify-between items-center mt-6">
                     <div className="text-sm text-gray-600">
-                      {t("employeesSettings.total")}{" "}
-                      {customersData ? customersData.length : 0}
+                      {t("customers.total")}{" "}
+                      {customersData ? customersData.length : 0}{" "}
                       {t("customers.totalCustomersRegistered")}
                     </div>
                     <div className="flex gap-2">
