@@ -41,10 +41,18 @@ app.use((req, res, next) => {
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    let message = err.message || "Internal Server Error";
+    
+    // Handle database lock errors
+    if (message.includes('INDEX_LOCKED') || message.includes('database is locked')) {
+      message = "Database temporarily unavailable. Please try again.";
+      console.log("Database lock detected, retrying...");
+    }
 
     res.status(status).json({ message });
-    throw err;
+    if (status >= 500) {
+      console.error('Server error:', err);
+    }
   });
 
   // importantly only setup vite in development and after
