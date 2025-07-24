@@ -27,14 +27,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  // Force refetch order items when dialog opens
-  useEffect(() => {
-    if (orderDetailsOpen && selectedOrder?.id) {
-      console.log('Dialog opened, refetching order items for order:', selectedOrder.id);
-      refetchOrderItems();
-    }
-  }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems]);
-
   const { data: tables, isLoading } = useQuery({
     queryKey: ['/api/tables'],
   });
@@ -105,6 +97,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const { data: storeSettings } = useQuery({
     queryKey: ['/api/store-settings'],
   });
+
+  // Force refetch order items when dialog opens
+  useEffect(() => {
+    if (orderDetailsOpen && selectedOrder?.id) {
+      console.log('Dialog opened, refetching order items for order:', selectedOrder.id);
+      refetchOrderItems();
+    }
+  }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems]);
 
   const updateTableStatusMutation = useMutation({
     mutationFn: ({ tableId, status }: { tableId: number; status: string }) =>
