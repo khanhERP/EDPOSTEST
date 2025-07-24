@@ -228,7 +228,7 @@ export default function InventoryPage() {
                     <SelectValue placeholder={t('common.category')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t('pos.allCategories')}</SelectItem>
+                    <SelectItem value="all">{t('common.allCategories')}</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name}

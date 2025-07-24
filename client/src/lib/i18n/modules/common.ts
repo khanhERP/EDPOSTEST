@@ -1,4 +1,3 @@
-
 import type { CommonTranslations } from '../types';
 
 export const commonTranslations: { [key: string]: CommonTranslations } = {
@@ -73,7 +72,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     occupied: '사용중',
     reserved: '예약됨',
     maintenance: '정비중',
-    orderManagement: '주문 관리'
+    orderManagement: '주문 관리',
+    allCategories: '모든 카테고리',
   },
   en: {
     loading: 'Loading...',
@@ -146,7 +146,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     occupied: 'Occupied',
     reserved: 'Reserved',
     maintenance: 'Maintenance',
-    orderManagement: 'Order Management'
+    orderManagement: 'Order Management',
+    allCategories: 'All Categories',
   },
   vi: {
     loading: 'Đang tải...',
@@ -219,7 +220,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     occupied: 'Đang sử dụng',
     reserved: 'Đã đặt',
     maintenance: 'Bảo trì',
-    orderManagement: 'Quản lý đơn hàng'
+    orderManagement: 'Quản lý đơn hàng',
+    allCategories: 'Tất cả danh mục',
   },
   tables: {
     occupied: 'Đang sử dụng',
