@@ -455,7 +455,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           return (
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-green-600 mb-3">
-                                ✅ Hiển thị {itemsToRender.length} món ăn cho đơn hàng #{selectedOrder?.id}
+                                ✅ Hiển thị {itemsToRender.length} món ăn cho đơn hàng {selectedOrder?.orderNumber}
                               </p>
                               {itemsToRender.map((item: any, index: number) => {
                                 console.log(`🍽️ Rendering item ${index + 1}:`, {
@@ -517,7 +517,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           return (
                             <div className="text-center py-6 bg-red-50 rounded-lg border border-red-200">
                               <p className="text-red-600 font-medium mb-3">
-                                ❌ Không có món ăn nào cho đơn hàng #{selectedOrder?.id}
+                                ❌ Không có món ăn nào cho đơn hàng {selectedOrder?.orderNumber}
                               </p>
                               <div className="text-xs text-gray-500 space-y-1 bg-white p-3 rounded border max-h-40 overflow-y-auto">
                                 <p><strong>Complete Debug Info:</strong></p>
