@@ -501,11 +501,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       const newOrder = await storage.createOrder(orderData, itemsData);
-      
+
       // Verify items were created
       const createdItems = await storage.getOrderItems(newOrder.id);
-      console.log(`Created ${createdItems.length} items for order ${newOrder.id}:`, createdItems);
-      
+      console.log(
+        `Created ${createdItems.length} items for order ${newOrder.id}:`,
+        createdItems,
+      );
+
       res.status(201).json(newOrder);
     } catch (error) {
       console.error("Order creation error:", error);
@@ -806,11 +809,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const customerId = parseInt(req.params.id);
       const pointsData = await storage.getCustomerPoints(customerId);
-      
+
       if (!pointsData) {
         return res.status(404).json({ message: "Customer not found" });
       }
-      
+
       res.json(pointsData);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch customer points" });
@@ -823,34 +826,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pointUpdateSchema = z.object({
         points: z.number().int().min(1),
         description: z.string().min(1),
-        type: z.enum(['earned', 'redeemed', 'adjusted']),
+        type: z.enum(["earned", "redeemed", "adjusted"]),
         employeeId: z.number().optional(),
-        orderId: z.number().optional()
+        orderId: z.number().optional(),
       });
 
-      const { points, description, type, employeeId, orderId } = pointUpdateSchema.parse(req.body);
-      
+      const { points, description, type, employeeId, orderId } =
+        pointUpdateSchema.parse(req.body);
+
       const pointTransaction = await storage.updateCustomerPoints(
-        customerId, 
-        points, 
-        description, 
-        type, 
-        employeeId, 
-        orderId
+        customerId,
+        points,
+        description,
+        type,
+        employeeId,
+        orderId,
       );
-      
+
       res.status(201).json(pointTransaction);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
           message: "Invalid point update data",
-          errors: error.errors
+          errors: error.errors,
         });
       }
-      if (error instanceof Error && error.message === 'Customer not found') {
+      if (error instanceof Error && error.message === "Customer not found") {
         return res.status(404).json({ message: "Customer not found" });
       }
-      if (error instanceof Error && error.message === 'Insufficient points balance') {
+      if (
+        error instanceof Error &&
+        error.message === "Insufficient points balance"
+      ) {
         return res.status(400).json({ message: "Insufficient points balance" });
       }
       res.status(500).json({ message: "Failed to update customer points" });
@@ -861,7 +868,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const customerId = parseInt(req.params.id);
       const limit = parseInt(req.query.limit as string) || 50;
-      
+
       const pointHistory = await storage.getPointHistory(customerId, limit);
       res.json(pointHistory);
     } catch (error) {
