@@ -13,7 +13,7 @@ import { z } from "zod";
 import { Plus, Package, AlertTriangle, TrendingUp, Search, Edit, RotateCcw } from "lucide-react";
 import { POSHeader } from "@/components/pos/header";
 import { RightSidebar } from "@/components/ui/right-sidebar";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation } from "@/lib/i18n/index";
 import { apiRequest } from "@/lib/queryClient";
 import type { Product, Category } from "@shared/schema";
 
