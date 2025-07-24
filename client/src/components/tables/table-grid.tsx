@@ -100,7 +100,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       reserved: { label: t('tables.reserved'), variant: "secondary" as const, color: "bg-yellow-500" },
       maintenance: { label: t('tables.outOfService'), variant: "outline" as const, color: "bg-gray-500" },
     };
-    
+
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.available;
   };
 
@@ -114,7 +114,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const handleTableClick = (table: Table) => {
     setSelectedTable(table);
     onTableSelect?.(table.id);
-    
+
     if (table.status === "available") {
       setOrderDialogOpen(true);
     }
@@ -150,7 +150,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       { id: 4, name: "ZaloPay", nameKey: "zalopay", enabled: true, icon: "📱" },
       { id: 5, name: "VNPay", nameKey: "vnpay", enabled: true, icon: "💳" },
     ];
-    
+
     // In a real implementation, this would come from store settings
     return defaultMethods.filter(method => method.enabled);
   };
@@ -282,7 +282,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               {selectedOrder && `Mã đơn: ${selectedOrder.orderNumber}`}
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedOrder && (
             <div className="space-y-4">
               {/* Order Info */}
@@ -319,9 +319,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   {orderItemsLoading ? (
                     <p className="text-gray-500 text-center py-4">Đang tải dữ liệu...</p>
                   ) : orderItems && Array.isArray(orderItems) && orderItems.length > 0 ? (
-                    orderItems.map((item: any) => {
-                      console.log('Rendering order item:', item);
-                      return (
+                    orderItems.map((item: any) => (
                       <div key={item.id} className="flex justify-between items-center p-3 bg-white border rounded-lg">
                         <div>
                           <p className="font-medium">{item.productName || getProductName(item.productId)}</p>
@@ -335,13 +333,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           <p className="text-sm text-gray-600">₩{Number(item.unitPrice).toLocaleString()}/món</p>
                         </div>
                       </div>
-                      );
-                    })
+                    ))
                   ) : (
                     <div className="text-center py-4">
                       <p className="text-gray-500">Không có món ăn nào trong đơn hàng</p>
                       {selectedOrder && (
-                        <p className="text-xs text-gray-400 mt-1">Order ID: {selectedOrder.id}</p>
+                        <div className="text-xs text-gray-400 mt-2">
+                          <p>Order ID: {selectedOrder.id}</p>
+                          <p>Order Number: {selectedOrder.orderNumber}</p>
+                        </div>
                       )}
                     </div>
                   )}
@@ -385,7 +385,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               Chọn phương thức thanh toán cho đơn hàng
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid grid-cols-1 gap-3">
             {getPaymentMethods().map((method) => (
               <Button
@@ -402,7 +402,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               </Button>
             ))}
           </div>
-          
+
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setPaymentMethodsOpen(false)}>
               Hủy
