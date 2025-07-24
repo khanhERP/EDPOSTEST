@@ -63,7 +63,7 @@ export function OrderManagement() {
     };
     
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-  };
+  };</old_str>
 
   const getTableInfo = (tableId: number) => {
     if (!tables) return null;
@@ -115,12 +115,12 @@ export function OrderManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{t('tables.orderManagement')}</h2>
-          <p className="text-gray-600">실시간 주문 현황을 확인하고 관리하세요</p>
+          <h2 className="text-2xl font-bold text-gray-900">{t('orders.orderManagement')}</h2>
+          <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
         </div>
         <Badge variant="secondary" className="text-lg px-4 py-2">
-          {activeOrders.length}개 진행중
-        </Badge>
+          {activeOrders.length}{t('orders.ordersInProgress')}
+        </Badge></old_str>
       </div>
 
       {/* Orders Grid */}
@@ -128,10 +128,10 @@ export function OrderManagement() {
         <Card>
           <CardContent className="py-12 text-center">
             <Clock className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <p className="text-xl text-gray-500">진행중인 주문이 없습니다</p>
-            <p className="text-gray-400 mt-2">새로운 주문이 들어오면 여기에 표시됩니다</p>
+            <p className="text-xl text-gray-500">{t('orders.noActiveOrders')}</p>
+            <p className="text-gray-400 mt-2">{t('orders.newOrdersWillAppearHere')}</p>
           </CardContent>
-        </Card>
+        </Card></old_str>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {activeOrders.map((order: Order) => {
@@ -147,8 +147,8 @@ export function OrderManagement() {
                         {order.orderNumber}
                       </CardTitle>
                       <p className="text-sm text-gray-600">
-                        {tableInfo ? `${tableInfo.tableNumber} (${tableInfo.capacity}명)` : '테이블 정보 없음'}
-                      </p>
+                        {tableInfo ? `${tableInfo.tableNumber} (${tableInfo.capacity}${t('orders.people')})` : t('orders.noTableInfo')}
+                      </p></old_str>
                     </div>
                     <Badge variant={statusConfig.variant}>
                       {statusConfig.label}
@@ -157,26 +157,26 @@ export function OrderManagement() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">고객:</span>
-                    <span className="font-medium">{order.customerName || '미입력'}</span>
+                    <span className="text-gray-600">{t('orders.customer')}:</span>
+                    <span className="font-medium">{order.customerName || t('orders.noInput')}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">인원:</span>
+                    <span className="text-gray-600">{t('orders.customerCount')}:</span>
                     <span className="font-medium flex items-center gap-1">
                       <Users className="w-3 h-3" />
-                      {order.customerCount}명
+                      {order.customerCount}{t('orders.people')}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">주문시간:</span>
+                    <span className="text-gray-600">{t('orders.orderTime')}:</span>
                     <span className="font-medium">{formatTime(order.createdAt)}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">총액:</span>
+                    <span className="text-gray-600">{t('orders.totalAmount')}:</span>
                     <span className="font-bold text-lg text-green-600">
                       {formatCurrency(order.totalAmount)}
                     </span>
-                  </div>
+                  </div></old_str>
                   
                   <Separator />
                   
@@ -201,7 +201,7 @@ export function OrderManagement() {
                           disabled={updateOrderStatusMutation.isPending}
                         >
                           <DollarSign className="w-3 h-3 mr-1" />
-                          Thanh toán
+                          {t('orders.payment')}
                         </Button>
                       )}
                     </div>

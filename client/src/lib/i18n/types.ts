@@ -214,6 +214,13 @@ export interface OrdersTranslations {
   memo: string;
   totalAmount: string;
   statusAndTime: string;
+  realTimeOrderStatus: string;
+  ordersInProgress: string;
+  noActiveOrders: string;
+  newOrdersWillAppearHere: string;
+  noTableInfo: string;
+  noInput: string;
+  payment: string;
   status: {
     pending: string;
     confirmed: string;
