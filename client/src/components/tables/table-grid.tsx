@@ -424,47 +424,65 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       </div>
 
                       {(() => {
-                        console.log('=== RENDER CHECK DETAILED ===');
-                        console.log('orderItems raw:', orderItems);
+                        console.log('=== RENDER CHECK ULTRA DETAILED ===');
+                        console.log('Raw orderItems data:', orderItems);
                         console.log('orderItems type:', typeof orderItems);
-                        console.log('orderItems constructor:', orderItems?.constructor?.name);
                         console.log('orderItems is array:', Array.isArray(orderItems));
                         console.log('orderItems length:', orderItems?.length);
                         console.log('orderItemsLoading:', orderItemsLoading);
                         console.log('selectedOrder?.id:', selectedOrder?.id);
+                        console.log('orderDetailsOpen:', orderDetailsOpen);
                         
-                        // Try to access each item individually
+                        // Try JSON stringify to see raw structure
+                        try {
+                          console.log('orderItems JSON:', JSON.stringify(orderItems, null, 2));
+                        } catch (e) {
+                          console.log('Cannot stringify orderItems:', e);
+                        }
+
+                        // Try different ways to access the data
                         if (orderItems) {
-                          console.log('Attempting to iterate orderItems:');
+                          console.log('Object.keys(orderItems):', Object.keys(orderItems));
+                          console.log('orderItems.data:', orderItems.data);
+                          console.log('orderItems.items:', orderItems.items);
+                          console.log('orderItems[0]:', orderItems[0]);
+                        }
+                        
+                        // Force array conversion and check different possible structures
+                        let itemsToRender = [];
+                        
+                        if (Array.isArray(orderItems)) {
+                          itemsToRender = orderItems;
+                          console.log('✅ orderItems is already an array with length:', itemsToRender.length);
+                        } else if (orderItems && orderItems.data && Array.isArray(orderItems.data)) {
+                          itemsToRender = orderItems.data;
+                          console.log('✅ Found items in orderItems.data with length:', itemsToRender.length);
+                        } else if (orderItems && orderItems.items && Array.isArray(orderItems.items)) {
+                          itemsToRender = orderItems.items;
+                          console.log('✅ Found items in orderItems.items with length:', itemsToRender.length);
+                        } else if (orderItems && typeof orderItems === 'object') {
+                          // Try to convert object to array if it has numeric keys
                           try {
-                            for (let i = 0; i < (orderItems.length || 0); i++) {
-                              console.log(`Item ${i}:`, orderItems[i]);
-                            }
+                            itemsToRender = Object.values(orderItems).filter(item => item && typeof item === 'object');
+                            console.log('✅ Converted object to array with length:', itemsToRender.length);
                           } catch (e) {
-                            console.log('Error iterating orderItems:', e);
+                            console.log('❌ Failed to convert object to array:', e);
                           }
                         }
-                        console.log('=== END RENDER CHECK DETAILED ===');
                         
-                        // More robust check for valid items
-                        const isValidArray = Array.isArray(orderItems);
-                        const hasItems = isValidArray && orderItems.length > 0;
+                        console.log('Final itemsToRender:', itemsToRender);
+                        console.log('itemsToRender length:', itemsToRender.length);
+                        console.log('=== END RENDER CHECK ULTRA DETAILED ===');
                         
-                        console.log('Final checks:', {
-                          isValidArray,
-                          hasItems,
-                          itemCount: orderItems?.length || 0
-                        });
-                        
-                        if (hasItems) {
-                          console.log('✅ SUCCESSFULLY RENDERING ITEMS LIST');
+                        if (itemsToRender && itemsToRender.length > 0) {
+                          console.log('🎉 SUCCESS! Rendering', itemsToRender.length, 'items');
                           return (
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-green-600 mb-3">
-                                ✅ Hiển thị {orderItems.length} món ăn cho đơn hàng #{selectedOrder?.id}
+                                ✅ Hiển thị {itemsToRender.length} món ăn cho đơn hàng #{selectedOrder?.id}
                               </p>
-                              {orderItems.map((item: any, index: number) => {
-                                console.log(`📦 Rendering item ${index + 1}:`, {
+                              {itemsToRender.map((item: any, index: number) => {
+                                console.log(`🍽️ Rendering item ${index + 1}:`, {
                                   id: item.id,
                                   productId: item.productId,
                                   productName: item.productName,
@@ -505,30 +523,38 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             </div>
                           );
                         } else {
-                          console.log('❌ NO VALID ITEMS TO RENDER');
-                          const debugInfo = {
+                          console.log('💔 NO ITEMS TO RENDER - Complete debug info:');
+                          const completeDebug = {
                             orderItemsExists: !!orderItems,
                             orderItemsType: typeof orderItems,
                             isArray: Array.isArray(orderItems),
-                            length: orderItems?.length,
+                            rawLength: orderItems?.length,
+                            processedLength: itemsToRender?.length,
                             loading: orderItemsLoading,
-                            orderId: selectedOrder?.id
+                            orderId: selectedOrder?.id,
+                            dialogOpen: orderDetailsOpen,
+                            rawData: orderItems,
+                            queryEnabled: !!selectedOrder?.id && orderDetailsOpen
                           };
-                          console.log('Debug info for empty state:', debugInfo);
+                          console.log('Complete debug:', completeDebug);
                           
                           return (
                             <div className="text-center py-6 bg-red-50 rounded-lg border border-red-200">
                               <p className="text-red-600 font-medium mb-3">
                                 ❌ Không có món ăn nào cho đơn hàng #{selectedOrder?.id}
                               </p>
-                              <div className="text-xs text-gray-500 space-y-1 bg-white p-3 rounded border">
-                                <p><strong>Debug:</strong></p>
+                              <div className="text-xs text-gray-500 space-y-1 bg-white p-3 rounded border max-h-40 overflow-y-auto">
+                                <p><strong>Complete Debug Info:</strong></p>
                                 <p>Loading: {orderItemsLoading ? 'Có' : 'Không'}</p>
                                 <p>Data exists: {orderItems ? 'Có' : 'Không'}</p>
                                 <p>Is array: {Array.isArray(orderItems) ? 'Có' : 'Không'}</p>
-                                <p>Length: {orderItems?.length || 0}</p>
+                                <p>Raw length: {orderItems?.length || 0}</p>
+                                <p>Processed length: {itemsToRender?.length || 0}</p>
                                 <p>Type: {typeof orderItems}</p>
                                 <p>Order ID: {selectedOrder?.id}</p>
+                                <p>Dialog open: {orderDetailsOpen ? 'Có' : 'Không'}</p>
+                                <p>Query enabled: {(!!selectedOrder?.id && orderDetailsOpen) ? 'Có' : 'Không'}</p>
+                                <p>Raw data: {JSON.stringify(orderItems)?.substring(0, 100)}...</p>
                               </div>
                             </div>
                           );
