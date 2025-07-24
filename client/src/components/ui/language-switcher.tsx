@@ -15,7 +15,8 @@ const languages = [
 ];
 
 export function LanguageSwitcher() {
-  const { currentLanguage, setLanguage } = useLanguageStore();
+  const currentLanguage = useLanguageStore(state => state.currentLanguage);
+  const setLanguage = useLanguageStore(state => state.setLanguage);
   
   const currentLang = languages.find(lang => lang.code === currentLanguage);
 
