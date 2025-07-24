@@ -39,8 +39,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     queryKey: ['/api/order-items', selectedOrder?.id],
     enabled: !!selectedOrder?.id,
     queryFn: async () => {
+      console.log('Fetching order items for order ID:', selectedOrder?.id);
       const response = await apiRequest('GET', `/api/order-items/${selectedOrder?.id}`);
-      return response;
+      console.log('Raw order items response for order', selectedOrder?.id, ':', response);
+      console.log('Response type:', typeof response, 'Length:', response?.length);
+      console.log('Is array?', Array.isArray(response));
+
+      // Ensure we return an array
+      const items = Array.isArray(response) ? response : [];
+      console.log('Processed items:', items);
+
+      return items;
     },
   });
 
@@ -318,7 +327,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <div className="space-y-2">
                   {orderItemsLoading ? (
                     <p className="text-gray-500 text-center py-4">Đang tải dữ liệu...</p>
-                  ) : orderItems && Array.isArray(orderItems) && orderItems.length > 0 ? (
+                  ) : orderItems && orderItems.length > 0 ? (
                     orderItems.map((item: any) => (
                       <div key={item.id} className="flex justify-between items-center p-3 bg-white border rounded-lg">
                         <div>
@@ -338,9 +347,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <div className="text-center py-4">
                       <p className="text-gray-500">Không có món ăn nào trong đơn hàng</p>
                       {selectedOrder && (
-                        <div className="text-xs text-gray-400 mt-2">
+                        <div className="text-xs text-gray-400 mt-2 space-y-1">
                           <p>Order ID: {selectedOrder.id}</p>
                           <p>Order Number: {selectedOrder.orderNumber}</p>
+                          <p>Debug - orderItems: {JSON.stringify(orderItems)}</p>
+                          <p>Debug - orderItems type: {typeof orderItems}</p>
+                          <p>Debug - orderItems length: {orderItems?.length || 'undefined'}</p>
+                          <p>Debug - orderItems is array: {Array.isArray(orderItems) ? 'yes' : 'no'}</p>
                         </div>
                       )}
                     </div>
