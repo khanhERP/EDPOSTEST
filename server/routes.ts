@@ -140,8 +140,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { transaction, items } = req.body;
 
-      const validatedTransaction = insertTransactionSchema.parse(transaction);
-      const validatedItems = z.array(insertTransactionItemSchema).parse(items);
+      console.log("Received transaction data:", JSON.stringify({ transaction, items }, null, 2));
+
+      // Transform string numbers to actual numbers for validation
+      const transformedTransaction = {
+        ...transaction,
+        subtotal: parseFloat(transaction.subtotal),
+        tax: parseFloat(transaction.tax),
+        total: parseFloat(transaction.total),
+        amountReceived: transaction.amountReceived ? parseFloat(transaction.amountReceived) : undefined,
+        change: transaction.change ? parseFloat(transaction.change) : undefined,
+      };
+
+      const transformedItems = items.map((item: any) => ({
+        ...item,
+        price: parseFloat(item.price),
+        quantity: parseInt(item.quantity),
+        total: parseFloat(item.total),
+      }));
+
+      console.log("Transformed data:", JSON.stringify({ transformedTransaction, transformedItems }, null, 2));
+
+      const validatedTransaction = insertTransactionSchema.parse(transformedTransaction);
+      const validatedItems = z.array(insertTransactionItemSchema).parse(transformedItems);
 
       // Validate stock availability
       for (const item of validatedItems) {
@@ -164,12 +185,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.status(201).json(receipt);
     } catch (error) {
+      console.error("Transaction creation error:", error);
       if (error instanceof z.ZodError) {
         return res
           .status(400)
-          .json({ message: "Invalid transaction data", errors: error.errors });
+          .json({ 
+            message: "Invalid transaction data", 
+            errors: error.errors,
+            details: error.format()
+          });
       }
-      res.status(500).json({ message: "Failed to create transaction" });
+      res.status(500).json({ 
+        message: "Failed to create transaction",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
