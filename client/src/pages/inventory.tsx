@@ -39,14 +39,14 @@ export default function InventoryPage() {
   const [stockFilter, setStockFilter] = useState<string>("all");
   const [showStockDialog, setShowStockDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  
+
   const queryClient = useQueryClient();
 
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
 
-  
+
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
@@ -89,7 +89,7 @@ export default function InventoryPage() {
                         (stockFilter === "low" && product.stock <= 10) ||
                         (stockFilter === "out" && product.stock === 0) ||
                         (stockFilter === "in" && product.stock > 10);
-    
+
     return matchesSearch && matchesCategory && matchesStock;
   });
 
@@ -124,7 +124,7 @@ export default function InventoryPage() {
     }
     setShowStockDialog(true);
   };
-  
+
   const onStockUpdate = (data: StockUpdateForm) => {
     if (selectedProduct?.id === 0) {
       // Creating new product
@@ -154,7 +154,7 @@ export default function InventoryPage() {
     <div className="min-h-screen bg-green-50 grocery-bg">
       <POSHeader />
       <RightSidebar />
-      
+
       <div className="main-content pt-16 px-6">
         <div className="max-w-7xl mx-auto py-8">
           {/* Page Header */}
@@ -304,7 +304,7 @@ export default function InventoryPage() {
                         const category = categories.find(c => c.id === product.categoryId);
                         const status = getStockStatus(product.stock);
                         const stockValue = parseFloat(product.price) * product.stock;
-                        
+
                         return (
                           <tr key={product.id} className="border-b border-gray-100 hover:bg-green-50/50">
                             <td className="py-4 px-4">
@@ -346,7 +346,7 @@ export default function InventoryPage() {
                       })}
                     </tbody>
                   </table>
-                  
+
                   {filteredProducts.length === 0 && (
                     <div className="text-center py-12">
                       <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -368,7 +368,7 @@ export default function InventoryPage() {
               {selectedProduct?.id === 0 ? "Thêm mới tồn kho" : t('inventory.stockUpdate')}
             </DialogTitle>
           </DialogHeader>
-          
+
           {selectedProduct && (
             <Form {...stockUpdateForm}>
               <form onSubmit={stockUpdateForm.handleSubmit(onStockUpdate)} className="space-y-4">
@@ -454,7 +454,7 @@ export default function InventoryPage() {
                     name="type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('inventory.stockUpdateType')}</FormLabel>
+                        <FormLabel>Loại cập nhật</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
@@ -478,7 +478,7 @@ export default function InventoryPage() {
                   name="quantity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{selectedProduct?.id === 0 ? "Số lượng tồn kho ban đầu" : t('inventory.quantity')}</FormLabel>
+                      <FormLabel>{selectedProduct?.id === 0 ? "Số lượng tồn kho ban đầu" : "số lượng tồn kho"}</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -499,7 +499,7 @@ export default function InventoryPage() {
                     name="notes"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('inventory.notesOptional')}</FormLabel>
+                        <FormLabel>lí do chỉnh sửa</FormLabel>
                         <FormControl>
                           <Input placeholder={t('inventory.changeReason')} {...field} />
                         </FormControl>
