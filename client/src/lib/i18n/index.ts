@@ -35,6 +35,7 @@ export function useTranslation() {
   const { currentLanguage, setLanguage } = useLanguageStore();
 
   const t = (key: TranslationKey): string => {
+    // Force component to re-render by accessing currentLanguage in the render cycle
     const value = getNestedTranslation(translations[currentLanguage], key);
 
     // Development-time validation
