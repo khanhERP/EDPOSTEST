@@ -544,10 +544,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/order-items/:orderId", async (req, res) => {
     try {
+      console.log("=== ORDER ITEMS DEBUG START ===");
+      console.log("Raw orderId param:", req.params.orderId);
+      
       const orderId = parseInt(req.params.orderId);
+      console.log("Parsed orderId:", orderId);
+      console.log("Is valid number:", !isNaN(orderId));
+      
+      if (isNaN(orderId)) {
+        console.log("❌ Invalid orderId - not a number");
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+      
+      console.log("🔍 Calling storage.getOrderItems with orderId:", orderId);
       const items = await storage.getOrderItems(orderId);
+      
+      console.log("📦 Raw items from storage:", items);
+      console.log("Items type:", typeof items);
+      console.log("Is array:", Array.isArray(items));
+      console.log("Items length:", items?.length || 0);
+      
+      if (items && items.length > 0) {
+        console.log("✅ Found items - first item structure:", JSON.stringify(items[0], null, 2));
+        items.forEach((item, index) => {
+          console.log(`  Item ${index + 1}:`, {
+            id: item.id,
+            orderId: item.orderId,
+            productId: item.productId,
+            productName: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            total: item.total,
+            notes: item.notes
+          });
+        });
+      } else {
+        console.log("⚠️ No items found for orderId:", orderId);
+      }
+      
+      console.log("📤 Sending response with items count:", items?.length || 0);
+      console.log("=== ORDER ITEMS DEBUG END ===");
+      
       res.json(items);
     } catch (error) {
+      console.error("❌ ORDER ITEMS ERROR:", error);
+      console.error("Error stack:", error.stack);
+      console.error("Error message:", error.message);
+      console.log("=== ORDER ITEMS DEBUG END (ERROR) ===");
       res.status(500).json({ message: "Failed to fetch order items" });
     }
   });
