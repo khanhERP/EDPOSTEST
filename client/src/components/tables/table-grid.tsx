@@ -291,7 +291,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       <Users className="w-3 h-3 mr-1" />
                       {activeOrder ? (
                         <span>
-                          {activeOrder.customerCount || 1}/{table.capacity}{t('tables.people')}
+                          {activeOrder.customerCount || 1}/{table.capacity}{t('orders.people')}
                         </span>
                       ) : (
                         <span>{table.capacity}{t('tables.people')}</span>
