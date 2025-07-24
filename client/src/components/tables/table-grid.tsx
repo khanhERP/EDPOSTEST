@@ -57,15 +57,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       });
       
       const response = await apiRequest('GET', `/api/order-items/${orderId}`);
+      const data = await response.json();
       
-      console.log('Raw order items response for order', orderId, ':', response);
-      console.log('Response type:', typeof response, 'Length:', response?.length);
-      console.log('Is array?', Array.isArray(response));
+      console.log('Raw order items response for order', orderId, ':', data);
+      console.log('Response type:', typeof data, 'Length:', data?.length);
+      console.log('Is array?', Array.isArray(data));
       
       // Log each item in detail
-      if (Array.isArray(response) && response.length > 0) {
+      if (Array.isArray(data) && data.length > 0) {
         console.log('Order items details:');
-        response.forEach((item, index) => {
+        data.forEach((item, index) => {
           console.log(`  Item ${index + 1}:`, {
             id: item.id,
             orderId: item.orderId,
@@ -81,7 +82,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       }
 
       // Ensure we return an array
-      const items = Array.isArray(response) ? response : [];
+      const items = Array.isArray(data) ? data : [];
       console.log('Final processed items count:', items.length);
       console.log('About to return items:', items);
       console.log('=== END FETCHING ORDER ITEMS ===');
