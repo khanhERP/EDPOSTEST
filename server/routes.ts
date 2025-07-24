@@ -153,7 +153,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const transformedItems = items.map((item: any) => ({
-        ...item,
+        productId: item.productId,
+        productName: item.productName,
         price: parseFloat(item.price),
         quantity: parseInt(item.quantity),
         total: parseFloat(item.total),
