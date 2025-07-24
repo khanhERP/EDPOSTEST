@@ -392,15 +392,6 @@ export type TranslationKey =
   | `notFound.${keyof NotFoundTranslations}`;
 
 // Language-specific translations type
-export type LanguageTranslations = {
-  [K in Language]: Translations;
-};
-orderPlaced: string;
-orderPlacedSuccess: string;
-orderFailed: string;
-tableOrder: string;
-tableCapacity: string;
-
 export interface LanguageTranslations {
   ko: { [key: string]: any };
   en: { [key: string]: any };
