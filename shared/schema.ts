@@ -263,6 +263,20 @@ export const pointTransactions = pgTable('point_transactions', {
   createdAt: timestamp('created_at').defaultNow()
 });
 
+// Membership settings table
+export const membershipSettings = pgTable('membership_settings', {
+  id: serial('id').primaryKey(),
+  level: varchar('level', { length: 20 }).notNull().unique(), // 'SILVER', 'GOLD', 'VIP'
+  name: varchar('name', { length: 50 }).notNull(),
+  minSpent: decimal('min_spent', { precision: 10, scale: 2 }).notNull(),
+  pointMultiplier: decimal('point_multiplier', { precision: 3, scale: 2 }).default('1.00'),
+  discountPercent: integer('discount_percent').default(0),
+  benefits: text('benefits'), // JSON string of benefits array
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
+});
+
 export const insertCustomerSchema = createInsertSchema(customers).omit({
   id: true,
   createdAt: true,
@@ -282,8 +296,15 @@ export const insertPointTransactionSchema = createInsertSchema(pointTransactions
   }),
 });
 
+export const insertMembershipSettingsSchema = createInsertSchema(membershipSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type Customer = InferSelectModel<typeof customers>;
 export type PointTransaction = typeof pointTransactions.$inferSelect;
+export type MembershipSettings = typeof membershipSettings.$inferSelect;
 export type AttendanceRecord = typeof attendanceRecords.$inferSelect;
 export type Table = typeof tables.$inferSelect;
 export type Order = typeof orders.$inferSelect;
@@ -303,6 +324,7 @@ export type InsertStoreSettings = z.infer<typeof insertStoreSettingsSchema>;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 export type InsertPointTransaction = z.infer<typeof insertPointTransactionSchema>;
+export type InsertMembershipSettings = z.infer<typeof insertMembershipSettingsSchema>;
 
 // Cart item type for frontend use
 export type CartItem = {

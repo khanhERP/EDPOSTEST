@@ -14,6 +14,7 @@ import {
   insertSupplierSchema,
   insertCustomerSchema,
   insertPointTransactionSchema,
+  insertMembershipSettingsSchema,
 } from "@shared/schema";
 import { initializeSampleData } from "./db";
 import { z } from "zod";
@@ -878,6 +879,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(pointHistory);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch point history" });
+    }
+  });
+
+  // Membership Settings Routes
+  app.get("/api/membership-settings", async (req, res) => {
+    try {
+      const settings = await storage.getMembershipSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch membership settings" });
+    }
+  });
+
+  app.get("/api/membership-settings/:level", async (req, res) => {
+    try {
+      const level = req.params.level;
+      const setting = await storage.getMembershipSetting(level);
+      if (!setting) {
+        return res.status(404).json({ message: "Membership setting not found" });
+      }
+      res.json(setting);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch membership setting" });
+    }
+  });
+
+  app.post("/api/membership-settings", async (req, res) => {
+    try {
+      const validatedData = insertMembershipSettingsSchema.parse(req.body);
+      const setting = await storage.createMembershipSetting(validatedData);
+      res.status(201).json(setting);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid membership setting data",
+          errors: error.errors,
+        });
+      }
+      res.status(500).json({ message: "Failed to create membership setting" });
+    }
+  });
+
+  app.put("/api/membership-settings/:level", async (req, res) => {
+    try {
+      const level = req.params.level;
+      const validatedData = insertMembershipSettingsSchema.partial().parse(req.body);
+      const setting = await storage.updateMembershipSetting(level, validatedData);
+      if (!setting) {
+        return res.status(404).json({ message: "Membership setting not found" });
+      }
+      res.json(setting);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid membership setting data",
+          errors: error.errors,
+        });
+      }
+      res.status(500).json({ message: "Failed to update membership setting" });
+    }
+  });
+
+  app.delete("/api/membership-settings/:level", async (req, res) => {
+    try {
+      const level = req.params.level;
+      const deleted = await storage.deleteMembershipSetting(level);
+      if (!deleted) {
+        return res.status(404).json({ message: "Membership setting not found" });
+      }
+      res.json({ message: "Membership setting deleted successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete membership setting" });
     }
   });
 

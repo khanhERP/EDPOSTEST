@@ -2,7 +2,21 @@ import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
-import { categories, products, employees, tables, orders, orderItems, transactions, transactionItems, attendanceRecords, storeSettings, suppliers, customers } from '@shared/schema';
+import {
+  categories,
+  products,
+  employees,
+  tables,
+  orders,
+  orderItems,
+  transactions,
+  transactionItems,
+  attendanceRecords,
+  storeSettings,
+  suppliers,
+  customers,
+  membershipSettings,
+} from "@shared/schema";
 import { sql } from 'drizzle-orm';
 
 neonConfig.webSocketConstructor = ws;
@@ -23,6 +37,42 @@ export async function initializeSampleData() {
     const customerCount = await db.select({ count: sql<number>`count(*)` }).from(customers);
     if (customerCount[0]?.count === 0) {
       console.log("🔄 Inserting sample customers data...");
+      // Initialize membership settings
+      const defaultMembershipSettings = [
+        {
+          level: "SILVER",
+          name: "신규 고객을 위한 기본 등급",
+          minSpent: "0.00",
+          pointMultiplier: "1.00",
+          discountPercent: 5,
+          benefits: JSON.stringify(["기본 포인트 적립", "생일 할인 5%"]),
+          isActive: true
+        },
+        {
+          level: "GOLD", 
+          name: "단골 고객을 위한 프리미엄 등급",
+          minSpent: "300000.00",
+          pointMultiplier: "1.50",
+          discountPercent: 10,
+          benefits: JSON.stringify(["포인트 1.5배 적립", "생일 할인 10%", "월 1회 무료 음료"]),
+          isActive: true
+        },
+        {
+          level: "VIP",
+          name: "VIP 고객을 위한 최고 등급", 
+          minSpent: "1000000.00",
+          pointMultiplier: "2.00",
+          discountPercent: 20,
+          benefits: JSON.stringify(["포인트 2배 적립", "생일 할인 20%", "월 2회 무료 음료", "전용 라운지 이용"]),
+          isActive: true
+        }
+      ];
+
+      // Insert membership settings
+      for (const setting of defaultMembershipSettings) {
+        await db.insert(membershipSettings).values(setting).onConflictDoNothing();
+      }
+
       await db.execute(sql`
         INSERT INTO customers (customer_id, name, phone, email, address, date_of_birth, visit_count, total_spent, points, membership_level, status, notes)
         VALUES
