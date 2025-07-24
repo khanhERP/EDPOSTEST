@@ -1,6 +1,6 @@
 import type { OrdersTranslations } from "../types";
 
-export const ordersTranslations: OrdersTranslations = {
+export const ordersTranslations: { [key: string]: OrdersTranslations } = {
   ko: {
     orderManagement: "주문 관리",
     orderDetails: "주문 상세",

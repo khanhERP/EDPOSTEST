@@ -1,4 +1,4 @@
-export type Language = 'ko' | 'en' | 'vi';
+export type Language = "ko" | "en" | "vi";
 
 // Common translations interface
 export interface CommonTranslations {
@@ -360,6 +360,11 @@ export interface OrdersTranslations {
   noTableInfo: string;
   noInput: string;
   payment: string;
+  orderPlaced: string;
+  orderPlacedSuccess: string;
+  orderFailed: string;
+  tableOrder: string;
+  tableCapacity: string;
   status: {
     pending: string;
     confirmed: string;
@@ -423,24 +428,39 @@ export interface Translations {
 }
 
 // Type-safe translation keys
-export type TranslationKey = 
-  | `common.${keyof CommonTranslations}`
-  | `nav.${keyof NavigationTranslations}`
-  | `reports.${keyof ReportsTranslations}`
-  | `settings.${keyof SettingsTranslations}`
-  | `notFound.${keyof NotFoundTranslations}`;
+export type TranslationKey =
+  | `common.${RecursiveKeyOf<CommonTranslations>}`
+  | `nav.${RecursiveKeyOf<NavigationTranslations>}`
+  | `reports.${RecursiveKeyOf<ReportsTranslations>}`
+  | `settings.${RecursiveKeyOf<SettingsTranslations>}`
+  | `notFound.${RecursiveKeyOf<NotFoundTranslations>}`
+  | `orders.${RecursiveKeyOf<OrdersTranslations>}`
+  | `customers.${RecursiveKeyOf<CustomersTranslations>}`
+  | `employees.${RecursiveKeyOf<EmployeesTranslations>}`
+  | `attendance.${RecursiveKeyOf<AttendanceTranslations>}`;
 
 // Language-specific translations type
-type Join<K, P> = K extends string ? P extends string ? `${K}.${P}` : never : never;
+type Join<K, P> = K extends string | number
+  ? P extends string | number
+    ? `${K}.${P}`
+    : never
+  : never;
 
-type RecursiveKeyOf<T> = {
-  [K in keyof T]: T[K] extends string
-    ? K
-    : T[K] extends Record<string, any>
-      ? K | Join<K, keyof T[K]> | {
-          [K2 in keyof T[K]]: T[K][K2] extends Record<string, any>
-            ? Join<K, Join<K2, keyof T[K][K2]>>
-            : never;
-        }[keyof T[K]]
-      : K
+type TwoLevelKeys<T> = {
+  [K in keyof T]: T[K] extends object ? Join<K, keyof T[K]> : never;
 }[keyof T];
+
+type ThreeLevelKeys<T> = {
+  [K in keyof T]: T[K] extends object
+    ? {
+        [K2 in keyof T[K]]: T[K][K2] extends object
+          ? Join<K, Join<K2, keyof T[K][K2]>>
+          : never;
+      }[keyof T[K]]
+    : never;
+}[keyof T];
+
+type RecursiveKeyOf<T> =
+  | (keyof T & string) // cấp 1
+  | TwoLevelKeys<T> // cấp 2
+  | ThreeLevelKeys<T>; // cấp 3
