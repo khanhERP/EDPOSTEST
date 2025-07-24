@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { translations2 } from './i18n/modules/translations.ts';
 
 export type Language = 'ko' | 'en' | 'vi';
 
@@ -1313,7 +1314,7 @@ export function useTranslation() {
 
   const t = (key: string): string => {
     const keys = key.split('.');
-    let value: any = translations[currentLanguage];
+    let value: any = translations2[currentLanguage];
     
     for (const k of keys) {
       value = value?.[k];

@@ -1601,7 +1601,7 @@ export default function Settings() {
                           <div className="flex items-center gap-2">
                             <span className="text-2xl">{method.icon}</span>
                             <span className="font-medium">
-                              {t(`settings.payments.cash`)}
+                              {t(`settings.storeUpdate`)}
                             </span>
                           </div>
                           <div className="flex items-center gap-2">
