@@ -57,15 +57,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       });
       
       const response = await apiRequest('GET', `/api/order-items/${orderId}`);
+      const data = await response.json();
       
-      console.log('Raw order items response for order', orderId, ':', response);
-      console.log('Response type:', typeof response, 'Length:', response?.length);
-      console.log('Is array?', Array.isArray(response));
+      console.log('Raw order items response for order', orderId, ':', data);
+      console.log('Response type:', typeof data, 'Length:', data?.length);
+      console.log('Is array?', Array.isArray(data));
       
       // Log each item in detail
-      if (Array.isArray(response) && response.length > 0) {
+      if (Array.isArray(data) && data.length > 0) {
         console.log('Order items details:');
-        response.forEach((item, index) => {
+        data.forEach((item, index) => {
           console.log(`  Item ${index + 1}:`, {
             id: item.id,
             orderId: item.orderId,
@@ -81,7 +82,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       }
 
       // Ensure we return an array
-      const items = Array.isArray(response) ? response : [];
+      const items = Array.isArray(data) ? data : [];
       console.log('Final processed items count:', items.length);
       console.log('About to return items:', items);
       console.log('=== END FETCHING ORDER ITEMS ===');
@@ -443,8 +444,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         // Try different ways to access the data
                         if (orderItems) {
                           console.log('Object.keys(orderItems):', Object.keys(orderItems));
-                          console.log('orderItems.data:', orderItems.data);
-                          console.log('orderItems.items:', orderItems.items);
+                          console.log('orderItems.data:', (orderItems as any).data);
+                          console.log('orderItems.items:', (orderItems as any).items);
                           console.log('orderItems[0]:', orderItems[0]);
                         }
                         
@@ -454,11 +455,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         if (Array.isArray(orderItems)) {
                           itemsToRender = orderItems;
                           console.log('✅ orderItems is already an array with length:', itemsToRender.length);
-                        } else if (orderItems && orderItems.data && Array.isArray(orderItems.data)) {
-                          itemsToRender = orderItems.data;
+                        } else if (orderItems && (orderItems as any).data && Array.isArray((orderItems as any).data)) {
+                          itemsToRender = (orderItems as any).data;
                           console.log('✅ Found items in orderItems.data with length:', itemsToRender.length);
-                        } else if (orderItems && orderItems.items && Array.isArray(orderItems.items)) {
-                          itemsToRender = orderItems.items;
+                        } else if (orderItems && (orderItems as any).items && Array.isArray((orderItems as any).items)) {
+                          itemsToRender = (orderItems as any).items;
                           console.log('✅ Found items in orderItems.items with length:', itemsToRender.length);
                         } else if (orderItems && typeof orderItems === 'object') {
                           // Try to convert object to array if it has numeric keys

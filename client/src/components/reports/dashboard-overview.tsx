@@ -23,7 +23,7 @@ import {
 import type { Order, Table as TableType } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 
-export function formatDateToYYYYMMDD(date) {
+export function formatDateToYYYYMMDD(date: Date | string | number): string {
   const d = new Date(date); // Ensure input is a Date
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
@@ -31,7 +31,7 @@ export function formatDateToYYYYMMDD(date) {
   return `${year}-${month}-${day}`;
 }
 
-export function subtractMonths(date, months) {
+export function subtractMonths(date: Date | string | number, months: number): Date {
   const newDate = new Date(date);
   newDate.setMonth(newDate.getMonth() - months);
   return newDate;
