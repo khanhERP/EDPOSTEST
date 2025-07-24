@@ -38,7 +38,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const { data: orderItems, isLoading: orderItemsLoading } = useQuery({
     queryKey: ['/api/order-items', selectedOrder?.id],
     enabled: !!selectedOrder?.id,
-    queryFn: () => apiRequest('GET', `/api/order-items/${selectedOrder?.id}`),
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/order-items/${selectedOrder?.id}`);
+      return response;
+    },
   });
 
   const { data: products } = useQuery({
@@ -319,8 +322,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     orderItems.map((item: any) => (
                       <div key={item.id} className="flex justify-between items-center p-3 bg-white border rounded-lg">
                         <div>
-                          <p className="font-medium">{getProductName(item.productId)}</p>
+                          <p className="font-medium">{item.productName || getProductName(item.productId)}</p>
                           <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
+                          {item.notes && (
+                            <p className="text-xs text-gray-500 italic">Ghi chú: {item.notes}</p>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="font-medium">₩{Number(item.total).toLocaleString()}</p>

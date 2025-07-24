@@ -553,7 +553,12 @@ export class DatabaseStorage implements IStorage {
     const [newOrder] = await db.insert(orders).values(order).returning();
 
     if (items.length > 0) {
-      const itemsWithOrderId = items.map(item => ({ ...item, orderId: newOrder.id }));
+      const itemsWithOrderId = items.map(item => ({ 
+        ...item, 
+        orderId: newOrder.id,
+        unitPrice: item.unitPrice.toString(),
+        total: item.total.toString()
+      }));
       await db.insert(orderItems).values(itemsWithOrderId);
     }
 
@@ -598,7 +603,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrderItems(orderId: number): Promise<OrderItem[]> {
-    return await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+    const items = await db
+      .select({
+        id: orderItems.id,
+        orderId: orderItems.orderId,
+        productId: orderItems.productId,
+        quantity: orderItems.quantity,
+        unitPrice: orderItems.unitPrice,
+        total: orderItems.total,
+        notes: orderItems.notes,
+        productName: products.name,
+        productSku: products.sku,
+      })
+      .from(orderItems)
+      .leftJoin(products, eq(orderItems.productId, products.id))
+      .where(eq(orderItems.orderId, orderId));
+    
+    return items as OrderItem[];
   }
 
   // Inventory Management
