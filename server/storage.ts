@@ -5,14 +5,22 @@ import {
   transactionItems,
   employees,
   attendanceRecords,
-  storeSettings,
-  suppliers,
   tables,
   orders,
   orderItems,
-  customers,
-  pointTransactions,
-  membershipSettings,
+  storeSettings,
+  suppliers,
+  type Category,
+  type Product,
+  type Transaction,
+  type TransactionItem,
+  type Employee,
+  type AttendanceRecord,
+  type Table,
+  type Order,
+  type OrderItem,
+  type StoreSettings,
+  type InsertCategory,
   type InsertProduct,
   type InsertTransaction,
   type InsertTransactionItem,
@@ -22,25 +30,14 @@ import {
   type InsertOrder,
   type InsertOrderItem,
   type InsertStoreSettings,
-  type InsertSupplier,
-  type InsertCustomer,
-  type InsertPointTransaction,
-  type InsertMembershipSettings,
-  type Product,
-  type Transaction,
-  type TransactionItem,
-  type Category,
-  type Employee,
-  type AttendanceRecord,
-  type Table,
-  type Order,
-  type OrderItem,
-  type StoreSettings,
-  type Supplier,
-  type Customer,
-  type PointTransaction,
-  type MembershipSettings,
   type Receipt,
+  type InsertSupplier,
+  customers,
+  pointTransactions,
+  type Customer,
+  type InsertCustomer,
+  type PointTransaction,
+  type InsertPointTransaction,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, ilike, and, gte, lte, or, sql } from "drizzle-orm";
@@ -190,14 +187,6 @@ export interface IStorage {
     customerId: number,
     limit?: number,
   ): Promise<PointTransaction[]>;
-
-  // Membership Settings
-  getMembershipSettings(): Promise<MembershipSettings[]>;
-  getMembershipSetting(id: number): Promise<MembershipSettings | undefined>;
-  updateMembershipSetting(
-    id: number,
-    settings: Partial<InsertMembershipSettings>,
-  ): Promise<MembershipSettings | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -744,7 +733,7 @@ export class DatabaseStorage implements IStorage {
       .from(orderItems)
       .leftJoin(products, eq(orderItems.productId, products.id))
       .where(eq(orderItems.orderId, orderId));
-
+      
     return items as OrderItem[];
   }
 
@@ -1060,31 +1049,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(pointTransactions.customerId, customerId))
       .orderBy(sql`${pointTransactions.createdAt} DESC`)
       .limit(limit);
-  }
-
-  // Membership Settings Methods
-  async getMembershipSettings(): Promise<MembershipSettings[]> {
-    return await db.select().from(membershipSettings).orderBy(membershipSettings.level);
-  }
-
-  async getMembershipSetting(id: number): Promise<MembershipSettings | undefined> {
-    const [setting] = await db
-      .select()
-      .from(membershipSettings)
-      .where(eq(membershipSettings.id, id));
-    return setting || undefined;
-  }
-
-  async updateMembershipSetting(
-    id: number,
-    settings: Partial<InsertMembershipSettings>,
-  ): Promise<MembershipSettings | undefined> {
-    const [updatedSetting] = await db
-      .update(membershipSettings)
-      .set({ ...settings, updatedAt: new Date() })
-      .where(eq(membershipSettings.id, id))
-      .returning();
-    return updatedSetting || undefined;
   }
 }
 

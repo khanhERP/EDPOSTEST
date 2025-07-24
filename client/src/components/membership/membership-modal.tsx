@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { type Customer, type MembershipSettings } from "@shared/schema";
+import { type Customer } from "@shared/schema";
 import { 
   Crown, 
   Medal, 
@@ -20,9 +20,7 @@ import {
   Star,
   Search,
   Save,
-  X,
-  Edit,
-  Settings
+  X
 } from "lucide-react";
 
 interface MembershipModalProps {
@@ -30,65 +28,45 @@ interface MembershipModalProps {
   onClose: () => void;
 }
 
-const getDefaultTiers = () => [
-    {
-      level: 'SILVER',
-      name: '실버',
-      icon: Medal,
-      color: 'bg-gray-100 text-gray-800 border-gray-200',
-      benefits: ['기본 포인트 적립', '생일 할인 5%'],
-      minSpent: 0,
-      description: '신규 고객을 위한 기본 등급'
-    },
-    {
-      level: 'GOLD',
-      name: '골드',
-      icon: Award,
-      color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      benefits: ['포인트 1.5배 적립', '생일 할인 10%', '월 1회 무료 음료'],
-      minSpent: 300000,
-      description: '단골 고객을 위한 프리미엄 등급'
-    },
-    {
-      level: 'VIP',
-      name: 'VIP',
-      icon: Crown,
-      color: 'bg-purple-100 text-purple-800 border-purple-200',
-      benefits: ['포인트 2배 적립', '생일 할인 20%', '월 2회 무료 음료', '전용 라운지 이용'],
-      minSpent: 1000000,
-      description: 'VIP 고객을 위한 최고 등급'
-    }
-  ];
-
-  const membershipTiers = membershipSettingsData && membershipSettingsData.length > 0 
-    ? membershipSettingsData.map(setting => {
-        const defaultTier = getDefaultTiers().find(t => t.level === setting.level) || getDefaultTiers()[0];
-        return {
-          ...defaultTier,
-          minSpent: parseFloat(setting.minSpent || '0'),
-          benefits: setting.benefits ? JSON.parse(setting.benefits) : defaultTier.benefits,
-          description: setting.name || defaultTier.description
-        };
-      })
-    : getDefaultTiers();
+const membershipTiers = [
+  {
+    level: 'SILVER',
+    name: '실버',
+    icon: Medal,
+    color: 'bg-gray-100 text-gray-800 border-gray-200',
+    benefits: ['기본 포인트 적립', '생일 할인 5%'],
+    minSpent: 0,
+    description: '신규 고객을 위한 기본 등급'
+  },
+  {
+    level: 'GOLD',
+    name: '골드',
+    icon: Award,
+    color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    benefits: ['포인트 1.5배 적립', '생일 할인 10%', '월 1회 무료 음료'],
+    minSpent: 300000,
+    description: '단골 고객을 위한 프리미엄 등급'
+  },
+  {
+    level: 'VIP',
+    name: 'VIP',
+    icon: Crown,
+    color: 'bg-purple-100 text-purple-800 border-purple-200',
+    benefits: ['포인트 2배 적립', '생일 할인 20%', '월 2회 무료 음료', '전용 라운지 이용'],
+    minSpent: 1000000,
+    description: 'VIP 고객을 위한 최고 등급'
+  }
+];
 
 export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedTier, setSelectedTier] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [editingTier, setEditingTier] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{[key: string]: any}>({});
 
   // Fetch customers
   const { data: customers, isLoading } = useQuery<Customer[]>({
     queryKey: ['/api/customers'],
-    enabled: isOpen,
-  });
-
-  // Fetch membership settings
-  const { data: membershipSettingsData, isLoading: settingsLoading } = useQuery<MembershipSettings[]>({
-    queryKey: ['/api/membership-settings'],
     enabled: isOpen,
   });
 
@@ -120,80 +98,16 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
     },
   });
 
-  // Update membership settings
-  const updateMembershipSettingsMutation = useMutation({
-    mutationFn: async ({ level, data }: { level: string; data: any }) => {
-      const response = await fetch(`/api/membership-settings/${level}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      if (!response.ok) throw new Error('Failed to update');
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/membership-settings'] });
-      setEditingTier(null);
-      setEditForm({});
-      toast({
-        title: 'Thành công',
-        description: 'Cài đặt membership đã được cập nhật.',
-      });
-    },
-    onError: () => {
-      toast({
-        title: 'Lỗi',
-        description: 'Không thể cập nhật cài đặt membership.',
-        variant: 'destructive',
-      });
-    },
-  });
-
   const handleUpdateMembership = (customerId: number, newLevel: string) => {
     updateMembershipMutation.mutate({ customerId, membershipLevel: newLevel });
   };
 
   const autoUpgradeBasedOnSpending = (customerId: number, totalSpent: number) => {
     let newLevel = 'SILVER';
-    const sortedTiers = membershipTiers.sort((a, b) => b.minSpent - a.minSpent);
-    
-    for (const tier of sortedTiers) {
-      if (totalSpent >= tier.minSpent) {
-        newLevel = tier.level;
-        break;
-      }
-    }
+    if (totalSpent >= 1000000) newLevel = 'VIP';
+    else if (totalSpent >= 300000) newLevel = 'GOLD';
     
     handleUpdateMembership(customerId, newLevel);
-  };
-
-  const handleEditTier = (tier: any) => {
-    setEditingTier(tier.level);
-    setEditForm({
-      minSpent: tier.minSpent,
-      benefits: tier.benefits,
-      description: tier.description
-    });
-  };
-
-  const handleSaveEdit = () => {
-    if (!editingTier) return;
-    
-    updateMembershipSettingsMutation.mutate({
-      level: editingTier,
-      data: {
-        minSpent: editForm.minSpent.toString(),
-        benefits: JSON.stringify(editForm.benefits || []),
-        name: editForm.description
-      }
-    });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingTier(null);
-    setEditForm({});
   };
 
   const filteredCustomers = customers?.filter(customer => {
@@ -245,62 +159,22 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
                         <Badge variant="outline" className="ml-auto">
                           {count}명
                         </Badge>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEditTier(tier)}
-                          className="h-6 w-6 p-0"
-                        >
-                          <Edit className="w-3 h-3" />
-                        </Button>
                       </CardTitle>
                       <CardDescription>{tier.description}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      {editingTier === tier.level ? (
-                        <div className="space-y-3">
-                          <div>
-                            <Label className="text-sm">Số tiền tối thiểu (₫)</Label>
-                            <Input
-                              type="number"
-                              value={editForm.minSpent || 0}
-                              onChange={(e) => setEditForm({...editForm, minSpent: parseInt(e.target.value) || 0})}
-                              className="h-8"
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-sm">Mô tả</Label>
-                            <Input
-                              value={editForm.description || ''}
-                              onChange={(e) => setEditForm({...editForm, description: e.target.value})}
-                              className="h-8"
-                            />
-                          </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" onClick={handleSaveEdit} disabled={updateMembershipSettingsMutation.isPending}>
-                              <Save className="w-3 h-3 mr-1" />
-                              Lưu
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={handleCancelEdit}>
-                              <X className="w-3 h-3 mr-1" />
-                              Hủy
-                            </Button>
-                          </div>
+                      <div className="space-y-2">
+                        <div className="text-sm font-medium">최소 구매금액: ₩{tier.minSpent.toLocaleString()}</div>
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium">혜택:</div>
+                          {tier.benefits.map((benefit, index) => (
+                            <div key={index} className="text-xs text-gray-600 flex items-center gap-1">
+                              <Gift className="w-3 h-3" />
+                              {benefit}
+                            </div>
+                          ))}
                         </div>
-                      ) : (
-                        <div className="space-y-2">
-                          <div className="text-sm font-medium">Số tiền tối thiểu: {tier.minSpent.toLocaleString()} ₫</div>
-                          <div className="space-y-1">
-                            <div className="text-sm font-medium">혜택:</div>
-                            {tier.benefits.map((benefit: string, index: number) => (
-                              <div key={index} className="text-xs text-gray-600 flex items-center gap-1">
-                                <Gift className="w-3 h-3" />
-                                {benefit}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                      </div>
                     </CardContent>
                   </Card>
                 );
