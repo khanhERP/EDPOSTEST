@@ -177,6 +177,28 @@ export interface SettingsTranslations {
   enabled: string;
   storeUpdated: string;
   updateError: string;
+  paymentMethods: string;
+  payments: {
+    cash: string;
+    creditCard: string;
+    debitCard: string;
+    momo: string;
+    zalopay: string;
+    vnpay: string;
+    banking: string;
+    shopeepay: string;
+    grabpay: string;
+    newPayment: string;
+  };
+  disabled: string;
+  backToPos: string;
+  storeNamePlaceholder: string;
+  storeCodePlaceholder: string;
+  taxId: string;
+  taxIdPlaceholder: string;
+  addressPlaceholder: string;
+  phonePlaceholder: string;
+  emailPlaceholder: string;
 }
 
 // Not Found translations interface
