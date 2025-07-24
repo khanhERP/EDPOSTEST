@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  // Force refetch order items when dialog opens
+  useEffect(() => {
+    if (orderDetailsOpen && selectedOrder?.id) {
+      console.log('Dialog opened, refetching order items for order:', selectedOrder.id);
+      refetchOrderItems();
+    }
+  }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems]);
 
   const { data: tables, isLoading } = useQuery({
     queryKey: ['/api/tables'],
@@ -401,18 +409,28 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <p className="text-gray-500 text-center py-4">Đang tải dữ liệu...</p>
                   ) : (
                     <>
-                      {/* Debug info always visible */}
+                      {/* Debug info and refetch button */}
                       <div className="text-xs text-blue-600 p-2 bg-blue-50 rounded mb-2">
-                        <p>Debug - Selected Order: {selectedOrder ? 'SET' : 'NULL'}</p>
-                        <p>Debug - Order ID: {selectedOrder?.id}</p>
-                        <p>Debug - Dialog Open: {orderDetailsOpen ? 'yes' : 'no'}</p>
-                        <p>Debug - Query Enabled: {!!(selectedOrder?.id && orderDetailsOpen) ? 'yes' : 'no'}</p>
-                        <p>Debug - Items Loading: {orderItemsLoading ? 'yes' : 'no'}</p>
-                        <p>Debug - Items loaded: {orderItems ? 'yes' : 'no'}</p>
-                        <p>Debug - Items count: {orderItems?.length || 0}</p>
-                        <p>Debug - Is array: {Array.isArray(orderItems) ? 'yes' : 'no'}</p>
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p>Debug - Order ID: {selectedOrder?.id}</p>
+                            <p>Debug - Items Loading: {orderItemsLoading ? 'yes' : 'no'}</p>
+                            <p>Debug - Items count: {orderItems?.length || 0}</p>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              console.log('Manual refetch triggered for order:', selectedOrder?.id);
+                              refetchOrderItems();
+                            }}
+                            disabled={orderItemsLoading}
+                          >
+                            {orderItemsLoading ? 'Loading...' : 'Tải lại'}
+                          </Button>
+                        </div>
                         {orderItems && orderItems.length > 0 && (
-                          <p>Debug - First item: {JSON.stringify(orderItems[0])}</p>
+                          <p>Debug - First item: {orderItems[0]?.productName || 'No name'}</p>
                         )}
                       </div>
 
@@ -421,42 +439,61 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         console.log('orderItems exists:', !!orderItems);
                         console.log('orderItems is array:', Array.isArray(orderItems));
                         console.log('orderItems length:', orderItems?.length);
-                        console.log('orderItems data:', orderItems);
+                        console.log('orderItems raw data:', orderItems);
+                        console.log('orderItemsLoading status:', orderItemsLoading);
+                        console.log('selectedOrder?.id:', selectedOrder?.id);
                         console.log('=== END RENDER CHECK ===');
                         
-                        if (orderItems && Array.isArray(orderItems) && orderItems.length > 0) {
+                        // Force check if we have valid data
+                        const hasValidItems = orderItems && Array.isArray(orderItems) && orderItems.length > 0;
+                        
+                        if (hasValidItems) {
+                          console.log('✅ Rendering items list with', orderItems.length, 'items');
                           return (
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-green-600">
-                                Tìm thấy {orderItems.length} món ăn trong order ID {selectedOrder?.id}:
+                                ✅ Hiển thị {orderItems.length} món ăn cho đơn hàng {selectedOrder?.id}:
                               </p>
-                              {orderItems.map((item: any, index: number) => (
-                                <div key={item.id || index} className="flex justify-between items-center p-3 bg-white border rounded-lg">
-                                  <div className="flex-1">
-                                    <p className="font-medium">{item.productName || getProductName(item.productId) || 'Unknown Product'}</p>
-                                    <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
-                                    <p className="text-xs text-gray-500">Product ID: {item.productId} | Item ID: {item.id}</p>
-                                    {item.notes && (
-                                      <p className="text-xs text-gray-500 italic">Ghi chú: {item.notes}</p>
-                                    )}
+                              {orderItems.map((item: any, index: number) => {
+                                console.log(`Rendering item ${index + 1}:`, item);
+                                return (
+                                  <div key={item.id || index} className="flex justify-between items-center p-3 bg-white border rounded-lg">
+                                    <div className="flex-1">
+                                      <p className="font-medium">
+                                        {item.productName || getProductName(item.productId) || `Product #${item.productId}`}
+                                      </p>
+                                      <p className="text-sm text-gray-600">Số lượng: {item.quantity}</p>
+                                      <p className="text-xs text-gray-500">
+                                        Product ID: {item.productId} | Order Item ID: {item.id}
+                                      </p>
+                                      {item.notes && (
+                                        <p className="text-xs text-gray-500 italic">Ghi chú: {item.notes}</p>
+                                      )}
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="font-medium">₩{Number(item.total || 0).toLocaleString()}</p>
+                                      <p className="text-sm text-gray-600">
+                                        ₩{Number(item.unitPrice || 0).toLocaleString()}/món
+                                      </p>
+                                    </div>
                                   </div>
-                                  <div className="text-right">
-                                    <p className="font-medium">₩{Number(item.total || 0).toLocaleString()}</p>
-                                    <p className="text-sm text-gray-600">₩{Number(item.unitPrice || 0).toLocaleString()}/món</p>
-                                  </div>
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           );
                         } else {
+                          console.log('❌ No valid items to render');
                           return (
                             <div className="text-center py-4">
-                              <p className="text-red-500">Không có món ăn nào trong đơn hàng (Order ID: {selectedOrder?.id})</p>
-                              <p className="text-xs text-gray-400 mt-1">
-                                Debug: Items loaded = {orderItems ? 'yes' : 'no'}, 
-                                Count = {orderItems?.length || 0}, 
-                                Is Array = {Array.isArray(orderItems) ? 'yes' : 'no'}
+                              <p className="text-red-500 mb-2">
+                                ❌ Không tìm thấy món ăn cho đơn hàng #{selectedOrder?.id}
                               </p>
+                              <div className="text-xs text-gray-400 space-y-1">
+                                <p>Trạng thái: {orderItemsLoading ? 'Đang tải...' : 'Đã tải xong'}</p>
+                                <p>Dữ liệu: {orderItems ? 'Có' : 'Không có'}</p>
+                                <p>Là mảng: {Array.isArray(orderItems) ? 'Có' : 'Không'}</p>
+                                <p>Số lượng: {orderItems?.length || 0}</p>
+                              </div>
                             </div>
                           );
                         }
