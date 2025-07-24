@@ -532,6 +532,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/order-items/:orderId", async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.orderId);
+      const items = await storage.getOrderItems(orderId);
+      res.json(items);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch order items" });
+    }
+  });
+
   app.post("/api/orders/:id/items", async (req, res) => {
     try {
       const orderId = parseInt(req.params.id);

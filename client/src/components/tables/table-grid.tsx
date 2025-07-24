@@ -35,9 +35,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     queryKey: ['/api/orders'],
   });
 
-  const { data: orderItems } = useQuery({
+  const { data: orderItems, isLoading: orderItemsLoading } = useQuery({
     queryKey: ['/api/order-items', selectedOrder?.id],
     enabled: !!selectedOrder?.id,
+    queryFn: () => apiRequest('GET', `/api/order-items/${selectedOrder?.id}`),
   });
 
   const { data: products } = useQuery({
@@ -312,7 +313,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               <div>
                 <h4 className="font-medium mb-3">Món đã gọi:</h4>
                 <div className="space-y-2">
-                  {orderItems && Array.isArray(orderItems) ? (
+                  {orderItemsLoading ? (
+                    <p className="text-gray-500 text-center py-4">Đang tải dữ liệu...</p>
+                  ) : orderItems && Array.isArray(orderItems) && orderItems.length > 0 ? (
                     orderItems.map((item: any) => (
                       <div key={item.id} className="flex justify-between items-center p-3 bg-white border rounded-lg">
                         <div>
@@ -326,7 +329,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       </div>
                     ))
                   ) : (
-                    <p className="text-gray-500 text-center py-4">Đang tải dữ liệu...</p>
+                    <p className="text-gray-500 text-center py-4">Không có món ăn nào trong đơn hàng</p>
                   )}
                 </div>
               </div>
