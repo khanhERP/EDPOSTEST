@@ -1,0 +1,202 @@
+import type { ReportsTranslations } from '../types';
+
+export const reportsTranslations: { [key: string]: ReportsTranslations } = {
+  ko: {
+    title: '보고서',
+    description: '매출 및 운영 보고서를 확인하세요',
+    dashboard: '대시보드',
+    dashboardDescription: '전체 매출 및 운영 현황을 한눈에 확인하세요',
+    salesAnalysis: '매출 분석',
+    menuAnalysis: '메뉴 분석',
+    tableAnalysis: '테이블 분석',
+    backToTables: '테이블로 돌아가기',
+    
+    // Date and time filters
+    startDate: '시작일',
+    endDate: '종료일',
+    refresh: '새로고침',
+    toDay: '오늘',
+    lastWeek: '지난 주',
+    lastMonth: '지난 달',
+    custom: '사용자 지정',
+    
+    // Dashboard metrics
+    totalRevenue: '총 매출',
+    totalOrders: '총 주문',
+    totalCustomers: '총 고객',
+    averageOrderValue: '평균 주문액',
+    dailyAverage: '일평균',
+    activeOrders: '활성 주문',
+    occupiedTables: '사용 중인 테이블',
+    monthlyRevenue: '월간 매출',
+    
+    // Sales analysis
+    analyzeRevenue: '매출 동향과 결제 방법별 분석을 확인하세요',
+    dailySales: '일별 매출',
+    paymentMethods: '결제 방법',
+    hourlyBreakdown: '시간대별 분석',
+    revenue: '매출',
+    orders: '주문',
+    customers: '고객',
+    cash: '현금',
+    card: '카드',
+    
+    // Menu analysis
+    productPerformance: '상품 성과',
+    categoryPerformance: '카테고리 성과',
+    topProducts: '인기 상품',
+    popularItems: '인기 메뉴',
+    totalSold: '총 판매량',
+    orderCount: '주문 횟수',
+    performance: '성과',
+    
+    // Table analysis
+    tablePerformance: '테이블 성과',
+    utilizationRate: '이용률',
+    turnoverRate: '회전율',
+    averageRevenue: '평균 매출',
+    peakHours: '피크 시간대',
+    tableUtilization: '테이블 이용률',
+    revenuePerTable: '테이블별 매출',
+    ordersPerTable: '테이블별 주문',
+    
+    // Common report elements
+    period: '기간',
+    thisMonth: '이번 달',
+    noData: '데이터가 없습니다',
+    noDataDescription: '선택한 기간에 대한 데이터가 없습니다. 다른 기간을 선택해보세요.',
+    loading: '데이터 불러오는 중...',
+  },
+  en: {
+    title: 'Reports',
+    description: 'View sales and operational reports',
+    dashboard: 'Dashboard',
+    dashboardDescription: 'Overview of total sales and operational status',
+    salesAnalysis: 'Sales Analysis',
+    menuAnalysis: 'Menu Analysis',
+    tableAnalysis: 'Table Analysis',
+    backToTables: 'Back to Tables',
+    
+    // Date and time filters
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    refresh: 'Refresh',
+    toDay: 'Today',
+    lastWeek: 'Last Week',
+    lastMonth: 'Last Month',
+    custom: 'Custom',
+    
+    // Dashboard metrics
+    totalRevenue: 'Total Revenue',
+    totalOrders: 'Total Orders',
+    totalCustomers: 'Total Customers',
+    averageOrderValue: 'Average Order Value',
+    dailyAverage: 'Daily Average',
+    activeOrders: 'Active Orders',
+    occupiedTables: 'Occupied Tables',
+    monthlyRevenue: 'Monthly Revenue',
+    
+    // Sales analysis
+    analyzeRevenue: 'Analyze revenue trends and payment method breakdown',
+    dailySales: 'Daily Sales',
+    paymentMethods: 'Payment Methods',
+    hourlyBreakdown: 'Hourly Breakdown',
+    revenue: 'Revenue',
+    orders: 'Orders',
+    customers: 'Customers',
+    cash: 'Cash',
+    card: 'Card',
+    
+    // Menu analysis
+    productPerformance: 'Product Performance',
+    categoryPerformance: 'Category Performance',
+    topProducts: 'Top Products',
+    popularItems: 'Popular Items',
+    totalSold: 'Total Sold',
+    orderCount: 'Order Count',
+    performance: 'Performance',
+    
+    // Table analysis
+    tablePerformance: 'Table Performance',
+    utilizationRate: 'Utilization Rate',
+    turnoverRate: 'Turnover Rate',
+    averageRevenue: 'Average Revenue',
+    peakHours: 'Peak Hours',
+    tableUtilization: 'Table Utilization',
+    revenuePerTable: 'Revenue per Table',
+    ordersPerTable: 'Orders per Table',
+    
+    // Common report elements
+    period: 'Period',
+    thisMonth: 'This Month',
+    noData: 'No data available',
+    noDataDescription: 'No data available for the selected period. Please try a different date range.',
+    loading: 'Loading data...',
+  },
+  vi: {
+    title: 'Báo cáo',
+    description: 'Xem báo cáo bán hàng và vận hành',
+    dashboard: 'Bảng điều khiển',
+    dashboardDescription: 'Tổng quan về doanh thu và tình trạng vận hành',
+    salesAnalysis: 'Phân tích bán hàng',
+    menuAnalysis: 'Phân tích thực đơn',
+    tableAnalysis: 'Phân tích bàn',
+    backToTables: 'Quay lại bàn',
+    
+    // Date and time filters
+    startDate: 'Ngày bắt đầu',
+    endDate: 'Ngày kết thúc',
+    refresh: 'Làm mới',
+    toDay: 'Hôm nay',
+    lastWeek: 'Tuần trước',
+    lastMonth: 'Tháng trước',
+    custom: 'Tùy chỉnh',
+    
+    // Dashboard metrics
+    totalRevenue: 'Tổng doanh thu',
+    totalOrders: 'Tổng đơn hàng',
+    totalCustomers: 'Tổng khách hàng',
+    averageOrderValue: 'Giá trị đơn hàng trung bình',
+    dailyAverage: 'Trung bình hàng ngày',
+    activeOrders: 'Đơn hàng đang hoạt động',
+    occupiedTables: 'Bàn đang sử dụng',
+    monthlyRevenue: 'Doanh thu tháng',
+    
+    // Sales analysis
+    analyzeRevenue: 'Phân tích xu hướng doanh thu và phương thức thanh toán',
+    dailySales: 'Doanh số hàng ngày',
+    paymentMethods: 'Phương thức thanh toán',
+    hourlyBreakdown: 'Phân tích theo giờ',
+    revenue: 'Doanh thu',
+    orders: 'Đơn hàng',
+    customers: 'Khách hàng',
+    cash: 'Tiền mặt',
+    card: 'Thẻ',
+    
+    // Menu analysis
+    productPerformance: 'Hiệu suất sản phẩm',
+    categoryPerformance: 'Hiệu suất danh mục',
+    topProducts: 'Sản phẩm hàng đầu',
+    popularItems: 'Món phổ biến',
+    totalSold: 'Tổng số bán',
+    orderCount: 'Số lượng đơn hàng',
+    performance: 'Hiệu suất',
+    
+    // Table analysis
+    tablePerformance: 'Hiệu suất bàn',
+    utilizationRate: 'Tỷ lệ sử dụng',
+    turnoverRate: 'Tỷ lệ luân chuyển',
+    averageRevenue: 'Doanh thu trung bình',
+    peakHours: 'Giờ cao điểm',
+    tableUtilization: 'Sử dụng bàn',
+    revenuePerTable: 'Doanh thu mỗi bàn',
+    ordersPerTable: 'Đơn hàng mỗi bàn',
+    
+    // Common report elements
+    period: 'Kỳ',
+    thisMonth: 'Tháng này',
+    noData: 'Không có dữ liệu',
+    noDataDescription: 'Không có dữ liệu cho khoảng thời gian đã chọn. Vui lòng thử khoảng thời gian khác.',
+    loading: 'Đang tải dữ liệu...',
+  },
+};
