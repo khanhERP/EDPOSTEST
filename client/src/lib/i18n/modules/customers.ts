@@ -42,6 +42,10 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     gold: "Vàng",
     silver: "Bạc",
     vip: "Vip",
+    total: "Tổng",
+    totalCustomersRegistered: "khách hàng đã đăng ký",
+    pointsManagement: "Quản lý điểm",
+    membershipManagement: "Quản lý thành viên",
   },
   en: {
     title: "Customer Management",
@@ -84,6 +88,10 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     gold: "Vàng",
     silver: "Bạc",
     vip: "Vip",
+    total: "Tổng",
+    totalCustomersRegistered: "khách hàng đã đăng ký",
+    pointsManagement: "Quản lý điểm",
+    membershipManagement: "Quản lý thành viên",
   },
   vi: {
     title: "Quản lý khách hàng",
@@ -126,5 +134,9 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     gold: "Vàng",
     silver: "Bạc",
     vip: "Vip",
+    total: "Tổng",
+    totalCustomersRegistered: "khách hàng đã đăng ký",
+    pointsManagement: "Quản lý điểm",
+    membershipManagement: "Quản lý thành viên",
   },
 };
