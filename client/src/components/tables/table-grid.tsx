@@ -334,18 +334,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         <Eye className="w-3 h-3 mr-1" />
                         Xem chi tiết
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full text-xs"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleStatusChange(table.id, "available");
-                        }}
-                      >
-                        <CheckCircle2 className="w-3 h-3 mr-1" />
-                        {t('tables.cleanupComplete')}
-                      </Button>
+                      
                     </div>
                   )}
                 </div>
