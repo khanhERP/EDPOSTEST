@@ -499,6 +499,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
 
       const newOrder = await storage.createOrder(orderData, itemsData);
+      
+      // Verify items were created
+      const createdItems = await storage.getOrderItems(newOrder.id);
+      console.log(`Created ${createdItems.length} items for order ${newOrder.id}:`, createdItems);
+      
       res.status(201).json(newOrder);
     } catch (error) {
       console.error("Order creation error:", error);

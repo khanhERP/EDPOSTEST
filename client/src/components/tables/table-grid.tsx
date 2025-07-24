@@ -319,7 +319,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   {orderItemsLoading ? (
                     <p className="text-gray-500 text-center py-4">Đang tải dữ liệu...</p>
                   ) : orderItems && Array.isArray(orderItems) && orderItems.length > 0 ? (
-                    orderItems.map((item: any) => (
+                    orderItems.map((item: any) => {
+                      console.log('Rendering order item:', item);
+                      return (
                       <div key={item.id} className="flex justify-between items-center p-3 bg-white border rounded-lg">
                         <div>
                           <p className="font-medium">{item.productName || getProductName(item.productId)}</p>
@@ -333,9 +335,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           <p className="text-sm text-gray-600">₩{Number(item.unitPrice).toLocaleString()}/món</p>
                         </div>
                       </div>
-                    ))
+                      );
+                    })
                   ) : (
-                    <p className="text-gray-500 text-center py-4">Không có món ăn nào trong đơn hàng</p>
+                    <div className="text-center py-4">
+                      <p className="text-gray-500">Không có món ăn nào trong đơn hàng</p>
+                      {selectedOrder && (
+                        <p className="text-xs text-gray-400 mt-1">Order ID: {selectedOrder.id}</p>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

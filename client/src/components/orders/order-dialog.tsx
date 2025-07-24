@@ -44,26 +44,29 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
   });
 
   const createOrderMutation = useMutation({
-    mutationFn: async (orderData: any) => {
-      console.log('Submitting order data:', JSON.stringify(orderData, null, 2));
-      const response = await apiRequest('POST', '/api/orders', orderData);
-      return response.json();
+    mutationFn: async (orderData: { order: any; items: any[] }) => {
+      console.log('Creating order with data:', orderData);
+      return apiRequest('POST', '/api/orders', orderData);
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log('Order created successfully:', response);
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/order-items'] });
+      setCart([]);
+      setCustomerName("");
+      setCustomerCount(1);
+      onOpenChange(false);
       toast({
-        title: t('tables.orderCompleted'),
-        description: t('tables.orderCompletedDesc'),
+        title: t('orders.orderPlaced'),
+        description: t('orders.orderPlacedSuccess'),
       });
-      handleClose();
     },
     onError: (error: any) => {
-      console.error('Order submission error:', error);
-      const errorMessage = error.message || t('tables.orderFailedDesc');
+      console.error('Order creation error:', error);
       toast({
-        title: t('tables.orderFailed'),
-        description: errorMessage,
+        title: t('common.error'),
+        description: error.response?.data?.message || t('orders.orderFailed'),
         variant: "destructive",
       });
     },
@@ -113,38 +116,33 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
     return cart.reduce((total, item) => total + (Number(item.product.price) * item.quantity), 0);
   };
 
-  const handleSubmitOrder = () => {
+  const handlePlaceOrder = () => {
     if (!table || cart.length === 0) return;
 
-    const subtotal = calculateTotal();
-    const tax = subtotal * 0.1; // 10% 세금
-    const total = subtotal + tax;
-
     const orderNumber = `ORD-${Date.now()}`;
+    const totalAmount = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
 
-    const orderData = {
-      order: {
-        orderNumber,
-        tableId: table.id,
-        customerName: customerName || null,
-        customerCount,
-        subtotal: subtotal.toFixed(2),
-        tax: tax.toFixed(2),
-        total: total.toFixed(2),
-        status: "pending",
-        paymentStatus: "pending",
-        notes: null,
-      },
-      items: cart.map(item => ({
-        productId: item.product.id,
-        quantity: item.quantity,
-        unitPrice: item.product.price,
-        total: (Number(item.product.price) * item.quantity).toFixed(2),
-        notes: item.notes || null,
-      })),
+    const order = {
+      orderNumber,
+      tableId: table.id,
+      employeeId: 1, // Default employee ID
+      customerName: customerName || null,
+      customerCount,
+      total: totalAmount.toString(), // Convert to string as expected by schema
+      status: "pending",
+      orderedAt: new Date().toISOString(),
     };
 
-    createOrderMutation.mutate(orderData);
+    const items = cart.map(item => ({
+      productId: item.product.id,
+      quantity: item.quantity,
+      unitPrice: item.product.price.toString(), // Convert to string
+      total: (item.product.price * item.quantity).toString(), // Convert to string
+      notes: item.notes || null,
+    }));
+
+    console.log('Placing order:', { order, items });
+    createOrderMutation.mutate({ order, items });
   };
 
   const handleClose = () => {
@@ -274,7 +272,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                             ₩{(Number(item.product.price) * item.quantity).toLocaleString()}
                           </span>
                         </div>
-                        
+
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <Button
@@ -335,7 +333,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                 </div>
 
                 <Button 
-                  onClick={handleSubmitOrder} 
+                  onClick={handlePlaceOrder} 
                   className="w-full"
                   disabled={createOrderMutation.isPending}
                 >
