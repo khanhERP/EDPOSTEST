@@ -221,6 +221,7 @@ export default function InventoryPage() {
                 }}
                 className="text-blue-600 border-blue-300 hover:bg-blue-50"
               >
+                <Plus className="h-4 w-4 mr-2" />
                 Thêm mặt hàng
               </Button>
             </CardHeader>
