@@ -375,7 +375,7 @@ export interface OrdersTranslations {
 }
 
 // Inventory translations interface
-interface InventoryTranslations {
+export interface InventoryTranslations {
   title: string;
   description: string;
   totalProducts: string;
