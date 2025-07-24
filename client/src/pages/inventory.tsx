@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,7 @@ const stockUpdateSchema = z.object({
 type StockUpdateForm = z.infer<typeof stockUpdateSchema>;
 
 export default function InventoryPage() {
-  const { t, currentLanguage } = useTranslation();
+  const { t } = useTranslation();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -42,16 +43,9 @@ export default function InventoryPage() {
 
   const queryClient = useQueryClient();
 
-  // Force re-render when language changes
-  useEffect(() => {
-    // This effect will run whenever currentLanguage changes
-    // No action needed, just dependency tracking
-  }, [currentLanguage]);
-
   const { data: products = [], isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
-
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
