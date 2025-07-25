@@ -124,14 +124,20 @@ export function CustomerPointsModal({
       return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['customer-points', customerId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['customer-point-history', customerId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['/api/customers'],
+      });
       toast({
-        title: '포인트 업데이트 완료',
-        description: '고객 포인트가 성공적으로 업데이트되었습니다.',
+        title: t("common.success"),
+        description: t("customers.pointsUpdated"),
       });
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ['customer-points', customerId] });
-      queryClient.invalidateQueries({ queryKey: ['customer-point-history', customerId] });
-      queryClient.invalidateQueries({ queryKey: ['customers'] });
       setActiveTab('overview');
     },
     onError: (error: any) => {

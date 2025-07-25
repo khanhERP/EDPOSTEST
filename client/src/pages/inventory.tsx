@@ -90,32 +90,58 @@ export default function InventoryPage() {
 
   const updateStockMutation = useMutation({
     mutationFn: async (data: StockUpdateForm) => {
-      return await apiRequest("/api/inventory/update-stock", "POST", data);
+      console.log('Updating stock:', data);
+      const response = await apiRequest("/api/inventory/update-stock", "POST", data);
+      if (!response.ok) {
+        throw new Error('Failed to update stock');
+      }
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setShowStockDialog(false);
       stockUpdateForm.reset();
+    },
+    onError: (error) => {
+      console.error('Update stock error:', error);
+      alert(t("inventory.updateFailed") || "Failed to update product");
     },
   });
 
   const createProductMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("/api/products", "POST", data);
+      console.log('Sending product data:', data);
+      const response = await apiRequest("/api/products", "POST", data);
+      if (!response.ok) {
+        throw new Error('Failed to create product');
+      }
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setShowStockDialog(false);
       stockUpdateForm.reset();
     },
+    onError: (error) => {
+      console.error('Create product error:', error);
+      alert(t("inventory.createFailed") || "Failed to create product");
+    },
   });
 
   const deleteProductMutation = useMutation({
     mutationFn: async (productId: number) => {
-      return await apiRequest(`/api/products/${productId}`, "DELETE");
+      const response = await apiRequest(`/api/products/${productId}`, "DELETE");
+      if (!response.ok) {
+        throw new Error('Failed to delete product');
+      }
+      return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+    },
+    onError: (error) => {
+      console.error('Delete product error:', error);
+      alert(t("inventory.deleteFailed") || "Failed to delete product");
     },
   });
 
@@ -182,17 +208,19 @@ export default function InventoryPage() {
     if (selectedProduct?.id === 0) {
       // Creating new product
       const newProductData = {
-        name: data.name,
-        sku: data.sku,
-        price: data.price,
-        stock: data.quantity,
-        categoryId: data.categoryId,
+        name: data.name || "",
+        sku: data.sku || "",
+        price: data.price || "0",
+        stock: data.quantity || 0,
+        categoryId: data.categoryId || 1,
         imageUrl: null,
         isActive: true,
       };
+      console.log('Creating product with data:', newProductData);
       createProductMutation.mutate(newProductData);
     } else {
       // Updating existing product stock
+      console.log('Updating stock with data:', data);
       updateStockMutation.mutate(data);
     }
   };

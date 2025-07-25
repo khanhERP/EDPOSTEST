@@ -498,6 +498,11 @@ export interface InventoryTranslations {
   addNewStock: string;
   save: string;
   updateType: string;
+  delete: string;
+  confirmDelete: string;
+  deleteFailed: string;
+  createFailed: string;
+  updateFailed: string;
 }
 
 export interface Translations {

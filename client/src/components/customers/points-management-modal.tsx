@@ -86,6 +86,7 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
       queryClient.invalidateQueries({ queryKey: ['/api/point-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-points', selectedCustomer?.id] });
       toast({
         title: t("customers.customerUpdated"),
         description: t("customers.pointsManagementDesc"),
@@ -115,6 +116,7 @@ export function PointsManagementModal({ isOpen, onClose }: PointsManagementModal
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
       queryClient.invalidateQueries({ queryKey: ['/api/point-transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['customer-points', selectedCustomer?.id] });
       toast({
         title: t("common.success"),
         description: t("customers.processPayment"),

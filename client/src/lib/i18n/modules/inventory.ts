@@ -52,6 +52,9 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     updateType: '수정 유형',
     delete: "삭제",
     confirmDelete: "삭제하시겠습니까?",
+    deleteFailed: "삭제에 실패했습니다",
+    createFailed: "상품 생성에 실패했습니다",
+    updateFailed: "상품 수정에 실패했습니다",
   },
   en: {
     title: 'Inventory Management',
@@ -104,6 +107,9 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     updateType: 'Update Type',
     delete: "Delete",
     confirmDelete: "Are you sure you want to delete",
+    deleteFailed: "Failed to delete product",
+    createFailed: "Failed to create product",
+    updateFailed: "Failed to update product",
   },
   vi: {
     title: 'Quản lý tồn kho',
@@ -156,5 +162,8 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     updateType: 'Loại cập nhật',
     delete: "Xóa",
     confirmDelete: "Bạn có chắc chắn muốn xóa",
+    deleteFailed: "Xóa sản phẩm thất bại",
+    createFailed: "Tạo sản phẩm thất bại",
+    updateFailed: "Cập nhật sản phẩm thất bại",
   }
 };
