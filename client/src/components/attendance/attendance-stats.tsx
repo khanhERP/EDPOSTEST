@@ -9,7 +9,7 @@ import type { AttendanceRecord, Employee } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 
 export function AttendanceStats() {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const [selectedMonth, setSelectedMonth] = useState<string>(
     new Date().toISOString().slice(0, 7) // YYYY-MM format
   );
@@ -98,8 +98,7 @@ export function AttendanceStats() {
 
   const formatMonth = (monthStr: string) => {
     const date = new Date(monthStr + "-01");
-    const { i18n } = useTranslation();
-    const locale = i18n.language === 'ko' ? 'ko-KR' : i18n.language === 'vi' ? 'vi-VN' : 'en-US';
+    const locale = currentLanguage === 'ko' ? 'ko-KR' : currentLanguage === 'vi' ? 'vi-VN' : 'en-US';
     return date.toLocaleDateString(locale, { 
       year: 'numeric', 
       month: 'long' 
