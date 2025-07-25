@@ -185,10 +185,6 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                   <Plus className="mr-2" size={16} />
                   Add New Product
                 </Button>
-                <Button variant="outline" className="border-orange-500 text-orange-700 hover:bg-orange-50">
-                  <Upload className="mr-2" size={16} />
-                  Bulk Import
-                </Button>
                 <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-50">
                   <Download className="mr-2" size={16} />
                   Export
