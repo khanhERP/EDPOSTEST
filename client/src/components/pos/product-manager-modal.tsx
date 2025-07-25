@@ -180,11 +180,7 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
         <div className="p-6">
           {!showAddForm ? (
             <>
-              <div className="flex space-x-4 mb-6">
-                <Button onClick={() => setShowAddForm(true)}>
-                  <Plus className="mr-2" size={16} />
-                  Add New Product
-                </Button>
+              <div className="mb-6">
               </div>
               
               <div className="bg-gray-50 rounded-lg overflow-hidden">
