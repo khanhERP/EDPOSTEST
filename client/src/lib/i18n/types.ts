@@ -130,6 +130,7 @@ export interface ReportsTranslations {
   // Additional keys
   endOfDayReportTab: string;
   revenueExpense: string;
+  mainConcern: string;
   cashPayment: string;
   cardPayment: string;
 
