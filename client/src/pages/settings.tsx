@@ -1364,7 +1364,7 @@ export default function Settings() {
 
                   <div className="flex justify-between items-center mt-6">
                     <div className="text-sm text-gray-600">
-                      {t("employeesSettings.total")} {filteredProducts.length}개
+                      {t("settings.total")} {filteredProducts.length}개
                       품목 표시 중
                     </div>
                   </div>

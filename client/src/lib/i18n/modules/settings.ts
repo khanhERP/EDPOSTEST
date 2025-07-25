@@ -96,6 +96,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     editProduct: '상품 수정',
     allCategories: '모든 카테고리',
     productNamePlaceholder: '상품 검색...',
+    total: '총',
   },
   en: {
     title: 'Settings',
@@ -192,6 +193,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     editProduct: 'Edit Product',
     allCategories: 'All Categories',
     productNamePlaceholder: 'Search products...',
+    total: 'Total',
   },
   vi: {
     title: 'Cài đặt',
@@ -288,5 +290,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     editProduct: 'Sửa sản phẩm',
     allCategories: 'Tất cả danh mục',
     productNamePlaceholder: 'Tìm kiếm sản phẩm...',
+    total: 'Tổng',
   },
 };
