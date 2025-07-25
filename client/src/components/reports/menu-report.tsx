@@ -337,7 +337,7 @@ export function MenuReport() {
                     <TableCell className="font-medium">
                       {item.product.name}
                     </TableCell>
-                    <TableCell>{item.quantity}개</TableCell>
+                    <TableCell>{item.quantity}{t("common.items")}</TableCell>
                     <TableCell>{formatCurrency(item.revenue)}</TableCell>
                   </TableRow>
                 ))}
@@ -386,7 +386,7 @@ export function MenuReport() {
                     <TableCell className="font-medium text-green-600">
                       {formatCurrency(item.revenue)}
                     </TableCell>
-                    <TableCell>{item.quantity}개</TableCell>
+                    <TableCell>{item.quantity}{t("common.items")}</TableCell>
                   </TableRow>
                 ))}
                 {menuData.topRevenueProducts.length === 0 && (
