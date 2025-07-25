@@ -11,7 +11,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     tableAnalysis: '테이블 분석',
     backToTables: '테이블로 돌아가기',
     noPaymentData: "결제 데이터가 없습니다.",
-    
+
     // Date and time filters
     startDate: '시작일',
     endDate: '종료일',
@@ -20,7 +20,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     lastWeek: '지난 주',
     lastMonth: '지난 달',
     custom: '사용자 지정',
-    
+
     // Dashboard metrics
     totalRevenue: '총 매출',
     totalOrders: '총 주문',
@@ -30,7 +30,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     activeOrders: '활성 주문',
     occupiedTables: '사용 중인 테이블',
     monthlyRevenue: '월간 매출',
-    
+
     // Sales analysis
     analyzeRevenue: '매출 동향과 결제 방법별 분석을 확인하세요',
     dailySales: '일별 매출',
@@ -41,7 +41,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customers: '고객',
     cash: '현금',
     card: '카드',
-    
+
     // Table analysis specific
     averageUtilization: '평균 이용률',
     averageOrdersPerTable: '테이블당 평균 주문 수',
@@ -70,7 +70,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalSold: '총 판매량',
     orderCount: '주문 횟수',
     performance: '성과',
-    
+
     // Table analysis
     tablePerformance: '테이블 성과',
     utilizationRate: '이용률',
@@ -80,14 +80,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     tableUtilization: '테이블 이용률',
     revenuePerTable: '테이블별 매출',
     ordersPerTable: '테이블별 주문',
-    
+
     // Common report elements
     period: '기간',
     thisMonth: '이번 달',
     noData: '데이터가 없습니다',
     noDataDescription: '선택한 기간에 대한 데이터가 없습니다. 다른 기간을 선택해보세요.',
     loading: '데이터 불러오는 중...',
-    
+
     // Additional dashboard keys
     periodRevenue: '기간 매출',
     customerCount: '고객 수',
@@ -103,6 +103,26 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     tableTurnoverRate: '테이블 회전율',
     times: '회',
     targetAverageDailySales: '목표 일평균 매출 {amount}, 목표 회전 {turnovers}회',
+
+    // Category performance
+    categoryPerformance: '카테고리 성과',
+    topSellingProducts: '인기 상품 (판매량 기준)',
+    topRevenueProducts: '고매출 상품 (매출 기준)',
+    menuItems: '{count}개 메뉴',
+    itemsSold: '{count}개 판매',
+    revenueShare: '매출 비중',
+    salesShare: '판매량 비중',
+    rank: '순위',
+    menuName: '메뉴명',
+    salesCount: '판매량',
+    revenue: '매출',
+    popularMenuByQuantity: '인기 메뉴 (판매량 기준)',
+    popularMenuByQuantityDesc: '판매 수량이 많은 메뉴 순위입니다.',
+    highRevenueMenu: '고매출 메뉴 (매출 기준)',
+    highRevenueMenuDesc: '매출 기여도가 높은 메뉴 순위입니다.',
+    noSalesData: '판매 데이터가 없습니다.',
+    noRevenueData: '매출 데이터가 없습니다.',
+    noCategoryData: '카테고리 데이터가 없습니다.',
   },
   en: {
     title: 'Reports',
@@ -113,7 +133,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     menuAnalysis: 'Menu Analysis',
     tableAnalysis: 'Table Analysis',
     backToTables: 'Back to Tables',
-    
+
     // Date and time filters
     startDate: 'Start Date',
     endDate: 'End Date',
@@ -122,7 +142,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     lastWeek: 'Last Week',
     lastMonth: 'Last Month',
     custom: 'Custom',
-    
+
     // Dashboard metrics
     totalRevenue: 'Total Revenue',
     totalOrders: 'Total Orders',
@@ -132,7 +152,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     activeOrders: 'Active Orders',
     occupiedTables: 'Occupied Tables',
     monthlyRevenue: 'Monthly Revenue',
-    
+
     // Sales analysis
     analyzeRevenue: 'Analyze revenue trends and payment method breakdown',
     dailySales: 'Daily Sales',
@@ -143,7 +163,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customers: 'Customers',
     cash: 'Cash',
     card: 'Card',
-    
+
     // Table analysis specific
     averageUtilization: 'Average Utilization',
     averageOrdersPerTable: 'Average orders per table',
@@ -172,7 +192,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalSold: 'Total Sold',
     orderCount: 'Order Count',
     performance: 'Performance',
-    
+
     // Table analysis
     tablePerformance: 'Table Performance',
     utilizationRate: 'Utilization Rate',
@@ -182,7 +202,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     tableUtilization: 'Table Utilization',
     revenuePerTable: 'Revenue per Table',
     ordersPerTable: 'Orders per Table',
-    
+
     // Common report elements
     period: 'Period',
     thisMonth: 'This Month',
@@ -190,7 +210,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noDataDescription: 'No data available for the selected period. Please try a different date range.',
     loading: 'Loading data...',
     noPaymentData: "There is no payment data.",
-    
+
     // Additional dashboard keys
     periodRevenue: 'Period Revenue',
     customerCount: 'Customer Count',
@@ -206,6 +226,26 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     tableTurnoverRate: 'Table Turnover Rate',
     times: 'times',
     targetAverageDailySales: 'Target avg. daily sales {amount}, Target turnover {turnovers} times',
+
+    // Category performance
+    categoryPerformance: 'Category Performance',
+    topSellingProducts: 'Top Selling Products (by Quantity)',
+    topRevenueProducts: 'Top Revenue Products (by Revenue)',
+    menuItems: '{count} items',
+    itemsSold: '{count} sold',
+    revenueShare: 'Revenue Share',
+    salesShare: 'Sales Share',
+    rank: 'Rank',
+    menuName: 'Menu Name',
+    salesCount: 'Sales Count',
+    revenue: 'Revenue',
+    popularMenuByQuantity: 'Popular Menu (by Quantity)',
+    popularMenuByQuantityDesc: 'Menu ranking by sales quantity.',
+    highRevenueMenu: 'High Revenue Menu (by Revenue)',
+    highRevenueMenuDesc: 'Menu ranking by revenue contribution.',
+    noSalesData: 'No sales data available.',
+    noRevenueData: 'No revenue data available.',
+    noCategoryData: 'No category data available.',
   },
   vi: {
     title: 'Báo cáo',
@@ -216,7 +256,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     menuAnalysis: 'Phân tích thực đơn',
     tableAnalysis: 'Phân tích bàn',
     backToTables: 'Quay lại bàn',
-    
+
     // Date and time filters
     startDate: 'Từ ngày',
     endDate: 'Đến ngày',
@@ -225,7 +265,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     lastWeek: 'Tuần trước',
     lastMonth: 'Tháng trước',
     custom: 'Tùy chỉnh',
-    
+
     // Dashboard metrics
     totalRevenue: 'Tổng doanh thu',
     totalOrders: 'Tổng đơn hàng',
@@ -235,7 +275,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     activeOrders: 'Đơn hàng đang hoạt động',
     occupiedTables: 'Bàn đang sử dụng',
     monthlyRevenue: 'Doanh thu tháng',
-    
+
     // Sales analysis
     analyzeRevenue: 'Phân tích xu hướng doanh thu và phương thức thanh toán',
     dailySales: 'Doanh số hàng ngày',
@@ -246,7 +286,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customers: 'Khách hàng',
     cash: 'Tiền mặt',
     card: 'Thẻ',
-    
+
     // Table analysis specific
     averageUtilization: 'Tỷ lệ sử dụng trung bình',
     averageOrdersPerTable: 'Số đơn hàng trung bình mỗi bàn',
@@ -275,7 +315,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalSold: 'Tổng số bán',
     orderCount: 'Số lượng đơn hàng',
     performance: 'Hiệu suất',
-    
+
     // Table analysis
     tablePerformance: 'Hiệu suất bàn',
     utilizationRate: 'Tỷ lệ sử dụng',
@@ -285,7 +325,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     tableUtilization: 'Sử dụng bàn',
     revenuePerTable: 'Doanh thu mỗi bàn',
     ordersPerTable: 'Đơn hàng mỗi bàn',
-    
+
     // Common report elements
     period: 'Kỳ',
     thisMonth: 'Tháng này',
@@ -293,7 +333,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noDataDescription: 'Không có dữ liệu cho khoảng thời gian đã chọn. Vui lòng thử khoảng thời gian khác.',
     loading: 'Đang tải dữ liệu...',
     noPaymentData: 'Không có dữ liệu thanh toán.',
-    
+
     // Additional dashboard keys
     periodRevenue: 'Doanh thu kỳ',
     customerCount: 'Số khách hàng',
@@ -309,5 +349,25 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     tableTurnoverRate: 'Tỷ lệ luân chuyển bàn',
     times: 'lần',
     targetAverageDailySales: 'Mục tiêu doanh thu trung bình hàng ngày {amount}, Mục tiêu luân chuyển {turnovers} lần',
+
+    // Category performance
+    categoryPerformance: 'Hiệu suất danh mục',
+    topSellingProducts: 'Sản phẩm bán chạy nhất (theo số lượng)',
+    topRevenueProducts: 'Sản phẩm doanh thu cao nhất (theo doanh thu)',
+    menuItems: '{count} món',
+    itemsSold: 'Đã bán {count}',
+    revenueShare: 'Tỷ lệ doanh thu',
+    salesShare: 'Tỷ lệ bán hàng',
+    rank: 'Thứ hạng',
+    menuName: 'Tên món',
+    salesCount: 'Số lượng bán',
+    revenue: 'Doanh thu',
+    popularMenuByQuantity: 'Món phổ biến (theo số lượng)',
+    popularMenuByQuantityDesc: 'Xếp hạng món theo số lượng bán.',
+    highRevenueMenu: 'Món doanh thu cao (theo doanh thu)',
+    highRevenueMenuDesc: 'Xếp hạng món theo đóng góp doanh thu.',
+    noSalesData: 'Không có dữ liệu bán hàng.',
+    noRevenueData: 'Không có dữ liệu doanh thu.',
+    noCategoryData: 'Không có dữ liệu danh mục.',
   },
 };

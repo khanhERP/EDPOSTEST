@@ -257,7 +257,7 @@ export function MenuReport() {
                         {category.category.name}
                       </Badge>
                       <span className="text-sm text-gray-600">
-                        {category.productCount}개 메뉴
+                        {t("reports.menuItems", { count: category.productCount })}
                       </span>
                     </div>
                     <div className="text-right">
@@ -265,14 +265,14 @@ export function MenuReport() {
                         {formatCurrency(category.revenue)}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {category.quantity}개 판매
+                        {t("reports.itemsSold", { count: category.quantity })}
                       </div>
                     </div>
                   </div>
                   
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs text-gray-500">
-                      <span>매출 비중</span>
+                      <span>{t("reports.revenueShare")}</span>
                       <span>{revenuePercentage.toFixed(1)}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -283,7 +283,7 @@ export function MenuReport() {
                     </div>
                     
                     <div className="flex justify-between text-xs text-gray-500">
-                      <span>판매량 비중</span>
+                      <span>{t("reports.salesShare")}</span>
                       <span>{quantityPercentage.toFixed(1)}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
@@ -299,7 +299,7 @@ export function MenuReport() {
             
             {menuData.categoryStats.length === 0 && (
               <div className="text-center text-gray-500 py-4">
-                카테고리 데이터가 없습니다.
+                {t("reports.noCategoryData")}
               </div>
             )}
           </div>
@@ -312,18 +312,18 @@ export function MenuReport() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Award className="w-5 h-5" />
-              인기 메뉴 (판매량 기준)
+              {t("reports.popularMenuByQuantity")}
             </CardTitle>
-            <CardDescription>판매 수량이 많은 메뉴 순위입니다.</CardDescription>
+            <CardDescription>{t("reports.popularMenuByQuantityDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>순위</TableHead>
-                  <TableHead>메뉴명</TableHead>
-                  <TableHead>판매량</TableHead>
-                  <TableHead>매출</TableHead>
+                  <TableHead>{t("reports.rank")}</TableHead>
+                  <TableHead>{t("reports.menuName")}</TableHead>
+                  <TableHead>{t("reports.salesCount")}</TableHead>
+                  <TableHead>{t("reports.revenue")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -344,7 +344,7 @@ export function MenuReport() {
                 {menuData.topSellingProducts.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center text-gray-500">
-                      판매 데이터가 없습니다.
+                      {t("reports.noSalesData")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -358,18 +358,18 @@ export function MenuReport() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5" />
-              고매출 메뉴 (매출 기준)
+              {t("reports.highRevenueMenu")}
             </CardTitle>
-            <CardDescription>매출 기여도가 높은 메뉴 순위입니다.</CardDescription>
+            <CardDescription>{t("reports.highRevenueMenuDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>순위</TableHead>
-                  <TableHead>메뉴명</TableHead>
-                  <TableHead>매출</TableHead>
-                  <TableHead>판매량</TableHead>
+                  <TableHead>{t("reports.rank")}</TableHead>
+                  <TableHead>{t("reports.menuName")}</TableHead>
+                  <TableHead>{t("reports.revenue")}</TableHead>
+                  <TableHead>{t("reports.salesCount")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -392,7 +392,7 @@ export function MenuReport() {
                 {menuData.topRevenueProducts.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center text-gray-500">
-                      매출 데이터가 없습니다.
+                      {t("reports.noRevenueData")}
                     </TableCell>
                   </TableRow>
                 )}

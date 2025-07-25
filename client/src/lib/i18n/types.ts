@@ -110,11 +110,23 @@ export interface ReportsTranslations {
   // Menu analysis
   productPerformance: string;
   categoryPerformance: string;
-  topProducts: string;
-  popularItems: string;
-  totalSold: string;
-  orderCount: string;
-  performance: string;
+  topSellingProducts: string;
+  topRevenueProducts: string;
+  menuItems: string;
+  itemsSold: string;
+  revenueShare: string;
+  salesShare: string;
+  rank: string;
+  menuName: string;
+  salesCount: string;
+  revenue: string;
+  popularMenuByQuantity: string;
+  popularMenuByQuantityDesc: string;
+  highRevenueMenu: string;
+  highRevenueMenuDesc: string;
+  noSalesData: string;
+  noRevenueData: string;
+  noCategoryData: string;
 
   // Table analysis
   tablePerformance: string;
