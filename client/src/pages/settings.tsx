@@ -1695,8 +1695,8 @@ export default function Settings() {
           <DialogHeader>
             <DialogTitle>
               {editingCategory
-                ? t("productManagement.editCategory")
-                : t("productManagement.addCategory")}
+                ? t("settings.editCategory")
+                : t("settings.addCategory")}
             </DialogTitle>
             <DialogDescription>
               {t("settings.categoryManagementDesc")}
@@ -1705,7 +1705,7 @@ export default function Settings() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="categoryName" className="text-right">
-                {t("productManagement.categoryName")}
+                {t("settings.categoryName")}
               </Label>
               <Input
                 id="categoryName"
@@ -1714,12 +1714,12 @@ export default function Settings() {
                   setCategoryForm((prev) => ({ ...prev, name: e.target.value }))
                 }
                 className="col-span-3"
-                placeholder={t("productManagement.categoryNamePlaceholder")}
+                placeholder={t("settings.categoryNamePlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="categoryIcon" className="text-right">
-                {t("productManagement.categoryIcon")}
+                {t("settings.categoryIcon")}
               </Label>
               <Select
                 value={categoryForm.icon}
@@ -1766,8 +1766,8 @@ export default function Settings() {
           <DialogHeader>
             <DialogTitle>
               {editingProduct
-                ? t("productManagement.editProduct")
-                : t("productManagement.addProduct")}
+                ? t("settings.editProduct")
+                : t("settings.addProduct")}
             </DialogTitle>
             <DialogDescription>
               Nhập thông tin sản phẩm mới
@@ -1776,7 +1776,7 @@ export default function Settings() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productName" className="text-right">
-                {t("productManagement.productName")}
+                {t("settings.productName")}
               </Label>
               <Input
                 id="productName"
@@ -1785,12 +1785,12 @@ export default function Settings() {
                   setProductForm((prev) => ({ ...prev, name: e.target.value }))
                 }
                 className="col-span-3"
-                placeholder={t("productManagement.productNamePlaceholder")}
+                placeholder={t("settings.productNamePlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productSku" className="text-right">
-                {t("productManagement.productSku")}
+                {t("settings.productSku")}
               </Label>
               <Input
                 id="productSku"
@@ -1799,12 +1799,12 @@ export default function Settings() {
                   setProductForm((prev) => ({ ...prev, sku: e.target.value }))
                 }
                 className="col-span-3"
-                placeholder={t("productManagement.productSkuPlaceholder")}
+                placeholder={t("settings.productSkuPlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productCategory" className="text-right">
-                {t("productManagement.productCategory")}
+                {t("settings.productCategory")}
               </Label>
               <Select
                 value={productForm.categoryId}
@@ -1814,7 +1814,7 @@ export default function Settings() {
               >
                 <SelectTrigger className="col-span-3">
                   <SelectValue
-                    placeholder={t("productManagement.selectCategory")}
+                    placeholder={t("settings.selectCategory")}
                   />
                 </SelectTrigger>
                 <SelectContent>
@@ -1831,7 +1831,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productPrice" className="text-right">
-                {t("productManagement.productPrice")}
+                {t("settings.productPrice")}
               </Label>
               <Input
                 id="productPrice"
@@ -1842,12 +1842,12 @@ export default function Settings() {
                   setProductForm((prev) => ({ ...prev, price: e.target.value }))
                 }
                 className="col-span-3"
-                placeholder={t("productManagement.productPricePlaceholder")}
+                placeholder={t("settings.productPricePlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productStock" className="text-right">
-                {t("productManagement.productStock")}
+                {t("settings.productStock")}
               </Label>
               <Input
                 id="productStock"
@@ -1857,7 +1857,7 @@ export default function Settings() {
                   setProductForm((prev) => ({ ...prev, stock: e.target.value }))
                 }
                 className="col-span-3"
-                placeholder={t("productManagement.productStockPlaceholder")}
+                placeholder={t("settings.productStockPlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
