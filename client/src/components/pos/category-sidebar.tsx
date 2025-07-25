@@ -87,7 +87,7 @@ export function CategorySidebar({
         </div>
         <Button 
           onClick={handleBarcodeScan}
-          className="w-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center rounded-xl mt-3"
+          className="w-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center rounded-xl mt-4"
         >
           <BarChart3 className="mr-2" size={16} />
           {t('pos.scanBarcode')}
