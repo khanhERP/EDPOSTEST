@@ -257,7 +257,7 @@ export function MenuReport() {
                         {category.category.name}
                       </Badge>
                       <span className="text-sm text-gray-600">
-                        {t("reports.menuItems", { count: category.productCount })}
+                        {t("reports.menuItems").replace("{count}",category.productCount)}
                       </span>
                     </div>
                     <div className="text-right">
@@ -265,7 +265,7 @@ export function MenuReport() {
                         {formatCurrency(category.revenue)}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {t("reports.itemsSold", { count: category.quantity })}
+                        {t("reports.itemsSold").replace("{count}",category.quantity)}
                       </div>
                     </div>
                   </div>
