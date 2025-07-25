@@ -147,41 +147,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products/bulk", async (req, res) => {
-    try {
-      const { products } = req.body;
-      
-      if (!Array.isArray(products)) {
-        return res.status(400).json({ message: "Products must be an array" });
-      }
-
-      const results = [];
-      const errors = [];
-
-      for (const productData of products) {
-        try {
-          const validatedData = insertProductSchema.parse(productData);
-          const product = await storage.createProduct(validatedData);
-          results.push(product);
-        } catch (error) {
-          errors.push({
-            product: productData,
-            error: error instanceof z.ZodError ? error.errors : "Failed to create product"
-          });
-        }
-      }
-
-      res.json({
-        success: results.length,
-        failed: errors.length,
-        results,
-        errors
-      });
-    } catch (error) {
-      res.status(500).json({ message: "Failed to bulk create products" });
-    }
-  });
-
   // Transactions
   app.post("/api/transactions", async (req, res) => {
     try {
@@ -340,7 +305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { date } = req.query;
 
-      let whereClause = {};
+      let whereCondition;
       if (date && typeof date === 'string') {
         // Filter by specific date
         const startOfDay = new Date(date);
@@ -349,22 +314,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
 
-        whereClause = {
-          clockIn: {
-            gte: startOfDay.toISOString(),
-            lt: endOfDay.toISOString()
-          }
-        };
+        whereCondition = and(
+          gte(attendanceRecords.clockIn, startOfDay),
+          lt(attendanceRecords.clockIn, endOfDay)
+        );
       }
 
       const attendance = await db.select().from(attendanceRecords)
-        .where(whereClause.clockIn ? 
-          and(
-            gte(attendanceRecords.clockIn, whereClause.clockIn.gte),
-            lt(attendanceRecords.clockIn, whereClause.clockIn.lt)
-          ) : 
-          undefined
-        )
+        .where(whereCondition)
         .orderBy(desc(attendanceRecords.clockIn));
 
       res.json(attendance);
