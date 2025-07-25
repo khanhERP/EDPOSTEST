@@ -82,12 +82,12 @@ export function ShoppingCart({
         ) : (
           cart.map((item) => (
             <div key={item.id} className="bg-gray-50 rounded-lg p-2">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-medium pos-text-primary text-sm truncate">{item.name}</h4>
-                  <p className="text-xs pos-text-secondary">{parseFloat(item.price).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ each</p>
-                </div>
-                <div className="flex items-center space-x-2 ml-2">
+              <div className="flex flex-col">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium pos-text-primary text-sm truncate">{item.name}</h4>
+                    <p className="text-xs pos-text-secondary">{parseFloat(item.price).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ each</p>
+                  </div>
                   <div className="flex items-center space-x-1">
                     <Button
                       size="sm"
@@ -108,17 +108,17 @@ export function ShoppingCart({
                     >
                       <Plus size={10} />
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onRemoveItem(item.id)}
+                      className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
+                    >
+                      <Minus size={10} />
+                    </Button>
                   </div>
-                  <div className="font-bold pos-text-primary text-sm text-center min-w-[80px]">{parseFloat(item.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onRemoveItem(item.id)}
-                    className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
-                  >
-                    <Minus size={10} />
-                  </Button>
                 </div>
+                <div className="font-bold pos-text-primary text-sm text-center">{parseFloat(item.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</div>
               </div>
             </div>
           ))
