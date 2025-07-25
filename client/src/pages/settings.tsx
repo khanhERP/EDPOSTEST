@@ -1058,7 +1058,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">
-                          {t("productManagement.totalCategories")}
+                          {t("settings.totalCategories")}
                         </p>
                         <p className="text-2xl font-bold text-green-600">
                           {categoriesData ? categoriesData.length : 0}
@@ -1074,7 +1074,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">
-                          {t("productManagement.totalProducts")}
+                          {t("settings.totalProducts")}
                         </p>
                         <p className="text-2xl font-bold text-blue-600">
                           {productsData ? productsData.length : 0}
@@ -1113,10 +1113,10 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Tag className="w-5 h-5 text-green-600" />
-                    {t("productManagement.categoryTitle")}
+                    {t("settings.categoryTitle")}
                   </CardTitle>
                   <CardDescription>
-                    {t("productManagement.categoryDescription")}
+                    {t("settings.categoryManagementDesc")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -1136,7 +1136,7 @@ export default function Settings() {
                       }}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      {t("productManagement.addCategory")}
+                      {t("settings.addCategory")}
                     </Button>
                   </div>
 
@@ -1148,7 +1148,7 @@ export default function Settings() {
                     <div className="text-center py-8">
                       <Tag className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                       <p className="text-gray-500">
-                        {t("productManagement.noCategories")}
+                        {t("settings.noCategories")}
                       </p>
                     </div>
                   ) : (
@@ -1217,7 +1217,7 @@ export default function Settings() {
                     {t("productManagement.productTitle")}
                   </CardTitle>
                   <CardDescription>
-                    {t("productManagement.productDescription")}
+                    Quản lý thông tin sản phẩm và giá cả
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -1702,7 +1702,7 @@ export default function Settings() {
                 : t("productManagement.addCategory")}
             </DialogTitle>
             <DialogDescription>
-              {t("productManagement.categoryDescription")}
+              {t("settings.categoryManagementDesc")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -1773,7 +1773,7 @@ export default function Settings() {
                 : t("productManagement.addProduct")}
             </DialogTitle>
             <DialogDescription>
-              {t("productManagement.productDescription")}
+              Nhập thông tin sản phẩm mới
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
