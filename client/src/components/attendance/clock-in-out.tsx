@@ -303,7 +303,7 @@ export function ClockInOut() {
                             variant="outline"
                           >
                             <Play className="w-4 h-4 mr-2" />
-                            {t('attendance.endBreak')}
+                            {t('attendance.breakEnd')}
                           </Button>
                         ) : (
                           <Button
@@ -312,7 +312,7 @@ export function ClockInOut() {
                             variant="outline"
                           >
                             <Coffee className="w-4 h-4 mr-2" />
-                            {t('attendance.startBreak')}
+                            {t('attendance.breakStart')}
                           </Button>
                         )}
                         <Button
