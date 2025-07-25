@@ -231,7 +231,7 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                           </td>
                           <td className="py-3 px-4 pos-text-secondary">{product.sku}</td>
                           <td className="py-3 px-4 pos-text-secondary">{getCategoryName(product.categoryId)}</td>
-                          <td className="py-3 px-4 font-medium">${product.price}</td>
+                          <td className="py-3 px-4 font-medium">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(product.price))}</td>
                           <td className="py-3 px-4">
                             <span className={`px-2 py-1 text-xs rounded-full ${
                               product.stock > 10 ? "bg-green-600 text-white" :
