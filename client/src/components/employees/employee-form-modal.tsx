@@ -134,8 +134,8 @@ export function EmployeeFormModal({
           </DialogTitle>
           <DialogDescription>
             {mode === "create"
-              ? t("employees.addEmployeeDesc")
-              : t("employees.editEmployeeDesc")}
+              ? t("employees.employeeFormDesc")
+              : t("employees.employeeFormDesc")}
           </DialogDescription>
         </DialogHeader>
 
