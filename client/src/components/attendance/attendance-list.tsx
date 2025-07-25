@@ -30,9 +30,10 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
 
   const formatTime = (dateString: string | null) => {
     if (!dateString) return "-";
-    return new Date(dateString).toLocaleTimeString('ko-KR', {
+    return new Date(dateString).toLocaleTimeString('vi-VN', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: false
     });
   };
 
@@ -96,7 +97,7 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
           <div className="flex justify-center py-8">
             <div className="text-gray-500">{t('common.loading')}</div>
           </div>
-        ) : !attendanceRecords || attendanceRecords.length === 0 ? (
+        ) : !attendanceRecords || !Array.isArray(attendanceRecords) || attendanceRecords.length === 0 ? (
           <div className="text-center py-8">
             <Clock className="w-12 h-12 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500">{t('attendance.noRecords')}</p>
