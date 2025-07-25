@@ -564,6 +564,8 @@ export interface InventoryTranslations {
   updateFailedDescription: string;
   updateSuccess: string;
   updateSuccessDescription: string;
+  duplicateSku: string;
+  duplicateSkuDescription: string;
 }
 
 // Tables translations interface

@@ -148,13 +148,23 @@ export default function InventoryPage() {
         description: t("inventory.createSuccessDescription") || "Sản phẩm mới đã được thêm vào kho hàng",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Create product error:', error);
-      toast({
-        title: t("inventory.createFailed") || "Tạo mới thất bại",
-        description: t("inventory.createFailedDescription") || "Không thể tạo sản phẩm mới. Vui lòng thử lại.",
-        variant: "destructive",
-      });
+      
+      // Check if it's a duplicate SKU error
+      if (error?.response?.status === 409 && error?.response?.data?.code === "DUPLICATE_SKU") {
+        toast({
+          title: t("inventory.duplicateSku") || "Đã tồn tại sản phẩm trong kho",
+          description: t("inventory.duplicateSkuDescription") || "SKU này đã được sử dụng cho sản phẩm khác",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: t("inventory.createFailed") || "Tạo mới thất bại",
+          description: t("inventory.createFailedDescription") || "Không thể tạo sản phẩm mới. Vui lòng thử lại.",
+          variant: "destructive",
+        });
+      }
     },
   });
 

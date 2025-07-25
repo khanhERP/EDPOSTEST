@@ -55,6 +55,8 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     deleteFailed: "삭제에 실패했습니다",
     createFailed: "상품 생성에 실패했습니다",
     updateFailed: "상품 수정에 실패했습니다",
+    duplicateSku: "이미 존재하는 상품입니다",
+    duplicateSkuDescription: "이 SKU는 다른 상품에서 이미 사용되고 있습니다",
   },
   en: {
     title: 'Inventory Management',
@@ -110,6 +112,8 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     deleteFailed: "Failed to delete product",
     createFailed: "Failed to create product",
     updateFailed: "Failed to update product",
+    duplicateSku: "Product already exists in inventory",
+    duplicateSkuDescription: "This SKU is already used by another product",
   },
   vi: {
     title: 'Quản lý tồn kho',
@@ -174,5 +178,7 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     updateFailedDescription: "Không thể cập nhật sản phẩm. Vui lòng thử lại.",
     updateSuccess: "Cập nhật thành công",
     updateSuccessDescription: "Thông tin sản phẩm đã được cập nhật",
+    duplicateSku: "Đã tồn tại sản phẩm trong kho",
+    duplicateSkuDescription: "SKU này đã được sử dụng cho sản phẩm khác",
   }
 };

@@ -72,6 +72,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/products", async (req, res) => {
     try {
       const validatedData = insertProductSchema.parse(req.body);
+      
+      // Check if SKU already exists
+      const existingProduct = await storage.getProductBySku(validatedData.sku);
+      if (existingProduct) {
+        return res.status(409).json({ 
+          message: "Product with this SKU already exists",
+          code: "DUPLICATE_SKU"
+        });
+      }
+      
       const product = await storage.createProduct(validatedData);
       res.status(201).json(product);
     } catch (error) {
