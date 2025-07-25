@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Grid3X3, List, ArrowUpDown, Package, Coffee, Cookie } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,9 @@ interface ProductGridProps {
 export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: ProductGridProps) {
   const { toast } = useToast();
   const { t } = useTranslation();
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products", { category: selectedCategory, search: searchQuery }],
@@ -138,6 +142,43 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
     return categoryNames[selectedCategory as number] || "Products";
   };
 
+  const handleSort = () => {
+    if (sortBy === 'name') {
+      setSortBy('price');
+    } else if (sortBy === 'price') {
+      setSortBy('stock');
+    } else {
+      setSortBy('name');
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    }
+  };
+
+  const getSortedProducts = () => {
+    const sorted = [...products].sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
+
+      switch (sortBy) {
+        case 'price':
+          aValue = parseFloat(a.price);
+          bValue = parseFloat(b.price);
+          break;
+        case 'stock':
+          aValue = a.stock;
+          bValue = b.stock;
+          break;
+        default:
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+      }
+
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  };
+
   return (
     <main className="flex-1 flex flex-col">
       <div className="bg-white p-4 border-b pos-border flex items-center justify-between pt-[22px] pb-[22px]">
@@ -146,13 +187,25 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
           <p className="text-sm pos-text-secondary">{products.length} {t('pos.productsAvailable')}</p>
         </div>
         <div className="flex items-center space-x-3">
-          <Button variant="outline" size="sm" className="flex items-center">
-            <Grid3X3 className="mr-2" size={16} />
-            {t('pos.gridView')}
+          <Button 
+            variant={viewMode === 'grid' ? "default" : "outline"} 
+            size="sm" 
+            className="flex items-center"
+            onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
+          >
+            {viewMode === 'grid' ? <Grid3X3 className="mr-2" size={16} /> : <List className="mr-2" size={16} />}
+            {viewMode === 'grid' ? t('pos.gridView') : t('pos.listView')}
           </Button>
-          <Button variant="outline" size="sm" className="flex items-center">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center"
+            onClick={handleSort}
+          >
             <ArrowUpDown className="mr-2" size={16} />
-            {t('pos.sortByName')}
+            {sortBy === 'name' ? t('pos.sortByName') : 
+             sortBy === 'price' ? t('pos.sortByPrice') : 
+             t('pos.sortByStock')} ({sortOrder === 'asc' ? '↑' : '↓'})
           </Button>
         </div>
       </div>
@@ -168,8 +221,11 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {products.map((product) => {
+          <div className={viewMode === 'grid' ? 
+            "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" : 
+            "flex flex-col space-y-2"
+          }>
+            {getSortedProducts().map((product) => {
               const stockStatus = getStockStatus(product.stock);
               const isPopular = getPopularBadge(product.name);
               const isLowStock = getLowStockBadge(product.stock);
@@ -177,51 +233,87 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
               return (
                 <div
                   key={product.id}
-                  className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 overflow-hidden cursor-pointer relative border border-gray-100"
+                  className={viewMode === 'grid' ? 
+                    "bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 overflow-hidden cursor-pointer relative border border-gray-100" :
+                    "bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative border border-gray-100 flex items-center p-4"
+                  }
                   onClick={() => handleAddToCart(product)}
                 >
-                  {product.imageUrl ? (
-                    <img 
-                      src={product.imageUrl} 
-                      alt={product.name}
-                      className="w-full h-32 object-cover"
-                      onError={(e) => {
-                        // If image fails to load, show placeholder
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        const placeholder = target.nextElementSibling as HTMLElement;
-                        if (placeholder) placeholder.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  {!product.imageUrl ? (
-                    <div className="w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center">
-                      <img 
-                        src={getPlaceholderImage(product.categoryId, product.name)} 
-                        alt={`${product.name} placeholder`}
-                        className="w-20 h-20 opacity-60"
-                      />
-                    </div>
+                  {viewMode === 'grid' ? (
+                    <>
+                      {product.imageUrl ? (
+                        <img 
+                          src={product.imageUrl} 
+                          alt={product.name}
+                          className="w-full h-32 object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            const placeholder = target.nextElementSibling as HTMLElement;
+                            if (placeholder) placeholder.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      {!product.imageUrl ? (
+                        <div className="w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center">
+                          <img 
+                            src={getPlaceholderImage(product.categoryId, product.name)} 
+                            alt={`${product.name} placeholder`}
+                            className="w-20 h-20 opacity-60"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 hidden flex-col items-center justify-center">
+                          <img 
+                            src={getPlaceholderImage(product.categoryId, product.name)} 
+                            alt={`${product.name} placeholder`}
+                            className="w-20 h-20 opacity-60"
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="p-3">
+                        <h3 className="font-medium pos-text-primary mb-1 line-clamp-2">{product.name}</h3>
+                        <p className="text-sm pos-text-secondary mb-2">SKU: {product.sku}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg font-bold text-green-600">{parseFloat(product.price).toLocaleString()} ₫</span>
+                          <span className={`text-xs font-medium ${stockStatus.color}`}>
+                            {stockStatus.text}
+                          </span>
+                        </div>
+                      </div>
+                    </>
                   ) : (
-                    <div className="w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 hidden flex-col items-center justify-center">
-                      <img 
-                        src={getPlaceholderImage(product.categoryId, product.name)} 
-                        alt={`${product.name} placeholder`}
-                        className="w-20 h-20 opacity-60"
-                      />
-                    </div>
+                    <>
+                      <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 mr-4">
+                        {product.imageUrl ? (
+                          <img 
+                            src={product.imageUrl} 
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                            <img 
+                              src={getPlaceholderImage(product.categoryId, product.name)} 
+                              alt={`${product.name} placeholder`}
+                              className="w-8 h-8 opacity-60"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium pos-text-primary mb-1">{product.name}</h3>
+                        <p className="text-sm pos-text-secondary mb-1">SKU: {product.sku}</p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg font-bold text-green-600">{parseFloat(product.price).toLocaleString()} ₫</span>
+                          <span className={`text-xs font-medium ${stockStatus.color}`}>
+                            {stockStatus.text}
+                          </span>
+                        </div>
+                      </div>
+                    </>
                   )}
-                  
-                  <div className="p-3">
-                    <h3 className="font-medium pos-text-primary mb-1 line-clamp-2">{product.name}</h3>
-                    <p className="text-sm pos-text-secondary mb-2">SKU: {product.sku}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-green-600">{parseFloat(product.price).toLocaleString()} ₫</span>
-                      <span className={`text-xs font-medium ${stockStatus.color}`}>
-                        {stockStatus.text}
-                      </span>
-                    </div>
-                  </div>
                   
                   {/* Badges */}
                   {isPopular && (
