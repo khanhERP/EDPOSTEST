@@ -24,6 +24,7 @@ export interface POSTranslations {
   paymentComplete: string;
   thankYou: string;
   receipt: string;
+  purchaseHistory: string;
   today: string;
   yesterday: string;
   thisWeek: string;
@@ -109,6 +110,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     paymentComplete: '결제 완료',
     thankYou: '감사합니다',
     receipt: '영수증',
+    purchaseHistory: '구매 내역',
     today: '오늘',
     yesterday: '어제',
     thisWeek: '이번 주',
@@ -192,6 +194,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     paymentComplete: 'Payment Complete',
     thankYou: 'Thank You',
     receipt: 'Receipt',
+    purchaseHistory: 'Purchase History',
     today: 'Today',
     yesterday: 'Yesterday',
     thisWeek: 'This Week',
@@ -275,6 +278,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     paymentComplete: 'Thanh toán hoàn tất',
     thankYou: 'Cảm ơn bạn',
     receipt: 'Hóa đơn',
+    purchaseHistory: 'Lịch sử mua hàng',
     today: 'Hôm nay',
     yesterday: 'Hôm qua',
     thisWeek: 'Tuần này',
