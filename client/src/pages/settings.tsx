@@ -143,6 +143,7 @@ export default function Settings() {
     phone: "02-1234-5678",
     email: "contact@edpos.com",
     taxId: "123-45-67890",
+    businessType: "restaurant",
     openTime: "09:00",
     closeTime: "22:00",
   });
@@ -157,6 +158,7 @@ export default function Settings() {
         phone: storeData.phone || "",
         email: storeData.email || "",
         taxId: storeData.taxId || "",
+        businessType: storeData.businessType || "restaurant",
         openTime: storeData.openTime || "09:00",
         closeTime: storeData.closeTime || "22:00",
       });
@@ -673,6 +675,29 @@ export default function Settings() {
                       }
                       placeholder={t("settings.taxIdPlaceholder")}
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="businessType">{t("settings.businessType")}</Label>
+                    <Select
+                      value={storeSettings.businessType}
+                      onValueChange={(value) =>
+                        handleStoreSettingChange("businessType", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={t("settings.businessTypePlaceholder")}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="retail">
+                          {t("settings.posRetail")}
+                        </SelectItem>
+                        <SelectItem value="restaurant">
+                          {t("settings.posRestaurant")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </CardContent>
               </Card>
