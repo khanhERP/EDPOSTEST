@@ -5,6 +5,7 @@ import { SalesReport } from "@/components/reports/sales-report";
 import { MenuReport } from "@/components/reports/menu-report";
 import { TableReport } from "@/components/reports/table-report";
 import { DashboardOverview } from "@/components/reports/dashboard-overview";
+import { EndOfDayReport } from "@/components/reports/end-of-day-report";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -42,7 +43,7 @@ export default function ReportsPage() {
           
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="h-10 items-center justify-center rounded-md p-1 text-muted-foreground grid w-full grid-cols-4 bg-[#4ed17e]">
+            <TabsList className="h-10 items-center justify-center rounded-md p-1 text-muted-foreground grid w-full grid-cols-5 bg-[#4ed17e]">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />
                 {t('reports.dashboard')}
@@ -58,6 +59,10 @@ export default function ReportsPage() {
               <TabsTrigger value="table" className="flex items-center gap-2">
                 <Utensils className="w-4 h-4" />
                 {t('reports.tableAnalysis')}
+              </TabsTrigger>
+              <TabsTrigger value="endofday" className="flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Báo cáo cuối ngày
               </TabsTrigger>
             </TabsList>
 
@@ -75,6 +80,10 @@ export default function ReportsPage() {
 
             <TabsContent value="table">
               <TableReport />
+            </TabsContent>
+
+            <TabsContent value="endofday">
+              <EndOfDayReport />
             </TabsContent>
           </Tabs>
         </div>
