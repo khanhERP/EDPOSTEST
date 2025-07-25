@@ -127,9 +127,10 @@ export function ClockInOut() {
   const selectedEmployee = (employees as Employee[] | undefined)?.find((emp: Employee) => emp.id === selectedEmployeeId);
 
   const formatTime = (dateInput: Date | string) => {
-    return new Date(dateInput).toLocaleTimeString('ko-KR', {
+    return new Date(dateInput).toLocaleTimeString('vi-VN', {
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: false
     });
   };
 
