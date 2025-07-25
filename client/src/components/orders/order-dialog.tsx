@@ -307,7 +307,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                         <span className={`font-bold ${
                           Number(product.stock) > 0 ? "text-blue-600" : "text-gray-400"
                         }`}>
-                          ₩{Number(product.price).toLocaleString()}
+                          {Number(product.price).toLocaleString()} ₫
                         </span>
                         <Badge
                           variant={
@@ -362,10 +362,9 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                             {item.product.name}
                           </h4>
                           <span className="text-sm font-bold">
-                            ₩
                             {(
                               Number(item.product.price) * item.quantity
-                            ).toLocaleString()}
+                            ).toLocaleString()} ₫
                           </span>
                         </div>
 
@@ -393,7 +392,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                             </Button>
                           </div>
                           <span className="text-xs text-gray-500">
-                            @₩{Number(item.product.price).toLocaleString()}
+                            @{Number(item.product.price).toLocaleString()} ₫
                           </span>
                         </div>
 
@@ -418,17 +417,17 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>{t("tables.subtotalLabel")}</span>
-                    <span>₩{calculateTotal().toLocaleString()}</span>
+                    <span>{calculateTotal().toLocaleString()} ₫</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>{t("tables.taxLabel")}</span>
-                    <span>₩{Math.round(calculateTax()).toLocaleString()}</span>
+                    <span>{Math.round(calculateTax()).toLocaleString()} ₫</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold">
                     <span>{t("tables.totalLabel")}</span>
                     <span>
-                      ₩{Math.round(calculateGrandTotal()).toLocaleString()}
+                      {Math.round(calculateGrandTotal()).toLocaleString()} ₫
                     </span>
                   </div>
                 </div>
