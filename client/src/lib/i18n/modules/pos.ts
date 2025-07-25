@@ -40,6 +40,7 @@ export interface POSTranslations {
   scanFailed: string;
   productNotFound: string;
   addItemsToCart: string;
+  emptyCart: string;
   clearCart: string;
   checkout: string;
   payment: string;
@@ -126,6 +127,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     scanFailed: '스캔 실패',
     productNotFound: '상품을 찾을 수 없습니다',
     addItemsToCart: '상품을 장바구니에 추가하여 시작하세요',
+    emptyCart: '장바구니가 비어있습니다',
     clearCart: '장바구니 비우기',
     checkout: '결제',
     payment: '결제',
@@ -210,6 +212,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     scanFailed: 'Scan Failed',
     productNotFound: 'Product not found',
     addItemsToCart: 'Add items to cart to get started',
+    emptyCart: 'Your cart is empty',
     clearCart: 'Clear Cart',
     checkout: 'Checkout',
     payment: 'Payment',
@@ -294,6 +297,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     scanFailed: 'Quét thất bại',
     productNotFound: 'Không tìm thấy sản phẩm',
     addItemsToCart: 'Thêm sản phẩm vào giỏ để bắt đầu',
+    emptyCart: 'Giỏ hàng trống',
     clearCart: 'Xóa giỏ hàng',
     checkout: 'Thanh toán',
     payment: 'Thanh toán',
