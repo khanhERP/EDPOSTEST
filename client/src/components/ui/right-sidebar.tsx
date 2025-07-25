@@ -130,23 +130,24 @@ export function RightSidebar() {
                 <Button
                   variant={isActive ? "secondary" : "ghost"}
                   className={cn(
-                    "w-[calc(100%-16px)] justify-start mb-1 mx-2 shadow-md hover:shadow-lg active:shadow-xl transition-all duration-300 group relative",
-                    showText ? "px-3" : "px-2",
-                    isActive && "bg-green-50 text-green-600 border-l-4 border-green-500 shadow-lg",
-                    isNavCollapsed && "hover:w-[calc(256px-16px)] hover:bg-green-50"
+                    "w-[calc(100%-16px)] justify-start mb-2 mx-2 h-12 rounded-lg font-semibold text-gray-700 transition-all duration-300 group relative border border-transparent",
+                    "bg-gradient-to-r from-gray-50 to-white hover:from-green-50 hover:to-green-100 hover:border-green-200 hover:text-green-700 hover:shadow-xl",
+                    showText ? "px-4" : "px-3",
+                    isActive && "bg-gradient-to-r from-green-100 to-green-50 text-green-800 border-green-300 shadow-lg font-bold",
+                    isNavCollapsed && "hover:w-[calc(256px-16px)]"
                   )}
                 >
-                  <Icon className={cn("w-5 h-5", showText && "mr-3")} />
+                  <Icon className={cn("w-6 h-6 flex-shrink-0", showText && "mr-4", isActive && "text-green-700")} />
                   {showText && (
-                    <span className="font-medium">{item.label}</span>
+                    <span className="font-semibold text-base">{item.label}</span>
                   )}
                   {isNavCollapsed && (
-                    <span className="opacity-0 group-hover:opacity-100 ml-3 font-medium transition-all duration-300 whitespace-nowrap">
+                    <span className="opacity-0 group-hover:opacity-100 ml-4 font-semibold text-base transition-all duration-300 whitespace-nowrap text-green-800">
                       {item.label}
                     </span>
                   )}
                   {showText && item.badge && (
-                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                    <span className="ml-auto bg-red-600 text-white text-xs font-bold rounded-full px-3 py-1 shadow-md">
                       {item.badge}
                     </span>
                   )}
