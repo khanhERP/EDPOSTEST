@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { OrderDialog } from "@/components/orders/order-dialog";
 import { Users, Clock, CheckCircle2, Eye, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +25,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [paymentMethodsOpen, setPaymentMethodsOpen] = useState(false);
+  const [pointsPaymentOpen, setPointsPaymentOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [pointsAmount, setPointsAmount] = useState("");
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
@@ -99,6 +105,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     queryKey: ['/api/store-settings'],
   });
 
+  const { data: customers } = useQuery({
+    queryKey: ['/api/customers'],
+    enabled: pointsPaymentOpen,
+  });
+
   // Force refetch order items when dialog opens
   useEffect(() => {
     if (orderDetailsOpen && selectedOrder?.id) {
@@ -143,6 +154,44 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       toast({
         title: 'Lỗi',
         description: 'Không thể hoàn tất thanh toán',
+        variant: "destructive",
+      });
+    },
+  });
+
+  const pointsPaymentMutation = useMutation({
+    mutationFn: async ({ customerId, points, orderId }: { customerId: number; points: number; orderId: number }) => {
+      // First redeem points
+      await apiRequest('POST', '/api/customers/redeem-points', {
+        customerId,
+        points
+      });
+      
+      // Then mark order as paid
+      await apiRequest('PUT', `/api/orders/${orderId}/status`, { 
+        status: 'paid', 
+        paymentMethod: 'points',
+        customerId 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+      setOrderDetailsOpen(false);
+      setPointsPaymentOpen(false);
+      setSelectedCustomer(null);
+      setPointsAmount("");
+      setSearchTerm("");
+      toast({
+        title: 'Thanh toán thành công',
+        description: 'Đơn hàng đã được thanh toán bằng điểm',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể hoàn tất thanh toán bằng điểm',
         variant: "destructive",
       });
     },
@@ -223,6 +272,41 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     if (selectedOrder) {
       completePaymentMutation.mutate({ orderId: selectedOrder.id, paymentMethod });
     }
+  };
+
+  const filteredCustomers = customers?.filter((customer: any) =>
+    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    customer.phone?.includes(searchTerm) ||
+    customer.customerId?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  const handlePointsPayment = () => {
+    if (!selectedCustomer || !pointsAmount || !selectedOrder) {
+      toast({
+        title: 'Lỗi',
+        description: 'Vui lòng chọn khách hàng và nhập số điểm',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const points = parseInt(pointsAmount);
+    const currentPoints = selectedCustomer.points || 0;
+    
+    if (points > currentPoints) {
+      toast({
+        title: 'Số điểm không đủ',
+        description: 'Khách hàng không có đủ điểm để thanh toán',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    pointsPaymentMutation.mutate({
+      customerId: selectedCustomer.id,
+      points,
+      orderId: selectedOrder.id
+    });
   };
 
   const getProductName = (productId: number) => {
@@ -565,9 +649,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 </div>
               </div>
 
-              {/* Payment Button */}
+              {/* Payment Buttons */}
               {selectedOrder.status !== 'paid' && (
-                <div className="pt-4">
+                <div className="pt-4 space-y-3">
                   <Button
                     onClick={() => setPaymentMethodsOpen(true)}
                     className="w-full bg-green-600 hover:bg-green-700"
@@ -575,6 +659,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   >
                     <CreditCard className="w-4 h-4 mr-2" />
                     Thanh toán
+                  </Button>
+                  <Button
+                    onClick={() => setPointsPaymentOpen(true)}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    size="lg"
+                    variant="outline"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Thanh toán bằng điểm
                   </Button>
                 </div>
               )}
@@ -613,6 +706,143 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setPaymentMethodsOpen(false)}>
               Hủy
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Points Payment Dialog */}
+      <Dialog open={pointsPaymentOpen} onOpenChange={setPointsPaymentOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Thanh toán bằng điểm</DialogTitle>
+            <DialogDescription>
+              Chọn khách hàng và số điểm để thanh toán đơn hàng
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Order Summary */}
+            {selectedOrder && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium mb-2">Thông tin đơn hàng</h4>
+                <div className="flex justify-between text-sm">
+                  <span>Mã đơn:</span>
+                  <span className="font-medium">{selectedOrder.orderNumber}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Tổng tiền:</span>
+                  <span className="font-medium">₩{Number(selectedOrder.total).toLocaleString()}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Customer Selection */}
+            <div className="space-y-3">
+              <Label>Tìm kiếm khách hàng</Label>
+              <Input
+                placeholder="Tìm theo tên, số điện thoại hoặc mã khách hàng..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              
+              <div className="max-h-64 overflow-y-auto border rounded-md">
+                {filteredCustomers.map((customer: any) => (
+                  <div
+                    key={customer.id}
+                    className={`p-3 cursor-pointer hover:bg-gray-50 border-b ${
+                      selectedCustomer?.id === customer.id ? 'bg-blue-50 border-blue-200' : ''
+                    }`}
+                    onClick={() => setSelectedCustomer(customer)}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="font-medium">{customer.name}</p>
+                        <p className="text-sm text-gray-600">{customer.customerId}</p>
+                        {customer.phone && (
+                          <p className="text-sm text-gray-600">{customer.phone}</p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-green-600">
+                          {(customer.points || 0).toLocaleString()}P
+                        </p>
+                        <p className="text-xs text-gray-500">Điểm tích lũy</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {filteredCustomers.length === 0 && searchTerm && (
+                  <div className="p-4 text-center text-gray-500">
+                    Không tìm thấy khách hàng
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Selected Customer Info */}
+            {selectedCustomer && (
+              <div className="p-4 bg-green-50 rounded-lg">
+                <h4 className="font-medium mb-2">Khách hàng đã chọn</h4>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="font-medium">{selectedCustomer.name}</p>
+                    <p className="text-sm text-gray-600">{selectedCustomer.customerId}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-green-600">
+                      {(selectedCustomer.points || 0).toLocaleString()}P
+                    </p>
+                    <p className="text-xs text-gray-500">Điểm có sẵn</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Points Amount Input */}
+            {selectedCustomer && (
+              <div className="space-y-3">
+                <Label>Số điểm sử dụng</Label>
+                <Input
+                  type="number"
+                  placeholder="Nhập số điểm muốn sử dụng..."
+                  value={pointsAmount}
+                  onChange={(e) => setPointsAmount(e.target.value)}
+                />
+                {pointsAmount && parseInt(pointsAmount) > (selectedCustomer.points || 0) && (
+                  <p className="text-sm text-red-600">
+                    Số điểm nhập vượt quá số điểm có sẵn
+                  </p>
+                )}
+                {pointsAmount && (
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between text-sm">
+                      <span>Điểm sau thanh toán:</span>
+                      <span className="font-medium">
+                        {Math.max(0, (selectedCustomer.points || 0) - parseInt(pointsAmount || '0')).toLocaleString()}P
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setPointsPaymentOpen(false)}>
+              Hủy
+            </Button>
+            <Button 
+              onClick={handlePointsPayment}
+              disabled={
+                !selectedCustomer || 
+                !pointsAmount || 
+                parseInt(pointsAmount || '0') > (selectedCustomer?.points || 0) || 
+                pointsPaymentMutation.isPending
+              }
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {pointsPaymentMutation.isPending ? 'Đang xử lý...' : 'Thanh toán bằng điểm'}
             </Button>
           </div>
         </DialogContent>
