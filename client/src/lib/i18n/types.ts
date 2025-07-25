@@ -542,6 +542,9 @@ export interface AttendanceTranslations {
   breakStartSuccess: string;
   breakStartSuccessDesc: string;
   breakStartError: string;
+  breakEndSuccess: string;
+  breakEndSuccessDesc: string;
+  breakEndError: string;
   hours: string;
   minutes: string;
   notesPlaceholder: string;
