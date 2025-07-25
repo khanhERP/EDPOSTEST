@@ -303,7 +303,7 @@ export default function Settings() {
   };
 
   const handleDeleteCustomer = (customerId: number) => {
-    if (confirm("정말로 이 고객을 t��제하시겠습니까?")) {
+    if (confirm("정말로 이 고객을 t제하시겠습니까?")) {
       fetch(`/api/customers/${customerId}`, { method: "DELETE" })
         .then(() => {
           queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
@@ -963,8 +963,7 @@ export default function Settings() {
                                 {customer.points || 0}P
                               </Button>
                             </div>
-                            <div>
-                              <Badge
+                            <div><Badge
                                 variant="default"
                                 className={`${
                                   customer.membershipLevel === "VIP"
