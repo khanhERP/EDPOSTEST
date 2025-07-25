@@ -232,17 +232,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   };
 
   const getPaymentMethods = () => {
-    // Default payment methods if not found in settings
-    const defaultMethods = [
-      { id: 1, name: "Tiền mặt", nameKey: "cash", enabled: true, icon: "💵" },
-      { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", enabled: true, icon: "💳" },
-      { id: 3, name: "MoMo", nameKey: "momo", enabled: true, icon: "📱" },
-      { id: 4, name: "ZaloPay", nameKey: "zalopay", enabled: true, icon: "📱" },
-      { id: 5, name: "VNPay", nameKey: "vnpay", enabled: true, icon: "💳" },
+    // Payment methods from settings - matches the structure in settings.tsx
+    const settingsPaymentMethods = [
+      { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
+      { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
+      { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
+      { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
+      { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
+      { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
+      { id: 7, name: "QR Code", nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
+      { id: 8, name: "ShopeePay", nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
+      { id: 9, name: "GrabPay", nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
     ];
 
-    // In a real implementation, this would come from store settings
-    return defaultMethods.filter(method => method.enabled);
+    // Filter to only return enabled payment methods
+    return settingsPaymentMethods.filter(method => method.enabled);
   };
 
   if (isLoading) {
