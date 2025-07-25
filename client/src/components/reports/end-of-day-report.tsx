@@ -9,15 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Printer, Monitor, Smartphone, Calendar, DollarSign, TrendingUp, Package, Users } from "lucide-react";
-import type { Transaction, Employee } from "@shared/schema";
+import { FileText, Printer, Calendar, DollarSign, TrendingUp, Package, Users } from "lucide-react";
+import type { Transaction, Employee, Order, Product } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 
 export function EndOfDayReport() {
   const { t } = useTranslation();
-  
-  // Display options
-  const [displayMode, setDisplayMode] = useState("horizontal"); // horizontal, vertical
   
   // Main concern filters
   const [concernType, setConcernType] = useState("sales"); // sales, revenue, inventory, summary
@@ -45,6 +42,14 @@ export function EndOfDayReport() {
     queryKey: ['/api/transactions'],
   });
 
+  const { data: orders } = useQuery({
+    queryKey: ['/api/orders'],
+  });
+
+  const { data: products } = useQuery({
+    queryKey: ['/api/products'],
+  });
+
   const { data: employees } = useQuery({
     queryKey: ['/api/employees'],
   });
@@ -64,7 +69,6 @@ export function EndOfDayReport() {
       
       const paymentMatch = paymentMethod === "all" || transaction.paymentMethod === paymentMethod;
       
-      // For now, we'll use transaction type based on total amount (positive = income, negative = expense)
       const transactionTypeMatch = transactionType === "all" || 
         (transactionType === "customer_payment" && Number(transaction.total) > 0) ||
         (transactionType === "customer_refund" && Number(transaction.total) < 0) ||
@@ -73,38 +77,21 @@ export function EndOfDayReport() {
       return dateMatch && paymentMatch && transactionTypeMatch;
     });
 
-    // Group data by concern type
-    const salesData = {
-      totalRevenue: filtered.reduce((sum, t) => sum + Number(t.total), 0),
-      totalTransactions: filtered.length,
-      averageTransaction: filtered.length > 0 ? filtered.reduce((sum, t) => sum + Number(t.total), 0) / filtered.length : 0,
-    };
-
-    const revenueData = {
-      income: filtered.filter(t => Number(t.total) > 0).reduce((sum, t) => sum + Number(t.total), 0),
-      expenses: filtered.filter(t => Number(t.total) < 0).reduce((sum, t) => sum + Math.abs(Number(t.total)), 0),
-      netProfit: 0,
-    };
-    revenueData.netProfit = revenueData.income - revenueData.expenses;
-
-    const paymentBreakdown = filtered.reduce((acc, t) => {
-      const method = t.paymentMethod || 'cash';
-      acc[method] = (acc[method] || 0) + Number(t.total);
-      return acc;
-    }, {} as Record<string, number>);
-
-    const hourlyBreakdown = filtered.reduce((acc, t) => {
-      const hour = new Date(t.createdAt || t.created_at).getHours();
-      acc[hour] = (acc[hour] || 0) + Number(t.total);
-      return acc;
-    }, {} as Record<number, number>);
+    // Filter orders for sales report
+    let filteredOrders = [];
+    if (orders && Array.isArray(orders)) {
+      filteredOrders = orders.filter((order: any) => {
+        const orderDate = new Date(order.orderedAt || order.created_at);
+        const dateMatch = dateType === "single" 
+          ? orderDate.toDateString() === start.toDateString()
+          : orderDate >= start && orderDate <= end;
+        return dateMatch && order.status === 'paid';
+      });
+    }
 
     return {
       filtered,
-      salesData,
-      revenueData,
-      paymentBreakdown,
-      hourlyBreakdown,
+      filteredOrders,
     };
   };
 
@@ -120,25 +107,25 @@ export function EndOfDayReport() {
     });
   };
 
-  const getPaymentMethodLabel = (method: string) => {
-    const labels = {
-      cash: t("reports.cashPayment"),
-      card: t("reports.cardPayment"),
-      transfer: t("reports.transfer"),
-      wallet: t("reports.wallet")
+  const getReportTitle = () => {
+    const titles = {
+      sales: "Báo cáo bán hàng",
+      revenue: "Báo cáo thu chi",
+      inventory: "Báo cáo hàng hóa",
+      summary: "Báo cáo tổng hợp"
     };
-    return labels[method as keyof typeof labels] || method;
+    return titles[concernType as keyof typeof titles] || "Báo cáo cuối ngày";
   };
 
-  const getTransactionTypeLabel = (type: string) => {
-    const labels = {
-      customer_payment: t("reports.customerPayment"),
-      customer_refund: t("reports.customerRefund"),
-      other_expense: t("reports.otherExpense"),
-      supplier_refund: t("reports.supplierRefund"),
-      supplier_payment: t("reports.supplierPayment")
-    };
-    return labels[type as keyof typeof labels] || t("common.all");
+  const getDateDisplay = () => {
+    if (concernType === "sales") {
+      return `Ngày bán: ${formatDate(startDate)}${dateType === "range" ? ` - Ngày thanh toán: ${formatDate(endDate)}` : ` - Ngày thanh toán: ${formatDate(startDate)}`}`;
+    } else if (concernType === "revenue") {
+      return `Từ ngày: ${formatDate(startDate)}${dateType === "range" ? ` - Đến ngày: ${formatDate(endDate)}` : ` - Đến ngày: ${formatDate(startDate)}`}`;
+    } else if (concernType === "inventory" || concernType === "summary") {
+      return `Ngày bán: ${formatDate(startDate)}${dateType === "range" ? ` - ${formatDate(endDate)}` : ""}`;
+    }
+    return "";
   };
 
   const handlePrint = () => {
@@ -164,7 +151,7 @@ export function EndOfDayReport() {
     <html>
     <head>
       <meta charset="utf-8">
-      <title>${t("reports.endOfDayReport")}</title>
+      <title>${getReportTitle()}</title>
       <style>
         @page {
           margin: 15mm;
@@ -191,41 +178,6 @@ export function EndOfDayReport() {
         .header p {
           margin: 5px 0;
           font-size: 11px;
-        }
-        .section {
-          margin-bottom: 15px;
-        }
-        .section h2 {
-          font-size: 14px;
-          margin: 0 0 8px 0;
-          color: #333;
-          border-bottom: 1px solid #ccc;
-          padding-bottom: 2px;
-        }
-        .stats-grid {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 15px;
-        }
-        .stat-item {
-          text-align: center;
-          flex: 1;
-          padding: 8px;
-          border: 1px solid #ddd;
-          margin-right: 5px;
-        }
-        .stat-item:last-child {
-          margin-right: 0;
-        }
-        .stat-value {
-          font-size: 14px;
-          font-weight: bold;
-          color: #0066cc;
-        }
-        .stat-label {
-          font-size: 10px;
-          color: #666;
-          margin-top: 2px;
         }
         table {
           width: 100%;
@@ -259,53 +211,73 @@ export function EndOfDayReport() {
           border-top: 1px solid #ccc;
           padding-top: 5px;
         }
-        @media print {
-          .no-print { display: none; }
-        }
       </style>
     </head>
     <body>
       <div class="header">
-        <h1>${t("reports.endOfDayReport")}</h1>
-        <p>${t("reports.dataFrom")} ${formatDate(startDate)} ${dateType === "range" ? `${t("reports.to")} ${formatDate(endDate)}` : ""}</p>
+        <h1>${getReportTitle()}</h1>
+        <p>${getDateDisplay()}</p>
         <p>Chi nhánh: Chi nhánh trung tâm</p>
       </div>
-
-      <div class="section">
-        <h2>Mã phiếu thu/chi</h2>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-value">${formatCurrency(reportData.salesData.totalRevenue)}</div>
-            <div class="stat-label">${t("reports.totalRevenue")}</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">${reportData.salesData.totalTransactions}</div>
-            <div class="stat-label">${t("reports.totalTransactions")}</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">${formatCurrency(reportData.revenueData.income)}</div>
-            <div class="stat-label">${t("reports.income")}</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">${formatCurrency(reportData.revenueData.expenses)}</div>
-            <div class="stat-label">${t("reports.expenses")}</div>
-          </div>
-        </div>
+      ${generateTableContent(reportData)}
+      <div class="footer">
+        <p>Báo cáo được tạo: ${currentDate} ${currentTime}</p>
       </div>
+    </body>
+    </html>
+    `;
+  };
 
-      <div class="section">
+  const generateTableContent = (reportData: any) => {
+    if (concernType === "sales") {
+      return `
         <table>
           <thead>
             <tr style="background-color: #b8d4f0;">
-              <th class="center">${t("reports.transactionId")}</th>
-              <th class="center">Người nhập/nhận</th>
-              <th class="center">Thu/Chi</th>
-              <th class="center">${t("reports.time")}</th>
-              <th class="center">Mã chứng từ</th>
+              <th class="center">Mã giao dịch</th>
+              <th class="center">Thời gian</th>
+              <th class="center">Số lượng</th>
+              <th class="center">Doanh thu</th>
+              <th class="center">Thu khác</th>
+              <th class="center">VAT</th>
+              <th class="center">Thực thu</th>
             </tr>
           </thead>
           <tbody>
-            ${reportData.filtered.length > 0 ? reportData.filtered.map((transaction, index) => `
+            ${reportData.filteredOrders.length > 0 ? reportData.filteredOrders.map((order: any, index: number) => `
+              <tr ${index % 2 === 0 ? 'style="background-color: #f8f9fa;"' : ''}>
+                <td class="center">${order.orderNumber || `ORD-${order.id}`}</td>
+                <td class="center">${new Date(order.orderedAt || order.created_at).toLocaleString('vi-VN')}</td>
+                <td class="center">${order.customerCount || 1}</td>
+                <td class="right">${formatCurrency(Number(order.total))}</td>
+                <td class="right">0 ₫</td>
+                <td class="right">0 ₫</td>
+                <td class="right">${formatCurrency(Number(order.total))}</td>
+              </tr>
+            `).join('') : `
+              <tr style="background-color: #fffacd;">
+                <td colspan="7" class="center" style="font-style: italic;">
+                  Báo cáo không có dữ liệu
+                </td>
+              </tr>
+            `}
+          </tbody>
+        </table>
+      `;
+    } else if (concernType === "revenue") {
+      return `
+        <table>
+          <thead>
+            <tr style="background-color: #b8d4f0;">
+              <th class="center">Mã phiếu thu/chi</th>
+              <th class="center">Người nộp/nhận</th>
+              <th class="center">Thu/Chi</th>
+              <th class="center">Thời gian</th>
+              <th class="center">Mã giao dịch</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${reportData.filtered.length > 0 ? reportData.filtered.map((transaction: any, index: number) => `
               <tr ${index % 2 === 0 ? 'style="background-color: #f8f9fa;"' : ''}>
                 <td class="center">${transaction.transactionId || `TXN-${transaction.id}`}</td>
                 <td class="center">${transaction.createdBy || 'Hệ thống'}</td>
@@ -322,38 +294,208 @@ export function EndOfDayReport() {
             `}
           </tbody>
         </table>
-      </div>
-
-      ${concernType === "revenue" || concernType === "summary" ? `
-      <div class="section">
-        <h2>${t("reports.paymentMethodBreakdown")}</h2>
+      `;
+    } else if (concernType === "inventory") {
+      return `
         <table>
           <thead>
-            <tr>
-              <th>${t("reports.method")}</th>
-              <th class="right">${t("reports.amount")}</th>
-              <th class="right">Tỷ lệ %</th>
+            <tr style="background-color: #b8d4f0;">
+              <th class="center">Mã hàng</th>
+              <th class="center">Tên hàng</th>
+              <th class="center">SL bán</th>
+              <th class="center">Doanh thu</th>
+              <th class="center">SL trả</th>
+              <th class="center">Giá trị trả</th>
+              <th class="center">Doanh thu thuần</th>
             </tr>
           </thead>
           <tbody>
-            ${Object.entries(reportData.paymentBreakdown).map(([method, amount]) => `
-              <tr>
-                <td>${getPaymentMethodLabel(method)}</td>
-                <td class="right">${formatCurrency(amount)}</td>
-                <td class="right">${reportData.salesData.totalRevenue > 0 ? ((amount / reportData.salesData.totalRevenue) * 100).toFixed(1) : 0}%</td>
+            ${products && products.length > 0 ? products.slice(0, 10).map((product: any, index: number) => `
+              <tr ${index % 2 === 0 ? 'style="background-color: #f8f9fa;"' : ''}>
+                <td class="center">${product.sku || product.id}</td>
+                <td>${product.name}</td>
+                <td class="center">0</td>
+                <td class="right">0 ₫</td>
+                <td class="center">0</td>
+                <td class="right">0 ₫</td>
+                <td class="right">0 ₫</td>
               </tr>
-            `).join('')}
+            `).join('') : `
+              <tr style="background-color: #fffacd;">
+                <td colspan="7" class="center" style="font-style: italic;">
+                  Báo cáo không có dữ liệu
+                </td>
+              </tr>
+            `}
           </tbody>
         </table>
-      </div>
-      ` : ''}
+      `;
+    }
+    return '';
+  };
 
-      <div class="footer">
-        <p>${t("reports.reportGenerated")}: ${currentDate} ${currentTime}</p>
-      </div>
-    </body>
-    </html>
-    `;
+  const renderSalesTable = () => {
+    const reportData = getFilteredData();
+    if (!reportData) return null;
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Chi tiết bán hàng</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-center">Mã giao dịch</TableHead>
+                <TableHead className="text-center">Thời gian</TableHead>
+                <TableHead className="text-center">Số lượng</TableHead>
+                <TableHead className="text-center">Doanh thu</TableHead>
+                <TableHead className="text-center">Thu khác</TableHead>
+                <TableHead className="text-center">VAT</TableHead>
+                <TableHead className="text-center">Thực thu</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {reportData.filteredOrders.length > 0 ? (
+                reportData.filteredOrders.slice(0, 20).map((order: any) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="text-center font-medium">
+                      {order.orderNumber || `ORD-${order.id}`}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {new Date(order.orderedAt || order.created_at).toLocaleString('vi-VN')}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {order.customerCount || 1}
+                    </TableCell>
+                    <TableCell className="text-right text-green-600">
+                      {formatCurrency(Number(order.total))}
+                    </TableCell>
+                    <TableCell className="text-right">0 ₫</TableCell>
+                    <TableCell className="text-right">0 ₫</TableCell>
+                    <TableCell className="text-right font-semibold text-green-600">
+                      {formatCurrency(Number(order.total))}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-gray-500 italic">
+                    Báo cáo không có dữ liệu
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderRevenueTable = () => {
+    const reportData = getFilteredData();
+    if (!reportData) return null;
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Chi tiết thu chi</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-center">Mã phiếu thu/chi</TableHead>
+                <TableHead className="text-center">Người nộp/nhận</TableHead>
+                <TableHead className="text-center">Thu/Chi</TableHead>
+                <TableHead className="text-center">Thời gian</TableHead>
+                <TableHead className="text-center">Mã giao dịch</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {reportData.filtered.length > 0 ? (
+                reportData.filtered.slice(0, 20).map((transaction: any) => (
+                  <TableRow key={transaction.id}>
+                    <TableCell className="text-center font-medium">
+                      {transaction.transactionId || `TXN-${transaction.id}`}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {transaction.createdBy || 'Hệ thống'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Badge variant={Number(transaction.total) >= 0 ? "default" : "destructive"}>
+                        {Number(transaction.total) >= 0 ? 'Thu' : 'Chi'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {new Date(transaction.createdAt || transaction.created_at).toLocaleString('vi-VN')}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {transaction.id}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-gray-500 italic">
+                    Báo cáo không có dữ liệu
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderInventoryTable = () => {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Chi tiết hàng hóa</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-center">Mã hàng</TableHead>
+                <TableHead>Tên hàng</TableHead>
+                <TableHead className="text-center">SL bán</TableHead>
+                <TableHead className="text-center">Doanh thu</TableHead>
+                <TableHead className="text-center">SL trả</TableHead>
+                <TableHead className="text-center">Giá trị trả</TableHead>
+                <TableHead className="text-center">Doanh thu thuần</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {products && products.length > 0 ? (
+                products.slice(0, 20).map((product: any) => (
+                  <TableRow key={product.id}>
+                    <TableCell className="text-center font-medium">
+                      {product.sku || product.id}
+                    </TableCell>
+                    <TableCell>{product.name}</TableCell>
+                    <TableCell className="text-center">0</TableCell>
+                    <TableCell className="text-right">0 ₫</TableCell>
+                    <TableCell className="text-center">0</TableCell>
+                    <TableCell className="text-right">0 ₫</TableCell>
+                    <TableCell className="text-right">0 ₫</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-gray-500 italic">
+                    Báo cáo không có dữ liệu
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    );
   };
 
   const reportData = getFilteredData();
@@ -366,162 +508,6 @@ export function EndOfDayReport() {
     );
   }
 
-  const renderSalesReport = () => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-green-500" />
-              <div>
-                <p className="text-sm text-gray-600">{t("reports.totalRevenue")}</p>
-                <p className="text-xl font-bold text-green-600">
-                  {formatCurrency(reportData.salesData.totalRevenue)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-500" />
-              <div>
-                <p className="text-sm text-gray-600">{t("reports.totalTransactions")}</p>
-                <p className="text-xl font-bold">{reportData.salesData.totalTransactions}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-purple-500" />
-              <div>
-                <p className="text-sm text-gray-600">{t("reports.averageOrderValue")}</p>
-                <p className="text-xl font-bold">
-                  {formatCurrency(reportData.salesData.averageTransaction)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("reports.paymentMethodBreakdown")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {Object.entries(reportData.paymentBreakdown).map(([method, amount]) => (
-              <div key={method} className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline">{getPaymentMethodLabel(method)}</Badge>
-                </div>
-                <span className="font-medium">{formatCurrency(amount)}</span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderRevenueReport = () => (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-green-500" />
-              <div>
-                <p className="text-sm text-gray-600">{t("reports.income")}</p>
-                <p className="text-xl font-bold text-green-600">
-                  {formatCurrency(reportData.revenueData.income)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-red-500" />
-              <div>
-                <p className="text-sm text-gray-600">{t("reports.expenses")}</p>
-                <p className="text-xl font-bold text-red-600">
-                  {formatCurrency(reportData.revenueData.expenses)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-blue-500" />
-              <div>
-                <p className="text-sm text-gray-600">{t("reports.netProfit")}</p>
-                <p className={`text-xl font-bold ${reportData.revenueData.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(reportData.revenueData.netProfit)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-
-  const renderTransactionTable = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t("reports.transactionDetails")}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("reports.transactionId")}</TableHead>
-              <TableHead>{t("reports.time")}</TableHead>
-              <TableHead>{t("reports.method")}</TableHead>
-              <TableHead>{t("reports.amount")}</TableHead>
-              <TableHead>{t("reports.notes")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {reportData.filtered.slice(0, 10).map((transaction: any) => (
-              <TableRow key={transaction.id}>
-                <TableCell className="font-medium">
-                  {transaction.transactionId || `TXN-${transaction.id}`}
-                </TableCell>
-                <TableCell>
-                  {new Date(transaction.createdAt || transaction.created_at).toLocaleString('vi-VN')}
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">
-                    {getPaymentMethodLabel(transaction.paymentMethod || 'cash')}
-                  </Badge>
-                </TableCell>
-                <TableCell className={Number(transaction.total) >= 0 ? 'text-green-600' : 'text-red-600'}>
-                  {formatCurrency(Number(transaction.total))}
-                </TableCell>
-                <TableCell className="text-sm text-gray-500">
-                  {transaction.notes || '-'}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -531,10 +517,10 @@ export function EndOfDayReport() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="w-5 h-5" />
-                {t("reports.endOfDayReport")}
+                {getReportTitle()}
               </CardTitle>
-              <CardDescription>
-                {t("reports.dashboardDescription")}
+              <CardDescription className="mt-2">
+                {getDateDisplay()}
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -553,31 +539,8 @@ export function EndOfDayReport() {
           <CardTitle className="text-lg">{t("reports.printOptions")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Display Mode */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <Label>{t("reports.displayMode")}</Label>
-              <Select value={displayMode} onValueChange={setDisplayMode}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="horizontal">
-                    <div className="flex items-center gap-2">
-                      <Monitor className="w-4 h-4" />
-                      {t("reports.horizontal")}
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="vertical">
-                    <div className="flex items-center gap-2">
-                      <Smartphone className="w-4 h-4" />
-                      {t("reports.vertical")}
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
+          {/* Main concern and date type in same row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label>{t("reports.concernType")}</Label>
               <Select value={concernType} onValueChange={setConcernType}>
@@ -605,11 +568,38 @@ export function EndOfDayReport() {
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
+          {/* Compact date inputs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>{t("reports.paymentMethodFilter")}</Label>
+              <Label className="text-sm">{dateType === "single" ? "Ngày" : t("reports.startDate")}</Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="h-9"
+              />
+            </div>
+            {dateType === "range" && (
+              <div>
+                <Label className="text-sm">{t("reports.endDate")}</Label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="h-9"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Additional filters */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label className="text-sm">{t("reports.paymentMethodFilter")}</Label>
               <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -621,36 +611,11 @@ export function EndOfDayReport() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          {/* Date inputs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label>{dateType === "single" ? t("common.date") : t("reports.startDate")}</Label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            {dateType === "range" && (
-              <div>
-                <Label>{t("reports.endDate")}</Label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Additional filters */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label>{t("reports.transactionTypeFilter")}</Label>
+              <Label className="text-sm">{t("reports.transactionTypeFilter")}</Label>
               <Select value={transactionType} onValueChange={setTransactionType}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -658,33 +623,14 @@ export function EndOfDayReport() {
                   <SelectItem value="customer_payment">{t("reports.customerPayment")}</SelectItem>
                   <SelectItem value="customer_refund">{t("reports.customerRefund")}</SelectItem>
                   <SelectItem value="other_expense">{t("reports.otherExpense")}</SelectItem>
-                  <SelectItem value="supplier_refund">{t("reports.supplierRefund")}</SelectItem>
-                  <SelectItem value="supplier_payment">{t("reports.supplierPayment")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label>{t("reports.creator")}</Label>
-              <Select value={selectedCreator} onValueChange={setSelectedCreator}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t("reports.creator")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("common.all")}</SelectItem>
-                  {employees && Array.isArray(employees) && employees.map((emp: Employee) => (
-                    <SelectItem key={emp.id} value={emp.id.toString()}>
-                      {emp.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label>{t("reports.employee")}</Label>
+              <Label className="text-sm">{t("reports.employee")}</Label>
               <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue placeholder={t("reports.employee")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -702,21 +648,19 @@ export function EndOfDayReport() {
       </Card>
 
       {/* Report Content */}
-      <div className={displayMode === "vertical" ? "space-y-6" : ""}>
-        {concernType === "sales" && renderSalesReport()}
-        {concernType === "revenue" && renderRevenueReport()}
-        {(concernType === "summary" || concernType === "inventory") && (
+      <div className="space-y-6">
+        {concernType === "sales" && renderSalesTable()}
+        {concernType === "revenue" && renderRevenueTable()}
+        {concernType === "inventory" && renderInventoryTable()}
+        {concernType === "summary" && (
           <div className="space-y-6">
-            {renderSalesReport()}
+            {renderSalesTable()}
             <Separator />
-            {renderRevenueReport()}
+            {renderRevenueTable()}
+            <Separator />
+            {renderInventoryTable()}
           </div>
         )}
-        
-        {/* Transaction Details */}
-        <div className={displayMode === "horizontal" ? "mt-6" : ""}>
-          {renderTransactionTable()}
-        </div>
       </div>
 
       {/* Summary Footer */}
@@ -724,11 +668,10 @@ export function EndOfDayReport() {
         <CardContent className="p-4">
           <div className="flex justify-between items-center text-sm text-gray-600">
             <span>
-              {t("reports.reportGenerated")}: {new Date().toLocaleString('vi-VN')}
+              Báo cáo được tạo: {new Date().toLocaleString('vi-VN')}
             </span>
             <span>
-              {t("reports.dataFrom")} {formatDate(startDate)} 
-              {dateType === "range" && ` ${t("reports.to")} ${formatDate(endDate)}`}
+              {getDateDisplay()}
             </span>
           </div>
         </CardContent>
