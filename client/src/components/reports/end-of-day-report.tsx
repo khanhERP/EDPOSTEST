@@ -536,15 +536,15 @@ export function EndOfDayReport() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{t("reports.printOptions")}</CardTitle>
+          <CardTitle className="text-base">{t("reports.printOptions")}</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3">
           {/* Main concern and date type in same row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <Label>{t("reports.concernType")}</Label>
+              <Label className="text-sm">{t("reports.mainConcern")}</Label>
               <Select value={concernType} onValueChange={setConcernType}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -557,9 +557,9 @@ export function EndOfDayReport() {
             </div>
 
             <div>
-              <Label>{t("reports.dateType")}</Label>
+              <Label className="text-sm">{t("reports.dateType")}</Label>
               <Select value={dateType} onValueChange={setDateType}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -571,14 +571,14 @@ export function EndOfDayReport() {
           </div>
 
           {/* Compact date inputs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <Label className="text-sm">{dateType === "single" ? "Ngày" : t("reports.startDate")}</Label>
+              <Label className="text-sm">{dateType === "single" ? t("reports.date") : t("reports.startDate")}</Label>
               <Input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="h-9"
+                className="h-8 text-sm"
               />
             </div>
             {dateType === "range" && (
@@ -588,18 +588,18 @@ export function EndOfDayReport() {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="h-9"
+                  className="h-8 text-sm"
                 />
               </div>
             )}
           </div>
 
           {/* Additional filters */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <Label className="text-sm">{t("reports.paymentMethodFilter")}</Label>
               <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -615,7 +615,7 @@ export function EndOfDayReport() {
             <div>
               <Label className="text-sm">{t("reports.transactionTypeFilter")}</Label>
               <Select value={transactionType} onValueChange={setTransactionType}>
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -630,7 +630,7 @@ export function EndOfDayReport() {
             <div>
               <Label className="text-sm">{t("reports.employee")}</Label>
               <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                <SelectTrigger className="h-9">
+                <SelectTrigger className="h-8 text-sm">
                   <SelectValue placeholder={t("reports.employee")} />
                 </SelectTrigger>
                 <SelectContent>
