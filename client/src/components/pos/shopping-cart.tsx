@@ -82,12 +82,12 @@ export function ShoppingCart({
         ) : (
           cart.map((item) => (
             <div key={item.id} className="bg-gray-50 rounded-lg p-2">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0">
                   <h4 className="font-medium pos-text-primary text-sm truncate">{item.name}</h4>
-                  <p className="text-xs pos-text-secondary">{parseFloat(item.price).toLocaleString()} ₫ each</p>
+                  <p className="text-xs pos-text-secondary">{parseFloat(item.price).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ each</p>
                 </div>
-                <div className="flex items-center space-x-2 ml-2">
+                <div className="flex flex-col items-end space-y-1 ml-2">
                   <div className="flex items-center space-x-1">
                     <Button
                       size="sm"
@@ -109,15 +109,17 @@ export function ShoppingCart({
                       <Plus size={10} />
                     </Button>
                   </div>
-                  <div className="font-bold pos-text-primary text-sm">{item.total.toLocaleString()} ₫</div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onRemoveItem(item.id)}
-                    className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
-                  >
-                    <Minus size={10} />
-                  </Button>
+                  <div className="flex items-center space-x-1">
+                    <div className="font-bold pos-text-primary text-sm">{parseFloat(item.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onRemoveItem(item.id)}
+                      className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
+                    >
+                      <Minus size={10} />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -130,16 +132,16 @@ export function ShoppingCart({
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="pos-text-secondary">{t('tables.subtotal')}:</span>
-              <span className="font-medium">{subtotal.toLocaleString()} ₫</span>
+              <span className="font-medium">{subtotal.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="pos-text-secondary">{t('tables.tax')} (8.25%):</span>
-              <span className="font-medium">{tax.toLocaleString()} ₫</span>
+              <span className="font-medium">{tax.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
             </div>
             <div className="border-t pt-2">
               <div className="flex justify-between">
                 <span className="text-lg font-bold pos-text-primary">{t('tables.total')}:</span>
-                <span className="text-lg font-bold text-blue-600">{total.toLocaleString()} ₫</span>
+                <span className="text-lg font-bold text-blue-600">{total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
               </div>
             </div>
           </div>
@@ -180,7 +182,7 @@ export function ShoppingCart({
               />
               <div className="flex justify-between text-sm">
                 <span className="pos-text-secondary">{t('tables.change')}:</span>
-                <span className="font-bold text-green-600">{change.toLocaleString()} ₫</span>
+                <span className="font-bold text-green-600">{change.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
               </div>
             </div>
           )}
