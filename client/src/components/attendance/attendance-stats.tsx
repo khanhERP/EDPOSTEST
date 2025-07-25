@@ -98,7 +98,10 @@ export function AttendanceStats() {
 
   const formatMonth = (monthStr: string) => {
     const date = new Date(monthStr + "-01");
-    return date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long' });
+    return date.toLocaleDateString('vi-VN', { 
+      year: 'numeric', 
+      month: 'long' 
+    });
   };
 
   return (

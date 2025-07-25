@@ -37,7 +37,11 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('ko-KR');
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -47,7 +51,7 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
       late: { label: t('attendance.status.late'), variant: "secondary" as const },
       half_day: { label: t('attendance.status.halfDay'), variant: "outline" as const },
     };
-    
+
     const config = statusConfig[status as keyof typeof statusConfig] || { label: status, variant: "outline" as const };
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
