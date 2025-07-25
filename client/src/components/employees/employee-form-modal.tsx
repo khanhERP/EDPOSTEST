@@ -60,9 +60,8 @@ export function EmployeeFormModal({
       return data.nextId;
     } catch (error) {
       console.error("Error generating employee ID:", error);
-      // Fallback to timestamp if API fails
-      const timestamp = Date.now().toString().slice(-6);
-      return `EMP-${timestamp}`;
+      // Fallback to EMP-001 if API fails
+      return "EMP-001";
     }
   };
 
