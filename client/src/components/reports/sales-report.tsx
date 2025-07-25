@@ -132,13 +132,10 @@ export function SalesReport() {
   };
 
   const formatDate = (dateStr: string) => {
-    const { currentLanguage } = useLanguageStore.getState();
-    const locale = currentLanguage === 'ko' ? 'ko-KR' : currentLanguage === 'vi' ? 'vi-VN' : 'en-US';
-    
-    return new Date(dateStr).toLocaleDateString(locale, {
-      month: '2-digit',
+    return new Date(dateStr).toLocaleDateString('en-GB', {
       day: '2-digit',
-      weekday: 'short'
+      month: '2-digit',
+      year: 'numeric'
     });
   };
 
