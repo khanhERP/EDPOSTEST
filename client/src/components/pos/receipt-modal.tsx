@@ -129,10 +129,6 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
             <Mail className="mr-2" size={16} />
             Email Receipt
           </Button>
-          <Button onClick={onClose} variant="outline" className="flex-1">
-            <X className="mr-2" size={16} />
-            Close
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
