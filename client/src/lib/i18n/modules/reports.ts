@@ -176,6 +176,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     paymentDate: '결제일',
     fromDate: '시작일',
     toDate: '종료일',
+    
+    // Table detail headers
+    salesDetailsHeader: '판매 세부사항',
+    revenueExpenseDetailsHeader: '수입 지출 세부사항',
+    inventoryDetailsHeader: '재고 세부사항',
   },
   en: {
     title: 'Reports',
@@ -327,6 +332,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cardPayment: 'Card',
     transfer: 'Bank Transfer',
     wallet: 'E-Wallet',
+    
+    // Table detail headers
+    salesDetailsHeader: 'Sales Details',
+    revenueExpenseDetailsHeader: 'Revenue & Expense Details',
+    inventoryDetailsHeader: 'Inventory Details',
   },
   vi: {
     title: 'Báo cáo',
@@ -496,5 +506,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cardPayment: 'Thẻ',
     transfer: 'Chuyển khoản',
     wallet: 'Ví điện tử',
+    
+    // Table detail headers
+    salesDetailsHeader: 'Chi tiết bán hàng',
+    revenueExpenseDetailsHeader: 'Chi tiết thu chi',
+    inventoryDetailsHeader: 'Chi tiết hàng hóa',
   },
 };

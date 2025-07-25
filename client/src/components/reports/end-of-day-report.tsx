@@ -340,19 +340,19 @@ export function EndOfDayReport() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Chi tiết bán hàng</CardTitle>
+          <CardTitle>{t("reports.salesDetailsHeader")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">Mã giao dịch</TableHead>
-                <TableHead className="text-center">Thời gian</TableHead>
-                <TableHead className="text-center">Số lượng</TableHead>
-                <TableHead className="text-center">Doanh thu</TableHead>
-                <TableHead className="text-center">Thu khác</TableHead>
-                <TableHead className="text-center">VAT</TableHead>
-                <TableHead className="text-center">Thực thu</TableHead>
+                <TableHead className="text-center">{t("reports.transactionCode")}</TableHead>
+                <TableHead className="text-center">{t("reports.time")}</TableHead>
+                <TableHead className="text-center">{t("reports.quantity")}</TableHead>
+                <TableHead className="text-center">{t("reports.revenue")}</TableHead>
+                <TableHead className="text-center">{t("reports.otherRevenue")}</TableHead>
+                <TableHead className="text-center">{t("reports.vat")}</TableHead>
+                <TableHead className="text-center">{t("reports.actualRevenue")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -399,17 +399,17 @@ export function EndOfDayReport() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Chi tiết thu chi</CardTitle>
+          <CardTitle>{t("reports.revenueExpenseDetailsHeader")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">Mã phiếu thu/chi</TableHead>
-                <TableHead className="text-center">Người nộp/nhận</TableHead>
-                <TableHead className="text-center">Thu/Chi</TableHead>
-                <TableHead className="text-center">Thời gian</TableHead>
-                <TableHead className="text-center">Mã giao dịch</TableHead>
+                <TableHead className="text-center">{t("reports.receiptCode")}</TableHead>
+                <TableHead className="text-center">{t("reports.payerReceiver")}</TableHead>
+                <TableHead className="text-center">{t("reports.revenueExpenseType")}</TableHead>
+                <TableHead className="text-center">{t("reports.time")}</TableHead>
+                <TableHead className="text-center">{t("reports.transactionCode")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -453,19 +453,19 @@ export function EndOfDayReport() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Chi tiết hàng hóa</CardTitle>
+          <CardTitle>{t("reports.inventoryDetailsHeader")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">Mã hàng</TableHead>
-                <TableHead>Tên hàng</TableHead>
-                <TableHead className="text-center">SL bán</TableHead>
-                <TableHead className="text-center">Doanh thu</TableHead>
-                <TableHead className="text-center">SL trả</TableHead>
-                <TableHead className="text-center">Giá trị trả</TableHead>
-                <TableHead className="text-center">Doanh thu thuần</TableHead>
+                <TableHead className="text-center">{t("reports.productCode")}</TableHead>
+                <TableHead>{t("reports.productName")}</TableHead>
+                <TableHead className="text-center">{t("reports.soldQuantity")}</TableHead>
+                <TableHead className="text-center">{t("reports.revenue")}</TableHead>
+                <TableHead className="text-center">{t("reports.returnQuantity")}</TableHead>
+                <TableHead className="text-center">{t("reports.returnValue")}</TableHead>
+                <TableHead className="text-center">{t("reports.netRevenue")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

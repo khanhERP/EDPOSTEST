@@ -164,6 +164,11 @@ export interface ReportsTranslations {
   paymentDate: string;
   fromDate: string;
   toDate: string;
+  
+  // Table detail headers
+  salesDetailsHeader: string;
+  revenueExpenseDetailsHeader: string;
+  inventoryDetailsHeader: string;
 
   // Table analysis
   tablePerformance: string;
