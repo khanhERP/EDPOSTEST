@@ -122,8 +122,8 @@ export function EndOfDayReport() {
 
   const getPaymentMethodLabel = (method: string) => {
     const labels = {
-      cash: t("reports.cash"),
-      card: t("reports.card"),
+      cash: t("reports.cashPayment"),
+      card: t("reports.cardPayment"),
       transfer: t("reports.transfer"),
       wallet: t("reports.wallet")
     };
@@ -305,11 +305,21 @@ export function EndOfDayReport() {
             </tr>
           </thead>
           <tbody>
-            <tr style="background-color: #fffacd;">
-              <td colspan="5" class="center" style="font-style: italic;">
-                Báo cáo không có dữ liệu
-              </td>
-            </tr>
+            ${reportData.filtered.length > 0 ? reportData.filtered.map((transaction, index) => `
+              <tr ${index % 2 === 0 ? 'style="background-color: #f8f9fa;"' : ''}>
+                <td class="center">${transaction.transactionId || `TXN-${transaction.id}`}</td>
+                <td class="center">${transaction.createdBy || 'Hệ thống'}</td>
+                <td class="center">${Number(transaction.total) >= 0 ? 'Thu' : 'Chi'}</td>
+                <td class="center">${new Date(transaction.createdAt || transaction.created_at).toLocaleString('vi-VN')}</td>
+                <td class="center">${transaction.id}</td>
+              </tr>
+            `).join('') : `
+              <tr style="background-color: #fffacd;">
+                <td colspan="5" class="center" style="font-style: italic;">
+                  Báo cáo không có dữ liệu
+                </td>
+              </tr>
+            `}
           </tbody>
         </table>
       </div>
@@ -576,7 +586,7 @@ export function EndOfDayReport() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="sales">{t("reports.sales")}</SelectItem>
-                  <SelectItem value="revenue">{t("reports.revenue")}</SelectItem>
+                  <SelectItem value="revenue">{t("reports.revenueExpense")}</SelectItem>
                   <SelectItem value="inventory">{t("reports.inventory")}</SelectItem>
                   <SelectItem value="summary">{t("reports.summary")}</SelectItem>
                 </SelectContent>
@@ -604,8 +614,8 @@ export function EndOfDayReport() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("common.all")}</SelectItem>
-                  <SelectItem value="cash">{t("reports.cash")}</SelectItem>
-                  <SelectItem value="card">{t("reports.card")}</SelectItem>
+                  <SelectItem value="cash">{t("reports.cashPayment")}</SelectItem>
+                  <SelectItem value="card">{t("reports.cardPayment")}</SelectItem>
                   <SelectItem value="transfer">{t("reports.transfer")}</SelectItem>
                   <SelectItem value="wallet">{t("reports.wallet")}</SelectItem>
                 </SelectContent>

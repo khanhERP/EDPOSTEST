@@ -19,10 +19,10 @@ export default function ReportsPage() {
     <div className="min-h-screen bg-green-50 grocery-bg">
       {/* Header */}
       <POSHeader />
-      
+
       {/* Right Sidebar */}
       <RightSidebar />
-      
+
       <div className="main-content pt-16 px-6">
         <div className="max-w-5xl mx-auto py-8">
           {/* Page Header */}
@@ -40,7 +40,7 @@ export default function ReportsPage() {
             </div>
           </div>
 
-          
+
 
           <Tabs defaultValue="overview" className="space-y-6">
             <TabsList className="h-10 items-center justify-center rounded-md p-1 text-muted-foreground grid w-full grid-cols-5 bg-[#4ed17e]">
@@ -62,7 +62,7 @@ export default function ReportsPage() {
               </TabsTrigger>
               <TabsTrigger value="endofday" className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
-                Báo cáo cuối ngày
+                {t("reports.endOfDayReportTab")}
               </TabsTrigger>
             </TabsList>
 

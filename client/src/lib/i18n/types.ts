@@ -128,6 +128,12 @@ export interface ReportsTranslations {
   noRevenueData: string;
   noCategoryData: string;
 
+  // Additional keys
+  endOfDayReportTab: string;
+  revenueExpense: string;
+  cashPayment: string;
+  cardPayment: string;
+
   // Table analysis
   tablePerformance: string;
   utilizationRate: string;
