@@ -91,11 +91,17 @@ export default function InventoryPage() {
   const updateStockMutation = useMutation({
     mutationFn: async (data: StockUpdateForm) => {
       console.log('Updating stock:', data);
-      const response = await apiRequest("/api/inventory/update-stock", "POST", data);
+      const response = await fetch("/api/inventory/update-stock", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
       if (!response.ok) {
         throw new Error('Failed to update stock');
       }
-      return response;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -111,11 +117,17 @@ export default function InventoryPage() {
   const createProductMutation = useMutation({
     mutationFn: async (data: any) => {
       console.log('Sending product data:', data);
-      const response = await apiRequest("/api/products", "POST", data);
+      const response = await fetch("/api/products", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
       if (!response.ok) {
         throw new Error('Failed to create product');
       }
-      return response;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -130,7 +142,9 @@ export default function InventoryPage() {
 
   const deleteProductMutation = useMutation({
     mutationFn: async (productId: number) => {
-      const response = await apiRequest(`/api/products/${productId}`, "DELETE");
+      const response = await fetch(`/api/products/${productId}`, {
+        method: "DELETE",
+      });
       if (!response.ok) {
         throw new Error('Failed to delete product');
       }
