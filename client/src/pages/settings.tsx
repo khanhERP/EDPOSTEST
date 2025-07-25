@@ -237,11 +237,11 @@ export default function Settings() {
     },
     {
       id: 7,
-      name: "Ngân hàng trực tuyến",
-      nameKey: "banking",
-      type: "banking",
-      enabled: false,
-      icon: "🏦",
+      name: "QR Code",
+      nameKey: "qrCode",
+      type: "qr",
+      enabled: true,
+      icon: "📱",
     },
     {
       id: 8,
