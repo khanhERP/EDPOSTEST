@@ -694,10 +694,7 @@ export function EndOfDayReport() {
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          {/* Compact date inputs */}
-          <div className="grid grid-cols-4">
             <div>
               <Label className="text-sm">
                 {dateType === "single"
