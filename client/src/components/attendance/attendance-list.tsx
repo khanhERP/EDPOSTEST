@@ -20,7 +20,14 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
   });
 
   const { data: attendanceRecords, isLoading } = useQuery({
-    queryKey: ['/api/attendance', { date: selectedDate }],
+    queryKey: ['/api/attendance', selectedDate],
+    queryFn: async () => {
+      const response = await fetch(`/api/attendance?date=${selectedDate}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch attendance records');
+      }
+      return response.json();
+    }
   });
 
   const getEmployeeName = (employeeId: number) => {

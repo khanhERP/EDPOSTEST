@@ -17,6 +17,7 @@ import {
 } from "@shared/schema";
 import { initializeSampleData } from "./db";
 import { z } from "zod";
+import { eq, desc, asc, and, or, like, count, sum, gte, lt } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize sample data
@@ -72,7 +73,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/products", async (req, res) => {
     try {
       const validatedData = insertProductSchema.parse(req.body);
-      
+
       // Check if SKU already exists
       const existingProduct = await storage.getProductBySku(validatedData.sku);
       if (existingProduct) {
@@ -81,7 +82,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           code: "DUPLICATE_SKU"
         });
       }
-      
+
       const product = await storage.createProduct(validatedData);
       res.status(201).json(product);
     } catch (error) {
@@ -298,17 +299,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Attendance
+  // Attendance routes
   app.get("/api/attendance", async (req, res) => {
     try {
-      const { employeeId, date } = req.query;
-      const records = await storage.getAttendanceRecords(
-        employeeId ? parseInt(employeeId as string) : undefined,
-        date as string,
-      );
-      res.json(records);
+      const { date } = req.query;
+
+      let whereClause = {};
+      if (date && typeof date === 'string') {
+        // Filter by specific date
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        whereClause = {
+          clockIn: {
+            gte: startOfDay.toISOString(),
+            lt: endOfDay.toISOString()
+          }
+        };
+      }
+
+      const attendance = await db.select().from(attendanceRecords)
+        .where(whereClause.clockIn ? 
+          and(
+            gte(attendanceRecords.clockIn, whereClause.clockIn.gte),
+            lt(attendanceRecords.clockIn, whereClause.clockIn.lt)
+          ) : 
+          undefined
+        )
+        .orderBy(desc(attendanceRecords.clockIn));
+
+      res.json(attendance);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch attendance records" });
+      console.error('Error fetching attendance records:', error);
+      res.status(500).json({ error: 'Failed to fetch attendance records' });
     }
   });
 
@@ -568,11 +594,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/order-items/:orderId", async (req, res) => {
     try {
       const orderId = parseInt(req.params.orderId);
-      
+
       if (isNaN(orderId)) {
         return res.status(400).json({ message: "Invalid order ID" });
       }
-      
+
       const items = await storage.getOrderItems(orderId);
       res.json(items);
     } catch (error) {
@@ -1003,10 +1029,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         GOLD: z.number().min(0),
         VIP: z.number().min(0)
       });
-      
+
       const validatedData = thresholdSchema.parse(req.body);
       const thresholds = await storage.updateMembershipThresholds(validatedData);
-      
+
       res.json(thresholds);
     } catch (error) {
       if (error instanceof z.ZodError) {
