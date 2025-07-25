@@ -38,8 +38,8 @@ import { format } from 'date-fns';
 import { CreditCard, TrendingUp, TrendingDown, Activity, Clock } from 'lucide-react';
 
 const pointUpdateSchema = z.object({
-  points: z.number().min(1, '포인트는 1 이상이어야 합니다'),
-  description: z.string().min(1, '설명을 입력해주세요'),
+  points: z.number().min(1, 'Points must be at least 1'),
+  description: z.string().min(1, 'Description is required'),
   type: z.enum(['earned', 'redeemed', 'adjusted']),
 });
 
@@ -142,8 +142,8 @@ export function CustomerPointsModal({
     },
     onError: (error: any) => {
       toast({
-        title: '포인트 업데이트 실패',
-        description: error.message || '포인트 업데이트 중 오류가 발생했습니다.',
+        title: t("customers.pointsUpdateFailed"),
+        description: error.message || t("customers.pointsUpdateError"),
         variant: 'destructive',
       });
     },
@@ -182,13 +182,13 @@ export function CustomerPointsModal({
   const getTypeLabel = (type: string) => {
     switch (type) {
       case 'earned':
-        return '적립';
+        return t("customers.earned");
       case 'redeemed':
-        return '사용';
+        return t("customers.redeemed");
       case 'adjusted':
-        return '조정';
+        return t("customers.adjusted");
       case 'expired':
-        return '만료';
+        return t("customers.expired");
       default:
         return type;
     }
@@ -200,10 +200,10 @@ export function CustomerPointsModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            {customerName} - 포인트 관리
+            {customerName} - {t("customers.pointManagement")}
           </DialogTitle>
           <DialogDescription>
-            고객의 포인트 현황을 확인하고 포인트를 추가하거나 사용할 수 있습니다.
+            {t("customers.pointManagementDescription")}
           </DialogDescription>
         </DialogHeader>
 
@@ -217,7 +217,7 @@ export function CustomerPointsModal({
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            포인트 현황
+            {t("customers.pointOverview")}
           </button>
           <button
             onClick={() => setActiveTab('update')}
@@ -227,7 +227,7 @@ export function CustomerPointsModal({
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            포인트 수정
+            {t("customers.updatePoints")}
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -237,7 +237,7 @@ export function CustomerPointsModal({
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            포인트 내역
+            {t("customers.pointHistory")}
           </button>
         </div>
 
@@ -248,7 +248,7 @@ export function CustomerPointsModal({
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CreditCard className="h-5 w-5" />
-                    현재 포인트
+                    {t("customers.currentPoints")}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -268,7 +268,7 @@ export function CustomerPointsModal({
               {pointHistory && pointHistory.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle>최근 포인트 내역</CardTitle>
+                    <CardTitle>{t("customers.recentPointHistory")}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
@@ -288,7 +288,7 @@ export function CustomerPointsModal({
                               {transaction.points > 0 ? '+' : ''}{transaction.points.toLocaleString()} P
                             </div>
                             <div className="text-sm text-gray-500">
-                              잔액: {transaction.newBalance.toLocaleString()} P
+                              {t("customers.balance")}: {transaction.newBalance.toLocaleString()} P
                             </div>
                           </div>
                         </div>
@@ -300,7 +300,7 @@ export function CustomerPointsModal({
                           variant="outline"
                           onClick={() => setActiveTab('history')}
                         >
-                          전체 내역 보기
+                          {t("customers.viewAllHistory")}
                         </Button>
                       </div>
                     )}
@@ -313,7 +313,7 @@ export function CustomerPointsModal({
           {activeTab === 'update' && (
             <Card>
               <CardHeader>
-                <CardTitle>포인트 수정</CardTitle>
+                <CardTitle>{t("customers.updatePoints")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <Form {...form}>
@@ -323,17 +323,17 @@ export function CustomerPointsModal({
                       name="type"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>처리 유형</FormLabel>
+                          <FormLabel>{t("customers.transactionType")}</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="처리 유형을 선택하세요" />
+                                <SelectValue placeholder={t("customers.selectTransactionType")} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="earned">적립</SelectItem>
-                              <SelectItem value="redeemed">사용</SelectItem>
-                              <SelectItem value="adjusted">조정</SelectItem>
+                              <SelectItem value="earned">{t("customers.earned")}</SelectItem>
+                              <SelectItem value="redeemed">{t("customers.redeemed")}</SelectItem>
+                              <SelectItem value="adjusted">{t("customers.adjusted")}</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -346,11 +346,11 @@ export function CustomerPointsModal({
                       name="points"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>포인트</FormLabel>
+                          <FormLabel>{t("customers.points")}</FormLabel>
                           <FormControl>
                             <Input
                               type="number"
-                              placeholder="포인트를 입력하세요"
+                              placeholder={t("customers.enterPoints")}
                               {...field}
                               onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                             />
@@ -365,10 +365,10 @@ export function CustomerPointsModal({
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>처리 사유</FormLabel>
+                          <FormLabel>{t("customers.reason")}</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="포인트 처리 사유를 입력하세요"
+                              placeholder={t("customers.enterReason")}
                               {...field}
                             />
                           </FormControl>
@@ -383,14 +383,14 @@ export function CustomerPointsModal({
                         disabled={updatePointsMutation.isPending}
                         className="bg-green-600 hover:bg-green-700"
                       >
-                        {updatePointsMutation.isPending ? '처리 중...' : '포인트 처리'}
+                        {updatePointsMutation.isPending ? t("common.processing") : t("customers.processPoints")}
                       </Button>
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => form.reset()}
                       >
-                        초기화
+                        {t("common.reset")}
                       </Button>
                     </div>
                   </form>
@@ -402,7 +402,7 @@ export function CustomerPointsModal({
           {activeTab === 'history' && (
             <Card>
               <CardHeader>
-                <CardTitle>포인트 내역</CardTitle>
+                <CardTitle>{t("customers.pointHistory")}</CardTitle>
               </CardHeader>
               <CardContent>
                 {historyLoading ? (
@@ -434,10 +434,10 @@ export function CustomerPointsModal({
                             {transaction.points > 0 ? '+' : ''}{transaction.points.toLocaleString()} P
                           </div>
                           <div className="text-sm text-gray-500">
-                            이전: {transaction.previousBalance.toLocaleString()} P
+                            {t("customers.previousBalance")}: {transaction.previousBalance.toLocaleString()} P
                           </div>
                           <div className="text-sm font-medium">
-                            잔액: {transaction.newBalance.toLocaleString()} P
+                            {t("customers.balance")}: {transaction.newBalance.toLocaleString()} P
                           </div>
                         </div>
                       </div>
@@ -445,7 +445,7 @@ export function CustomerPointsModal({
                   </div>
                 ) : (
                   <div className="text-center py-8 text-gray-500">
-                    포인트 내역이 없습니다.
+                    {t("customers.noPointHistory")}
                   </div>
                 )}
               </CardContent>

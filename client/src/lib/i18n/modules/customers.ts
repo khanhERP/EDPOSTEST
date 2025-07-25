@@ -114,6 +114,7 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     upgradeAvailable: "승급 가능",
     allTiers: "전체",
     close: "닫기",
+    pointsUpdated: "포인트가 업데이트되었습니다",
   },
   en: {
     title: "Customer Management",
@@ -227,7 +228,8 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     filterByTier: "Filter by Tier",
     upgradeAvailable: "Upgrade Available",
     allTiers: "All Tiers",
-    close: "Close",
+    close: "Close", 
+    pointsUpdated: "Points updated successfully",
   },
   vi: {
     title: "Quản lý khách hàng",
@@ -342,5 +344,6 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     upgradeAvailable: "Có thể nâng cấp",
     allTiers: "Tất cả cấp độ",
     close: "Đóng",
+    pointsUpdated: "Cập nhật điểm thành công",
   },
 };
