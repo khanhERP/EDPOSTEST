@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { insertProductSchema, type Product, type Category } from "@shared/schema";
 import { z } from "zod";
+import { useTranslation } from "@/lib/i18n";
 
 interface ProductManagerModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
@@ -150,7 +152,7 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
   };
 
   const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this product?")) {
+    if (confirm(t('tables.confirmDeleteProduct'))) {
       deleteProductMutation.mutate(id);
     }
   };
@@ -170,7 +172,7 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
       <DialogContent className="max-w-4xl w-full max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            Product Management
+            {t('tables.productManagement')}
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X size={20} />
             </Button>
@@ -197,17 +199,17 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
               
               <div className="bg-gray-50 rounded-lg overflow-hidden">
                 {isLoading ? (
-                  <div className="p-8 text-center">Loading products...</div>
+                  <div className="p-8 text-center">{t('tables.loading')}</div>
                 ) : (
                   <table className="w-full">
                     <thead className="bg-gray-100">
                       <tr>
-                        <th className="text-left py-3 px-4 font-medium pos-text-primary">Product</th>
-                        <th className="text-left py-3 px-4 font-medium pos-text-primary">SKU</th>
-                        <th className="text-left py-3 px-4 font-medium pos-text-primary">Category</th>
-                        <th className="text-left py-3 px-4 font-medium pos-text-primary">Price</th>
-                        <th className="text-left py-3 px-4 font-medium pos-text-primary">Stock</th>
-                        <th className="text-left py-3 px-4 font-medium pos-text-primary">Actions</th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">{t('tables.product')}</th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">{t('tables.sku')}</th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">{t('tables.category')}</th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">{t('tables.price')}</th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">{t('tables.stock')}</th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">{t('tables.actions')}</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white">
@@ -271,7 +273,7 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-medium">
-                  {editingProduct ? "Edit Product" : "Add New Product"}
+                  {editingProduct ? t('tables.editProduct') : t('tables.addNewProduct')}
                 </h3>
                 <Button variant="ghost" onClick={resetForm}>
                   <X size={16} />
@@ -286,9 +288,9 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Product Name</FormLabel>
+                          <FormLabel>{t('tables.productName')}</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} placeholder={t('tables.productNamePlaceholder')} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -300,9 +302,9 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                       name="sku"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>SKU</FormLabel>
+                          <FormLabel>{t('tables.sku')}</FormLabel>
                           <FormControl>
-                            <Input {...field} />
+                            <Input {...field} placeholder={t('tables.skuPlaceholder')} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -316,9 +318,9 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                       name="price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Price</FormLabel>
+                          <FormLabel>{t('tables.price')}</FormLabel>
                           <FormControl>
-                            <Input {...field} type="number" step="0.01" />
+                            <Input {...field} type="number" step="0.01" placeholder={t('tables.pricePlaceholder')} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -330,11 +332,12 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                       name="stock"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Stock</FormLabel>
+                          <FormLabel>{t('tables.stock')}</FormLabel>
                           <FormControl>
                             <Input 
                               {...field} 
                               type="number" 
+                              placeholder={t('tables.stockPlaceholder')}
                               onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
                             />
                           </FormControl>
@@ -348,14 +351,14 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                       name="categoryId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
+                          <FormLabel>{t('tables.category')}</FormLabel>
                           <Select 
                             onValueChange={(value) => field.onChange(parseInt(value))}
                             value={field.value.toString()}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select category" />
+                                <SelectValue placeholder={t('tables.selectCategory')} />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -377,9 +380,9 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                     name="imageUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Image URL (optional)</FormLabel>
+                        <FormLabel>{t('tables.imageUrlOptional')}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} placeholder={t('tables.imageUrl')} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -388,14 +391,14 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                   
                   <div className="flex justify-end space-x-3">
                     <Button type="button" variant="outline" onClick={resetForm}>
-                      Cancel
+                      {t('tables.cancel')}
                     </Button>
                     <Button 
                       type="submit" 
                       disabled={createProductMutation.isPending || updateProductMutation.isPending}
                       className="btn-primary"
                     >
-                      {editingProduct ? "Update Product" : "Create Product"}
+                      {editingProduct ? t('tables.updateProduct') : t('tables.createProduct')}
                     </Button>
                   </div>
                 </form>
