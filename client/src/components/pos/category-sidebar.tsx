@@ -75,7 +75,7 @@ export function CategorySidebar({
   return (
     <aside className="w-64 bg-white shadow-material border-r pos-border flex flex-col">
       <div className="p-4 border-b pos-border">
-        <div className="relative mb-3">
+        <div className="relative mb-3 mt-2">
           <Input
             type="text"
             placeholder={t('pos.searchProducts')}
