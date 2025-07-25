@@ -181,7 +181,7 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
           {!showAddForm ? (
             <>
               <div className="flex space-x-4 mb-6">
-                <Button onClick={() => setShowAddForm(true)} className="btn-primary">
+                <Button onClick={() => setShowAddForm(true)}>
                   <Plus className="mr-2" size={16} />
                   Add New Product
                 </Button>
@@ -390,7 +390,6 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                     <Button 
                       type="submit" 
                       disabled={createProductMutation.isPending || updateProductMutation.isPending}
-                      className="btn-primary"
                     >
                       {editingProduct ? "Update Product" : "Create Product"}
                     </Button>
