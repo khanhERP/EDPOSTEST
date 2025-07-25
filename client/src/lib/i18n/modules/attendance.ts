@@ -28,6 +28,10 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     startBreak: '휴식 시작',
     endBreak: '휴식 종료',
     status: {
+      present: '출근',
+      absent: '결근',
+      late: '지각',
+      halfDay: '반일근무',
       working: '근무중',
       onBreak: '휴식중',
       clockedOut: '퇴근함',
@@ -71,6 +75,9 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     lateCount: '지각',
     absentCount: '결근',
     times: '회',
+    breakTime: '휴식 시간',
+    totalHours: '총 근무시간',
+    overtime: '초과근무',
   },
   en: {
     title: 'Attendance Management',
@@ -98,6 +105,10 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     startBreak: 'Start Break',
     endBreak: 'End Break',
     status: {
+      present: 'Present',
+      absent: 'Absent',
+      late: 'Late',
+      halfDay: 'Half Day',
       working: 'Working',
       onBreak: 'On Break',
       clockedOut: 'Clocked Out',
@@ -141,6 +152,9 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     lateCount: 'Late',
     absentCount: 'Absent',
     times: 'times',
+    breakTime: 'Break Time',
+    totalHours: 'Total Hours',
+    overtime: 'Overtime',
   },
   vi: {
     title: 'Quản lý chấm công',
@@ -168,6 +182,10 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     startBreak: 'Bắt đầu nghỉ',
     endBreak: 'Kết thúc nghỉ',
     status: {
+      present: 'Có mặt',
+      absent: 'Vắng mặt',
+      late: 'Trễ',
+      halfDay: 'Nửa ngày',
       working: 'Đang làm việc',
       onBreak: 'Đang nghỉ',
       clockedOut: 'Đã tan ca',
@@ -211,5 +229,8 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     lateCount: 'Trễ',
     absentCount: 'Vắng mặt',
     times: 'lần',
+    breakTime: 'Thời gian nghỉ',
+    totalHours: 'Tổng giờ làm',
+    overtime: 'Làm thêm giờ',
   },
 };
