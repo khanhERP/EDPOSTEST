@@ -61,9 +61,20 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
           console.log(`Data:`, item.data);
         });
         
+        // Check if there are SKU duplicate errors
+        const skuErrors = errorItems.filter(item => 
+          item.error && item.error.includes("already exists")
+        );
+        
+        let errorDescription = data.message || `${data.success} sản phẩm thành công, ${data.errors} sản phẩm lỗi`;
+        
+        if (skuErrors.length > 0) {
+          errorDescription += `\nCó ${skuErrors.length} sản phẩm bị trùng mã SKU`;
+        }
+        
         toast({
           title: "Hoàn thành với lỗi",
-          description: data.message || `${data.success} sản phẩm thành công, ${data.errors} sản phẩm lỗi`,
+          description: errorDescription,
           variant: "destructive",
         });
       } else {
@@ -138,6 +149,12 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
           }
           if (product.categoryId <= 0) {
             newErrors.push(`Dòng ${rowNumber}: Category ID không hợp lệ`);
+          }
+
+          // Check for duplicate SKU within the imported data
+          const skuExists = validProducts.some(p => p.sku === product.sku);
+          if (skuExists) {
+            newErrors.push(`Dòng ${rowNumber}: SKU "${product.sku}" bị trùng lặp trong file`);
           }
 
           if (newErrors.length === 0 || newErrors.filter(e => e.includes(`Dòng ${rowNumber}`)).length === 0) {
