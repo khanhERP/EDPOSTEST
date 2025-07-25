@@ -148,7 +148,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Table headers for reports
     transactionCode: '거래 코드',
-    time: '시간',
     quantity: '수량',
     otherRevenue: '기타 수입',
     vat: 'VAT',
@@ -168,7 +167,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseDetails: '수입 지출 세부사항',
     inventoryDetails: '재고 세부사항',
     noReportData: '보고서 데이터가 없습니다',
-    reportGenerated: '보고서 생성됨',
     centralBranch: '중앙 지점',
 
     // Date labels
@@ -452,7 +450,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     rank: 'Thứ hạng',
     menuName: 'Tên món',
     salesCount: 'Số lượng bán',
-    revenue: 'Doanh thu',
     popularMenuByQuantity: 'Món phổ biến (theo số lượng)',
     popularMenuByQuantityDesc: 'Xếp hạng món theo số lượng bán.',
     highRevenueMenu: 'Món doanh thu cao (theo doanh thu)',

@@ -109,15 +109,15 @@ export function ShoppingCart({
                       <Plus size={10} />
                     </Button>
                   </div>
-                  <div className="text-right">
-                    <div className="font-bold pos-text-primary text-sm">{item.total.toLocaleString()} ₫</div>
-                    <button 
-                      onClick={() => onRemoveItem(item.id)}
-                      className="text-xs text-red-500 hover:text-red-700 transition-colors"
-                    >
-                      Remove
-                    </button>
-                  </div>
+                  <div className="font-bold pos-text-primary text-sm">{item.total.toLocaleString()} ₫</div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onRemoveItem(item.id)}
+                    className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
+                  >
+                    <Minus size={10} />
+                  </Button>
                 </div>
               </div>
             </div>
