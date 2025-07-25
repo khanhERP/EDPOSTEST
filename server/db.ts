@@ -24,6 +24,31 @@ export const db = drizzle({ client: pool, schema });
 // Initialize sample data function
 export async function initializeSampleData() {
   try {
+    console.log("Running database migrations...");
+
+    // Run migration for membership thresholds
+    try {
+      await db.execute(sql`
+        ALTER TABLE store_settings 
+        ADD COLUMN IF NOT EXISTS gold_threshold TEXT DEFAULT '300000'
+      `);
+      await db.execute(sql`
+        ALTER TABLE store_settings 
+        ADD COLUMN IF NOT EXISTS vip_threshold TEXT DEFAULT '1000000'
+      `);
+      
+      // Update existing records
+      await db.execute(sql`
+        UPDATE store_settings 
+        SET gold_threshold = COALESCE(gold_threshold, '300000'), 
+            vip_threshold = COALESCE(vip_threshold, '1000000')
+      `);
+      
+      console.log("Migration for membership thresholds completed successfully.");
+    } catch (migrationError) {
+      console.log("Migration already applied or error:", migrationError);
+    }
+
     // Check if customers table has data
     const customerCount = await db.select({ count: sql<number>`count(*)` }).from(customers);
     if (customerCount[0]?.count === 0) {
