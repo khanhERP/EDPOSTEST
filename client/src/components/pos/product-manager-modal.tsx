@@ -185,10 +185,6 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                   <Plus className="mr-2" size={16} />
                   Add New Product
                 </Button>
-                <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-50">
-                  <Download className="mr-2" size={16} />
-                  Export
-                </Button>
               </div>
               
               <div className="bg-gray-50 rounded-lg overflow-hidden">
