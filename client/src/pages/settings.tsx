@@ -1455,11 +1455,11 @@ export default function Settings() {
                                 }
                               >
                                 {employee.role === "admin"
-                                  ? t("employeesSettings.admin")
+                                  ? t("employees.roles.admin")
                                   : employee.role === "manager"
-                                    ? t("employeesSettings.manager")
+                                    ? t("employees.roles.manager")
                                     : employee.role === "cashier"
-                                      ? t("employeesSettings.cashier")
+                                      ? t("employees.roles.cashier")
                                       : employee.role}
                               </Badge>
                             </div>
@@ -1478,8 +1478,8 @@ export default function Settings() {
                                 }
                               >
                                 {employee.isActive
-                                  ? t("employeesSettings.active")
-                                  : t("employeesSettings.inactive")}
+                                  ? t("employees.active")
+                                  : t("employees.inactive")}
                               </Badge>
                             </div>
                             <div className="flex items-center justify-center gap-2">
@@ -1544,9 +1544,8 @@ export default function Settings() {
 
                   <div className="flex justify-between items-center mt-6">
                     <div className="text-sm text-gray-600">
-                      {t("employeesSettings.total")}{" "}
-                      {employeesData ? employeesData.length : 0}
-                      {t("employeesSettings.totalEmployeesRegistered")}
+                      {t("employees.total")}{" "}
+                      {employeesData ? employeesData.length : 0} nhân viên
                     </div>
                     <div className="flex gap-2">
                       <Button variant="outline" size="sm">
