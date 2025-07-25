@@ -822,6 +822,7 @@ export class DatabaseStorage implements IStorage {
         .values({
           storeName: "EDPOS 레스토랑",
           storeCode: "STORE001",
+          businessType: "restaurant",
           openTime: "09:00",
           closeTime: "22:00",
         })
