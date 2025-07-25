@@ -32,6 +32,7 @@ export interface POSTranslations {
   thisYear: string;
   productsAvailable: string;
   gridView: string;
+  listView: string;
   sortByName: string;
   noProductsFound: string;
   searchProducts: string;
@@ -120,6 +121,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     thisYear: '올해',
     productsAvailable: '개 상품 사용 가능',
     gridView: '그리드 보기',
+    listView: '목록 보기',
     sortByName: '이름순 정렬',
     noProductsFound: '상품을 찾을 수 없습니다',
     searchProducts: '상품 검색...',
@@ -206,6 +208,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     thisYear: 'This Year',
     productsAvailable: 'products available',
     gridView: 'Grid View',
+    listView: 'List View',
     sortByName: 'Sort by Name',
     noProductsFound: 'No products found',
     searchProducts: 'Search products...',
@@ -292,6 +295,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     thisYear: 'Năm nay',
     productsAvailable: 'sản phẩm có sẵn',
     gridView: 'Xem dạng lưới',
+    listView: 'Xem dạng danh sách',
     sortByName: 'Sắp xếp theo tên',
     noProductsFound: 'Không tìm thấy sản phẩm',
     searchProducts: 'Tìm kiếm sản phẩm...',
