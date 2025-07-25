@@ -183,7 +183,7 @@ export function OrderManagement() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
-                        ₩{Number(order.total).toLocaleString()}
+                        {Number(order.total).toLocaleString()} ₫
                       </span>
                     </div>
 
