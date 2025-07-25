@@ -134,6 +134,14 @@ export function ClockInOut() {
     });
   };
 
+  const formatDate = (dateInput: Date | string) => {
+    return new Date(dateInput).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
   const getWorkingHours = (clockIn: Date | string, clockOut?: Date | string | null) => {
     const start = new Date(clockIn);
     const end = clockOut ? new Date(clockOut) : new Date();
