@@ -2,6 +2,7 @@ import { useState } from "react";
 import { POSHeader } from "@/components/pos/header";
 import { RightSidebar } from "@/components/ui/right-sidebar";
 import { SalesReport } from "@/components/reports/sales-report";
+import { SalesChartReport } from "@/components/reports/sales-chart-report";
 import { MenuReport } from "@/components/reports/menu-report";
 import { TableReport } from "@/components/reports/table-report";
 import { DashboardOverview } from "@/components/reports/dashboard-overview";
@@ -43,7 +44,7 @@ export default function ReportsPage() {
 
 
           <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="h-10 items-center justify-center rounded-md p-1 text-muted-foreground grid w-full grid-cols-5 bg-[#4ed17e]">
+            <TabsList className="h-10 items-center justify-center rounded-md p-1 text-muted-foreground grid w-full grid-cols-6 bg-[#4ed17e]">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />
                 {t('reports.dashboard')}
@@ -51,6 +52,10 @@ export default function ReportsPage() {
               <TabsTrigger value="sales" className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
                 {t('reports.salesAnalysis')}
+              </TabsTrigger>
+              <TabsTrigger value="saleschart" className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                {t('reports.salesChart')}
               </TabsTrigger>
               <TabsTrigger value="menu" className="flex items-center gap-2">
                 <PieChart className="w-4 h-4" />
@@ -72,6 +77,10 @@ export default function ReportsPage() {
 
             <TabsContent value="sales">
               <SalesReport />
+            </TabsContent>
+
+            <TabsContent value="saleschart">
+              <SalesChartReport />
             </TabsContent>
 
             <TabsContent value="menu">
