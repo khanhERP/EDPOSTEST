@@ -386,16 +386,16 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                     )}
                   />
                   
-                  <div className="flex space-x-3">
+                  <div className="flex justify-end space-x-3">
+                    <Button type="button" variant="outline" onClick={resetForm}>
+                      Cancel
+                    </Button>
                     <Button 
                       type="submit" 
                       disabled={createProductMutation.isPending || updateProductMutation.isPending}
                       className="btn-primary"
                     >
                       {editingProduct ? "Update Product" : "Create Product"}
-                    </Button>
-                    <Button type="button" variant="outline" onClick={resetForm}>
-                      Cancel
                     </Button>
                   </div>
                 </form>
