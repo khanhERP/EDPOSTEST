@@ -520,6 +520,24 @@ export interface AttendanceTranslations {
   breakEndSuccess: string;
   breakEndSuccessDesc: string;
   breakEndError: string;
+  loading: string;
+  noAttendanceData: string;
+  selectEmployeeFirst: string;
+  invalidEmployee: string;
+  alreadyClockedIn: string;
+  notClockedIn: string;
+  alreadyOnBreak: string;
+  notOnBreak: string;
+  confirmClockOut: string;
+  confirmBreakStart: string;
+  confirmBreakEnd: string;
+  processing: string;
+  attendanceHistory: string;
+  weeklyView: string;
+  monthlyView: string;
+  filterByEmployee: string;
+  exportData: string;
+  printReport: string;
   status: {
     present: string;
     absent: string;
