@@ -171,6 +171,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Date labels
     date: '날짜',
+    
+    // Sales chart report
+    salesChart: '매출 차트',
     saleDate: '판매일',
     paymentDate: '결제일',
     fromDate: '시작일',
@@ -358,6 +361,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     
     // Date labels
     date: 'Date',
+    
+    // Sales chart report
+    salesChart: 'Sales Chart',
     saleDate: 'Sale Date',
     paymentDate: 'Payment Date',
     fromDate: 'From Date',
@@ -580,6 +586,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     
     // Date labels
     date: 'Ngày',
+    
+    // Sales chart report
+    salesChart: 'Biểu đồ bán hàng',
     saleDate: 'Ngày bán',
     paymentDate: 'Ngày thanh toán',
     fromDate: 'Từ ngày',
