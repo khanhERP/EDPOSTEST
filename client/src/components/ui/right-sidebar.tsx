@@ -117,7 +117,7 @@ export function RightSidebar() {
                 <Button
                   variant={isActive ? "secondary" : "ghost"}
                   className={cn(
-                    "w-full justify-start mb-1 mx-2",
+                    "w-full justify-start mb-1 mx-2 hover:shadow-sm transition-shadow duration-200",
                     isExpanded ? "px-4" : "px-2",
                     isActive && "bg-green-50 text-green-600 border-l-2 border-green-500"
                   )}
