@@ -52,7 +52,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         console.log('No order ID available for fetching items');
         return [];
       }
-      
+
       console.log('=== FETCHING ORDER ITEMS ===');
       console.log('Fetching order items for order ID:', orderId);
       console.log('API URL will be:', `/api/order-items/${orderId}`);
@@ -61,14 +61,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         dialogOpen: orderDetailsOpen,
         bothTrue: !!selectedOrder?.id && orderDetailsOpen
       });
-      
+
       const response = await apiRequest('GET', `/api/order-items/${orderId}`);
       const data = await response.json();
-      
+
       console.log('Raw order items response for order', orderId, ':', data);
       console.log('Response type:', typeof data, 'Length:', data?.length);
       console.log('Is array?', Array.isArray(data));
-      
+
       // Log each item in detail
       if (Array.isArray(data) && data.length > 0) {
         console.log('Order items details:');
@@ -166,7 +166,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         customerId,
         points
       });
-      
+
       // Then mark order as paid
       await apiRequest('PUT', `/api/orders/${orderId}/status`, { 
         status: 'paid', 
@@ -210,32 +210,32 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const getActiveOrder = (tableId: number) => {
     if (!orders || !Array.isArray(orders)) return null;
-    
+
     // Get all active orders for this table and sort by orderedAt descending to get the latest
     const activeOrders = orders.filter((order: Order) => 
       order.tableId === tableId && !["paid", "cancelled"].includes(order.status)
     );
-    
+
     console.log(`Active orders for table ${tableId}:`, activeOrders.map(o => ({
       id: o.id,
       orderNumber: o.orderNumber,
       orderedAt: o.orderedAt,
       status: o.status
     })));
-    
+
     if (activeOrders.length === 0) return null;
-    
+
     // Sort by orderedAt descending and return the most recent order
     const latestOrder = activeOrders.sort((a: Order, b: Order) => 
       new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
     )[0];
-    
+
     console.log(`Latest order for table ${tableId}:`, {
       id: latestOrder.id,
       orderNumber: latestOrder.orderNumber,
       orderedAt: latestOrder.orderedAt
     });
-    
+
     return latestOrder;
   };
 
@@ -258,10 +258,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     console.log('Order ID:', order.id, 'Table ID:', order.tableId, 'Ordered at:', order.orderedAt);
     console.log('Order status:', order.status, 'Order number:', order.orderNumber);
     console.log('=== END ORDER DETAILS ===');
-    
+
     // Set the selected order first
     setSelectedOrder(order);
-    
+
     // Then open the dialog - this ensures selectedOrder is set when the query runs
     setTimeout(() => {
       setOrderDetailsOpen(true);
@@ -292,7 +292,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
     const points = parseInt(pointsAmount);
     const currentPoints = selectedCustomer.points || 0;
-    
+
     if (points > currentPoints) {
       toast({
         title: 'Số điểm không đủ',
@@ -428,7 +428,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         <Eye className="w-3 h-3 mr-1" />
                         Xem chi tiết
                       </Button>
-                      
+
                     </div>
                   )}
                 </div>
@@ -506,7 +506,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         console.log('orderItemsLoading:', orderItemsLoading);
                         console.log('selectedOrder?.id:', selectedOrder?.id);
                         console.log('orderDetailsOpen:', orderDetailsOpen);
-                        
+
                         // Try JSON stringify to see raw structure
                         try {
                           console.log('orderItems JSON:', JSON.stringify(orderItems, null, 2));
@@ -521,10 +521,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           console.log('orderItems.items:', (orderItems as any).items);
                           console.log('orderItems[0]:', orderItems[0]);
                         }
-                        
+
                         // Force array conversion and check different possible structures
                         let itemsToRender = [];
-                        
+
                         if (Array.isArray(orderItems)) {
                           itemsToRender = orderItems;
                           console.log('✅ orderItems is already an array with length:', itemsToRender.length);
@@ -543,11 +543,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             console.log('❌ Failed to convert object to array:', e);
                           }
                         }
-                        
+
                         console.log('Final itemsToRender:', itemsToRender);
                         console.log('itemsToRender length:', itemsToRender.length);
                         console.log('=== END RENDER CHECK ULTRA DETAILED ===');
-                        
+
                         if (itemsToRender && itemsToRender.length > 0) {
                           console.log('🎉 SUCCESS! Rendering', itemsToRender.length, 'items');
                           return (
@@ -564,7 +564,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                   unitPrice: item.unitPrice,
                                   total: item.total
                                 });
-                                
+
                                 return (
                                   <div key={`item-${item.id || index}`} className="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm">
                                     <div className="flex-1">
@@ -611,7 +611,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             queryEnabled: !!selectedOrder?.id && orderDetailsOpen
                           };
                           console.log('Complete debug:', completeDebug);
-                          
+
                           return (
                             <div className="text-center py-6 bg-red-50 rounded-lg border border-red-200">
                               <p className="text-red-600 font-medium mb-3">
@@ -645,7 +645,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               <div className="space-y-2">
                 <div className="flex justify-between text-lg font-bold">
                   <span>Tổng cần thanh toán:</span>
-                  <span className="text-green-600">₩{Number(selectedOrder.total).toLocaleString()}</span>
+                  <span className="text-green-600">{Number(selectedOrder.total).toLocaleString()} ₫</span>
                 </div>
               </div>
 
@@ -731,7 +731,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Tổng tiền:</span>
-                  <span className="font-medium">₩{Number(selectedOrder.total).toLocaleString()}</span>
+                  <span className="font-medium">{Number(selectedOrder.total).toLocaleString()} ₫</span>
                 </div>
               </div>
             )}
@@ -744,7 +744,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              
+
               <div className="max-h-64 overflow-y-auto border rounded-md">
                 {filteredCustomers.map((customer: any) => (
                   <div
@@ -794,7 +794,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     </p>
                     <p className="text-xs text-gray-500">Điểm có sẵn</p>
                   </div>
-                </div>
+                </div>```text
+
               </div>
             )}
 
