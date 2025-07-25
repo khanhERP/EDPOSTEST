@@ -75,7 +75,7 @@ export function CategorySidebar({
   return (
     <aside className="w-64 bg-white shadow-material border-r pos-border flex flex-col">
       <div className="p-4 border-b pos-border">
-        <div className="relative mb-3 mt-2">
+        <div className="relative mb-3">
           <Input
             type="text"
             placeholder={t('pos.searchProducts')}
@@ -87,7 +87,7 @@ export function CategorySidebar({
         </div>
         <Button 
           onClick={handleBarcodeScan}
-          className="w-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center rounded-xl mt-4"
+          className="w-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center rounded-xl"
         >
           <BarChart3 className="mr-2" size={16} />
           {t('pos.scanBarcode')}

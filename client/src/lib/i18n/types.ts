@@ -161,20 +161,10 @@ export interface ReportsTranslations {
   
   // Date labels
   date: string;
-  
-  // Table analysis missing keys
-  detailedTablePerformance: string;
-  detailedTablePerformanceDesc: string;
-  currentStatus: string;
-  orderCount: string;
-  peakTime: string;
-  
-  // End of day report specific keys
-  endOfDayReport: string;
-  dailyReport: string;
-  generateReport: string;
-  reportGenerated: string;
-  centralBranch: string;
+  saleDate: string;
+  paymentDate: string;
+  fromDate: string;
+  toDate: string;
   
   // Table detail headers
   salesDetailsHeader: string;
@@ -506,20 +496,6 @@ export interface AttendanceTranslations {
   breakStart: string;
   breakEnd: string;
   selectEmployee: string;
-  employeeSelect: string;
-  qrAttendance: string;
-  qrCodeTitle: string;
-  qrCodeDescription: string;
-  qrCodeInstructions: string;
-  urlCopy: string;
-  copySuccess: string;
-  copySuccessDesc: string;
-  currentStatus: string;
-  clockInTime: string;
-  clockOutTime: string;
-  refresh: string;
-  startBreak: string;
-  endBreak: string;
   notes: string;
   recordsDescription: string;
   selectedDate: string;
@@ -529,9 +505,6 @@ export interface AttendanceTranslations {
     absent: string;
     late: string;
     halfDay: string;
-    working: string;
-    onBreak: string;
-    clockedOut: string;
   };
   clockInSuccess: string;
   clockInSuccessDesc: string;
@@ -542,9 +515,6 @@ export interface AttendanceTranslations {
   breakStartSuccess: string;
   breakStartSuccessDesc: string;
   breakStartError: string;
-  breakEndSuccess: string;
-  breakEndSuccessDesc: string;
-  breakEndError: string;
   hours: string;
   minutes: string;
   notesPlaceholder: string;

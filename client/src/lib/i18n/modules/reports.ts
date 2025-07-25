@@ -182,20 +182,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     
     // Additional missing keys
     date: '날짜',
-    
-    // Table analysis missing keys
-    detailedTablePerformance: '테이블별 상세 성과',
-    detailedTablePerformanceDesc: '각 테이블별 상세 운영 지표를 확인하세요',
-    currentStatus: '현재 상태',
-    orderCount: '주문 수',
-    peakTime: '피크 시간',
-    
-    // End of day report specific keys
-    endOfDayReport: '마감 보고서',
-    dailyReport: '일일 보고서',
-    generateReport: '보고서 생성',
-    reportGenerated: '보고서가 생성되었습니다',
-    centralBranch: '중앙 지점',
+    saleDate: '판매일',
+    paymentDate: '결제일',
+    fromDate: '시작일',
+    toDate: '종료일',
   },
   en: {
     title: 'Reports',
@@ -355,20 +345,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     
     // Additional missing keys
     date: 'Date',
-    
-    // Table analysis missing keys
-    detailedTablePerformance: 'Detailed Table Performance',
-    detailedTablePerformanceDesc: 'Check detailed operational metrics for each table',
-    currentStatus: 'Current Status',
-    orderCount: 'Order Count',
-    peakTime: 'Peak Time',
-    
-    // End of day report specific keys
-    endOfDayReport: 'End of Day Report',
-    dailyReport: 'Daily Report', 
-    generateReport: 'Generate Report',
-    reportGenerated: 'Report has been generated',
-    centralBranch: 'Central Branch',
+    saleDate: 'Sale Date',
+    paymentDate: 'Payment Date',
+    fromDate: 'From Date',
+    toDate: 'To Date',
   },
   vi: {
     title: 'Báo cáo',
@@ -543,18 +523,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseDetailsHeader: 'Chi tiết thu chi',
     inventoryDetailsHeader: 'Chi tiết hàng hóa',
     
-    // Table analysis missing keys
-    detailedTablePerformance: 'Hiệu suất chi tiết theo bàn',
-    detailedTablePerformanceDesc: 'Kiểm tra các chỉ số hoạt động chi tiết cho từng bàn',
-    currentStatus: 'Trạng thái hiện tại',
-    orderCount: 'Số đơn hàng',
-    peakTime: 'Giờ cao điểm',
-    
-    // End of day report specific keys
-    endOfDayReport: 'Báo cáo cuối ngày',
-    dailyReport: 'Báo cáo hàng ngày',
-    generateReport: 'Tạo báo cáo',
-    reportGenerated: 'Báo cáo đã được tạo',
-    centralBranch: 'Chi nhánh trung tâm',
+    // Additional missing keys
+    saleDate: 'Ngày bán',
+    paymentDate: 'Ngày thanh toán',
+    fromDate: 'Từ ngày',
+    toDate: 'Đến ngày',
   },
 };

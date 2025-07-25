@@ -169,18 +169,30 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl w-full max-h-screen overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>Product Management</DialogTitle>
+          <DialogTitle className="flex items-center justify-between">
+            Product Management
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X size={20} />
             </Button>
-          </div>
+          </DialogTitle>
         </DialogHeader>
         
         <div className="p-6">
           {!showAddForm ? (
             <>
-              <div className="mb-6">
+              <div className="flex space-x-4 mb-6">
+                <Button onClick={() => setShowAddForm(true)} className="btn-primary">
+                  <Plus className="mr-2" size={16} />
+                  Add New Product
+                </Button>
+                <Button variant="outline" className="border-orange-500 text-orange-700 hover:bg-orange-50">
+                  <Upload className="mr-2" size={16} />
+                  Bulk Import
+                </Button>
+                <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-50">
+                  <Download className="mr-2" size={16} />
+                  Export
+                </Button>
               </div>
               
               <div className="bg-gray-50 rounded-lg overflow-hidden">
@@ -261,6 +273,9 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                 <h3 className="text-lg font-medium">
                   {editingProduct ? "Edit Product" : "Add New Product"}
                 </h3>
+                <Button variant="ghost" onClick={resetForm}>
+                  <X size={16} />
+                </Button>
               </div>
               
               <Form {...form}>
@@ -371,15 +386,16 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                     )}
                   />
                   
-                  <div className="flex justify-end space-x-3">
-                    <Button type="button" variant="outline" onClick={resetForm}>
-                      Cancel
-                    </Button>
+                  <div className="flex space-x-3">
                     <Button 
                       type="submit" 
                       disabled={createProductMutation.isPending || updateProductMutation.isPending}
+                      className="btn-primary"
                     >
                       {editingProduct ? "Update Product" : "Create Product"}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={resetForm}>
+                      Cancel
                     </Button>
                   </div>
                 </form>

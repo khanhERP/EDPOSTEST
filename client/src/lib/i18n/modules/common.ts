@@ -74,6 +74,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     occupied: "사용중",
     reserved: "예약됨",
     maintenance: "유지보수",
+    loading: "로딩 중...",
     noData: "데이터가 없습니다",
     count: "건",
     people: "명",

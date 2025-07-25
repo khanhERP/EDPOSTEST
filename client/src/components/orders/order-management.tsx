@@ -9,7 +9,6 @@ import { Separator } from "@/components/ui/separator";
 import { Eye, Clock, CheckCircle2, DollarSign, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
-import { useLanguageStore } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import type { Order, Table, Product, OrderItem } from "@shared/schema";
 
@@ -18,7 +17,6 @@ export function OrderManagement() {
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
-  const { currentLanguage } = useLanguageStore();
   const queryClient = useQueryClient();
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
@@ -94,9 +92,7 @@ export function OrderManagement() {
 
   const formatTime = (dateString: string | Date) => {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    const locale = currentLanguage === 'ko' ? 'ko-KR' : 
-                   currentLanguage === 'vi' ? 'vi-VN' : 'en-US';
-    return date.toLocaleTimeString(locale, {
+    return date.toLocaleTimeString('ko-KR', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -187,7 +183,7 @@ export function OrderManagement() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
-                        {Number(order.total).toLocaleString()} ₫
+                        ₩{Number(order.total).toLocaleString()}
                       </span>
                     </div>
 
@@ -344,7 +340,7 @@ export function OrderManagement() {
                                 </span>
                               </div>
                               <div className="text-xs text-gray-600 mt-1">
-                                {Number(item.unitPrice || 0).toLocaleString()} ₫/món
+                                ₩{Number(item.unitPrice || 0).toLocaleString()}/món
                               </div>
                               {item.notes && (
                                 <div className="text-xs text-blue-600 italic mt-1">
@@ -354,7 +350,7 @@ export function OrderManagement() {
                             </div>
                             <div className="text-right">
                               <div className="font-bold text-green-600">
-                                {Number(item.total || 0).toLocaleString()} ₫
+                                ₩{Number(item.total || 0).toLocaleString()}
                               </div>
                             </div>
                           </div>

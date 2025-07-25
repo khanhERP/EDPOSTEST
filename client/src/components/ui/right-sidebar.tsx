@@ -112,7 +112,7 @@ export function RightSidebar() {
       </div>
 
       {/* Menu Items */}
-      <nav className="py-4 group pb-20">
+      <nav className="py-4 group">
         {menuItems.map((item, index) => {
           const Icon = item.icon;
           const isActive = location === item.href;
@@ -164,7 +164,7 @@ export function RightSidebar() {
 
       {/* Bottom Section */}
       {isExpanded && !isNavCollapsed && (
-        <div className="absolute bottom-2 left-2 right-2 p-3 border border-green-200 bg-green-50 rounded-lg shadow-sm">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-green-200 bg-green-50">
           <div className="text-sm text-gray-500 text-center">
             <div className="font-medium">EDPOS System</div>
             <div className="text-xs opacity-75">v1.0.0</div>

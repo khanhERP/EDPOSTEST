@@ -75,12 +75,7 @@ export function ClockInOut() {
   });
 
   const breakStartMutation = useMutation({
-    mutationFn: () => {
-      if (!todayAttendance) {
-        throw new Error('No attendance record found');
-      }
-      return apiRequest('POST', `/api/attendance/break-start/${(todayAttendance as AttendanceRecord).id}`, {});
-    },
+    mutationFn: () => apiRequest('POST', `/api/attendance/break-start/${(todayAttendance as AttendanceRecord)?.id}`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
@@ -89,8 +84,7 @@ export function ClockInOut() {
         description: t('attendance.breakStartSuccessDesc'),
       });
     },
-    onError: (error) => {
-      console.error('Break start error:', error);
+    onError: () => {
       toast({
         title: t('common.error'),
         description: t('attendance.breakStartError'),
@@ -100,12 +94,7 @@ export function ClockInOut() {
   });
 
   const breakEndMutation = useMutation({
-    mutationFn: () => {
-      if (!todayAttendance) {
-        throw new Error('No attendance record found');
-      }
-      return apiRequest('POST', `/api/attendance/break-end/${(todayAttendance as AttendanceRecord).id}`, {});
-    },
+    mutationFn: () => apiRequest('POST', `/api/attendance/break-end/${(todayAttendance as AttendanceRecord)?.id}`, {}),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
@@ -114,8 +103,7 @@ export function ClockInOut() {
         description: t('attendance.breakEndSuccessDesc'),
       });
     },
-    onError: (error) => {
-      console.error('Break end error:', error);
+    onError: () => {
       toast({
         title: t('common.error'),
         description: t('attendance.breakEndError'),
@@ -127,18 +115,9 @@ export function ClockInOut() {
   const selectedEmployee = (employees as Employee[] | undefined)?.find((emp: Employee) => emp.id === selectedEmployeeId);
 
   const formatTime = (dateInput: Date | string) => {
-    return new Date(dateInput).toLocaleTimeString('vi-VN', {
+    return new Date(dateInput).toLocaleTimeString('ko-KR', {
       hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  };
-
-  const formatDate = (dateInput: Date | string) => {
-    return new Date(dateInput).toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+      minute: '2-digit'
     });
   };
 
@@ -182,7 +161,7 @@ export function ClockInOut() {
   };
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Employee Selection */}
       <Card>
         <CardHeader>
@@ -208,17 +187,17 @@ export function ClockInOut() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
+          <div className="grid grid-cols-1 gap-2">
             {(employees as Employee[] | undefined)?.map((employee: Employee) => (
               <Button
                 key={employee.id}
                 variant={selectedEmployeeId === employee.id ? "default" : "outline"}
-                className="justify-start h-auto py-3"
+                className="justify-start"
                 onClick={() => setSelectedEmployeeId(employee.id)}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-sm font-medium">{employee.name}</span>
-                  <Badge variant="secondary" className="text-xs">{t(`employees.roles.${employee.role}`)}</Badge>
+                  <span>{employee.name}</span>
+                  <Badge variant="secondary">{t(`employees.roles.${employee.role}`)}</Badge>
                 </div>
               </Button>
             )) || (
@@ -302,7 +281,7 @@ export function ClockInOut() {
               )}
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {!todayAttendance ? (
                   <Button
                     onClick={() => clockInMutation.mutate()}
@@ -319,28 +298,28 @@ export function ClockInOut() {
                         {(todayAttendance as AttendanceRecord).breakStart && !(todayAttendance as AttendanceRecord).breakEnd ? (
                           <Button
                             onClick={() => breakEndMutation.mutate()}
-                            disabled={breakEndMutation.isPending || !todayAttendance}
+                            disabled={breakEndMutation.isPending}
                             variant="outline"
                           >
                             <Play className="w-4 h-4 mr-2" />
-                            {breakEndMutation.isPending ? t('common.loading') : t('attendance.endBreak')}
+                            {t('attendance.endBreak')}
                           </Button>
                         ) : (
                           <Button
                             onClick={() => breakStartMutation.mutate()}
-                            disabled={breakStartMutation.isPending || !todayAttendance || (todayAttendance as AttendanceRecord).breakStart}
+                            disabled={breakStartMutation.isPending}
                             variant="outline"
                           >
                             <Coffee className="w-4 h-4 mr-2" />
-                            {breakStartMutation.isPending ? t('common.loading') : t('attendance.startBreak')}
+                            {t('attendance.startBreak')}
                           </Button>
                         )}
                         <Button
                           onClick={() => clockOutMutation.mutate()}
-                          disabled={clockOutMutation.isPending || !todayAttendance}
+                          disabled={clockOutMutation.isPending}
                         >
                           <LogOut className="w-4 h-4 mr-2" />
-                          {clockOutMutation.isPending ? t('common.loading') : t('attendance.clockOut')}
+                          {t('attendance.clockOut')}
                         </Button>
                       </>
                     )}
@@ -382,7 +361,7 @@ export function ClockInOut() {
                 URL: {window.location.origin}/attendance-qr
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 w-full">
+            <div className="flex gap-2 w-full">
               <Button
                 variant="outline"
                 onClick={() => {
