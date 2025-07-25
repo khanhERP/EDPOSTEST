@@ -298,7 +298,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           {activeOrder.customerCount || 1}/{table.capacity}{t('orders.people')}
                         </span>
                       ) : (
-                        <span>{table.capacity}{t('tables.people')}</span>
+                        <span>{table.capacity} {t('tables.people')}</span>
                       )}
                     </div>
                     <Badge variant={statusConfig.variant} className="text-xs">
