@@ -91,6 +91,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     warning: "경고",
     info: "정보",
     restaurant: "레스토랑",
+    tableDeleteConfirm: "이 테이블을 삭제하시겠습니까?",
+    tableDeleteError: "사용된 테이블은 삭제할 수 없습니다.",
   },
   en: {
     loading: "Loading...",
@@ -182,6 +184,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     warning: "Warning",
     info: "Information",
     restaurant: "Restaurant",
+    tableDeleteConfirm: "Are you sure you want to delete this table?",
+    tableDeleteError: "Cannot delete a table that has been used.",
   },
   vi: {
     loading: "Đang tải...",
@@ -273,5 +277,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     warning: "Cảnh báo",
     info: "Thông tin",
     restaurant: "Nhà hàng",
+    tableDeleteConfirm: "Bạn có chắc chắn muốn xóa bàn này?",
+    tableDeleteError: "Không thể xóa bàn đã được sử dụng.",
   },
 };

@@ -117,7 +117,7 @@ export function TableManagement() {
     onError: () => {
       toast({
         title: t("common.error"),
-        description: t("common.error"),
+        description: t("common.tableDeleteConfirm"),
         variant: "destructive",
       });
     },
@@ -135,7 +135,7 @@ export function TableManagement() {
     onError: () => {
       toast({
         title: t("common.error"),
-        description: t("common.error"),
+        description: t("common.tableDeleteError"),
         variant: "destructive",
       });
     },
