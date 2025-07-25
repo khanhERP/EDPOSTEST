@@ -27,6 +27,7 @@ interface MenuItem {
 
 export function RightSidebar() {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const [location] = useLocation();
   const { t } = useTranslation();
 
@@ -88,7 +89,15 @@ export function RightSidebar() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => {
+            if (isExpanded) {
+              setIsNavCollapsed(true);
+              setIsExpanded(false);
+            } else {
+              setIsExpanded(true);
+              // Keep nav collapsed when reopening
+            }
+          }}
           className="w-full flex items-center justify-center"
         >
           {isExpanded ? (
@@ -103,27 +112,40 @@ export function RightSidebar() {
       </div>
 
       {/* Menu Items */}
-      <nav className="py-4">
+      <nav className="py-4 group">
         {menuItems.map((item, index) => {
           const Icon = item.icon;
           const isActive = location === item.href;
+          const showText = isExpanded && !isNavCollapsed;
           
           return (
-            <div key={item.href}>
+            <div 
+              key={item.href}
+              className={cn(
+                "relative",
+                isNavCollapsed && "group-hover:w-64"
+              )}
+            >
               <Link href={item.href}>
                 <Button
                   variant={isActive ? "secondary" : "ghost"}
                   className={cn(
-                    "w-[calc(100%-16px)] justify-start mb-1 mx-2 hover:shadow-sm transition-shadow duration-200",
-                    isExpanded ? "px-3" : "px-2",
-                    isActive && "bg-green-50 text-green-600 border-l-2 border-green-500"
+                    "w-[calc(100%-16px)] justify-start mb-1 mx-2 hover:shadow-sm transition-all duration-200",
+                    showText ? "px-3" : "px-2",
+                    isActive && "bg-green-50 text-green-600 border-l-2 border-green-500",
+                    isNavCollapsed && "group-hover:w-[calc(256px-16px)]"
                   )}
                 >
-                  <Icon className={cn("w-5 h-5", isExpanded && "mr-3")} />
-                  {isExpanded && (
+                  <Icon className={cn("w-5 h-5", showText && "mr-3")} />
+                  {showText && (
                     <span className="font-medium">{item.label}</span>
                   )}
-                  {isExpanded && item.badge && (
+                  {isNavCollapsed && (
+                    <span className="opacity-0 group-hover:opacity-100 ml-3 font-medium transition-opacity duration-200 absolute left-8 whitespace-nowrap">
+                      {item.label}
+                    </span>
+                  )}
+                  {showText && item.badge && (
                     <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
                       {item.badge}
                     </span>
@@ -131,7 +153,7 @@ export function RightSidebar() {
                 </Button>
               </Link>
               {/* Add separator after first item (기본 POS) and before employee section */}
-              {(index === 0 || index === 3) && isExpanded && (
+              {(index === 0 || index === 3) && showText && (
                 <div className="border-t border-gray-200 my-3 mx-4"></div>
               )}
             </div>
@@ -140,7 +162,7 @@ export function RightSidebar() {
       </nav>
 
       {/* Bottom Section */}
-      {isExpanded && (
+      {isExpanded && !isNavCollapsed && (
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-green-200 bg-green-50">
           <div className="text-sm text-gray-500 text-center">
             <div className="font-medium">EDPOS System</div>
