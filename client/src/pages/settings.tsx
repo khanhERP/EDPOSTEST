@@ -622,7 +622,7 @@ export default function Settings() {
               {t("settings.employees")}
             </TabsTrigger>
             <TabsTrigger value="payments" className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4" />
+              <CreditCard className="w-5 h-5" />
               {t("settings.paymentMethods")}
             </TabsTrigger>
           </TabsList>
