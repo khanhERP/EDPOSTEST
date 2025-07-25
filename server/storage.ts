@@ -192,6 +192,7 @@ export interface IStorage {
 
   getMembershipThresholds(): Promise<{ GOLD: number; VIP: number }>;
   updateMembershipThresholds(thresholds: { GOLD: number; VIP: number }): Promise<{ GOLD: number; VIP: number }>;
+  recalculateAllMembershipLevels(goldThreshold: number, vipThreshold: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -875,7 +876,35 @@ export class DatabaseStorage implements IStorage {
 
   // Customers
   async getCustomers(): Promise<Customer[]> {
-    return await db.select().from(customers).orderBy(customers.name);
+    // Get membership thresholds
+    const thresholds = await this.getMembershipThresholds();
+
+    // Get all customers
+    const allCustomers = await db.select().from(customers).orderBy(customers.name);
+
+    // Update membership levels based on spending
+    const updatedCustomers = [];
+    for (const customer of allCustomers) {
+      const totalSpent = parseFloat(customer.totalSpent || '0');
+      const calculatedLevel = this.calculateMembershipLevel(totalSpent, thresholds.GOLD, thresholds.VIP);
+
+      // Update if membership level has changed
+      if (customer.membershipLevel !== calculatedLevel) {
+        const [updatedCustomer] = await db
+          .update(customers)
+          .set({ 
+            membershipLevel: calculatedLevel,
+            updatedAt: new Date()
+          })
+          .where(eq(customers.id, customer.id))
+          .returning();
+        updatedCustomers.push(updatedCustomer);
+      } else {
+        updatedCustomers.push(customer);
+      }
+    }
+
+    return updatedCustomers;
   }
 
   async searchCustomers(query: string): Promise<Customer[]> {
@@ -948,38 +977,37 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async updateCustomerVisit(
-    id: number,
-    amount: number,
-    points: number,
-  ): Promise<Customer | undefined> {
-    const customer = await this.getCustomer(id);
-    if (!customer) return undefined;
+  async updateCustomerVisit(customerId: number, amount: number, points: number) {
+    const [customer] = await db
+      .select()
+      .from(customers)
+      .where(eq(customers.id, customerId));
 
+    if (!customer) {
+      throw new Error("Customer not found");
+    }
+
+    const newTotalSpent = parseFloat(customer.totalSpent || '0') + amount;
     const newVisitCount = (customer.visitCount || 0) + 1;
-    const newTotalSpent = parseFloat(customer.totalSpent || "0") + amount;
     const newPoints = (customer.points || 0) + points;
 
-    // Determine membership level based on total spent
-    let membershipLevel = "Bronze";
-    if (newTotalSpent >= 1000000) membershipLevel = "Diamond";
-    else if (newTotalSpent >= 500000) membershipLevel = "Platinum";
-    else if (newTotalSpent >= 200000) membershipLevel = "Gold";
-    else if (newTotalSpent >= 50000) membershipLevel = "Silver";
+    // Get membership thresholds and calculate new level
+    const thresholds = await this.getMembershipThresholds();
+    const newMembershipLevel = this.calculateMembershipLevel(newTotalSpent, thresholds.GOLD, thresholds.VIP);
 
-    const [result] = await db
+    const [updated] = await db
       .update(customers)
       .set({
         visitCount: newVisitCount,
-        totalSpent: newTotalSpent.toFixed(2),
+        totalSpent: newTotalSpent.toString(),
         points: newPoints,
-        membershipLevel,
+        membershipLevel: newMembershipLevel,
         updatedAt: new Date(),
       })
-      .where(eq(customers.id, id))
+      .where(eq(customers.id, customerId))
       .returning();
 
-    return result || undefined;
+    return updated;
   }
 
   // Point Management Methods
@@ -1064,6 +1092,7 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
+  // Get membership thresholds
   async getMembershipThresholds(): Promise<{ GOLD: number; VIP: number }> {
     try {
       const [settings] = await db.select().from(storeSettings).limit(1);
@@ -1084,6 +1113,13 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Calculate membership level based on total spent
+  private calculateMembershipLevel(totalSpent: number, goldThreshold: number, vipThreshold: number): string {
+    if (totalSpent >= vipThreshold) return 'VIP';
+    if (totalSpent >= goldThreshold) return 'GOLD';
+    return 'SILVER';
+  }
+
   async updateMembershipThresholds(thresholds: { GOLD: number; VIP: number }): Promise<{ GOLD: number; VIP: number }> {
     try {
       // Update or insert store settings with thresholds
@@ -1097,10 +1133,33 @@ export class DatabaseStorage implements IStorage {
         })
         .where(eq(storeSettings.id, currentSettings.id));
 
+      // Recalculate all customer membership levels with new thresholds
+      await this.recalculateAllMembershipLevels(thresholds.GOLD, thresholds.VIP);
+
       return thresholds;
     } catch (error) {
       console.error('Error updating membership thresholds:', error);
       throw error;
+    }
+  }
+
+  // Recalculate membership levels for all customers
+  async recalculateAllMembershipLevels(goldThreshold: number, vipThreshold: number) {
+    const allCustomers = await db.select().from(customers);
+
+    for (const customer of allCustomers) {
+      const totalSpent = parseFloat(customer.totalSpent || '0');
+      const calculatedLevel = this.calculateMembershipLevel(totalSpent, goldThreshold, vipThreshold);
+
+      if (customer.membershipLevel !== calculatedLevel) {
+        await db
+          .update(customers)
+          .set({ 
+            membershipLevel: calculatedLevel,
+            updatedAt: new Date()
+          })
+          .where(eq(customers.id, customer.id));
+      }
     }
   }
 }
