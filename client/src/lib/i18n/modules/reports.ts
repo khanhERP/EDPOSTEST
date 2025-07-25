@@ -174,10 +174,22 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     
     // Sales chart report
     salesChart: '매출 차트',
+    salesChartDescription: '차트를 통한 시각적 매출 분석',
     saleDate: '판매일',
     paymentDate: '결제일',
     fromDate: '시작일',
     toDate: '종료일',
+    barChart: '막대 차트',
+    pieChart: '원형 차트',
+    lineChart: '선형 차트',
+    dailyRevenue: '일별 매출',
+    paymentMethodDistribution: '결제 방법 분포',
+    hourlyRevenue: '시간별 매출',
+    barChartDesc: '일별 매출을 보여주는 막대 차트',
+    pieChartDesc: '결제 방법 분석 원형 차트',
+    lineChartDesc: '시간별 트렌드를 추적하는 선형 차트',
+    paymentMethodDetails: '결제 방법 세부사항',
+    averageOrderValue: '평균 주문 금액',
     
     // Table detail headers
     salesDetailsHeader: '판매 세부사항',
@@ -364,10 +376,22 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     
     // Sales chart report
     salesChart: 'Sales Chart',
+    salesChartDescription: 'Visual sales analysis through charts',
     saleDate: 'Sale Date',
     paymentDate: 'Payment Date',
     fromDate: 'From Date',
     toDate: 'To Date',
+    barChart: 'Bar Chart',
+    pieChart: 'Pie Chart',
+    lineChart: 'Line Chart',
+    dailyRevenue: 'Daily Revenue',
+    paymentMethodDistribution: 'Payment Method Distribution',
+    hourlyRevenue: 'Hourly Revenue',
+    barChartDesc: 'Bar chart showing daily revenue',
+    pieChartDesc: 'Pie chart analyzing payment methods',
+    lineChartDesc: 'Line chart tracking hourly trends',
+    paymentMethodDetails: 'Payment Method Details',
+    averageOrderValue: 'Average Order Value',
     
     // Table headers for reports
     transactionCode: 'Transaction Code',
@@ -589,10 +613,22 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     
     // Sales chart report
     salesChart: 'Biểu đồ bán hàng',
+    salesChartDescription: 'Phân tích doanh thu trực quan qua biểu đồ',
     saleDate: 'Ngày bán',
     paymentDate: 'Ngày thanh toán',
     fromDate: 'Từ ngày',
     toDate: 'Đến ngày',
+    barChart: 'Biểu đồ cột',
+    pieChart: 'Biểu đồ tròn',
+    lineChart: 'Biểu đồ đường',
+    dailyRevenue: 'Doanh thu theo ngày',
+    paymentMethodDistribution: 'Phân bố phương thức thanh toán',
+    hourlyRevenue: 'Doanh thu theo giờ',
+    barChartDesc: 'Biểu đồ cột hiển thị doanh thu hàng ngày',
+    pieChartDesc: 'Biểu đồ tròn phân tích phương thức thanh toán',
+    lineChartDesc: 'Biểu đồ đường theo dõi xu hướng theo giờ',
+    paymentMethodDetails: 'Chi tiết phương thức thanh toán',
+    averageOrderValue: 'Giá trị đơn hàng trung bình',
     
     // Table headers for reports
     transactionCode: 'Mã giao dịch',

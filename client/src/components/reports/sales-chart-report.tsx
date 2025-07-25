@@ -265,7 +265,7 @@ export function SalesChartReport() {
                 <BarChart3 className="w-5 h-5" />
                 {t("reports.salesChart")}
               </CardTitle>
-              <CardDescription>Phân tích doanh thu bằng biểu đồ trực quan</CardDescription>
+              <CardDescription>{t("reports.salesChartDescription")}</CardDescription>
             </div>
             <div className="flex items-center gap-4">
               <Select value={chartType} onValueChange={setChartType}>
@@ -276,19 +276,19 @@ export function SalesChartReport() {
                   <SelectItem value="bar">
                     <div className="flex items-center gap-2">
                       <BarChart3 className="w-4 h-4" />
-                      Biểu đồ cột
+                      {t("reports.barChart")}
                     </div>
                   </SelectItem>
                   <SelectItem value="pie">
                     <div className="flex items-center gap-2">
                       <PieChartIcon className="w-4 h-4" />
-                      Biểu đồ tròn
+                      {t("reports.pieChart")}
                     </div>
                   </SelectItem>
                   <SelectItem value="line">
                     <div className="flex items-center gap-2">
                       <Activity className="w-4 h-4" />
-                      Biểu đồ đường
+                      {t("reports.lineChart")}
                     </div>
                   </SelectItem>
                 </SelectContent>
@@ -356,7 +356,7 @@ export function SalesChartReport() {
                 <p className="text-sm font-medium text-gray-600">{t("reports.totalOrders")}</p>
                 <p className="text-2xl font-bold">{salesData.totalOrders}</p>
                 <p className="text-xs text-gray-500 mt-1">
-                  Trung bình: {formatCurrency(salesData.totalOrders > 0 ? salesData.totalRevenue / salesData.totalOrders : 0)}
+                  {t("reports.averageOrderValue")}: {formatCurrency(salesData.totalOrders > 0 ? salesData.totalRevenue / salesData.totalOrders : 0)}
                 </p>
               </div>
               <BarChart3 className="w-8 h-8 text-blue-500" />
@@ -369,14 +369,14 @@ export function SalesChartReport() {
       <Card>
         <CardHeader>
           <CardTitle>
-            {chartType === "bar" && "Doanh thu theo ngày"}
-            {chartType === "pie" && "Phân bố theo phương thức thanh toán"}
-            {chartType === "line" && "Doanh thu theo giờ"}
+            {chartType === "bar" && t("reports.dailyRevenue")}
+            {chartType === "pie" && t("reports.paymentMethodDistribution")}
+            {chartType === "line" && t("reports.hourlyRevenue")}
           </CardTitle>
           <CardDescription>
-            {chartType === "bar" && "Biểu đồ cột hiển thị doanh thu hàng ngày"}
-            {chartType === "pie" && "Biểu đồ tròn phân tích phương thức thanh toán"}
-            {chartType === "line" && "Biểu đồ đường theo dõi xu hướng theo giờ"}
+            {chartType === "bar" && t("reports.barChartDesc")}
+            {chartType === "pie" && t("reports.pieChartDesc")}
+            {chartType === "line" && t("reports.lineChartDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -388,7 +388,7 @@ export function SalesChartReport() {
       {chartType === "pie" && (
         <Card>
           <CardHeader>
-            <CardTitle>Chi tiết phương thức thanh toán</CardTitle>
+            <CardTitle>{t("reports.paymentMethodDetails")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
