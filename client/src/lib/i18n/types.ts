@@ -553,6 +553,9 @@ export interface InventoryTranslations {
   delete: string;
   confirmDelete: string;
   deleteFailed: string;
+  deleteFailedDescription: string;
+  deleteSuccess: string;
+  deleteSuccessDescription: string;
   createFailed: string;
   updateFailed: string;
 }

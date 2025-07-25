@@ -163,6 +163,9 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     delete: "Xóa",
     confirmDelete: "Bạn có chắc chắn muốn xóa",
     deleteFailed: "Xóa sản phẩm thất bại",
+    deleteFailedDescription: "Không thể xóa sản phẩm. Vui lòng thử lại.",
+    deleteSuccess: "Xóa thành công",
+    deleteSuccessDescription: "Sản phẩm đã được xóa khỏi kho hàng",
     createFailed: "Tạo sản phẩm thất bại",
     updateFailed: "Cập nhật sản phẩm thất bại",
   }

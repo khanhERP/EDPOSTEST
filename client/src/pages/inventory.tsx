@@ -43,6 +43,7 @@ import { POSHeader } from "@/components/pos/header";
 import { RightSidebar } from "@/components/ui/right-sidebar";
 import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { Product, Category } from "@shared/schema";
 
 const stockUpdateSchema = z.object({
@@ -61,6 +62,7 @@ type StockUpdateForm = z.infer<typeof stockUpdateSchema>;
 
 export default function InventoryPage() {
   const { t } = useTranslation();
+  const { toast } = useToast();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -152,10 +154,18 @@ export default function InventoryPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: t("inventory.deleteSuccess") || "Xóa thành công",
+        description: t("inventory.deleteSuccessDescription") || "Sản phẩm đã được xóa khỏi kho hàng",
+      });
     },
     onError: (error) => {
       console.error('Delete product error:', error);
-      alert(t("inventory.deleteFailed") || "Failed to delete product");
+      toast({
+        title: t("inventory.deleteFailed") || "Xóa thất bại",
+        description: t("inventory.deleteFailedDescription") || "Không thể xóa sản phẩm. Vui lòng thử lại.",
+        variant: "destructive",
+      });
     },
   });
 
