@@ -141,7 +141,7 @@ export function RightSidebar() {
                     <span className="font-medium">{item.label}</span>
                   )}
                   {isNavCollapsed && (
-                    <span className="opacity-0 group-hover:opacity-100 ml-3 font-medium transition-opacity duration-200 absolute left-8 whitespace-nowrap">
+                    <span className="opacity-0 group-hover:opacity-100 ml-3 font-medium transition-all duration-200 absolute left-8 whitespace-nowrap bg-white text-gray-800 px-2 py-1 rounded-md shadow-lg border border-gray-200 z-50">
                       {item.label}
                     </span>
                   )}
