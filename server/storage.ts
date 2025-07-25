@@ -40,7 +40,7 @@ import {
   type InsertPointTransaction,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, ilike, and, gte, lte, or, sql } from "drizzle-orm";
+import { eq, ilike, and, gte, lte, or, sql, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Categories
@@ -93,6 +93,7 @@ export interface IStorage {
     employee: Partial<InsertEmployee>,
   ): Promise<Employee | undefined>;
   deleteEmployee(id: number): Promise<boolean>;
+  getNextEmployeeId(): Promise<string>;
 
   // Attendance
   getAttendanceRecords(
@@ -369,6 +370,38 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(transactions).orderBy(transactions.createdAt);
   }
 
+  // Get next employee ID in sequence
+  async getNextEmployeeId(): Promise<string> {
+    try {
+      const lastEmployee = await db
+        .select()
+        .from(employees)
+        .orderBy(desc(employees.id))
+        .limit(1);
+
+      if (lastEmployee.length === 0) {
+        return "EMP-001";
+      }
+
+      // Extract number from last employee ID (EMP-001 -> 001)
+      const lastId = lastEmployee[0].employeeId;
+      const match = lastId.match(/EMP-(\d+)/);
+
+      if (match) {
+        const lastNumber = parseInt(match[1], 10);
+        const nextNumber = lastNumber + 1;
+        return `EMP-${nextNumber.toString().padStart(3, '0')}`;
+      }
+
+      // Fallback if format doesn't match
+      return "EMP-001";
+    } catch (error) {
+      console.error("Error generating next employee ID:", error);
+      return "EMP-001";
+    }
+  }
+
+  // Employee methods
   async getEmployees(): Promise<Employee[]> {
     return await db
       .select()
@@ -1019,7 +1052,7 @@ export class DatabaseStorage implements IStorage {
     return { points: customer.points || 0 };
   }
 
-  async updateCustomerPoints(
+  async updateCustomerPoints(```python
     customerId: number,
     points: number,
     description: string,

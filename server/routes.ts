@@ -224,6 +224,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get next employee ID
+  app.get("/api/employees/next-id", async (req, res) => {
+    try {
+      const nextId = await storage.getNextEmployeeId();
+      res.json({ nextId });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate employee ID" });
+    }
+  });
+
   // Employees
   app.get("/api/employees", async (req, res) => {
     try {

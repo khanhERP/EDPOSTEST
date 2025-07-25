@@ -1,3 +1,4 @@
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -52,15 +53,23 @@ export function EmployeeFormModal({
   const { t } = useTranslation();
 
   // Generate employee ID for new employees
-  const generateEmployeeId = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    return `EMP-${timestamp}`;
+  const generateEmployeeId = async () => {
+    try {
+      const response = await apiRequest("GET", "/api/employees/next-id");
+      const data = await response.json();
+      return data.nextId;
+    } catch (error) {
+      console.error("Error generating employee ID:", error);
+      // Fallback to timestamp if API fails
+      const timestamp = Date.now().toString().slice(-6);
+      return `EMP-${timestamp}`;
+    }
   };
 
   const form = useForm<InsertEmployee>({
     resolver: zodResolver(insertEmployeeSchema),
     defaultValues: {
-      employeeId: employee?.employeeId || (mode === "create" ? generateEmployeeId() : ""),
+      employeeId: employee?.employeeId || "",
       name: employee?.name || "",
       email: employee?.email || "",
       phone: employee?.phone || null,
@@ -69,6 +78,15 @@ export function EmployeeFormModal({
       hireDate: employee?.hireDate ? new Date(employee.hireDate) : new Date(),
     },
   });
+
+  // Set employee ID for new employees
+  React.useEffect(() => {
+    if (mode === "create" && !employee?.employeeId) {
+      generateEmployeeId().then((nextId) => {
+        form.setValue("employeeId", nextId);
+      });
+    }
+  }, [mode, employee?.employeeId]);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertEmployee) => {
@@ -82,14 +100,16 @@ export function EmployeeFormModal({
         description: t("employees.addEmployeeSuccess"),
       });
       onClose();
-      form.reset({
-        employeeId: generateEmployeeId(),
-        name: "",
-        email: "",
-        phone: null,
-        role: "cashier",
-        isActive: true,
-        hireDate: new Date(),
+      generateEmployeeId().then((nextId) => {
+        form.reset({
+          employeeId: nextId,
+          name: "",
+          email: "",
+          phone: null,
+          role: "cashier",
+          isActive: true,
+          hireDate: new Date(),
+        });
       });
     },
     onError: () => {
@@ -179,9 +199,15 @@ export function EmployeeFormModal({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("employees.name")}</FormLabel>
+                  <FormLabel>
+                    {t("employees.name")} <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="홍길동" {...field} />
+                    <Input 
+                      placeholder={t("employees.namePlaceholder")} 
+                      {...field}
+                      required
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
