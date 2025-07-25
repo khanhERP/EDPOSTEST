@@ -169,12 +169,12 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl w-full max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            Product Management
+          <div className="flex items-center justify-between">
+            <DialogTitle>Product Management</DialogTitle>
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X size={20} />
             </Button>
-          </DialogTitle>
+          </div>
         </DialogHeader>
         
         <div className="p-6">
@@ -382,15 +382,15 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                     )}
                   />
                   
-                  <div className="flex space-x-3">
+                  <div className="flex justify-end space-x-3">
+                    <Button type="button" variant="outline" onClick={resetForm}>
+                      Cancel
+                    </Button>
                     <Button 
                       type="submit" 
                       disabled={createProductMutation.isPending || updateProductMutation.isPending}
                     >
                       {editingProduct ? "Update Product" : "Create Product"}
-                    </Button>
-                    <Button type="button" variant="outline" onClick={resetForm}>
-                      Cancel
                     </Button>
                   </div>
                 </form>
