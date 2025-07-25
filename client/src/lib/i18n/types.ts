@@ -199,6 +199,13 @@ export interface SettingsTranslations {
   addressPlaceholder: string;
   phonePlaceholder: string;
   emailPlaceholder: string;
+  productDeleteSuccess: string;
+  // Product Management specific keys
+  productTitle: string;
+  addProduct: string;
+  editProduct: string;
+  allCategories: string;
+  productNamePlaceholder: string;
 }
 
 // Not Found translations interface

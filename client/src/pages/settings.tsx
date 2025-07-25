@@ -1214,7 +1214,7 @@ export default function Settings() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <ShoppingCart className="w-5 h-5 text-green-600" />
-                    {t("productManagement.productTitle")}
+                    {t("settings.productTitle")}
                   </CardTitle>
                   <CardDescription>
                     Quản lý thông tin sản phẩm và giá cả
@@ -1224,9 +1224,7 @@ export default function Settings() {
                   <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
                       <Input
-                        placeholder={t(
-                          "productManagement.productNamePlaceholder",
-                        )}
+                        placeholder={t("settings.productNamePlaceholder")}
                         className="w-64"
                         value={productSearchTerm}
                         onChange={(e) => setProductSearchTerm(e.target.value)}
@@ -1237,12 +1235,12 @@ export default function Settings() {
                       >
                         <SelectTrigger className="w-48">
                           <SelectValue
-                            placeholder={t("productManagement.selectCategory")}
+                            placeholder={t("settings.selectCategory")}
                           />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">
-                            {t("productManagement.allCategories")}
+                            {t("settings.allCategories")}
                           </SelectItem>
                           {categoriesData?.map((category: any) => (
                             <SelectItem
@@ -1267,7 +1265,7 @@ export default function Settings() {
                       }}
                     >
                       <Plus className="w-4 h-4 mr-2" />
-                      {t("productManagement.addProduct")}
+                      {t("settings.addProduct")}
                     </Button>
                   </div>
 
@@ -1279,17 +1277,17 @@ export default function Settings() {
                     <div className="text-center py-8">
                       <ShoppingCart className="w-12 h-12 mx-auto text-gray-400 mb-4" />
                       <p className="text-gray-500">
-                        {t("productManagement.noProducts")}
+                        {t("settings.noProducts")}
                       </p>
                     </div>
                   ) : (
                     <div className="rounded-md border">
                       <div className="grid grid-cols-7 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                        <div>{t("productManagement.productName")}</div>
-                        <div>{t("productManagement.productSku")}</div>
-                        <div>{t("productManagement.productCategory")}</div>
-                        <div>{t("productManagement.productPrice")}</div>
-                        <div>{t("productManagement.productStock")}</div>
+                        <div>{t("settings.productName")}</div>
+                        <div>{t("settings.productSku")}</div>
+                        <div>{t("settings.productCategory")}</div>
+                        <div>{t("settings.productPrice")}</div>
+                        <div>{t("settings.productStock")}</div>
                         <div>상태</div>
                         <div className="text-center">{t("common.actions")}</div>
                       </div>

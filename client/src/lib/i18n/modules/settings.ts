@@ -90,6 +90,12 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     productCreateSuccess: '상품이 생성되었습니다',
     productUpdateSuccess: '상품이 수정되었습니다',
     productDeleteSuccess: '상품이 삭제되었습니다',
+    // Product Management specific keys
+    productTitle: '상품 관리',
+    addProduct: '상품 추가',
+    editProduct: '상품 수정',
+    allCategories: '모든 카테고리',
+    productNamePlaceholder: '상품 검색...',
   },
   en: {
     title: 'Settings',
@@ -180,6 +186,12 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     productCreateSuccess: 'Product created successfully',
     productUpdateSuccess: 'Product updated successfully',
     productDeleteSuccess: 'Product deleted successfully',
+    // Product Management specific keys
+    productTitle: 'Product Management',
+    addProduct: 'Add Product',
+    editProduct: 'Edit Product',
+    allCategories: 'All Categories',
+    productNamePlaceholder: 'Search products...',
   },
   vi: {
     title: 'Cài đặt',
@@ -270,5 +282,11 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     productCreateSuccess: 'Tạo sản phẩm thành công',
     productUpdateSuccess: 'Cập nhật sản phẩm thành công',
     productDeleteSuccess: 'Xóa sản phẩm thành công',
+    // Product Management specific keys
+    productTitle: 'Quản lý sản phẩm',
+    addProduct: 'Thêm sản phẩm',
+    editProduct: 'Sửa sản phẩm',
+    allCategories: 'Tất cả danh mục',
+    productNamePlaceholder: 'Tìm kiếm sản phẩm...',
   },
 };
