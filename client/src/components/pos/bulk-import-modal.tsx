@@ -45,9 +45,22 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
       return response.json();
     },
     onSuccess: (data) => {
+      console.log("=== BULK IMPORT SUCCESS RESPONSE ===");
+      console.log("Full response data:", JSON.stringify(data, null, 2));
+      console.log("Success count:", data.success);
+      console.log("Error count:", data.errors);
+      console.log("Results array:", data.results);
+      
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       
       if (data.errors > 0) {
+        console.log("=== ERRORS FOUND ===");
+        const errorItems = data.results?.filter(r => !r.success) || [];
+        errorItems.forEach((item, index) => {
+          console.log(`Error ${index + 1}:`, item.error);
+          console.log(`Data:`, item.data);
+        });
+        
         toast({
           title: "Hoàn thành với lỗi",
           description: data.message || `${data.success} sản phẩm thành công, ${data.errors} sản phẩm lỗi`,
@@ -62,6 +75,11 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
       handleClose();
     },
     onError: (error) => {
+      console.log("=== BULK IMPORT ERROR ===");
+      console.log("Error object:", error);
+      console.log("Error message:", error.message);
+      console.log("Error stack:", error.stack);
+      
       toast({
         title: "Lỗi",
         description: error.message || "Không thể nhập sản phẩm hàng loạt",

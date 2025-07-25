@@ -1053,9 +1053,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const productData of productList) {
         try {
-          // Validate required fields
-          if (!productData.name || !productData.sku || !productData.price || productData.categoryId === undefined) {
-            throw new Error("Missing required fields");
+          console.log(`Processing product: ${JSON.stringify(productData)}`);
+          
+          // Validate required fields with detailed messages
+          const missingFields = [];
+          if (!productData.name) missingFields.push("name");
+          if (!productData.sku) missingFields.push("sku");
+          if (!productData.price) missingFields.push("price");
+          if (productData.categoryId === undefined || productData.categoryId === null) missingFields.push("categoryId");
+          
+          if (missingFields.length > 0) {
+            throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+          }
+
+          // Validate data types
+          if (isNaN(parseFloat(productData.price))) {
+            throw new Error(`Invalid price: ${productData.price}`);
+          }
+          
+          if (isNaN(parseInt(productData.categoryId))) {
+            throw new Error(`Invalid categoryId: ${productData.categoryId}`);
           }
 
           const [product] = await db.insert(products).values({
@@ -1067,11 +1084,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             imageUrl: productData.imageUrl || null,
           }).returning();
 
+          console.log(`Successfully created product: ${product.name}`);
           results.push({ success: true, product });
           successCount++;
         } catch (error) {
-          console.error("Error creating product:", error);
-          results.push({ success: false, error: error.message, data: productData });
+          const errorMessage = error.message || "Unknown error";
+          console.error(`Error creating product ${productData.name || 'Unknown'}:`, errorMessage);
+          console.error("Product data:", JSON.stringify(productData, null, 2));
+          
+          results.push({ 
+            success: false, 
+            error: errorMessage, 
+            data: productData,
+            productName: productData.name || 'Unknown'
+          });
           errorCount++;
         }
       }
