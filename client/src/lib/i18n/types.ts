@@ -389,20 +389,6 @@ export interface EmployeesTranslations {
   };
   active: string;
   inactive: string;
-  total: string;
-  totalEmployeesRegistered: string;
-  loadingEmployeeData: string;
-  noRegisteredEmployees: string;
-  addEmployeeToStart: string;
-  deleteConfirm: string;
-  employeeDeleteConfirm: string;
-  deleteSuccess: string;
-  employeeDeleted: string;
-  deleteError: string;
-  employeeDeleteFailed: string;
-  admin: string;
-  manager: string;
-  cashier: string;
 }
 
 // Attendance translations interface
