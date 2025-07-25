@@ -230,11 +230,11 @@ export function TableReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">평균 이용률</p>
+                <p className="text-sm font-medium text-gray-600">{t("reports.averageUtilization")}</p>
                 <p className="text-2xl font-bold">
-                  {tableData.averageUtilization.toFixed(1)}회
+                  {tableData.averageUtilization.toFixed(1)}{t("reports.times")}
                 </p>
-                <p className="text-xs text-gray-500">테이블당 평균 주문 수</p>
+                <p className="text-xs text-gray-500">{t("reports.averageOrdersPerTable")}</p>
               </div>
               <TrendingUp className="w-8 h-8 text-blue-500" />
             </div>
@@ -245,9 +245,9 @@ export function TableReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">총 주문 건수</p>
+                <p className="text-sm font-medium text-gray-600">{t("reports.totalOrders")}</p>
                 <p className="text-2xl font-bold">{tableData.totalOrders}</p>
-                <p className="text-xs text-gray-500">전체 테이블</p>
+                <p className="text-xs text-gray-500">{t("reports.allTables")}</p>
               </div>
               <Clock className="w-8 h-8 text-green-500" />
             </div>
@@ -258,9 +258,9 @@ export function TableReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">총 고객 수</p>
+                <p className="text-sm font-medium text-gray-600">{t("reports.totalCustomers")}</p>
                 <p className="text-2xl font-bold">{tableData.totalCustomers}</p>
-                <p className="text-xs text-gray-500">누적 방문 고객</p>
+                <p className="text-xs text-gray-500">{t("reports.cumulativeVisitors")}</p>
               </div>
               <Users className="w-8 h-8 text-purple-500" />
             </div>
@@ -271,11 +271,11 @@ export function TableReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">총 매출</p>
+                <p className="text-sm font-medium text-gray-600">{t("reports.totalRevenue")}</p>
                 <p className="text-2xl font-bold text-green-600">
                   {formatCurrency(tableData.totalRevenue)}
                 </p>
-                <p className="text-xs text-gray-500">테이블별 합계</p>
+                <p className="text-xs text-gray-500">{t("reports.totalByTable")}</p>
               </div>
               <Utensils className="w-8 h-8 text-green-500" />
             </div>
@@ -286,21 +286,21 @@ export function TableReport() {
       {/* Detailed Table Performance */}
       <Card>
         <CardHeader>
-          <CardTitle>테이블별 상세 성과</CardTitle>
-          <CardDescription>각 테이블의 상세한 운영 지표를 확인합니다.</CardDescription>
+          <CardTitle>{t("reports.detailedTablePerformance")}</CardTitle>
+          <CardDescription>{t("reports.detailedTablePerformanceDesc")}</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>테이블</TableHead>
-                <TableHead>현재 상태</TableHead>
-                <TableHead>주문 수</TableHead>
-                <TableHead>매출</TableHead>
-                <TableHead>고객 수</TableHead>
-                <TableHead>평균 주문가</TableHead>
-                <TableHead>회전율</TableHead>
-                <TableHead>피크 시간</TableHead>
+                <TableHead>{t("common.table")}</TableHead>
+                <TableHead>{t("reports.currentStatus")}</TableHead>
+                <TableHead>{t("reports.orderCount")}</TableHead>
+                <TableHead>{t("reports.revenue")}</TableHead>
+                <TableHead>{t("reports.customerCount")}</TableHead>
+                <TableHead>{t("reports.averageOrderValue")}</TableHead>
+                <TableHead>{t("reports.turnoverRate")}</TableHead>
+                <TableHead>{t("reports.peakTime")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -328,21 +328,21 @@ export function TableReport() {
                           {statusConfig.label}
                         </Badge>
                       </TableCell>
-                      <TableCell>{stats.orderCount}건</TableCell>
+                      <TableCell>{stats.orderCount}{t("common.count")}</TableCell>
                       <TableCell className="font-semibold">
                         {formatCurrency(stats.revenue)}
                       </TableCell>
-                      <TableCell>{stats.customerCount}명</TableCell>
+                      <TableCell>{stats.customerCount}{t("common.people")}</TableCell>
                       <TableCell>
                         {stats.orderCount > 0 ? formatCurrency(stats.averageOrderValue) : '-'}
                       </TableCell>
                       <TableCell>
                         <Badge variant={stats.turnoverRate > 1 ? "default" : "outline"}>
-                          {stats.turnoverRate.toFixed(1)}회/일
+                          {stats.turnoverRate.toFixed(1)}{t("reports.timesPerDay")}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {peakHour !== null ? `${peakHour}시` : '-'}
+                        {peakHour !== null ? `${peakHour}${t("reports.hour")}` : '-'}
                       </TableCell>
                     </TableRow>
                   );
@@ -358,7 +358,7 @@ export function TableReport() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <TrendingUp className="w-4 h-4" />
-              매출 상위 테이블
+              {t("reports.topRevenueTables")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -385,7 +385,7 @@ export function TableReport() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <Clock className="w-4 h-4" />
-              회전율 상위 테이블
+              {t("reports.topTurnoverTables")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -399,7 +399,7 @@ export function TableReport() {
                     <span className="font-medium">{stats.table.tableNumber}</span>
                   </div>
                   <span className="text-sm font-semibold">
-                    {stats.turnoverRate.toFixed(1)}회/일
+                    {stats.turnoverRate.toFixed(1)}{t("reports.timesPerDay")}
                   </span>
                 </div>
               ))}
@@ -412,7 +412,7 @@ export function TableReport() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <Users className="w-4 h-4" />
-              이용률 상위 테이블
+              {t("reports.topUtilizationTables")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -426,7 +426,7 @@ export function TableReport() {
                     <span className="font-medium">{stats.table.tableNumber}</span>
                   </div>
                   <span className="text-sm font-semibold">
-                    {stats.orderCount}건
+                    {stats.orderCount}{t("common.count")}
                   </span>
                 </div>
               ))}

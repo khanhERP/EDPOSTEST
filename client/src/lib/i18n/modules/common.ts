@@ -1,4 +1,3 @@
-
 import type { CommonTranslations } from "../types";
 
 export const commonTranslations: { [key: string]: CommonTranslations } = {
@@ -73,7 +72,12 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     unavailable: "사용 불가",
     occupied: "사용중",
     reserved: "예약됨",
-    maintenance: "정비중",
+    maintenance: "유지보수",
+    loading: "로딩 중...",
+    noData: "데이터가 없습니다",
+    count: "건",
+    people: "명",
+    table: "테이블",
     orderManagement: "주문 관리",
     allCategories: "모든 카테고리",
     notes: "비고",
@@ -159,6 +163,11 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     occupied: "Occupied",
     reserved: "Reserved",
     maintenance: "Maintenance",
+    loading: "Loading...",
+    noData: "No data available",
+    count: "Count",
+    people: "People",
+    table: "Table",
     orderManagement: "Order Management",
     allCategories: "All Categories",
     notes: "Notes",
@@ -244,6 +253,11 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     occupied: "Đang sử dụng",
     reserved: "Đã đặt",
     maintenance: "Bảo trì",
+    loading: "Đang tải...",
+    noData: "Không có dữ liệu",
+    count: "Số",
+    people: "Người",
+    table: "Bàn",
     orderManagement: "Quản lý đơn hàng",
     allCategories: "Tất cả danh mục",
     notes: "Ghi chú",
