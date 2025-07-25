@@ -270,10 +270,10 @@ export function EmployeeFormModal({
               </Button>
               <Button type="submit" disabled={isLoading}>
                 {isLoading
-                  ? t("common.saving")
+                  ? t("employees.saving")
                   : mode === "create"
-                    ? t("common.add")
-                    : t("common.save")}
+                    ? t("employees.add")
+                    : t("employees.save")}
               </Button>
             </div>
           </form>

@@ -214,7 +214,6 @@ export interface SettingsTranslations {
   editProduct: string;
   allCategories: string;
   productNamePlaceholder: string;
-  productNamePlaceholder: string;
   skuLabel: string;
   skuPlaceholder: string;
   priceLabel: string;
@@ -259,7 +258,6 @@ export interface CustomersTranslations {
   visitCount: string;
   totalSpent: string;
   points: string;
-  membershipLevel: string;
   status: string;
   totalCustomers: string;
   activeCustomers: string;
@@ -383,6 +381,16 @@ export interface EmployeesTranslations {
   title: string;
   description: string;
   employeeManagement: string;
+  total: string;
+  employeeList: string;
+  confirmDelete: string;
+  saving: string;
+  save: string;
+  add: string;
+  currentEmployeeCount: string;
+  updateEmployeeSuccess: string;
+  updateEmployeeError: string;
+  addEmployeeSuccess: string;
   addEmployee: string;
   editEmployee: string;
   deleteEmployee: string;
@@ -406,6 +414,7 @@ export interface EmployeesTranslations {
   namePlaceholder: string;
   phonePlaceholder: string;
   emailPlaceholder: string;
+  addEmployeeError: string;
   salaryPlaceholder: string;
   roles: {
     admin: string;

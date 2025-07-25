@@ -112,7 +112,7 @@ export function EmployeeList() {
                   <TableHead>{t('employees.role')}</TableHead>
                   <TableHead>{t('employees.hireDate')}</TableHead>
                   <TableHead>{t('employees.status')}</TableHead>
-                  <TableHead>{t('employees.management')}</TableHead>
+                  <TableHead>{t('employees.employeeManagement')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
