@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BarChart3, Clock, Users, TrendingUp, Calendar } from "lucide-react";
 import type { AttendanceRecord, Employee } from "@shared/schema";
-import { useTranslation } from "react-i18next";
+import { useTranslation } from "@/lib/i18n";
 
 export function AttendanceStats() {
   const { t } = useTranslation();
