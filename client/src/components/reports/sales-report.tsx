@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Calendar, DollarSign } from "lucide-react";
 import type { Transaction } from "@shared/schema";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation, useLanguageStore } from "@/lib/i18n";
 
 export function SalesReport() {
   const { t } = useTranslation();
@@ -132,7 +132,10 @@ export function SalesReport() {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('ko-KR', {
+    const { currentLanguage } = useLanguageStore.getState();
+    const locale = currentLanguage === 'ko' ? 'ko-KR' : currentLanguage === 'vi' ? 'vi-VN' : 'en-US';
+    
+    return new Date(dateStr).toLocaleDateString(locale, {
       month: '2-digit',
       day: '2-digit',
       weekday: 'short'
