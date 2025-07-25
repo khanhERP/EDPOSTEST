@@ -38,12 +38,7 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md w-full max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            Receipt
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X size={20} />
-            </Button>
-          </DialogTitle>
+          <DialogTitle>Receipt</DialogTitle>
         </DialogHeader>
         
         <div id="receipt-content" className="p-6 receipt-print bg-white">
@@ -133,6 +128,10 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
           <Button onClick={handleEmail} variant="secondary" className="flex-1">
             <Mail className="mr-2" size={16} />
             Email Receipt
+          </Button>
+          <Button onClick={onClose} variant="outline" className="flex-1">
+            <X className="mr-2" size={16} />
+            Close
           </Button>
         </div>
       </DialogContent>
