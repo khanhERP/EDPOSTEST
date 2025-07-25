@@ -90,7 +90,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Additional dashboard keys
     periodRevenue: '기간 매출',
-    customerCount: '고객 수',
     monthRevenue: '월간 매출',
     monthAccumulated: '월 누적',
     realTimeStatus: '실시간 현황',
@@ -98,14 +97,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     count: '건',
     performanceMetrics: '성과 지표',
     salesAchievementRate: '매출 달성률',
-    hour: '시',
     peakHour: '피크 시간',
     tableTurnoverRate: '테이블 회전율',
-    times: '회',
     targetAverageDailySales: '목표 일평균 매출 {amount}, 목표 회전 {turnovers}회',
 
     // Category performance
-    categoryPerformance: '카테고리 성과',
     topSellingProducts: '인기 상품 (판매량 기준)',
     topRevenueProducts: '고매출 상품 (매출 기준)',
     menuItems: '{count}개 메뉴',
@@ -115,7 +111,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     rank: '순위',
     menuName: '메뉴명',
     salesCount: '판매량',
-    revenue: '매출',
     popularMenuByQuantity: '인기 메뉴 (판매량 기준)',
     popularMenuByQuantityDesc: '판매 수량이 많은 메뉴 순위입니다.',
     highRevenueMenu: '고매출 메뉴 (매출 기준)',
@@ -131,7 +126,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     vertical: '세로',
     concernType: '관심 영역',
     sales: 'Bán hàng',
-    revenue: '수익',
     inventory: '재고',
     summary: '요약',
     dateType: '날짜 유형',
@@ -162,8 +156,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     method: 'Phương thức',
     amount: 'Số tiền',
     notes: 'Ghi chú',
-    cash: 'Tiền mặt',
-    card: 'Thẻ',
     transfer: '계좌이체',
     wallet: '전자지갑',
   },

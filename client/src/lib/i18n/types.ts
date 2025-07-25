@@ -119,7 +119,6 @@ export interface ReportsTranslations {
   rank: string;
   menuName: string;
   salesCount: string;
-  revenue: string;
   popularMenuByQuantity: string;
   popularMenuByQuantityDesc: string;
   highRevenueMenu: string;
