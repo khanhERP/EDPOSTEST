@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BarChart3, Clock, Users, TrendingUp, Calendar } from "lucide-react";
 import type { AttendanceRecord, Employee } from "@shared/schema";
+import { useTranslation } from "react-i18next";
 
 export function AttendanceStats() {
+  const { t } = useTranslation();
   const [selectedMonth, setSelectedMonth] = useState<string>(
     new Date().toISOString().slice(0, 7) // YYYY-MM format
   );
@@ -69,7 +71,7 @@ export function AttendanceStats() {
       const totalHours = employeeRecords.reduce((sum: number, record: AttendanceRecord) => 
         sum + (parseFloat(record.totalHours || "0")), 0
       );
-      
+
       const overtimeHours = employeeRecords.reduce((sum: number, record: AttendanceRecord) => 
         sum + (parseFloat(record.overtime || "0")), 0
       );
@@ -108,10 +110,10 @@ export function AttendanceStats() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="w-5 h-5" />
-                근태 통계
+                {t('attendance.monthlyStats')}
               </CardTitle>
               <CardDescription>
-                월별 근태 현황과 직원별 통계를 확인합니다.
+                {t('attendance.monthlyStatsDesc')}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
