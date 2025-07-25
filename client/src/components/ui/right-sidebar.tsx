@@ -130,15 +130,20 @@ export function RightSidebar() {
                 <Button
                   variant={isActive ? "secondary" : "ghost"}
                   className={cn(
-                    "w-[calc(100%-16px)] justify-start mb-1 mx-2 shadow-sm hover:shadow-md active:shadow-lg transition-all duration-200",
+                    "w-[calc(100%-16px)] justify-start mb-1 mx-2 shadow-md hover:shadow-lg active:shadow-xl transition-all duration-300 group relative",
                     showText ? "px-3" : "px-2",
-                    isActive && "bg-green-50 text-green-600 border-l-2 border-green-500 shadow-md",
-                    isNavCollapsed && "group-hover:w-[calc(256px-16px)]"
+                    isActive && "bg-green-50 text-green-600 border-l-4 border-green-500 shadow-lg",
+                    isNavCollapsed && "hover:w-[calc(256px-16px)] hover:bg-green-50"
                   )}
                 >
                   <Icon className={cn("w-5 h-5", showText && "mr-3")} />
                   {showText && (
                     <span className="font-medium">{item.label}</span>
+                  )}
+                  {isNavCollapsed && (
+                    <span className="opacity-0 group-hover:opacity-100 ml-3 font-medium transition-all duration-300 whitespace-nowrap">
+                      {item.label}
+                    </span>
                   )}
                   {showText && item.badge && (
                     <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
