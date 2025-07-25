@@ -40,13 +40,13 @@ export function MenuReport() {
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
-      
+
       return orderDate >= start && orderDate <= end && order.status === 'paid';
     });
 
     // Get all order items for the filtered orders
     const allOrderItems: OrderItem[] = [];
-    
+
     for (const order of filteredOrders) {
       try {
         const response = await fetch(`/api/orders/${order.id}`);
@@ -138,7 +138,7 @@ export function MenuReport() {
   const handleDateRangeChange = (range: string) => {
     setDateRange(range);
     const today = new Date();
-    
+
     switch (range) {
       case "today":
         setStartDate(today.toISOString().split('T')[0]);
@@ -205,7 +205,7 @@ export function MenuReport() {
                   <SelectItem value="custom">{t("reports.custom")}</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               {dateRange === "custom" && (
                 <>
                   <div className="flex items-center gap-2">
@@ -248,7 +248,7 @@ export function MenuReport() {
               const quantityPercentage = menuData.totalQuantity > 0
                 ? (category.quantity / menuData.totalQuantity) * 100
                 : 0;
-              
+
               return (
                 <div key={category.category.id} className="space-y-2">
                   <div className="flex justify-between items-center">
@@ -269,7 +269,7 @@ export function MenuReport() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>{t("reports.revenueShare")}</span>
@@ -281,7 +281,7 @@ export function MenuReport() {
                         style={{ width: `${revenuePercentage}%` }}
                       ></div>
                     </div>
-                    
+
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>{t("reports.salesShare")}</span>
                       <span>{quantityPercentage.toFixed(1)}%</span>
@@ -296,7 +296,7 @@ export function MenuReport() {
                 </div>
               );
             })}
-            
+
             {menuData.categoryStats.length === 0 && (
               <div className="text-center text-gray-500 py-4">
                 {t("reports.noCategoryData")}
@@ -331,7 +331,7 @@ export function MenuReport() {
                   <TableRow key={item.product.id}>
                     <TableCell>
                       <Badge variant={index < 3 ? "default" : "outline"}>
-                        {index + 1}위
+                        {t("reports.rank")} {index + 1}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-medium">
@@ -377,7 +377,7 @@ export function MenuReport() {
                   <TableRow key={item.product.id}>
                     <TableCell>
                       <Badge variant={index < 3 ? "default" : "outline"}>
-                        {index + 1}위
+                        {t("reports.rank")} {index + 1}
                       </Badge>
                     </TableCell>
                     <TableCell className="font-medium">
