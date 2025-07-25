@@ -98,7 +98,11 @@ export function AttendanceStats() {
 
   const formatMonth = (monthStr: string) => {
     const date = new Date(monthStr + "-01");
-    return date.toLocaleDateString('vi-VN', { year: 'numeric', month: 'long' });
+    return date.toLocaleDateString('vi-VN', { 
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric' 
+    });
   };
 
   const formatDate = (dateInput: Date | string) => {
@@ -132,6 +136,7 @@ export function AttendanceStats() {
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="w-auto"
+                placeholder="dd/MM/yyyy"
               />
             </div>
           </div>
