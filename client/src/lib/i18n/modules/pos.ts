@@ -55,6 +55,7 @@ export interface POSTranslations {
   newTransaction: string;
   transactionComplete: string;
   transactionFailed: string;
+  manageProducts: string;
   productManager: string;
   productName: string;
   sku: string;
@@ -142,6 +143,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     newTransaction: '새 거래',
     transactionComplete: '거래 완료',
     transactionFailed: '거래 실패',
+    manageProducts: '상품 관리',
     productManager: '상품 관리',
     productName: '상품명',
     sku: 'SKU',
@@ -227,6 +229,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     newTransaction: 'New Transaction',
     transactionComplete: 'Transaction Complete',
     transactionFailed: 'Transaction Failed',
+    manageProducts: 'Manage Products',
     productManager: 'Product Manager',
     productName: 'Product Name',
     sku: 'SKU',
@@ -312,6 +315,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     newTransaction: 'Giao dịch mới',
     transactionComplete: 'Giao dịch hoàn tất',
     transactionFailed: 'Giao dịch thất bại',
+    manageProducts: 'Quản lý sản phẩm',
     productManager: 'Quản lý sản phẩm',
     productName: 'Tên sản phẩm',
     sku: 'SKU',
