@@ -183,7 +183,7 @@ export function OrderManagement() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
-                        ₩{Number(order.total).toLocaleString()}
+                        {Number(order.total).toLocaleString()} ₫
                       </span>
                     </div>
 
@@ -340,7 +340,7 @@ export function OrderManagement() {
                                 </span>
                               </div>
                               <div className="text-xs text-gray-600 mt-1">
-                                ₩{Number(item.unitPrice || 0).toLocaleString()}/món
+                                {Number(item.unitPrice || 0).toLocaleString()} ₫/món
                               </div>
                               {item.notes && (
                                 <div className="text-xs text-blue-600 italic mt-1">
@@ -350,7 +350,7 @@ export function OrderManagement() {
                             </div>
                             <div className="text-right">
                               <div className="font-bold text-green-600">
-                                ₩{Number(item.total || 0).toLocaleString()}
+                                {Number(item.total || 0).toLocaleString()} ₫
                               </div>
                             </div>
                           </div>
