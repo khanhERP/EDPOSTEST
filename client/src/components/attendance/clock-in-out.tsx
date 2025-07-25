@@ -292,6 +292,14 @@ export function ClockInOut() {
                 </div>
               )}
 
+              {/* Debug info - remove after fixing */}
+              {process.env.NODE_ENV === 'development' && todayAttendance && (
+                <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
+                  Debug: breakStart={JSON.stringify((todayAttendance as AttendanceRecord).breakStart)}, 
+                  breakEnd={JSON.stringify((todayAttendance as AttendanceRecord).breakEnd)}
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {!todayAttendance ? (
@@ -319,7 +327,7 @@ export function ClockInOut() {
                         ) : (
                           <Button
                             onClick={() => breakStartMutation.mutate()}
-                            disabled={breakStartMutation.isPending || !todayAttendance}
+                            disabled={breakStartMutation.isPending || !todayAttendance || (todayAttendance as AttendanceRecord).breakStart}
                             variant="outline"
                           >
                             <Coffee className="w-4 h-4 mr-2" />
