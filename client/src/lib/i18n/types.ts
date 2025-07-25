@@ -324,6 +324,24 @@ export interface CustomersTranslations {
   upgradeAvailable: string;
   allTiers: string;
   close: string;
+  pointManagement: string;
+  pointManagementDescription: string;
+  pointOverview: string;
+  updatePoints: string;
+  pointHistory: string;
+  recentPointHistory: string;
+  viewAllHistory: string;
+  transactionType: string;
+  selectTransactionType: string;
+  enterPoints: string;
+  reason: string;
+  enterReason: string;
+  processPoints: string;
+  balance: string;
+  previousBalance: string;
+  noPointHistory: string;
+  pointsUpdateFailed: string;
+  pointsUpdateError: string;
 }
 
 // Employees translations interface
