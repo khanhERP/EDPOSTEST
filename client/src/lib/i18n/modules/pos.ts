@@ -34,6 +34,8 @@ export interface POSTranslations {
   gridView: string;
   listView: string;
   sortByName: string;
+  sortByPrice: string;
+  sortByStock: string;
   noProductsFound: string;
   searchProducts: string;
   scanBarcode: string;
@@ -123,6 +125,8 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     gridView: '그리드 보기',
     listView: '목록 보기',
     sortByName: '이름순 정렬',
+    sortByPrice: '가격순 정렬',
+    sortByStock: '재고순 정렬',
     noProductsFound: '상품을 찾을 수 없습니다',
     searchProducts: '상품 검색...',
     scanBarcode: '바코드 스캔',
@@ -210,6 +214,8 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     gridView: 'Grid View',
     listView: 'List View',
     sortByName: 'Sort by Name',
+    sortByPrice: 'Sort by Price',
+    sortByStock: 'Sort by Stock',
     noProductsFound: 'No products found',
     searchProducts: 'Search products...',
     scanBarcode: 'Scan Barcode',
@@ -297,6 +303,8 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     gridView: 'Xem dạng lưới',
     listView: 'Xem dạng danh sách',
     sortByName: 'Sắp xếp theo tên',
+    sortByPrice: 'Sắp xếp theo giá',
+    sortByStock: 'Sắp xếp theo tồn kho',
     noProductsFound: 'Không tìm thấy sản phẩm',
     searchProducts: 'Tìm kiếm sản phẩm...',
     scanBarcode: 'Quét mã vạch',
