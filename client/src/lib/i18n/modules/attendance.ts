@@ -1,4 +1,3 @@
-
 import type { AttendanceTranslations } from '../types';
 
 export const attendanceTranslations: { [key: string]: AttendanceTranslations } = {
@@ -197,6 +196,7 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     lateCount: 'Late',
     absentCount: 'Absent',
     times: 'times',
+    monthPickerPlaceholder: 'YYYY-MM',
   },
   vi: {
     title: 'Quản lý chấm công',
@@ -275,7 +275,7 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     breakEndSuccess: 'Kết thúc nghỉ',
     breakEndSuccessDesc: 'Đã kết thúc thời gian nghỉ',
     breakEndError: 'Lỗi kết thúc nghỉ',
-    
+
     // Additional missing keys for attendance management
     loading: 'Đang tải...',
     noAttendanceData: 'Không có dữ liệu chấm công',
@@ -295,7 +295,7 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     filterByEmployee: 'Lọc theo nhân viên',
     exportData: 'Xuất dữ liệu',
     printReport: 'In báo cáo',
-    
+
     status: {
       present: 'Có mặt',
       absent: 'Vắng mặt',

@@ -601,6 +601,7 @@ export interface AttendanceTranslations {
   lateCount: string;
   absentCount: string;
   times: string;
+  monthPickerPlaceholder: string;
 }
 
 // Main translations interface
