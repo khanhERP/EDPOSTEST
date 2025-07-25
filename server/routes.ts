@@ -14,8 +14,9 @@ import {
   insertSupplierSchema,
   insertCustomerSchema,
   insertPointTransactionSchema,
+  attendanceRecords,
 } from "@shared/schema";
-import { initializeSampleData } from "./db";
+import { initializeSampleData, db } from "./db";
 import { z } from "zod";
 import { eq, desc, asc, and, or, like, count, sum, gte, lt } from "drizzle-orm";
 
