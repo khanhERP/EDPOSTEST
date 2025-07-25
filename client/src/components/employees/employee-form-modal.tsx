@@ -51,10 +51,16 @@ export function EmployeeFormModal({
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
+  // Generate employee ID for new employees
+  const generateEmployeeId = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    return `EMP-${timestamp}`;
+  };
+
   const form = useForm<InsertEmployee>({
     resolver: zodResolver(insertEmployeeSchema),
     defaultValues: {
-      employeeId: employee?.employeeId || "",
+      employeeId: employee?.employeeId || (mode === "create" ? generateEmployeeId() : ""),
       name: employee?.name || "",
       email: employee?.email || "",
       phone: employee?.phone || null,
@@ -76,7 +82,15 @@ export function EmployeeFormModal({
         description: t("employees.addEmployeeSuccess"),
       });
       onClose();
-      form.reset();
+      form.reset({
+        employeeId: generateEmployeeId(),
+        name: "",
+        email: "",
+        phone: null,
+        role: "cashier",
+        isActive: true,
+        hireDate: new Date(),
+      });
     },
     onError: () => {
       toast({
@@ -148,7 +162,12 @@ export function EmployeeFormModal({
                 <FormItem>
                   <FormLabel>{t("employees.employeeId")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="EMP001" {...field} />
+                    <Input 
+                      placeholder="EMP001" 
+                      {...field} 
+                      readOnly={mode === "create"}
+                      className={mode === "create" ? "bg-gray-100" : ""}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
