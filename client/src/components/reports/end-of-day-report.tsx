@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,10 +14,10 @@ import { useTranslation } from "@/lib/i18n";
 
 export function EndOfDayReport() {
   const { t } = useTranslation();
-  
+
   // Main concern filters
   const [concernType, setConcernType] = useState("sales"); // sales, revenue, inventory, summary
-  
+
   // Date range
   const [dateType, setDateType] = useState("single"); // single, range
   const [startDate, setStartDate] = useState<string>(
@@ -27,13 +26,13 @@ export function EndOfDayReport() {
   const [endDate, setEndDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
-  
+
   // Payment method filter
   const [paymentMethod, setPaymentMethod] = useState("all"); // all, cash, card, transfer, wallet
-  
+
   // Transaction type filter
   const [transactionType, setTransactionType] = useState("all"); // all, customer_payment, customer_refund, other_expense, supplier_refund, supplier_payment
-  
+
   // Creator and employee filters
   const [selectedCreator, setSelectedCreator] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState("all");
@@ -66,9 +65,9 @@ export function EndOfDayReport() {
       const dateMatch = dateType === "single" 
         ? transactionDate.toDateString() === start.toDateString()
         : transactionDate >= start && transactionDate <= end;
-      
+
       const paymentMatch = paymentMethod === "all" || transaction.paymentMethod === paymentMethod;
-      
+
       const transactionTypeMatch = transactionType === "all" || 
         (transactionType === "customer_payment" && Number(transaction.total) > 0) ||
         (transactionType === "customer_refund" && Number(transaction.total) < 0) ||
@@ -145,7 +144,7 @@ export function EndOfDayReport() {
 
     const currentDate = new Date().toLocaleDateString('vi-VN');
     const currentTime = new Date().toLocaleTimeString('vi-VN');
-    
+
     return `
     <!DOCTYPE html>
     <html>
@@ -257,7 +256,7 @@ export function EndOfDayReport() {
             `).join('') : `
               <tr style="background-color: #fffacd;">
                 <td colspan="7" class="center" style="font-style: italic;">
-                  Báo cáo không có dữ liệu
+                  ${t("reports.noReportData")}
                 </td>
               </tr>
             `}
@@ -288,7 +287,7 @@ export function EndOfDayReport() {
             `).join('') : `
               <tr style="background-color: #fffacd;">
                 <td colspan="5" class="center" style="font-style: italic;">
-                  Báo cáo không có dữ liệu
+                  ${t("reports.noReportData")}
                 </td>
               </tr>
             `}
@@ -323,7 +322,7 @@ export function EndOfDayReport() {
             `).join('') : `
               <tr style="background-color: #fffacd;">
                 <td colspan="7" class="center" style="font-style: italic;">
-                  Báo cáo không có dữ liệu
+                  ${t("reports.noReportData")}
                 </td>
               </tr>
             `}
@@ -382,7 +381,7 @@ export function EndOfDayReport() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-gray-500 italic">
-                    Báo cáo không có dữ liệu
+                    {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
               )}
@@ -439,7 +438,7 @@ export function EndOfDayReport() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-gray-500 italic">
-                    Báo cáo không có dữ liệu
+                    {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
               )}
@@ -487,7 +486,7 @@ export function EndOfDayReport() {
               ) : (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-gray-500 italic">
-                    Báo cáo không có dữ liệu
+                    {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
               )}

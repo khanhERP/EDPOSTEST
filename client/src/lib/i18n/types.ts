@@ -133,6 +133,37 @@ export interface ReportsTranslations {
   mainConcern: string;
   cashPayment: string;
   cardPayment: string;
+  
+  // Table headers for reports
+  transactionCode: string;
+  time: string;
+  quantity: string;
+  otherRevenue: string;
+  vat: string;
+  actualRevenue: string;
+  receiptCode: string;
+  payerReceiver: string;
+  revenueExpenseType: string;
+  productCode: string;
+  productName: string;
+  soldQuantity: string;
+  returnQuantity: string;
+  returnValue: string;
+  netRevenue: string;
+  
+  // Report specific content
+  salesDetails: string;
+  revenueExpenseDetails: string;
+  inventoryDetails: string;
+  noReportData: string;
+  reportGenerated: string;
+  centralBranch: string;
+  
+  // Date labels
+  saleDate: string;
+  paymentDate: string;
+  fromDate: string;
+  toDate: string;
 
   // Table analysis
   tablePerformance: string;

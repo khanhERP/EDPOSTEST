@@ -141,6 +141,41 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     notes: 'Ghi chú',
     transfer: '계좌이체',
     wallet: '전자지갑',
+    cashPayment: '현금',
+    cardPayment: '카드',
+    transfer: '계좌이체',
+    wallet: '전자지갑',
+
+    // Table headers for reports
+    transactionCode: '거래 코드',
+    time: '시간',
+    quantity: '수량',
+    otherRevenue: '기타 수입',
+    vat: 'VAT',
+    actualRevenue: '실제 수입',
+    receiptCode: '영수증 코드',
+    payerReceiver: '지불자/수령자',
+    revenueExpenseType: '수입/지출',
+    productCode: '상품 코드',
+    productName: '상품명',
+    soldQuantity: '판매 수량',
+    returnQuantity: '반품 수량',
+    returnValue: '반품 가치',
+    netRevenue: '순 수익',
+
+    // Report specific content
+    salesDetails: '판매 세부사항',
+    revenueExpenseDetails: '수입 지출 세부사항',
+    inventoryDetails: '재고 세부사항',
+    noReportData: '보고서 데이터가 없습니다',
+    reportGenerated: '보고서 생성됨',
+    centralBranch: '중앙 지점',
+
+    // Date labels
+    saleDate: '판매일',
+    paymentDate: '결제일',
+    fromDate: '시작일',
+    toDate: '종료일',
   },
   en: {
     title: 'Reports',
