@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Eye, Clock, CheckCircle2, DollarSign, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
+import { useLanguageStore } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import type { Order, Table, Product, OrderItem } from "@shared/schema";
 
@@ -17,6 +18,7 @@ export function OrderManagement() {
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
+  const { currentLanguage } = useLanguageStore();
   const queryClient = useQueryClient();
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
@@ -92,7 +94,9 @@ export function OrderManagement() {
 
   const formatTime = (dateString: string | Date) => {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    return date.toLocaleTimeString('ko-KR', {
+    const locale = currentLanguage === 'ko' ? 'ko-KR' : 
+                   currentLanguage === 'vi' ? 'vi-VN' : 'en-US';
+    return date.toLocaleTimeString(locale, {
       hour: '2-digit',
       minute: '2-digit'
     });

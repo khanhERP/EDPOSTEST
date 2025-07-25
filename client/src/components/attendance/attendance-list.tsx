@@ -20,7 +20,14 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
   });
 
   const { data: attendanceRecords, isLoading } = useQuery({
-    queryKey: ['/api/attendance', { date: selectedDate }],
+    queryKey: ['/api/attendance', selectedDate],
+    queryFn: async () => {
+      const response = await fetch(`/api/attendance?date=${selectedDate}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch attendance records');
+      }
+      return response.json();
+    },
   });
 
   const getEmployeeName = (employeeId: number) => {
@@ -93,7 +100,12 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
           <div className="flex justify-center py-8">
             <div className="text-gray-500">{t('common.loading')}</div>
           </div>
-        ) : !attendanceRecords || attendanceRecords.length === 0 ? (
+        ) : !attendanceRecords || attendanceRecords.length === 0 || 
+            (attendanceRecords || []).filter((record: AttendanceRecord) => {
+              const recordDate = new Date(record.clockIn).toDateString();
+              const filterDate = new Date(selectedDate).toDateString();
+              return recordDate === filterDate;
+            }).length === 0 ? (
           <div className="text-center py-8">
             <Clock className="w-12 h-12 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500">{t('common.noRecords')}</p>
@@ -114,7 +126,11 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
               </TableRow>
             </TableHeader>
             <TableBody>
-              {attendanceRecords.map((record: AttendanceRecord) => (
+              {(attendanceRecords || []).filter((record: AttendanceRecord) => {
+                const recordDate = new Date(record.clockIn).toDateString();
+                const filterDate = new Date(selectedDate).toDateString();
+                return recordDate === filterDate;
+              }).map((record: AttendanceRecord) => (
                 <TableRow key={record.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
