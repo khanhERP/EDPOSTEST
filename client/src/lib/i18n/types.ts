@@ -48,6 +48,11 @@ export interface CommonTranslations {
   occupied: string;
   reserved: string;
   maintenance: string;
+  clear: string;
+  refresh: string;
+  update: string;
+  create: string;
+  reset: string;
 }
 
 // Navigation translations interface
@@ -209,6 +214,25 @@ export interface SettingsTranslations {
   editProduct: string;
   allCategories: string;
   productNamePlaceholder: string;
+  productNamePlaceholder: string;
+  skuLabel: string;
+  skuPlaceholder: string;
+  priceLabel: string;
+  pricePlaceholder: string;
+  categoryLabel: string;
+  categoryPlaceholder: string;
+  initialStockQuantity: string;
+  initialStockPlaceholder: string;
+  stockQuantity: string;
+  editReason: string;
+  addNewStock: string;
+  save: string;
+  updateType: string;
+  delete: string;
+  confirmDelete: string;
+  deleteFailed: string;
+  createFailed: string;
+  updateFailed: string;
 }
 
 // Not Found translations interface
