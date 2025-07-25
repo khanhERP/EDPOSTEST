@@ -183,7 +183,7 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
           {!showAddForm ? (
             <>
               <div className="flex space-x-4 mb-6">
-                <Button onClick={() => setShowAddForm(true)} className="btn-primary hover:opacity-90">
+                <Button onClick={() => setShowAddForm(true)} className="btn-primary">
                   <Plus className="mr-2" size={16} />
                   {t('tables.addNewProduct')}
                 </Button>
