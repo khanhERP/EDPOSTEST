@@ -319,7 +319,7 @@ export function TableReport() {
                           }`}></div>
                           {stats.table.tableNumber}
                           <span className="text-xs text-gray-500">
-                            ({stats.table.capacity}명)
+                            ({stats.table.capacity}{t("common.people")})
                           </span>
                         </div>
                       </TableCell>
