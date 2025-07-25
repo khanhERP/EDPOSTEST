@@ -15,6 +15,7 @@ import {
   insertCustomerSchema,
   insertPointTransactionSchema,
   attendanceRecords,
+  products,
 } from "@shared/schema";
 import { initializeSampleData, db } from "./db";
 import { z } from "zod";
