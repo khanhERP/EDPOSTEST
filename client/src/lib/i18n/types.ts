@@ -161,10 +161,6 @@ export interface ReportsTranslations {
   
   // Date labels
   date: string;
-  saleDate: string;
-  paymentDate: string;
-  fromDate: string;
-  toDate: string;
   
   // Table analysis missing keys
   detailedTablePerformance: string;
@@ -172,6 +168,13 @@ export interface ReportsTranslations {
   currentStatus: string;
   orderCount: string;
   peakTime: string;
+  
+  // End of day report specific keys
+  endOfDayReport: string;
+  dailyReport: string;
+  generateReport: string;
+  reportGenerated: string;
+  centralBranch: string;
   
   // Table detail headers
   salesDetailsHeader: string;
