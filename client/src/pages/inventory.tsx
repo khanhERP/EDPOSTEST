@@ -550,15 +550,17 @@ export default function InventoryPage() {
                 onSubmit={stockUpdateForm.handleSubmit(onStockUpdate)}
                 className="space-y-4"
               >
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h3 className="font-medium text-gray-900">
-                    {selectedProduct.name || t("inventory.newProduct")}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {t("inventory.currentStockLabel")}: {selectedProduct.stock}
-                    {t("common.items")}
-                  </p>
-                </div>
+                {selectedProduct?.id !== 0 && (
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="font-medium text-gray-900">
+                      {selectedProduct.name}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {t("inventory.currentStockLabel")}: {selectedProduct.stock}
+                      {t("common.items")}
+                    </p>
+                  </div>
+                )}
 
                 {selectedProduct?.id === 0 && (
                   <>
