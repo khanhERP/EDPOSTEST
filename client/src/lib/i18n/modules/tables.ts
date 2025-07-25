@@ -70,6 +70,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     amountReceived: "받은 금액",
     change: "거스름돈",
     completeSale: "결제 완료",
+    confirmDelete: "정말로 이 테이블을 삭제하시겠습니까?",
   },
   en: {
     title: "Table Management",
@@ -140,6 +141,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     amountReceived: "Amount Received",
     change: "Change",
     completeSale: "Complete Sale",
+    confirmDelete: "Are you sure you want to delete this table?",
   },
   vi: {
     title: "Quản lý bàn",
@@ -210,5 +212,6 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     amountReceived: "Số tiền nhận",
     change: "Tiền thừa",
     completeSale: "Hoàn thành bán hàng",
+    confirmDelete: "Bạn có chắc chắn muốn xóa bàn này?",
   },
 };
