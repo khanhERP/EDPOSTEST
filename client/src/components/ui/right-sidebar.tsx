@@ -26,8 +26,8 @@ interface MenuItem {
 // Menu items will be translated using the hook inside the component
 
 export function RightSidebar() {
-  const [isExpanded, setIsExpanded] = useState(true);
-  const [isNavCollapsed, setIsNavCollapsed] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isNavCollapsed, setIsNavCollapsed] = useState(true);
   const [location] = useLocation();
   const { t } = useTranslation();
 
