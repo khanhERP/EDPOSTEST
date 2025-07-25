@@ -51,10 +51,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Menu analysis
     productPerformance: '상품 성과',
     categoryPerformance: '카테고리 성과',
-    topProducts: '인기 상품',
-    popularItems: '인기 메뉴',
-    totalSold: '총 판매량',
-    performance: '성과',
 
     // Table analysis
     tablePerformance: '테이블 성과',
@@ -104,18 +100,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noCategoryData: '카테고리 데이터가 없습니다.',
 
     // End of day report
-    endOfDayReport: '일일 마감 보고서',
-    displayMode: '표시 모드',
-    horizontal: '가로',
-    vertical: '세로',
-    concernType: '관심 영역',
-    sales: 'Bán hàng',
-    inventory: '재고',
-    summary: '요약',
-    dateType: '날짜 유형',
-    singleDate: '단일 날짜',
-    dateRange: '날짜 범위',
-    paymentMethodFilter: 'Phương thức thanh toán',
     transactionTypeFilter: 'Loại giao dịch',
     creator: '생성자',
     employee: '직원',
@@ -184,18 +168,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     card: 'Card',
 
     // Table analysis specific
-    averageUtilization: 'Average Utilization',
-    averageOrdersPerTable: 'Average orders per table',
-    allTables: 'All tables',
-    cumulativeVisitors: 'Cumulative visitors',
-    totalByTable: 'Total by table',
-    detailedTablePerformance: 'Detailed Table Performance',
-    detailedTablePerformanceDesc: 'Check detailed operational indicators for each table',
-    currentStatus: 'Current Status',
-    orderCount: 'Order Count',
     customerCount: 'Customer Count',
     turnoverRate: 'Turnover Rate',
-    peakTime: 'Peak Time',
     topRevenueTables: 'Top Revenue Tables',
     topTurnoverTables: 'Top Turnover Tables',
     topUtilizationTables: 'Top Utilization Tables',
@@ -209,13 +183,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     topProducts: 'Top Products',
     popularItems: 'Popular Items',
     totalSold: 'Total Sold',
-    orderCount: 'Order Count',
     performance: 'Performance',
 
     // Table analysis
     tablePerformance: 'Table Performance',
     utilizationRate: 'Utilization Rate',
-    turnoverRate: 'Turnover Rate',
     averageRevenue: 'Average Revenue',
     peakHours: 'Peak Hours',
     tableUtilization: 'Table Utilization',
@@ -232,7 +204,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Additional dashboard keys
     periodRevenue: 'Period Revenue',
-    customerCount: 'Customer Count',
     monthRevenue: 'Monthly Revenue',
     monthAccumulated: 'Month Accumulated',
     realTimeStatus: 'Real-time Status',
@@ -240,14 +211,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     count: 'count',
     performanceMetrics: 'Performance Metrics',
     salesAchievementRate: 'Sales Achievement Rate',
-    hour: 'hour',
     peakHour: 'Peak Hour',
     tableTurnoverRate: 'Table Turnover Rate',
-    times: 'times',
     targetAverageDailySales: 'Target avg. daily sales {amount}, Target turnover {turnovers} times',
 
     // Category performance
-    categoryPerformance: 'Category Performance',
     topSellingProducts: 'Top Selling Products (by Quantity)',
     topRevenueProducts: 'Top Revenue Products (by Revenue)',
     menuItems: '{count} items',
@@ -257,7 +225,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     rank: 'Rank',
     menuName: 'Menu Name',
     salesCount: 'Sales Count',
-    revenue: 'Revenue',
     popularMenuByQuantity: 'Popular Menu (by Quantity)',
     popularMenuByQuantityDesc: 'Menu ranking by sales quantity.',
     highRevenueMenu: 'High Revenue Menu (by Revenue)',
