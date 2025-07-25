@@ -161,7 +161,7 @@ export function ClockInOut() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
       {/* Employee Selection */}
       <Card>
         <CardHeader>
@@ -187,17 +187,17 @@ export function ClockInOut() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2">
             {(employees as Employee[] | undefined)?.map((employee: Employee) => (
               <Button
                 key={employee.id}
                 variant={selectedEmployeeId === employee.id ? "default" : "outline"}
-                className="justify-start"
+                className="justify-start h-auto py-3"
                 onClick={() => setSelectedEmployeeId(employee.id)}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span>{employee.name}</span>
-                  <Badge variant="secondary">{t(`employees.roles.${employee.role}`)}</Badge>
+                  <span className="text-sm font-medium">{employee.name}</span>
+                  <Badge variant="secondary" className="text-xs">{t(`employees.roles.${employee.role}`)}</Badge>
                 </div>
               </Button>
             )) || (
@@ -281,7 +281,7 @@ export function ClockInOut() {
               )}
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {!todayAttendance ? (
                   <Button
                     onClick={() => clockInMutation.mutate()}
@@ -361,7 +361,7 @@ export function ClockInOut() {
                 URL: {window.location.origin}/attendance-qr
               </p>
             </div>
-            <div className="flex gap-2 w-full">
+            <div className="flex flex-col sm:flex-row gap-2 w-full">
               <Button
                 variant="outline"
                 onClick={() => {
