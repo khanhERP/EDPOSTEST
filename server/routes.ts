@@ -1038,6 +1038,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk create products
+  app.post("/api/products/bulk", async (req, res) => {
+    try {
+      const { products: productList } = req.body;
+
+      if (!productList || !Array.isArray(productList)) {
+        return res.status(400).json({ error: "Invalid products data" });
+      }
+
+      const results = [];
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const productData of productList) {
+        try {
+          // Validate required fields
+          if (!productData.name || !productData.sku || !productData.price || productData.categoryId === undefined) {
+            throw new Error("Missing required fields");
+          }
+
+          const [product] = await db.insert(products).values({
+            name: productData.name,
+            sku: productData.sku,
+            price: productData.price.toString(),
+            stock: parseInt(productData.stock) || 0,
+            categoryId: parseInt(productData.categoryId),
+            imageUrl: productData.imageUrl || null,
+          }).returning();
+
+          results.push({ success: true, product });
+          successCount++;
+        } catch (error) {
+          console.error("Error creating product:", error);
+          results.push({ success: false, error: error.message, data: productData });
+          errorCount++;
+        }
+      }
+
+      res.json({
+        success: successCount,
+        errors: errorCount,
+        results,
+        message: `${successCount} sản phẩm đã được tạo thành công${errorCount > 0 ? `, ${errorCount} sản phẩm lỗi` : ''}`
+      });
+    } catch (error) {
+      console.error("Bulk products creation error:", error);
+      res.status(500).json({ error: "Failed to create products" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

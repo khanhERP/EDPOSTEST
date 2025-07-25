@@ -38,21 +38,33 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ products }),
       });
-      if (!response.ok) throw new Error("Failed to bulk create products");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to bulk create products");
+      }
       return response.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      toast({
-        title: "Thành công",
-        description: `Đã nhập ${data.success} sản phẩm thành công`,
-      });
+      
+      if (data.errors > 0) {
+        toast({
+          title: "Hoàn thành với lỗi",
+          description: data.message || `${data.success} sản phẩm thành công, ${data.errors} sản phẩm lỗi`,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Thành công",
+          description: data.message || `Đã nhập ${data.success} sản phẩm thành công`,
+        });
+      }
       handleClose();
     },
-    onError: () => {
+    onError: (error) => {
       toast({
         title: "Lỗi",
-        description: "Không thể nhập sản phẩm hàng loạt",
+        description: error.message || "Không thể nhập sản phẩm hàng loạt",
         variant: "destructive",
       });
     },
