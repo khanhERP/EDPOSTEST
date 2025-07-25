@@ -656,7 +656,7 @@ export function EndOfDayReport() {
         </CardHeader>
         <CardContent className="space-y-3">
           {/* Main concern and date type in same row */}
-          <div className="grid grid-cols-4">
+          <div className="grid grid-cols-4 gap-4">
             <div>
               <Label className="text-sm">{t("reports.mainConcern")}</Label>
               <Select value={concernType} onValueChange={setConcernType}>
