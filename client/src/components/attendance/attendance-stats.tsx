@@ -128,7 +128,6 @@ export function AttendanceStats() {
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="w-auto"
-                placeholder={t('attendance.monthPickerPlaceholder')}
               />
             </div>
           </div>

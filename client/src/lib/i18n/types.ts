@@ -133,7 +133,7 @@ export interface ReportsTranslations {
   mainConcern: string;
   cashPayment: string;
   cardPayment: string;
-  
+
   // Table headers for reports
   transactionCode: string;
   time: string;
@@ -150,7 +150,7 @@ export interface ReportsTranslations {
   returnQuantity: string;
   returnValue: string;
   netRevenue: string;
-  
+
   // Report specific content
   salesDetails: string;
   revenueExpenseDetails: string;
@@ -158,14 +158,14 @@ export interface ReportsTranslations {
   noReportData: string;
   reportGenerated: string;
   centralBranch: string;
-  
+
   // Date labels
   date: string;
   saleDate: string;
   paymentDate: string;
   fromDate: string;
   toDate: string;
-  
+
   // Table detail headers
   salesDetailsHeader: string;
   revenueExpenseDetailsHeader: string;
@@ -566,6 +566,7 @@ export interface AttendanceTranslations {
   monthlyStats: string;
   monthlyStatsDesc: string;
   selectMonth: string;
+  monthPickerPlaceholder: string;
   totalWorkDays: string;
   totalAttendance: string;
   totalWorkHours: string;
@@ -601,7 +602,6 @@ export interface AttendanceTranslations {
   lateCount: string;
   absentCount: string;
   times: string;
-  monthPickerPlaceholder: string;
 }
 
 // Main translations interface
