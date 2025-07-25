@@ -75,7 +75,12 @@ export function ClockInOut() {
   });
 
   const breakStartMutation = useMutation({
-    mutationFn: () => apiRequest('POST', `/api/attendance/break-start/${(todayAttendance as AttendanceRecord)?.id}`, {}),
+    mutationFn: () => {
+      if (!todayAttendance) {
+        throw new Error('No attendance record found');
+      }
+      return apiRequest('POST', `/api/attendance/break-start/${(todayAttendance as AttendanceRecord).id}`, {});
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
@@ -84,7 +89,8 @@ export function ClockInOut() {
         description: t('attendance.breakStartSuccessDesc'),
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Break start error:', error);
       toast({
         title: t('common.error'),
         description: t('attendance.breakStartError'),
@@ -94,7 +100,12 @@ export function ClockInOut() {
   });
 
   const breakEndMutation = useMutation({
-    mutationFn: () => apiRequest('POST', `/api/attendance/break-end/${(todayAttendance as AttendanceRecord)?.id}`, {}),
+    mutationFn: () => {
+      if (!todayAttendance) {
+        throw new Error('No attendance record found');
+      }
+      return apiRequest('POST', `/api/attendance/break-end/${(todayAttendance as AttendanceRecord).id}`, {});
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
@@ -103,7 +114,8 @@ export function ClockInOut() {
         description: t('attendance.breakEndSuccessDesc'),
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Break end error:', error);
       toast({
         title: t('common.error'),
         description: t('attendance.breakEndError'),
@@ -298,28 +310,28 @@ export function ClockInOut() {
                         {(todayAttendance as AttendanceRecord).breakStart && !(todayAttendance as AttendanceRecord).breakEnd ? (
                           <Button
                             onClick={() => breakEndMutation.mutate()}
-                            disabled={breakEndMutation.isPending}
+                            disabled={breakEndMutation.isPending || !todayAttendance}
                             variant="outline"
                           >
                             <Play className="w-4 h-4 mr-2" />
-                            {t('attendance.endBreak')}
+                            {breakEndMutation.isPending ? t('common.loading') : t('attendance.endBreak')}
                           </Button>
                         ) : (
                           <Button
                             onClick={() => breakStartMutation.mutate()}
-                            disabled={breakStartMutation.isPending}
+                            disabled={breakStartMutation.isPending || !todayAttendance}
                             variant="outline"
                           >
                             <Coffee className="w-4 h-4 mr-2" />
-                            {t('attendance.startBreak')}
+                            {breakStartMutation.isPending ? t('common.loading') : t('attendance.startBreak')}
                           </Button>
                         )}
                         <Button
                           onClick={() => clockOutMutation.mutate()}
-                          disabled={clockOutMutation.isPending}
+                          disabled={clockOutMutation.isPending || !todayAttendance}
                         >
                           <LogOut className="w-4 h-4 mr-2" />
-                          {t('attendance.clockOut')}
+                          {clockOutMutation.isPending ? t('common.loading') : t('attendance.clockOut')}
                         </Button>
                       </>
                     )}
