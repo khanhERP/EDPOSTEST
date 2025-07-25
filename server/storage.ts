@@ -1052,7 +1052,7 @@ export class DatabaseStorage implements IStorage {
     return { points: customer.points || 0 };
   }
 
-  async updateCustomerPoints(```python
+  async updateCustomerPoints(
     customerId: number,
     points: number,
     description: string,
