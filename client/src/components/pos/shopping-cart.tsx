@@ -129,16 +129,16 @@ export function ShoppingCart({
         <div className="border-t pos-border p-4 space-y-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="pos-text-secondary">Subtotal:</span>
+              <span className="pos-text-secondary">{t('tables.subtotal')}:</span>
               <span className="font-medium">{subtotal.toLocaleString()} ₫</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="pos-text-secondary">Tax (8.25%):</span>
+              <span className="pos-text-secondary">{t('tables.tax')} (8.25%):</span>
               <span className="font-medium">{tax.toLocaleString()} ₫</span>
             </div>
             <div className="border-t pt-2">
               <div className="flex justify-between">
-                <span className="text-lg font-bold pos-text-primary">Total:</span>
+                <span className="text-lg font-bold pos-text-primary">{t('tables.total')}:</span>
                 <span className="text-lg font-bold text-blue-600">{total.toLocaleString()} ₫</span>
               </div>
             </div>
@@ -146,7 +146,7 @@ export function ShoppingCart({
           
           {/* Payment Methods */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium pos-text-primary">Payment Method</Label>
+            <Label className="text-sm font-medium pos-text-primary">{t('tables.paymentMethod')}</Label>
             <div className="grid grid-cols-2 gap-2">
               <Button
                 variant={paymentMethod === "cash" ? "default" : "outline"}
@@ -154,7 +154,7 @@ export function ShoppingCart({
                 className="text-sm"
               >
                 <Banknote className="mr-1" size={16} />
-                Cash
+                {t('tables.cash')}
               </Button>
               <Button
                 variant={paymentMethod === "card" ? "default" : "outline"}
@@ -162,7 +162,7 @@ export function ShoppingCart({
                 className="text-sm"
               >
                 <CreditCard className="mr-1" size={16} />
-                Card
+                {t('tables.card')}
               </Button>
             </div>
           </div>
@@ -170,7 +170,7 @@ export function ShoppingCart({
           {/* Cash Payment */}
           {paymentMethod === "cash" && (
             <div className="space-y-2">
-              <Label className="text-sm font-medium pos-text-primary">Amount Received</Label>
+              <Label className="text-sm font-medium pos-text-primary">{t('tables.amountReceived')}</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -179,7 +179,7 @@ export function ShoppingCart({
                 onChange={(e) => setAmountReceived(e.target.value)}
               />
               <div className="flex justify-between text-sm">
-                <span className="pos-text-secondary">Change:</span>
+                <span className="pos-text-secondary">{t('tables.change')}:</span>
                 <span className="font-bold text-green-600">{change.toLocaleString()} ₫</span>
               </div>
             </div>
@@ -191,7 +191,7 @@ export function ShoppingCart({
             className="w-full btn-success flex items-center justify-center"
           >
             <CartIcon className="mr-2" size={16} />
-            {isProcessing ? "Processing..." : "Complete Sale"}
+            {isProcessing ? "Processing..." : t('tables.completeSale')}
           </Button>
         </div>
       )}
