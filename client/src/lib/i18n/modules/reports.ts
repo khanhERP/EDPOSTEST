@@ -170,6 +170,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     centralBranch: '중앙 지점',
 
     // Date labels
+    date: '날짜',
     saleDate: '판매일',
     paymentDate: '결제일',
     fromDate: '시작일',
@@ -180,12 +181,24 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseDetailsHeader: '수입 지출 세부사항',
     inventoryDetailsHeader: '재고 세부사항',
     
-    // Additional missing keys
-    date: '날짜',
-    saleDate: '판매일',
-    paymentDate: '결제일',
-    fromDate: '시작일',
-    toDate: '종료일',
+    // End of day report detailed table translations
+    transactionTypeHeader: '거래 유형',
+    orderNumberHeader: '주문 번호',
+    employeeHeader: '직원',
+    customerHeader: '고객',
+    totalAmountHeader: '총 금액',
+    paymentMethodHeader: '결제 방법',
+    notesHeader: '메모',
+    timeHeader: '시간',
+    itemHeader: '항목',
+    unitPriceHeader: '단가',
+    totalPriceHeader: '총 가격',
+    categoryHeader: '카테고리',
+    stockInHeader: '입고',
+    stockOutHeader: '출고',
+    currentStockHeader: '현재 재고',
+    supplierHeader: '공급업체',
+    expiryDateHeader: '유통기한',
   },
   en: {
     title: 'Reports',
@@ -343,12 +356,54 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseDetailsHeader: 'Revenue & Expense Details',
     inventoryDetailsHeader: 'Inventory Details',
     
-    // Additional missing keys
+    // Date labels
     date: 'Date',
     saleDate: 'Sale Date',
     paymentDate: 'Payment Date',
     fromDate: 'From Date',
     toDate: 'To Date',
+    
+    // Table headers for reports
+    transactionCode: 'Transaction Code',
+    quantity: 'Quantity',
+    otherRevenue: 'Other Revenue',
+    vat: 'VAT',
+    actualRevenue: 'Actual Revenue',
+    receiptCode: 'Receipt Code',
+    payerReceiver: 'Payer/Receiver',
+    revenueExpenseType: 'Revenue/Expense Type',
+    productCode: 'Product Code',
+    productName: 'Product Name',
+    soldQuantity: 'Sold Quantity',
+    returnQuantity: 'Return Quantity',
+    returnValue: 'Return Value',
+    netRevenue: 'Net Revenue',
+
+    // Report specific content
+    salesDetails: 'Sales Details',
+    revenueExpenseDetails: 'Revenue & Expense Details',
+    inventoryDetails: 'Inventory Details',
+    noReportData: 'No report data available',
+    centralBranch: 'Central Branch',
+    
+    // End of day report detailed table translations
+    transactionTypeHeader: 'Transaction Type',
+    orderNumberHeader: 'Order Number',
+    employeeHeader: 'Employee',
+    customerHeader: 'Customer',
+    totalAmountHeader: 'Total Amount',
+    paymentMethodHeader: 'Payment Method',
+    notesHeader: 'Notes',
+    timeHeader: 'Time',
+    itemHeader: 'Item',
+    unitPriceHeader: 'Unit Price',
+    totalPriceHeader: 'Total Price',
+    categoryHeader: 'Category',
+    stockInHeader: 'Stock In',
+    stockOutHeader: 'Stock Out',
+    currentStockHeader: 'Current Stock',
+    supplierHeader: 'Supplier',
+    expiryDateHeader: 'Expiry Date',
   },
   vi: {
     title: 'Báo cáo',
@@ -523,10 +578,53 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseDetailsHeader: 'Chi tiết thu chi',
     inventoryDetailsHeader: 'Chi tiết hàng hóa',
     
-    // Additional missing keys
+    // Date labels
+    date: 'Ngày',
     saleDate: 'Ngày bán',
     paymentDate: 'Ngày thanh toán',
     fromDate: 'Từ ngày',
     toDate: 'Đến ngày',
+    
+    // Table headers for reports
+    transactionCode: 'Mã giao dịch',
+    quantity: 'Số lượng',
+    otherRevenue: 'Thu nhập khác',
+    vat: 'VAT',
+    actualRevenue: 'Doanh thu thực tế',
+    receiptCode: 'Mã hóa đơn',
+    payerReceiver: 'Người trả/Người nhận',
+    revenueExpenseType: 'Loại thu/chi',
+    productCode: 'Mã sản phẩm',
+    productName: 'Tên sản phẩm',
+    soldQuantity: 'Số lượng bán',
+    returnQuantity: 'Số lượng trả',
+    returnValue: 'Giá trị trả',
+    netRevenue: 'Doanh thu ròng',
+
+    // Report specific content
+    salesDetails: 'Chi tiết bán hàng',
+    revenueExpenseDetails: 'Chi tiết thu chi',
+    inventoryDetails: 'Chi tiết hàng hóa',
+    noReportData: 'Không có dữ liệu báo cáo',
+    centralBranch: 'Chi nhánh trung tâm',
+    
+    // End of day report detailed table translations
+    transactionTypeHeader: 'Loại giao dịch',
+    orderNumberHeader: 'Số đơn hàng',
+    employeeHeader: 'Nhân viên',
+    customerHeader: 'Khách hàng',
+    totalAmountHeader: 'Tổng số tiền',
+    paymentMethodHeader: 'Phương thức thanh toán',
+    notesHeader: 'Ghi chú',
+    timeHeader: 'Thời gian',
+    itemHeader: 'Mặt hàng',
+    unitPriceHeader: 'Đơn giá',
+    totalPriceHeader: 'Tổng giá',
+    categoryHeader: 'Danh mục',
+    stockInHeader: 'Nhập kho',
+    stockOutHeader: 'Xuất kho',
+    currentStockHeader: 'Tồn kho hiện tại',
+    supplierHeader: 'Nhà cung cấp',
+    expiryDateHeader: 'Ngày hết hạn',
   },
 };
