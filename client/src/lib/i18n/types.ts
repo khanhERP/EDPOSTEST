@@ -34,6 +34,8 @@ export interface CommonTranslations {
   description: string;
   price: string;
   quantity: string;
+  notes: string;
+  notesPlaceholder: string;
   actions: string;
   collapse: string;
   expand: string;
