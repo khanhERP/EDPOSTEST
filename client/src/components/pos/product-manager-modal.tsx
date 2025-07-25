@@ -185,15 +185,15 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
               <div className="flex space-x-4 mb-6">
                 <Button onClick={() => setShowAddForm(true)} className="btn-primary">
                   <Plus className="mr-2" size={16} />
-                  Add New Product
+                  {t('tables.addNewProduct')}
                 </Button>
                 <Button variant="outline" className="border-orange-500 text-orange-700 hover:bg-orange-50">
                   <Upload className="mr-2" size={16} />
-                  Bulk Import
+                  {t('tables.bulkImport')}
                 </Button>
                 <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-50">
                   <Download className="mr-2" size={16} />
-                  Export
+                  {t('tables.export')}
                 </Button>
               </div>
               
