@@ -95,7 +95,7 @@ export function RightSidebar() {
               setIsExpanded(false);
             } else {
               setIsExpanded(true);
-              // Keep nav collapsed when reopening
+              setIsNavCollapsed(false); // Auto show text when expanding
             }
           }}
           className="w-full flex items-center justify-center"
