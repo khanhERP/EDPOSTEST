@@ -557,6 +557,35 @@ export interface InventoryTranslations {
   updateFailed: string;
 }
 
+// Tables translations interface
+export interface TablesTranslations {
+  title: string;
+  description: string;
+  tableManagement: string;
+  addTable: string;
+  editTable: string;
+  deleteTable: string;
+  searchPlaceholder: string;
+  tableId: string;
+  tableNumber: string;
+  capacity: string;
+  status: string;
+  available: string;
+  occupied: string;
+  reserved: string;
+  maintenance: string;
+  tableFormTitle: string;
+  tableFormDesc: string;
+  tableAdded: string;
+  tableUpdated: string;
+  tableDeleted: string;
+  tableError: string;
+  tableNumberPlaceholder: string;
+  capacityPlaceholder: string;
+  qrCodePlaceholder: string;
+  selectStatus: string;
+}
+
 export interface Translations {
   common: CommonTranslations;
   nav: NavigationTranslations;
@@ -568,6 +597,7 @@ export interface Translations {
   employees: EmployeesTranslations;
   attendance: AttendanceTranslations;
   inventory: InventoryTranslations;
+  tables: TablesTranslations;
 }
 
 // Type-safe translation keys
@@ -581,7 +611,8 @@ export type TranslationKey =
   | `customers.${keyof CustomersTranslations}`
   | `employees.${keyof EmployeesTranslations}`
   | `attendance.${keyof AttendanceTranslations}`
-  | `inventory.${keyof InventoryTranslations}`;
+  | `inventory.${keyof InventoryTranslations}`
+  | `tables.${keyof TablesTranslations}`;
 
 // Language-specific translations type
 export interface LanguageTranslations {
