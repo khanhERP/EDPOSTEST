@@ -953,8 +953,15 @@ export default function Settings() {
                               ).toLocaleString()}{" "}
                               ₫
                             </div>
-                            <div className="text-center font-medium text-purple-600">
-                              {customer.points || 0}
+                            <div className="text-center">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                onClick={() => handleManagePoints(customer)}
+                              >
+                                {customer.points || 0}P
+                              </Button>
                             </div>
                             <div>
                               <Badge
