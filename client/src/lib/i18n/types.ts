@@ -557,7 +557,13 @@ export interface InventoryTranslations {
   deleteSuccess: string;
   deleteSuccessDescription: string;
   createFailed: string;
+  createFailedDescription: string;
+  createSuccess: string;
+  createSuccessDescription: string;
   updateFailed: string;
+  updateFailedDescription: string;
+  updateSuccess: string;
+  updateSuccessDescription: string;
 }
 
 // Tables translations interface

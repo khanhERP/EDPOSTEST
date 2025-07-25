@@ -167,6 +167,12 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     deleteSuccess: "Xóa thành công",
     deleteSuccessDescription: "Sản phẩm đã được xóa khỏi kho hàng",
     createFailed: "Tạo sản phẩm thất bại",
+    createFailedDescription: "Không thể tạo sản phẩm mới. Vui lòng thử lại.",
+    createSuccess: "Tạo mới thành công",
+    createSuccessDescription: "Sản phẩm mới đã được thêm vào kho hàng",
     updateFailed: "Cập nhật sản phẩm thất bại",
+    updateFailedDescription: "Không thể cập nhật sản phẩm. Vui lòng thử lại.",
+    updateSuccess: "Cập nhật thành công",
+    updateSuccessDescription: "Thông tin sản phẩm đã được cập nhật",
   }
 };

@@ -109,10 +109,18 @@ export default function InventoryPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setShowStockDialog(false);
       stockUpdateForm.reset();
+      toast({
+        title: t("inventory.updateSuccess") || "Cập nhật thành công",
+        description: t("inventory.updateSuccessDescription") || "Thông tin sản phẩm đã được cập nhật",
+      });
     },
     onError: (error) => {
       console.error('Update stock error:', error);
-      alert(t("inventory.updateFailed") || "Failed to update product");
+      toast({
+        title: t("inventory.updateFailed") || "Cập nhật thất bại",
+        description: t("inventory.updateFailedDescription") || "Không thể cập nhật sản phẩm. Vui lòng thử lại.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -135,10 +143,18 @@ export default function InventoryPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setShowStockDialog(false);
       stockUpdateForm.reset();
+      toast({
+        title: t("inventory.createSuccess") || "Tạo mới thành công",
+        description: t("inventory.createSuccessDescription") || "Sản phẩm mới đã được thêm vào kho hàng",
+      });
     },
     onError: (error) => {
       console.error('Create product error:', error);
-      alert(t("inventory.createFailed") || "Failed to create product");
+      toast({
+        title: t("inventory.createFailed") || "Tạo mới thất bại",
+        description: t("inventory.createFailedDescription") || "Không thể tạo sản phẩm mới. Vui lòng thử lại.",
+        variant: "destructive",
+      });
     },
   });
 
