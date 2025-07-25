@@ -183,15 +183,15 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
           {!showAddForm ? (
             <>
               <div className="flex space-x-4 mb-6">
-                <Button onClick={() => setShowAddForm(true)} className="btn-primary">
+                <Button onClick={() => setShowAddForm(true)} className="btn-primary hover:opacity-90">
                   <Plus className="mr-2" size={16} />
                   {t('tables.addNewProduct')}
                 </Button>
-                <Button variant="outline" className="border-orange-500 text-orange-700 hover:bg-orange-50">
+                <Button variant="outline" className="border-orange-500 text-orange-700 hover:bg-orange-100 hover:border-orange-600">
                   <Upload className="mr-2" size={16} />
                   {t('tables.bulkImport')}
                 </Button>
-                <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-50">
+                <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-100 hover:border-green-600">
                   <Download className="mr-2" size={16} />
                   {t('tables.export')}
                 </Button>
