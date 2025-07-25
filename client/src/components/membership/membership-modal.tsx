@@ -35,6 +35,11 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
   const queryClient = useQueryClient();
   const [selectedTier, setSelectedTier] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isEditingThresholds, setIsEditingThresholds] = useState(false);
+  const [thresholds, setThresholds] = useState({
+    GOLD: 300000,
+    VIP: 1000000
+  });
 
   const membershipTiers = [
     {
@@ -52,7 +57,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
       icon: Award,
       color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
       benefits: [t("customers.pointsEarning15"), t("customers.birthdayDiscount10"), t("customers.freeDrinkMonthly")],
-      minSpent: 300000,
+      minSpent: thresholds.GOLD,
       description: t("customers.premiumLevelDesc")
     },
     {
@@ -61,7 +66,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
       icon: Crown,
       color: 'bg-purple-100 text-purple-800 border-purple-200',
       benefits: [t("customers.pointsEarning2x"), t("customers.birthdayDiscount20"), t("customers.freeDrink2Monthly"), t("customers.vipRoomAccess")],
-      minSpent: 1000000,
+      minSpent: thresholds.VIP,
       description: t("customers.vipLevelDesc")
     }
   ];
@@ -108,10 +113,35 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
 
   const autoUpgradeBasedOnSpending = (customerId: number, totalSpent: number) => {
     let newLevel = 'SILVER';
-    if (totalSpent >= 1000000) newLevel = 'VIP';
-    else if (totalSpent >= 300000) newLevel = 'GOLD';
+    if (totalSpent >= thresholds.VIP) newLevel = 'VIP';
+    else if (totalSpent >= thresholds.GOLD) newLevel = 'GOLD';
     
     handleUpdateMembership(customerId, newLevel);
+  };
+
+  const saveThresholds = () => {
+    setIsEditingThresholds(false);
+    toast({
+      title: t("common.success"),
+      description: "Đã cập nhật mức chi tiêu nâng hạng",
+    });
+    // Refresh customer list to recalculate membership levels
+    queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+  };
+
+  const autoUpgradeAllCustomers = () => {
+    customers?.forEach(customer => {
+      const totalSpent = parseFloat(customer.totalSpent || '0');
+      const currentLevel = customer.membershipLevel || 'SILVER';
+      let suggestedLevel = 'SILVER';
+      
+      if (totalSpent >= thresholds.VIP) suggestedLevel = 'VIP';
+      else if (totalSpent >= thresholds.GOLD) suggestedLevel = 'GOLD';
+      
+      if (currentLevel !== suggestedLevel) {
+        autoUpgradeBasedOnSpending(customer.id, totalSpent);
+      }
+    });
   };
 
   const filteredCustomers = customers?.filter(customer => {
@@ -168,7 +198,22 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        <div className="text-sm font-medium">{t("customers.minPurchaseAmount")}: ₩{tier.minSpent.toLocaleString()}</div>
+                        <div className="text-sm font-medium flex items-center gap-2">
+                          {t("customers.minPurchaseAmount")}: 
+                          {isEditingThresholds && tier.level !== 'SILVER' ? (
+                            <Input
+                              type="number"
+                              value={thresholds[tier.level as keyof typeof thresholds]}
+                              onChange={(e) => setThresholds(prev => ({
+                                ...prev,
+                                [tier.level]: parseInt(e.target.value) || 0
+                              }))}
+                              className="w-32 h-6 text-xs"
+                            />
+                          ) : (
+                            <span>₩{tier.minSpent.toLocaleString()}</span>
+                          )}
+                        </div>
                         <div className="space-y-1">
                           <div className="text-sm font-medium">{t("customers.membershipBenefits")}:</div>
                           {tier.benefits.map((benefit, index) => (
@@ -194,13 +239,37 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
                 {t("customers.customerMembershipManagement")}
               </h3>
               <div className="flex gap-2">
+                {isEditingThresholds ? (
+                  <>
+                    <Button
+                      onClick={saveThresholds}
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      Lưu mức chi tiêu
+                    </Button>
+                    <Button
+                      onClick={() => setIsEditingThresholds(false)}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Hủy
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    onClick={() => setIsEditingThresholds(true)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Sửa mức chi tiêu
+                  </Button>
+                )}
                 <Button
-                  onClick={() => {
-                    customers?.forEach(customer => {
-                      const totalSpent = parseFloat(customer.totalSpent || '0');
-                      autoUpgradeBasedOnSpending(customer.id, totalSpent);
-                    });
-                  }}
+                  onClick={autoUpgradeAllCustomers}
                   variant="outline"
                   size="sm"
                 >
@@ -253,7 +322,7 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
                   {filteredCustomers.map((customer) => {
                     const currentTier = membershipTiers.find(t => t.level === (customer.membershipLevel || 'SILVER'));
                     const totalSpent = parseFloat(customer.totalSpent || '0');
-                    const suggestedTier = totalSpent >= 1000000 ? 'VIP' : totalSpent >= 300000 ? 'GOLD' : 'SILVER';
+                    const suggestedTier = totalSpent >= thresholds.VIP ? 'VIP' : totalSpent >= thresholds.GOLD ? 'GOLD' : 'SILVER';
                     const needsUpgrade = suggestedTier !== (customer.membershipLevel || 'SILVER');
                     
                     return (
