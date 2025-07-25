@@ -406,7 +406,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         )}
                       </div>
                       <div className="font-medium">
-                        ₩{Number(activeOrder.total).toLocaleString()}
+                        {Number(activeOrder.total).toLocaleString()} ₫
                       </div>
                     </div>
                   )}
@@ -585,10 +585,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                     </div>
                                     <div className="text-right ml-4">
                                       <p className="font-bold text-lg text-green-600">
-                                        ₩{Number(item.total || 0).toLocaleString()}
+                                        {Number(item.total || 0).toLocaleString()} ₫
                                       </p>
                                       <p className="text-sm text-gray-500">
-                                        ₩{Number(item.unitPrice || 0).toLocaleString()}/món
+                                        {Number(item.unitPrice || 0).toLocaleString()} ₫/món
                                       </p>
                                     </div>
                                   </div>
