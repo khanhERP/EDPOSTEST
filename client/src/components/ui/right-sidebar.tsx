@@ -141,9 +141,14 @@ export function RightSidebar() {
                     <span className="font-medium">{item.label}</span>
                   )}
                   {isNavCollapsed && (
-                    <span className="opacity-0 group-hover:opacity-100 ml-3 font-medium transition-all duration-200 absolute left-8 whitespace-nowrap bg-white text-gray-800 px-2 py-1 rounded-md shadow-lg border border-gray-200 z-50">
-                      {item.label}
-                    </span>
+                    <div className="opacity-0 group-hover:opacity-100 transition-all duration-300 ease-out absolute left-12 top-1/2 transform -translate-y-1/2 z-50 pointer-events-none">
+                      <div className="bg-gray-900 text-white text-sm font-medium px-3 py-2 rounded-lg shadow-xl whitespace-nowrap">
+                        {item.label}
+                        <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1">
+                          <div className="w-2 h-2 bg-gray-900 rotate-45"></div>
+                        </div>
+                      </div>
+                    </div>
                   )}
                   {showText && item.badge && (
                     <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
