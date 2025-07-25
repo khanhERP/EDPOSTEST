@@ -92,7 +92,15 @@ export function OrderManagement() {
 
   const formatTime = (dateString: string | Date) => {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
-    return date.toLocaleTimeString('ko-KR', {
+    const currentLanguage = localStorage.getItem('language') || 'ko';
+    
+    const localeMap = {
+      ko: 'ko-KR',
+      en: 'en-US',
+      vi: 'vi-VN'
+    };
+    
+    return date.toLocaleTimeString(localeMap[currentLanguage as keyof typeof localeMap] || 'ko-KR', {
       hour: '2-digit',
       minute: '2-digit'
     });
