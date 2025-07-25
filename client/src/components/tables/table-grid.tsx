@@ -662,9 +662,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   </Button>
                   <Button
                     onClick={() => setPointsPaymentOpen(true)}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white border-blue-600 hover:border-blue-700"
                     size="lg"
-                    variant="outline"
                   >
                     <Users className="w-4 h-4 mr-2" />
                     Thanh toán bằng điểm
