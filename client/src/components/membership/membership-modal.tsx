@@ -42,6 +42,18 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
     VIP: 1000000
   });
 
+  // Fetch customers
+  const { data: customers, isLoading } = useQuery<Customer[]>({
+    queryKey: ['/api/customers'],
+    enabled: isOpen,
+  });
+
+  // Fetch membership thresholds
+  const { data: fetchedThresholds } = useQuery<{ GOLD: number; VIP: number }>({
+    queryKey: ['/api/membership-thresholds'],
+    enabled: isOpen,
+  });
+
   // Update thresholds when data is fetched
   React.useEffect(() => {
     if (fetchedThresholds) {
@@ -78,25 +90,6 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
       description: t("customers.vipLevelDesc")
     }
   ];
-
-
-
-  // Fetch customers
-  const { data: customers, isLoading } = useQuery<Customer[]>({
-    queryKey: ['/api/customers'],
-    enabled: isOpen,
-  });
-
-  // Fetch membership thresholds
-  const { data: fetchedThresholds } = useQuery<{ GOLD: number; VIP: number }>({
-    queryKey: ['/api/membership-thresholds'],
-    enabled: isOpen,
-    onSuccess: (data) => {
-      if (data) {
-        setThresholds(data);
-      }
-    }
-  });
 
   // Update customer membership
   const updateMembershipMutation = useMutation({
