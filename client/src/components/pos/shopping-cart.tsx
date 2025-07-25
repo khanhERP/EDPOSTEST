@@ -82,44 +82,42 @@ export function ShoppingCart({
         ) : (
           cart.map((item) => (
             <div key={item.id} className="bg-gray-50 rounded-lg p-2">
-              <div className="flex flex-col">
-                <div className="flex items-start justify-between mb-2">
+              <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
                     <h4 className="font-medium pos-text-primary text-sm truncate">{item.name}</h4>
                     <p className="text-xs pos-text-secondary">{parseFloat(item.price).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ each</p>
+                    <div className="flex items-center space-x-1 mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                        className="w-6 h-6 p-0"
+                        disabled={item.quantity <= 1}
+                      >
+                        <Minus size={10} />
+                      </Button>
+                      <span className="w-6 text-center font-medium text-xs">{item.quantity}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                        className="w-6 h-6 p-0"
+                        disabled={item.quantity >= item.stock}
+                      >
+                        <Plus size={10} />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onRemoveItem(item.id)}
+                        className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
+                      >
+                        <Minus size={10} />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                      className="w-6 h-6 p-0"
-                      disabled={item.quantity <= 1}
-                    >
-                      <Minus size={10} />
-                    </Button>
-                    <span className="w-6 text-center font-medium text-xs">{item.quantity}</span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                      className="w-6 h-6 p-0"
-                      disabled={item.quantity >= item.stock}
-                    >
-                      <Plus size={10} />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onRemoveItem(item.id)}
-                      className="w-6 h-6 p-0 text-red-500 hover:text-red-700 border-red-300 hover:border-red-500"
-                    >
-                      <Minus size={10} />
-                    </Button>
-                  </div>
+                  <div className="font-bold pos-text-primary text-sm ml-4">{parseFloat(item.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</div>
                 </div>
-                <div className="font-bold pos-text-primary text-sm text-center">{parseFloat(item.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</div>
-              </div>
             </div>
           ))
         )}
