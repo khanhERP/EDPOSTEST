@@ -43,22 +43,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     card: '카드',
 
     // Table analysis specific
-    averageUtilization: '평균 이용률',
-    averageOrdersPerTable: '테이블당 평균 주문 수',
-    allTables: '전체 테이블',
-    cumulativeVisitors: '누적 방문 고객',
-    totalByTable: '테이블별 합계',
-    detailedTablePerformance: '테이블별 상세 성과',
-    detailedTablePerformanceDesc: '각 테이블의 상세한 운영 지표를 확인합니다',
-    currentStatus: '현재 상태',
-    orderCount: '주문 수',
     customerCount: '고객 수',
     turnoverRate: '회전율',
-    peakTime: '피크 시간',
-    topRevenueTables: '매출 상위 테이블',
-    topTurnoverTables: '회전율 상위 테이블',
-    topUtilizationTables: '이용률 상위 테이블',
-    timesPerDay: '회/일',
     hour: '시',
     times: '회',
 
@@ -68,13 +54,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     topProducts: '인기 상품',
     popularItems: '인기 메뉴',
     totalSold: '총 판매량',
-    orderCount: '주문 횟수',
     performance: '성과',
 
     // Table analysis
     tablePerformance: '테이블 성과',
     utilizationRate: '이용률',
-    turnoverRate: '회전율',
     averageRevenue: '평균 매출',
     peakHours: '피크 시간대',
     tableUtilization: '테이블 이용률',
