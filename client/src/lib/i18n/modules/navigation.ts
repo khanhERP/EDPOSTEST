@@ -8,6 +8,7 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     reports: '보고서',
     employees: '직원',
     attendance: '출석',
+    suppliers: '공급업체',
   },
   en: {
     pos: 'POS',
@@ -16,6 +17,7 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     reports: 'Reports',
     employees: 'Employees',
     attendance: 'Attendance',
+    suppliers: 'Suppliers',
   },
   vi: {
     pos: 'POS',
@@ -24,5 +26,6 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     reports: 'Báo cáo',
     employees: 'Nhân viên',
     attendance: 'Chấm công',
+    suppliers: 'Nhà cung cấp',
   },
 };
