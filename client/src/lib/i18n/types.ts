@@ -166,6 +166,13 @@ export interface ReportsTranslations {
   fromDate: string;
   toDate: string;
   
+  // Table analysis missing keys
+  detailedTablePerformance: string;
+  detailedTablePerformanceDesc: string;
+  currentStatus: string;
+  orderCount: string;
+  peakTime: string;
+  
   // Table detail headers
   salesDetailsHeader: string;
   revenueExpenseDetailsHeader: string;

@@ -186,6 +186,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     paymentDate: '결제일',
     fromDate: '시작일',
     toDate: '종료일',
+    
+    // Table analysis missing keys
+    detailedTablePerformance: '테이블별 상세 성과',
+    detailedTablePerformanceDesc: '각 테이블별 상세 운영 지표를 확인하세요',
+    currentStatus: '현재 상태',
+    orderCount: '주문 수',
+    peakTime: '피크 시간',
   },
   en: {
     title: 'Reports',
@@ -349,6 +356,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     paymentDate: 'Payment Date',
     fromDate: 'From Date',
     toDate: 'To Date',
+    
+    // Table analysis missing keys
+    detailedTablePerformance: 'Detailed Table Performance',
+    detailedTablePerformanceDesc: 'Check detailed operational metrics for each table',
+    currentStatus: 'Current Status',
+    orderCount: 'Order Count',
+    peakTime: 'Peak Time',
   },
   vi: {
     title: 'Báo cáo',
@@ -528,5 +542,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     paymentDate: 'Ngày thanh toán',
     fromDate: 'Từ ngày',
     toDate: 'Đến ngày',
+    
+    // Table analysis missing keys
+    detailedTablePerformance: 'Hiệu suất chi tiết theo bàn',
+    detailedTablePerformanceDesc: 'Kiểm tra các chỉ số hoạt động chi tiết cho từng bàn',
+    currentStatus: 'Trạng thái hiện tại',
+    orderCount: 'Số đơn hàng',
+    peakTime: 'Giờ cao điểm',
   },
 };
