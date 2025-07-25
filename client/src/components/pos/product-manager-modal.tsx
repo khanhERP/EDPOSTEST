@@ -265,9 +265,6 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                 <h3 className="text-lg font-medium">
                   {editingProduct ? "Edit Product" : "Add New Product"}
                 </h3>
-                <Button variant="ghost" onClick={resetForm}>
-                  <X size={16} />
-                </Button>
               </div>
               
               <Form {...form}>
