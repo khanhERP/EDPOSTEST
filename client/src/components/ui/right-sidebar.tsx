@@ -164,7 +164,7 @@ export function RightSidebar() {
 
       {/* Bottom Section */}
       {isExpanded && !isNavCollapsed && (
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-green-200 bg-green-50">
+        <div className="absolute bottom-4 left-0 right-0 mx-4 p-3 border border-green-200 bg-green-50 rounded-lg shadow-sm">
           <div className="text-sm text-gray-500 text-center">
             <div className="font-medium">EDPOS System</div>
             <div className="text-xs opacity-75">v1.0.0</div>
