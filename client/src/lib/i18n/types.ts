@@ -133,7 +133,7 @@ export interface ReportsTranslations {
   mainConcern: string;
   cashPayment: string;
   cardPayment: string;
-
+  
   // Table headers for reports
   transactionCode: string;
   time: string;
@@ -150,7 +150,7 @@ export interface ReportsTranslations {
   returnQuantity: string;
   returnValue: string;
   netRevenue: string;
-
+  
   // Report specific content
   salesDetails: string;
   revenueExpenseDetails: string;
@@ -158,14 +158,14 @@ export interface ReportsTranslations {
   noReportData: string;
   reportGenerated: string;
   centralBranch: string;
-
+  
   // Date labels
   date: string;
   saleDate: string;
   paymentDate: string;
   fromDate: string;
   toDate: string;
-
+  
   // Table detail headers
   salesDetailsHeader: string;
   revenueExpenseDetailsHeader: string;
@@ -500,11 +500,34 @@ export interface AttendanceTranslations {
   recordsDescription: string;
   selectedDate: string;
   unknownEmployee: string;
+  noRecords: string;
+  selectOtherDate: string;
+  clockInTime: string;
+  clockOutTime: string;
+  breakTime: string;
+  totalHours: string;
+  overtime: string;
+  employeeSelect: string;
+  currentStatus: string;
+  refresh: string;
+  qrAttendance: string;
+  qrCodeTitle: string;
+  qrCodeDescription: string;
+  qrCodeInstructions: string;
+  urlCopy: string;
+  copySuccess: string;
+  copySuccessDesc: string;
+  breakEndSuccess: string;
+  breakEndSuccessDesc: string;
+  breakEndError: string;
   status: {
     present: string;
     absent: string;
     late: string;
     halfDay: string;
+    working: string;
+    onBreak: string;
+    clockedOut: string;
   };
   clockInSuccess: string;
   clockInSuccessDesc: string;
@@ -680,36 +703,6 @@ export interface TablesTranslations {
   capacityPlaceholder: string;
   qrCodePlaceholder: string;
   selectStatus: string;
-  confirmDelete: string;
-  // Product Management
-  productManagement: string;
-  addNewProduct: string;
-  bulkImport: string;
-  export: string;
-  product: string;
-  sku: string;
-  category: string;
-  price: string;
-  stock: string;
-  actions: string;
-  editProduct: string;
-  deleteProduct: string;
-  productName: string;
-  productPrice: string;
-  productStock: string;
-  productCategory: string;
-  imageUrl: string;
-  createProduct: string;
-  updateProduct: string;
-  cancel: string;
-  loading: string;
-  productNamePlaceholder: string;
-  skuPlaceholder: string;
-  pricePlaceholder: string;
-  stockPlaceholder: string;
-  selectCategory: string;
-  imageUrlOptional: string;
-  confirmDeleteProduct: string;
 }
 
 export interface Translations {
