@@ -82,6 +82,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     error: "오류",
     warning: "경고",
     info: "정보",
+    restaurant: "레스토랑",
   },
   en: {
     loading: "Loading...",
@@ -163,6 +164,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     error: "Error",
     warning: "Warning",
     info: "Information",
+    restaurant: "Restaurant",
   },
   vi: {
     loading: "Đang tải...",
@@ -244,5 +246,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     error: "Lỗi",
     warning: "Cảnh báo",
     info: "Thông tin",
+    restaurant: "Nhà hàng",
   },
 };
