@@ -117,7 +117,7 @@ export function AttendanceStats() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Label htmlFor="month-picker">월 선택:</Label>
+              <Label htmlFor="month-picker">{t('attendance.selectMonth')}:</Label>
               <Input
                 id="month-picker"
                 type="month"
@@ -137,7 +137,7 @@ export function AttendanceStats() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">총 근무일</p>
+                  <p className="text-sm font-medium text-gray-600">{t('attendance.totalWorkDays')}</p>
                   <p className="text-3xl font-bold">{monthlyStats.totalWorkingDays}</p>
                 </div>
                 <Calendar className="w-8 h-8 text-blue-500" />
@@ -149,7 +149,7 @@ export function AttendanceStats() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">총 출근 횟수</p>
+                  <p className="text-sm font-medium text-gray-600">{t('attendance.totalAttendance')}</p>
                   <p className="text-3xl font-bold">{monthlyStats.totalAttendance}</p>
                 </div>
                 <Users className="w-8 h-8 text-green-500" />
@@ -161,9 +161,9 @@ export function AttendanceStats() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">총 근무시간</p>
+                  <p className="text-sm font-medium text-gray-600">{t('attendance.totalWorkHours')}</p>
                   <p className="text-3xl font-bold">{monthlyStats.totalWorkingHours.toFixed(1)}</p>
-                  <p className="text-xs text-gray-500">시간</p>
+                  <p className="text-xs text-gray-500">{t('attendance.hours')}</p>
                 </div>
                 <Clock className="w-8 h-8 text-purple-500" />
               </div>
@@ -174,9 +174,9 @@ export function AttendanceStats() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">총 초과근무</p>
+                  <p className="text-sm font-medium text-gray-600">{t('attendance.totalOvertime')}</p>
                   <p className="text-3xl font-bold">{monthlyStats.totalOvertime.toFixed(1)}</p>
-                  <p className="text-xs text-gray-500">시간</p>
+                  <p className="text-xs text-gray-500">{t('attendance.hours')}</p>
                 </div>
                 <TrendingUp className="w-8 h-8 text-orange-500" />
               </div>
@@ -190,25 +190,25 @@ export function AttendanceStats() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">평균 근무시간</CardTitle>
+              <CardTitle className="text-lg">{t('attendance.averageWorkHours')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
-                {monthlyStats.averageWorkingHours.toFixed(1)} 시간
+                {monthlyStats.averageWorkingHours.toFixed(1)} {t('attendance.hours')}
               </div>
-              <p className="text-sm text-gray-600 mt-2">일일 평균 근무시간</p>
+              <p className="text-sm text-gray-600 mt-2">{t('attendance.dailyAverageWorkHours')}</p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">출근율</CardTitle>
+              <CardTitle className="text-lg">{t('attendance.attendanceRate')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600">
                 {monthlyStats.attendanceRate.toFixed(1)}%
               </div>
-              <p className="text-sm text-gray-600 mt-2">전체 직원 평균 출근율</p>
+              <p className="text-sm text-gray-600 mt-2">{t('attendance.overallAttendanceRate')}</p>
             </CardContent>
           </Card>
         </div>
@@ -217,16 +217,16 @@ export function AttendanceStats() {
       {/* Employee Stats */}
       <Card>
         <CardHeader>
-          <CardTitle>직원별 통계 ({formatMonth(selectedMonth)})</CardTitle>
+          <CardTitle>{t('attendance.employeeStats')} ({formatMonth(selectedMonth)})</CardTitle>
           <CardDescription>
-            각 직원의 근태 현황을 자세히 확인할 수 있습니다.
+            {t('attendance.employeeStatsDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {employeeStats.length === 0 ? (
             <div className="text-center py-8">
               <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500">통계 데이터가 없습니다.</p>
+              <p className="text-gray-500">{t('common.noRecords')}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -235,33 +235,37 @@ export function AttendanceStats() {
                   <div className="flex justify-between items-start mb-3">
                     <div>
                       <h3 className="font-semibold">{employee.name}</h3>
-                      <p className="text-sm text-gray-600">{employee.role === 'manager' ? '매니저' : employee.role === 'admin' ? '관리자' : '캐셔'}</p>
+                      <p className="text-sm text-gray-600">
+                        {employee.role === 'manager' ? t('employees.roles.manager') : 
+                         employee.role === 'admin' ? t('employees.roles.admin') : 
+                         t('employees.roles.cashier')}
+                      </p>
                     </div>
                     <Badge variant={attendanceRate >= 95 ? "default" : attendanceRate >= 85 ? "secondary" : "destructive"}>
-                      출근율 {attendanceRate.toFixed(1)}%
+                      {t('attendance.attendanceRate')} {attendanceRate.toFixed(1)}%
                     </Badge>
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
                     <div>
-                      <p className="text-gray-600">근무 일수</p>
-                      <p className="font-semibold">{totalDays}일</p>
+                      <p className="text-gray-600">{t('attendance.workDays')}</p>
+                      <p className="font-semibold">{totalDays}{t('attendance.days')}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">총 근무시간</p>
-                      <p className="font-semibold">{totalHours}시간</p>
+                      <p className="text-gray-600">{t('attendance.totalHours')}</p>
+                      <p className="font-semibold">{totalHours}{t('attendance.hours')}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">초과근무</p>
-                      <p className="font-semibold">{overtimeHours}시간</p>
+                      <p className="text-gray-600">{t('attendance.overtime')}</p>
+                      <p className="font-semibold">{overtimeHours}{t('attendance.hours')}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">지각</p>
-                      <p className="font-semibold text-orange-600">{lateCount}회</p>
+                      <p className="text-gray-600">{t('attendance.lateCount')}</p>
+                      <p className="font-semibold text-orange-600">{lateCount}{t('attendance.times')}</p>
                     </div>
                     <div>
-                      <p className="text-gray-600">결근</p>
-                      <p className="font-semibold text-red-600">{absentCount}회</p>
+                      <p className="text-gray-600">{t('attendance.absentCount')}</p>
+                      <p className="font-semibold text-red-600">{absentCount}{t('attendance.times')}</p>
                     </div>
                   </div>
                 </div>
