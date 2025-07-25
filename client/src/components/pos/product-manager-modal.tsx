@@ -396,7 +396,7 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                     <Button 
                       type="submit" 
                       disabled={createProductMutation.isPending || updateProductMutation.isPending}
-                      className="btn-primary"
+                      className="btn-primary hover:bg-blue-500"
                     >
                       {editingProduct ? t('tables.updateProduct') : t('tables.createProduct')}
                     </Button>
