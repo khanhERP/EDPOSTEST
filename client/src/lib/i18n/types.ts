@@ -425,6 +425,8 @@ export interface EmployeesTranslations {
   };
   active: string;
   inactive: string;
+  deleteSuccess: string;
+  deleteError: string;
 }
 
 // Attendance translations interface

@@ -49,6 +49,7 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     add: "추가",
     saving: "저장 중...",
     confirmDelete: "정말로 {{name}}을(를) 삭제하시겠습니까?",
+    deleteSuccess: "직원이 성공적으로 삭제되었습니다"
   },
   en: {
     title: "Employee Management",
@@ -98,6 +99,7 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     add: "Add",
     saving: "Saving...",
     confirmDelete: "Are you sure you want to delete {{name}}?",
+    deleteSuccess: "Employee deleted successfully",
   },
   vi: {
     title: "Quản lý nhân viên",
@@ -147,5 +149,7 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     add: "Thêm",
     saving: "Đang lưu...",
     confirmDelete: "Bạn có chắc chắn muốn xóa {{name}}?",
+    deleteSuccess: "Đã xóa nhân viên thành công",
+    deleteError: "Lỗi khi xóa nhân viên",
   },
 };
