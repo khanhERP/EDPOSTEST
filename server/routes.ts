@@ -147,6 +147,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/products/bulk", async (req, res) => {
+    try {
+      const { products } = req.body;
+      
+      if (!Array.isArray(products)) {
+        return res.status(400).json({ message: "Products must be an array" });
+      }
+
+      const results = [];
+      const errors = [];
+
+      for (const productData of products) {
+        try {
+          const validatedData = insertProductSchema.parse(productData);
+          const product = await storage.createProduct(validatedData);
+          results.push(product);
+        } catch (error) {
+          errors.push({
+            product: productData,
+            error: error instanceof z.ZodError ? error.errors : "Failed to create product"
+          });
+        }
+      }
+
+      res.json({
+        success: results.length,
+        failed: errors.length,
+        results,
+        errors
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to bulk create products" });
+    }
+  });
+
   // Transactions
   app.post("/api/transactions", async (req, res) => {
     try {

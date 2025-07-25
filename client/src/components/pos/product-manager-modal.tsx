@@ -14,6 +14,7 @@ import { queryClient } from "@/lib/queryClient";
 import { insertProductSchema, type Product, type Category } from "@shared/schema";
 import { z } from "zod";
 import { useTranslation } from "@/lib/i18n";
+import { BulkImportModal } from "./bulk-import-modal";
 
 interface ProductManagerModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ const productFormSchema = insertProductSchema.extend({
 
 export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProps) {
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showBulkImport, setShowBulkImport] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -187,7 +189,11 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                   <Plus className="mr-2" size={16} />
                   {t('tables.addNewProduct')}
                 </Button>
-                <Button variant="outline" className="border-orange-500 text-orange-700 hover:bg-orange-100 hover:border-orange-600">
+                <Button 
+                  variant="outline" 
+                  className="border-orange-500 text-orange-700 hover:bg-orange-100 hover:border-orange-600"
+                  onClick={() => setShowBulkImport(true)}
+                >
                   <Upload className="mr-2" size={16} />
                   {t('tables.bulkImport')}
                 </Button>
@@ -406,6 +412,11 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
             </div>
           )}
         </div>
+        
+        <BulkImportModal 
+          isOpen={showBulkImport} 
+          onClose={() => setShowBulkImport(false)} 
+        />
       </DialogContent>
     </Dialog>
   );

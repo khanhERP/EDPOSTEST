@@ -1,0 +1,276 @@
+
+import { useState, useRef } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { X, Upload, Download, AlertCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { queryClient } from "@/lib/queryClient";
+import { useTranslation } from "@/lib/i18n";
+import * as XLSX from 'xlsx';
+
+interface BulkImportModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+interface ProductRow {
+  name: string;
+  sku: string;
+  price: string;
+  stock: number;
+  categoryId: number;
+  imageUrl?: string;
+}
+
+export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [preview, setPreview] = useState<ProductRow[]>([]);
+  const [errors, setErrors] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  const { t } = useTranslation();
+
+  const bulkCreateMutation = useMutation({
+    mutationFn: async (products: ProductRow[]) => {
+      const response = await fetch("/api/products/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ products }),
+      });
+      if (!response.ok) throw new Error("Failed to bulk create products");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Thành công",
+        description: `Đã nhập ${data.success} sản phẩm thành công`,
+      });
+      handleClose();
+    },
+    onError: () => {
+      toast({
+        title: "Lỗi",
+        description: "Không thể nhập sản phẩm hàng loạt",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsProcessing(true);
+    setErrors([]);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+        // Skip header row and process data
+        const rows = jsonData.slice(1) as any[][];
+        const validProducts: ProductRow[] = [];
+        const newErrors: string[] = [];
+
+        rows.forEach((row, index) => {
+          const rowNumber = index + 2; // +2 because we skipped header and arrays are 0-indexed
+          
+          if (!row[0] || !row[1] || !row[2] || row[3] === undefined || !row[4]) {
+            newErrors.push(`Dòng ${rowNumber}: Thiếu thông tin bắt buộc`);
+            return;
+          }
+
+          const product: ProductRow = {
+            name: row[0]?.toString().trim(),
+            sku: row[1]?.toString().trim(),
+            price: row[2]?.toString().trim(),
+            stock: parseInt(row[3]?.toString()) || 0,
+            categoryId: parseInt(row[4]?.toString()) || 0,
+            imageUrl: row[5]?.toString().trim() || "",
+          };
+
+          // Validate data
+          if (!product.name) {
+            newErrors.push(`Dòng ${rowNumber}: Tên sản phẩm không được để trống`);
+          }
+          if (!product.sku) {
+            newErrors.push(`Dòng ${rowNumber}: SKU không được để trống`);
+          }
+          if (isNaN(parseFloat(product.price))) {
+            newErrors.push(`Dòng ${rowNumber}: Giá không hợp lệ`);
+          }
+          if (product.categoryId <= 0) {
+            newErrors.push(`Dòng ${rowNumber}: Category ID không hợp lệ`);
+          }
+
+          if (newErrors.length === 0 || newErrors.filter(e => e.includes(`Dòng ${rowNumber}`)).length === 0) {
+            validProducts.push(product);
+          }
+        });
+
+        setPreview(validProducts);
+        setErrors(newErrors);
+      } catch (error) {
+        setErrors(["Không thể đọc file Excel. Vui lòng kiểm tra định dạng file."]);
+      }
+      setIsProcessing(false);
+    };
+
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleImport = () => {
+    if (preview.length > 0) {
+      bulkCreateMutation.mutate(preview);
+    }
+  };
+
+  const handleClose = () => {
+    setPreview([]);
+    setErrors([]);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+    onClose();
+  };
+
+  const downloadTemplate = () => {
+    const template = [
+      ["Tên sản phẩm", "SKU", "Giá", "Số lượng", "Category ID", "Hình ảnh (URL)"],
+      ["Cà phê đen", "COFFEE-001", "25000", "100", "1", ""],
+      ["Bánh mì", "FOOD-001", "15000", "50", "2", ""],
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(template);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+    XLSX.writeFile(wb, "product_import_template.xlsx");
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-4xl max-h-screen overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center justify-between">
+            Nhập sản phẩm hàng loạt
+            <Button variant="ghost" size="sm" onClick={handleClose}>
+              <X size={20} />
+            </Button>
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="p-6 space-y-6">
+          {/* Instructions */}
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <h3 className="font-medium mb-2">Hướng dẫn:</h3>
+            <ol className="list-decimal list-inside space-y-1 text-sm">
+              <li>Tải xuống file mẫu Excel</li>
+              <li>Điền thông tin sản phẩm theo đúng định dạng</li>
+              <li>Upload file và xem trước dữ liệu</li>
+              <li>Nhấn "Nhập sản phẩm" để hoàn tất</li>
+            </ol>
+          </div>
+
+          {/* Download template and upload */}
+          <div className="flex space-x-4">
+            <Button onClick={downloadTemplate} variant="outline">
+              <Download className="mr-2" size={16} />
+              Tải file mẫu
+            </Button>
+            
+            <div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept=".xlsx,.xls"
+                className="hidden"
+              />
+              <Button 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isProcessing}
+              >
+                <Upload className="mr-2" size={16} />
+                {isProcessing ? "Đang xử lý..." : "Chọn file Excel"}
+              </Button>
+            </div>
+          </div>
+
+          {/* Errors */}
+          {errors.length > 0 && (
+            <div className="bg-red-50 p-4 rounded-lg">
+              <div className="flex items-center mb-2">
+                <AlertCircle className="mr-2 text-red-500" size={16} />
+                <h3 className="font-medium text-red-700">Có lỗi trong dữ liệu:</h3>
+              </div>
+              <ul className="list-disc list-inside space-y-1 text-sm text-red-600">
+                {errors.map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Preview */}
+          {preview.length > 0 && (
+            <div>
+              <h3 className="font-medium mb-4">Xem trước dữ liệu ({preview.length} sản phẩm):</h3>
+              <div className="bg-gray-50 rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="text-left py-2 px-3">Tên sản phẩm</th>
+                      <th className="text-left py-2 px-3">SKU</th>
+                      <th className="text-left py-2 px-3">Giá</th>
+                      <th className="text-left py-2 px-3">Số lượng</th>
+                      <th className="text-left py-2 px-3">Category ID</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white">
+                    {preview.slice(0, 10).map((product, index) => (
+                      <tr key={index} className="border-b border-gray-200">
+                        <td className="py-2 px-3">{product.name}</td>
+                        <td className="py-2 px-3">{product.sku}</td>
+                        <td className="py-2 px-3">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(parseFloat(product.price))}</td>
+                        <td className="py-2 px-3">{product.stock}</td>
+                        <td className="py-2 px-3">{product.categoryId}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {preview.length > 10 && (
+                  <div className="p-2 text-center text-gray-500 text-sm">
+                    ... và {preview.length - 10} sản phẩm khác
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          {preview.length > 0 && errors.length === 0 && (
+            <div className="flex justify-end space-x-3">
+              <Button variant="outline" onClick={handleClose}>
+                Hủy
+              </Button>
+              <Button 
+                onClick={handleImport}
+                disabled={bulkCreateMutation.isPending}
+                className="btn-primary"
+              >
+                {bulkCreateMutation.isPending ? "Đang nhập..." : `Nhập ${preview.length} sản phẩm`}
+              </Button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
