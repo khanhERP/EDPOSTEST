@@ -24,7 +24,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -1807,7 +1806,7 @@ export default function Settings() {
               </Label>
               <Select
                 value={productForm.categoryId}
-                onValueChange={(value) =>
+                onChange={(value) =>
                   setProductForm((prev) => ({ ...prev, categoryId: value }))
                 }
               >
