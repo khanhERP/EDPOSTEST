@@ -1,4 +1,3 @@
-
 import type { InventoryTranslations } from '../types';
 
 export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
@@ -50,7 +49,9 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     editReason: '수정 이유',
     addNewStock: '새 재고 추가',
     save: '저장',
-    updateType: '수정 유형'
+    updateType: '수정 유형',
+    delete: "삭제",
+    confirmDelete: "삭제하시겠습니까?",
   },
   en: {
     title: 'Inventory Management',
@@ -100,7 +101,9 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     editReason: 'Edit Reason',
     addNewStock: 'Add New Stock',
     save: 'Save',
-    updateType: 'Update Type'
+    updateType: 'Update Type',
+    delete: "Delete",
+    confirmDelete: "Are you sure you want to delete",
   },
   vi: {
     title: 'Quản lý tồn kho',
@@ -150,6 +153,8 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     editReason: 'Lý do chỉnh sửa',
     addNewStock: 'Thêm mới tồn kho',
     save: 'Lưu',
-    updateType: 'Loại cập nhật'
+    updateType: 'Loại cập nhật',
+    delete: "Xóa",
+    confirmDelete: "Bạn có chắc chắn muốn xóa",
   }
 };

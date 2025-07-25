@@ -36,6 +36,7 @@ import {
   TrendingUp,
   Search,
   Edit,
+  Trash2,
   RotateCcw,
 } from "lucide-react";
 import { POSHeader } from "@/components/pos/header";
@@ -109,6 +110,15 @@ export default function InventoryPage() {
     },
   });
 
+  const deleteProductMutation = useMutation({
+    mutationFn: async (productId: number) => {
+      return await apiRequest(`/api/products/${productId}`, "DELETE");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+    },
+  });
+
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -160,6 +170,12 @@ export default function InventoryPage() {
       });
     }
     setShowStockDialog(true);
+  };
+
+  const handleDeleteProduct = (product: Product) => {
+    if (window.confirm(`${t("inventory.confirmDelete")} "${product.name}"?`)) {
+      deleteProductMutation.mutate(product.id);
+    }
   };
 
   const onStockUpdate = (data: StockUpdateForm) => {
@@ -433,15 +449,26 @@ export default function InventoryPage() {
                               {stockValue.toLocaleString()} ₫
                             </td>
                             <td className="py-4 px-4 text-center">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleStockUpdate(product)}
-                                className="text-green-600 border-green-300 hover:bg-green-50"
-                              >
-                                <Edit className="h-4 w-4 mr-1" />
-                                {t("inventory.edit")}
-                              </Button>
+                              <div className="flex gap-2 justify-center">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleStockUpdate(product)}
+                                  className="text-green-600 border-green-300 hover:bg-green-50"
+                                >
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  {t("inventory.edit")}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteProduct(product)}
+                                  className="text-red-600 border-red-300 hover:bg-red-50"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-1" />
+                                  {t("inventory.delete")}
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         );
