@@ -86,9 +86,28 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
     : [];
 
   const addToCart = (product: Product) => {
+    // Check if product is out of stock
+    if (product.stock <= 0) {
+      toast({
+        title: t("common.error"),
+        description: `${product.name} đã hết hàng`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
+        // Check if adding one more would exceed stock
+        if (existing.quantity >= product.stock) {
+          toast({
+            title: t("common.warning"),
+            description: `Chỉ còn ${product.stock} ${product.name} trong kho`,
+            variant: "destructive",
+          });
+          return prev;
+        }
         return prev.map((item) =>
           item.product.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
@@ -269,11 +288,15 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
               {filteredProducts.map((product: Product) => (
                 <Card
                   key={product.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  className={`transition-shadow ${
+                    Number(product.stock) > 0
+                      ? "cursor-pointer hover:shadow-md"
+                      : "cursor-not-allowed opacity-60"
+                  }`}
                 >
                   <CardContent
                     className="p-3"
-                    onClick={() => addToCart(product)}
+                    onClick={() => Number(product.stock) > 0 && addToCart(product)}
                   >
                     <div className="space-y-2">
                       <h4 className="font-medium text-sm">{product.name}</h4>
@@ -281,7 +304,9 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                         {product.sku}
                       </p>
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-blue-600">
+                        <span className={`font-bold ${
+                          Number(product.stock) > 0 ? "text-blue-600" : "text-gray-400"
+                        }`}>
                           ₩{Number(product.price).toLocaleString()}
                         </span>
                         <Badge
@@ -291,9 +316,17 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                               : "destructive"
                           }
                         >
-                          {t("tables.stockCount")} {product.stock}
+                          {Number(product.stock) > 0 
+                            ? `${t("tables.stockCount")} ${product.stock}`
+                            : "Hết hàng"
+                          }
                         </Badge>
                       </div>
+                      {Number(product.stock) === 0 && (
+                        <div className="text-xs text-red-500 font-medium">
+                          Sản phẩm hiện đang hết hàng
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -354,6 +387,7 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                               variant="outline"
                               onClick={() => addToCart(item.product)}
                               className="h-6 w-6 p-0"
+                              disabled={item.quantity >= item.product.stock}
                             >
                               <Plus className="w-3 h-3" />
                             </Button>
