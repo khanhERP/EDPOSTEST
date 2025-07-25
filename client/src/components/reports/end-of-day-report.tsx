@@ -1,14 +1,41 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Printer, Calendar, DollarSign, TrendingUp, Package, Users } from "lucide-react";
+import {
+  FileText,
+  Printer,
+  Calendar,
+  DollarSign,
+  TrendingUp,
+  Package,
+  Users,
+} from "lucide-react";
 import type { Transaction, Employee, Order, Product } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 
@@ -21,10 +48,10 @@ export function EndOfDayReport() {
   // Date range
   const [dateType, setDateType] = useState("single"); // single, range
   const [startDate, setStartDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    new Date().toISOString().split("T")[0],
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    new Date().toISOString().split("T")[0],
   );
 
   // Payment method filter
@@ -38,19 +65,19 @@ export function EndOfDayReport() {
   const [selectedEmployee, setSelectedEmployee] = useState("all");
 
   const { data: transactions } = useQuery({
-    queryKey: ['/api/transactions'],
+    queryKey: ["/api/transactions"],
   });
 
   const { data: orders } = useQuery({
-    queryKey: ['/api/orders'],
+    queryKey: ["/api/orders"],
   });
 
   const { data: products } = useQuery({
-    queryKey: ['/api/products'],
+    queryKey: ["/api/products"],
   });
 
   const { data: employees } = useQuery({
-    queryKey: ['/api/employees'],
+    queryKey: ["/api/employees"],
   });
 
   const getFilteredData = () => {
@@ -61,16 +88,23 @@ export function EndOfDayReport() {
     end.setHours(23, 59, 59, 999);
 
     let filtered = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
-      const dateMatch = dateType === "single" 
-        ? transactionDate.toDateString() === start.toDateString()
-        : transactionDate >= start && transactionDate <= end;
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
+      const dateMatch =
+        dateType === "single"
+          ? transactionDate.toDateString() === start.toDateString()
+          : transactionDate >= start && transactionDate <= end;
 
-      const paymentMatch = paymentMethod === "all" || transaction.paymentMethod === paymentMethod;
+      const paymentMatch =
+        paymentMethod === "all" || transaction.paymentMethod === paymentMethod;
 
-      const transactionTypeMatch = transactionType === "all" || 
-        (transactionType === "customer_payment" && Number(transaction.total) > 0) ||
-        (transactionType === "customer_refund" && Number(transaction.total) < 0) ||
+      const transactionTypeMatch =
+        transactionType === "all" ||
+        (transactionType === "customer_payment" &&
+          Number(transaction.total) > 0) ||
+        (transactionType === "customer_refund" &&
+          Number(transaction.total) < 0) ||
         (transactionType === "other_expense" && Number(transaction.total) < 0);
 
       return dateMatch && paymentMatch && transactionTypeMatch;
@@ -81,10 +115,11 @@ export function EndOfDayReport() {
     if (orders && Array.isArray(orders)) {
       filteredOrders = orders.filter((order: any) => {
         const orderDate = new Date(order.orderedAt || order.created_at);
-        const dateMatch = dateType === "single" 
-          ? orderDate.toDateString() === start.toDateString()
-          : orderDate >= start && orderDate <= end;
-        return dateMatch && order.status === 'paid';
+        const dateMatch =
+          dateType === "single"
+            ? orderDate.toDateString() === start.toDateString()
+            : orderDate >= start && orderDate <= end;
+        return dateMatch && order.status === "paid";
       });
     }
 
@@ -99,10 +134,10 @@ export function EndOfDayReport() {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+    return new Date(dateStr).toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
   };
 
@@ -111,7 +146,7 @@ export function EndOfDayReport() {
       sales: "Báo cáo bán hàng",
       revenue: "Báo cáo thu chi",
       inventory: "Báo cáo hàng hóa",
-      summary: "Báo cáo tổng hợp"
+      summary: "Báo cáo tổng hợp",
     };
     return titles[concernType as keyof typeof titles] || "Báo cáo cuối ngày";
   };
@@ -129,7 +164,7 @@ export function EndOfDayReport() {
 
   const handlePrint = () => {
     const printContent = generatePrintContent();
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open("", "_blank");
     if (printWindow) {
       printWindow.document.write(printContent);
       printWindow.document.close();
@@ -140,10 +175,10 @@ export function EndOfDayReport() {
 
   const generatePrintContent = () => {
     const reportData = getFilteredData();
-    if (!reportData) return '';
+    if (!reportData) return "";
 
-    const currentDate = new Date().toLocaleDateString('vi-VN');
-    const currentTime = new Date().toLocaleTimeString('vi-VN');
+    const currentDate = new Date().toLocaleDateString("vi-VN");
+    const currentTime = new Date().toLocaleTimeString("vi-VN");
 
     return `
     <!DOCTYPE html>
@@ -243,23 +278,31 @@ export function EndOfDayReport() {
             </tr>
           </thead>
           <tbody>
-            ${reportData.filteredOrders.length > 0 ? reportData.filteredOrders.map((order: any, index: number) => `
-              <tr ${index % 2 === 0 ? 'style="background-color: #f8f9fa;"' : ''}>
+            ${
+              reportData.filteredOrders.length > 0
+                ? reportData.filteredOrders
+                    .map(
+                      (order: any, index: number) => `
+              <tr ${index % 2 === 0 ? 'style="background-color: #f8f9fa;"' : ""}>
                 <td class="center">${order.orderNumber || `ORD-${order.id}`}</td>
-                <td class="center">${new Date(order.orderedAt || order.created_at).toLocaleString('vi-VN')}</td>
+                <td class="center">${new Date(order.orderedAt || order.created_at).toLocaleString("vi-VN")}</td>
                 <td class="center">${order.customerCount || 1}</td>
                 <td class="right">${formatCurrency(Number(order.total))}</td>
                 <td class="right">0 ₫</td>
                 <td class="right">0 ₫</td>
                 <td class="right">${formatCurrency(Number(order.total))}</td>
               </tr>
-            `).join('') : `
+            `,
+                    )
+                    .join("")
+                : `
               <tr style="background-color: #fffacd;">
                 <td colspan="7" class="center" style="font-style: italic;">
                   ${t("reports.noReportData")}
                 </td>
               </tr>
-            `}
+            `
+            }
           </tbody>
         </table>
       `;
@@ -276,21 +319,29 @@ export function EndOfDayReport() {
             </tr>
           </thead>
           <tbody>
-            ${reportData.filtered.length > 0 ? reportData.filtered.map((transaction: any, index: number) => `
-              <tr ${index % 2 === 0 ? 'style="background-color: #f8f9fa;"' : ''}>
+            ${
+              reportData.filtered.length > 0
+                ? reportData.filtered
+                    .map(
+                      (transaction: any, index: number) => `
+              <tr ${index % 2 === 0 ? 'style="background-color: #f8f9fa;"' : ""}>
                 <td class="center">${transaction.transactionId || `TXN-${transaction.id}`}</td>
-                <td class="center">${transaction.createdBy || 'Hệ thống'}</td>
-                <td class="center">${Number(transaction.total) >= 0 ? 'Thu' : 'Chi'}</td>
-                <td class="center">${new Date(transaction.createdAt || transaction.created_at).toLocaleString('vi-VN')}</td>
+                <td class="center">${transaction.createdBy || "Hệ thống"}</td>
+                <td class="center">${Number(transaction.total) >= 0 ? "Thu" : "Chi"}</td>
+                <td class="center">${new Date(transaction.createdAt || transaction.created_at).toLocaleString("vi-VN")}</td>
                 <td class="center">${transaction.id}</td>
               </tr>
-            `).join('') : `
+            `,
+                    )
+                    .join("")
+                : `
               <tr style="background-color: #fffacd;">
                 <td colspan="5" class="center" style="font-style: italic;">
                   ${t("reports.noReportData")}
                 </td>
               </tr>
-            `}
+            `
+            }
           </tbody>
         </table>
       `;
@@ -309,8 +360,13 @@ export function EndOfDayReport() {
             </tr>
           </thead>
           <tbody>
-            ${products && products.length > 0 ? products.slice(0, 10).map((product: any, index: number) => `
-              <tr ${index % 2 === 0 ? 'style="background-color: #f8f9fa;"' : ''}>
+            ${
+              products && products.length > 0
+                ? products
+                    .slice(0, 10)
+                    .map(
+                      (product: any, index: number) => `
+              <tr ${index % 2 === 0 ? 'style="background-color: #f8f9fa;"' : ""}>
                 <td class="center">${product.sku || product.id}</td>
                 <td>${product.name}</td>
                 <td class="center">0</td>
@@ -319,18 +375,22 @@ export function EndOfDayReport() {
                 <td class="right">0 ₫</td>
                 <td class="right">0 ₫</td>
               </tr>
-            `).join('') : `
+            `,
+                    )
+                    .join("")
+                : `
               <tr style="background-color: #fffacd;">
                 <td colspan="7" class="center" style="font-style: italic;">
                   ${t("reports.noReportData")}
                 </td>
               </tr>
-            `}
+            `
+            }
           </tbody>
         </table>
       `;
     }
-    return '';
+    return "";
   };
 
   const renderSalesTable = () => {
@@ -346,13 +406,27 @@ export function EndOfDayReport() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">{t("reports.transactionCode")}</TableHead>
-                <TableHead className="text-center">{t("reports.time")}</TableHead>
-                <TableHead className="text-center">{t("reports.quantity")}</TableHead>
-                <TableHead className="text-center">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-center">{t("reports.otherRevenue")}</TableHead>
-                <TableHead className="text-center">{t("reports.vat")}</TableHead>
-                <TableHead className="text-center">{t("reports.actualRevenue")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.transactionCode")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.time")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.quantity")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.otherRevenue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.vat")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.actualRevenue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -363,7 +437,9 @@ export function EndOfDayReport() {
                       {order.orderNumber || `ORD-${order.id}`}
                     </TableCell>
                     <TableCell className="text-center">
-                      {new Date(order.orderedAt || order.created_at).toLocaleString('vi-VN')}
+                      {new Date(
+                        order.orderedAt || order.created_at,
+                      ).toLocaleString("vi-VN")}
                     </TableCell>
                     <TableCell className="text-center">
                       {order.customerCount || 1}
@@ -380,7 +456,10 @@ export function EndOfDayReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={7}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -405,11 +484,21 @@ export function EndOfDayReport() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">{t("reports.receiptCode")}</TableHead>
-                <TableHead className="text-center">{t("reports.payerReceiver")}</TableHead>
-                <TableHead className="text-center">{t("reports.revenueExpenseType")}</TableHead>
-                <TableHead className="text-center">{t("reports.time")}</TableHead>
-                <TableHead className="text-center">{t("reports.transactionCode")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.receiptCode")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.payerReceiver")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.revenueExpenseType")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.time")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.transactionCode")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -420,15 +509,23 @@ export function EndOfDayReport() {
                       {transaction.transactionId || `TXN-${transaction.id}`}
                     </TableCell>
                     <TableCell className="text-center">
-                      {transaction.createdBy || 'Hệ thống'}
+                      {transaction.createdBy || "Hệ thống"}
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant={Number(transaction.total) >= 0 ? "default" : "destructive"}>
-                        {Number(transaction.total) >= 0 ? 'Thu' : 'Chi'}
+                      <Badge
+                        variant={
+                          Number(transaction.total) >= 0
+                            ? "default"
+                            : "destructive"
+                        }
+                      >
+                        {Number(transaction.total) >= 0 ? "Thu" : "Chi"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      {new Date(transaction.createdAt || transaction.created_at).toLocaleString('vi-VN')}
+                      {new Date(
+                        transaction.createdAt || transaction.created_at,
+                      ).toLocaleString("vi-VN")}
                     </TableCell>
                     <TableCell className="text-center">
                       {transaction.id}
@@ -437,7 +534,10 @@ export function EndOfDayReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -459,13 +559,25 @@ export function EndOfDayReport() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">{t("reports.productCode")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.productCode")}
+                </TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">{t("reports.soldQuantity")}</TableHead>
-                <TableHead className="text-center">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-center">{t("reports.returnQuantity")}</TableHead>
-                <TableHead className="text-center">{t("reports.returnValue")}</TableHead>
-                <TableHead className="text-center">{t("reports.netRevenue")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.soldQuantity")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.returnQuantity")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.netRevenue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -485,7 +597,10 @@ export function EndOfDayReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={7}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -535,11 +650,13 @@ export function EndOfDayReport() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t("reports.printOptions")}</CardTitle>
+          <CardTitle className="text-base">
+            {t("reports.printOptions")}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {/* Main concern and date type in same row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
             <div>
               <Label className="text-sm">{t("reports.mainConcern")}</Label>
               <Select value={concernType} onValueChange={setConcernType}>
@@ -548,9 +665,15 @@ export function EndOfDayReport() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="sales">{t("reports.sales")}</SelectItem>
-                  <SelectItem value="revenue">{t("reports.revenueExpense")}</SelectItem>
-                  <SelectItem value="inventory">{t("reports.inventory")}</SelectItem>
-                  <SelectItem value="summary">{t("reports.summary")}</SelectItem>
+                  <SelectItem value="revenue">
+                    {t("reports.revenueExpense")}
+                  </SelectItem>
+                  <SelectItem value="inventory">
+                    {t("reports.inventory")}
+                  </SelectItem>
+                  <SelectItem value="summary">
+                    {t("reports.summary")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -562,8 +685,12 @@ export function EndOfDayReport() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="single">{t("reports.singleDate")}</SelectItem>
-                  <SelectItem value="range">{t("reports.dateRange")}</SelectItem>
+                  <SelectItem value="single">
+                    {t("reports.singleDate")}
+                  </SelectItem>
+                  <SelectItem value="range">
+                    {t("reports.dateRange")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -572,7 +699,11 @@ export function EndOfDayReport() {
           {/* Compact date inputs */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <Label className="text-sm">{dateType === "single" ? t("reports.date") : t("reports.startDate")}</Label>
+              <Label className="text-sm">
+                {dateType === "single"
+                  ? t("reports.date")
+                  : t("reports.startDate")}
+              </Label>
               <Input
                 type="date"
                 value={startDate}
@@ -596,49 +727,73 @@ export function EndOfDayReport() {
           {/* Additional filters */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <Label className="text-sm">{t("reports.paymentMethodFilter")}</Label>
+              <Label className="text-sm">
+                {t("reports.paymentMethodFilter")}
+              </Label>
               <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                 <SelectTrigger className="h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("common.all")}</SelectItem>
-                  <SelectItem value="cash">{t("reports.cashPayment")}</SelectItem>
-                  <SelectItem value="card">{t("reports.cardPayment")}</SelectItem>
-                  <SelectItem value="transfer">{t("reports.transfer")}</SelectItem>
+                  <SelectItem value="cash">
+                    {t("reports.cashPayment")}
+                  </SelectItem>
+                  <SelectItem value="card">
+                    {t("reports.cardPayment")}
+                  </SelectItem>
+                  <SelectItem value="transfer">
+                    {t("reports.transfer")}
+                  </SelectItem>
                   <SelectItem value="wallet">{t("reports.wallet")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
-              <Label className="text-sm">{t("reports.transactionTypeFilter")}</Label>
-              <Select value={transactionType} onValueChange={setTransactionType}>
+              <Label className="text-sm">
+                {t("reports.transactionTypeFilter")}
+              </Label>
+              <Select
+                value={transactionType}
+                onValueChange={setTransactionType}
+              >
                 <SelectTrigger className="h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("common.all")}</SelectItem>
-                  <SelectItem value="customer_payment">{t("reports.customerPayment")}</SelectItem>
-                  <SelectItem value="customer_refund">{t("reports.customerRefund")}</SelectItem>
-                  <SelectItem value="other_expense">{t("reports.otherExpense")}</SelectItem>
+                  <SelectItem value="customer_payment">
+                    {t("reports.customerPayment")}
+                  </SelectItem>
+                  <SelectItem value="customer_refund">
+                    {t("reports.customerRefund")}
+                  </SelectItem>
+                  <SelectItem value="other_expense">
+                    {t("reports.otherExpense")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div>
               <Label className="text-sm">{t("reports.employee")}</Label>
-              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+              <Select
+                value={selectedEmployee}
+                onValueChange={setSelectedEmployee}
+              >
                 <SelectTrigger className="h-8 text-sm">
                   <SelectValue placeholder={t("reports.employee")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("common.all")}</SelectItem>
-                  {employees && Array.isArray(employees) && employees.map((emp: Employee) => (
-                    <SelectItem key={emp.id} value={emp.id.toString()}>
-                      {emp.name}
-                    </SelectItem>
-                  ))}
+                  {employees &&
+                    Array.isArray(employees) &&
+                    employees.map((emp: Employee) => (
+                      <SelectItem key={emp.id} value={emp.id.toString()}>
+                        {emp.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
             </div>
@@ -666,12 +821,8 @@ export function EndOfDayReport() {
       <Card>
         <CardContent className="p-4">
           <div className="flex justify-between items-center text-sm text-gray-600">
-            <span>
-              Báo cáo được tạo: {new Date().toLocaleString('vi-VN')}
-            </span>
-            <span>
-              {getDateDisplay()}
-            </span>
+            <span>Báo cáo được tạo: {new Date().toLocaleString("vi-VN")}</span>
+            <span>{getDateDisplay()}</span>
           </div>
         </CardContent>
       </Card>
