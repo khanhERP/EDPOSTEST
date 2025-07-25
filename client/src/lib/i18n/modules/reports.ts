@@ -179,6 +179,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesDetailsHeader: '판매 세부사항',
     revenueExpenseDetailsHeader: '수입 지출 세부사항',
     inventoryDetailsHeader: '재고 세부사항',
+    
+    // Additional missing keys
+    date: '날짜',
+    saleDate: '판매일',
+    paymentDate: '결제일',
+    fromDate: '시작일',
+    toDate: '종료일',
   },
   en: {
     title: 'Reports',
@@ -335,6 +342,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesDetailsHeader: 'Sales Details',
     revenueExpenseDetailsHeader: 'Revenue & Expense Details',
     inventoryDetailsHeader: 'Inventory Details',
+    
+    // Additional missing keys
+    date: 'Date',
+    saleDate: 'Sale Date',
+    paymentDate: 'Payment Date',
+    fromDate: 'From Date',
+    toDate: 'To Date',
   },
   vi: {
     title: 'Báo cáo',
@@ -508,5 +522,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesDetailsHeader: 'Chi tiết bán hàng',
     revenueExpenseDetailsHeader: 'Chi tiết thu chi',
     inventoryDetailsHeader: 'Chi tiết hàng hóa',
+    
+    // Additional missing keys
+    saleDate: 'Ngày bán',
+    paymentDate: 'Ngày thanh toán',
+    fromDate: 'Từ ngày',
+    toDate: 'Đến ngày',
   },
 };

@@ -160,6 +160,7 @@ export interface ReportsTranslations {
   centralBranch: string;
   
   // Date labels
+  date: string;
   saleDate: string;
   paymentDate: string;
   fromDate: string;
