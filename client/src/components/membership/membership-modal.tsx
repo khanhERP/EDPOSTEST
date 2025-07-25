@@ -1,4 +1,5 @@
 import { useState } from "react";
+import * as React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,13 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
     VIP: 1000000
   });
 
+  // Update thresholds when data is fetched
+  React.useEffect(() => {
+    if (fetchedThresholds) {
+      setThresholds(fetchedThresholds);
+    }
+  }, [fetchedThresholds]);
+
   const membershipTiers = [
     {
       level: 'SILVER',
@@ -79,6 +87,17 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
     enabled: isOpen,
   });
 
+  // Fetch membership thresholds
+  const { data: fetchedThresholds } = useQuery<{ GOLD: number; VIP: number }>({
+    queryKey: ['/api/membership-thresholds'],
+    enabled: isOpen,
+    onSuccess: (data) => {
+      if (data) {
+        setThresholds(data);
+      }
+    }
+  });
+
   // Update customer membership
   const updateMembershipMutation = useMutation({
     mutationFn: async ({ customerId, membershipLevel }: { customerId: number; membershipLevel: string }) => {
@@ -107,6 +126,35 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
     },
   });
 
+  // Update membership thresholds
+  const updateThresholdsMutation = useMutation({
+    mutationFn: async (newThresholds: { GOLD: number; VIP: number }) => {
+      const response = await fetch('/api/membership-thresholds', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newThresholds),
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/membership-thresholds'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+      toast({
+        title: t("common.success"),
+        description: "Đã cập nhật mức chi tiêu nâng hạng",
+      });
+    },
+    onError: () => {
+      toast({
+        title: t("common.error"),
+        description: "Không thể cập nhật mức chi tiêu",
+        variant: 'destructive',
+      });
+    },
+  });
+
   const handleUpdateMembership = (customerId: number, newLevel: string) => {
     updateMembershipMutation.mutate({ customerId, membershipLevel: newLevel });
   };
@@ -120,13 +168,8 @@ export function MembershipModal({ isOpen, onClose }: MembershipModalProps) {
   };
 
   const saveThresholds = () => {
+    updateThresholdsMutation.mutate(thresholds);
     setIsEditingThresholds(false);
-    toast({
-      title: t("common.success"),
-      description: "Đã cập nhật mức chi tiêu nâng hạng",
-    });
-    // Refresh customer list to recalculate membership levels
-    queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
   };
 
   const autoUpgradeAllCustomers = () => {

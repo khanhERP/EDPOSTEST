@@ -977,6 +977,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Membership thresholds management
+  app.get("/api/membership-thresholds", async (req, res) => {
+    try {
+      const thresholds = await storage.getMembershipThresholds();
+      res.json(thresholds);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch membership thresholds" });
+    }
+  });
+
+  app.put("/api/membership-thresholds", async (req, res) => {
+    try {
+      const thresholdSchema = z.object({
+        GOLD: z.number().min(0),
+        VIP: z.number().min(0)
+      });
+      
+      const validatedData = thresholdSchema.parse(req.body);
+      const thresholds = await storage.updateMembershipThresholds(validatedData);
+      
+      res.json(thresholds);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          message: "Invalid threshold data",
+          errors: error.errors,
+        });
+      }
+      res.status(500).json({ message: "Failed to update membership thresholds" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

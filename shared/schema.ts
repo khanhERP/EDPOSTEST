@@ -80,6 +80,8 @@ export const storeSettings = pgTable("store_settings", {
   email: text("email"),
   openTime: text("open_time").default("09:00"),
   closeTime: text("close_time").default("22:00"),
+  goldThreshold: text("gold_threshold").default("300000"),
+  vipThreshold: text("vip_threshold").default("1000000"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 

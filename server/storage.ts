@@ -187,6 +187,11 @@ export interface IStorage {
     customerId: number,
     limit?: number,
   ): Promise<PointTransaction[]>;
+
+  getAllPointTransactions(limit?: number): Promise<PointTransaction[]>;
+
+  getMembershipThresholds(): Promise<{ GOLD: number; VIP: number }>;
+  updateMembershipThresholds(thresholds: { GOLD: number; VIP: number }): Promise<{ GOLD: number; VIP: number }>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -733,7 +738,7 @@ export class DatabaseStorage implements IStorage {
       .from(orderItems)
       .leftJoin(products, eq(orderItems.productId, products.id))
       .where(eq(orderItems.orderId, orderId));
-      
+
     return items as OrderItem[];
   }
 
@@ -1057,6 +1062,46 @@ export class DatabaseStorage implements IStorage {
       .from(pointTransactions)
       .orderBy(sql`${pointTransactions.createdAt} DESC`)
       .limit(limit);
+  }
+
+  async getMembershipThresholds(): Promise<{ GOLD: number; VIP: number }> {
+    try {
+      const [settings] = await db.select().from(storeSettings).limit(1);
+
+      if (!settings) {
+        // Return default values if no settings exist
+        return { GOLD: 300000, VIP: 1000000 };
+      }
+
+      // Parse thresholds from settings or return defaults
+      const goldThreshold = parseInt(settings.goldThreshold as string) || 300000;
+      const vipThreshold = parseInt(settings.vipThreshold as string) || 1000000;
+
+      return { GOLD: goldThreshold, VIP: vipThreshold };
+    } catch (error) {
+      console.error('Error fetching membership thresholds:', error);
+      return { GOLD: 300000, VIP: 1000000 };
+    }
+  }
+
+  async updateMembershipThresholds(thresholds: { GOLD: number; VIP: number }): Promise<{ GOLD: number; VIP: number }> {
+    try {
+      // Update or insert store settings with thresholds
+      const currentSettings = await this.getStoreSettings();
+
+      await db.update(storeSettings)
+        .set({
+          goldThreshold: thresholds.GOLD.toString(),
+          vipThreshold: thresholds.VIP.toString(),
+          updatedAt: new Date(),
+        })
+        .where(eq(storeSettings.id, currentSettings.id));
+
+      return thresholds;
+    } catch (error) {
+      console.error('Error updating membership thresholds:', error);
+      throw error;
+    }
   }
 }
 
