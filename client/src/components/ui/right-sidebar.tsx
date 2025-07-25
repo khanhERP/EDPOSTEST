@@ -76,10 +76,7 @@ export function RightSidebar() {
     );
   }, [isExpanded]);
 
-  // Auto-collapse sidebar when route changes
-  useEffect(() => {
-    setIsExpanded(false);
-  }, [location]);
+  
 
   return (
     <div className={cn(
