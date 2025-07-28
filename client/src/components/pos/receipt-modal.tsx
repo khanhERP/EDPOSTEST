@@ -64,13 +64,13 @@ export function ReceiptModal({
           style={{ paddingTop: "1px" }}
         >
           <div className="text-center mb-4">
-            <p className="text-sm font-semibold">Easy Digital Point Of Sale Service</p>
-            <div className="flex items-center justify-center mb-2 mt-1">
-              <img src={logoPath} alt="EDPOS Logo" className="h-8" />
-            </div>
+            <p className="text-sm font-semibold mb-1">Easy Digital Point Of Sale Service</p>
             <p className="text-sm">Main Store Location</p>
             <p className="text-sm">123 Commerce St, City, State 12345</p>
-            <p className="text-sm">Phone: (555) 123-4567</p>
+            <p className="text-sm mb-2">Phone: (555) 123-4567</p>
+            <div className="flex items-center justify-center">
+              <img src={logoPath} alt="EDPOS Logo" className="h-8" />
+            </div>
           </div>
 
           <div className="border-t border-b border-gray-300 py-2 mb-4">
