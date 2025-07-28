@@ -19,7 +19,6 @@ import {
   Settings,
   LogOut,
   Calendar,
-  Clock,
   TrendingUp,
   DollarSign,
   Package,
