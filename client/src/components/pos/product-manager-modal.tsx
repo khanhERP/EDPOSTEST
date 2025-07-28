@@ -46,6 +46,7 @@ interface ProductManagerModalProps {
 
 const productFormSchema = insertProductSchema.extend({
   categoryId: z.number().min(1, "Category is required"),
+  price: z.string().optional(),
 });
 
 export function ProductManagerModal({
