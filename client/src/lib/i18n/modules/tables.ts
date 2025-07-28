@@ -247,7 +247,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     goodsType: "Hàng hóa",
     materialType: "Nguyên vật liệu", 
     finishedProductType: "Thành phẩm",
-    productType: "Loại sản phẩm",
+    imageUrlOptional: "URL hình ảnh (tùy chọn)",
   },
   ko: {
     title: "테이블 관리",
@@ -356,6 +356,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     goodsType: "Goods",
     materialType: "Raw Materials",
     finishedProductType: "Finished Products",
+    imageUrlOptional: "이미지 URL (선택사항)",
     },
   en: {
     title: "Table Management",
@@ -436,6 +437,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     goodsType: "Goods",
     materialType: "Raw Materials",
     finishedProductType: "Finished Products",
+    imageUrlOptional: "Image URL (optional)",
   },
   vi: {
     title: "Quản lý bàn",
@@ -541,6 +543,6 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     goodsType: "Hàng hóa",
     materialType: "Nguyên vật liệu", 
     finishedProductType: "Thành phẩm",
-    productType: "Loại sản phẩm",
+    imageUrlOptional: "URL hình ảnh (tùy chọn)",
   },
 };
