@@ -283,13 +283,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productFilterPlaceholder: '코드, 이름으로 검색',
     debtRangeFrom: '기말 채무',
     debtRangeTo: '부터',
-    
+
     // Customer report tables
     customerSalesReport: '고객별 매출 보고서',
     customerProfitReport: '고객별 이익 보고서',
     customerDebtReport: '고객별 채무 보고서',
     customerProductSalesReport: '고객별 상품 매출 보고서',
-    
+
     // Customer report table headers
     customerId: '고객 ID',
     customerName: '고객',
@@ -316,7 +316,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerBySales: '고객별 판매',
     supplierByPurchase: '공급업체별 구매',
     profit: '이익',
-    
+
     // Inventory report tables
     salesReportByProduct: '상품별 판매 보고서',
     profitReportByProduct: '상품별 이익 보고서',
@@ -326,7 +326,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     disposalReport: '상품 폐기 보고서',
     employeeSalesReport: '직원별 상품 판매 보고서',
     supplierReportByProduct: '공급업체별 상품 구매 보고서',
-    
+
     // Table headers
     quantitySold: '판매 수량',
     profitMargin: '이익률',
@@ -362,13 +362,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     quantity: '수량',
     productCode: '상품 코드',
     productName: '상품명',
-    soldQuantity: '판매 수량',
-    returnQuantity: '반품 수량',
-    returnValue: '반품 가치',
-    netRevenue: '순 매출',
-    totalCost: '총 원가',
-    grossProfit: '총 이익',
-    customerCount: '고객 수',
+    inventoryValue: '재고 가치',
   },
   en: {
     title: 'Reports',
@@ -599,13 +593,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productFilterPlaceholder: 'Search by code, name',
     debtRangeFrom: 'Closing debt from',
     debtRangeTo: 'to',
-    
+
     // Customer report tables
     customerSalesReport: 'Sales Report by Customer',
     customerProfitReport: 'Profit Report by Customer',
     customerDebtReport: 'Debt Report by Customer',
     customerProductSalesReport: 'Product Sales Report by Customer',
-    
+
     // Customer report table headers
     customerId: 'Customer ID',
     customerName: 'Customer',
@@ -632,7 +626,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerBySales: 'Customer by Sales',
     supplierByPurchase: 'Supplier by Purchase',
     profit: 'Profit',
-    
+
     // Inventory report tables
     salesReportByProduct: 'Sales Report by Product',
     profitReportByProduct: 'Profit Report by Product',
@@ -642,7 +636,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     disposalReport: 'Product Disposal Report',
     employeeSalesReport: 'Employee Sales Report by Product',
     supplierReportByProduct: 'Supplier Purchase Report by Product',
-    
+
     // Table headers
     quantitySold: 'Quantity Sold',
     profitMargin: 'Profit Margin',
@@ -973,13 +967,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productFilterPlaceholder: 'Tìm theo mã, tên hàng',
     debtRangeFrom: 'Nợ cuối kỳ từ',
     debtRangeTo: 'tới',
-    
+
     // Customer report tables
     customerSalesReport: 'Báo cáo bán hàng theo khách hàng',
     customerProfitReport: 'Báo cáo lợi nhuận theo khách hàng',
     customerDebtReport: 'Báo cáo công nợ theo khách hàng',
     customerProductSalesReport: 'Báo cáo hàng bán theo khách',
-    
+
     // Customer report table headers
     customerId: 'Mã khách hàng',
     customerName: 'Khách hàng',
@@ -1006,7 +1000,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerBySales: 'Khách theo hàng bán',
     supplierByPurchase: 'NCC theo hàng nhập',
     profit: 'Lợi nhuận',
-    
+
     // Inventory report tables
     salesReportByProduct: 'Báo cáo bán hàng theo hàng hóa',
     profitReportByProduct: 'Báo cáo lợi nhuận theo hàng hóa',
@@ -1016,7 +1010,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     disposalReport: 'Báo cáo hàng hóa xuất hủy',
     employeeSalesReport: 'Báo cáo nhân viên theo hàng bán',
     supplierReportByProduct: 'Báo cáo danh sách nhà cung cấp theo hàng nhập',
-    
+
     // Table headers
     quantitySold: 'Số lượng bán',
     profitMargin: 'Tỷ suất',
@@ -1094,7 +1088,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Chart related translations
     chartView: 'Xem biểu đồ',
     visualRepresentation: 'Biểu diễn trực quan của dữ liệu',
-    netRevenue: 'Doanh thu thuần',
 
     // Table headers for reports
     salesDetailsHeader: 'Chi tiết bán hàng',
