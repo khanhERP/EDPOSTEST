@@ -401,6 +401,9 @@ export function EndOfDayReport() {
       <Card>
         <CardHeader>
           <CardTitle>{t("reports.salesReportHeader")}</CardTitle>
+          <CardDescription>
+            {getDateDisplay()}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -479,6 +482,9 @@ export function EndOfDayReport() {
       <Card>
         <CardHeader>
           <CardTitle>{t("reports.revenueExpenseReportHeader")}</CardTitle>
+          <CardDescription>
+            {getDateDisplay()}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -554,6 +560,9 @@ export function EndOfDayReport() {
       <Card>
         <CardHeader>
           <CardTitle>{t("reports.inventoryReportHeader")}</CardTitle>
+          <CardDescription>
+            {getDateDisplay()}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -633,9 +642,6 @@ export function EndOfDayReport() {
                 <FileText className="w-5 h-5" />
                 {t('reports.endOfDayReport')}
               </CardTitle>
-              <CardDescription className="mt-2">
-                {getDateDisplay()}
-              </CardDescription>
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={handlePrint}>
