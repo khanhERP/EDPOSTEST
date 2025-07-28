@@ -193,20 +193,6 @@ export function POSHeader() {
               {/* Dropdown Menu */}
               {posMenuOpen && (
                 <div className="absolute top-full right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50">
-                  <Link href="/pos">
-                    <button 
-                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                        location === "/pos" ? "bg-green-50 text-green-600" : "text-gray-700"
-                      }`}
-                      onClick={() => setPosMenuOpen(false)}
-                    >
-                      <Home className="w-4 h-4 mr-3" />
-                      {t('nav.pos')}
-                    </button>
-                  </Link>
-
-                  <div className="border-t border-gray-200 my-2"></div>
-
                   {/* Only show Tables option for restaurant business type */}
                   {storeSettings?.businessType === "restaurant" && (
                     <Link href="/tables">
@@ -221,6 +207,20 @@ export function POSHeader() {
                       </button>
                     </Link>
                   )}
+
+                  <Link href="/pos">
+                    <button 
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                        location === "/pos" ? "bg-green-50 text-green-600" : "text-gray-700"
+                      }`}
+                      onClick={() => setPosMenuOpen(false)}
+                    >
+                      <Home className="w-4 h-4 mr-3" />
+                      {t('nav.pos')}
+                    </button>
+                  </Link>
+
+                  <div className="border-t border-gray-200 my-2"></div>
 
                   <Link href="/inventory">
                     <button 
