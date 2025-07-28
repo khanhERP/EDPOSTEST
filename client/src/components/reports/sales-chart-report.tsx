@@ -17,50 +17,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-  ResponsiveContainer,
-} from "recharts";
-import { TrendingUp, BarChart3, PieChart as PieChartIcon, Activity } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TrendingUp, FileText, Calendar } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
 export function SalesChartReport() {
   const { t } = useTranslation();
   
-  const [dateRange, setDateRange] = useState("week");
-  const [chartType, setChartType] = useState("bar"); // bar, pie, line
+  const [concernType, setConcernType] = useState("time");
   const [startDate, setStartDate] = useState<string>(
-    "2025-01-15"
+    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
   const [endDate, setEndDate] = useState<string>(
-    "2025-01-20"
+    new Date().toISOString().split('T')[0]
   );
+  const [salesMethod, setSalesMethod] = useState("all");
+  const [salesChannel, setSalesChannel] = useState("all");
 
   const { data: transactions } = useQuery({
     queryKey: ['/api/transactions'],
   });
 
-  const { data: products } = useQuery({
-    queryKey: ['/api/products'],
+  const { data: employees } = useQuery({
+    queryKey: ['/api/employees'],
   });
 
-  const getSalesChartData = () => {
-    if (!transactions || !Array.isArray(transactions)) return null;
+  const getFilteredData = () => {
+    if (!transactions || !Array.isArray(transactions)) return [];
     
     const filteredTransactions = transactions.filter((transaction: any) => {
       const transactionDate = new Date(transaction.createdAt || transaction.created_at);
@@ -68,189 +51,283 @@ export function SalesChartReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
       
-      return transactionDate >= start && transactionDate <= end;
-    });
-
-    // Daily sales data for bar and line charts
-    const dailySales: { [date: string]: { revenue: number; orders: number } } = {};
-    
-    filteredTransactions.forEach((transaction: any) => {
-      const date = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString('vi-VN');
+      const dateMatch = transactionDate >= start && transactionDate <= end;
       
-      if (!dailySales[date]) {
-        dailySales[date] = { revenue: 0, orders: 0 };
-      }
+      // For now, we'll assume all transactions are "no delivery" and "direct"
+      // In a real system, you would filter based on actual delivery and channel data
+      const methodMatch = salesMethod === "all" || 
+        (salesMethod === "no_delivery" && true) || 
+        (salesMethod === "delivery" && false);
       
-      dailySales[date].revenue += Number(transaction.total);
-      dailySales[date].orders += 1;
+      const channelMatch = salesChannel === "all" || 
+        (salesChannel === "direct" && true) || 
+        (salesChannel === "other" && false);
+      
+      return dateMatch && methodMatch && channelMatch;
     });
 
-    const dailyChartData = Object.entries(dailySales).map(([date, data]) => ({
-      date,
-      revenue: data.revenue,
-      orders: data.orders,
-      name: date
-    })).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-    // Payment method data for pie chart
-    const paymentMethods: { [method: string]: number } = {};
-    
-    filteredTransactions.forEach((transaction: any) => {
-      const method = transaction.paymentMethod || 'cash';
-      paymentMethods[method] = (paymentMethods[method] || 0) + Number(transaction.total);
-    });
-
-    const pieChartData = Object.entries(paymentMethods).map(([method, revenue]) => ({
-      name: getPaymentMethodLabel(method),
-      value: revenue,
-      method
-    }));
-
-    // Hourly sales data
-    const hourlySales: { [hour: number]: number } = {};
-    
-    filteredTransactions.forEach((transaction: any) => {
-      const hour = new Date(transaction.createdAt || transaction.created_at).getHours();
-      hourlySales[hour] = (hourlySales[hour] || 0) + Number(transaction.total);
-    });
-
-    const hourlyChartData = Array.from({ length: 24 }, (_, hour) => ({
-      hour: `${hour}:00`,
-      revenue: hourlySales[hour] || 0,
-      name: `${hour}:00`
-    }));
-
-    // Total stats
-    const totalRevenue = filteredTransactions.reduce((sum: number, transaction: any) => 
-      sum + Number(transaction.total), 0
-    );
-    const totalOrders = filteredTransactions.length;
-
-    return {
-      dailyChartData,
-      pieChartData,
-      hourlyChartData,
-      totalRevenue,
-      totalOrders,
-    };
+    return filteredTransactions;
   };
 
-  const handleDateRangeChange = (range: string) => {
-    setDateRange(range);
-    const today = new Date();
-    
-    switch (range) {
-      case "today":
-        setStartDate(today.toISOString().split('T')[0]);
-        setEndDate(today.toISOString().split('T')[0]);
-        break;
-      case "week":
-        setStartDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
-        setEndDate(today.toISOString().split('T')[0]);
-        break;
-      case "month":
-        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-        setStartDate(monthStart.toISOString().split('T')[0]);
-        setEndDate(today.toISOString().split('T')[0]);
-        break;
-    }
+  const getReportTitle = () => {
+    const concernTypes = {
+      time: t('reports.timeSalesReport'),
+      profit: t('reports.profitByInvoiceReport'),
+      discount: t('reports.invoiceDiscountReport'),
+      return: t('reports.returnByInvoiceReport'),
+      employee: t('reports.employeeSalesReport')
+    };
+    return concernTypes[concernType as keyof typeof concernTypes] || t('reports.comprehensiveSalesReport');
   };
 
   const formatCurrency = (amount: number) => {
     return `${amount.toLocaleString()} ₫`;
   };
 
-  const getPaymentMethodLabel = (method: string) => {
-    const labels = {
-      cash: t("reports.cash"),
-      card: t("reports.card"),
-      mobile: 'Mobile'
-    };
-    return labels[method as keyof typeof labels] || method;
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
   };
 
-  const chartConfig = {
-    revenue: {
-      label: t("reports.revenue"),
-      color: "#10b981",
-    },
-    orders: {
-      label: t("reports.orders"),
-      color: "#3b82f6",
-    },
-  };
+  const renderTimeReport = () => {
+    const filteredData = getFilteredData();
+    const dailyData: { [date: string]: { revenue: number; returnValue: number } } = {};
+    
+    filteredData.forEach((transaction: any) => {
+      const date = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString('vi-VN');
+      if (!dailyData[date]) {
+        dailyData[date] = { revenue: 0, returnValue: 0 };
+      }
+      
+      const amount = Number(transaction.total);
+      if (amount > 0) {
+        dailyData[date].revenue += amount;
+      } else {
+        dailyData[date].returnValue += Math.abs(amount);
+      }
+    });
 
-  const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
-
-  const salesData = getSalesChartData();
-
-  if (!salesData) {
     return (
-      <div className="flex justify-center py-8">
-        <div className="text-gray-500">{t("reports.loading")}</div>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{t('reports.time')}</TableHead>
+            <TableHead>{t('reports.totalRevenue')}</TableHead>
+            <TableHead>{t('reports.returnValue')}</TableHead>
+            <TableHead>{t('reports.netRevenue')}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Object.entries(dailyData).map(([date, data]) => (
+            <TableRow key={date}>
+              <TableCell>{date}</TableCell>
+              <TableCell>{formatCurrency(data.revenue)}</TableCell>
+              <TableCell>{formatCurrency(data.returnValue)}</TableCell>
+              <TableCell>{formatCurrency(data.revenue - data.returnValue)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     );
-  }
+  };
 
-  const renderChart = () => {
-    switch (chartType) {
-      case "bar":
-        return (
-          <ChartContainer config={chartConfig} className="h-[400px]">
-            <BarChart data={salesData.dailyChartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="revenue" fill="#10b981" name={t("reports.revenue")} />
-            </BarChart>
-          </ChartContainer>
-        );
+  const renderProfitReport = () => {
+    const filteredData = getFilteredData();
+    const dailyData: { [date: string]: { totalAmount: number; discount: number; revenue: number; cost: number } } = {};
+    
+    filteredData.forEach((transaction: any) => {
+      const date = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString('vi-VN');
+      if (!dailyData[date]) {
+        dailyData[date] = { totalAmount: 0, discount: 0, revenue: 0, cost: 0 };
+      }
       
-      case "pie":
-        return (
-          <ChartContainer config={chartConfig} className="h-[400px]">
-            <PieChart>
-              <Pie
-                data={salesData.pieChartData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                outerRadius={120}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {salesData.pieChartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <ChartTooltip content={<ChartTooltipContent />} />
-            </PieChart>
-          </ChartContainer>
-        );
+      const subtotal = Number(transaction.subtotal || transaction.total);
+      const total = Number(transaction.total);
+      const discount = subtotal - total;
       
-      case "line":
-        return (
-          <ChartContainer config={chartConfig} className="h-[400px]">
-            <LineChart data={salesData.hourlyChartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="hour" />
-              <YAxis />
-              <ChartTooltip content={<ChartTooltipContent />} />
-              <Line 
-                type="monotone" 
-                dataKey="revenue" 
-                stroke="#10b981" 
-                strokeWidth={2}
-                name={t("reports.revenue")}
-              />
-            </LineChart>
-          </ChartContainer>
-        );
+      dailyData[date].totalAmount += subtotal;
+      dailyData[date].discount += discount;
+      dailyData[date].revenue += total;
+      dailyData[date].cost += total * 0.6; // Assume 60% cost ratio
+    });
+
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{t('reports.time')}</TableHead>
+            <TableHead>{t('reports.totalAmount')}</TableHead>
+            <TableHead>{t('reports.discount')}</TableHead>
+            <TableHead>{t('reports.revenue')}</TableHead>
+            <TableHead>{t('reports.totalCost')}</TableHead>
+            <TableHead>{t('reports.grossProfit')}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Object.entries(dailyData).map(([date, data]) => (
+            <TableRow key={date}>
+              <TableCell>{date}</TableCell>
+              <TableCell>{formatCurrency(data.totalAmount)}</TableCell>
+              <TableCell>{formatCurrency(data.discount)}</TableCell>
+              <TableCell>{formatCurrency(data.revenue)}</TableCell>
+              <TableCell>{formatCurrency(data.cost)}</TableCell>
+              <TableCell>{formatCurrency(data.revenue - data.cost)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  const renderDiscountReport = () => {
+    const filteredData = getFilteredData();
+    const dailyData: { [date: string]: { invoiceCount: number; invoiceValue: number; discount: number } } = {};
+    
+    filteredData.forEach((transaction: any) => {
+      const date = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString('vi-VN');
+      if (!dailyData[date]) {
+        dailyData[date] = { invoiceCount: 0, invoiceValue: 0, discount: 0 };
+      }
       
+      const subtotal = Number(transaction.subtotal || transaction.total);
+      const total = Number(transaction.total);
+      const discount = subtotal - total;
+      
+      dailyData[date].invoiceCount += 1;
+      dailyData[date].invoiceValue += subtotal;
+      dailyData[date].discount += discount;
+    });
+
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{t('reports.time')}</TableHead>
+            <TableHead>{t('reports.totalInvoices')}</TableHead>
+            <TableHead>{t('reports.invoiceValue')}</TableHead>
+            <TableHead>{t('reports.invoiceDiscount')}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Object.entries(dailyData).map(([date, data]) => (
+            <TableRow key={date}>
+              <TableCell>{date}</TableCell>
+              <TableCell>{data.invoiceCount}</TableCell>
+              <TableCell>{formatCurrency(data.invoiceValue)}</TableCell>
+              <TableCell>{formatCurrency(data.discount)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  const renderReturnReport = () => {
+    const filteredData = getFilteredData();
+    const dailyData: { [date: string]: { returnCount: number; returnValue: number } } = {};
+    
+    filteredData.forEach((transaction: any) => {
+      const date = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString('vi-VN');
+      const amount = Number(transaction.total);
+      
+      if (amount < 0) { // Return transactions
+        if (!dailyData[date]) {
+          dailyData[date] = { returnCount: 0, returnValue: 0 };
+        }
+        dailyData[date].returnCount += 1;
+        dailyData[date].returnValue += Math.abs(amount);
+      }
+    });
+
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{t('reports.time')}</TableHead>
+            <TableHead>{t('reports.returnTicketCount')}</TableHead>
+            <TableHead>{t('reports.returnValue')}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Object.entries(dailyData).length > 0 ? (
+            Object.entries(dailyData).map(([date, data]) => (
+              <TableRow key={date}>
+                <TableCell>{date}</TableCell>
+                <TableCell>{data.returnCount}</TableCell>
+                <TableCell>{formatCurrency(data.returnValue)}</TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center text-gray-500">
+                {t('reports.noData')}
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  const renderEmployeeReport = () => {
+    const filteredData = getFilteredData();
+    const employeeData: { [cashier: string]: { revenue: number; returnValue: number } } = {};
+    
+    filteredData.forEach((transaction: any) => {
+      const cashier = transaction.cashierName || 'Unknown';
+      if (!employeeData[cashier]) {
+        employeeData[cashier] = { revenue: 0, returnValue: 0 };
+      }
+      
+      const amount = Number(transaction.total);
+      if (amount > 0) {
+        employeeData[cashier].revenue += amount;
+      } else {
+        employeeData[cashier].returnValue += Math.abs(amount);
+      }
+    });
+
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{t('reports.seller')}</TableHead>
+            <TableHead>{t('reports.totalRevenue')}</TableHead>
+            <TableHead>{t('reports.returnValue')}</TableHead>
+            <TableHead>{t('reports.netRevenue')}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Object.entries(employeeData).map(([cashier, data]) => (
+            <TableRow key={cashier}>
+              <TableCell>{cashier}</TableCell>
+              <TableCell>{formatCurrency(data.revenue)}</TableCell>
+              <TableCell>{formatCurrency(data.returnValue)}</TableCell>
+              <TableCell>{formatCurrency(data.revenue - data.returnValue)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  const renderReportTable = () => {
+    switch (concernType) {
+      case 'time':
+        return renderTimeReport();
+      case 'profit':
+        return renderProfitReport();
+      case 'discount':
+        return renderDiscountReport();
+      case 'return':
+        return renderReturnReport();
+      case 'employee':
+        return renderEmployeeReport();
       default:
-        return null;
+        return renderTimeReport();
     }
   };
 
@@ -259,160 +336,108 @@ export function SalesChartReport() {
       {/* Header */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" />
-                {t("reports.salesChart")}
-              </CardTitle>
-              <CardDescription>{t("reports.salesChartDescription")}</CardDescription>
-            </div>
-            <div className="flex items-center gap-4">
-              <Select value={chartType} onValueChange={setChartType}>
-                <SelectTrigger className="w-40">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="bar">
-                    <div className="flex items-center gap-2">
-                      <BarChart3 className="w-4 h-4" />
-                      {t("reports.barChart")}
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="pie">
-                    <div className="flex items-center gap-2">
-                      <PieChartIcon className="w-4 h-4" />
-                      {t("reports.pieChart")}
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="line">
-                    <div className="flex items-center gap-2">
-                      <Activity className="w-4 h-4" />
-                      {t("reports.lineChart")}
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              
-              <Select value={dateRange} onValueChange={handleDateRangeChange}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">{t("reports.toDay")}</SelectItem>
-                  <SelectItem value="week">{t("reports.lastWeek")}</SelectItem>
-                  <SelectItem value="month">{t("reports.lastMonth")}</SelectItem>
-                  <SelectItem value="custom">{t("reports.custom")}</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              {dateRange === "custom" && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <Label>{t("reports.startDate")}:</Label>
-                    <Input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-auto"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label>{t("reports.endDate")}:</Label>
-                    <Input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-auto"
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            {t("reports.comprehensiveSalesReport")}
+          </CardTitle>
+          <CardDescription>
+            {t("reports.comprehensiveSalesReport")} - {getReportTitle()}
+          </CardDescription>
         </CardHeader>
       </Card>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{t("reports.totalRevenue")}</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(salesData.totalRevenue)}
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">{t("reports.totalOrders")}</p>
-                <p className="text-2xl font-bold">{salesData.totalOrders}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {t("reports.averageOrderValue")}: {formatCurrency(salesData.totalOrders > 0 ? salesData.totalRevenue / salesData.totalOrders : 0)}
-                </p>
-              </div>
-              <BarChart3 className="w-8 h-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Chart */}
+      {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            {chartType === "bar" && t("reports.dailyRevenue")}
-            {chartType === "pie" && t("reports.paymentMethodDistribution")}
-            {chartType === "line" && t("reports.hourlyRevenue")}
-          </CardTitle>
-          <CardDescription>
-            {chartType === "bar" && t("reports.barChartDesc")}
-            {chartType === "pie" && t("reports.pieChartDesc")}
-            {chartType === "line" && t("reports.lineChartDesc")}
-          </CardDescription>
+          <CardTitle className="text-base">{t("reports.concernType")}</CardTitle>
         </CardHeader>
-        <CardContent>
-          {renderChart()}
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Concerns Filter */}
+            <div>
+              <Label>{t("reports.concernType")}</Label>
+              <Select value={concernType} onValueChange={setConcernType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="time">{t("reports.timeReport")}</SelectItem>
+                  <SelectItem value="profit">{t("reports.profitReport")}</SelectItem>
+                  <SelectItem value="discount">{t("reports.discountReport")}</SelectItem>
+                  <SelectItem value="return">{t("reports.returnReport")}</SelectItem>
+                  <SelectItem value="employee">{t("reports.employeeReport")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Sales Method Filter */}
+            <div>
+              <Label>{t("reports.salesMethod")}</Label>
+              <Select value={salesMethod} onValueChange={setSalesMethod}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("common.all")}</SelectItem>
+                  <SelectItem value="no_delivery">{t("reports.noDelivery")}</SelectItem>
+                  <SelectItem value="delivery">{t("reports.delivery")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Sales Channel Filter */}
+            <div>
+              <Label>{t("reports.salesChannel")}</Label>
+              <Select value={salesChannel} onValueChange={setSalesChannel}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("common.all")}</SelectItem>
+                  <SelectItem value="direct">{t("reports.direct")}</SelectItem>
+                  <SelectItem value="other">{t("reports.other")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Date Range */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label>{t("reports.startDate")}</Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>{t("reports.endDate")}</Label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Legend for Pie Chart */}
-      {chartType === "pie" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("reports.paymentMethodDetails")}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {salesData.pieChartData.map((entry, index) => (
-                <div key={entry.method} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div 
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    ></div>
-                    <span className="font-medium">{entry.name}</span>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-semibold">{formatCurrency(entry.value)}</div>
-                    <div className="text-xs text-gray-500">
-                      {((entry.value / salesData.totalRevenue) * 100).toFixed(1)}%
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Report Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            {getReportTitle()}
+          </CardTitle>
+          <CardDescription>
+            {t("reports.dataFrom")} {formatDate(startDate)} {t("reports.to")} {formatDate(endDate)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {renderReportTable()}
+        </CardContent>
+      </Card>
     </div>
   );
 }

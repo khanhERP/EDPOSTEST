@@ -194,6 +194,37 @@ export interface ReportsTranslations {
   // Sales chart report
   salesChart: string;
   salesChartDescription: string;
+  
+  // Comprehensive sales report
+  comprehensiveSalesReport: string;
+  concernType: string;
+  timeReport: string;
+  profitReport: string;
+  discountReport: string;
+  returnReport: string;
+  employeeReport: string;
+  salesMethod: string;
+  noDelivery: string;
+  delivery: string;
+  salesChannel: string;
+  direct: string;
+  other: string;
+  timeSalesReport: string;
+  profitByInvoiceReport: string;
+  invoiceDiscountReport: string;
+  returnByInvoiceReport: string;
+  employeeSalesReport: string;
+  returnValue: string;
+  netRevenue: string;
+  totalAmount: string;
+  discount: string;
+  totalCost: string;
+  grossProfit: string;
+  totalInvoices: string;
+  invoiceValue: string;
+  invoiceDiscount: string;
+  returnTicketCount: string;
+  seller: string;
   saleDate: string;
   paymentDate: string;
   fromDate: string;
