@@ -400,7 +400,7 @@ export function EndOfDayReport() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{t("reports.salesDetailsHeader")}</CardTitle>
+          <CardTitle>{t("reports.salesReportHeader")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -478,7 +478,7 @@ export function EndOfDayReport() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{t("reports.revenueExpenseDetailsHeader")}</CardTitle>
+          <CardTitle>{t("reports.revenueExpenseReportHeader")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -553,7 +553,7 @@ export function EndOfDayReport() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{t("reports.inventoryDetailsHeader")}</CardTitle>
+          <CardTitle>{t("reports.inventoryReportHeader")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
