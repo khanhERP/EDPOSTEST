@@ -75,9 +75,14 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
           errorDescription += `\nCó ${skuErrors.length} sản phẩm bị trùng mã SKU`;
         }
         
+        // Automatically download error report
+        setTimeout(() => {
+          downloadErrorReport(errorItems);
+        }, 500);
+        
         toast({
           title: "Hoàn thành với lỗi",
-          description: errorDescription + "\nTải xuống báo cáo lỗi để xem chi tiết",
+          description: errorDescription + "\nFile báo cáo lỗi đã được tải xuống tự động",
           variant: "destructive",
         });
       } else {
@@ -321,29 +326,16 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
             </div>
           )}
 
-          {/* Error Report Download */}
+          {/* Error Report Info */}
           {errorResults.length > 0 && (
             <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center mb-2">
-                    <AlertCircle className="mr-2 text-red-500" size={16} />
-                    <h3 className="font-medium text-red-700">Có {errorResults.length} sản phẩm bị lỗi</h3>
-                  </div>
-                  <p className="text-sm text-red-600">
-                    Tải xuống báo cáo lỗi để xem chi tiết từng sản phẩm bị lỗi và nguyên nhân
-                  </p>
-                </div>
-                <Button 
-                  onClick={() => downloadErrorReport(errorResults)}
-                  variant="destructive"
-                  size="sm"
-                  className="ml-4"
-                >
-                  <FileSpreadsheet className="mr-2" size={16} />
-                  Tải báo cáo lỗi
-                </Button>
+              <div className="flex items-center mb-2">
+                <AlertCircle className="mr-2 text-red-500" size={16} />
+                <h3 className="font-medium text-red-700">Có {errorResults.length} sản phẩm bị lỗi</h3>
               </div>
+              <p className="text-sm text-red-600">
+                File báo cáo lỗi chi tiết đã được tải xuống tự động vào máy tính của bạn
+              </p>
             </div>
           )}
 
