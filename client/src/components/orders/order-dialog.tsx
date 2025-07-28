@@ -421,24 +421,26 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
                   <>
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-600">Món đã gọi trước đó:</h4>
-                      {existingItems.map((item, index) => (
-                        <Card key={`existing-${index}`} className="bg-gray-50">
-                          <CardContent className="p-3">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <h4 className="font-medium text-sm">{item.productName}</h4>
-                                <p className="text-xs text-gray-500">Đã gọi</p>
+                      <div className="max-h-32 overflow-y-auto space-y-2">
+                        {existingItems.map((item, index) => (
+                          <Card key={`existing-${index}`} className="bg-gray-50">
+                            <CardContent className="p-3">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <h4 className="font-medium text-sm">{item.productName}</h4>
+                                  <p className="text-xs text-gray-500">Đã gọi</p>
+                                </div>
+                                <div className="text-right">
+                                  <span className="text-sm font-bold">
+                                    {(Number(item.total)).toLocaleString()} ₫
+                                  </span>
+                                  <p className="text-xs text-gray-500">x{item.quantity}</p>
+                                </div>
                               </div>
-                              <div className="text-right">
-                                <span className="text-sm font-bold">
-                                  {(Number(item.total)).toLocaleString()} ₫
-                                </span>
-                                <p className="text-xs text-gray-500">x{item.quantity}</p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
                     </div>
                     {cart.length > 0 && <Separator />}
                     {cart.length > 0 && (
