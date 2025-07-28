@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -44,7 +44,6 @@ import {
 
 export function CustomerReport() {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
 
   // Filters
   const [concernType, setConcernType] = useState("sales");
@@ -60,7 +59,6 @@ export function CustomerReport() {
   const [selectedProductType, setSelectedProductType] = useState("all");
   const [debtFrom, setDebtFrom] = useState("");
   const [debtTo, setDebtTo] = useState("");
-  const [dateRange, setDateRange] = useState<string>("");
 
   const { data: orders } = useQuery({
     queryKey: ["/api/orders"],
@@ -82,12 +80,6 @@ export function CustomerReport() {
     queryKey: ["/api/customer-debts"],
     enabled: concernType === "debt",
   });
-
-  // Refetch data when filters change
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/customer-debts"] });
-  }, [startDate, endDate, concernType, customerSearch, productSearch, selectedCategory, selectedProductType, debtFrom, debtTo, queryClient]);
 
   const formatCurrency = (amount: number) => {
     return `${amount.toLocaleString()} ₫`;
@@ -968,7 +960,8 @@ export function CustomerReport() {
                           marginBottom: 4,
                         }}
                         contentStyle={{
-                          backgroundColor: "rgba(255, 255, 255, 0.98)",                          border: "1px solid #e2e8f0",
+                          backgroundColor: "rgba(255, 255, 255, 0.98)",
+                          border: "1px solid #e2e8f0",
                           borderRadius: "12px",
                           boxShadow:
                             "0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.05)",

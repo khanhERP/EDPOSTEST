@@ -149,7 +149,7 @@ export const inventoryTranslations: { [key: string]: InventoryTranslations } = {
     quantityInput: 'Nhập số lượng',
     changeReason: 'Lý do thay đổi',
     processing: 'Đang xử lý...',
-    addNewItem: 'Thêm sản phẩm mới',
+    addNewItem: 'Thêm mặt hàng mới',
     newProduct: 'Sản phẩm mới',
     productNameLabel: 'Tên sản phẩm',
     productNamePlaceholder: 'Nhập tên sản phẩm',

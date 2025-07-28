@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,7 +12,7 @@ import { useTranslation } from "@/lib/i18n";
 
 export function TableReport() {
   const { t } = useTranslation();
-
+  
   const [dateRange, setDateRange] = useState("week");
   const [startDate, setStartDate] = useState<string>(
     new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
@@ -21,17 +21,13 @@ export function TableReport() {
     new Date().toISOString().split('T')[0]
   );
 
-  const { data: orders = [], refetch: refetchOrders } = useQuery({
+  const { data: orders = [] } = useQuery({
     queryKey: ['/api/orders'],
   });
 
   const { data: tables = [] } = useQuery({
     queryKey: ['/api/tables'],
   });
-
-  useEffect(() => {
-    refetchOrders();
-  }, [startDate, endDate, dateRange, refetchOrders]);
 
   const getTableData = () => {
     if (!orders || !tables) return null;
@@ -41,7 +37,7 @@ export function TableReport() {
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
-
+      
       return orderDate >= start && orderDate <= end && order.status === 'paid';
     });
 
@@ -76,7 +72,7 @@ export function TableReport() {
         stats.orderCount += 1;
         stats.revenue += Number(order.total);
         stats.customerCount += order.customerCount || 0;
-
+        
         // Track peak hours
         const hour = new Date(order.orderedAt).getHours();
         stats.peakHours[hour] = (stats.peakHours[hour] || 0) + 1;
@@ -122,7 +118,7 @@ export function TableReport() {
   const handleDateRangeChange = (range: string) => {
     setDateRange(range);
     const today = new Date();
-
+    
     switch (range) {
       case "today":
         setStartDate(today.toISOString().split('T')[0]);
@@ -151,14 +147,14 @@ export function TableReport() {
       reserved: { label: t("common.reserved"), variant: "secondary" as const },
       maintenance: { label: t("common.maintenance"), variant: "outline" as const },
     };
-
+    
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.available;
   };
 
   const getPeakHour = (peakHours: { [hour: number]: number }) => {
     const hours = Object.keys(peakHours);
     if (hours.length === 0) return null;
-
+    
     const peak = hours.reduce((max, hour) => 
       peakHours[parseInt(hour)] > peakHours[parseInt(max)] ? hour : max
     );
@@ -200,7 +196,7 @@ export function TableReport() {
                   <SelectItem value="custom">{t("reports.custom")}</SelectItem>
                 </SelectContent>
               </Select>
-
+              
               {dateRange === "custom" && (
                 <>
                   <div className="flex items-center gap-2">
@@ -313,7 +309,7 @@ export function TableReport() {
                 .map((stats) => {
                   const statusConfig = getTableStatusBadge(stats.table.status);
                   const peakHour = getPeakHour(stats.peakHours);
-
+                  
                   return (
                     <TableRow key={stats.table.id}>
                       <TableCell className="font-medium">

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -41,7 +41,6 @@ import { useTranslation } from "@/lib/i18n";
 
 export function EndOfDayReport() {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
 
   // Main concern filters
   const [concernType, setConcernType] = useState("sales"); // sales, revenue, inventory, summary
@@ -129,12 +128,6 @@ export function EndOfDayReport() {
       filteredOrders,
     };
   };
-
-  // Refetch data when filters change
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-  }, [startDate, endDate, dateType, concernType, paymentMethod, transactionType, queryClient]);
 
   const formatCurrency = (amount: number) => {
     return `${amount.toLocaleString()} ₫`;

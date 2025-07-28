@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -43,7 +43,6 @@ import {
 
 export function InventoryReport() {
   const { t } = useTranslation();
-  const queryClient = useQueryClient();
 
   // Filters
   const [concernType, setConcernType] = useState("sales");
@@ -76,12 +75,6 @@ export function InventoryReport() {
   const { data: suppliers } = useQuery({
     queryKey: ["/api/suppliers"],
   });
-
-  // Refetch data when filters change
-  useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ['/api/products'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-  }, [startDate, endDate, concernType, selectedCategory, productSearch, productType, queryClient]);
 
   const formatCurrency = (amount: number) => {
     return `${amount.toLocaleString()} ₫`;
@@ -932,7 +925,7 @@ export function InventoryReport() {
                 <TableHead>{t("reports.productCode")}</TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
                 <TableHead className="text-center">
-{t("reports.totalDisposed")}
+                  {t("reports.totalDisposed")}
                 </TableHead>
                 <TableHead className="text-right">
                   {t("reports.totalValue")}
@@ -1512,22 +1505,6 @@ export function InventoryReport() {
     </div>
   );
 }
-
-const getInventoryData = () => {
-    if (!products || !Array.isArray(products)) return [];
-
-    return products.map((product: any) => ({
-      ...product,
-      minStock: 5, // Default minimum stock
-      maxStock: 100, // Default maximum stock  
-      reorderLevel: 10, // Default reorder level
-      supplier: 'Nhà cung cấp chính', // Default supplier
-      location: 'Kho chính', // Default location
-      lastRestocked: new Date(), // Current date as default
-      averageCost: parseFloat(product.price) * 0.7, // Assume 30% markup
-      totalValue: parseFloat(product.price) * product.stock,
-    }));
-  };
 
 const fetchInventoryData = async () => {
     try {

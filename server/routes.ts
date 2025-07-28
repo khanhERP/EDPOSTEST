@@ -636,108 +636,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add order items to existing order
-  app.post("/api/orders/:orderId/items", async (req, res) => {
+  app.post('/api/orders/:orderId/items', async (req, res) => {
     try {
-      console.log("=== ADD ITEMS TO ORDER START ===");
       const orderId = parseInt(req.params.orderId);
       const { items } = req.body;
 
-      console.log(`Order ID: ${orderId}`);
-      console.log(`Items to add:`, JSON.stringify(items, null, 2));
-
-      if (!items || !Array.isArray(items) || items.length === 0) {
-        console.error("Invalid items data:", items);
-        return res.status(400).json({ error: 'Items array is required and must not be empty' });
-      }
-
-      // Validate order exists
-      const existingOrder = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
-      if (existingOrder.length === 0) {
-        console.error(`Order ${orderId} not found`);
-        return res.status(404).json({ error: 'Order not found' });
-      }
-      console.log("Existing order found:", existingOrder[0]);
-
-      // Get current order totals
-      const currentOrderItems = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
-      console.log(`Current order has ${currentOrderItems.length} items`);
+      console.log(`Adding ${items.length} items to order ${orderId}`);
 
       const createdItems = [];
-      let newItemsTotal = 0;
+      for (const item of items) {
+        // Get product info to include in the order item
+        const [product] = await db
+          .select()
+          .from(products)
+          .where(eq(products.id, item.productId));
 
-      // Create new items
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        console.log(`Processing item ${i + 1}:`, item);
-
-        // Validate item data
-        if (!item.productId || !item.quantity || !item.unitPrice || !item.total) {
-          console.error(`Invalid item data at index ${i}:`, item);
-          return res.status(400).json({ error: `Invalid item data at position ${i + 1}` });
-        }
-
-        try {
-          const newItem = await db.insert(orderItems).values({
-            orderId: orderId,
+        const [orderItem] = await db
+          .insert(orderItems)
+          .values({
+            orderId,
             productId: item.productId,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             total: item.total,
-            notes: item.notes || null,
-          }).returning();
+            notes: item.notes,
+            productName: product?.name || null,
+            productSku: product?.sku || null,
+          })
+          .returning();
 
-          console.log(`Created item ${i + 1}:`, newItem[0]);
-          createdItems.push(newItem[0]);
-          newItemsTotal += parseFloat(item.total);
-        } catch (itemError) {
-          console.error(`Error creating item ${i + 1}:`, itemError);
-          throw itemError;
-        }
+        createdItems.push(orderItem);
       }
 
-      console.log(`New items total: ${newItemsTotal}`);
+      // Update order total
+      const [orderItemsSum] = await db
+        .select({
+          total: sql<number>`sum(${orderItems.total})`,
+        })
+        .from(orderItems)
+        .where(eq(orderItems.orderId, orderId));
 
-      // Calculate new order totals
-      const currentTotal = parseFloat(existingOrder[0].total || "0");
-      const updatedTotal = currentTotal + newItemsTotal;
-      const updatedSubtotal = updatedTotal / 1.1; // Remove 10% tax
-      const updatedTax = updatedTotal - updatedSubtotal;
-
-      console.log(`Current order total: ${currentTotal}`);
-      console.log(`Updated total: ${updatedTotal}`);
-      console.log(`Updated subtotal: ${updatedSubtotal}`);
-      console.log(`Updated tax: ${updatedTax}`);
-
-      // Update order totals
-      const updateResult = await db
+      await db
         .update(orders)
         .set({
-          total: updatedTotal.toString(),
-          subtotal: updatedSubtotal.toString(),
-          tax: updatedTax.toString(),
+          total: orderItemsSum.total?.toString() || "0",
+          subtotal: (orderItemsSum.total * 0.9)?.toString() || "0",
+          tax: (orderItemsSum.total * 0.1)?.toString() || "0",
         })
-        .where(eq(orders.id, orderId))
-        .returning();
+        .where(eq(orders.id, orderId));
 
-      console.log("Order update result:", updateResult);
-      console.log(`Successfully created ${createdItems.length} items for order ${orderId}`);
-      console.log("=== ADD ITEMS TO ORDER END ===");
+      console.log(`Created ${createdItems.length} items for order ${orderId}:`, createdItems);
 
-      res.json({
-        success: true,
-        items: createdItems,
-        newTotal: updatedTotal,
-        message: `Added ${createdItems.length} items to order successfully`
-      });
+      res.json(createdItems);
     } catch (error) {
-      console.error('=== ADD ITEMS TO ORDER ERROR ===');
-      console.error('Error details:', error);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-      res.status(500).json({ 
-        error: 'Failed to add items to order',
-        details: error.message 
-      });
+      console.error('Error adding items to order:', error);
+      res.status(500).json({ error: 'Failed to add items to order' });
     }
   });
 
@@ -928,7 +881,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.put("/api/customers/:id", async (req, res) => {
     try {
-      ```text
       const id = parseInt(req.params.id);
       const customerData = req.body;
       const customer = await storage.updateCustomer(id, customerData);
@@ -1171,7 +1123,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/supplier-debts", async (req, res) => {
     try {
       const { startDate, endDate, supplierId } = req.query;
-
+      
       // Mock data for supplier debts - replace with actual database queries
       const supplierDebts = [
         {
@@ -1211,7 +1163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/supplier-purchases", async (req, res) => {
     try {
       const { startDate, endDate, supplierId } = req.query;
-
+      
       // Mock data for supplier purchases - replace with actual database queries
       const supplierPurchases = [
         {
@@ -1250,7 +1202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/customer-debts", async (req, res) => {
     try {
       const { startDate, endDate, customerId } = req.query;
-
+      
       // Get customer debts from database
       const customerDebts = await db
         .select({
@@ -1281,7 +1233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/customer-sales", async (req, res) => {
     try {
       const { startDate, endDate, customerId } = req.query;
-
+      
       // Get customer sales data from database
       const customerSales = await db
         .select({
