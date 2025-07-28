@@ -52,8 +52,8 @@ const stockUpdateSchema = (t: any) => z.object({
   type: z.enum(["add", "subtract", "set"]),
   notes: z.string().optional(),
   // Fields for new product creation
-  name: z.string().optional(),
-  sku: z.string().optional(),
+  name: z.string().min(1, "Tên sản phẩm là bắt buộc"),
+  sku: z.string().min(1, "SKU là bắt buộc"),
   price: z.string().optional(),
   categoryId: z.number().optional(),
 });
@@ -201,9 +201,9 @@ export default function InventoryPage() {
     },
     onError: (error) => {
       console.error("Delete product error:", error);
-      
+
       let errorMessage = t("inventory.deleteFailedDescription") || "Không thể xóa sản phẩm. Vui lòng thử lại.";
-      
+
       if (error instanceof Error && error.message.includes("Cannot delete product")) {
         if (error.message.includes("transactions")) {
           errorMessage = "Không thể xóa sản phẩm vì đã được sử dụng trong các giao dịch bán hàng.";
@@ -211,7 +211,7 @@ export default function InventoryPage() {
           errorMessage = "Không thể xóa sản phẩm vì đã được sử dụng trong các đơn hàng.";
         }
       }
-      
+
       toast({
         title: t("inventory.deleteFailed") || "Xóa thất bại",
         description: errorMessage,
