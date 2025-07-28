@@ -968,8 +968,7 @@ export function CustomerReport() {
                           marginBottom: 4,
                         }}
                         contentStyle={{
-                          backgroundColor: "rgba(255, 255, 255, 0.98)",
-                          border: "1px solid #e2e8f0",
+                          backgroundColor: "rgba(255, 255, 255, 0.98)",                          border: "1px solid #e2e8f0",
                           borderRadius: "12px",
                           boxShadow:
                             "0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.05)",
