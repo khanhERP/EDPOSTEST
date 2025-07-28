@@ -55,6 +55,7 @@ export function ProductManagerModal({
     price: z.string().optional(),
     sku: z.string().min(1, t("tables.skuRequired")),
     name: z.string().min(1, t("tables.productNameRequired")),
+    productType: z.number().min(1, t("tables.productTypeRequired")),
   });
   const [showAddForm, setShowAddForm] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
@@ -167,6 +168,7 @@ export function ProductManagerModal({
       price: "",
       stock: 0,
       categoryId: 0,
+      productType: 1,
       imageUrl: "",
     },
   });
@@ -187,6 +189,7 @@ export function ProductManagerModal({
       price: product.price,
       stock: product.stock,
       categoryId: product.categoryId,
+      productType: product.productType || 1,
       imageUrl: product.imageUrl || "",
     });
     setShowAddForm(true);
@@ -207,12 +210,22 @@ export function ProductManagerModal({
       price: "",
       stock: 0,
       categoryId: 0,
+      productType: 1,
       imageUrl: "",
     });
   };
 
   const getCategoryName = (categoryId: number) => {
     return categories.find((c) => c.id === categoryId)?.name || "Unknown";
+  };
+
+  const getProductTypeName = (productType: number) => {
+    const types = {
+      1: t("tables.goodsType"),
+      2: t("tables.materialType"), 
+      3: t("tables.finishedProductType")
+    };
+    return types[productType as keyof typeof types] || "Unknown";
   };
 
   const exportProductsToExcel = () => {
@@ -289,6 +302,7 @@ export function ProductManagerModal({
           price: "",
           stock: 0,
           categoryId: 0,
+          productType: 1,
           imageUrl: "",
         });
       }
@@ -305,6 +319,7 @@ export function ProductManagerModal({
       price: "",
       stock: 0,
       categoryId: 0,
+      productType: 1,
       imageUrl: "",
     });
     onClose();
@@ -371,6 +386,9 @@ export function ProductManagerModal({
                           {t("tables.category")}
                         </th>
                         <th className="text-left py-3 px-4 font-medium pos-text-primary">
+                          {t("tables.productType")}
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">
                           {t("tables.price")}
                         </th>
                         <th className="text-left py-3 px-4 font-medium pos-text-primary">
@@ -408,6 +426,9 @@ export function ProductManagerModal({
                           </td>
                           <td className="py-3 px-4 pos-text-secondary">
                             {getCategoryName(product.categoryId)}
+                          </td>
+                          <td className="py-3 px-4 pos-text-secondary">
+                            {getProductTypeName(product.productType || 1)}
                           </td>
                           <td className="py-3 px-4 font-medium">
                             {new Intl.NumberFormat("vi-VN", {
@@ -511,7 +532,7 @@ export function ProductManagerModal({
                     />
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-4 gap-4">
                     <FormField
                       control={form.control}
                       name="price"
@@ -580,6 +601,36 @@ export function ProductManagerModal({
                                   {category.name}
                                 </SelectItem>
                               ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="productType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("tables.productType")}</FormLabel>
+                          <Select
+                            onValueChange={(value) =>
+                              field.onChange(parseInt(value))
+                            }
+                            value={field.value.toString()}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue
+                                  placeholder={t("tables.selectProductType")}
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="1">{t("tables.goodsType")}</SelectItem>
+                              <SelectItem value="2">{t("tables.materialType")}</SelectItem>
+                              <SelectItem value="3">{t("tables.finishedProductType")}</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />

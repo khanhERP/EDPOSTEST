@@ -19,6 +19,7 @@ export const products = pgTable("products", {
   categoryId: integer("category_id").references(() => categories.id).notNull(),
   imageUrl: text("image_url"),
   isActive: boolean("is_active").notNull().default(true),
+  productType: integer("product_type").notNull().default(1),
 });
 
 export const transactions = pgTable("transactions", {
@@ -152,6 +153,7 @@ export const insertProductSchema = createInsertSchema(products).omit({
     message: "Price must be a positive number",
   }),
   stock: z.number().min(0, "Stock cannot be negative"),
+  productType: z.number().min(1).max(3, "Product type is required"),
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
