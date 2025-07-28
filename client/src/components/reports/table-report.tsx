@@ -232,7 +232,7 @@ export function TableReport() {
               <div>
                 <p className="text-sm font-medium text-gray-600">{t("reports.averageUtilization")}</p>
                 <p className="text-2xl font-bold">
-                  {tableData.averageUtilization.toFixed(1)}{t("reports.times")}
+                  {tableData.averageUtilization.toFixed(1)} {t("reports.times")}
                 </p>
                 <p className="text-xs text-gray-500">{t("reports.averageOrdersPerTable")}</p>
               </div>
@@ -319,7 +319,7 @@ export function TableReport() {
                           }`}></div>
                           {stats.table.tableNumber}
                           <span className="text-xs text-gray-500">
-                            ({stats.table.capacity}{t("common.people")})
+                            ({stats.table.capacity} {t("common.people")})
                           </span>
                         </div>
                       </TableCell>
@@ -328,21 +328,21 @@ export function TableReport() {
                           {statusConfig.label}
                         </Badge>
                       </TableCell>
-                      <TableCell>{stats.orderCount}{t("common.count")}</TableCell>
+                      <TableCell>{stats.orderCount} {t("common.count")}</TableCell>
                       <TableCell className="font-semibold">
                         {formatCurrency(stats.revenue)}
                       </TableCell>
-                      <TableCell>{stats.customerCount}{t("common.people")}</TableCell>
+                      <TableCell>{stats.customerCount} {t("common.people")}</TableCell>
                       <TableCell>
                         {stats.orderCount > 0 ? formatCurrency(stats.averageOrderValue) : '-'}
                       </TableCell>
                       <TableCell>
                         <Badge variant={stats.turnoverRate > 1 ? "default" : "outline"}>
-                          {stats.turnoverRate.toFixed(1)}{t("reports.timesPerDay")}
+                          {stats.turnoverRate.toFixed(1)} {t("reports.timesPerDay")}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {peakHour !== null ? `${peakHour}${t("reports.hour")}` : '-'}
+                        {peakHour !== null ? `${peakHour} ${t("reports.hour")}` : '-'}
                       </TableCell>
                     </TableRow>
                   );
@@ -399,7 +399,7 @@ export function TableReport() {
                     <span className="font-medium">{stats.table.tableNumber}</span>
                   </div>
                   <span className="text-sm font-semibold">
-                    {stats.turnoverRate.toFixed(1)}{t("reports.timesPerDay")}
+                    {stats.turnoverRate.toFixed(1)} {t("reports.timesPerDay")}
                   </span>
                 </div>
               ))}
@@ -426,7 +426,7 @@ export function TableReport() {
                     <span className="font-medium">{stats.table.tableNumber}</span>
                   </div>
                   <span className="text-sm font-semibold">
-                    {stats.orderCount}{t("common.count")}
+                    {stats.orderCount} {t("common.count")}
                   </span>
                 </div>
               ))}
