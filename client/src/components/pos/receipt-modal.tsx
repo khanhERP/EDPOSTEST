@@ -134,7 +134,7 @@ export function ReceiptModal({ isOpen, onClose, receipt, onConfirm, isPreview = 
             </>
           ) : (
             <>
-              <Button onClick={handlePrint} className="flex-1 btn-primary">
+              <Button onClick={handlePrint} className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200">
                 <Printer className="mr-2" size={16} />
                 Print Receipt
               </Button>
