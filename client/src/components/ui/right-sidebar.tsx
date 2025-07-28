@@ -15,6 +15,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;
@@ -31,7 +33,16 @@ export function RightSidebar() {
   const [location] = useLocation();
   const { t } = useTranslation();
 
-  const menuItems: MenuItem[] = [
+  // Query store settings to get business type
+  const { data: storeSettings } = useQuery({
+    queryKey: ["/api/store-settings"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/store-settings");
+      return response.json();
+    },
+  });
+
+  const baseMenuItems: MenuItem[] = [
     {
       icon: Home,
       label: t('nav.pos'),
@@ -68,6 +79,15 @@ export function RightSidebar() {
       href: "/settings",
     },
   ];
+
+  // Filter menu items based on business type
+  const menuItems = baseMenuItems.filter(item => {
+    // Hide tables (Bán theo bàn) for retail business type
+    if (item.href === "/tables" && storeSettings?.businessType === "retail") {
+      return false;
+    }
+    return true;
+  });
 
   // Update CSS custom property for responsive margin
   useEffect(() => {
