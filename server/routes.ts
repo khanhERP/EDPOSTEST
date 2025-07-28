@@ -1119,6 +1119,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Supplier Reports APIs
+  app.get("/api/supplier-debts", async (req, res) => {
+    try {
+      const { startDate, endDate, supplierId } = req.query;
+      
+      // Mock data for supplier debts - replace with actual database queries
+      const supplierDebts = [
+        {
+          id: 1,
+          supplierCode: "SUP001",
+          supplierName: "Nhà cung cấp A",
+          initialDebt: 500000,
+          newDebt: 300000,
+          payment: 200000,
+          finalDebt: 600000,
+          phone: "010-1234-5678"
+        },
+        {
+          id: 2,
+          supplierCode: "SUP002", 
+          supplierName: "Nhà cung cấp B",
+          initialDebt: 800000,
+          newDebt: 400000,
+          payment: 300000,
+          finalDebt: 900000,
+          phone: "010-2345-6789"
+        }
+      ];
+
+      // Filter by supplier if specified
+      let filteredDebts = supplierDebts;
+      if (supplierId) {
+        filteredDebts = supplierDebts.filter(debt => debt.id === parseInt(supplierId as string));
+      }
+
+      res.json(filteredDebts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch supplier debts" });
+    }
+  });
+
+  app.get("/api/supplier-purchases", async (req, res) => {
+    try {
+      const { startDate, endDate, supplierId } = req.query;
+      
+      // Mock data for supplier purchases - replace with actual database queries
+      const supplierPurchases = [
+        {
+          id: 1,
+          supplierCode: "SUP001",
+          supplierName: "Nhà cung cấp A", 
+          purchaseValue: 1500000,
+          paymentValue: 1200000,
+          netValue: 300000,
+          phone: "010-1234-5678"
+        },
+        {
+          id: 2,
+          supplierCode: "SUP002",
+          supplierName: "Nhà cung cấp B",
+          purchaseValue: 2000000,
+          paymentValue: 1700000,
+          netValue: 300000,
+          phone: "010-2345-6789"
+        }
+      ];
+
+      // Filter by supplier if specified
+      let filteredPurchases = supplierPurchases;
+      if (supplierId) {
+        filteredPurchases = supplierPurchases.filter(purchase => purchase.id === parseInt(supplierId as string));
+      }
+
+      res.json(filteredPurchases);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch supplier purchases" });
+    }
+  });
+
+  // Customer Reports APIs
+  app.get("/api/customer-debts", async (req, res) => {
+    try {
+      const { startDate, endDate, customerId } = req.query;
+      
+      // Get customer debts from database
+      const customerDebts = await db
+        .select({
+          id: customers.id,
+          customerCode: customers.customerId,
+          customerName: customers.name,
+          initialDebt: sql<number>`0`, // Mock initial debt
+          newDebt: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.1`, // 10% of total spent as debt
+          payment: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.05`, // 5% as payment
+          finalDebt: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.05`, // Final debt
+          phone: customers.phone
+        })
+        .from(customers)
+        .where(eq(customers.status, 'active'));
+
+      // Filter by customer if specified
+      let filteredDebts = customerDebts;
+      if (customerId) {
+        filteredDebts = customerDebts.filter(debt => debt.id === parseInt(customerId as string));
+      }
+
+      res.json(filteredDebts);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer debts" });
+    }
+  });
+
+  app.get("/api/customer-sales", async (req, res) => {
+    try {
+      const { startDate, endDate, customerId } = req.query;
+      
+      // Get customer sales data from database
+      const customerSales = await db
+        .select({
+          id: customers.id,
+          customerCode: customers.customerId,
+          customerName: customers.name,
+          totalSales: customers.totalSpent,
+          visitCount: customers.visitCount,
+          averageOrder: sql<number>`CASE WHEN ${customers.visitCount} > 0 THEN ${customers.totalSpent} / ${customers.visitCount} ELSE 0 END`,
+          phone: customers.phone
+        })
+        .from(customers)
+        .where(eq(customers.status, 'active'));
+
+      // Filter by customer if specified
+      let filteredSales = customerSales;
+      if (customerId) {
+        filteredSales = customerSales.filter(sale => sale.id === parseInt(customerId as string));
+      }
+
+      res.json(filteredSales);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch customer sales" });
+    }
+  });
+
   // Bulk create products
   app.post("/api/products/bulk", async (req, res) => {
     try {

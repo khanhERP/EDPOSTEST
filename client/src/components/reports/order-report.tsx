@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -150,16 +149,16 @@ export function OrderReport() {
     // For each filtered order, estimate product sales based on order total
     filteredOrders.forEach((order: any) => {
       const orderTotal = Number(order.total);
-      
+
       // Simulate order items by distributing order total among available products
       // In a real system, this would come from order_items table
       const randomProductsCount = Math.min(Math.floor(Math.random() * 3) + 1, products.length);
       const selectedProducts = products
         .sort(() => 0.5 - Math.random())
         .slice(0, randomProductsCount);
-      
+
       const avgValuePerProduct = orderTotal / selectedProducts.length;
-      
+
       selectedProducts.forEach((product: any) => {
         const productId = product.id.toString();
         if (!productStats[productId]) {
@@ -170,7 +169,7 @@ export function OrderReport() {
             orders: new Set(),
           };
         }
-        
+
         const quantity = Math.floor(Math.random() * 3) + 1;
         productStats[productId].quantity += quantity;
         productStats[productId].value += avgValuePerProduct;
@@ -183,11 +182,11 @@ export function OrderReport() {
 
   const getChartData = () => {
     const filteredOrders = getFilteredData();
-    
+
     if (concernType === "transaction") {
       // Daily order count chart
       const dailyData: { [date: string]: { orders: number; value: number } } = {};
-      
+
       filteredOrders.forEach((order: any) => {
         const date = new Date(order.orderedAt || order.created_at).toISOString().split('T')[0];
         if (!dailyData[date]) {
@@ -367,6 +366,33 @@ export function OrderReport() {
     },
   };
 
+  // Modified fetchOrderData function to use real data from API
+  const fetchOrderData = async () => {
+    try {
+      const response = await fetch('/api/orders');
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      const orders = await response.json();
+
+      // Get table data to map table names
+      const tablesResponse = await fetch('/api/tables');
+      const tables = await tablesResponse.json();
+      const tableMap = new Map(tables.map((t: any) => [t.id, t.tableNumber]));
+
+      return orders.map((order: any) => ({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        customerName: order.customerName || 'Khách lẻ',
+        tableNumber: tableMap.get(order.tableId) || 'Unknown',
+        total: parseFloat(order.total),
+        status: order.status,
+        createdAt: order.orderedAt,
+      }));
+    } catch (error) {
+      console.error('Error fetching order data:', error);
+      return [];
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -540,7 +566,7 @@ export function OrderReport() {
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               Live Data
             </div>
-            
+
             <div className="relative z-10 h-full">
               <ChartContainer config={chartConfig}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -647,7 +673,7 @@ export function OrderReport() {
               </ChartContainer>
             </div>
           </div>
-          
+
           {/* Enhanced Chart Legend */}
           <div className="mt-6 flex flex-wrap justify-center gap-6">
             {concernType === "transaction" ? (

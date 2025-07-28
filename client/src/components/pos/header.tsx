@@ -13,29 +13,28 @@ import {
   ShoppingCart
 } from "lucide-react";
 import {
+  Search,
+  Bell,
+  User,
+  Settings,
+  LogOut,
+  Calendar,
+  Clock,
+  TrendingUp,
+  DollarSign,
+  Package,
+  Users as UsersIcon,
+  FileText as ReportsIcon,
+  ShoppingCart as CartIcon,
   ChevronDown,
   Users,
   FileText,
   ShoppingCart,
-  Package,
+  Package2,
   BarChart3,
-  Monitor,
-  Calendar,
-  Settings,
-  DollarSign,
-  Search,
-  Globe,
-  User,
-  Clock,
+  Settings as SettingsIcon,
   UserCheck,
   Truck,
-  HelpCircle,
-  Store,
-  CheckSquare,
-  CreditCard,
-  Target,
-  Menu,
-  X,
   Building2,
 } from "lucide-react";
 
@@ -471,3 +470,4 @@ export function POSHeader() {
     </header>
   );
 }
+</replit_final_file>
