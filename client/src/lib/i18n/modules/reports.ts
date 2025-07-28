@@ -204,7 +204,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     profitReport: "이익",
     discountReport: "할인 HD",
     returnReport: "반품",
-    employeeReport: "직원",
     salesMethod: "판매 방법",
     noDelivery: "배송 없음",
     delivery: "배송",
@@ -284,7 +283,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Supplier report
     supplierReport: "공급업체 보고서",
     supplierReportTab: "공급업체 보고서",
-    employeeReport: "직원 보고서",
     employeeReportTab: "직원 보고서",
     employeeReportDescription: "직원 및 성과 분석",
     employeeAnalysisDescription: "직원 분석 및 판매 성과",
@@ -423,11 +421,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     profitReport: "Lợi nhuận",
     discountReport: "Giảm giá HD",
     returnReport: "Trả hàng",
-    employeeReport: "Nhân viên",
     salesMethod: "Phương thức bán hàng",
     noDelivery: "Không giao hàng",
     delivery: "Giao hàng",
-    salesChannel: "Kênh bán",
     direct: "Trực tiếp",
     other: "Khác",
     timeSalesReport: "Báo cáo bán hàng theo thời gian",
@@ -445,7 +441,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceValue: "Giá trị hóa đơn",
     invoiceDiscount: "Giảm giá hóa đơn",
     returnTicketCount: "SL Phiếu trả",
-    seller: "Người bán",
 
     // Chart related translations
     chartView: "Xem biểu đồ",
@@ -844,7 +839,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     profitReport: "Profit",
     discountReport: "Invoice Discount",
     returnReport: "Returns",
-    employeeReport: "Employee",
     salesMethod: "Sales Method",
     noDelivery: "No Delivery",
     delivery: "Delivery",
@@ -1124,10 +1118,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inventoryReportDescription: "Phân tích hàng hóa và tồn kho",
 
     // Supplier report
-    supplierReport: "Báo cáo nhà cung cấp",
     supplierReportTab: "Báo cáo nhà cung cấp",
-    employeeReportTab: "Báo cáo nhân viên",
-    employeeReportDescription: "Phân tích nhân viên và hiệu suất",
     supplierReportDescription: "Phân tích nhà cung cấp và nhập hàng",
     supplierConcernType: "Mối quan tâm",
     supplierPurchase: "Nhập hàng",
@@ -1262,7 +1253,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     profitReport: "Lợi nhuận",
     discountReport: "Giảm giá HD",
     returnReport: "Trả hàng",
-    employeeReport: "Nhân viên",
     salesMethod: "Phương thức bán hàng",
     noDelivery: "Không giao hàng",
     delivery: "Giao hàng",
