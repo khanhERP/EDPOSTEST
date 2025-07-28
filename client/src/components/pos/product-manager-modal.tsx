@@ -185,7 +185,7 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
           {!showAddForm ? (
             <>
               <div className="flex space-x-4 mb-6">
-                <Button onClick={() => setShowAddForm(true)} className="btn-primary hover:bg-blue-500">
+                <Button onClick={() => setShowAddForm(true)} className="bg-green-600 hover:bg-green-700 text-white font-medium transition-colors duration-200">
                   <Plus className="mr-2" size={16} />
                   {t('tables.addNewProduct')}
                 </Button>
@@ -402,7 +402,7 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                     <Button 
                       type="submit" 
                       disabled={createProductMutation.isPending || updateProductMutation.isPending}
-                      className="btn-primary hover:bg-blue-500"
+                      className="bg-green-600 hover:bg-green-700 text-white font-medium transition-colors duration-200"
                     >
                       {editingProduct ? t('tables.updateProduct') : t('tables.createProduct')}
                     </Button>
