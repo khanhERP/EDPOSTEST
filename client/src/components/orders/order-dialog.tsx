@@ -85,50 +85,122 @@ export function OrderDialog({
 
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: { order: any; items: any[] }) => {
-      console.log(
-        mode === "edit"
-          ? "Updating order with data:"
-          : "Creating order with data:",
-        orderData,
-      );
+      console.log("=== ORDER MUTATION START ===");
+      console.log("Mode:", mode);
+      console.log("Existing order:", existingOrder);
+      console.log("Order data:", JSON.stringify(orderData, null, 2));
+      
       if (mode === "edit" && existingOrder) {
-        // For edit mode, we add new items to the existing order
-        return apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
-          items: orderData.items,
-        });
+        console.log("EDIT MODE: Adding items to existing order");
+        console.log("Order ID:", existingOrder.id);
+        console.log("Items to add:", JSON.stringify(orderData.items, null, 2));
+        
+        try {
+          const response = await apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
+            items: orderData.items,
+          });
+          console.log("Edit response received:", response);
+          return response;
+        } catch (error) {
+          console.error("=== EDIT ORDER ERROR ===");
+          console.error("Error object:", error);
+          console.error("Error message:", error.message);
+          throw error;
+        }
       } else {
-        // For create mode, create a new order
-        return apiRequest("POST", "/api/orders", orderData);
+        console.log("CREATE MODE: Creating new order");
+        try {
+          const response = await apiRequest("POST", "/api/orders", orderData);
+          console.log("Create response received:", response);
+          return response;
+        } catch (error) {
+          console.error("=== CREATE ORDER ERROR ===");
+          console.error("Error object:", error);
+          console.error("Error message:", error.message);
+          throw error;
+        }
       }
     },
-    onSuccess: (response) => {
-      console.log(
-        mode === "edit"
-          ? "Order updated successfully:"
-          : "Order created successfully:",
-        response,
-      );
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
-      setCart([]);
-      setCustomerName("");
-      setCustomerCount(1);
-      setExistingItems([]);
-      onOpenChange(false);
-      toast({
-        title: mode === "edit" ? "Cập nhật đơn hàng" : t("orders.orderPlaced"),
-        description:
-          mode === "edit"
-            ? "Đã thêm món mới vào đơn hàng"
-            : t("orders.orderPlacedSuccess"),
-      });
+    onSuccess: async (response) => {
+      console.log("=== ORDER MUTATION SUCCESS ===");
+      console.log("Response:", response);
+      
+      try {
+        // Parse response if needed
+        let data = response;
+        if (typeof response.json === 'function') {
+          data = await response.json();
+        }
+        
+        console.log("Parsed response data:", data);
+        
+        // Invalidate queries to refresh data
+        await queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+        await queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+        await queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
+        
+        // Reset form state
+        setCart([]);
+        setCustomerName("");
+        setCustomerCount(1);
+        setExistingItems([]);
+        onOpenChange(false);
+        
+        // Show success message
+        const successMessage = mode === "edit" 
+          ? (data.message || "Đã thêm món mới vào đơn hàng")
+          : t("orders.orderPlacedSuccess");
+          
+        toast({
+          title: mode === "edit" ? "Cập nhật đơn hàng" : t("orders.orderPlaced"),
+          description: successMessage,
+        });
+        
+        console.log("=== ORDER MUTATION SUCCESS COMPLETE ===");
+      } catch (error) {
+        console.error("Error processing success response:", error);
+        // Still show success message even if response parsing fails
+        toast({
+          title: mode === "edit" ? "Cập nhật đơn hàng" : t("orders.orderPlaced"),
+          description: mode === "edit" ? "Đã thêm món mới vào đơn hàng" : t("orders.orderPlacedSuccess"),
+        });
+      }
     },
-    onError: (error: any) => {
-      console.error("Order creation error:", error);
+    onError: async (error: any) => {
+      console.error("=== ORDER MUTATION ERROR ===");
+      console.error("Error object:", error);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      
+      let errorMessage = mode === "edit" ? "Không thể cập nhật đơn hàng" : t("orders.orderFailed");
+      
+      try {
+        // Try to get detailed error message
+        if (error.response) {
+          console.error("Response status:", error.response.status);
+          console.error("Response headers:", error.response.headers);
+          
+          if (typeof error.response.json === 'function') {
+            const errorData = await error.response.json();
+            console.error("Response data:", errorData);
+            errorMessage = errorData.error || errorData.details || errorMessage;
+          } else if (error.response.data) {
+            console.error("Response data:", error.response.data);
+            errorMessage = error.response.data.error || error.response.data.message || errorMessage;
+          }
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      } catch (parseError) {
+        console.error("Error parsing error response:", parseError);
+      }
+      
+      console.error("Final error message:", errorMessage);
+      console.error("=== ORDER MUTATION ERROR END ===");
+      
       toast({
         title: t("common.error"),
-        description: error.response?.data?.message || t("orders.orderFailed"),
+        description: errorMessage,
         variant: "destructive",
       });
     },
