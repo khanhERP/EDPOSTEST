@@ -197,10 +197,18 @@ export function OrderDialog({
   };
 
   const calculateTotal = () => {
-    return cart.reduce(
+    const cartTotal = cart.reduce(
       (total, item) => total + Number(item.product.price) * item.quantity,
       0,
     );
+    
+    // In edit mode, also add existing items total
+    const existingTotal = mode === "edit" ? existingItems.reduce(
+      (total, item) => total + Number(item.total),
+      0,
+    ) : 0;
+    
+    return cartTotal + existingTotal;
   };
 
   const calculateTax = () => {
