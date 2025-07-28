@@ -63,6 +63,11 @@ export interface NavigationTranslations {
   reports: string;
   employees: string;
   attendance: string;
+  suppliers: string;
+  salesReports: string;
+  inventoryReports: string;
+  expensesReports: string;
+  profitReports: string;
 }
 
 // Reports translations interface

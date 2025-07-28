@@ -74,14 +74,15 @@ export function POSHeader() {
       const target = event.target as HTMLElement;
       if (!target.closest('.pos-dropdown')) {
         setPosMenuOpen(false);
+        setReportsSubmenuOpen(false);
       }
     };
 
-    if (posMenuOpen) {
+    if (posMenuOpen || reportsSubmenuOpen) {
       document.addEventListener('click', handleClickOutside);
       return () => document.removeEventListener('click', handleClickOutside);
     }
-  }, [posMenuOpen]);
+  }, [posMenuOpen, reportsSubmenuOpen]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
@@ -185,52 +186,74 @@ export function POSHeader() {
                       >
                         <BarChart3 className="w-4 h-4 mr-3" />
                         {t('nav.reports')}
-                        <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${reportsSubmenuOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${reportsSubmenuOpen ? 'rotate-180' : ''}`} />
                       </button>
                       {reportsSubmenuOpen && (
-                        <div className="absolute top-full right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50">
-                          <Link href="/reports/sales">
+                        <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50">
+                          <Link href="/reports?tab=overview">
                             <button
                               className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                                location === "/reports/sales" ? "bg-green-50 text-green-600" : "text-gray-700"
+                                location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => setReportsSubmenuOpen(false)}
                             >
                               <TrendingUp className="w-4 h-4 mr-3" />
-                              {t('nav.salesReports')}
+                              {t('reports.dashboard')}
                             </button>
                           </Link>
-                          <Link href="/reports/inventory">
+                          <Link href="/reports?tab=sales">
                             <button
                               className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                                location === "/reports/inventory" ? "bg-green-50 text-green-600" : "text-gray-700"
+                                location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => setReportsSubmenuOpen(false)}
                             >
-                              <Package className="w-4 h-4 mr-3" />
-                              {t('nav.inventoryReports')}
+                              <BarChart3 className="w-4 h-4 mr-3" />
+                              {t('reports.salesAnalysis')}
                             </button>
                           </Link>
-                          <Link href="/reports/expenses">
+                          <Link href="/reports?tab=saleschart">
                             <button
                               className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                                location === "/reports/expenses" ? "bg-green-50 text-green-600" : "text-gray-700"
+                                location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => setReportsSubmenuOpen(false)}
                             >
-                              <FileText className="w-4 h-4 mr-3" />
-                              {t('nav.expensesReports')}
+                              <BarChart3 className="w-4 h-4 mr-3" />
+                              {t('reports.salesChart')}
                             </button>
                           </Link>
-                          <Link href="/reports/profit">
+                          <Link href="/reports?tab=menu">
                             <button
                               className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                                location === "/reports/profit" ? "bg-green-50 text-green-600" : "text-gray-700"
+                                location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => setReportsSubmenuOpen(false)}
                             >
                               <PieChart className="w-4 h-4 mr-3" />
-                              {t('nav.profitReports')}
+                              {t('reports.menuAnalysis')}
+                            </button>
+                          </Link>
+                          <Link href="/reports?tab=table">
+                            <button
+                              className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                                location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
+                              }`}
+                              onClick={() => setReportsSubmenuOpen(false)}
+                            >
+                              <Utensils className="w-4 h-4 mr-3" />
+                              {t('reports.tableAnalysis')}
+                            </button>
+                          </Link>
+                          <Link href="/reports?tab=endofday">
+                            <button
+                              className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                                location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
+                              }`}
+                              onClick={() => setReportsSubmenuOpen(false)}
+                            >
+                              <FileText className="w-4 h-4 mr-3" />
+                              {t('reports.endOfDayReport')}
                             </button>
                           </Link>
                         </div>
