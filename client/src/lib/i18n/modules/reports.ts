@@ -222,7 +222,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Chart related translations
     chartView: '차트 보기',
     visualRepresentation: '데이터의 시각적 표현',
-    netRevenue: '순 매출',
 
     // Table headers for reports
     salesDetailsHeader: '판매 세부사항',
@@ -700,7 +699,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     returnByInvoiceReport: 'Returns Report by Invoice',
     employeeSalesReport: 'Sales Report by Employee',
     returnValue: 'Return Value',
-    netRevenue: 'Net Revenue',
     totalAmount: 'Total Amount',
     discount: 'Discount',
     totalCost: 'Total Cost',
@@ -714,7 +712,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Chart related translations
     chartView: 'Chart View',
     visualRepresentation: 'Visual representation of data',
-    netRevenue: 'Net Revenue',
 
     // Table headers for reports
     salesDetailsHeader: 'Sales Details',
@@ -1074,7 +1071,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     returnByInvoiceReport: 'Báo cáo trả hàng theo hóa đơn',
     employeeSalesReport: 'Báo cáo bán hàng theo nhân viên',
     returnValue: 'Giá trị trả',
-    netRevenue: 'Doanh thu thuần',
     totalAmount: 'Tổng tiền hàng',
     discount: 'Giảm giá',
     totalCost: 'Tổng giá vốn',
