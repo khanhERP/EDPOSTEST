@@ -655,12 +655,7 @@ export function EndOfDayReport() {
 
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            {t("reports.printOptions")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3 pt-6">
           {/* Main concern and date type in same row */}
           <div className="grid grid-cols-4 gap-4">
             <div>
