@@ -63,7 +63,7 @@ export function ReceiptModal({
           className="px-6 pb-6 receipt-print bg-white"
           style={{ paddingTop: "1px" }}
         >
-          <div className="text-center mb-4">
+          <div className="text-center mb-4 mt-2">
             <p className="text-sm font-semibold mb-1">Easy Digital Point Of Sale Service</p>
             <p className="text-sm">Main Store Location</p>
             <p className="text-sm">123 Commerce St, City, State 12345</p>
