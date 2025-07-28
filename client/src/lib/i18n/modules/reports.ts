@@ -148,19 +148,51 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     income: '수입',
     expenses: '지출',
     netProfit: '순이익',
-    paymentMethodBreakdown: '결제 phương thức thanh toán',
-    transactionDetails: 'Chi tiết giao dịch',
-    transactionId: 'Mã giao dịch',
-    time: 'Thời gian',
-    method: 'Phương thức',
-    amount: 'Số tiền',
-    notes: 'Ghi chú',
+    paymentMethodBreakdown: '결제 방법 분석',
+    transactionDetails: '거래 세부사항',
+    transactionId: '거래 ID',
+    time: '시간',
+    method: '방법',
+    amount: '금액',
+    notes: '메모',
     transfer: '계좌이체',
     wallet: '전자지갑',
     cashPayment: '현금',
     cardPayment: '카드',
-    transfer: '계좌이체',
-    wallet: '전자지갑',
+
+    // Comprehensive sales report
+    comprehensiveSalesReport: '종합 매출 보고서',
+    timeReport: '시간',
+    profitReport: '이익',
+    discountReport: '할인 HD',
+    returnReport: '반품',
+    employeeReport: '직원',
+    salesMethod: '판매 방법',
+    noDelivery: '배송 없음',
+    delivery: '배송',
+    salesChannel: '판매 채널',
+    direct: '직접',
+    other: '기타',
+    timeSalesReport: '시간별 매출 보고서',
+    profitByInvoiceReport: '송장별 이익 보고서',
+    invoiceDiscountReport: '송장 할인 종합 보고서',
+    returnByInvoiceReport: '송장별 반품 보고서',
+    employeeSalesReport: '직원별 매출 보고서',
+    returnValue: '반품 가치',
+    netRevenue: '순 매출',
+    totalAmount: '총 금액',
+    discount: '할인',
+    totalCost: '총 원가',
+    grossProfit: '총 이익',
+    totalInvoices: '총 송장',
+    invoiceValue: '송장 가치',
+    invoiceDiscount: '송장 할인',
+    returnTicketCount: '반품 표 수량',
+    seller: '판매자',
+
+    // Chart related translations
+    chartView: '차트 보기',
+    visualRepresentation: '데이터의 시각적 표현',
 
     // Table headers for reports
     transactionCode: '거래 코드',
@@ -175,8 +207,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productName: '상품명',
     soldQuantity: '판매 수량',
     returnQuantity: '반품 수량',
-    returnValue: '반품 가치',
-    netRevenue: '순 수익',
 
     // Report specific content
     salesDetails: '판매 세부사항',
@@ -191,106 +221,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Sales chart report
     salesChart: '매출 차트',
     salesChartDescription: '차트를 통한 시각적 매출 분석',
-
-    // Comprehensive sales report
-    comprehensiveSalesReport: '종합 매출 보고서',
-    concernType: '관심 사항',
-    timeReport: '시간',
-    profitReport: '이익',
-    discountReport: '할인 HD',
-    returnReport: '반품',
-    employeeReport: '직원',
-    salesMethod: '판매 방법',
-    noDelivery: '배송 없음',
-    delivery: '배송',
-    salesChannel: '판매 채널',
-    direct: '직접',
-    other: '기타',
-    timeSalesReport: '시간별 매출 보고서',
-    profitByInvoiceReport: '송장별 이익 보고서',
-    invoiceDiscountReport: '송장 할인 종합 보고서',
-    returnByInvoiceReport: '송장별 반품 보고서',
-    employeeSalesReport: '직원별 매출 보고서',
-    totalRevenue: '총 매출',
-    returnValue: '반품 가치',
-    netRevenue: '순 매출',
-    totalAmount: '총 금액',
-    discount: '할인',
-    totalCost: '총 원가',
-    grossProfit: '총 이익',
-    totalInvoices: '총 송장',
-    invoiceValue: '송장 가치',
-    invoiceDiscount: '송장 할인',
-    returnTicketCount: '반품 표 수량',
-    seller: '판매자',
-
-      // Chart related translations
-      chartView: '차트 보기',
-      visualRepresentation: '데이터의 시각적 표현',
-      chartPlaceholder: '차트 표시 영역',
-      chartWillDisplayHere: '시간, 수익, 직원 보고서의 차트가 여기에 표시됩니다',
-
-      // Table headers for reports
-    transactionCode: '거래 코드',
-    quantity: '수량',
-    otherRevenue: '기타 수입',
-    vat: 'VAT',
-    actualRevenue: '실제 수입',
-    receiptCode: '영수증 코드',
-    payerReceiver: '지불자/수령자',
-    revenueExpenseType: '수입/지출',
-    productCode: '상품 코드',
-    productName: '상품명',
-    soldQuantity: '판매 수량',
-    returnQuantity: '반품 수량',
-    returnValue: '반품 가치',
-    netRevenue: '순 수익',
-
-    // Report specific content
-    salesDetails: '판매 세부사항',
-    revenueExpenseDetails: '수입 지출 세부사항',
-    inventoryDetails: '재고 세부사항',
-    noReportData: '보고서 데이터가 없습니다',
-    centralBranch: '중앙 지점',
-
-    // Date labels
-    date: '날짜',
-
-    // Sales chart report
-    salesChart: '매출 차트',
-    salesChartDescription: '차트를 통한 시각적 매출 분석',
-
-    // Comprehensive sales report
-    comprehensiveSalesReport: '종합 매출 보고서',
-    concernType: '관심 사항',
-    timeReport: '시간',
-    profitReport: '이익',
-    discountReport: '할인 HD',
-    returnReport: '반품',
-    employeeReport: '직원',
-    salesMethod: '판매 방법',
-    noDelivery: '배송 없음',
-    delivery: '배송',
-    salesChannel: '판매 채널',
-    direct: '직접',
-    other: '기타',
-    timeSalesReport: '시간별 매출 보고서',
-    profitByInvoiceReport: '송장별 이익 보고서',
-    invoiceDiscountReport: '송장 할인 종합 보고서',
-    returnByInvoiceReport: '송장별 반품 보고서',
-    employeeSalesReport: '직원별 매출 보고서',
-    totalRevenue: '총 매출',
-    returnValue: '반품 가치',
-    netRevenue: '순 매출',
-    totalAmount: '총 금액',
-    discount: '할인',
-    totalCost: '총 원가',
-    grossProfit: '총 이익',
-    totalInvoices: '총 송장',
-    invoiceValue: '송장 가치',
-    invoiceDiscount: '송장 할인',
-    returnTicketCount: '반품 표 수량',
-    seller: '판매자',
   },
   en: {
     title: 'Reports',
@@ -455,11 +385,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     transfer: 'Bank Transfer',
     wallet: 'E-Wallet',
 
-    // Table detail headers
-    salesDetailsHeader: 'Sales Details',
-    revenueExpenseDetailsHeader: 'Revenue & Expense Details',
-    inventoryDetailsHeader: 'Inventory Details',
-
     // Date labels
     date: 'Date',
 
@@ -469,7 +394,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Comprehensive sales report
     comprehensiveSalesReport: 'Comprehensive Sales Report',
-    concernType: 'Concern Type',
     timeReport: 'Time',
     profitReport: 'Profit',
     discountReport: 'Invoice Discount',
@@ -486,7 +410,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscountReport: 'Comprehensive Invoice Discount Report',
     returnByInvoiceReport: 'Returns Report by Invoice',
     employeeSalesReport: 'Sales Report by Employee',
-    totalRevenue: 'Total Revenue',
     returnValue: 'Return Value',
     netRevenue: 'Net Revenue',
     totalAmount: 'Total Amount',
@@ -499,13 +422,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     returnTicketCount: 'Return Ticket Count',
     seller: 'Seller',
 
-      // Chart related translations
-      chartView: 'Chart View',
-      visualRepresentation: 'Visual representation of data',
-      chartPlaceholder: 'Chart Display Area',
-      chartWillDisplayHere: 'Chart will be displayed here for Time, Profit, and Employee reports',
+    // Chart related translations
+    chartView: 'Chart View',
+    visualRepresentation: 'Visual representation of data',
 
-      // Table headers for reports
+    // Table headers for reports
     transactionCode: 'Transaction Code',
     quantity: 'Quantity',
     otherRevenue: 'Other Revenue',
@@ -518,8 +439,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productName: 'Product Name',
     soldQuantity: 'Sold Quantity',
     returnQuantity: 'Return Quantity',
-    returnValue: 'Return Value',
-    netRevenue: 'Net Revenue',
 
     // Report specific content
     salesDetails: 'Sales Details',
@@ -527,37 +446,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inventoryDetails: 'Inventory Details',
     noReportData: 'No report data available',
     centralBranch: 'Central Branch',
-
-    // Report titles
-    salesReportTitle: 'Sales Report',
-    revenueReportTitle: 'Revenue Report',
-    inventoryReportTitle: 'Inventory Report',
-    summaryReportTitle: 'Summary Report',
-
-    // Date display labels
-    saleDate: 'Sale Date',
-    paymentDate: 'Payment Date',
-    fromDate: 'From Date',
-    toDate: 'To Date',
-
-    // End of day report detailed table translations
-    transactionTypeHeader: 'Transaction Type',
-    orderNumberHeader: 'Order Number',
-    employeeHeader: 'Employee',
-    customerHeader: 'Customer',
-    totalAmountHeader: 'Total Amount',
-    paymentMethodHeader: 'Payment Method',
-    notesHeader: 'Notes',
-    timeHeader: 'Time',
-    itemHeader: 'Item',
-    unitPriceHeader: 'Unit Price',
-    totalPriceHeader: 'Total Price',
-    categoryHeader: 'Category',
-    stockInHeader: 'Stock In',
-    stockOutHeader: 'Stock Out',
-    currentStockHeader: 'Current Stock',
-    supplierHeader: 'Supplier',
-    expiryDateHeader: 'Expiry Date',
   },
   vi: {
     title: 'Báo cáo',
@@ -613,13 +501,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     detailedTablePerformance: 'Hiệu suất chi tiết theo bàn',
     detailedTablePerformanceDesc: 'Kiểm tra các chỉ số hoạt động chi tiết cho từng bàn',
     currentStatus: 'Trạng thái hiện tại',
-    orderCountTable: 'Số đơn hàng',
-    customerCountTable: 'Số khách hàng',
-    turnoverRateTable: 'Tỷ lệ luân chuyển',
+    orderCount: 'Số đơn hàng',
     peakTime: 'Giờ cao điểm',
-    topRevenueTables: 'Bàn doanh thu cao nhất',
-    topTurnoverTables: 'Bàn luân chuyển cao nhất',
-    topUtilizationTables: 'Bàn sử dụng cao nhất',
     timesPerDay: ' lần/ngày',
     hourUnit: ' giờ',
     timesUnit: ' lần',
@@ -628,17 +511,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Menu analysis
     productPerformance: 'Hiệu suất sản phẩm',
-    categoryPerformanceMenu: 'Hiệu suất danh mục',
+    categoryPerformance: 'Hiệu suất danh mục',
     topProducts: 'Sản phẩm hàng đầu',
     popularItems: 'Món phổ biến',
     totalSold: 'Tổng số bán',
-    orderCount: 'Số lượng đơn hàng',
     performance: 'Hiệu suất',
 
     // Table analysis
     tablePerformance: 'Hiệu suất bàn',
     utilizationRate: 'Tỷ lệ sử dụng',
-    turnoverRate: 'Tỷ lệ luân chuyển',
     averageRevenue: 'Doanh thu trung bình',
     peakHours: 'Giờ cao điểm',
     tableUtilization: 'Sử dụng bàn',
@@ -655,7 +536,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Additional dashboard keys
     periodRevenue: 'Doanh thu kỳ',
-    customerCount: 'Số khách hàng',
     monthRevenue: 'Doanh thu tháng',
     monthAccumulated: 'Tích lũy tháng',
     realTimeStatus: 'Trạng thái thời gian thực',
@@ -663,14 +543,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     count: 'số lượng',
     performanceMetrics: 'Chỉ số hiệu suất',
     salesAchievementRate: 'Tỷ lệ đạt doanh thu',
-    hour: 'giờ',
     peakHour: 'Giờ cao điểm',
     tableTurnoverRate: 'Tỷ lệ luân chuyển bàn',
-    times: 'lần',
     targetAverageDailySales: 'Mục tiêu doanh thu trung bình hàng ngày {amount}, Mục tiêu luân chuyển {turnovers} lần',
 
     // Category performance
-    categoryPerformance: 'Hiệu suất danh mục',
     topSellingProducts: 'Sản phẩm bán chạy nhất (theo số lượng)',
     topRevenueProducts: 'Sản phẩm doanh thu cao nhất (theo doanh thu)',
     menuItems: '{count} món',
@@ -703,7 +580,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     dateType: 'Loại ngày',
     singleDate: 'Ngày đơn',
     dateRange: 'Khoảng ngày',
-    date: 'Ngày',
     paymentMethodFilter: 'Phương thức thanh toán',
     transactionTypeFilter: 'Loại giao dịch',
     creator: 'Người tạo',
@@ -734,11 +610,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     transfer: 'Chuyển khoản',
     wallet: 'Ví điện tử',
 
-    // Table detail headers
-    salesDetailsHeader: 'Chi tiết bán hàng',
-    revenueExpenseDetailsHeader: 'Chi tiết thu chi',
-    inventoryDetailsHeader: 'Chi tiết hàng hóa',
-
     // Date labels
     date: 'Ngày',
 
@@ -748,7 +619,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Comprehensive sales report
     comprehensiveSalesReport: 'Báo cáo bán hàng tổng hợp',
-    concernType: 'Mối quan tâm',
     timeReport: 'Thời gian',
     profitReport: 'Lợi nhuận',
     discountReport: 'Giảm giá HD',
@@ -765,7 +635,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscountReport: 'Báo cáo tổng hợp giảm giá hóa đơn',
     returnByInvoiceReport: 'Báo cáo trả hàng theo hóa đơn',
     employeeSalesReport: 'Báo cáo bán hàng theo nhân viên',
-    totalRevenue: 'Tổng doanh thu',
     returnValue: 'Giá trị trả',
     netRevenue: 'Doanh thu thuần',
     totalAmount: 'Tổng tiền hàng',
@@ -778,13 +647,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     returnTicketCount: 'SL Phiếu trả',
     seller: 'Người bán',
 
-      // Chart related translations
-      chartView: 'Xem biểu đồ',
-      visualRepresentation: 'Biểu diễn trực quan của dữ liệu',
-      chartPlaceholder: 'Khu vực hiển thị biểu đồ',
-      chartWillDisplayHere: 'Biểu đồ sẽ được hiển thị ở đây cho báo cáo Thời gian, Lợi nhuận và Nhân viên',
+    // Chart related translations
+    chartView: 'Xem biểu đồ',
+    visualRepresentation: 'Biểu diễn trực quan của dữ liệu',
 
-      // Table headers for reports
+    // Table headers for reports
     transactionCode: 'Mã giao dịch',
     quantity: 'Số lượng',
     otherRevenue: 'Thu nhập khác',
@@ -797,8 +664,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productName: 'Tên sản phẩm',
     soldQuantity: 'Số lượng bán',
     returnQuantity: 'Số lượng trả',
-    returnValue: 'Giá trị trả',
-    netRevenue: 'Doanh thu ròng',
 
     // Report specific content
     salesDetails: 'Chi tiết bán hàng',
@@ -806,36 +671,5 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inventoryDetails: 'Chi tiết hàng hóa',
     noReportData: 'Không có dữ liệu báo cáo',
     centralBranch: 'Chi nhánh trung tâm',
-
-    // Report titles
-    salesReportTitle: 'Báo cáo bán hàng',
-    revenueReportTitle: 'Báo cáo thu chi',
-    inventoryReportTitle: 'Báo cáo hàng hóa',
-    summaryReportTitle: 'Báo cáo tổng hợp',
-
-    // Date display labels
-    saleDate: 'Ngày bán',
-    paymentDate: 'Ngày thanh toán',
-    fromDate: 'Từ ngày',
-    toDate: 'Đến ngày',
-
-    // End of day report detailed table translations
-    transactionTypeHeader: 'Loại giao dịch',
-    orderNumberHeader: 'Số đơn hàng',
-    employeeHeader: 'Nhân viên',
-    customerHeader: 'Khách hàng',
-    totalAmountHeader: 'Tổng số tiền',
-    paymentMethodHeader: 'Phương thức thanh toán',
-    notesHeader: 'Ghi chú',
-    timeHeader: 'Thời gian',
-    itemHeader: 'Mặt hàng',
-    unitPriceHeader: 'Đơn giá',
-    totalPriceHeader: 'Tổng giá',
-    categoryHeader: 'Danh mục',
-    stockInHeader: 'Nhập kho',
-    stockOutHeader: 'Xuất kho',
-    currentStockHeader: 'Tồn kho hiện tại',
-    supplierHeader: 'Nhà cung cấp',
-    expiryDateHeader: 'Ngày hết hạn',
   },
 };
