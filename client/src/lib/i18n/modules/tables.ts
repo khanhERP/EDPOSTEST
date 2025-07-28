@@ -239,7 +239,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     skuPlaceholder: "Nhập SKU",
     pricePlaceholder: "Nhập giá",
     stockPlaceholder: "Nhập số lượng tồn kho",
-    selectCategory: "Chọn danh mục",
+    selectCategory: "Chọn danh mục", 
     categoryRequired: "Danh mục là bắt buộc",
     productType: "Loại sản phẩm",
     selectProductType: "Chọn loại sản phẩm",
@@ -247,7 +247,8 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     goodsType: "Hàng hóa",
     materialType: "Nguyên vật liệu", 
     finishedProductType: "Thành phẩm",
-    },
+    productType: "Loại sản phẩm",
+  },
   ko: {
     title: "테이블 관리",
     description: "테이블 상태를 확인하고 주문을 관리하세요",
@@ -540,5 +541,6 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     goodsType: "Hàng hóa",
     materialType: "Nguyên vật liệu", 
     finishedProductType: "Thành phẩm",
-    },
+    productType: "Loại sản phẩm",
+  },
 };

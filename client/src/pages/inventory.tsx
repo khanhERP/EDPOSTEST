@@ -529,6 +529,9 @@ export default function InventoryPage() {
                           SKU
                         </th>
                         <th className="text-left py-3 px-4 font-medium text-gray-700">
+                          {t("tables.productType")}
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">
                           {t("common.category")}
                         </th>
                         <th className="text-center py-3 px-4 font-medium text-gray-700">
@@ -569,6 +572,17 @@ export default function InventoryPage() {
                             </td>
                             <td className="py-4 px-4 text-gray-600">
                               {product.sku}
+                            </td>
+                            <td className="py-4 px-4">
+                              <Badge
+                                variant="outline"
+                                className="text-blue-700 border-blue-300"
+                              >
+                                {product.productType === 1 ? t("tables.goodsType") : 
+                                 product.productType === 2 ? t("tables.materialType") : 
+                                 product.productType === 3 ? t("tables.finishedProductType") : 
+                                 t("tables.goodsType")}
+                              </Badge>
                             </td>
                             <td className="py-4 px-4">
                               <Badge
