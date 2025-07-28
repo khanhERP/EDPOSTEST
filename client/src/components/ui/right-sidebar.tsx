@@ -44,14 +44,14 @@ export function RightSidebar() {
 
   const baseMenuItems: MenuItem[] = [
     {
-      icon: Home,
-      label: t('nav.pos'),
-      href: "/pos",
-    },
-    {
       icon: Utensils,
       label: t('nav.tables'),
       href: "/tables",
+    },
+    {
+      icon: Home,
+      label: t('nav.pos'),
+      href: "/pos",
     },
     {
       icon: Package,
