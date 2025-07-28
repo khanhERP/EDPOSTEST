@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Minus, ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -403,8 +404,8 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
           </div>
 
           {/* Cart */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">
                 {mode === "edit" ? "Món đã gọi & Món mới" : t("tables.orderHistory")}
               </h3>
@@ -413,105 +414,108 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
               </Badge>
             </div>
 
-            {/* Existing Items (Edit Mode Only) */}
-            {mode === "edit" && existingItems.length > 0 && (
-              <>
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium text-gray-600">Món đã gọi trước đó:</h4>
-                  {existingItems.map((item, index) => (
-                    <Card key={`existing-${index}`} className="bg-gray-50">
-                      <CardContent className="p-3">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium text-sm">{item.productName}</h4>
-                            <p className="text-xs text-gray-500">Đã gọi</p>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-sm font-bold">
-                              {(Number(item.total)).toLocaleString()} ₫
-                            </span>
-                            <p className="text-xs text-gray-500">x{item.quantity}</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-                {cart.length > 0 && <Separator />}
-                {cart.length > 0 && (
-                  <h4 className="text-sm font-medium text-gray-600">Món mới thêm:</h4>
+            <ScrollArea className="flex-1 pr-4">
+              <div className="space-y-4">
+                {/* Existing Items (Edit Mode Only) */}
+                {mode === "edit" && existingItems.length > 0 && (
+                  <>
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium text-gray-600">Món đã gọi trước đó:</h4>
+                      {existingItems.map((item, index) => (
+                        <Card key={`existing-${index}`} className="bg-gray-50">
+                          <CardContent className="p-3">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h4 className="font-medium text-sm">{item.productName}</h4>
+                                <p className="text-xs text-gray-500">Đã gọi</p>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-sm font-bold">
+                                  {(Number(item.total)).toLocaleString()} ₫
+                                </span>
+                                <p className="text-xs text-gray-500">x{item.quantity}</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                    {cart.length > 0 && <Separator />}
+                    {cart.length > 0 && (
+                      <h4 className="text-sm font-medium text-gray-600">Món mới thêm:</h4>
+                    )}
+                  </>
                 )}
-              </>
-            )}
 
-            {cart.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p>{t("tables.noItemsSelected")}</p>
-              </div>
-            ) : (
-              <div className="space-y-3 overflow-y-auto max-h-80">
-                {cart.map((item) => (
-                  <Card key={item.product.id}>
-                    <CardContent className="p-3">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-medium text-sm">
-                            {item.product.name}
-                          </h4>
-                          <span className="text-sm font-bold">
-                            {(
-                              Number(item.product.price) * item.quantity
-                            ).toLocaleString()} ₫
-                          </span>
-                        </div>
+                {cart.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p>{t("tables.noItemsSelected")}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {cart.map((item) => (
+                      <Card key={item.product.id}>
+                        <CardContent className="p-3">
+                          <div className="space-y-2">
+                            <div className="flex justify-between items-start">
+                              <h4 className="font-medium text-sm">
+                                {item.product.name}
+                              </h4>
+                              <span className="text-sm font-bold">
+                                {(
+                                  Number(item.product.price) * item.quantity
+                                ).toLocaleString()} ₫
+                              </span>
+                            </div>
 
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => removeFromCart(item.product.id)}
-                              className="h-6 w-6 p-0"
-                            >
-                              <Minus className="w-3 h-3" />
-                            </Button>
-                            <span className="text-sm font-medium w-8 text-center">
-                              {item.quantity}
-                            </span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => addToCart(item.product)}
-                              className="h-6 w-6 p-0"
-                              disabled={item.quantity >= item.product.stock}
-                            >
-                              <Plus className="w-3 h-3" />
-                            </Button>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => removeFromCart(item.product.id)}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </Button>
+                                <span className="text-sm font-medium w-8 text-center">
+                                  {item.quantity}
+                                </span>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => addToCart(item.product)}
+                                  className="h-6 w-6 p-0"
+                                  disabled={item.quantity >= item.product.stock}
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </Button>
+                              </div>
+                              <span className="text-xs text-gray-500">
+                                @{Number(item.product.price).toLocaleString()} ₫
+                              </span>
+                            </div>
+
+                            <Textarea
+                              placeholder={t("tables.specialRequests")}
+                              value={item.notes || ""}
+                              onChange={(e) =>
+                                updateItemNotes(item.product.id, e.target.value)
+                              }
+                              className="text-xs h-16"
+                            />
                           </div>
-                          <span className="text-xs text-gray-500">
-                            @{Number(item.product.price).toLocaleString()} ₫
-                          </span>
-                        </div>
-
-                        <Textarea
-                          placeholder={t("tables.specialRequests")}
-                          value={item.notes || ""}
-                          onChange={(e) =>
-                            updateItemNotes(item.product.id, e.target.value)
-                          }
-                          className="text-xs h-16"
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
+            </ScrollArea>
 
             {cart.length > 0 && (
-              <>
-                <Separator />
+              <div className="mt-4 space-y-4 border-t pt-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>{t("tables.subtotalLabel")}</span>
@@ -539,7 +543,7 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
                     ? (mode === "edit" ? "Đang cập nhật..." : t("tables.placing"))
                     : (mode === "edit" ? "Cập nhật đơn hàng" : t("tables.placeOrder"))}
                 </Button>
-              </>
+              </div>
             )}
           </div>
         </div>
