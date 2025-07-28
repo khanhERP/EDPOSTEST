@@ -132,12 +132,99 @@ export interface ReportsTranslations {
   noRevenueData: string;
   noCategoryData: string;
 
+  // Table analysis specific
+  customerCount: string;
+  turnoverRate: string;
+  hour: string;
+  times: string;
+
   // Additional keys
+  endOfDayReport: string;
   endOfDayReportTab: string;
   revenueExpense: string;
   mainConcern: string;
+  sales: string;
+  inventory: string;
+  summary: string;
+  dateType: string;
+  singleDate: string;
+  dateRange: string;
+  date: string;
+  paymentMethodFilter: string;
+  transactionTypeFilter: string;
+  creator: string;
+  employee: string;
+  customerPayment: string;
+  customerRefund: string;
+  otherExpense: string;
+  supplierRefund: string;
+  supplierPayment: string;
+  printReport: string;
+  reportGenerated: string;
+  dataFrom: string;
+  to: string;
+  printOptions: string;
+  totalTransactions: string;
+  income: string;
+  expenses: string;
+  netProfit: string;
+  paymentMethodBreakdown: string;
+  transactionDetails: string;
+  transactionId: string;
+  time: string;
+  method: string;
+  amount: string;
+  notes: string;
   cashPayment: string;
   cardPayment: string;
+  transfer: string;
+  wallet: string;
+
+  // Table detail headers
+  salesDetailsHeader: string;
+  revenueExpenseDetailsHeader: string;
+  inventoryDetailsHeader: string;
+  
+  // Sales chart report
+  salesChart: string;
+  salesChartDescription: string;
+  saleDate: string;
+  paymentDate: string;
+  fromDate: string;
+  toDate: string;
+  barChart: string;
+  pieChart: string;
+  lineChart: string;
+  dailyRevenue: string;
+  paymentMethodDistribution: string;
+  hourlyRevenue: string;
+  barChartDesc: string;
+  pieChartDesc: string;
+  lineChartDesc: string;
+  paymentMethodDetails: string;
+  
+  // Table headers for reports
+  transactionCode: string;
+  quantity: string;
+  otherRevenue: string;
+  vat: string;
+  actualRevenue: string;
+  receiptCode: string;
+  payerReceiver: string;
+  revenueExpenseType: string;
+  productCode: string;
+  productName: string;
+  soldQuantity: string;
+  returnQuantity: string;
+  returnValue: string;
+  netRevenue: string;
+
+  // Report specific content
+  salesDetails: string;
+  revenueExpenseDetails: string;
+  inventoryDetails: string;
+  noReportData: string;
+  centralBranch: string;
 
   // Table headers for reports
   transactionCode: string;

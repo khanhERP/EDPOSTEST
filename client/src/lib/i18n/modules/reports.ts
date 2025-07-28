@@ -476,6 +476,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     card: 'Thẻ',
 
     // Table analysis specific
+    customerCount: 'Số khách hàng',
+    turnoverRate: 'Tỷ lệ luân chuyển',
     averageUtilization: 'Tỷ lệ sử dụng trung bình',
     averageOrdersPerTable: 'Số đơn hàng trung bình mỗi bàn',
     allTables: 'Tất cả bàn',
@@ -494,6 +496,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     timesPerDay: ' lần/ngày',
     hourUnit: ' giờ',
     timesUnit: ' lần',
+    hour: 'giờ',
+    times: 'lần',
 
     // Menu analysis
     productPerformance: 'Hiệu suất sản phẩm',
