@@ -203,8 +203,12 @@ export function OrderDialog({
     );
     
     // In edit mode, also add existing items total
-    const existingTotal = mode === "edit" ? existingItems.reduce(
-      (total, item) => total + Number(item.total),
+    const existingTotal = mode === "edit" && existingItems.length > 0 ? existingItems.reduce(
+      (total, item) => {
+        // Handle different possible data structures
+        const itemTotal = item.total || (Number(item.unitPrice || 0) * Number(item.quantity || 0));
+        return total + Number(itemTotal);
+      },
       0,
     ) : 0;
     
@@ -575,11 +579,38 @@ export function OrderDialog({
         </div>
 
         {/* DialogFooter with Summary and Order Button */}
-        {cart.length > 0 && (
+        {(cart.length > 0 || (mode === "edit" && existingItems.length > 0)) && (
           <DialogFooter className="pt-6">
             <div className="flex items-center justify-between w-full">
               {/* Summary items in horizontal layout */}
               <div className="flex items-center gap-4 text-sm">
+                {mode === "edit" && existingItems.length > 0 && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600">Món đã gọi</span>
+                      <span className="font-medium">
+                        {existingItems.reduce((total, item) => {
+                          const itemTotal = item.total || (Number(item.unitPrice || 0) * Number(item.quantity || 0));
+                          return total + Number(itemTotal);
+                        }, 0).toLocaleString()} ₫
+                      </span>
+                    </div>
+                    {cart.length > 0 && <div className="w-px h-4 bg-gray-300"></div>}
+                  </>
+                )}
+                {cart.length > 0 && (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600">
+                        {mode === "edit" ? "Món mới thêm" : t("tables.subtotalLabel")}
+                      </span>
+                      <span className="font-medium">
+                        {cart.reduce((total, item) => total + Number(item.product.price) * item.quantity, 0).toLocaleString()} ₫
+                      </span>
+                    </div>
+                    <div className="w-px h-4 bg-gray-300"></div>
+                  </>
+                )}
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600">
                     {t("tables.subtotalLabel")}
