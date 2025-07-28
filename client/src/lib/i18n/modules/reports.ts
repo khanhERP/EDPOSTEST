@@ -222,6 +222,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Chart related translations
     chartView: '차트 보기',
     visualRepresentation: '데이터의 시각적 표현',
+    netRevenue: '순 매출',
 
     // Table headers for reports
     salesDetailsHeader: '판매 세부사항',
@@ -719,6 +720,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Chart related translations
     chartView: 'Chart View',
     visualRepresentation: 'Visual representation of data',
+    netRevenue: 'Net Revenue',
 
     // Table headers for reports
     salesDetailsHeader: 'Sales Details',
@@ -1092,6 +1094,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Chart related translations
     chartView: 'Xem biểu đồ',
     visualRepresentation: 'Biểu diễn trực quan của dữ liệu',
+    netRevenue: 'Doanh thu thuần',
 
     // Table headers for reports
     salesDetailsHeader: 'Chi tiết bán hàng',
