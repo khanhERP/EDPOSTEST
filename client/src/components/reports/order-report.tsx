@@ -452,7 +452,7 @@ export function OrderReport() {
           </div>
 
           {/* Date Range */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <Label>{t("reports.startDate")}</Label>
               <Input
@@ -502,87 +502,166 @@ export function OrderReport() {
       </Card>
 
       {/* Chart Display */}
-      <Card className="shadow-lg border-blue-100">
-        <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
-          <CardTitle className="flex items-center gap-2 text-blue-800">
-            <TrendingUp className="w-5 h-5 text-blue-600" />
-            {t("reports.chartView")} - {concernType === "transaction" ? t("reports.transactionConcern") : t("reports.productConcern")}
+      <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
+        <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+          <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+            <div className="p-2 bg-white/20 rounded-lg">
+              <TrendingUp className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-white/90 text-sm font-normal">
+                {t("reports.chartView")}
+              </div>
+              <div className="text-white font-semibold">
+                {concernType === "transaction" ? t("reports.transactionConcern") : t("reports.productConcern")}
+              </div>
+            </div>
           </CardTitle>
-          <CardDescription className="text-blue-600">
-            {t("reports.visualRepresentation")}
+          <CardDescription className="text-blue-100 mt-2">
+            {t("reports.visualRepresentation")} - {t("reports.fromDate")}: {formatDate(startDate)} {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-6">
-          <div className="h-96 w-full bg-white rounded-lg border border-blue-100 p-4">
-            <ChartContainer config={chartConfig}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={getChartData()}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-                  barCategoryGap="20%"
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#e5e7eb"
-                    opacity={0.6}
-                  />
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 11, fill: "#374151" }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                    interval={0}
-                    tickMargin={10}
-                  />
-                  <YAxis
-                    tick={{ fontSize: 11, fill: "#374151" }}
-                    tickFormatter={(value) => {
-                      if (value >= 1000000) {
-                        return `${(value / 1000000).toFixed(1)}M`;
-                      } else if (value >= 1000) {
-                        return `${(value / 1000).toFixed(0)}K`;
-                      }
-                      return value.toString();
-                    }}
-                    width={60}
-                  />
-                  <ChartTooltip
-                    content={<ChartTooltipContent />}
-                    labelStyle={{ color: "#374151", fontWeight: 600 }}
-                    contentStyle={{
-                      backgroundColor: "white",
-                      border: "1px solid #d1d5db",
-                      borderRadius: "8px",
-                      boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                    }}
-                  />
-                  {concernType === "transaction" ? (
-                    <>
-                      <Bar
-                        dataKey="orders"
-                        fill="#10b981"
-                        radius={[4, 4, 0, 0]}
-                        maxBarSize={60}
-                      />
-                      <Bar
-                        dataKey="value"
-                        fill="#3b82f6"
-                        radius={[4, 4, 0, 0]}
-                        maxBarSize={60}
-                      />
-                    </>
-                  ) : (
-                    <Bar
-                      dataKey="quantity"
-                      fill="#f59e0b"
-                      radius={[4, 4, 0, 0]}
-                      maxBarSize={60}
+        <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
+          <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-indigo-50/20 rounded-xl"></div>
+            <div className="absolute top-4 right-4 flex items-center gap-2 text-sm text-gray-500">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              Live Data
+            </div>
+            
+            <div className="relative z-10 h-full">
+              <ChartContainer config={chartConfig}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={getChartData()}
+                    margin={{ top: 30, right: 40, left: 30, bottom: 90 }}
+                    barCategoryGap="25%"
+                  >
+                    <defs>
+                      <linearGradient id="orderGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.6} />
+                      </linearGradient>
+                      <linearGradient id="valueGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.6} />
+                      </linearGradient>
+                      <linearGradient id="quantityGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.6} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="2 4"
+                      stroke="#e2e8f0"
+                      opacity={0.4}
+                      horizontal={true}
+                      vertical={false}
                     />
-                  )}
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
+                      angle={-35}
+                      textAnchor="end"
+                      height={85}
+                      interval={0}
+                      tickMargin={12}
+                      axisLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                      tickLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
+                      tickFormatter={(value) => {
+                        if (value >= 1000000) {
+                          return `${(value / 1000000).toFixed(1)}M`;
+                        } else if (value >= 1000) {
+                          return `${(value / 1000).toFixed(0)}K`;
+                        }
+                        return value.toString();
+                      }}
+                      width={70}
+                      axisLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                      tickLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                    />
+                    <ChartTooltip
+                      content={<ChartTooltipContent />}
+                      labelStyle={{ 
+                        color: "#1e293b", 
+                        fontWeight: 600,
+                        fontSize: 13,
+                        marginBottom: 4
+                      }}
+                      contentStyle={{
+                        backgroundColor: "rgba(255, 255, 255, 0.98)",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "12px",
+                        boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.05)",
+                        padding: "12px 16px",
+                        backdropFilter: "blur(8px)"
+                      }}
+                      cursor={{ fill: "rgba(59, 130, 246, 0.05)" }}
+                    />
+                    {concernType === "transaction" ? (
+                      <>
+                        <Bar
+                          dataKey="orders"
+                          fill="url(#orderGradient)"
+                          radius={[6, 6, 0, 0]}
+                          maxBarSize={45}
+                          stroke="#059669"
+                          strokeWidth={1}
+                        />
+                        <Bar
+                          dataKey="value"
+                          fill="url(#valueGradient)"
+                          radius={[6, 6, 0, 0]}
+                          maxBarSize={45}
+                          stroke="#2563eb"
+                          strokeWidth={1}
+                        />
+                      </>
+                    ) : (
+                      <Bar
+                        dataKey="quantity"
+                        fill="url(#quantityGradient)"
+                        radius={[6, 6, 0, 0]}
+                        maxBarSize={50}
+                        stroke="#d97706"
+                        strokeWidth={1}
+                      />
+                    )}
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </div>
+          </div>
+          
+          {/* Enhanced Chart Legend */}
+          <div className="mt-6 flex flex-wrap justify-center gap-6">
+            {concernType === "transaction" ? (
+              <>
+                <div className="flex items-center gap-3 px-4 py-2 bg-green-50 rounded-lg border border-green-200">
+                  <div className="w-4 h-4 rounded bg-gradient-to-b from-emerald-400 to-emerald-600 shadow-sm"></div>
+                  <span className="text-sm font-medium text-green-800">
+                    {t("reports.orders")}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="w-4 h-4 rounded bg-gradient-to-b from-blue-400 to-blue-600 shadow-sm"></div>
+                  <span className="text-sm font-medium text-blue-800">
+                    {t("reports.orderValue")}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-3 px-4 py-2 bg-amber-50 rounded-lg border border-amber-200">
+                <div className="w-4 h-4 rounded bg-gradient-to-b from-amber-400 to-amber-600 shadow-sm"></div>
+                <span className="text-sm font-medium text-amber-800">
+                  {t("reports.orderQuantity")}
+                </span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
