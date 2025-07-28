@@ -184,8 +184,8 @@ export function EmployeeFormModal({
                     <Input 
                       placeholder="EMP001" 
                       {...field} 
-                      readOnly={mode === "create"}
-                      className={mode === "create" ? "bg-gray-100" : ""}
+                      readOnly={true}
+                      className="bg-gray-100"
                     />
                   </FormControl>
                   <FormMessage />
