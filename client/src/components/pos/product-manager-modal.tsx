@@ -58,7 +58,11 @@ export function ProductManagerModal({
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  const { data: products = [], isLoading, refetch } = useQuery<Product[]>({
+  const {
+    data: products = [],
+    isLoading,
+    refetch,
+  } = useQuery<Product[]>({
     queryKey: ["/api/products"],
     enabled: isOpen,
   });
@@ -305,10 +309,9 @@ export function ProductManagerModal({
 
   return (
     <Dialog open={isOpen}>
-      <DialogContent 
+      <DialogContent
         className="max-w-4xl w-full max-h-screen overflow-y-auto"
         onInteractOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
