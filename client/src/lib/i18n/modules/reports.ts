@@ -418,7 +418,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     profitReport: "Lợi nhuận",
     discountReport: "Giảm giá HD",
     returnReport: "Trả hàng",
-    salesMethod: "Phương thức bán hàng",
     noDelivery: "Không giao hàng",
     delivery: "Giao hàng",
     direct: "Trực tiếp",
@@ -905,7 +904,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalCustomers: "Tổng khách hàng",
     averageOrderValue: "Giá trị đơn hàng trung bình",
     dailyAverage: "Trung bình hàng ngày",
-    activeOrders: "Đơn hàng đang hoạt động",
+    activeOrders: "Đp�n hàng đang hoạt động",
     occupiedTables: "Bàn đang sử dụng",
     monthlyRevenue: "Doanh thu tháng",
 
