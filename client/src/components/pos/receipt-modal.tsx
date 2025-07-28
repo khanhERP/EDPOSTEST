@@ -44,7 +44,7 @@ export function ReceiptModal({ isOpen, onClose, receipt, onConfirm, isPreview = 
         </DialogHeader>
         
         <div id="receipt-content" className="py-6 px-6 receipt-print bg-white">
-          <div className="text-center mb-4">
+          <div className="text-center mb-2">
             <div className="flex items-center justify-center mb-2">
               <img src={logoPath} alt="EDPOS Logo" className="h-8" />
             </div>
