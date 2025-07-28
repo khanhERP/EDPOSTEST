@@ -509,9 +509,9 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
               </div>
             )}
 
+            {/* Summary và Button luôn hiển thị bên ngoài */}
             {cart.length > 0 && (
-              <>
-                <Separator />
+              <div className="mt-4 border-t pt-4 bg-white">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>{t("tables.subtotalLabel")}</span>
@@ -532,14 +532,14 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
 
                 <Button
                   onClick={handlePlaceOrder}
-                  className="w-full"
+                  className="w-full mt-4"
                   disabled={createOrderMutation.isPending}
                 >
                   {createOrderMutation.isPending
                     ? (mode === "edit" ? "Đang cập nhật..." : t("tables.placing"))
                     : (mode === "edit" ? "Cập nhật đơn hàng" : t("tables.placeOrder"))}
                 </Button>
-              </>
+              </div>
             )}
           </div>
         </div>
