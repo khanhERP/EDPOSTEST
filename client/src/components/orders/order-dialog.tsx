@@ -52,15 +52,26 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
     queryKey: ["/api/categories"],
   });
 
-  const { data: existingOrderItems } = useQuery({
+  const { data: existingOrderItems, refetch: refetchExistingItems } = useQuery({
     queryKey: ['/api/order-items', existingOrder?.id],
     enabled: !!(existingOrder?.id && mode === "edit" && open),
     staleTime: 0,
     queryFn: async () => {
+      console.log('Fetching existing order items for order:', existingOrder.id);
       const response = await apiRequest('GET', `/api/order-items/${existingOrder.id}`);
-      return response.json();
+      const data = await response.json();
+      console.log('Existing order items response:', data);
+      return data;
     },
   });
+
+  // Refetch existing items when dialog opens in edit mode
+  useEffect(() => {
+    if (mode === "edit" && open && existingOrder?.id) {
+      console.log('Dialog opened in edit mode, refetching existing items');
+      refetchExistingItems();
+    }
+  }, [mode, open, existingOrder?.id, refetchExistingItems]);
 
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: { order: any; items: any[] }) => {
@@ -232,7 +243,10 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
     setCustomerName("");
     setCustomerCount(1);
     setSelectedCategory(null);
-    setExistingItems([]);
+    // Only clear existing items if we're not in edit mode
+    if (mode !== "edit") {
+      setExistingItems([]);
+    }
     onOpenChange(false);
   };
 
@@ -249,9 +263,13 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
 
   useEffect(() => {
     if (mode === "edit" && existingOrderItems && Array.isArray(existingOrderItems)) {
+      console.log('Setting existing items:', existingOrderItems);
       setExistingItems(existingOrderItems);
+    } else if (mode === "edit" && open && existingOrder?.id) {
+      // Clear existing items when dialog opens in edit mode but no data yet
+      setExistingItems([]);
     }
-  }, [mode, existingOrderItems]);
+  }, [mode, existingOrderItems, open, existingOrder?.id]);
 
   if (!table) return null;
 

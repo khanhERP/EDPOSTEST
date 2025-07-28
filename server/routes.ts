@@ -20,6 +20,7 @@ import {
 import { initializeSampleData, db } from "./db";
 import { z } from "zod";
 import { eq, desc, asc, and, or, like, count, sum, gte, lt } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize sample data
@@ -635,52 +636,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add order items to existing order
-  app.post("/api/orders/:id/items", async (req, res) => {
+  app.post('/api/orders/:orderId/items', async (req, res) => {
     try {
-      const orderId = parseInt(req.params.id);
+      const orderId = parseInt(req.params.orderId);
       const { items } = req.body;
 
       console.log(`Adding ${items.length} items to order ${orderId}`);
 
-      // Add new items to the order
       const createdItems = [];
       for (const item of items) {
-        const [newItem] = await db.insert(orderItems).values({
-          orderId,
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          total: item.total,
-          notes: item.notes,
-        }).returning();
+        // Get product info to include in the order item
+        const [product] = await db
+          .select()
+          .from(products)
+          .where(eq(products.id, item.productId));
 
-        // Get product name for the response
-        const [product] = await db.select().from(products).where(eq(products.id, item.productId));
-        newItem.productName = product?.name || 'Unknown Product';
-        newItem.productSku = product?.sku || '';
+        const [orderItem] = await db
+          .insert(orderItems)
+          .values({
+            orderId,
+            productId: item.productId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            total: item.total,
+            notes: item.notes,
+            productName: product?.name || null,
+            productSku: product?.sku || null,
+          })
+          .returning();
 
-        createdItems.push(newItem);
+        createdItems.push(orderItem);
       }
 
-      // Recalculate order total
-      const allOrderItems = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
-      const newSubtotal = allOrderItems.reduce((sum, item) => sum + parseFloat(item.total), 0);
-      const newTax = newSubtotal * 0.1; // 10% tax
-      const newTotal = newSubtotal + newTax;
+      // Update order total
+      const [orderItemsSum] = await db
+        .select({
+          total: sql<number>`sum(${orderItems.total})`,
+        })
+        .from(orderItems)
+        .where(eq(orderItems.orderId, orderId));
 
-      // Update order totals
-      await db.update(orders).set({
-        subtotal: newSubtotal.toString(),
-        tax: newTax.toString(),
-        total: newTotal.toString(),
-      }).where(eq(orders.id, orderId));
+      await db
+        .update(orders)
+        .set({
+          total: orderItemsSum.total?.toString() || "0",
+          subtotal: (orderItemsSum.total * 0.9)?.toString() || "0",
+          tax: (orderItemsSum.total * 0.1)?.toString() || "0",
+        })
+        .where(eq(orders.id, orderId));
 
-      console.log(`Updated order ${orderId} totals - Subtotal: ${newSubtotal}, Tax: ${newTax}, Total: ${newTotal}`);
+      console.log(`Created ${createdItems.length} items for order ${orderId}:`, createdItems);
 
-      res.json({ success: true, items: createdItems, newTotal });
+      res.json(createdItems);
     } catch (error) {
-      console.error("Error adding items to order:", error);
-      res.status(500).json({ error: "Failed to add items to order" });
+      console.error('Error adding items to order:', error);
+      res.status(500).json({ error: 'Failed to add items to order' });
     }
   });
 
