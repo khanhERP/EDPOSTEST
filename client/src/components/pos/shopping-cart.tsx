@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/lib/i18n";
 import { PaymentMethodModal } from "./payment-method-modal";
+import { ReceiptModal } from "./receipt-modal";
 import type { CartItem } from "@shared/schema";
 
 interface ShoppingCartProps {
@@ -27,7 +28,9 @@ export function ShoppingCart({
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
   const [amountReceived, setAmountReceived] = useState<string>("");
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
+  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [selectedCardMethod, setSelectedCardMethod] = useState<string>("");
+  const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const { t } = useTranslation();
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
@@ -53,9 +56,33 @@ export function ShoppingCart({
       };
       onCheckout(paymentData);
     } else {
-      // Show payment method selection modal for card payments
-      setShowPaymentMethodModal(true);
+      // Show receipt preview first for card payments
+      const receipt = {
+        transactionId: `TXN-${Date.now()}`,
+        items: cart.map(item => ({
+          id: item.id,
+          productName: item.name,
+          price: parseFloat(item.price).toFixed(2),
+          quantity: item.quantity,
+          total: parseFloat(item.total).toFixed(2)
+        })),
+        subtotal: subtotal.toFixed(2),
+        tax: tax.toFixed(2),
+        total: total.toFixed(2),
+        paymentMethod: "card",
+        amountReceived: total.toFixed(2),
+        change: "0.00",
+        cashierName: "John Smith",
+        createdAt: new Date().toISOString()
+      };
+      setPreviewReceipt(receipt);
+      setShowReceiptPreview(true);
     }
+  };
+
+  const handleReceiptConfirm = () => {
+    setShowReceiptPreview(false);
+    setShowPaymentMethodModal(true);
   };
 
   const handleCardPaymentMethodSelect = (method: string) => {
@@ -211,6 +238,15 @@ export function ShoppingCart({
           </Button>
         </div>
       )}
+
+      {/* Receipt Preview Modal for Card Payments */}
+      <ReceiptModal
+        isOpen={showReceiptPreview}
+        onClose={() => setShowReceiptPreview(false)}
+        receipt={previewReceipt}
+        onConfirm={handleReceiptConfirm}
+        isPreview={true}
+      />
 
       {/* Payment Method Selection Modal */}
       <PaymentMethodModal

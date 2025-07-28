@@ -8,9 +8,11 @@ interface ReceiptModalProps {
   isOpen: boolean;
   onClose: () => void;
   receipt: Receipt | null;
+  onConfirm?: () => void;
+  isPreview?: boolean;
 }
 
-export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
+export function ReceiptModal({ isOpen, onClose, receipt, onConfirm, isPreview = false }: ReceiptModalProps) {
   if (!receipt) return null;
 
   const handlePrint = () => {
@@ -38,7 +40,7 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md w-full max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Receipt</DialogTitle>
+          <DialogTitle>{isPreview ? "Xem trước hóa đơn" : "Receipt"}</DialogTitle>
         </DialogHeader>
         
         <div id="receipt-content" className="p-6 receipt-print bg-white">
@@ -121,14 +123,27 @@ export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
         </div>
         
         <div className="flex space-x-3 p-4 border-t">
-          <Button onClick={handlePrint} className="flex-1 btn-primary">
-            <Printer className="mr-2" size={16} />
-            Print Receipt
-          </Button>
-          <Button onClick={handleEmail} variant="secondary" className="flex-1">
-            <Mail className="mr-2" size={16} />
-            Email Receipt
-          </Button>
+          {isPreview ? (
+            <>
+              <Button onClick={onClose} variant="outline" className="flex-1">
+                Hủy
+              </Button>
+              <Button onClick={onConfirm} className="flex-1 btn-primary">
+                Xác nhận & Chọn thanh toán
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button onClick={handlePrint} className="flex-1 btn-primary">
+                <Printer className="mr-2" size={16} />
+                Print Receipt
+              </Button>
+              <Button onClick={handleEmail} variant="secondary" className="flex-1">
+                <Mail className="mr-2" size={16} />
+                Email Receipt
+              </Button>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>
