@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -47,6 +47,7 @@ import {
 
 export function OrderReport() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   // Filters
   const [concernType, setConcernType] = useState("transaction");
@@ -61,6 +62,7 @@ export function OrderReport() {
   const [productSearch, setProductSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState("all");
+  const [dateRange, setDateRange] = useState<string>("7");
 
   const { data: orders } = useQuery({
     queryKey: ["/api/orders"],
@@ -77,6 +79,11 @@ export function OrderReport() {
   const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
   });
+
+    // Refetch data when filters change
+    useEffect(() => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+    }, [startDate, endDate, dateRange, concernType, customerSearch, productSearch, queryClient, orderStatus, selectedCategory, selectedEmployee]);
 
   const getFilteredData = () => {
     if (!orders || !Array.isArray(orders)) return [];

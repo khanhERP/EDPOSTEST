@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -43,6 +43,7 @@ import {
 
 export function InventoryReport() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   // Filters
   const [concernType, setConcernType] = useState("sales");
@@ -75,6 +76,12 @@ export function InventoryReport() {
   const { data: suppliers } = useQuery({
     queryKey: ["/api/suppliers"],
   });
+
+  // Refetch data when filters change
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+  }, [startDate, endDate, concernType, selectedCategory, productSearch, productType, queryClient]);
 
   const formatCurrency = (amount: number) => {
     return `${amount.toLocaleString()} ₫`;

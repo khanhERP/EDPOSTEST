@@ -1,18 +1,17 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Calendar, DollarSign } from "lucide-react";
-import type { Transaction } from "@shared/schema";
-import { useTranslation, useLanguageStore } from "@/lib/i18n";
+import { Button } from "@/components/ui/button";
+import { TrendingUp, Calendar, Download } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "@/lib/i18n";
 
 export function SalesReport() {
   const { t } = useTranslation();
-  
+
   const [dateRange, setDateRange] = useState("week");
   const [startDate, setStartDate] = useState<string>(
     "2025-01-15" // Start from when sample data begins
@@ -21,13 +20,15 @@ export function SalesReport() {
     "2025-01-20" // End at date with sample data
   );
 
+  const queryClient = useQueryClient();
+
   const { data: transactions } = useQuery({
     queryKey: ['/api/transactions'],
   });
 
   const getSalesData = () => {
     if (!transactions || !Array.isArray(transactions)) return null;
-    
+
     console.log('Sales Report Debug:', {
       totalTransactions: transactions.length,
       startDate,
@@ -40,22 +41,22 @@ export function SalesReport() {
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
-      
+
       return transactionDate >= start && transactionDate <= end;
     });
-    
+
     console.log('Filtered Transactions:', filteredTransactions.length);
 
     // Daily sales breakdown
     const dailySales: { [date: string]: { revenue: number; orders: number; customers: number } } = {};
-    
+
     filteredTransactions.forEach((transaction: any) => {
       const date = new Date(transaction.createdAt || transaction.created_at).toISOString().split('T')[0];
-      
+
       if (!dailySales[date]) {
         dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
       }
-      
+
       dailySales[date].revenue += Number(transaction.total);
       dailySales[date].orders += 1;
       dailySales[date].customers += 1; // Each transaction represents one customer
@@ -63,7 +64,7 @@ export function SalesReport() {
 
     // Payment method breakdown
     const paymentMethods: { [method: string]: { count: number; revenue: number } } = {};
-    
+
     filteredTransactions.forEach((transaction: any) => {
       const method = transaction.paymentMethod || 'cash';
       if (!paymentMethods[method]) {
@@ -75,7 +76,7 @@ export function SalesReport() {
 
     // Hourly breakdown
     const hourlySales: { [hour: number]: number } = {};
-    
+
     filteredTransactions.forEach((transaction: any) => {
       const hour = new Date(transaction.createdAt || transaction.created_at).getHours();
       hourlySales[hour] = (hourlySales[hour] || 0) + Number(transaction.total);
@@ -109,7 +110,7 @@ export function SalesReport() {
   const handleDateRangeChange = (range: string) => {
     setDateRange(range);
     const today = new Date();
-    
+
     switch (range) {
       case "today":
         setStartDate(today.toISOString().split('T')[0]);
@@ -126,6 +127,11 @@ export function SalesReport() {
         break;
     }
   };
+
+  // Refetch data when filters change
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['/api/transactions'] });
+  }, [startDate, endDate, dateRange, queryClient]);
 
   const formatCurrency = (amount: number) => {
     return `${amount.toLocaleString()} ₫`;
@@ -187,7 +193,7 @@ export function SalesReport() {
                   <SelectItem value="custom">{t("reports.custom")}</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               {dateRange === "custom" && (
                 <>
                   <div className="flex items-center gap-2">
@@ -315,7 +321,7 @@ export function SalesReport() {
                 const percentage = salesData.totalRevenue > 0 
                   ? (payment.revenue / salesData.totalRevenue) * 100 
                   : 0;
-                
+
                 return (
                   <div key={payment.method} className="space-y-2">
                     <div className="flex justify-between items-center">
@@ -345,7 +351,7 @@ export function SalesReport() {
                   </div>
                 );
               })}
-              
+
               {salesData.paymentMethods.length === 0 && (
                 <div className="text-center text-gray-500 py-4">
                   {t("reports.noPaymentData")}

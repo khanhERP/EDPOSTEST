@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -45,6 +45,9 @@ export function SupplierReport() {
   const [debtFrom, setDebtFrom] = useState<string>("");
   const [debtTo, setDebtTo] = useState<string>("");
 
+  const queryClient = useQueryClient();
+  const [supplierFilter, setSupplierFilter] = useState('');
+
   const { data: suppliers } = useQuery({
     queryKey: ["/api/suppliers"],
   });
@@ -58,6 +61,11 @@ export function SupplierReport() {
     queryKey: ["/api/supplier-purchases"],
     enabled: concernType === "purchase" || concernType === "purchaseBySupplier",
   });
+
+  // Refetch data when filters change
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+  }, [startDate, endDate, concernType, supplierFilter, queryClient]);
 
   const formatCurrency = (amount: number) => {
     return `${amount.toLocaleString()} ₫`;
