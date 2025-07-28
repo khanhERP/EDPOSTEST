@@ -440,7 +440,7 @@ export function SalesChartReport() {
         return {
           revenue: {
             label: t('reports.totalRevenue'),
-            color: "#3b82f6",
+            color: "#10b981",
           },
           returnValue: {
             label: t('reports.returnValue'),
@@ -448,14 +448,14 @@ export function SalesChartReport() {
           },
           netRevenue: {
             label: t('reports.netRevenue'),
-            color: "#10b981",
+            color: "#3b82f6",
           },
         };
       case 'profit':
         return {
           revenue: {
             label: t('reports.revenue'),
-            color: "#3b82f6",
+            color: "#10b981",
           },
           cost: {
             label: t('reports.totalCost'),
@@ -463,14 +463,14 @@ export function SalesChartReport() {
           },
           profit: {
             label: t('reports.grossProfit'),
-            color: "#10b981",
+            color: "#3b82f6",
           },
         };
       case 'employee':
         return {
           revenue: {
             label: t('reports.totalRevenue'),
-            color: "#3b82f6",
+            color: "#10b981",
           },
           returnValue: {
             label: t('reports.returnValue'),
@@ -478,12 +478,21 @@ export function SalesChartReport() {
           },
           netRevenue: {
             label: t('reports.netRevenue'),
-            color: "#10b981",
+            color: "#3b82f6",
           },
         };
       default:
         return {};
     }
+  };
+
+  const getTooltipLabel = (value: number, name: string) => {
+    const chartConfig = getChartConfig();
+    const config = chartConfig[name as keyof typeof chartConfig] as { label: string };
+    return [
+      `${value.toLocaleString()} ₫`,
+      config?.label || name
+    ];
   };
 
   return (
@@ -620,10 +629,7 @@ export function SalesChartReport() {
                     />
                     <ChartTooltip 
                       content={<ChartTooltipContent />}
-                      formatter={(value: number, name: string) => [
-                        `${value.toLocaleString()} ₫`,
-                        name
-                      ]}
+                      formatter={getTooltipLabel}
                       labelStyle={{ color: '#374151', fontWeight: 600 }}
                       contentStyle={{ 
                         backgroundColor: 'white', 
