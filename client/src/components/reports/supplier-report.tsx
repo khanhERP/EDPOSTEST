@@ -485,6 +485,86 @@ export function SupplierReport() {
     );
   };
 
+  const renderOverviewChart = () => {
+    const purchaseData = getSupplierPurchaseData();
+    const debtData = getSupplierDebtData();
+    
+    // Combine data for overview chart
+    const supplierMap = new Map();
+    
+    // Add purchase data
+    purchaseData.forEach(item => {
+      const key = item.supplierCode;
+      if (!supplierMap.has(key)) {
+        supplierMap.set(key, {
+          name: item.supplierName.length > 15 
+            ? item.supplierName.substring(0, 15) + "..." 
+            : item.supplierName,
+          purchase: 0,
+          debt: 0,
+        });
+      }
+      supplierMap.get(key).purchase = item.netValue;
+    });
+    
+    // Add debt data
+    debtData.forEach(item => {
+      const key = item.supplierCode;
+      if (!supplierMap.has(key)) {
+        supplierMap.set(key, {
+          name: item.supplierName.length > 15 
+            ? item.supplierName.substring(0, 15) + "..." 
+            : item.supplierName,
+          purchase: 0,
+          debt: 0,
+        });
+      }
+      supplierMap.get(key).debt = item.closingDebt;
+    });
+    
+    const chartData = Array.from(supplierMap.values()).slice(0, 10);
+    
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" />
+            {t("reports.supplierOverviewChart")}
+          </CardTitle>
+          <CardDescription>
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={400}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="name" 
+                angle={-45}
+                textAnchor="end"
+                height={80}
+                fontSize={12}
+              />
+              <YAxis 
+                tickFormatter={(value) => (value / 1000000).toFixed(1) + "M"}
+              />
+              <Tooltip 
+                formatter={(value: any, name: string) => [
+                  formatCurrency(value), 
+                  name === 'purchase' ? t("reports.netValue") : t("reports.closingDebt")
+                ]}
+              />
+              <Bar dataKey="purchase" fill="#22c55e" name="purchase" />
+              <Bar dataKey="debt" fill="#ef4444" name="debt" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Filters */}
@@ -546,6 +626,9 @@ export function SupplierReport() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Overview Chart */}
+      {renderOverviewChart()}
 
       {/* Report Content */}
       {concernType === "purchase" && renderPurchaseReport()}
