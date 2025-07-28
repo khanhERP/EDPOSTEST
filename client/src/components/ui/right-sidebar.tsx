@@ -140,11 +140,13 @@ export function RightSidebar() {
                 >
                   <Icon className={cn("w-6 h-6 flex-shrink-0", showText && "mr-4", isActive && "text-green-700")} />
                   {showText && (
-                    <span className="font-semibold text-base">{item.href === "/pos" ? "Bán hàng" : item.label}</span>
+                    <span className="font-semibold text-base">
+                      {item.href === "/pos" ? "Bán hàng" : item.href === "/tables" ? "Bán theo bàn" : item.label}
+                    </span>
                   )}
                   {isNavCollapsed && (
                     <span className="opacity-0 group-hover:opacity-100 ml-4 font-semibold text-base transition-all duration-300 whitespace-nowrap text-green-800">
-                      {item.href === "/pos" ? "Bán hàng" : item.label}
+                      {item.href === "/pos" ? "Bán hàng" : item.href === "/tables" ? "Bán theo bàn" : item.label}
                     </span>
                   )}
                   {showText && item.badge && (
