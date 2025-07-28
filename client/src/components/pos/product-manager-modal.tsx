@@ -1,4 +1,8 @@
-import { useState } from "react";
+The code modification ensures that the product form is reset to its default state whenever the product manager modal is opened, preventing carry-over of previous data.
+```
+
+```replit_final_file
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { X, Plus, Upload, Download, Edit, Trash2 } from "lucide-react";
 import {
@@ -263,6 +267,23 @@ export function ProductManagerModal({
       description: `Đã xuất ${products.length} sản phẩm ra file Excel`,
     });
   };
+
+  useEffect(() => {
+    if (isOpen) {
+      refetch();
+      // Reset form completely when opening modal
+      if (!editingProduct) {
+        form.reset({
+          name: "",
+          sku: "",
+          price: "",
+          stock: 0,
+          categoryId: 0,
+          imageUrl: "",
+        });
+      }
+    }
+  }, [isOpen, refetch, editingProduct]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
