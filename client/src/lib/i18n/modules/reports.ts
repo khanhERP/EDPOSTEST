@@ -45,6 +45,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Table analysis specific
     customerCount: '고객 수',
     turnoverRate: '회전율',
+    topRevenueTables: '최고 매출 테이블',
+    topTurnoverTables: '최고 회전율 테이블',
+    topUtilizationTables: '최고 이용률 테이블',
+    timesPerDay: '회/일',
+    hourUnit: '시간',
+    timesUnit: '회',
     hour: '시',
     times: '회',
 
@@ -262,7 +268,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     topTurnoverTables: 'Top Turnover Tables',
     topUtilizationTables: 'Top Utilization Tables',
     timesPerDay: ' times/day',
-    hour: ' o\'clock',
+    hourUnit: ' hour',
+    timesUnit: ' times',
+    hour: ' hour',
     times: ' times',
 
     // Menu analysis
@@ -478,6 +486,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Table analysis specific
     customerCount: 'Số khách hàng',
     turnoverRate: 'Tỷ lệ luân chuyển',
+    topRevenueTables: 'Bàn doanh thu cao nhất',
+    topTurnoverTables: 'Bàn luân chuyển cao nhất',
+    topUtilizationTables: 'Bàn sử dụng cao nhất',
     averageUtilization: 'Tỷ lệ sử dụng trung bình',
     averageOrdersPerTable: 'Số đơn hàng trung bình mỗi bàn',
     allTables: 'Tất cả bàn',

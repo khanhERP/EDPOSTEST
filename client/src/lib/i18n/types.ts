@@ -135,6 +135,12 @@ export interface ReportsTranslations {
   // Table analysis specific
   customerCount: string;
   turnoverRate: string;
+  topRevenueTables: string;
+  topTurnoverTables: string;
+  topUtilizationTables: string;
+  timesPerDay: string;
+  hourUnit: string;
+  timesUnit: string;
   hour: string;
   times: string;
 
