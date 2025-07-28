@@ -396,6 +396,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     return settingsPaymentMethods.filter(method => method.enabled);
   };
 
+    const getOrderStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { label: t('orders.pending'), variant: "secondary" as const },
+      preparing: { label: t('orders.preparing'), variant: "secondary" as const },
+      delivering: { label: t('orders.delivering'), variant: "secondary" as const },
+      completed: { label: t('orders.completed'), variant: "default" as const },
+      paid: { label: 'Đã thanh toán', variant: "default" as const },
+      cancelled: { label: t('orders.cancelled'), variant: "destructive" as const },
+    };
+
+    return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+  };
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -448,8 +461,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         <span>{table.capacity} {t('orders.people')}</span>
                       )}
                     </div>
-                    <Badge variant={statusConfig.variant} className="text-xs">
-                      {statusConfig.label}
+                    <Badge variant={table.status === "occupied" && activeOrder ? getOrderStatusBadge(activeOrder.status).variant : statusConfig.variant} className="text-xs">
+                      {table.status === "occupied" && activeOrder ? getOrderStatusBadge(activeOrder.status).label : statusConfig.label}
                     </Badge>
                   </div>
 
@@ -491,7 +504,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         <Eye className="w-3 h-3 mr-1" />
                         Xem chi tiết
                       </Button>
-                      
+
                       <Button
                         size="sm"
                         variant="default"
