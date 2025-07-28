@@ -20,7 +20,6 @@ export const products = pgTable("products", {
   imageUrl: text("image_url"),
   isActive: boolean("is_active").notNull().default(true),
   productType: integer("product_type").notNull().default(1),
-  trackInventory: boolean("track_inventory").notNull().default(true),
 });
 
 export const transactions = pgTable("transactions", {
@@ -155,7 +154,6 @@ export const insertProductSchema = createInsertSchema(products).omit({
   }),
   stock: z.number().min(0, "Stock cannot be negative"),
   productType: z.number().min(1).max(3, "Product type is required"),
-  trackInventory: z.boolean().optional(),
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({

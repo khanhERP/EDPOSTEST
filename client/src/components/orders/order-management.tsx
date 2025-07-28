@@ -141,8 +141,8 @@ export function OrderManagement() {
   };
 
   const handlePaymentClick = (order: Order) => {
-    setSelectedOrder(order);
-    setOrderDetailsOpen(true);
+    setOrderForPayment(order);
+    setPaymentModalOpen(true);
   };
 
   const handlePaymentMethodSelect = (paymentMethod: string) => {
