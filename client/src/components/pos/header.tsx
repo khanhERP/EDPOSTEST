@@ -16,6 +16,7 @@ export function POSHeader() {
   const { t } = useTranslation();
   const [posMenuOpen, setPosMenuOpen] = useState(false);
   const [reportsSubmenuOpen, setReportsSubmenuOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [location] = useLocation();
 
   // Fetch store settings
