@@ -371,15 +371,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inOutInventoryReport: "입출고 보고서",
     detailedInOutInventoryReport: "입출고 상세 보고서",
     disposalReport: "상품 폐기 보고서",
-    employeeSalesReport: "직원별 상품 판매 보고서",
     customerSalesReport: "고객별 상품 판매 보고서",
     supplierReportByProduct: "공급업체별 상품 구매 보고서",
 
     // Table headers
     quantitySold: "판매 수량",
     returnQuantity: "반품 수량",
-    returnValue: "반품 가치",
-    netRevenue: "순 매출",
     totalCost: "총 원가",
     grossProfit: "총 이익",
     profitMargin: "이익률",
@@ -430,9 +427,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     profitByInvoiceReport: "Báo cáo lợi nhuận theo hóa đơn",
     invoiceDiscountReport: "Báo cáo tổng hợp giảm giá hóa đơn",
     returnByInvoiceReport: "Báo cáo trả hàng theo hóa đơn",
-    employeeSalesReport: "Báo cáo bán hàng theo nhân viên",
-    returnValue: "Giá trị trả",
-    netRevenue: "Doanh thu thuần",
     totalAmount: "Tổng tiền hàng",
     discount: "Giảm giá",
     totalCost: "Tổng giá vốn",
@@ -441,9 +435,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceValue: "Giá trị hóa đơn",
     invoiceDiscount: "Giảm giá hóa đơn",
     returnTicketCount: "SL Phiếu trả",
-
-    // Chart related translations
-    visualRepresentation: "Biểu diễn trực quan của dữ liệu",
 
     // Table headers for reports
     salesDetailsHeader: "Chi tiết bán hàng",
@@ -848,9 +839,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     profitByInvoiceReport: "Profit Report by Invoice",
     invoiceDiscountReport: "Comprehensive Invoice Discount Report",
     returnByInvoiceReport: "Returns Report by Invoice",
-    employeeSalesReport: "Sales Report by Employee",
-    returnValue: "Return Value",
-    netRevenue: "Net Revenue",
     totalAmount: "Total Amount",
     discount: "Discount",
     totalCost: "Total Cost",
@@ -1262,9 +1250,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     profitByInvoiceReport: "Báo cáo lợi nhuận theo hóa đơn",
     invoiceDiscountReport: "Báo cáo tổng hợp giảm giá hóa đơn",
     returnByInvoiceReport: "Báo cáo trả hàng theo hóa đơn",
-    employeeSalesReport: "Báo cáo bán hàng theo nhân viên",
     returnValue: "Giá trị trả",
-    netRevenue: "Doanh thu thuần",
     totalAmount: "Tổng tiền hàng",
     discount: "Giảm giá",
     totalCost: "Tổng giá vốn",
