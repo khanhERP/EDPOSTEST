@@ -143,12 +143,12 @@ export function EndOfDayReport() {
 
   const getReportTitle = () => {
     const titles = {
-      sales: "Báo cáo bán hàng",
-      revenue: "Báo cáo thu chi",
-      inventory: "Báo cáo hàng hóa",
-      summary: "Báo cáo tổng hợp",
+      sales: t("reports.salesReportTitle"),
+      revenue: t("reports.revenueReportTitle"),
+      inventory: t("reports.inventoryReportTitle"),
+      summary: t("reports.summaryReportTitle"),
     };
-    return titles[concernType as keyof typeof titles] || "Báo cáo cuối ngày";
+    return titles[concernType as keyof typeof titles] || t("reports.endOfDayReport");
   };
 
   const getDateDisplay = () => {

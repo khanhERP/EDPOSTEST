@@ -249,6 +249,12 @@ export interface ReportsTranslations {
   returnValue: string;
   netRevenue: string;
 
+  // Report titles
+  salesReportTitle: string;
+  revenueReportTitle: string;
+  inventoryReportTitle: string;
+  summaryReportTitle: string;
+
   // Report specific content
   salesDetails: string;
   revenueExpenseDetails: string;

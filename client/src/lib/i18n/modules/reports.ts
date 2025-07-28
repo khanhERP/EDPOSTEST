@@ -212,6 +212,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseDetailsHeader: '수입 지출 세부사항',
     inventoryDetailsHeader: '재고 세부사항',
     
+    // Report titles
+    salesReportTitle: '매출 보고서',
+    revenueReportTitle: '수익 보고서',
+    inventoryReportTitle: '재고 보고서',
+    summaryReportTitle: '요약 보고서',
+
     // End of day report detailed table translations
     transactionTypeHeader: '거래 유형',
     orderNumberHeader: '주문 번호',
@@ -444,6 +450,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noReportData: 'No report data available',
     centralBranch: 'Central Branch',
     
+    // Report titles
+    salesReportTitle: 'Sales Report',
+    revenueReportTitle: 'Revenue Report',
+    inventoryReportTitle: 'Inventory Report',
+    summaryReportTitle: 'Summary Report',
+
     // End of day report detailed table translations
     transactionTypeHeader: 'Transaction Type',
     orderNumberHeader: 'Order Number',
@@ -688,6 +700,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noReportData: 'Không có dữ liệu báo cáo',
     centralBranch: 'Chi nhánh trung tâm',
     
+    // Report titles
+    salesReportTitle: 'Báo cáo bán hàng',
+    revenueReportTitle: 'Báo cáo thu chi',
+    inventoryReportTitle: 'Báo cáo hàng hóa',
+    summaryReportTitle: 'Báo cáo tổng hợp',
+
     // End of day report detailed table translations
     transactionTypeHeader: 'Loại giao dịch',
     orderNumberHeader: 'Số đơn hàng',
