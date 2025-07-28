@@ -621,6 +621,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/orders/:id/payment", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { paymentMethod } = req.body;
+      
+      // Update order status to paid
+      const order = await storage.updateOrderStatus(id, 'paid');
+
+      if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      // Also update table status to available if the order is linked to a table
+      if (order.tableId) {
+        await storage.updateTableStatus(order.tableId, 'available');
+      }
+
+      res.json({ ...order, paymentMethod });
+    } catch (error) {
+      console.error('Payment completion error:', error);
+      res.status(500).json({ message: "Failed to complete payment" });
+    }
+  });
+
   app.get("/api/order-items/:orderId", async (req, res) => {
     try {
       console.log('=== GET ORDER ITEMS API CALLED ===');
