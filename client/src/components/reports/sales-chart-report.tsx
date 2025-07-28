@@ -580,62 +580,137 @@ export function SalesChartReport() {
 
       {/* Chart Display - Only for Time, Profit, and Employee */}
       {shouldShowChart() && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
+        <Card className="shadow-lg border-green-100">
+          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100">
+            <CardTitle className="flex items-center gap-2 text-green-800">
+              <TrendingUp className="w-5 h-5 text-green-600" />
               {t("reports.chartView")} - {getReportTitle()}
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-green-600">
               {t("reports.visualRepresentation")}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="h-80 w-full">
+          <CardContent className="p-6">
+            <div className="h-96 w-full bg-white rounded-lg border border-green-100 p-4">
               <ChartContainer config={getChartConfig()}>
-                <BarChart data={getChartData()}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="name" 
-                    tick={{ fontSize: 12 }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={60}
-                  />
-                  <YAxis 
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
-                  />
-                  <ChartTooltip 
-                    content={<ChartTooltipContent />}
-                    formatter={(value: number) => [
-                      `${value.toLocaleString()} ₫`,
-                      ''
-                    ]}
-                  />
-                  {concernType === 'time' && (
-                    <>
-                      <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
-                      <Bar dataKey="returnValue" fill="var(--color-returnValue)" radius={4} />
-                      <Bar dataKey="netRevenue" fill="var(--color-netRevenue)" radius={4} />
-                    </>
-                  )}
-                  {concernType === 'profit' && (
-                    <>
-                      <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
-                      <Bar dataKey="cost" fill="var(--color-cost)" radius={4} />
-                      <Bar dataKey="profit" fill="var(--color-profit)" radius={4} />
-                    </>
-                  )}
-                  {concernType === 'employee' && (
-                    <>
-                      <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
-                      <Bar dataKey="returnValue" fill="var(--color-returnValue)" radius={4} />
-                      <Bar dataKey="netRevenue" fill="var(--color-netRevenue)" radius={4} />
-                    </>
-                  )}
-                </BarChart>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={getChartData()}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+                    barCategoryGap="20%"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.6} />
+                    <XAxis 
+                      dataKey="name" 
+                      tick={{ fontSize: 11, fill: '#374151' }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      interval={0}
+                      tickMargin={10}
+                    />
+                    <YAxis 
+                      tick={{ fontSize: 11, fill: '#374151' }}
+                      tickFormatter={(value) => {
+                        if (value >= 1000000) {
+                          return `${(value / 1000000).toFixed(1)}M`;
+                        } else if (value >= 1000) {
+                          return `${(value / 1000).toFixed(0)}K`;
+                        }
+                        return value.toString();
+                      }}
+                      width={60}
+                    />
+                    <ChartTooltip 
+                      content={<ChartTooltipContent />}
+                      formatter={(value: number, name: string) => [
+                        `${value.toLocaleString()} ₫`,
+                        name
+                      ]}
+                      labelStyle={{ color: '#374151', fontWeight: 600 }}
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '1px solid #d1d5db',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      }}
+                    />
+                    {concernType === 'time' && (
+                      <>
+                        <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                        <Bar dataKey="returnValue" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                        <Bar dataKey="netRevenue" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                      </>
+                    )}
+                    {concernType === 'profit' && (
+                      <>
+                        <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                        <Bar dataKey="cost" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                        <Bar dataKey="profit" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                      </>
+                    )}
+                    {concernType === 'employee' && (
+                      <>
+                        <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                        <Bar dataKey="returnValue" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                        <Bar dataKey="netRevenue" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                      </>
+                    )}
+                  </BarChart>
+                </ResponsiveContainer>
               </ChartContainer>
+            </div>
+            
+            {/* Chart Legend */}
+            <div className="mt-4 flex flex-wrap justify-center gap-4">
+              {concernType === 'time' && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
+                    <span className="text-sm text-gray-600">{t('reports.totalRevenue')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-red-500"></div>
+                    <span className="text-sm text-gray-600">{t('reports.returnValue')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-blue-500"></div>
+                    <span className="text-sm text-gray-600">{t('reports.netRevenue')}</span>
+                  </div>
+                </>
+              )}
+              {concernType === 'profit' && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
+                    <span className="text-sm text-gray-600">{t('reports.revenue')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-amber-500"></div>
+                    <span className="text-sm text-gray-600">{t('reports.totalCost')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-blue-500"></div>
+                    <span className="text-sm text-gray-600">{t('reports.grossProfit')}</span>
+                  </div>
+                </>
+              )}
+              {concernType === 'employee' && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
+                    <span className="text-sm text-gray-600">{t('reports.totalRevenue')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-red-500"></div>
+                    <span className="text-sm text-gray-600">{t('reports.returnValue')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-blue-500"></div>
+                    <span className="text-sm text-gray-600">{t('reports.netRevenue')}</span>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
