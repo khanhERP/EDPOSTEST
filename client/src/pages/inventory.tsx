@@ -46,9 +46,9 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Product, Category } from "@shared/schema";
 
-const stockUpdateSchema = z.object({
+const stockUpdateSchema = (t: any) => z.object({
   productId: z.number(),
-  quantity: z.number().min(1, "Quantity must be at least 1"),
+  quantity: z.number().min(1, t("inventory.quantityMinError") || "Quantity must be at least 1"),
   type: z.enum(["add", "subtract", "set"]),
   notes: z.string().optional(),
   // Fields for new product creation
@@ -83,7 +83,7 @@ export default function InventoryPage() {
   });
 
   const stockUpdateForm = useForm<StockUpdateForm>({
-    resolver: zodResolver(stockUpdateSchema),
+    resolver: zodResolver(stockUpdateSchema(t)),
     defaultValues: {
       quantity: 1,
       type: "add",

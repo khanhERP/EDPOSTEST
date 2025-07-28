@@ -720,6 +720,7 @@ export interface InventoryTranslations {
   updateSuccessDescription: string;
   duplicateSku: string;
   duplicateSkuDescription: string;
+  quantityMinError: string;
 }
 
 // Tables translations interface
