@@ -129,6 +129,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ message: "Product deleted successfully" });
     } catch (error) {
+      console.error("Delete product error:", error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes("Cannot delete product")) {
+          return res.status(400).json({ 
+            message: error.message,
+            code: "PRODUCT_IN_USE"
+          });
+        }
+      }
+      
       res.status(500).json({ message: "Failed to delete product" });
     }
   });

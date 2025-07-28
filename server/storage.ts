@@ -275,11 +275,40 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProduct(id: number): Promise<boolean> {
-    const result = await db
-      .delete(products)
-      .where(eq(products.id, id))
-      .returning();
-    return result.length > 0;
+    try {
+      // Check if product exists in transactions
+      const transactionItems = await db
+        .select()
+        .from(transactionItems)
+        .where(eq(transactionItems.productId, id))
+        .limit(1);
+
+      if (transactionItems.length > 0) {
+        throw new Error("Cannot delete product: it has been used in transactions");
+      }
+
+      // Check if product exists in order items
+      const orderItemsCheck = await db
+        .select()
+        .from(orderItems)
+        .where(eq(orderItems.productId, id))
+        .limit(1);
+
+      if (orderItemsCheck.length > 0) {
+        throw new Error("Cannot delete product: it has been used in orders");
+      }
+
+      // If no references found, delete the product
+      const result = await db
+        .delete(products)
+        .where(eq(products.id, id))
+        .returning();
+      
+      return result.length > 0;
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      throw error;
+    }
   }
 
   async deleteInactiveProducts(): Promise<number> {

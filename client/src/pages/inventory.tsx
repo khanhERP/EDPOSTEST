@@ -187,7 +187,8 @@ export default function InventoryPage() {
         method: "DELETE",
       });
       if (!response.ok) {
-        throw new Error("Failed to delete product");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to delete product");
       }
       return response;
     },
@@ -195,16 +196,25 @@ export default function InventoryPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
         title: "",
-        description: t("inventory.deleteSuccess"),
+        description: t("inventory.deleteSuccess") || "Xóa sản phẩm thành công",
       });
     },
     onError: (error) => {
       console.error("Delete product error:", error);
+      
+      let errorMessage = t("inventory.deleteFailedDescription") || "Không thể xóa sản phẩm. Vui lòng thử lại.";
+      
+      if (error instanceof Error && error.message.includes("Cannot delete product")) {
+        if (error.message.includes("transactions")) {
+          errorMessage = "Không thể xóa sản phẩm vì đã được sử dụng trong các giao dịch bán hàng.";
+        } else if (error.message.includes("orders")) {
+          errorMessage = "Không thể xóa sản phẩm vì đã được sử dụng trong các đơn hàng.";
+        }
+      }
+      
       toast({
         title: t("inventory.deleteFailed") || "Xóa thất bại",
-        description:
-          t("inventory.deleteFailedDescription") ||
-          "Không thể xóa sản phẩm. Vui lòng thử lại.",
+        description: errorMessage,
         variant: "destructive",
       });
     },
