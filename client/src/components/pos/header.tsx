@@ -79,10 +79,7 @@ export function POSHeader() {
   };
 
   const handleReportsMouseLeave = () => {
-    const timer = setTimeout(() => {
-      setReportsSubmenuOpen(false);
-    }, 500); // 500ms delay before hiding
-    setSubmenuTimer(timer);
+    // Don't set timer here, let the container handle it
   };
 
   const handleSubmenuMouseEnter = () => {
@@ -93,9 +90,13 @@ export function POSHeader() {
   };
 
   const handleSubmenuMouseLeave = () => {
+    // Don't set timer here, let the container handle it
+  };
+
+  const handleReportsContainerMouseLeave = () => {
     const timer = setTimeout(() => {
       setReportsSubmenuOpen(false);
-    }, 500);
+    }, 300);
     setSubmenuTimer(timer);
   };
 
@@ -214,7 +215,10 @@ export function POSHeader() {
                       {t('nav.inventory')}
                     </button>
                   </Link>
-                    <div className="relative">
+                    <div 
+                      className="relative"
+                      onMouseLeave={handleReportsContainerMouseLeave}
+                    >
                       <button
                         className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
                           location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
@@ -225,7 +229,6 @@ export function POSHeader() {
                           setReportsSubmenuOpen(!reportsSubmenuOpen);
                         }}
                         onMouseEnter={handleReportsMouseEnter}
-                        onMouseLeave={handleReportsMouseLeave}
                       >
                         <BarChart3 className="w-4 h-4 mr-3" />
                         {t('nav.reports')}
@@ -234,8 +237,6 @@ export function POSHeader() {
                       {reportsSubmenuOpen && (
                         <div 
                           className="absolute top-0 right-full mr-0.5 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50"
-                          onMouseEnter={handleSubmenuMouseEnter}
-                          onMouseLeave={handleSubmenuMouseLeave}
                         >
                           <Link href="/reports?tab=overview">
                             <button
