@@ -728,7 +728,7 @@ export function EndOfDayReport() {
           </div>
 
           {/* Additional filters */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <Label className="text-sm">
                 {t("reports.paymentMethodFilter")}
@@ -749,32 +749,6 @@ export function EndOfDayReport() {
                     {t("reports.transfer")}
                   </SelectItem>
                   <SelectItem value="wallet">{t("reports.wallet")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-sm">
-                {t("reports.transactionTypeFilter")}
-              </Label>
-              <Select
-                value={transactionType}
-                onValueChange={setTransactionType}
-              >
-                <SelectTrigger className="h-8 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("common.all")}</SelectItem>
-                  <SelectItem value="customer_payment">
-                    {t("reports.customerPayment")}
-                  </SelectItem>
-                  <SelectItem value="customer_refund">
-                    {t("reports.customerRefund")}
-                  </SelectItem>
-                  <SelectItem value="other_expense">
-                    {t("reports.otherExpense")}
-                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
