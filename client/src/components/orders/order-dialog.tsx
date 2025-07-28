@@ -514,7 +514,6 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
           </div>
 
           </div>
-
         </div>
 
         {/* Summary Footer Container - Below main content */}
@@ -553,6 +552,8 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
             </div>
           </div>
         )}
+      </DialogContent>
+    </Dialog>
       </DialogContent>
     </Dialog>
   );
