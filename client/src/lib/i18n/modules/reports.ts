@@ -187,11 +187,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Date labels
     date: '날짜',
-    
+
     // Sales chart report
     salesChart: '매출 차트',
     salesChartDescription: '차트를 통한 시각적 매출 분석',
-    
+
     // Comprehensive sales report
     comprehensiveSalesReport: '종합 매출 보고서',
     concernType: '관심 사항',
@@ -223,57 +223,74 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscount: '송장 할인',
     returnTicketCount: '반품 표 수량',
     seller: '판매자',
-    saleDate: '판매일',
-    paymentDate: '결제일',
-    fromDate: '시작일',
-    toDate: '종료일',
-    barChart: '막대 차트',
-    pieChart: '원형 차트',
-    lineChart: '선형 차트',
-    dailyRevenue: '일별 매출',
-    paymentMethodDistribution: '결제 방법 분포',
-    hourlyRevenue: '시간별 매출',
-    barChartDesc: '일별 매출을 보여주는 막대 차트',
-    pieChartDesc: '결제 방법 분석 원형 차트',
-    lineChartDesc: '시간별 트렌드를 추적하는 선형 차트',
-    paymentMethodDetails: '결제 방법 세부사항',
-    averageOrderValue: '평균 주문 금액',
-    
-    // Table detail headers
-    salesDetailsHeader: '판매 세부사항',
-    revenueExpenseDetailsHeader: '수입 지출 세부사항',
-    inventoryDetailsHeader: '재고 세부사항',
-    
-    // Report titles
-    salesReportTitle: '매출 보고서',
-    revenueReportTitle: '수익 보고서',
-    inventoryReportTitle: '재고 보고서',
-    summaryReportTitle: '요약 보고서',
 
-    // Date display labels
-    saleDate: '판매일',
-    paymentDate: '결제일',
-    fromDate: '시작일',
-    toDate: '종료일',
+      // Chart related translations
+      chartView: '차트 보기',
+      visualRepresentation: '데이터의 시각적 표현',
+      chartPlaceholder: '차트 표시 영역',
+      chartWillDisplayHere: '시간, 수익, 직원 보고서의 차트가 여기에 표시됩니다',
 
-    // End of day report detailed table translations
-    transactionTypeHeader: '거래 유형',
-    orderNumberHeader: '주문 번호',
-    employeeHeader: '직원',
-    customerHeader: '고객',
-    totalAmountHeader: '총 금액',
-    paymentMethodHeader: '결제 방법',
-    notesHeader: '메모',
-    timeHeader: '시간',
-    itemHeader: '항목',
-    unitPriceHeader: '단가',
-    totalPriceHeader: '총 가격',
-    categoryHeader: '카테고리',
-    stockInHeader: '입고',
-    stockOutHeader: '출고',
-    currentStockHeader: '현재 재고',
-    supplierHeader: '공급업체',
-    expiryDateHeader: '유통기한',
+      // Table headers for reports
+    transactionCode: '거래 코드',
+    quantity: '수량',
+    otherRevenue: '기타 수입',
+    vat: 'VAT',
+    actualRevenue: '실제 수입',
+    receiptCode: '영수증 코드',
+    payerReceiver: '지불자/수령자',
+    revenueExpenseType: '수입/지출',
+    productCode: '상품 코드',
+    productName: '상품명',
+    soldQuantity: '판매 수량',
+    returnQuantity: '반품 수량',
+    returnValue: '반품 가치',
+    netRevenue: '순 수익',
+
+    // Report specific content
+    salesDetails: '판매 세부사항',
+    revenueExpenseDetails: '수입 지출 세부사항',
+    inventoryDetails: '재고 세부사항',
+    noReportData: '보고서 데이터가 없습니다',
+    centralBranch: '중앙 지점',
+
+    // Date labels
+    date: '날짜',
+
+    // Sales chart report
+    salesChart: '매출 차트',
+    salesChartDescription: '차트를 통한 시각적 매출 분석',
+
+    // Comprehensive sales report
+    comprehensiveSalesReport: '종합 매출 보고서',
+    concernType: '관심 사항',
+    timeReport: '시간',
+    profitReport: '이익',
+    discountReport: '할인 HD',
+    returnReport: '반품',
+    employeeReport: '직원',
+    salesMethod: '판매 방법',
+    noDelivery: '배송 없음',
+    delivery: '배송',
+    salesChannel: '판매 채널',
+    direct: '직접',
+    other: '기타',
+    timeSalesReport: '시간별 매출 보고서',
+    profitByInvoiceReport: '송장별 이익 보고서',
+    invoiceDiscountReport: '송장 할인 종합 보고서',
+    returnByInvoiceReport: '송장별 반품 보고서',
+    employeeSalesReport: '직원별 매출 보고서',
+    totalRevenue: '총 매출',
+    returnValue: '반품 가치',
+    netRevenue: '순 매출',
+    totalAmount: '총 금액',
+    discount: '할인',
+    totalCost: '총 원가',
+    grossProfit: '총 이익',
+    totalInvoices: '총 송장',
+    invoiceValue: '송장 가치',
+    invoiceDiscount: '송장 할인',
+    returnTicketCount: '반품 표 수량',
+    seller: '판매자',
   },
   en: {
     title: 'Reports',
@@ -437,19 +454,19 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cardPayment: 'Card',
     transfer: 'Bank Transfer',
     wallet: 'E-Wallet',
-    
+
     // Table detail headers
     salesDetailsHeader: 'Sales Details',
     revenueExpenseDetailsHeader: 'Revenue & Expense Details',
     inventoryDetailsHeader: 'Inventory Details',
-    
+
     // Date labels
     date: 'Date',
-    
+
     // Sales chart report
     salesChart: 'Sales Chart',
     salesChartDescription: 'Visual sales analysis through charts',
-    
+
     // Comprehensive sales report
     comprehensiveSalesReport: 'Comprehensive Sales Report',
     concernType: 'Concern Type',
@@ -481,23 +498,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscount: 'Invoice Discount',
     returnTicketCount: 'Return Ticket Count',
     seller: 'Seller',
-    saleDate: 'Sale Date',
-    paymentDate: 'Payment Date',
-    fromDate: 'From Date',
-    toDate: 'To Date',
-    barChart: 'Bar Chart',
-    pieChart: 'Pie Chart',
-    lineChart: 'Line Chart',
-    dailyRevenue: 'Daily Revenue',
-    paymentMethodDistribution: 'Payment Method Distribution',
-    hourlyRevenue: 'Hourly Revenue',
-    barChartDesc: 'Bar chart showing daily revenue',
-    pieChartDesc: 'Pie chart analyzing payment methods',
-    lineChartDesc: 'Line chart tracking hourly trends',
-    paymentMethodDetails: 'Payment Method Details',
-    averageOrderValue: 'Average Order Value',
-    
-    // Table headers for reports
+
+      // Chart related translations
+      chartView: 'Chart View',
+      visualRepresentation: 'Visual representation of data',
+      chartPlaceholder: 'Chart Display Area',
+      chartWillDisplayHere: 'Chart will be displayed here for Time, Profit, and Employee reports',
+
+      // Table headers for reports
     transactionCode: 'Transaction Code',
     quantity: 'Quantity',
     otherRevenue: 'Other Revenue',
@@ -519,7 +527,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inventoryDetails: 'Inventory Details',
     noReportData: 'No report data available',
     centralBranch: 'Central Branch',
-    
+
     // Report titles
     salesReportTitle: 'Sales Report',
     revenueReportTitle: 'Revenue Report',
@@ -725,19 +733,19 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cardPayment: 'Thẻ',
     transfer: 'Chuyển khoản',
     wallet: 'Ví điện tử',
-    
+
     // Table detail headers
     salesDetailsHeader: 'Chi tiết bán hàng',
     revenueExpenseDetailsHeader: 'Chi tiết thu chi',
     inventoryDetailsHeader: 'Chi tiết hàng hóa',
-    
+
     // Date labels
     date: 'Ngày',
-    
+
     // Sales chart report
     salesChart: 'Biểu đồ bán hàng',
     salesChartDescription: 'Phân tích doanh thu trực quan qua biểu đồ',
-    
+
     // Comprehensive sales report
     comprehensiveSalesReport: 'Báo cáo bán hàng tổng hợp',
     concernType: 'Mối quan tâm',
@@ -769,23 +777,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscount: 'Giảm giá hóa đơn',
     returnTicketCount: 'SL Phiếu trả',
     seller: 'Người bán',
-    saleDate: 'Ngày bán',
-    paymentDate: 'Ngày thanh toán',
-    fromDate: 'Từ ngày',
-    toDate: 'Đến ngày',
-    barChart: 'Biểu đồ cột',
-    pieChart: 'Biểu đồ tròn',
-    lineChart: 'Biểu đồ đường',
-    dailyRevenue: 'Doanh thu theo ngày',
-    paymentMethodDistribution: 'Phân bố phương thức thanh toán',
-    hourlyRevenue: 'Doanh thu theo giờ',
-    barChartDesc: 'Biểu đồ cột hiển thị doanh thu hàng ngày',
-    pieChartDesc: 'Biểu đồ tròn phân tích phương thức thanh toán',
-    lineChartDesc: 'Biểu đồ đường theo dõi xu hướng theo giờ',
-    paymentMethodDetails: 'Chi tiết phương thức thanh toán',
-    averageOrderValue: 'Giá trị đơn hàng trung bình',
-    
-    // Table headers for reports
+
+      // Chart related translations
+      chartView: 'Xem biểu đồ',
+      visualRepresentation: 'Biểu diễn trực quan của dữ liệu',
+      chartPlaceholder: 'Khu vực hiển thị biểu đồ',
+      chartWillDisplayHere: 'Biểu đồ sẽ được hiển thị ở đây cho báo cáo Thời gian, Lợi nhuận và Nhân viên',
+
+      // Table headers for reports
     transactionCode: 'Mã giao dịch',
     quantity: 'Số lượng',
     otherRevenue: 'Thu nhập khác',
@@ -807,7 +806,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inventoryDetails: 'Chi tiết hàng hóa',
     noReportData: 'Không có dữ liệu báo cáo',
     centralBranch: 'Chi nhánh trung tâm',
-    
+
     // Report titles
     salesReportTitle: 'Báo cáo bán hàng',
     revenueReportTitle: 'Báo cáo thu chi',

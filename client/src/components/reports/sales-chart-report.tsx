@@ -331,6 +331,10 @@ export function SalesChartReport() {
     }
   };
 
+  const shouldShowChart = () => {
+    return ['time', 'profit', 'employee'].includes(concernType);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -422,6 +426,30 @@ export function SalesChartReport() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Chart Display - Only for Time, Profit, and Employee */}
+      {shouldShowChart() && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              {t("reports.chartView")} - {getReportTitle()}
+            </CardTitle>
+            <CardDescription>
+              {t("reports.visualRepresentation")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80 w-full bg-gray-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+              <div className="text-center">
+                <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500 font-medium">{t("reports.chartPlaceholder")}</p>
+                <p className="text-gray-400 text-sm mt-2">{t("reports.chartWillDisplayHere")}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Report Table */}
       <Card>
