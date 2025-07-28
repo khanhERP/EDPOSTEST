@@ -37,6 +37,7 @@ import {
 import { z } from "zod";
 import { useTranslation } from "@/lib/i18n";
 import { BulkImportModal } from "./bulk-import-modal";
+import { Checkbox } from "@/components/ui/checkbox";
 import * as XLSX from "xlsx";
 
 interface ProductManagerModalProps {
@@ -56,6 +57,7 @@ export function ProductManagerModal({
     sku: z.string().min(1, t("tables.skuRequired")),
     name: z.string().min(1, t("tables.productNameRequired")),
     productType: z.number().min(1, t("tables.productTypeRequired")),
+    trackInventory: z.boolean().optional(),
   });
   const [showAddForm, setShowAddForm] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
@@ -170,6 +172,7 @@ export function ProductManagerModal({
       categoryId: 0,
       productType: 1,
       imageUrl: "",
+      trackInventory: true,
     },
   });
 
@@ -191,6 +194,7 @@ export function ProductManagerModal({
       categoryId: product.categoryId,
       productType: product.productType || 1,
       imageUrl: product.imageUrl || "",
+      trackInventory: product.trackInventory !== false,
     });
     setShowAddForm(true);
   };
@@ -212,6 +216,7 @@ export function ProductManagerModal({
       categoryId: 0,
       productType: 1,
       imageUrl: "",
+      trackInventory: true,
     });
   };
 
@@ -304,6 +309,7 @@ export function ProductManagerModal({
           categoryId: 0,
           productType: 1,
           imageUrl: "",
+          trackInventory: true,
         });
       }
     }
@@ -321,6 +327,7 @@ export function ProductManagerModal({
       categoryId: 0,
       productType: 1,
       imageUrl: "",
+      trackInventory: true,
     });
     onClose();
   };
@@ -652,6 +659,26 @@ export function ProductManagerModal({
                           />
                         </FormControl>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="trackInventory"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value !== false}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            {t("inventory.trackInventory")}
+                          </FormLabel>
+                        </div>
                       </FormItem>
                     )}
                   />
