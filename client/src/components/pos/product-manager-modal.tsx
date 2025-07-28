@@ -44,17 +44,18 @@ interface ProductManagerModalProps {
   onClose: () => void;
 }
 
-const productFormSchema = insertProductSchema.extend({
-  categoryId: z.number().min(1, "Category is required"),
-  price: z.string().optional(),
-  sku: z.string().min(1, "SKU is required"),
-  name: z.string().min(1, "Product name is required"),
-});
-
 export function ProductManagerModal({
   isOpen,
   onClose,
 }: ProductManagerModalProps) {
+  const { t } = useTranslation();
+  
+  const productFormSchema = insertProductSchema.extend({
+    categoryId: z.number().min(1, t("tables.categoryRequired")),
+    price: z.string().optional(),
+    sku: z.string().min(1, t("tables.skuRequired")),
+    name: z.string().min(1, t("tables.productNameRequired")),
+  });
   const [showAddForm, setShowAddForm] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
