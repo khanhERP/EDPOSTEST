@@ -56,6 +56,7 @@ const stockUpdateSchema = (t: any) => z.object({
   sku: z.string().min(1, "SKU là bắt buộc"),
   price: z.string().optional(),
   categoryId: z.number().optional(),
+  productType: z.number().optional(),
 });
 
 type StockUpdateForm = z.infer<typeof stockUpdateSchema>;
@@ -284,6 +285,7 @@ export default function InventoryPage() {
         sku: "",
         price: "0",
         categoryId: categories[0]?.id || 1,
+        productType: 1,
       });
     } else {
       // Load existing product data for editing
@@ -295,6 +297,7 @@ export default function InventoryPage() {
         sku: product.sku,
         price: product.price,
         categoryId: product.categoryId,
+        productType: product.productType || 1,
       });
     }
     setShowStockDialog(true);
@@ -329,6 +332,7 @@ export default function InventoryPage() {
         price: data.price || "0",
         stock: data.quantity || 0,
         categoryId: data.categoryId || 1,
+        productType: data.productType || 1,
         imageUrl: null,
         isActive: true,
       };
@@ -716,6 +720,36 @@ export default function InventoryPage() {
                               {...field}
                             />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={stockUpdateForm.control}
+                      name="productType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("tables.productType")}</FormLabel>
+                          <Select
+                            onValueChange={(value) =>
+                              field.onChange(parseInt(value))
+                            }
+                            value={field.value?.toString() || "1"}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue
+                                  placeholder={t("tables.selectProductType")}
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="1">{t("tables.goodsType")}</SelectItem>
+                              <SelectItem value="2">{t("tables.materialType")}</SelectItem>
+                              <SelectItem value="3">{t("tables.finishedProductType")}</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
