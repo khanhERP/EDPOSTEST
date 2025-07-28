@@ -195,6 +195,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     visualRepresentation: '데이터의 시각적 표현',
 
     // Table headers for reports
+    salesDetailsHeader: '판매 세부사항',
+    revenueExpenseDetailsHeader: '수입 지출 세부사항',
+    inventoryDetailsHeader: '재고 세부사항',
     transactionCode: '거래 코드',
     quantity: '수량',
     otherRevenue: '기타 수입',
@@ -447,6 +450,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     visualRepresentation: 'Visual representation of data',
 
     // Table headers for reports
+    salesDetailsHeader: 'Sales Details',
+    revenueExpenseDetailsHeader: 'Revenue & Expense Details',
+    inventoryDetailsHeader: 'Inventory Details',
     transactionCode: 'Transaction Code',
     quantity: 'Quantity',
     otherRevenue: 'Other Revenue',
@@ -682,6 +688,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     visualRepresentation: 'Biểu diễn trực quan của dữ liệu',
 
     // Table headers for reports
+    salesDetailsHeader: 'Chi tiết bán hàng',
+    revenueExpenseDetailsHeader: 'Chi tiết thu chi',
+    inventoryDetailsHeader: 'Chi tiết hàng hóa',
     transactionCode: 'Mã giao dịch',
     quantity: 'Số lượng',
     otherRevenue: 'Thu nhập khác',
