@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -93,11 +92,14 @@ export function InventoryReport() {
     if (!products || !Array.isArray(products)) return [];
 
     return products.filter((product: any) => {
-      const searchMatch = !productSearch ||
+      const searchMatch =
+        !productSearch ||
         product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-        (product.sku && product.sku.toLowerCase().includes(productSearch.toLowerCase()));
+        (product.sku &&
+          product.sku.toLowerCase().includes(productSearch.toLowerCase()));
 
-      const categoryMatch = selectedCategory === "all" ||
+      const categoryMatch =
+        selectedCategory === "all" ||
         product.categoryId.toString() === selectedCategory;
 
       return searchMatch && categoryMatch;
@@ -109,26 +111,29 @@ export function InventoryReport() {
     if (!filteredProducts.length || !orders) return [];
 
     // Mock sales data based on products
-    return filteredProducts.map((product: any) => ({
-      productCode: product.sku || product.id,
-      productName: product.name,
-      quantitySold: Math.floor(Math.random() * 100) + 10,
-      revenue: Math.floor(Math.random() * 1000000) + 100000,
-      quantityReturned: Math.floor(Math.random() * 10),
-      returnValue: Math.floor(Math.random() * 50000) + 5000,
-      netRevenue: 0, // Will be calculated
-    })).map(item => ({
-      ...item,
-      netRevenue: item.revenue - item.returnValue,
-    }));
+    return filteredProducts
+      .map((product: any) => ({
+        productCode: product.sku || product.id,
+        productName: product.name,
+        quantitySold: Math.floor(Math.random() * 100) + 10,
+        revenue: Math.floor(Math.random() * 1000000) + 100000,
+        quantityReturned: Math.floor(Math.random() * 10),
+        returnValue: Math.floor(Math.random() * 50000) + 5000,
+        netRevenue: 0, // Will be calculated
+      }))
+      .map((item) => ({
+        ...item,
+        netRevenue: item.revenue - item.returnValue,
+      }));
   };
 
   const getProfitData = () => {
     const salesData = getSalesData();
-    return salesData.map(item => {
+    return salesData.map((item) => {
       const totalCost = item.quantitySold * (Math.random() * 20000 + 10000);
       const profit = item.netRevenue - totalCost;
-      const profitMargin = item.netRevenue > 0 ? (profit / item.netRevenue * 100) : 0;
+      const profitMargin =
+        item.netRevenue > 0 ? (profit / item.netRevenue) * 100 : 0;
 
       return {
         ...item,
@@ -143,9 +148,10 @@ export function InventoryReport() {
     const filteredProducts = getFilteredProducts();
     return filteredProducts.map((product: any) => {
       const quantity = Math.floor(Math.random() * 100) + 10;
-      const salePrice = product.price || Math.floor(Math.random() * 50000) + 10000;
+      const salePrice =
+        product.price || Math.floor(Math.random() * 50000) + 10000;
       const costPrice = salePrice * 0.7;
-      
+
       return {
         productCode: product.sku || product.id,
         productName: product.name,
@@ -225,7 +231,7 @@ export function InventoryReport() {
 
   const getEmployeeSalesData = () => {
     const salesData = getSalesData();
-    return salesData.map(item => ({
+    return salesData.map((item) => ({
       ...item,
       employeeCount: Math.floor(Math.random() * 5) + 1,
     }));
@@ -233,7 +239,7 @@ export function InventoryReport() {
 
   const getCustomerSalesData = () => {
     const salesData = getSalesData();
-    return salesData.map(item => ({
+    return salesData.map((item) => ({
       ...item,
       customerCount: Math.floor(Math.random() * 20) + 5,
     }));
@@ -241,40 +247,48 @@ export function InventoryReport() {
 
   const getSupplierData = () => {
     const filteredProducts = getFilteredProducts();
-    return filteredProducts.map((product: any) => ({
-      productCode: product.sku || product.id,
-      productName: product.name,
-      supplierCount: Math.floor(Math.random() * 3) + 1,
-      inQuantity: Math.floor(Math.random() * 50) + 10,
-      inValue: Math.floor(Math.random() * 500000) + 100000,
-      returnQuantity: Math.floor(Math.random() * 5),
-      returnValue: Math.floor(Math.random() * 50000) + 5000,
-      netRevenue: 0,
-    })).map(item => ({
-      ...item,
-      netRevenue: item.inValue - item.returnValue,
-    }));
+    return filteredProducts
+      .map((product: any) => ({
+        productCode: product.sku || product.id,
+        productName: product.name,
+        supplierCount: Math.floor(Math.random() * 3) + 1,
+        inQuantity: Math.floor(Math.random() * 50) + 10,
+        inValue: Math.floor(Math.random() * 500000) + 100000,
+        returnQuantity: Math.floor(Math.random() * 5),
+        returnValue: Math.floor(Math.random() * 50000) + 5000,
+        netRevenue: 0,
+      }))
+      .map((item) => ({
+        ...item,
+        netRevenue: item.inValue - item.returnValue,
+      }));
   };
 
   const getChartData = () => {
     if (concernType === "sales") {
-      return getSalesData().slice(0, 10).map(item => ({
-        name: item.productName,
-        value: item.netRevenue,
-        quantity: item.quantitySold,
-      }));
+      return getSalesData()
+        .slice(0, 10)
+        .map((item) => ({
+          name: item.productName,
+          value: item.netRevenue,
+          quantity: item.quantitySold,
+        }));
     } else if (concernType === "profit") {
-      return getProfitData().slice(0, 10).map(item => ({
-        name: item.productName,
-        value: item.profit,
-        margin: item.profitMargin,
-      }));
+      return getProfitData()
+        .slice(0, 10)
+        .map((item) => ({
+          name: item.productName,
+          value: item.profit,
+          margin: item.profitMargin,
+        }));
     } else if (concernType === "inventoryValue") {
-      return getInventoryValue().slice(0, 10).map(item => ({
-        name: item.productName,
-        value: item.inventoryValue,
-        quantity: item.quantity,
-      }));
+      return getInventoryValue()
+        .slice(0, 10)
+        .map((item) => ({
+          name: item.productName,
+          value: item.inventoryValue,
+          quantity: item.quantity,
+        }));
     }
     return [];
   };
@@ -289,7 +303,8 @@ export function InventoryReport() {
             {t("reports.salesReportByProduct")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -298,24 +313,40 @@ export function InventoryReport() {
               <TableRow>
                 <TableHead>{t("reports.productCode")}</TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">{t("reports.quantitySold")}</TableHead>
-                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-center">{t("reports.returnQuantity")}</TableHead>
-                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.quantitySold")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.returnQuantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.slice(0, 20).map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.productCode}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.productCode}
+                    </TableCell>
                     <TableCell>{item.productName}</TableCell>
-                    <TableCell className="text-center">{item.quantitySold}</TableCell>
+                    <TableCell className="text-center">
+                      {item.quantitySold}
+                    </TableCell>
                     <TableCell className="text-right text-green-600">
                       {formatCurrency(item.revenue)}
                     </TableCell>
-                    <TableCell className="text-center">{item.quantityReturned}</TableCell>
+                    <TableCell className="text-center">
+                      {item.quantityReturned}
+                    </TableCell>
                     <TableCell className="text-right text-red-600">
                       {formatCurrency(item.returnValue)}
                     </TableCell>
@@ -326,7 +357,10 @@ export function InventoryReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={7}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -348,7 +382,8 @@ export function InventoryReport() {
             {t("reports.profitReportByProduct")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -357,28 +392,58 @@ export function InventoryReport() {
               <TableRow>
                 <TableHead>{t("reports.productCode")}</TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">{t("reports.quantitySold")}</TableHead>
-                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-center">{t("reports.returnQuantity")}</TableHead>
-                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.totalCost")}</TableHead>
-                <TableHead className="text-right">{t("reports.grossProfit")}</TableHead>
-                <TableHead className="text-right">{t("reports.profitMargin")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.quantitySold")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.returnQuantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.totalCost")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.grossProfit")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.profitMargin")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.slice(0, 20).map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.productCode}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.productCode}
+                    </TableCell>
                     <TableCell>{item.productName}</TableCell>
-                    <TableCell className="text-center">{item.quantitySold}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.revenue)}</TableCell>
-                    <TableCell className="text-center">{item.quantityReturned}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.returnValue)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.netRevenue)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.totalCost)}</TableCell>
+                    <TableCell className="text-center">
+                      {item.quantitySold}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.revenue)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.quantityReturned}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.returnValue)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.netRevenue)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.totalCost)}
+                    </TableCell>
                     <TableCell className="text-right text-green-600">
                       {formatCurrency(item.profit)}
                     </TableCell>
@@ -389,7 +454,10 @@ export function InventoryReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={10} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={10}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -411,7 +479,8 @@ export function InventoryReport() {
             {t("reports.inventoryValueReport")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -420,23 +489,43 @@ export function InventoryReport() {
               <TableRow>
                 <TableHead>{t("reports.productCode")}</TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">{t("reports.quantity")}</TableHead>
-                <TableHead className="text-right">{t("reports.salePrice")}</TableHead>
-                <TableHead className="text-right">{t("reports.saleValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.costPrice")}</TableHead>
-                <TableHead className="text-right">{t("reports.inventoryValue")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.quantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.salePrice")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.saleValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.costPrice")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.inventoryValue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.slice(0, 20).map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.productCode}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.productCode}
+                    </TableCell>
                     <TableCell>{item.productName}</TableCell>
-                    <TableCell className="text-center">{item.quantity}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.salePrice)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.saleValue)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.costPrice)}</TableCell>
+                    <TableCell className="text-center">
+                      {item.quantity}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.salePrice)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.saleValue)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.costPrice)}
+                    </TableCell>
                     <TableCell className="text-right text-blue-600">
                       {formatCurrency(item.inventoryValue)}
                     </TableCell>
@@ -444,7 +533,10 @@ export function InventoryReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={7}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -466,7 +558,8 @@ export function InventoryReport() {
             {t("reports.inOutInventoryReport")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -475,33 +568,66 @@ export function InventoryReport() {
               <TableRow>
                 <TableHead>{t("reports.productCode")}</TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">{t("reports.openingStock")}</TableHead>
-                <TableHead className="text-right">{t("reports.openingValue")}</TableHead>
-                <TableHead className="text-center">{t("reports.inQuantity")}</TableHead>
-                <TableHead className="text-center">{t("reports.outQuantity")}</TableHead>
-                <TableHead className="text-right">{t("reports.outValue")}</TableHead>
-                <TableHead className="text-center">{t("reports.closingStock")}</TableHead>
-                <TableHead className="text-right">{t("reports.closingValue")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.openingStock")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.openingValue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.inQuantity")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.outQuantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.outValue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.closingStock")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.closingValue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.slice(0, 20).map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.productCode}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.productCode}
+                    </TableCell>
                     <TableCell>{item.productName}</TableCell>
-                    <TableCell className="text-center">{item.openingStock}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.openingValue)}</TableCell>
-                    <TableCell className="text-center text-green-600">{item.inQuantity}</TableCell>
-                    <TableCell className="text-center text-red-600">{item.outQuantity}</TableCell>
-                    <TableCell className="text-right text-red-600">{formatCurrency(item.outValue)}</TableCell>
-                    <TableCell className="text-center">{item.closingStock}</TableCell>
-                    <TableCell className="text-right text-blue-600">{formatCurrency(item.closingValue)}</TableCell>
+                    <TableCell className="text-center">
+                      {item.openingStock}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.openingValue)}
+                    </TableCell>
+                    <TableCell className="text-center text-green-600">
+                      {item.inQuantity}
+                    </TableCell>
+                    <TableCell className="text-center text-red-600">
+                      {item.outQuantity}
+                    </TableCell>
+                    <TableCell className="text-right text-red-600">
+                      {formatCurrency(item.outValue)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.closingStock}
+                    </TableCell>
+                    <TableCell className="text-right text-blue-600">
+                      {formatCurrency(item.closingValue)}
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={9}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -523,7 +649,8 @@ export function InventoryReport() {
             {t("reports.detailedInOutInventoryReport")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -532,49 +659,114 @@ export function InventoryReport() {
               <TableRow>
                 <TableHead>{t("reports.productCode")}</TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">{t("reports.openingStock")}</TableHead>
-                <TableHead className="text-right">{t("reports.openingPrice")}</TableHead>
-                <TableHead className="text-center">{t("reports.inSupplier")}</TableHead>
-                <TableHead className="text-center">{t("reports.inCheck")}</TableHead>
-                <TableHead className="text-center">{t("reports.inReturn")}</TableHead>
-                <TableHead className="text-center">{t("reports.inTransfer")}</TableHead>
-                <TableHead className="text-center">{t("reports.inProduction")}</TableHead>
-                <TableHead className="text-center">{t("reports.outSale")}</TableHead>
-                <TableHead className="text-center">{t("reports.outDisposal")}</TableHead>
-                <TableHead className="text-center">{t("reports.outSupplier")}</TableHead>
-                <TableHead className="text-center">{t("reports.outCheck")}</TableHead>
-                <TableHead className="text-center">{t("reports.outTransfer")}</TableHead>
-                <TableHead className="text-center">{t("reports.outProduction")}</TableHead>
-                <TableHead className="text-center">{t("reports.closingStock")}</TableHead>
-                <TableHead className="text-right">{t("reports.closingValue")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.openingStock")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.openingPrice")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.inSupplier")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.inCheck")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.inReturn")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.inTransfer")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.inProduction")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.outSale")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.outDisposal")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.outSupplier")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.outCheck")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.outTransfer")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.outProduction")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.closingStock")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.closingValue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.slice(0, 20).map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.productCode}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.productCode}
+                    </TableCell>
                     <TableCell>{item.productName}</TableCell>
-                    <TableCell className="text-center">{item.openingStock}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.openingPrice)}</TableCell>
-                    <TableCell className="text-center text-green-600">{item.inSupplier}</TableCell>
-                    <TableCell className="text-center text-green-600">{item.inCheck}</TableCell>
-                    <TableCell className="text-center text-green-600">{item.inReturn}</TableCell>
-                    <TableCell className="text-center text-green-600">{item.inTransfer}</TableCell>
-                    <TableCell className="text-center text-green-600">{item.inProduction}</TableCell>
-                    <TableCell className="text-center text-red-600">{item.outSale}</TableCell>
-                    <TableCell className="text-center text-red-600">{item.outDisposal}</TableCell>
-                    <TableCell className="text-center text-red-600">{item.outSupplier}</TableCell>
-                    <TableCell className="text-center text-red-600">{item.outCheck}</TableCell>
-                    <TableCell className="text-center text-red-600">{item.outTransfer}</TableCell>
-                    <TableCell className="text-center text-red-600">{item.outProduction}</TableCell>
-                    <TableCell className="text-center">{item.closingStock}</TableCell>
-                    <TableCell className="text-right text-blue-600">{formatCurrency(item.closingValue)}</TableCell>
+                    <TableCell className="text-center">
+                      {item.openingStock}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.openingPrice)}
+                    </TableCell>
+                    <TableCell className="text-center text-green-600">
+                      {item.inSupplier}
+                    </TableCell>
+                    <TableCell className="text-center text-green-600">
+                      {item.inCheck}
+                    </TableCell>
+                    <TableCell className="text-center text-green-600">
+                      {item.inReturn}
+                    </TableCell>
+                    <TableCell className="text-center text-green-600">
+                      {item.inTransfer}
+                    </TableCell>
+                    <TableCell className="text-center text-green-600">
+                      {item.inProduction}
+                    </TableCell>
+                    <TableCell className="text-center text-red-600">
+                      {item.outSale}
+                    </TableCell>
+                    <TableCell className="text-center text-red-600">
+                      {item.outDisposal}
+                    </TableCell>
+                    <TableCell className="text-center text-red-600">
+                      {item.outSupplier}
+                    </TableCell>
+                    <TableCell className="text-center text-red-600">
+                      {item.outCheck}
+                    </TableCell>
+                    <TableCell className="text-center text-red-600">
+                      {item.outTransfer}
+                    </TableCell>
+                    <TableCell className="text-center text-red-600">
+                      {item.outProduction}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.closingStock}
+                    </TableCell>
+                    <TableCell className="text-right text-blue-600">
+                      {formatCurrency(item.closingValue)}
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={17} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={17}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -596,7 +788,8 @@ export function InventoryReport() {
             {t("reports.disposalReport")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -605,17 +798,25 @@ export function InventoryReport() {
               <TableRow>
                 <TableHead>{t("reports.productCode")}</TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">{t("reports.totalDisposed")}</TableHead>
-                <TableHead className="text-right">{t("reports.totalValue")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.totalDisposed")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.totalValue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.slice(0, 20).map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.productCode}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.productCode}
+                    </TableCell>
                     <TableCell>{item.productName}</TableCell>
-                    <TableCell className="text-center text-red-600">{item.totalDisposed}</TableCell>
+                    <TableCell className="text-center text-red-600">
+                      {item.totalDisposed}
+                    </TableCell>
                     <TableCell className="text-right text-red-600">
                       {formatCurrency(item.totalValue)}
                     </TableCell>
@@ -623,7 +824,10 @@ export function InventoryReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -645,7 +849,8 @@ export function InventoryReport() {
             {t("reports.employeeSalesReport")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -654,25 +859,49 @@ export function InventoryReport() {
               <TableRow>
                 <TableHead>{t("reports.productCode")}</TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">{t("reports.employeeCount")}</TableHead>
-                <TableHead className="text-center">{t("reports.quantitySold")}</TableHead>
-                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-center">{t("reports.returnQuantity")}</TableHead>
-                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.employeeCount")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.quantitySold")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.returnQuantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.slice(0, 20).map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.productCode}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.productCode}
+                    </TableCell>
                     <TableCell>{item.productName}</TableCell>
-                    <TableCell className="text-center">{item.employeeCount}</TableCell>
-                    <TableCell className="text-center">{item.quantitySold}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.revenue)}</TableCell>
-                    <TableCell className="text-center">{item.quantityReturned}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.returnValue)}</TableCell>
+                    <TableCell className="text-center">
+                      {item.employeeCount}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.quantitySold}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.revenue)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.quantityReturned}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.returnValue)}
+                    </TableCell>
                     <TableCell className="text-right text-blue-600">
                       {formatCurrency(item.netRevenue)}
                     </TableCell>
@@ -680,7 +909,10 @@ export function InventoryReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={8}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -702,7 +934,8 @@ export function InventoryReport() {
             {t("reports.customerSalesReport")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -711,25 +944,49 @@ export function InventoryReport() {
               <TableRow>
                 <TableHead>{t("reports.productCode")}</TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">{t("reports.customerCount")}</TableHead>
-                <TableHead className="text-center">{t("reports.quantityPurchased")}</TableHead>
-                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-center">{t("reports.returnQuantity")}</TableHead>
-                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.customerCount")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.quantityPurchased")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.returnQuantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.slice(0, 20).map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.productCode}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.productCode}
+                    </TableCell>
                     <TableCell>{item.productName}</TableCell>
-                    <TableCell className="text-center">{item.customerCount}</TableCell>
-                    <TableCell className="text-center">{item.quantitySold}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.revenue)}</TableCell>
-                    <TableCell className="text-center">{item.quantityReturned}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.returnValue)}</TableCell>
+                    <TableCell className="text-center">
+                      {item.customerCount}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.quantitySold}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.revenue)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.quantityReturned}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.returnValue)}
+                    </TableCell>
                     <TableCell className="text-right text-blue-600">
                       {formatCurrency(item.netRevenue)}
                     </TableCell>
@@ -737,7 +994,10 @@ export function InventoryReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={8}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -759,7 +1019,8 @@ export function InventoryReport() {
             {t("reports.supplierReportByProduct")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -768,25 +1029,49 @@ export function InventoryReport() {
               <TableRow>
                 <TableHead>{t("reports.productCode")}</TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">{t("reports.supplierCount")}</TableHead>
-                <TableHead className="text-center">{t("reports.inQuantity")}</TableHead>
-                <TableHead className="text-right">{t("reports.inValue")}</TableHead>
-                <TableHead className="text-center">{t("reports.returnQuantity")}</TableHead>
-                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.supplierCount")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.inQuantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.inValue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.returnQuantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.slice(0, 20).map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.productCode}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.productCode}
+                    </TableCell>
                     <TableCell>{item.productName}</TableCell>
-                    <TableCell className="text-center">{item.supplierCount}</TableCell>
-                    <TableCell className="text-center text-green-600">{item.inQuantity}</TableCell>
-                    <TableCell className="text-right text-green-600">{formatCurrency(item.inValue)}</TableCell>
-                    <TableCell className="text-center text-red-600">{item.returnQuantity}</TableCell>
-                    <TableCell className="text-right text-red-600">{formatCurrency(item.returnValue)}</TableCell>
+                    <TableCell className="text-center">
+                      {item.supplierCount}
+                    </TableCell>
+                    <TableCell className="text-center text-green-600">
+                      {item.inQuantity}
+                    </TableCell>
+                    <TableCell className="text-right text-green-600">
+                      {formatCurrency(item.inValue)}
+                    </TableCell>
+                    <TableCell className="text-center text-red-600">
+                      {item.returnQuantity}
+                    </TableCell>
+                    <TableCell className="text-right text-red-600">
+                      {formatCurrency(item.returnValue)}
+                    </TableCell>
                     <TableCell className="text-right text-blue-600">
                       {formatCurrency(item.netRevenue)}
                     </TableCell>
@@ -794,7 +1079,10 @@ export function InventoryReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={8}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -846,13 +1134,27 @@ export function InventoryReport() {
                 <SelectContent>
                   <SelectItem value="sales">{t("reports.sales")}</SelectItem>
                   <SelectItem value="profit">{t("reports.profit")}</SelectItem>
-                  <SelectItem value="inventoryValue">{t("reports.inventoryValue")}</SelectItem>
-                  <SelectItem value="inOutInventory">{t("reports.inOutInventory")}</SelectItem>
-                  <SelectItem value="detailedInOutInventory">{t("reports.detailedInOutInventory")}</SelectItem>
-                  <SelectItem value="disposal">{t("reports.disposal")}</SelectItem>
-                  <SelectItem value="employeeSales">{t("reports.employeeBySales")}</SelectItem>
-                  <SelectItem value="customerSales">{t("reports.customerBySales")}</SelectItem>
-                  <SelectItem value="supplierPurchase">{t("reports.supplierByPurchase")}</SelectItem>
+                  <SelectItem value="inventoryValue">
+                    {t("reports.inventoryValue")}
+                  </SelectItem>
+                  <SelectItem value="inOutInventory">
+                    {t("reports.inOutInventory")}
+                  </SelectItem>
+                  <SelectItem value="detailedInOutInventory">
+                    {t("reports.detailedInOutInventory")}
+                  </SelectItem>
+                  <SelectItem value="disposal">
+                    {t("reports.disposal")}
+                  </SelectItem>
+                  <SelectItem value="employeeSales">
+                    {t("reports.employeeBySales")}
+                  </SelectItem>
+                  <SelectItem value="customerSales">
+                    {t("reports.customerBySales")}
+                  </SelectItem>
+                  <SelectItem value="supplierPurchase">
+                    {t("reports.supplierByPurchase")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -867,8 +1169,12 @@ export function InventoryReport() {
                 <SelectContent>
                   <SelectItem value="all">{t("common.all")}</SelectItem>
                   <SelectItem value="combo">{t("reports.combo")}</SelectItem>
-                  <SelectItem value="product">{t("reports.product")}</SelectItem>
-                  <SelectItem value="service">{t("reports.service")}</SelectItem>
+                  <SelectItem value="product">
+                    {t("reports.product")}
+                  </SelectItem>
+                  <SelectItem value="service">
+                    {t("reports.service")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -876,7 +1182,10 @@ export function InventoryReport() {
             {/* Product Group */}
             <div>
               <Label>{t("reports.productGroup")}</Label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select
+                value={selectedCategory}
+                onValueChange={setSelectedCategory}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder={t("reports.productGroup")} />
                 </SelectTrigger>
@@ -885,7 +1194,10 @@ export function InventoryReport() {
                   {categories &&
                     Array.isArray(categories) &&
                     categories.map((category: any) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
+                      <SelectItem
+                        key={category.id}
+                        value={category.id.toString()}
+                      >
                         {category.name}
                       </SelectItem>
                     ))}
@@ -895,7 +1207,7 @@ export function InventoryReport() {
           </div>
 
           {/* Date Range */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <Label>{t("reports.startDate")}</Label>
               <Input
@@ -945,12 +1257,15 @@ export function InventoryReport() {
                 <div className="text-white font-semibold">
                   {concernType === "sales" && t("reports.sales")}
                   {concernType === "profit" && t("reports.profit")}
-                  {concernType === "inventoryValue" && t("reports.inventoryValue")}
+                  {concernType === "inventoryValue" &&
+                    t("reports.inventoryValue")}
                 </div>
               </div>
             </CardTitle>
             <CardDescription className="text-blue-100 mt-2">
-              {t("reports.visualRepresentation")} - {t("reports.fromDate")}: {formatDate(startDate)} {t("reports.toDate")}: {formatDate(endDate)}
+              {t("reports.visualRepresentation")} - {t("reports.fromDate")}:{" "}
+              {formatDate(startDate)} {t("reports.toDate")}:{" "}
+              {formatDate(endDate)}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
@@ -963,9 +1278,23 @@ export function InventoryReport() {
                     barCategoryGap="25%"
                   >
                     <defs>
-                      <linearGradient id="valueGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.6} />
+                      <linearGradient
+                        id="valueGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#3b82f6"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#3b82f6"
+                          stopOpacity={0.6}
+                        />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -1002,19 +1331,20 @@ export function InventoryReport() {
                     />
                     <ChartTooltip
                       content={<ChartTooltipContent />}
-                      labelStyle={{ 
-                        color: "#1e293b", 
+                      labelStyle={{
+                        color: "#1e293b",
                         fontWeight: 600,
                         fontSize: 13,
-                        marginBottom: 4
+                        marginBottom: 4,
                       }}
                       contentStyle={{
                         backgroundColor: "rgba(255, 255, 255, 0.98)",
                         border: "1px solid #e2e8f0",
                         borderRadius: "12px",
-                        boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.05)",
+                        boxShadow:
+                          "0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.05)",
                         padding: "12px 16px",
-                        backdropFilter: "blur(8px)"
+                        backdropFilter: "blur(8px)",
                       }}
                       cursor={{ fill: "rgba(59, 130, 246, 0.05)" }}
                     />
@@ -1040,7 +1370,8 @@ export function InventoryReport() {
         {concernType === "profit" && renderProfitReport()}
         {concernType === "inventoryValue" && renderInventoryValueReport()}
         {concernType === "inOutInventory" && renderInOutInventoryReport()}
-        {concernType === "detailedInOutInventory" && renderDetailedInOutInventoryReport()}
+        {concernType === "detailedInOutInventory" &&
+          renderDetailedInOutInventoryReport()}
         {concernType === "disposal" && renderDisposalReport()}
         {concernType === "employeeSales" && renderEmployeeSalesReport()}
         {concernType === "customerSales" && renderCustomerSalesReport()}
