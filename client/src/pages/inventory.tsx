@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -57,6 +58,7 @@ const stockUpdateSchema = (t: any) => z.object({
   price: z.string().optional(),
   categoryId: z.number().optional(),
   productType: z.number().optional(),
+  trackInventory: z.boolean().optional(),
 });
 
 type StockUpdateForm = z.infer<typeof stockUpdateSchema>;
@@ -248,6 +250,37 @@ export default function InventoryPage() {
     },
   });
 
+  const updateProductTrackInventoryMutation = useMutation({
+    mutationFn: async ({ id, trackInventory }: { id: number; trackInventory: boolean }) => {
+      const response = await fetch(`/api/products/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ trackInventory }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to update track inventory status");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Cập nhật thành công",
+        description: "Trạng thái theo dõi tồn kho đã được cập nhật",
+      });
+    },
+    onError: (error) => {
+      console.error("Update track inventory error:", error);
+      toast({
+        title: "Cập nhật thất bại",
+        description: "Không thể cập nhật trạng thái theo dõi tồn kho. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -286,6 +319,7 @@ export default function InventoryPage() {
         price: "0",
         categoryId: categories[0]?.id || 1,
         productType: 1,
+        trackInventory: true,
       });
     } else {
       // Load existing product data for editing
@@ -335,6 +369,7 @@ export default function InventoryPage() {
         productType: data.productType || 1,
         imageUrl: null,
         isActive: true,
+        trackInventory: data.trackInventory !== false,
       };
       console.log("Creating product with data:", newProductData);
       createProductMutation.mutate(newProductData);
@@ -556,6 +591,11 @@ export default function InventoryPage() {
                             {t("common.status")}
                           </div>
                         </th>
+                        <th className="text-center py-3 px-2 font-medium text-gray-700 w-auto min-w-[100px]">
+                          <div className="leading-tight break-words">
+                            {t("inventory.trackInventory")}
+                          </div>
+                        </th>
                         <th className="text-right py-3 px-2 font-medium text-gray-700 w-auto min-w-[80px]">
                           <div className="leading-tight break-words">
                             {t("inventory.unitPrice")}
@@ -625,6 +665,18 @@ export default function InventoryPage() {
                               <Badge className={`${status.color} text-white text-xs`}>
                                 {status.label}
                               </Badge>
+                            </td>
+                            <td className="py-4 px-2 text-center">
+                              <Checkbox 
+                                checked={product.trackInventory !== false}
+                                onCheckedChange={(checked) => {
+                                  // Update product track inventory status
+                                  updateProductTrackInventoryMutation.mutate({
+                                    id: product.id,
+                                    trackInventory: !!checked
+                                  });
+                                }}
+                              />
                             </td>
                             <td className="py-4 px-2 text-right text-gray-900">
                               <div className="break-words">
@@ -829,6 +881,26 @@ export default function InventoryPage() {
                             </SelectContent>
                           </Select>
                           <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={stockUpdateForm.control}
+                      name="trackInventory"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value !== false}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              {t("inventory.trackInventory")}
+                            </FormLabel>
+                          </div>
                         </FormItem>
                       )}
                     />
