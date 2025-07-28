@@ -631,7 +631,7 @@ export function EndOfDayReport() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="w-5 h-5" />
-                {getReportTitle()}
+                {t('reports.endOfDayReport')}
               </CardTitle>
               <CardDescription className="mt-2">
                 {getDateDisplay()}
