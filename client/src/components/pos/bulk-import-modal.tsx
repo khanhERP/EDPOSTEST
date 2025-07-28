@@ -1,7 +1,7 @@
 
 import { useState, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { X, Upload, Download, AlertCircle } from "lucide-react";
+import { X, Upload, Download, AlertCircle, FileSpreadsheet } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +27,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [preview, setPreview] = useState<ProductRow[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
+  const [errorResults, setErrorResults] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -56,6 +57,8 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
       if (data.errors > 0) {
         console.log("=== ERRORS FOUND ===");
         const errorItems = data.results?.filter(r => !r.success) || [];
+        setErrorResults(errorItems);
+        
         errorItems.forEach((item, index) => {
           console.log(`Error ${index + 1}:`, item.error);
           console.log(`Data:`, item.data);
@@ -74,7 +77,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
         
         toast({
           title: "Hoàn thành với lỗi",
-          description: errorDescription,
+          description: errorDescription + "\nTải xuống báo cáo lỗi để xem chi tiết",
           variant: "destructive",
         });
       } else {
@@ -182,6 +185,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
   const handleClose = () => {
     setPreview([]);
     setErrors([]);
+    setErrorResults([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -199,6 +203,58 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Template");
     XLSX.writeFile(wb, "product_import_template.xlsx");
+  };
+
+  const downloadErrorReport = (errorResults: any[]) => {
+    const errorData = [
+      ["Tên sản phẩm", "SKU", "Giá", "Số lượng", "Category ID", "Hình ảnh (URL)", "Lỗi chi tiết"]
+    ];
+
+    errorResults.forEach(result => {
+      if (!result.success && result.data) {
+        errorData.push([
+          result.data.name || "",
+          result.data.sku || "",
+          result.data.price || "",
+          result.data.stock || "",
+          result.data.categoryId || "",
+          result.data.imageUrl || "",
+          result.error || "Lỗi không xác định"
+        ]);
+      }
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(errorData);
+    
+    // Auto-fit column widths
+    const colWidths = [
+      { wch: 20 }, // Tên sản phẩm
+      { wch: 15 }, // SKU
+      { wch: 10 }, // Giá
+      { wch: 10 }, // Số lượng
+      { wch: 12 }, // Category ID
+      { wch: 30 }, // Hình ảnh URL
+      { wch: 40 }, // Lỗi chi tiết
+    ];
+    ws['!cols'] = colWidths;
+
+    // Style header row
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (!ws[cellAddress]) continue;
+      ws[cellAddress].s = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "DC2626" } },
+        alignment: { horizontal: "center" }
+      };
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Lỗi Import");
+    
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    XLSX.writeFile(wb, `product_import_errors_${timestamp}.xlsx`);
   };
 
   return (
@@ -262,6 +318,32 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
                   <li key={index}>{error}</li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {/* Error Report Download */}
+          {errorResults.length > 0 && (
+            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center mb-2">
+                    <AlertCircle className="mr-2 text-red-500" size={16} />
+                    <h3 className="font-medium text-red-700">Có {errorResults.length} sản phẩm bị lỗi</h3>
+                  </div>
+                  <p className="text-sm text-red-600">
+                    Tải xuống báo cáo lỗi để xem chi tiết từng sản phẩm bị lỗi và nguyên nhân
+                  </p>
+                </div>
+                <Button 
+                  onClick={() => downloadErrorReport(errorResults)}
+                  variant="destructive"
+                  size="sm"
+                  className="ml-4"
+                >
+                  <FileSpreadsheet className="mr-2" size={16} />
+                  Tải báo cáo lỗi
+                </Button>
+              </div>
             </div>
           )}
 
