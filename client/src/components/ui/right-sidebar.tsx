@@ -89,6 +89,7 @@ export function RightSidebar() {
         <Button
           variant="ghost"
           size="sm"
+          className="mt-1"
           onClick={() => {
             if (isExpanded) {
               setIsNavCollapsed(true);
