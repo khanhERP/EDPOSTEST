@@ -515,7 +515,9 @@ export function OrderDialog({
                   <p>{t("tables.noItemsSelected")}</p>
                 </div>
               ) : (
-                <div className="max-h-[550px] overflow-y-auto space-y-3">
+                <div
+                  className={`${mode === "edit" ? "max-h-[200px]" : "max-h-[400px]"} overflow-y-auto space-y-3`}
+                >
                   {cart.map((item) => (
                     <Card key={item.product.id}>
                       <CardContent className="p-3">
