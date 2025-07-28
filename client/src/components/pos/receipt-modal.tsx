@@ -128,7 +128,7 @@ export function ReceiptModal({ isOpen, onClose, receipt, onConfirm, isPreview = 
               <Button onClick={onClose} variant="outline" className="flex-1">
                 Hủy
               </Button>
-              <Button onClick={onConfirm} className="flex-1 btn-primary">
+              <Button onClick={onConfirm} className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200">
                 Xác nhận & Chọn thanh toán
               </Button>
             </>
