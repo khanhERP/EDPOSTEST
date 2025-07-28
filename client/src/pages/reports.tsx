@@ -17,6 +17,7 @@ import { BarChart3, PieChart, TrendingUp, Utensils, Package, Users, Calendar, Fi
 import { Link, useSearch } from "wouter";
 import { useTranslation } from "@/lib/i18n";
 import { SupplierReport } from "@/components/reports/supplier-report";
+import { EmployeeReport } from "@/components/reports/employee-report";
 
 export default function ReportsPage() {
   const { t } = useTranslation();
@@ -140,6 +141,14 @@ export default function ReportsPage() {
                   <span className="hidden sm:inline">{t("reports.supplierReportTab")}</span>
                   <span className="sm:hidden">Supplier</span>
                 </TabsTrigger>
+                <TabsTrigger 
+                  value="employee" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
+                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t("reports.employeeReportTab")}</span>
+                  <span className="sm:hidden">Employee</span>
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -181,6 +190,14 @@ export default function ReportsPage() {
 
             <TabsContent value="supplier">
               <SupplierReport />
+            </TabsContent>
+
+            <TabsContent value="employee">
+              <EmployeeReport />
+            </TabsContent>
+
+            <TabsContent value="eod" className="hidden">
+              <EndOfDayReport />
             </TabsContent>
           </Tabs>
         </div>

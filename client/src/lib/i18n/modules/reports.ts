@@ -277,6 +277,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Supplier report
     supplierReport: "공급업체 보고서",
     supplierReportTab: "공급업체 보고서",
+    employeeReport: "직원 보고서",
+    employeeReportTab: "직원 보고서",
+    employeeReportDescription: "직원 및 성과 분석",
     supplierReportDescription: "공급업체 및 구매 분석",
     supplierConcernType: "관심사 유형",
     supplierPurchase: "구매",
@@ -680,6 +683,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Supplier report
     supplierReport: "Supplier Report",
     supplierReportTab: "Supplier Report",
+    employeeReport: "Employee Report",
+    employeeReportTab: "Employee Report",
+    employeeReportDescription: "Employee and performance analysis",
     supplierReportDescription: "Supplier and purchasing analysis",
     supplierConcernType: "Concern Type",
     supplierPurchase: "Purchase",
@@ -1088,6 +1094,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Supplier report
     supplierReport: "Báo cáo nhà cung cấp",
     supplierReportTab: "Báo cáo nhà cung cấp",
+    employeeReport: "Báo cáo nhân viên",
+    employeeReportTab: "Báo cáo nhân viên",
+    employeeReportDescription: "Phân tích nhân viên và hiệu suất",
     supplierReportDescription: "Phân tích nhà cung cấp và nhập hàng",
     supplierConcernType: "Mối quan tâm",
     supplierPurchase: "Nhập hàng",
