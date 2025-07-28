@@ -635,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Fetching order items from storage...');
       const items = await storage.getOrderItems(orderId);
       console.log(`Found ${items.length} order items:`, items);
-      
+
       res.json(items);
     } catch (error) {
       console.error('=== GET ORDER ITEMS ERROR ===');
@@ -643,7 +643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
       console.error('Order ID:', req.params.orderId);
-      
+
       res.status(500).json({ 
         message: "Failed to fetch order items",
         details: error.message,
@@ -781,7 +781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orderId: req.params.orderId,
         body: req.body
       });
-      
+
       res.status(500).json({ 
         error: 'Failed to add items to order',
         details: error.message,
@@ -1219,7 +1219,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/supplier-debts", async (req, res) => {
     try {
       const { startDate, endDate, supplierId } = req.query;
-      
+
       // Mock data for supplier debts - replace with actual database queries
       const supplierDebts = [
         {
@@ -1259,7 +1259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/supplier-purchases", async (req, res) => {
     try {
       const { startDate, endDate, supplierId } = req.query;
-      
+
       // Mock data for supplier purchases - replace with actual database queries
       const supplierPurchases = [
         {
@@ -1298,7 +1298,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/customer-debts", async (req, res) => {
     try {
       const { startDate, endDate, customerId } = req.query;
-      
+
       // Get customer debts from database
       const customerDebts = await db
         .select({
@@ -1329,7 +1329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/customer-sales", async (req, res) => {
     try {
       const { startDate, endDate, customerId } = req.query;
-      
+
       // Get customer sales data from database
       const customerSales = await db
         .select({
@@ -1429,6 +1429,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Bulk products creation error:", error);
       res.status(500).json({ error: "Failed to create products" });
+    }
+  });
+
+  // Employee routes
+  app.get("/api/employees", async (req, res) => {
+    try {
+      const employees = await storage.getEmployees();
+      res.json(employees);
+    } catch (error) {
+      console.error('Error fetching employees:', error);
+      res.status(500).json({ message: "Failed to fetch employees" });
+    }
+  });
+
+  // Employee sales report data
+  app.get("/api/employee-sales", async (req, res) => {
+    try {
+      const { startDate, endDate, employeeId } = req.query;
+
+      let query = db
+        .select({
+          employeeName: transactionsTable.cashierName,
+          total: transactionsTable.total,
+          createdAt: transactionsTable.createdAt
+        })
+        .from(transactionsTable);
+
+      if (startDate && endDate) {
+        query = query.where(
+          and(
+            gte(transactionsTable.createdAt, startDate as string),
+            lte(transactionsTable.createdAt, endDate as string)
+          )
+        );
+      }
+
+      if (employeeId && employeeId !== 'all') {
+        query = query.where(eq(transactionsTable.cashierName, employeeId as string));
+      }
+
+      const salesData = await query;
+      res.json(salesData);
+    } catch (error) {
+      console.error('Error fetching employee sales:', error);
+      res.status(500).json({ message: "Failed to fetch employee sales data" });
     }
   });
 

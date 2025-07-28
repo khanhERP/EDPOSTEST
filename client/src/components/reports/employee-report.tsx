@@ -61,18 +61,28 @@ export function EmployeeReport() {
 
   const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const { data: transactions } = useQuery({
-    queryKey: ["/api/transactions"],
+    queryKey: ["/api/transactions", startDate, endDate],
+    staleTime: 1 * 60 * 1000, // 1 minute
   });
 
   const { data: products } = useQuery({
     queryKey: ["/api/products"],
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const { data: categories } = useQuery({
     queryKey: ["/api/categories"],
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Employee sales data query
+  const { data: employeeSalesData } = useQuery({
+    queryKey: ["/api/employee-sales", startDate, endDate, selectedEmployee],
+    staleTime: 1 * 60 * 1000, // 1 minute
   });
 
   const formatCurrency = (amount: number) => {
@@ -100,7 +110,8 @@ export function EmployeeReport() {
 
       const employeeMatch = selectedEmployee === "all" || 
         transaction.cashierName === selectedEmployee ||
-        transaction.employeeId?.toString() === selectedEmployee;
+        transaction.employeeId?.toString() === selectedEmployee ||
+        transaction.cashierName?.includes(selectedEmployee);
 
       return dateMatch && employeeMatch;
     });
