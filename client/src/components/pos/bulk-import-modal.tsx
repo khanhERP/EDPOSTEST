@@ -384,7 +384,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
               <Button 
                 onClick={handleImport}
                 disabled={bulkCreateMutation.isPending}
-                className="btn-primary"
+                className="bg-green-600 hover:bg-green-700 text-white font-medium transition-colors duration-200"
               >
                 {bulkCreateMutation.isPending ? "Đang nhập..." : `Nhập ${preview.length} sản phẩm`}
               </Button>
