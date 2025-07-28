@@ -201,17 +201,19 @@ export function OrderDialog({
       (total, item) => total + Number(item.product.price) * item.quantity,
       0,
     );
-    
+
     // In edit mode, also add existing items total
-    const existingTotal = mode === "edit" && existingItems.length > 0 ? existingItems.reduce(
-      (total, item) => {
-        // Handle different possible data structures
-        const itemTotal = item.total || (Number(item.unitPrice || 0) * Number(item.quantity || 0));
-        return total + Number(itemTotal);
-      },
-      0,
-    ) : 0;
-    
+    const existingTotal =
+      mode === "edit" && existingItems.length > 0
+        ? existingItems.reduce((total, item) => {
+            // Handle different possible data structures
+            const itemTotal =
+              item.total ||
+              Number(item.unitPrice || 0) * Number(item.quantity || 0);
+            return total + Number(itemTotal);
+          }, 0)
+        : 0;
+
     return cartTotal + existingTotal;
   };
 
@@ -500,7 +502,7 @@ export function OrderDialog({
                   </div>
                   {cart.length > 0 && <Separator />}
                   {cart.length > 0 && (
-                    <h4 className="text-sm font-medium text-gray-600">
+                    <h4 className="text-sm font-medium text-gray-550">
                       Món mới thêm:
                     </h4>
                   )}
@@ -513,9 +515,7 @@ export function OrderDialog({
                   <p>{t("tables.noItemsSelected")}</p>
                 </div>
               ) : (
-                <div
-                  className="max-h-[600px] overflow-y-auto space-y-3"
-                >
+                <div className="max-h-[550px] overflow-y-auto space-y-3">
                   {cart.map((item) => (
                     <Card key={item.product.id}>
                       <CardContent className="p-3">
@@ -589,23 +589,41 @@ export function OrderDialog({
                     <div className="flex items-center gap-2">
                       <span className="text-gray-600">Món đã gọi</span>
                       <span className="font-medium">
-                        {existingItems.reduce((total, item) => {
-                          const itemTotal = item.total || (Number(item.unitPrice || 0) * Number(item.quantity || 0));
-                          return total + Number(itemTotal);
-                        }, 0).toLocaleString()} ₫
+                        {existingItems
+                          .reduce((total, item) => {
+                            const itemTotal =
+                              item.total ||
+                              Number(item.unitPrice || 0) *
+                                Number(item.quantity || 0);
+                            return total + Number(itemTotal);
+                          }, 0)
+                          .toLocaleString()}{" "}
+                        ₫
                       </span>
                     </div>
-                    {cart.length > 0 && <div className="w-px h-4 bg-gray-300"></div>}
+                    {cart.length > 0 && (
+                      <div className="w-px h-4 bg-gray-300"></div>
+                    )}
                   </>
                 )}
                 {cart.length > 0 && (
                   <>
                     <div className="flex items-center gap-2">
                       <span className="text-gray-600">
-                        {mode === "edit" ? "Món mới thêm" : t("tables.subtotalLabel")}
+                        {mode === "edit"
+                          ? "Món mới thêm"
+                          : t("tables.subtotalLabel")}
                       </span>
                       <span className="font-medium">
-                        {cart.reduce((total, item) => total + Number(item.product.price) * item.quantity, 0).toLocaleString()} ₫
+                        {cart
+                          .reduce(
+                            (total, item) =>
+                              total +
+                              Number(item.product.price) * item.quantity,
+                            0,
+                          )
+                          .toLocaleString()}{" "}
+                        ₫
                       </span>
                     </div>
                     <div className="w-px h-4 bg-gray-300"></div>
