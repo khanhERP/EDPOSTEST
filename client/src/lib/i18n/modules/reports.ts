@@ -231,12 +231,17 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseReportHeader: '수입 지출 보고서',
     inventoryReportHeader: '재고 보고서',
     transactionCode: '거래 코드',
+    quantity: '수량',
     otherRevenue: '기타 수입',
     vat: 'VAT',
     actualRevenue: '실제 수입',
     receiptCode: '영수증 코드',
     payerReceiver: '지불자/수령자',
     revenueExpenseType: '수입/지출',
+    productCode: '상품 코드',
+    productName: '상품명',
+    soldQuantity: '판매 수량',
+    returnQuantity: '반품 수량',
 
     // Report specific content
     salesDetails: '판매 세부사항',
@@ -282,13 +287,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productFilterPlaceholder: '코드, 이름으로 검색',
     debtRangeFrom: '기말 채무',
     debtRangeTo: '부터',
-
+    
     // Customer report tables
     customerSalesReport: '고객별 매출 보고서',
     customerProfitReport: '고객별 이익 보고서',
     customerDebtReport: '고객별 채무 보고서',
     customerProductSalesReport: '고객별 상품 매출 보고서',
-
+    
     // Customer report table headers
     customerId: '고객 ID',
     customerName: '고객',
@@ -315,7 +320,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerBySales: '고객별 판매',
     supplierByPurchase: '공급업체별 구매',
     profit: '이익',
-
+    
     // Inventory report tables
     salesReportByProduct: '상품별 판매 보고서',
     profitReportByProduct: '상품별 이익 보고서',
@@ -324,14 +329,21 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     detailedInOutInventoryReport: '입출고 상세 보고서',
     disposalReport: '상품 폐기 보고서',
     employeeSalesReport: '직원별 상품 판매 보고서',
+    customerSalesReport: '고객별 상품 판매 보고서',
     supplierReportByProduct: '공급업체별 상품 구매 보고서',
-
+    
     // Table headers
     quantitySold: '판매 수량',
+    returnQuantity: '반품 수량',
+    returnValue: '반품 가치',
+    netRevenue: '순 매출',
+    totalCost: '총 원가',
+    grossProfit: '총 이익',
     profitMargin: '이익률',
     salePrice: '판매가',
     saleValue: '판매 가치',
     costPrice: '원가',
+    inventoryValue: '재고 가치',
     openingStock: '기초 재고',
     openingValue: '기초 가치',
     openingPrice: '기초 가격',
@@ -354,14 +366,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalDisposed: '총 폐기량',
     totalValue: '총 가치',
     employeeCount: '직원 수',
+    customerCount: '고객 수',
     quantityPurchased: '구매 수량',
     supplierCount: '공급업체 수',
     inValue: '입고 가치',
     value: '가치',
     quantity: '수량',
-    productCode: '상품 코드',
-    productName: '상품명',
-    inventoryValue: '재고 가치',
   },
   en: {
     title: 'Reports',
@@ -592,13 +602,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productFilterPlaceholder: 'Search by code, name',
     debtRangeFrom: 'Closing debt from',
     debtRangeTo: 'to',
-
+    
     // Customer report tables
     customerSalesReport: 'Sales Report by Customer',
     customerProfitReport: 'Profit Report by Customer',
     customerDebtReport: 'Debt Report by Customer',
     customerProductSalesReport: 'Product Sales Report by Customer',
-
+    
     // Customer report table headers
     customerId: 'Customer ID',
     customerName: 'Customer',
@@ -625,7 +635,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerBySales: 'Customer by Sales',
     supplierByPurchase: 'Supplier by Purchase',
     profit: 'Profit',
-
+    
     // Inventory report tables
     salesReportByProduct: 'Sales Report by Product',
     profitReportByProduct: 'Profit Report by Product',
@@ -634,14 +644,21 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     detailedInOutInventoryReport: 'Detailed In/Out Inventory Report',
     disposalReport: 'Product Disposal Report',
     employeeSalesReport: 'Employee Sales Report by Product',
+    customerSalesReport: 'Customer Sales Report by Product',
     supplierReportByProduct: 'Supplier Purchase Report by Product',
-
+    
     // Table headers
     quantitySold: 'Quantity Sold',
+    returnQuantity: 'Return Quantity',
+    returnValue: 'Return Value',
+    netRevenue: 'Net Revenue',
+    totalCost: 'Total Cost',
+    grossProfit: 'Gross Profit',
     profitMargin: 'Profit Margin',
     salePrice: 'Sale Price',
     saleValue: 'Sale Value',
     costPrice: 'Cost Price',
+    inventoryValue: 'Inventory Value',
     openingStock: 'Opening Stock',
     openingValue: 'Opening Value',
     openingPrice: 'Opening Price',
@@ -664,21 +681,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalDisposed: 'Total Disposed',
     totalValue: 'Total Value',
     employeeCount: 'Employee Count',
+    customerCount: 'Customer Count',
     quantityPurchased: 'Quantity Purchased',
     supplierCount: 'Supplier Count',
     inValue: 'In Value',
     value: 'Value',
     quantity: 'Quantity',
-    productCode: 'Product Code',
-    productName: 'Product Name',
-    soldQuantity: 'Sold Quantity',
-    returnQuantity: 'Return Quantity',
-    returnValue: 'Return Value',
-    netRevenue: 'Net Revenue',
-    totalCost: 'Total Cost',
-    grossProfit: 'Gross Profit',
-    inventoryValue: 'Inventory Value',
-    customerCount: 'Customer Count',
 
     // Comprehensive sales report
     comprehensiveSalesReport: 'Comprehensive Sales Report',
@@ -699,6 +707,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     returnByInvoiceReport: 'Returns Report by Invoice',
     employeeSalesReport: 'Sales Report by Employee',
     returnValue: 'Return Value',
+    netRevenue: 'Net Revenue',
     totalAmount: 'Total Amount',
     discount: 'Discount',
     totalCost: 'Total Cost',
@@ -721,12 +730,17 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseReportHeader: 'Revenue & Expense Report',
     inventoryReportHeader: 'Inventory Report',
     transactionCode: 'Transaction Code',
+    quantity: 'Quantity',
     otherRevenue: 'Other Revenue',
     vat: 'VAT',
     actualRevenue: 'Actual Revenue',
     receiptCode: 'Receipt Code',
     payerReceiver: 'Payer/Receiver',
     revenueExpenseType: 'Revenue/Expense Type',
+    productCode: 'Product Code',
+    productName: 'Product Name',
+    soldQuantity: 'Sold Quantity',
+    returnQuantity: 'Return Quantity',
 
     // Report specific content
     salesDetails: 'Sales Details',
@@ -964,13 +978,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productFilterPlaceholder: 'Tìm theo mã, tên hàng',
     debtRangeFrom: 'Nợ cuối kỳ từ',
     debtRangeTo: 'tới',
-
+    
     // Customer report tables
     customerSalesReport: 'Báo cáo bán hàng theo khách hàng',
     customerProfitReport: 'Báo cáo lợi nhuận theo khách hàng',
     customerDebtReport: 'Báo cáo công nợ theo khách hàng',
     customerProductSalesReport: 'Báo cáo hàng bán theo khách',
-
+    
     // Customer report table headers
     customerId: 'Mã khách hàng',
     customerName: 'Khách hàng',
@@ -997,7 +1011,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerBySales: 'Khách theo hàng bán',
     supplierByPurchase: 'NCC theo hàng nhập',
     profit: 'Lợi nhuận',
-
+    
     // Inventory report tables
     salesReportByProduct: 'Báo cáo bán hàng theo hàng hóa',
     profitReportByProduct: 'Báo cáo lợi nhuận theo hàng hóa',
@@ -1006,14 +1020,21 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     detailedInOutInventoryReport: 'Báo cáo xuất nhập tồn chi tiết',
     disposalReport: 'Báo cáo hàng hóa xuất hủy',
     employeeSalesReport: 'Báo cáo nhân viên theo hàng bán',
+    customerSalesReport: 'Báo cáo khách theo hàng bán',
     supplierReportByProduct: 'Báo cáo danh sách nhà cung cấp theo hàng nhập',
-
+    
     // Table headers
     quantitySold: 'Số lượng bán',
+    returnQuantity: 'Số lượng trả',
+    returnValue: 'Giá trị trả',
+    netRevenue: 'Doanh thu thuần',
+    totalCost: 'Tổng giá vốn',
+    grossProfit: 'Lợi nhuận gộp',
     profitMargin: 'Tỷ suất',
     salePrice: 'Giá bán',
     saleValue: 'Giá trị bán',
     costPrice: 'Giá vốn',
+    inventoryValue: 'Giá trị kho',
     openingStock: 'Tồn đầu kỳ',
     openingValue: 'Giá trị đầu kỳ',
     openingPrice: 'Giá đầu kỳ',
@@ -1036,21 +1057,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalDisposed: 'Tổng SL hủy',
     totalValue: 'Tổng giá trị',
     employeeCount: 'Số lượng nhân viên',
+    customerCount: 'SL khách hàng',
     quantityPurchased: 'SL mua',
     supplierCount: 'SL NCC',
     inValue: 'Giá trị nhập',
     value: 'Giá trị',
     quantity: 'Số lượng',
-    productCode: 'Mã sản phẩm',
-    productName: 'Tên sản phẩm',
-    soldQuantity: 'Số lượng bán',
-    returnQuantity: 'Số lượng trả',
-    returnValue: 'Giá trị trả',
-    netRevenue: 'Doanh thu thuần',
-    totalCost: 'Tổng giá vốn',
-    grossProfit: 'Lợi nhuận gộp',
-    inventoryValue: 'Giá trị kho',
-    customerCount: 'SL khách hàng',
 
     // Comprehensive sales report
     comprehensiveSalesReport: 'Báo cáo bán hàng tổng hợp',
@@ -1071,6 +1083,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     returnByInvoiceReport: 'Báo cáo trả hàng theo hóa đơn',
     employeeSalesReport: 'Báo cáo bán hàng theo nhân viên',
     returnValue: 'Giá trị trả',
+    netRevenue: 'Doanh thu thuần',
     totalAmount: 'Tổng tiền hàng',
     discount: 'Giảm giá',
     totalCost: 'Tổng giá vốn',
@@ -1093,12 +1106,17 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseReportHeader: 'Báo cáo thu chi',
     inventoryReportHeader: 'Báo cáo hàng hóa',
     transactionCode: 'Mã giao dịch',
+    quantity: 'Số lượng',
     otherRevenue: 'Thu nhập khác',
     vat: 'VAT',
     actualRevenue: 'Doanh thu thực tế',
     receiptCode: 'Mã hóa đơn',
     payerReceiver: 'Người trả/Người nhận',
     revenueExpenseType: 'Loại thu/chi',
+    productCode: 'Mã sản phẩm',
+    productName: 'Tên sản phẩm',
+    soldQuantity: 'Số lượng bán',
+    returnQuantity: 'Số lượng trả',
 
     // Report specific content
     salesDetails: 'Chi tiết bán hàng',

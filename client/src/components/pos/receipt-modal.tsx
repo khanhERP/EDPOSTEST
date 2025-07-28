@@ -43,8 +43,8 @@ export function ReceiptModal({ isOpen, onClose, receipt, onConfirm, isPreview = 
           <DialogTitle>{isPreview ? "Xem trước hóa đơn" : "Receipt"}</DialogTitle>
         </DialogHeader>
         
-        <div id="receipt-content" className="py-6 px-6 receipt-print bg-white">
-          <div className="text-center mb-2">
+        <div id="receipt-content" className="p-6 receipt-print bg-white">
+          <div className="text-center mb-4">
             <div className="flex items-center justify-center mb-2">
               <img src={logoPath} alt="EDPOS Logo" className="h-8" />
             </div>
