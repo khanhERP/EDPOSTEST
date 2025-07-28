@@ -351,6 +351,20 @@ export function POSHeader() {
                               <span className="truncate">{t("reports.inventoryReport")}</span>
                             </button>
                           </Link>
+                          <Link href="/reports?tab=customer">
+                            <button
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
+                                location === "/reports" && window.location.search === "?tab=customer" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                              }`}
+                              onClick={() => {
+                                setReportsSubmenuOpen(false);
+                                setPosMenuOpen(false);
+                              }}
+                            >
+                              <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                              <span className="truncate">{t("reports.customerReportTab")}</span>
+                            </button>
+                          </Link>
                         </div>
                       )}
                     </div>

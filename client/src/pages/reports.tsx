@@ -9,6 +9,7 @@ import { DashboardOverview } from "@/components/reports/dashboard-overview";
 import { EndOfDayReport } from "@/components/reports/end-of-day-report";
 import { OrderReport } from "@/components/reports/order-report";
 import { InventoryReport } from "@/components/reports/inventory-report";
+import { CustomerReport } from "@/components/reports/customer-report";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,7 +25,7 @@ export default function ReportsPage() {
   useEffect(() => {
     const params = new URLSearchParams(search);
     const tab = params.get('tab');
-    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday', 'order', 'inventory'].includes(tab)) {
+    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday', 'order', 'inventory', 'customer'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [search]);
@@ -56,7 +57,7 @@ export default function ReportsPage() {
 
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="h-10 items-center justify-center rounded-md p-1 text-muted-foreground grid w-full grid-cols-8 bg-[#4ed17e] hidden">
+            <TabsList className="h-10 items-center justify-center rounded-md p-1 text-muted-foreground grid w-full grid-cols-9 bg-[#4ed17e] hidden">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />
                 {t('reports.dashboard')}
@@ -88,6 +89,10 @@ export default function ReportsPage() {
               <TabsTrigger value="inventory" className="flex items-center gap-2">
                 <Package className="w-4 h-4" />
                 {t("reports.inventoryReport")}
+              </TabsTrigger>
+              <TabsTrigger value="customer" className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                {t("reports.customerReportTab")}
               </TabsTrigger>
             </TabsList>
 
@@ -121,6 +126,10 @@ export default function ReportsPage() {
 
             <TabsContent value="inventory">
               <InventoryReport />
+            </TabsContent>
+
+            <TabsContent value="customer">
+              <CustomerReport />
             </TabsContent>
           </Tabs>
         </div>
