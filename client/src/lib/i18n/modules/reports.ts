@@ -272,6 +272,33 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inventoryReport: '재고 보고서',
     inventoryReportDescription: '재고 및 상품 분석',
 
+    // Supplier report
+    supplierReport: '공급업체 보고서',
+    supplierReportTab: '공급업체 보고서',
+    supplierReportDescription: '공급업체 및 구매 분석',
+    supplierConcernType: '관심사 유형',
+    supplierPurchase: '구매',
+    supplierDebt: '부채',
+    supplierPurchaseBySupplier: '공급업체별 구매',
+    supplierFilter: '공급업체',
+    supplierFilterPlaceholder: '코드, 이름, 전화번호로 검색',
+    supplierDebtFrom: '공급업체 부채',
+    supplierDebtTo: '부터',
+    
+    // Supplier report tables
+    supplierPurchaseReport: '공급업체별 구매 보고서',
+    supplierDebtReport: '공급업체별 부채 보고서',
+    supplierProductPurchaseReport: '공급업체별 상품 구매 목록',
+    supplierPurchaseChart: '공급업체별 구매 차트',
+    supplierDebtChart: '공급업체별 부채 차트',
+    
+    // Supplier report table headers
+    supplierCode: '공급업체 코드',
+    supplierName: '공급업체 이름',
+    purchaseValue: '구매 가치',
+    productCount: '상품 수',
+    totalQuantity: '총 수량',
+
     // Customer report
     customerReport: '고객 보고서',
     customerReportTab: '고객 보고서',
@@ -586,6 +613,33 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Inventory report
     inventoryReport: 'Inventory Report',
     inventoryReportDescription: 'Inventory and product analysis',
+
+    // Supplier report
+    supplierReport: 'Supplier Report',
+    supplierReportTab: 'Supplier Report',
+    supplierReportDescription: 'Supplier and purchasing analysis',
+    supplierConcernType: 'Concern Type',
+    supplierPurchase: 'Purchase',
+    supplierDebt: 'Debt',
+    supplierPurchaseBySupplier: 'Purchase by Supplier',
+    supplierFilter: 'Supplier',
+    supplierFilterPlaceholder: 'Search by code, name, phone',
+    supplierDebtFrom: 'Supplier debt from',
+    supplierDebtTo: 'to',
+    
+    // Supplier report tables
+    supplierPurchaseReport: 'Purchase Report by Supplier',
+    supplierDebtReport: 'Debt Report by Supplier',
+    supplierProductPurchaseReport: 'Product Purchase List by Supplier',
+    supplierPurchaseChart: 'Purchase Chart by Supplier',
+    supplierDebtChart: 'Debt Chart by Supplier',
+    
+    // Supplier report table headers
+    supplierCode: 'Supplier Code',
+    supplierName: 'Supplier Name',
+    purchaseValue: 'Purchase Value',
+    productCount: 'Product Count',
+    totalQuantity: 'Total Quantity',
 
     // Customer report
     customerReport: 'Customer Report',
@@ -962,6 +1016,33 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Inventory report
     inventoryReport: 'Báo cáo hàng hóa',
     inventoryReportDescription: 'Phân tích hàng hóa và tồn kho',
+
+    // Supplier report
+    supplierReport: 'Báo cáo nhà cung cấp',
+    supplierReportTab: 'Báo cáo nhà cung cấp',
+    supplierReportDescription: 'Phân tích nhà cung cấp và nhập hàng',
+    supplierConcernType: 'Mối quan tâm',
+    supplierPurchase: 'Nhập hàng',
+    supplierDebt: 'Công nợ',
+    supplierPurchaseBySupplier: 'Nhập hàng theo NCC',
+    supplierFilter: 'Nhà cung cấp',
+    supplierFilterPlaceholder: 'Tìm theo mã, tên, số điện thoại',
+    supplierDebtFrom: 'Công nợ NCC từ',
+    supplierDebtTo: 'tới',
+    
+    // Supplier report tables
+    supplierPurchaseReport: 'Báo cáo nhập hàng theo nhà cung cấp',
+    supplierDebtReport: 'Báo cáo công nợ theo nhà cung cấp',
+    supplierProductPurchaseReport: 'Báo cáo danh sách hàng nhập theo nhà cung cấp',
+    supplierPurchaseChart: 'Biểu đồ nhập hàng theo nhà cung cấp',
+    supplierDebtChart: 'Biểu đồ công nợ theo nhà cung cấp',
+    
+    // Supplier report table headers
+    supplierCode: 'Mã nhà cung cấp',
+    supplierName: 'Tên nhà cung cấp',
+    purchaseValue: 'Giá trị nhập',
+    productCount: 'Số lượng sản phẩm',
+    totalQuantity: 'Tổng số lượng',
 
     // Customer report
     customerReport: 'Báo cáo khách hàng',

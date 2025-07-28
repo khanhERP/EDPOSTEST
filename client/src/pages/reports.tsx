@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, PieChart, TrendingUp, Utensils, Package, Users, Calendar, FileText, ShoppingCart } from "lucide-react";
 import { Link, useSearch } from "wouter";
 import { useTranslation } from "@/lib/i18n";
+import { SupplierReport } from "@/components/reports/supplier-report";
 
 export default function ReportsPage() {
   const { t } = useTranslation();
@@ -25,7 +26,7 @@ export default function ReportsPage() {
   useEffect(() => {
     const params = new URLSearchParams(search);
     const tab = params.get('tab');
-    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday', 'order', 'inventory', 'customer'].includes(tab)) {
+    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday', 'order', 'inventory', 'customer', 'supplier'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [search]);
@@ -94,6 +95,10 @@ export default function ReportsPage() {
                 <Users className="w-4 h-4" />
                 {t("reports.customerReportTab")}
               </TabsTrigger>
+              <TabsTrigger value="supplier" className="flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                {t("reports.supplierReportTab")}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview">
@@ -130,6 +135,10 @@ export default function ReportsPage() {
 
             <TabsContent value="customer">
               <CustomerReport />
+            </TabsContent>
+
+            <TabsContent value="supplier">
+              <SupplierReport />
             </TabsContent>
           </Tabs>
         </div>
