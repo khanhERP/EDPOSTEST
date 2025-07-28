@@ -58,48 +58,60 @@ export default function ReportsPage() {
 
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="h-10 items-center justify-center rounded-md p-1 text-muted-foreground grid w-full grid-cols-9 bg-[#4ed17e] hidden">
-              <TabsTrigger value="overview" className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4" />
-                {t('reports.dashboard')}
-              </TabsTrigger>
-              <TabsTrigger value="sales" className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" />
-                {t('reports.salesAnalysis')}
-              </TabsTrigger>
-              <TabsTrigger value="saleschart" className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" />
-                {t('reports.salesChart')}
-              </TabsTrigger>
-              <TabsTrigger value="menu" className="flex items-center gap-2">
-                <PieChart className="w-4 h-4" />
-                {t('reports.menuAnalysis')}
-              </TabsTrigger>
-              <TabsTrigger value="table" className="flex items-center gap-2">
-                <Utensils className="w-4 h-4" />
-                {t('reports.tableAnalysis')}
-              </TabsTrigger>
-              <TabsTrigger value="endofday" className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                {t("reports.endOfDayReportTab")}
-              </TabsTrigger>
-              <TabsTrigger value="order" className="flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4" />
-                {t("reports.orderReportTab")}
-              </TabsTrigger>
-              <TabsTrigger value="inventory" className="flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                {t("reports.inventoryReport")}
-              </TabsTrigger>
-              <TabsTrigger value="customer" className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                {t("reports.customerReportTab")}
-              </TabsTrigger>
-              <TabsTrigger value="supplier" className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                {t("reports.supplierReportTab")}
-              </TabsTrigger>
-            </TabsList>
+            <div className="w-full overflow-x-auto">
+              <TabsList className="h-auto min-h-[40px] items-center justify-start rounded-md p-2 text-muted-foreground flex flex-wrap gap-1 bg-green-50 border border-green-200 w-full">
+                <TabsTrigger value="overview" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t('reports.dashboard')}</span>
+                  <span className="sm:hidden">Dashboard</span>
+                </TabsTrigger>
+                <TabsTrigger value="sales" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t('reports.salesAnalysis')}</span>
+                  <span className="sm:hidden">Sales</span>
+                </TabsTrigger>
+                <TabsTrigger value="saleschart" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t('reports.salesChart')}</span>
+                  <span className="sm:hidden">Chart</span>
+                </TabsTrigger>
+                <TabsTrigger value="menu" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                  <PieChart className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t('reports.menuAnalysis')}</span>
+                  <span className="sm:hidden">Menu</span>
+                </TabsTrigger>
+                <TabsTrigger value="table" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                  <Utensils className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t('reports.tableAnalysis')}</span>
+                  <span className="sm:hidden">Table</span>
+                </TabsTrigger>
+                <TabsTrigger value="endofday" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                  <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t("reports.endOfDayReportTab")}</span>
+                  <span className="sm:hidden">EOD</span>
+                </TabsTrigger>
+                <TabsTrigger value="order" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                  <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t("reports.orderReportTab")}</span>
+                  <span className="sm:hidden">Order</span>
+                </TabsTrigger>
+                <TabsTrigger value="inventory" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                  <Package className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t("reports.inventoryReport")}</span>
+                  <span className="sm:hidden">Inventory</span>
+                </TabsTrigger>
+                <TabsTrigger value="customer" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t("reports.customerReportTab")}</span>
+                  <span className="sm:hidden">Customer</span>
+                </TabsTrigger>
+                <TabsTrigger value="supplier" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t("reports.supplierReportTab")}</span>
+                  <span className="sm:hidden">Supplier</span>
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="overview">
               <DashboardOverview />
