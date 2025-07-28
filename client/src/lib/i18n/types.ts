@@ -851,6 +851,8 @@ export interface OrdersTranslations {
     served: string;
     paid: string;
     cancelled: string;
+    delivering: string;
+    completed: string;
   };
 }
 
