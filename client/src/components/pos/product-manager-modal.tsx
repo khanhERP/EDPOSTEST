@@ -416,9 +416,9 @@ export function ProductManagerModal({
                     ? t("tables.editProduct")
                     : t("tables.addNewProduct")}
                 </h3>
-                <Button variant="ghost" onClick={resetForm}>
+                {/* <Button variant="ghost" onClick={resetForm}>
                   <X size={16} />
-                </Button>
+                </Button> */}
               </div>
 
               <Form {...form}>
