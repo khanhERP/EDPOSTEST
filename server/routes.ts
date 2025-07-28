@@ -133,6 +133,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // New endpoint to cleanup inactive products
+  app.delete("/api/products/cleanup/inactive", async (req, res) => {
+    try {
+      const deletedCount = await storage.deleteInactiveProducts();
+      res.json({ 
+        message: `Successfully deleted ${deletedCount} inactive products`,
+        deletedCount
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to cleanup inactive products" });
+    }
+  });
+
   app.get("/api/products/barcode/:sku", async (req, res) => {
     try {
       const sku = req.params.sku;

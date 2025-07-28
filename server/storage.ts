@@ -59,6 +59,7 @@ export interface IStorage {
     product: Partial<InsertProduct>,
   ): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<boolean>;
+  deleteInactiveProducts(): Promise<number>;
   updateProductStock(
     id: number,
     quantity: number,
@@ -274,12 +275,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProduct(id: number): Promise<boolean> {
-    const [product] = await db
-      .update(products)
-      .set({ isActive: false })
+    const result = await db
+      .delete(products)
       .where(eq(products.id, id))
       .returning();
-    return !!product;
+    return result.length > 0;
+  }
+
+  async deleteInactiveProducts(): Promise<number> {
+    const result = await db
+      .delete(products)
+      .where(eq(products.isActive, false))
+      .returning();
+    return result.length;
   }
 
   async updateProductStock(

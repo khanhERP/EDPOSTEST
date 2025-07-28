@@ -182,7 +182,7 @@ export default function InventoryPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
         title: t("inventory.deleteSuccess") || "Xóa thành công",
-        description: t("inventory.deleteSuccessDescription") || "Sản phẩm đã được xóa khỏi kho hàng",
+        description: "Sản phẩm đã được xóa vĩnh viễn khỏi cơ sở dữ liệu",
       });
     },
     onError: (error) => {
@@ -190,6 +190,33 @@ export default function InventoryPage() {
       toast({
         title: t("inventory.deleteFailed") || "Xóa thất bại",
         description: t("inventory.deleteFailedDescription") || "Không thể xóa sản phẩm. Vui lòng thử lại.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const cleanupMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch("/api/products/cleanup/inactive", {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error('Failed to cleanup inactive products');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Dọn dẹp thành công",
+        description: `Đã xóa ${data.deletedCount} sản phẩm vô hiệu khỏi cơ sở dữ liệu`,
+      });
+    },
+    onError: (error) => {
+      console.error('Cleanup error:', error);
+      toast({
+        title: "Dọn dẹp thất bại",
+        description: "Không thể xóa các sản phẩm vô hiệu. Vui lòng thử lại.",
         variant: "destructive",
       });
     },
@@ -249,8 +276,14 @@ export default function InventoryPage() {
   };
 
   const handleDeleteProduct = (product: Product) => {
-    if (window.confirm(`${t("inventory.confirmDelete")} "${product.name}"?`)) {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm "${product.name}" khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.`)) {
       deleteProductMutation.mutate(product.id);
+    }
+  };
+
+  const handleCleanupInactiveProducts = () => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa vĩnh viễn tất cả sản phẩm vô hiệu khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.")) {
+      cleanupMutation.mutate();
     }
   };
 
@@ -420,28 +453,40 @@ export default function InventoryPage() {
               <CardTitle className="text-left">
                 {t("inventory.stockStatus")}
               </CardTitle>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  // Create a placeholder product for adding new items
-                  const newProduct: Product = {
-                    id: 0,
-                    name: "",
-                    sku: "",
-                    categoryId: 1,
-                    price: "0",
-                    stock: 0,
-                    imageUrl: null,
-                    isActive: true,
-                  };
-                  handleStockUpdate(newProduct);
-                }}
-                className="text-blue-600 border-blue-300 hover:bg-blue-50"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                {t("inventory.addNewItem")}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCleanupInactiveProducts}
+                  className="text-red-600 border-red-300 hover:bg-red-50"
+                  disabled={cleanupMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {cleanupMutation.isPending ? "Đang xóa..." : "Xóa sản phẩm vô hiệu"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // Create a placeholder product for adding new items
+                    const newProduct: Product = {
+                      id: 0,
+                      name: "",
+                      sku: "",
+                      categoryId: 1,
+                      price: "0",
+                      stock: 0,
+                      imageUrl: null,
+                      isActive: true,
+                    };
+                    handleStockUpdate(newProduct);
+                  }}
+                  className="text-blue-600 border-blue-300 hover:bg-blue-50"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t("inventory.addNewItem")}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {productsLoading ? (
