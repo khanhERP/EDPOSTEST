@@ -217,6 +217,16 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Date labels
     date: '날짜',
+    saleDate: '판매일',
+    paymentDate: '결제일',
+    fromDate: '시작일',
+    toDate: '종료일',
+
+    // Report titles
+    salesReportTitle: '매출 보고서',
+    revenueReportTitle: '수익 보고서',
+    inventoryReportTitle: '재고 보고서',
+    summaryReportTitle: '요약 보고서',
 
     // Sales chart report
     salesChart: '매출 차트',
@@ -387,6 +397,16 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Date labels
     date: 'Date',
+    saleDate: 'Sale Date',
+    paymentDate: 'Payment Date',
+    fromDate: 'From Date',
+    toDate: 'To Date',
+
+    // Report titles
+    salesReportTitle: 'Sales Report',
+    revenueReportTitle: 'Revenue Report',
+    inventoryReportTitle: 'Inventory Report',
+    summaryReportTitle: 'Summary Report',
 
     // Sales chart report
     salesChart: 'Sales Chart',
@@ -612,6 +632,16 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Date labels
     date: 'Ngày',
+    saleDate: 'Ngày bán',
+    paymentDate: 'Ngày thanh toán',
+    fromDate: 'Từ ngày',
+    toDate: 'Đến ngày',
+
+    // Report titles
+    salesReportTitle: 'Báo cáo bán hàng',
+    revenueReportTitle: 'Báo cáo doanh thu',
+    inventoryReportTitle: 'Báo cáo hàng hóa',
+    summaryReportTitle: 'Báo cáo tổng hợp',
 
     // Sales chart report
     salesChart: 'Biểu đồ bán hàng',

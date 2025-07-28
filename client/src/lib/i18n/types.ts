@@ -301,6 +301,12 @@ export interface ReportsTranslations {
   fromDate: string;
   toDate: string;
 
+  // Report titles
+  salesReportTitle: string;
+  revenueReportTitle: string;
+  inventoryReportTitle: string;
+  summaryReportTitle: string;
+
   // Table detail headers
   salesDetailsHeader: string;
   revenueExpenseDetailsHeader: string;
