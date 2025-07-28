@@ -20,6 +20,19 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { TrendingUp, FileText, Calendar } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+} from "recharts";
 
 export function SalesChartReport() {
   const { t } = useTranslation();
@@ -335,6 +348,144 @@ export function SalesChartReport() {
     return ['time', 'profit', 'employee'].includes(concernType);
   };
 
+  const getChartData = () => {
+    const filteredData = getFilteredData();
+    
+    switch (concernType) {
+      case 'time': {
+        const dailyData: { [date: string]: { revenue: number; returnValue: number } } = {};
+        
+        filteredData.forEach((transaction: any) => {
+          const date = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString('vi-VN');
+          if (!dailyData[date]) {
+            dailyData[date] = { revenue: 0, returnValue: 0 };
+          }
+          
+          const amount = Number(transaction.total);
+          if (amount > 0) {
+            dailyData[date].revenue += amount;
+          } else {
+            dailyData[date].returnValue += Math.abs(amount);
+          }
+        });
+
+        return Object.entries(dailyData).map(([date, data]) => ({
+          name: date,
+          revenue: data.revenue,
+          returnValue: data.returnValue,
+          netRevenue: data.revenue - data.returnValue,
+        }));
+      }
+      
+      case 'profit': {
+        const dailyData: { [date: string]: { totalAmount: number; discount: number; revenue: number; cost: number } } = {};
+        
+        filteredData.forEach((transaction: any) => {
+          const date = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString('vi-VN');
+          if (!dailyData[date]) {
+            dailyData[date] = { totalAmount: 0, discount: 0, revenue: 0, cost: 0 };
+          }
+          
+          const subtotal = Number(transaction.subtotal || transaction.total);
+          const total = Number(transaction.total);
+          const discount = subtotal - total;
+          
+          dailyData[date].totalAmount += subtotal;
+          dailyData[date].discount += discount;
+          dailyData[date].revenue += total;
+          dailyData[date].cost += total * 0.6;
+        });
+
+        return Object.entries(dailyData).map(([date, data]) => ({
+          name: date,
+          revenue: data.revenue,
+          cost: data.cost,
+          profit: data.revenue - data.cost,
+        }));
+      }
+      
+      case 'employee': {
+        const employeeData: { [cashier: string]: { revenue: number; returnValue: number } } = {};
+        
+        filteredData.forEach((transaction: any) => {
+          const cashier = transaction.cashierName || 'Unknown';
+          if (!employeeData[cashier]) {
+            employeeData[cashier] = { revenue: 0, returnValue: 0 };
+          }
+          
+          const amount = Number(transaction.total);
+          if (amount > 0) {
+            employeeData[cashier].revenue += amount;
+          } else {
+            employeeData[cashier].returnValue += Math.abs(amount);
+          }
+        });
+
+        return Object.entries(employeeData).map(([cashier, data]) => ({
+          name: cashier,
+          revenue: data.revenue,
+          returnValue: data.returnValue,
+          netRevenue: data.revenue - data.returnValue,
+        }));
+      }
+      
+      default:
+        return [];
+    }
+  };
+
+  const getChartConfig = () => {
+    switch (concernType) {
+      case 'time':
+        return {
+          revenue: {
+            label: t('reports.totalRevenue'),
+            color: "#3b82f6",
+          },
+          returnValue: {
+            label: t('reports.returnValue'),
+            color: "#ef4444",
+          },
+          netRevenue: {
+            label: t('reports.netRevenue'),
+            color: "#10b981",
+          },
+        };
+      case 'profit':
+        return {
+          revenue: {
+            label: t('reports.revenue'),
+            color: "#3b82f6",
+          },
+          cost: {
+            label: t('reports.totalCost'),
+            color: "#f59e0b",
+          },
+          profit: {
+            label: t('reports.grossProfit'),
+            color: "#10b981",
+          },
+        };
+      case 'employee':
+        return {
+          revenue: {
+            label: t('reports.totalRevenue'),
+            color: "#3b82f6",
+          },
+          returnValue: {
+            label: t('reports.returnValue'),
+            color: "#ef4444",
+          },
+          netRevenue: {
+            label: t('reports.netRevenue'),
+            color: "#10b981",
+          },
+        };
+      default:
+        return {};
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -440,12 +591,51 @@ export function SalesChartReport() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-80 w-full bg-gray-50 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
-              <div className="text-center">
-                <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500 font-medium">{t("reports.chartPlaceholder")}</p>
-                <p className="text-gray-400 text-sm mt-2">{t("reports.chartWillDisplayHere")}</p>
-              </div>
+            <div className="h-80 w-full">
+              <ChartContainer config={getChartConfig()}>
+                <BarChart data={getChartData()}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fontSize: 12 }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
+                  />
+                  <ChartTooltip 
+                    content={<ChartTooltipContent />}
+                    formatter={(value: number) => [
+                      `${value.toLocaleString()} ₫`,
+                      ''
+                    ]}
+                  />
+                  {concernType === 'time' && (
+                    <>
+                      <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                      <Bar dataKey="returnValue" fill="var(--color-returnValue)" radius={4} />
+                      <Bar dataKey="netRevenue" fill="var(--color-netRevenue)" radius={4} />
+                    </>
+                  )}
+                  {concernType === 'profit' && (
+                    <>
+                      <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                      <Bar dataKey="cost" fill="var(--color-cost)" radius={4} />
+                      <Bar dataKey="profit" fill="var(--color-profit)" radius={4} />
+                    </>
+                  )}
+                  {concernType === 'employee' && (
+                    <>
+                      <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                      <Bar dataKey="returnValue" fill="var(--color-returnValue)" radius={4} />
+                      <Bar dataKey="netRevenue" fill="var(--color-netRevenue)" radius={4} />
+                    </>
+                  )}
+                </BarChart>
+              </ChartContainer>
             </div>
           </CardContent>
         </Card>
