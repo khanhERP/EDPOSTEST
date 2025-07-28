@@ -281,8 +281,25 @@ export function ProductManagerModal({
     }
   }, [isOpen, refetch, editingProduct]);
 
+  const handleModalClose = (open: boolean) => {
+    if (!open) {
+      // Reset all form states when modal closes
+      setShowAddForm(false);
+      setEditingProduct(null);
+      form.reset({
+        name: "",
+        sku: "",
+        price: "",
+        stock: 0,
+        categoryId: 0,
+        imageUrl: "",
+      });
+    }
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleModalClose}>
       <DialogContent className="max-w-4xl w-full max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
