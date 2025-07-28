@@ -513,39 +513,40 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
             </div>
           </div>
 
-          {/* Fixed Summary Section - Outside of cart container */}
-          {cart.length > 0 && (
-            <div className="fixed bottom-0 right-0 w-[calc(33.333%-1.5rem)] bg-white border-t border-l border-r rounded-t-lg shadow-lg p-4 mr-6">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>{t("tables.subtotalLabel")}</span>
-                  <span>{calculateTotal().toLocaleString()} ₫</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>{t("tables.taxLabel")}</span>
-                  <span>{Math.round(calculateTax()).toLocaleString()} ₫</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between font-bold">
-                  <span>{t("tables.totalLabel")}</span>
-                  <span>
-                    {Math.round(calculateGrandTotal()).toLocaleString()} ₫
-                  </span>
-                </div>
-              </div>
+          </div>
 
-              <Button
-                onClick={handlePlaceOrder}
-                className="w-full mt-4"
-                disabled={createOrderMutation.isPending}
-              >
-                {createOrderMutation.isPending
-                  ? (mode === "edit" ? "Đang cập nhật..." : t("tables.placing"))
-                  : (mode === "edit" ? "Cập nhật đơn hàng" : t("tables.placeOrder"))}
-              </Button>
+        {/* Fixed Summary Popup - Inside DialogContent at bottom right */}
+        {cart.length > 0 && (
+          <div className="absolute bottom-4 right-4 bg-white border rounded-lg shadow-2xl p-4 min-w-[300px] z-10">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>{t("tables.subtotalLabel")}</span>
+                <span>{calculateTotal().toLocaleString()} ₫</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>{t("tables.taxLabel")}</span>
+                <span>{Math.round(calculateTax()).toLocaleString()} ₫</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between font-bold">
+                <span>{t("tables.totalLabel")}</span>
+                <span>
+                  {Math.round(calculateGrandTotal()).toLocaleString()} ₫
+                </span>
+              </div>
             </div>
-          )}
-        </div>
+
+            <Button
+              onClick={handlePlaceOrder}
+              className="w-full mt-4"
+              disabled={createOrderMutation.isPending}
+            >
+              {createOrderMutation.isPending
+                ? (mode === "edit" ? "Đang cập nhật..." : t("tables.placing"))
+                : (mode === "edit" ? "Cập nhật đơn hàng" : t("tables.placeOrder"))}
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
