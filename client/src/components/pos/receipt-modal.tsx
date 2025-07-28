@@ -63,22 +63,7 @@ export function ReceiptModal({
           className="px-6 pb-6 receipt-print bg-white"
           style={{ paddingTop: "1px" }}
         >
-          <div className="border-t border-b border-gray-300 py-2 mb-4 mt-2">
-            <div className="flex justify-between text-sm">
-              <span>Transaction #:</span>
-              <span>{receipt.transactionId}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Date:</span>
-              <span>{new Date(receipt.createdAt).toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Cashier:</span>
-              <span>{receipt.cashierName}</span>
-            </div>
-          </div>
-
-          <div className="text-center mb-2">
+          <div className="text-center mb-2 mt-2">
             <p className="text-xs font-semibold mb-0.5">Easy Digital Point Of Sale Service</p>
             <p className="text-xs">Main Store Location</p>
             <p className="text-xs">123 Commerce St, City, State 12345</p>
