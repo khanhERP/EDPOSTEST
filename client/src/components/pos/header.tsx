@@ -240,7 +240,7 @@ export function POSHeader() {
                         >
                           <Link href="/reports?tab=overview">
                             <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 transition-colors text-sm sm:text-base ${
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => {
@@ -254,7 +254,7 @@ export function POSHeader() {
                           </Link>
                           <Link href="/reports?tab=sales">
                             <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 transition-colors text-sm sm:text-base ${
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => {
@@ -268,7 +268,7 @@ export function POSHeader() {
                           </Link>
                           <Link href="/reports?tab=saleschart">
                             <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 transition-colors text-sm sm:text-base ${
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => {
@@ -282,7 +282,7 @@ export function POSHeader() {
                           </Link>
                           <Link href="/reports?tab=menu">
                             <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 transition-colors text-sm sm:text-base ${
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => {
@@ -296,7 +296,7 @@ export function POSHeader() {
                           </Link>
                           <Link href="/reports?tab=table">
                             <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 transition-colors text-sm sm:text-base ${
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => {
@@ -310,7 +310,7 @@ export function POSHeader() {
                           </Link>
                           <Link href="/reports?tab=endofday">
                             <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 transition-colors text-sm sm:text-base ${
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => {
