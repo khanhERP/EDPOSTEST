@@ -211,7 +211,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProducts(): Promise<Product[]> {
-    const result = await db.select().from(products).where(eq(products.isActive, true));
+    const result = await db.select().from(products).where(eq(products.isActive, true)).orderBy(products.name);
     // Ensure productType has a default value if missing
     return result.map(product => ({
       ...product,

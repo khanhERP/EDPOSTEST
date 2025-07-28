@@ -49,7 +49,7 @@ export function ProductManagerModal({
   onClose,
 }: ProductManagerModalProps) {
   const { t } = useTranslation();
-  
+
   const productFormSchema = insertProductSchema.extend({
     categoryId: z.number().min(1, t("tables.categoryRequired")),
     price: z.string().optional(),
@@ -428,7 +428,7 @@ export function ProductManagerModal({
                             {getCategoryName(product.categoryId)}
                           </td>
                           <td className="py-3 px-4 pos-text-secondary">
-                            {getProductTypeName(product.productType || 1)}
+                            {getProductTypeName(product.productType)}
                           </td>
                           <td className="py-3 px-4 font-medium">
                             {new Intl.NumberFormat("vi-VN", {
