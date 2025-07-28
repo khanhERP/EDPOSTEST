@@ -1,7 +1,3 @@
-The code modification ensures that the product form is reset to its default state whenever the product manager modal is opened, preventing carry-over of previous data.
-```
-
-```replit_final_file
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { X, Plus, Upload, Download, Edit, Trash2 } from "lucide-react";
