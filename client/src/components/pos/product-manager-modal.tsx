@@ -310,7 +310,7 @@ export function ProductManagerModal({
   return (
     <Dialog open={isOpen}>
       <DialogContent
-        className="max-w-4xl w-full max-h-screen overflow-y-auto"
+        className="max-w-4xl w-full max-h-screen overflow-y-auto [&>button]:hidden"
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
