@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OrderDialog } from "@/components/orders/order-dialog";
-import { Users, Clock, CheckCircle2, Eye, CreditCard, QrCode } from "lucide-react";
+import { Users, Clock, CheckCircle2, Eye, CreditCard, QrCode, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
@@ -33,6 +33,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [showQRPayment, setShowQRPayment] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
+  const [editOrderOpen, setEditOrderOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [editingTable, setEditingTable] = useState<Table | null>(null);
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
@@ -328,6 +331,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     setPaymentMethodsOpen(true);
   };
 
+  const handleEditOrder = (order: Order, table: Table) => {
+    setEditingOrder(order);
+    setEditingTable(table);
+    setEditOrderOpen(true);
+  };
+
   const filteredCustomers = customers?.filter((customer: any) =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     customer.phone?.includes(searchTerm) ||
@@ -482,7 +491,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         <Eye className="w-3 h-3 mr-1" />
                         Xem chi tiết
                       </Button>
-
+                      
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="w-full text-xs bg-blue-600 hover:bg-blue-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (activeOrder) {
+                            handleEditOrder(activeOrder, table);
+                          }
+                        }}
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Gọi thêm
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -962,6 +985,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Order Dialog */}
+      <OrderDialog 
+        open={editOrderOpen}
+        onOpenChange={setEditOrderOpen}
+        table={editingTable}
+        existingOrder={editingOrder}
+        mode="edit"
+      />
     </>
   );
 }

@@ -24,6 +24,8 @@ interface OrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   table: Table | null;
+  existingOrder?: any;
+  mode?: "create" | "edit";
 }
 
 interface CartItem {
@@ -32,11 +34,12 @@ interface CartItem {
   notes?: string;
 }
 
-export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
+export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "create" }: OrderDialogProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerCount, setCustomerCount] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
+  const [existingItems, setExistingItems] = useState<any[]>([]);
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -49,23 +52,40 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
     queryKey: ["/api/categories"],
   });
 
+  const { data: existingOrderItems } = useQuery({
+    queryKey: ['/api/order-items', existingOrder?.id],
+    enabled: !!(existingOrder?.id && mode === "edit" && open),
+    staleTime: 0,
+    queryFn: async () => {
+      const response = await apiRequest('GET', `/api/order-items/${existingOrder.id}`);
+      return response.json();
+    },
+  });
+
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: { order: any; items: any[] }) => {
-      console.log("Creating order with data:", orderData);
-      return apiRequest("POST", "/api/orders", orderData);
+      console.log(mode === "edit" ? "Updating order with data:" : "Creating order with data:", orderData);
+      if (mode === "edit" && existingOrder) {
+        // For edit mode, we add new items to the existing order
+        return apiRequest("POST", `/api/orders/${existingOrder.id}/items`, { items: orderData.items });
+      } else {
+        // For create mode, create a new order
+        return apiRequest("POST", "/api/orders", orderData);
+      }
     },
     onSuccess: (response) => {
-      console.log("Order created successfully:", response);
+      console.log(mode === "edit" ? "Order updated successfully:" : "Order created successfully:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
       setCart([]);
       setCustomerName("");
       setCustomerCount(1);
+      setExistingItems([]);
       onOpenChange(false);
       toast({
-        title: t("orders.orderPlaced"),
-        description: t("orders.orderPlacedSuccess"),
+        title: mode === "edit" ? "Cập nhật đơn hàng" : t("orders.orderPlaced"),
+        description: mode === "edit" ? "Đã thêm món mới vào đơn hàng" : t("orders.orderPlacedSuccess"),
       });
     },
     onError: (error: any) => {
@@ -158,38 +178,53 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
   const handlePlaceOrder = () => {
     if (!table || cart.length === 0) return;
 
-    const orderNumber = `ORD-${Date.now()}`;
-    const subtotalAmount = cart.reduce(
-      (sum, item) => sum + item.product.price * item.quantity,
-      0,
-    );
-    const taxAmount = subtotalAmount * 0.1; // 10% tax
-    const totalAmount = subtotalAmount + taxAmount;
+    if (mode === "edit" && existingOrder) {
+      // For edit mode, only send the new items to be added
+      const items = cart.map((item) => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+        unitPrice: item.product.price.toString(),
+        total: (item.product.price * item.quantity).toString(),
+        notes: item.notes || null,
+      }));
 
-    const order = {
-      orderNumber,
-      tableId: table.id,
-      employeeId: 1, // Default employee ID
-      customerName: customerName || null,
-      customerCount,
-      subtotal: subtotalAmount.toString(), // Add required subtotal field
-      tax: taxAmount.toString(), // Add tax field
-      total: totalAmount.toString(), // Convert to string as expected by schema
-      status: "pending",
-      paymentStatus: "pending", // Add required paymentStatus field
-      orderedAt: new Date().toISOString(),
-    };
+      console.log("Adding items to existing order:", { items });
+      createOrderMutation.mutate({ order: existingOrder, items });
+    } else {
+      // Create mode - original logic
+      const orderNumber = `ORD-${Date.now()}`;
+      const subtotalAmount = cart.reduce(
+        (sum, item) => sum + item.product.price * item.quantity,
+        0,
+      );
+      const taxAmount = subtotalAmount * 0.1; // 10% tax
+      const totalAmount = subtotalAmount + taxAmount;
 
-    const items = cart.map((item) => ({
-      productId: item.product.id,
-      quantity: item.quantity,
-      unitPrice: item.product.price.toString(), // Convert to string
-      total: (item.product.price * item.quantity).toString(), // Convert to string
-      notes: item.notes || null,
-    }));
+      const order = {
+        orderNumber,
+        tableId: table.id,
+        employeeId: 1, // Default employee ID
+        customerName: customerName || null,
+        customerCount,
+        subtotal: subtotalAmount.toString(),
+        tax: taxAmount.toString(),
+        total: totalAmount.toString(),
+        status: "pending",
+        paymentStatus: "pending",
+        orderedAt: new Date().toISOString(),
+      };
 
-    console.log("Placing order:", { order, items });
-    createOrderMutation.mutate({ order, items });
+      const items = cart.map((item) => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+        unitPrice: item.product.price.toString(),
+        total: (item.product.price * item.quantity).toString(),
+        notes: item.notes || null,
+      }));
+
+      console.log("Placing order:", { order, items });
+      createOrderMutation.mutate({ order, items });
+    }
   };
 
   const handleClose = () => {
@@ -197,14 +232,26 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
     setCustomerName("");
     setCustomerCount(1);
     setSelectedCategory(null);
+    setExistingItems([]);
     onOpenChange(false);
   };
 
   useEffect(() => {
     if (table && open) {
-      setCustomerCount(Math.min(table.capacity, 1));
+      if (mode === "edit" && existingOrder) {
+        setCustomerName(existingOrder.customerName || "");
+        setCustomerCount(existingOrder.customerCount || 1);
+      } else {
+        setCustomerCount(Math.min(table.capacity, 1));
+      }
     }
-  }, [table, open]);
+  }, [table, open, mode, existingOrder]);
+
+  useEffect(() => {
+    if (mode === "edit" && existingOrderItems && Array.isArray(existingOrderItems)) {
+      setExistingItems(existingOrderItems);
+    }
+  }, [mode, existingOrderItems]);
 
   if (!table) return null;
 
@@ -214,10 +261,13 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5" />
-            {table.tableNumber}
+            {mode === "edit" ? `Chỉnh sửa đơn hàng - Bàn ${table.tableNumber}` : `Bàn ${table.tableNumber}`}
           </DialogTitle>
           <DialogDescription>
-            {t("tables.tableCapacity")}: {table.capacity}{t("orders.people")} | {t("tables.selectMenuToOrder")}
+            {mode === "edit" 
+              ? `Đơn hàng ${existingOrder?.orderNumber} | Thêm món hoặc chỉnh sửa số lượng`
+              : `${t("tables.tableCapacity")}: ${table.capacity}${t("orders.people")} | ${t("tables.selectMenuToOrder")}`
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -338,13 +388,43 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">
-                {t("tables.orderHistory")}
+                {mode === "edit" ? "Món đã gọi & Món mới" : t("tables.orderHistory")}
               </h3>
               <Badge variant="secondary">
-                {cart.length}
-                {t("tables.itemsSelected")}
+                {mode === "edit" ? `${existingItems.length + cart.length} món` : `${cart.length}${t("tables.itemsSelected")}`}
               </Badge>
             </div>
+
+            {/* Existing Items (Edit Mode Only) */}
+            {mode === "edit" && existingItems.length > 0 && (
+              <>
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-gray-600">Món đã gọi trước đó:</h4>
+                  {existingItems.map((item, index) => (
+                    <Card key={`existing-${index}`} className="bg-gray-50">
+                      <CardContent className="p-3">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-medium text-sm">{item.productName}</h4>
+                            <p className="text-xs text-gray-500">Đã gọi</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm font-bold">
+                              {(Number(item.total)).toLocaleString()} ₫
+                            </span>
+                            <p className="text-xs text-gray-500">x{item.quantity}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                {cart.length > 0 && <Separator />}
+                {cart.length > 0 && (
+                  <h4 className="text-sm font-medium text-gray-600">Món mới thêm:</h4>
+                )}
+              </>
+            )}
 
             {cart.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
@@ -438,8 +518,8 @@ export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
                   disabled={createOrderMutation.isPending}
                 >
                   {createOrderMutation.isPending
-                    ? t("tables.placing")
-                    : t("tables.placeOrder")}
+                    ? (mode === "edit" ? "Đang cập nhật..." : t("tables.placing"))
+                    : (mode === "edit" ? "Cập nhật đơn hàng" : t("tables.placeOrder"))}
                 </Button>
               </>
             )}

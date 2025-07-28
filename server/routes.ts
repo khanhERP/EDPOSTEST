@@ -130,7 +130,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Product deleted successfully" });
     } catch (error) {
       console.error("Delete product error:", error);
-      
+
       if (error instanceof Error) {
         if (error.message.includes("Cannot delete product")) {
           return res.status(400).json({ 
@@ -139,7 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
       }
-      
+
       res.status(500).json({ message: "Failed to delete product" });
     }
   });
@@ -634,17 +634,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add order items to existing order
   app.post("/api/orders/:id/items", async (req, res) => {
     try {
       const orderId = parseInt(req.params.id);
-      const itemsData = req.body.map((item: any) =>
-        insertOrderItemSchema.parse(item),
-      );
+      const { items } = req.body;
 
-      const items = await storage.addOrderItems(orderId, itemsData);
-      res.status(201).json(items);
+      console.log(`Adding ${items.length} items to order ${orderId}`);
+
+      // Add new items to the order
+      const createdItems = [];
+      for (const item of items) {
+        const [newItem] = await db.insert(orderItems).values({
+          orderId,
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          total: item.total,
+          notes: item.notes,
+        }).returning();
+
+        // Get product name for the response
+        const [product] = await db.select().from(products).where(eq(products.id, item.productId));
+        newItem.productName = product?.name || 'Unknown Product';
+        newItem.productSku = product?.sku || '';
+
+        createdItems.push(newItem);
+      }
+
+      // Recalculate order total
+      const allOrderItems = await db.select().from(orderItems).where(eq(orderItems.orderId, orderId));
+      const newSubtotal = allOrderItems.reduce((sum, item) => sum + parseFloat(item.total), 0);
+      const newTax = newSubtotal * 0.1; // 10% tax
+      const newTotal = newSubtotal + newTax;
+
+      // Update order totals
+      await db.update(orders).set({
+        subtotal: newSubtotal.toString(),
+        tax: newTax.toString(),
+        total: newTotal.toString(),
+      }).where(eq(orders.id, orderId));
+
+      console.log(`Updated order ${orderId} totals - Subtotal: ${newSubtotal}, Tax: ${newTax}, Total: ${newTotal}`);
+
+      res.json({ success: true, items: createdItems, newTotal });
     } catch (error) {
-      res.status(400).json({ message: "Failed to add order items" });
+      console.error("Error adding items to order:", error);
+      res.status(500).json({ error: "Failed to add items to order" });
     }
   });
 
@@ -1089,14 +1125,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       for (const productData of productList) {
         try {
           console.log(`Processing product: ${JSON.stringify(productData)}`);
-          
+
           // Validate required fields with detailed messages
           const missingFields = [];
           if (!productData.name) missingFields.push("name");
           if (!productData.sku) missingFields.push("sku");
           if (!productData.price) missingFields.push("price");
           if (productData.categoryId === undefined || productData.categoryId === null) missingFields.push("categoryId");
-          
+
           if (missingFields.length > 0) {
             throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
           }
@@ -1105,7 +1141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (isNaN(parseFloat(productData.price))) {
             throw new Error(`Invalid price: ${productData.price}`);
           }
-          
+
           if (isNaN(parseInt(productData.categoryId))) {
             throw new Error(`Invalid categoryId: ${productData.categoryId}`);
           }
@@ -1126,7 +1162,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const errorMessage = error.message || "Unknown error";
           console.error(`Error creating product ${productData.name || 'Unknown'}:`, errorMessage);
           console.error("Product data:", JSON.stringify(productData, null, 2));
-          
+
           results.push({ 
             success: false, 
             error: errorMessage, 
