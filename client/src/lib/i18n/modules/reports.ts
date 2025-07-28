@@ -286,18 +286,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     supplierDebtTo: '부터',
 
     // Supplier report tables
-    supplierPurchaseReport: '공급업체별 구매 보고서',
-    supplierDebtReport: '공급업체별 부채 보고서',
-    supplierProductPurchaseReport: '공급업체별 상품 구매 목록',
-    supplierPurchaseChart: '공급업체별 구매 차트',
-    supplierDebtChart: '공급업체별 부채 차트',
-
-    // Supplier report table headers
-    supplierCode: '공급업체 코드',
-    supplierName: '공급업체 이름',
-    purchaseValue: '구매 가치',
-    productCount: '상품 수',
-    totalQuantity: '총 수량',
+    supplierPurchaseReport: 'Báo cáo nhập hàng theo nhà cung cấp',
+    supplierDebtReport: 'Báo cáo công nợ theo nhà cung cấp',
+    supplierProductPurchaseReport: 'Báo cáo danh sách hàng nhập theo nhà cung cấp',
+    supplierPurchaseChart: 'Biểu đồ giá trị nhập hàng theo nhà cung cấp',
+    supplierPurchaseReportTitle: 'Purchase Report by Supplier',
+    supplierDebtChart: 'Biểu đồ công nợ nhà cung cấp',
+    supplierDebtReportTitle: 'Debt Report by Supplier', 
+    supplierProductPurchaseReportTitle: 'Product Purchase List Report by Supplier',
+    supplierOverviewChart: 'Biểu đồ tổng quan nhà cung cấp (Nhập hàng & Công nợ)',
 
     // Customer report
     customerReport: '고객 보고서',
@@ -632,15 +629,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     supplierDebtReport: 'Debt Report by Supplier',
     supplierProductPurchaseReport: 'Product Purchase List by Supplier',
     supplierPurchaseChart: 'Purchase Chart by Supplier',
+    supplierPurchaseReportTitle: 'Purchase Report by Supplier',
     supplierDebtChart: 'Debt Chart by Supplier',
+    supplierDebtReportTitle: 'Debt Report by Supplier', 
+    supplierProductPurchaseReportTitle: 'Product Purchase List Report by Supplier',
     supplierOverviewChart: 'Supplier Overview Chart (Purchase & Debt)',
-
-    // Supplier report table headers
-    supplierCode: 'Supplier Code',
-    supplierName: 'Supplier Name',
-    purchaseValue: 'Purchase Value',
-    productCount: 'Product Count',
-    totalQuantity: 'Total Quantity',
 
     // Customer report
     customerReport: 'Customer Report',
@@ -1035,9 +1028,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     supplierPurchaseReport: 'Báo cáo nhập hàng theo nhà cung cấp',
     supplierDebtReport: 'Báo cáo công nợ theo nhà cung cấp',
     supplierProductPurchaseReport: 'Báo cáo danh sách hàng nhập theo nhà cung cấp',
-    supplierOverviewChart: 'Biểu đồ tổng quan nhà cung cấp (Nhập hàng & Công nợ)',
-    supplierPurchaseChart: 'Biểu đồ giá trị nhập hàng theo nhà cung cấp',
+    supplierPurchaseChart: 'Biểu đồ nhập hàng nhà cung cấp',
+      supplierPurchaseReportTitle: 'Báo cáo nhập hàng theo nhà cung cấp',
     supplierDebtChart: 'Biểu đồ công nợ nhà cung cấp',
+      supplierDebtReportTitle: 'Báo cáo công nợ theo nhà cung cấp',
+      supplierProductPurchaseReportTitle: 'Báo cáo danh sách hàng nhập theo nhà cung cấp',
+    supplierOverviewChart: 'Biểu đồ tổng quan nhà cung cấp',
 
     // Customer report
     customerReport: 'Báo cáo khách hàng',

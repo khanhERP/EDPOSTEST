@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -81,11 +80,9 @@ export function SupplierReport() {
 
     return supplierPurchases
       .filter((purchase: any) => {
-        // Date filter
         const purchaseDate = new Date(purchase.createdAt || purchase.created_at);
         const dateMatch = purchaseDate >= start && purchaseDate <= end;
 
-        // Supplier search filter
         const supplierMatch =
           !supplierSearch ||
           (purchase.supplier?.code &&
@@ -119,11 +116,9 @@ export function SupplierReport() {
 
     return supplierDebts
       .filter((debt: any) => {
-        // Date filter
         const debtDate = new Date(debt.createdAt || debt.created_at);
         const dateMatch = debtDate >= start && debtDate <= end;
 
-        // Supplier search filter
         const supplierMatch =
           !supplierSearch ||
           (debt.supplier?.code &&
@@ -137,7 +132,6 @@ export function SupplierReport() {
           (debt.supplierName &&
             debt.supplierName.toLowerCase().includes(supplierSearch.toLowerCase()));
 
-        // Debt amount filter
         const debtAmountMatch = (() => {
           if (!debtFrom && !debtTo) return true;
           const from = debtFrom ? Number(debtFrom) : 0;
@@ -165,7 +159,6 @@ export function SupplierReport() {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    // Group purchases by supplier
     const supplierProductMap = new Map();
 
     supplierPurchases.forEach((purchase: any) => {
@@ -176,8 +169,7 @@ export function SupplierReport() {
 
       const supplierCode = purchase.supplier?.code || purchase.supplierCode || purchase.supplier?.id || "N/A";
       const supplierName = purchase.supplier?.name || purchase.supplierName || "Không xác định";
-      
-      // Supplier search filter
+
       const supplierMatch =
         !supplierSearch ||
         supplierCode.toLowerCase().includes(supplierSearch.toLowerCase()) ||
@@ -191,16 +183,12 @@ export function SupplierReport() {
         supplierProductMap.set(key, {
           supplierCode,
           supplierName,
-          productCount: 0,
-          totalQuantity: 0,
-          totalValue: 0,
+          openingDebt: Number(purchase.openingDebt || 0),
+          debitAmount: Number(purchase.debitAmount || 0),
+          creditAmount: Number(purchase.creditAmount || 0),
+          closingDebt: Number(purchase.closingDebt || 0),
         });
       }
-
-      const supplier = supplierProductMap.get(key);
-      supplier.productCount += Number(purchase.productCount || 1);
-      supplier.totalQuantity += Number(purchase.quantity || purchase.totalQuantity || 0);
-      supplier.totalValue += Number(purchase.totalValue || purchase.purchaseValue || 0);
     });
 
     return Array.from(supplierProductMap.values());
@@ -219,13 +207,7 @@ export function SupplierReport() {
       <div className="space-y-6">
         {/* Chart */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              {t("reports.supplierPurchaseChart")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -248,16 +230,15 @@ export function SupplierReport() {
           </CardContent>
         </Card>
 
-        {/* Table */}
+        {/* Report Table */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="w-5 h-5" />
-              {t("reports.supplierPurchaseReport")}
+              {t("reports.supplierPurchaseReportTitle")}
             </CardTitle>
             <CardDescription>
-              {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-              {t("reports.toDate")}: {formatDate(endDate)}
+              {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -273,7 +254,7 @@ export function SupplierReport() {
               </TableHeader>
               <TableBody>
                 {data.length > 0 ? (
-                  data.slice(0, 20).map((item, index) => (
+                  data.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{item.supplierCode}</TableCell>
                       <TableCell>{item.supplierName}</TableCell>
@@ -316,13 +297,7 @@ export function SupplierReport() {
       <div className="space-y-6">
         {/* Chart */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              {t("reports.supplierDebtChart")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -345,44 +320,15 @@ export function SupplierReport() {
           </CardContent>
         </Card>
 
-        {/* Debt Range Filter */}
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex gap-4 items-end">
-              <div className="flex-1">
-                <Label htmlFor="debt-from">{t("reports.supplierDebtFrom")}</Label>
-                <Input
-                  id="debt-from"
-                  type="number"
-                  placeholder="0"
-                  value={debtFrom}
-                  onChange={(e) => setDebtFrom(e.target.value)}
-                />
-              </div>
-              <div className="flex-1">
-                <Label htmlFor="debt-to">{t("reports.supplierDebtTo")}</Label>
-                <Input
-                  id="debt-to"
-                  type="number"
-                  placeholder="999999999"
-                  value={debtTo}
-                  onChange={(e) => setDebtTo(e.target.value)}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Table */}
+        {/* Report Table */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="w-5 h-5" />
-              {t("reports.supplierDebtReport")}
+              {t("reports.supplierDebtReportTitle")}
             </CardTitle>
             <CardDescription>
-              {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-              {t("reports.toDate")}: {formatDate(endDate)}
+              {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -399,7 +345,7 @@ export function SupplierReport() {
               </TableHeader>
               <TableBody>
                 {data.length > 0 ? (
-                  data.slice(0, 20).map((item, index) => (
+                  data.map((item, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{item.supplierCode}</TableCell>
                       <TableCell>{item.supplierName}</TableCell>
@@ -440,11 +386,10 @@ export function SupplierReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Building2 className="w-5 h-5" />
-            {t("reports.supplierProductPurchaseReport")}
+            {t("reports.supplierProductPurchaseReportTitle")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-            {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -453,27 +398,35 @@ export function SupplierReport() {
               <TableRow>
                 <TableHead>{t("reports.supplierCode")}</TableHead>
                 <TableHead>{t("reports.supplierName")}</TableHead>
-                <TableHead className="text-center">{t("reports.productCount")}</TableHead>
-                <TableHead className="text-center">{t("reports.totalQuantity")}</TableHead>
-                <TableHead className="text-right">{t("reports.totalValue")}</TableHead>
+                <TableHead className="text-right">{t("reports.openingDebt")}</TableHead>
+                <TableHead className="text-right">{t("reports.debitAmount")}</TableHead>
+                <TableHead className="text-right">{t("reports.creditAmount")}</TableHead>
+                <TableHead className="text-right">{t("reports.closingDebt")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
-                data.slice(0, 20).map((item, index) => (
+                data.map((item, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">{item.supplierCode}</TableCell>
                     <TableCell>{item.supplierName}</TableCell>
-                    <TableCell className="text-center">{item.productCount}</TableCell>
-                    <TableCell className="text-center">{item.totalQuantity}</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.openingDebt)}
+                    </TableCell>
+                    <TableCell className="text-right text-red-600">
+                      {formatCurrency(item.debitAmount)}
+                    </TableCell>
+                    <TableCell className="text-right text-green-600">
+                      {formatCurrency(item.creditAmount)}
+                    </TableCell>
                     <TableCell className="text-right text-blue-600">
-                      {formatCurrency(item.totalValue)}
+                      {formatCurrency(item.closingDebt)}
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-500 italic">
+                  <TableCell colSpan={6} className="text-center text-gray-500 italic">
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -485,96 +438,15 @@ export function SupplierReport() {
     );
   };
 
-  const renderOverviewChart = () => {
-    const purchaseData = getSupplierPurchaseData();
-    const debtData = getSupplierDebtData();
-    
-    // Combine data for overview chart
-    const supplierMap = new Map();
-    
-    // Add purchase data
-    purchaseData.forEach(item => {
-      const key = item.supplierCode;
-      if (!supplierMap.has(key)) {
-        supplierMap.set(key, {
-          name: item.supplierName.length > 15 
-            ? item.supplierName.substring(0, 15) + "..." 
-            : item.supplierName,
-          purchase: 0,
-          debt: 0,
-        });
-      }
-      supplierMap.get(key).purchase = item.netValue;
-    });
-    
-    // Add debt data
-    debtData.forEach(item => {
-      const key = item.supplierCode;
-      if (!supplierMap.has(key)) {
-        supplierMap.set(key, {
-          name: item.supplierName.length > 15 
-            ? item.supplierName.substring(0, 15) + "..." 
-            : item.supplierName,
-          purchase: 0,
-          debt: 0,
-        });
-      }
-      supplierMap.get(key).debt = item.closingDebt;
-    });
-    
-    const chartData = Array.from(supplierMap.values()).slice(0, 10);
-    
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5" />
-            {t("reports.supplierOverviewChart")}
-          </CardTitle>
-          <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-            {t("reports.toDate")}: {formatDate(endDate)}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                dataKey="name" 
-                angle={-45}
-                textAnchor="end"
-                height={80}
-                fontSize={12}
-              />
-              <YAxis 
-                tickFormatter={(value) => (value / 1000000).toFixed(1) + "M"}
-              />
-              <Tooltip 
-                formatter={(value: any, name: string) => [
-                  formatCurrency(value), 
-                  name === 'purchase' ? t("reports.netValue") : t("reports.closingDebt")
-                ]}
-              />
-              <Bar dataKey="purchase" fill="#22c55e" name="purchase" />
-              <Bar dataKey="debt" fill="#ef4444" name="debt" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-    );
-  };
-
   return (
     <div className="space-y-6">
-      {/* Filters */}
+      {/* Main Filters */}
       <Card>
         <CardHeader>
           <CardTitle>{t("reports.supplierReport")}</CardTitle>
           <CardDescription>{t("reports.supplierReportDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Main filters row */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <Label htmlFor="concern-type">{t("reports.supplierConcernType")}</Label>
@@ -589,7 +461,7 @@ export function SupplierReport() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <Label htmlFor="start-date">{t("reports.startDate")}</Label>
               <Input
@@ -599,7 +471,7 @@ export function SupplierReport() {
                 onChange={(e) => setStartDate(e.target.value)}
               />
             </div>
-            
+
             <div>
               <Label htmlFor="end-date">{t("reports.endDate")}</Label>
               <Input
@@ -624,11 +496,34 @@ export function SupplierReport() {
               </div>
             </div>
           </div>
+
+          {/* Debt Range Filter - Only show for debt concern type */}
+          {concernType === "debt" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
+              <div>
+                <Label htmlFor="debt-from">{t("reports.supplierDebtFrom")}</Label>
+                <Input
+                  id="debt-from"
+                  type="number"
+                  placeholder="0"
+                  value={debtFrom}
+                  onChange={(e) => setDebtFrom(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="debt-to">{t("reports.supplierDebtTo")}</Label>
+                <Input
+                  id="debt-to"
+                  type="number"
+                  placeholder="999999999"
+                  value={debtTo}
+                  onChange={(e) => setDebtTo(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
-
-      {/* Report Content - Show overview chart only for purchase and debt */}
-      {(concernType === "purchase" || concernType === "debt") && renderOverviewChart()}
 
       {/* Report Content Based on Concern Type */}
       <div key={concernType}>
