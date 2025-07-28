@@ -58,11 +58,7 @@ export function ProductManagerModal({
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  const {
-    data: products = [],
-    isLoading,
-    refetch,
-  } = useQuery<Product[]>({
+  const { data: products = [], isLoading, refetch } = useQuery<Product[]>({
     queryKey: ["/api/products"],
     enabled: isOpen,
   });
@@ -198,14 +194,7 @@ export function ProductManagerModal({
   const resetForm = () => {
     setShowAddForm(false);
     setEditingProduct(null);
-    form.reset({
-      name: "",
-      sku: "",
-      price: "",
-      stock: 0,
-      categoryId: 0,
-      imageUrl: "",
-    });
+    form.reset();
   };
 
   const getCategoryName = (categoryId: number) => {
@@ -292,30 +281,32 @@ export function ProductManagerModal({
     }
   }, [isOpen, refetch, editingProduct]);
 
-  const handleModalClose = () => {
-    // Reset all form states when modal closes
-    setShowAddForm(false);
-    setEditingProduct(null);
-    form.reset({
-      name: "",
-      sku: "",
-      price: "",
-      stock: 0,
-      categoryId: 0,
-      imageUrl: "",
-    });
+  const handleModalClose = (open: boolean) => {
+    if (!open) {
+      // Reset all form states when modal closes
+      setShowAddForm(false);
+      setEditingProduct(null);
+      form.reset({
+        name: "",
+        sku: "",
+        price: "",
+        stock: 0,
+        categoryId: 0,
+        imageUrl: "",
+      });
+    }
     onClose();
   };
 
   return (
-    <Dialog open={isOpen}>
-      <DialogContent
-        className="max-w-4xl w-full max-h-screen overflow-y-auto"
-        onInteractOutside={(e) => e.preventDefault()}
-      >
+    <Dialog open={isOpen} onOpenChange={handleModalClose}>
+      <DialogContent className="max-w-4xl w-full max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="flex items-center justify-between">
             {t("tables.productManagement")}
+            {/* <Button variant="ghost" size="sm" onClick={onClose}>
+              <X size={20} />
+            </Button> */}
           </DialogTitle>
         </DialogHeader>
 
