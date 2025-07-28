@@ -282,13 +282,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productFilterPlaceholder: '코드, 이름으로 검색',
     debtRangeFrom: '기말 채무',
     debtRangeTo: '부터',
-
+    
     // Customer report tables
     customerSalesReport: '고객별 매출 보고서',
     customerProfitReport: '고객별 이익 보고서',
     customerDebtReport: '고객별 채무 보고서',
     customerProductSalesReport: '고객별 상품 매출 보고서',
-
+    
     // Customer report table headers
     customerId: '고객 ID',
     customerName: '고객',
@@ -315,7 +315,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerBySales: '고객별 판매',
     supplierByPurchase: '공급업체별 구매',
     profit: '이익',
-
+    
     // Inventory report tables
     salesReportByProduct: '상품별 판매 보고서',
     profitReportByProduct: '상품별 이익 보고서',
@@ -325,13 +325,49 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     disposalReport: '상품 폐기 보고서',
     employeeSalesReport: '직원별 상품 판매 보고서',
     supplierReportByProduct: '공급업체별 상품 구매 보고서',
-
+    
     // Table headers
+    quantitySold: '판매 수량',
+    profitMargin: '이익률',
+    salePrice: '판매가',
+    saleValue: '판매 가치',
+    costPrice: '원가',
+    openingStock: '기초 재고',
+    openingValue: '기초 가치',
+    openingPrice: '기초 가격',
+    inQuantity: '입고 수량',
+    outQuantity: '출고 수량',
+    outValue: '출고 가치',
+    closingStock: '기말 재고',
+    closingValue: '기말 가치',
+    inSupplier: '공급업체 입고',
+    inCheck: '검수 입고',
+    inReturn: '반품 입고',
+    inTransfer: '이동 입고',
+    inProduction: '생산 입고',
+    outSale: '판매 출고',
+    outDisposal: '폐기 출고',
+    outSupplier: '공급업체 출고',
+    outCheck: '검수 출고',
+    outTransfer: '이동 출고',
+    outProduction: '생산 출고',
+    totalDisposed: '총 폐기량',
+    totalValue: '총 가치',
+    employeeCount: '직원 수',
+    quantityPurchased: '구매 수량',
+    supplierCount: '공급업체 수',
+    inValue: '입고 가치',
     value: '가치',
     quantity: '수량',
-
-    // Chart tooltip labels
-    customerDebt: '고객 채무',
+    productCode: '상품 코드',
+    productName: '상품명',
+    soldQuantity: '판매 수량',
+    returnQuantity: '반품 수량',
+    returnValue: '반품 가치',
+    netRevenue: '순 매출',
+    totalCost: '총 원가',
+    grossProfit: '총 이익',
+    customerCount: '고객 수',
   },
   en: {
     title: 'Reports',
@@ -562,13 +598,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productFilterPlaceholder: 'Search by code, name',
     debtRangeFrom: 'Closing debt from',
     debtRangeTo: 'to',
-
+    
     // Customer report tables
     customerSalesReport: 'Sales Report by Customer',
     customerProfitReport: 'Profit Report by Customer',
     customerDebtReport: 'Debt Report by Customer',
     customerProductSalesReport: 'Product Sales Report by Customer',
-
+    
     // Customer report table headers
     customerId: 'Customer ID',
     customerName: 'Customer',
@@ -595,7 +631,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerBySales: 'Customer by Sales',
     supplierByPurchase: 'Supplier by Purchase',
     profit: 'Profit',
-
+    
     // Inventory report tables
     salesReportByProduct: 'Sales Report by Product',
     profitReportByProduct: 'Profit Report by Product',
@@ -605,7 +641,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     disposalReport: 'Product Disposal Report',
     employeeSalesReport: 'Employee Sales Report by Product',
     supplierReportByProduct: 'Supplier Purchase Report by Product',
-
+    
     // Table headers
     quantitySold: 'Quantity Sold',
     profitMargin: 'Profit Margin',
@@ -935,13 +971,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productFilterPlaceholder: 'Tìm theo mã, tên hàng',
     debtRangeFrom: 'Nợ cuối kỳ từ',
     debtRangeTo: 'tới',
-
+    
     // Customer report tables
     customerSalesReport: 'Báo cáo bán hàng theo khách hàng',
     customerProfitReport: 'Báo cáo lợi nhuận theo khách hàng',
     customerDebtReport: 'Báo cáo công nợ theo khách hàng',
     customerProductSalesReport: 'Báo cáo hàng bán theo khách',
-
+    
     // Customer report table headers
     customerId: 'Mã khách hàng',
     customerName: 'Khách hàng',
@@ -968,7 +1004,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerBySales: 'Khách theo hàng bán',
     supplierByPurchase: 'NCC theo hàng nhập',
     profit: 'Lợi nhuận',
-
+    
     // Inventory report tables
     salesReportByProduct: 'Báo cáo bán hàng theo hàng hóa',
     profitReportByProduct: 'Báo cáo lợi nhuận theo hàng hóa',
@@ -978,7 +1014,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     disposalReport: 'Báo cáo hàng hóa xuất hủy',
     employeeSalesReport: 'Báo cáo nhân viên theo hàng bán',
     supplierReportByProduct: 'Báo cáo danh sách nhà cung cấp theo hàng nhập',
-
+    
     // Table headers
     quantitySold: 'Số lượng bán',
     profitMargin: 'Tỷ suất',
@@ -1012,8 +1048,71 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inValue: 'Giá trị nhập',
     value: 'Giá trị',
     quantity: 'Số lượng',
+    productCode: 'Mã sản phẩm',
+    productName: 'Tên sản phẩm',
+    soldQuantity: 'Số lượng bán',
+    returnQuantity: 'Số lượng trả',
+    returnValue: 'Giá trị trả',
+    netRevenue: 'Doanh thu thuần',
+    totalCost: 'Tổng giá vốn',
+    grossProfit: 'Lợi nhuận gộp',
+    inventoryValue: 'Giá trị kho',
+    customerCount: 'SL khách hàng',
 
-    // Chart tooltip labels
-    customerDebt: 'Công nợ khách hàng',
+    // Comprehensive sales report
+    comprehensiveSalesReport: 'Báo cáo bán hàng tổng hợp',
+    timeReport: 'Thời gian',
+    profitReport: 'Lợi nhuận',
+    discountReport: 'Giảm giá HD',
+    returnReport: 'Trả hàng',
+    employeeReport: 'Nhân viên',
+    salesMethod: 'Phương thức bán hàng',
+    noDelivery: 'Không giao hàng',
+    delivery: 'Giao hàng',
+    salesChannel: 'Kênh bán',
+    direct: 'Trực tiếp',
+    other: 'Khác',
+    timeSalesReport: 'Báo cáo bán hàng theo thời gian',
+    profitByInvoiceReport: 'Báo cáo lợi nhuận theo hóa đơn',
+    invoiceDiscountReport: 'Báo cáo tổng hợp giảm giá hóa đơn',
+    returnByInvoiceReport: 'Báo cáo trả hàng theo hóa đơn',
+    employeeSalesReport: 'Báo cáo bán hàng theo nhân viên',
+    returnValue: 'Giá trị trả',
+    netRevenue: 'Doanh thu thuần',
+    totalAmount: 'Tổng tiền hàng',
+    discount: 'Giảm giá',
+    totalCost: 'Tổng giá vốn',
+    grossProfit: 'Lợi nhuận gộp',
+    totalInvoices: 'Tổng hóa đơn',
+    invoiceValue: 'Giá trị hóa đơn',
+    invoiceDiscount: 'Giảm giá hóa đơn',
+    returnTicketCount: 'SL Phiếu trả',
+    seller: 'Người bán',
+
+    // Chart related translations
+    chartView: 'Xem biểu đồ',
+    visualRepresentation: 'Biểu diễn trực quan của dữ liệu',
+
+    // Table headers for reports
+    salesDetailsHeader: 'Chi tiết bán hàng',
+    revenueExpenseDetailsHeader: 'Chi tiết thu chi',
+    inventoryDetailsHeader: 'Chi tiết hàng hóa',
+    salesReportHeader: 'Báo cáo bán hàng',
+    revenueExpenseReportHeader: 'Báo cáo thu chi',
+    inventoryReportHeader: 'Báo cáo hàng hóa',
+    transactionCode: 'Mã giao dịch',
+    otherRevenue: 'Thu nhập khác',
+    vat: 'VAT',
+    actualRevenue: 'Doanh thu thực tế',
+    receiptCode: 'Mã hóa đơn',
+    payerReceiver: 'Người trả/Người nhận',
+    revenueExpenseType: 'Loại thu/chi',
+
+    // Report specific content
+    salesDetails: 'Chi tiết bán hàng',
+    revenueExpenseDetails: 'Chi tiết thu chi',
+    inventoryDetails: 'Chi tiết hàng hóa',
+    noReportData: 'Không có dữ liệu báo cáo',
+    centralBranch: 'Chi nhánh trung tâm',
   },
 };
