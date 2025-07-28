@@ -617,7 +617,7 @@ export function CustomerReport() {
           </div>
 
           {/* Date Range */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <Label>{t("reports.startDate")}</Label>
               <Input
