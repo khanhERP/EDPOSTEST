@@ -153,6 +153,7 @@ export function RightSidebar() {
                   className={cn(
                     "w-[calc(100%-16px)] justify-start mb-2 mx-2 h-12 rounded-lg font-semibold text-gray-700 transition-all duration-300 group relative border border-transparent",
                     "bg-gradient-to-r from-gray-50 to-white hover:from-green-50 hover:to-green-100 hover:border-green-200 hover:text-green-700 hover:shadow-xl",
+                    "focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:outline-none",
                     showText ? "px-4" : "px-3",
                     isActive && "bg-gradient-to-r from-green-100 to-green-50 text-green-800 border-green-300 shadow-lg font-bold",
                     isNavCollapsed && "hover:w-[calc(256px-16px)]"
