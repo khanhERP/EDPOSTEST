@@ -380,13 +380,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     costPrice: "원가",
     inventoryValue: "재고 가치",
     openingStock: "기초 재고",
-    openingValue: "기초 가치",
-    openingPrice: "기초 가격",
-    inQuantity: "입고 수량",
-    outQuantity: "출고 수량",
-    outValue: "출고 가치",
-    closingStock: "기말 재고",
-    closingValue: "기말 가치",
+    openingValue: "Giá trị đầu kỳ",
+    openingPrice: "Giá đầu kỳ",
+    inQuantity: "Số lượng nhập",
+    outQuantity: "SL Xuất",
+    outValue: "Giá trị Xuất",
+    closingStock: "Tồn cuối kỳ",
+    closingValue: "Giá trị cuối kỳ",
     inSupplier: "Nhập - NCC",
     inCheck: "Nhập - Kiểm",
     inReturn: "Nhập - Trả",
@@ -436,6 +436,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscount: "Giảm giá hóa đơn",
     returnTicketCount: "SL Phiếu trả",
     seller: "Người bán",
+
+    // Chart related translations
+    chartView: "Xem biểu đồ",
+    visualRepresentation: "Biểu diễn trực quan của dữ liệu",
 
     // Table headers for reports
     salesDetailsHeader: "Chi tiết bán hàng",
@@ -1017,6 +1021,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     creator: "Người tạo",
     employee: "Nhân viên",
     employeeReport: "Báo cáo nhân viên",
+    employeeReportTab: "Báo cáo nhân viên",
+    employeeReportDescription: "Phân tích nhân viên và hiệu suất bán hàng",
+    employeeAnalysisDescription: "Phân tích nhân viên và hiệu suất bán hàng",
     customerPayment: "Thu tiền khách trả",
     customerRefund: "Chi tiền trả khách",
     otherExpense: "Chi phí khác",
@@ -1184,6 +1191,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     detailedInOutInventoryReport: "Báo cáo xuất nhập tồn chi tiết",
     disposalReport: "Báo cáo hàng hóa xuất hủy",
     employeeSalesReport: "Báo cáo nhân viên theo hàng bán",
+    customerSalesReport: "Báo cáo khách hàng theo hàng bán",
     supplierReportByProduct: "Báo cáo danh sách nhà cung cấp theo hàng nhập",
 
     // Table headers

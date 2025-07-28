@@ -531,7 +531,7 @@ export function EmployeeReport() {
             {t("reports.employeeReport")}
           </CardTitle>
           <CardDescription>
-            Phân tích nhân viên và hiệu suất bán hàng
+            {t("reports.employeeAnalysisDescription")}
           </CardDescription>
         </CardHeader>
       </Card>
