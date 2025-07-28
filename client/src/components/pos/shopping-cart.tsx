@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/lib/i18n";
+import { PaymentMethodModal } from "./payment-method-modal";
 import type { CartItem } from "@shared/schema";
 
 interface ShoppingCartProps {
@@ -25,6 +26,8 @@ export function ShoppingCart({
 }: ShoppingCartProps) {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
   const [amountReceived, setAmountReceived] = useState<string>("");
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
+  const [selectedCardMethod, setSelectedCardMethod] = useState<string>("");
   const { t } = useTranslation();
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
@@ -42,14 +45,27 @@ export function ShoppingCart({
         alert(`Số tiền nhận được không đủ. Cần: ${total.toLocaleString()} ₫`);
         return;
       }
+      // Proceed with cash payment
+      const paymentData = {
+        paymentMethod: "cash",
+        amountReceived: parseFloat(amountReceived || "0"),
+        change: change,
+      };
+      onCheckout(paymentData);
+    } else {
+      // Show payment method selection modal for card payments
+      setShowPaymentMethodModal(true);
     }
+  };
 
+  const handleCardPaymentMethodSelect = (method: string) => {
+    setSelectedCardMethod(method);
     const paymentData = {
-      paymentMethod,
-      amountReceived: paymentMethod === "cash" ? parseFloat(amountReceived || "0") : total,
-      change: paymentMethod === "cash" ? change : 0,
+      paymentMethod: "card",
+      cardType: method,
+      amountReceived: total,
+      change: 0,
     };
-
     onCheckout(paymentData);
   };
 
@@ -195,6 +211,14 @@ export function ShoppingCart({
           </Button>
         </div>
       )}
+
+      {/* Payment Method Selection Modal */}
+      <PaymentMethodModal
+        isOpen={showPaymentMethodModal}
+        onClose={() => setShowPaymentMethodModal(false)}
+        onSelectMethod={handleCardPaymentMethodSelect}
+        total={total}
+      />
     </aside>
   );
 }
