@@ -81,7 +81,7 @@ export function POSHeader() {
   const handleReportsMouseLeave = () => {
     const timer = setTimeout(() => {
       setReportsSubmenuOpen(false);
-    }, 300); // 300ms delay before hiding
+    }, 500); // 500ms delay before hiding
     setSubmenuTimer(timer);
   };
 
@@ -95,7 +95,7 @@ export function POSHeader() {
   const handleSubmenuMouseLeave = () => {
     const timer = setTimeout(() => {
       setReportsSubmenuOpen(false);
-    }, 300);
+    }, 500);
     setSubmenuTimer(timer);
   };
 
@@ -233,7 +233,7 @@ export function POSHeader() {
                       </button>
                       {reportsSubmenuOpen && (
                         <div 
-                          className="absolute top-0 right-full mr-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50"
+                          className="absolute top-0 right-full mr-0.5 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50"
                           onMouseEnter={handleSubmenuMouseEnter}
                           onMouseLeave={handleSubmenuMouseLeave}
                         >
