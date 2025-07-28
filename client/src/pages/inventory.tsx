@@ -92,7 +92,7 @@ export default function InventoryPage() {
 
   const updateStockMutation = useMutation({
     mutationFn: async (data: StockUpdateForm) => {
-      console.log('Updating stock:', data);
+      console.log("Updating stock:", data);
       const response = await fetch("/api/inventory/update-stock", {
         method: "POST",
         headers: {
@@ -101,7 +101,7 @@ export default function InventoryPage() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error('Failed to update stock');
+        throw new Error("Failed to update stock");
       }
       return response.json();
     },
@@ -111,14 +111,18 @@ export default function InventoryPage() {
       stockUpdateForm.reset();
       toast({
         title: t("inventory.updateSuccess") || "Cập nhật thành công",
-        description: t("inventory.updateSuccessDescription") || "Thông tin sản phẩm đã được cập nhật",
+        description:
+          t("inventory.updateSuccessDescription") ||
+          "Thông tin sản phẩm đã được cập nhật",
       });
     },
     onError: (error) => {
-      console.error('Update stock error:', error);
+      console.error("Update stock error:", error);
       toast({
         title: t("inventory.updateFailed") || "Cập nhật thất bại",
-        description: t("inventory.updateFailedDescription") || "Không thể cập nhật sản phẩm. Vui lòng thử lại.",
+        description:
+          t("inventory.updateFailedDescription") ||
+          "Không thể cập nhật sản phẩm. Vui lòng thử lại.",
         variant: "destructive",
       });
     },
@@ -126,7 +130,7 @@ export default function InventoryPage() {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log('Sending product data:', data);
+      console.log("Sending product data:", data);
       const response = await fetch("/api/products", {
         method: "POST",
         headers: {
@@ -135,7 +139,7 @@ export default function InventoryPage() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error('Failed to create product');
+        throw new Error("Failed to create product");
       }
       return response.json();
     },
@@ -145,23 +149,32 @@ export default function InventoryPage() {
       stockUpdateForm.reset();
       toast({
         title: t("inventory.createSuccess") || "Tạo mới thành công",
-        description: t("inventory.createSuccessDescription") || "Sản phẩm mới đã được thêm vào kho hàng",
+        description:
+          t("inventory.createSuccessDescription") ||
+          "Sản phẩm mới đã được thêm vào kho hàng",
       });
     },
     onError: (error: any) => {
-      console.error('Create product error:', error);
-      
+      console.error("Create product error:", error);
+
       // Check if it's a duplicate SKU error
-      if (error?.response?.status === 409 && error?.response?.data?.code === "DUPLICATE_SKU") {
+      if (
+        error?.response?.status === 409 &&
+        error?.response?.data?.code === "DUPLICATE_SKU"
+      ) {
         toast({
           title: t("inventory.duplicateSku") || "Đã tồn tại sản phẩm trong kho",
-          description: t("inventory.duplicateSkuDescription") || "SKU này đã được sử dụng cho sản phẩm khác",
+          description:
+            t("inventory.duplicateSkuDescription") ||
+            "SKU này đã được sử dụng cho sản phẩm khác",
           variant: "destructive",
         });
       } else {
         toast({
           title: t("inventory.createFailed") || "Tạo mới thất bại",
-          description: t("inventory.createFailedDescription") || "Không thể tạo sản phẩm mới. Vui lòng thử lại.",
+          description:
+            t("inventory.createFailedDescription") ||
+            "Không thể tạo sản phẩm mới. Vui lòng thử lại.",
           variant: "destructive",
         });
       }
@@ -174,22 +187,24 @@ export default function InventoryPage() {
         method: "DELETE",
       });
       if (!response.ok) {
-        throw new Error('Failed to delete product');
+        throw new Error("Failed to delete product");
       }
       return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
-        title: t("inventory.deleteSuccess") || "Xóa thành công",
-        description: "Sản phẩm đã được xóa vĩnh viễn khỏi cơ sở dữ liệu",
+        title: "",
+        description: t("inventory.deleteSuccess"),
       });
     },
     onError: (error) => {
-      console.error('Delete product error:', error);
+      console.error("Delete product error:", error);
       toast({
         title: t("inventory.deleteFailed") || "Xóa thất bại",
-        description: t("inventory.deleteFailedDescription") || "Không thể xóa sản phẩm. Vui lòng thử lại.",
+        description:
+          t("inventory.deleteFailedDescription") ||
+          "Không thể xóa sản phẩm. Vui lòng thử lại.",
         variant: "destructive",
       });
     },
@@ -201,7 +216,7 @@ export default function InventoryPage() {
         method: "DELETE",
       });
       if (!response.ok) {
-        throw new Error('Failed to cleanup inactive products');
+        throw new Error("Failed to cleanup inactive products");
       }
       return response.json();
     },
@@ -213,7 +228,7 @@ export default function InventoryPage() {
       });
     },
     onError: (error) => {
-      console.error('Cleanup error:', error);
+      console.error("Cleanup error:", error);
       toast({
         title: "Dọn dẹp thất bại",
         description: "Không thể xóa các sản phẩm vô hiệu. Vui lòng thử lại.",
@@ -276,13 +291,21 @@ export default function InventoryPage() {
   };
 
   const handleDeleteProduct = (product: Product) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm "${product.name}" khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.`)) {
+    if (
+      window.confirm(
+        `Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm "${product.name}" khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.`,
+      )
+    ) {
       deleteProductMutation.mutate(product.id);
     }
   };
 
   const handleCleanupInactiveProducts = () => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa vĩnh viễn tất cả sản phẩm vô hiệu khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.")) {
+    if (
+      window.confirm(
+        "Bạn có chắc chắn muốn xóa vĩnh viễn tất cả sản phẩm vô hiệu khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.",
+      )
+    ) {
       cleanupMutation.mutate();
     }
   };
@@ -299,11 +322,11 @@ export default function InventoryPage() {
         imageUrl: null,
         isActive: true,
       };
-      console.log('Creating product with data:', newProductData);
+      console.log("Creating product with data:", newProductData);
       createProductMutation.mutate(newProductData);
     } else {
       // Updating existing product stock
-      console.log('Updating stock with data:', data);
+      console.log("Updating stock with data:", data);
       updateStockMutation.mutate(data);
     }
   };
@@ -627,7 +650,8 @@ export default function InventoryPage() {
                       {selectedProduct.name}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {t("inventory.currentStockLabel")}: {selectedProduct.stock}
+                      {t("inventory.currentStockLabel")}:{" "}
+                      {selectedProduct.stock}
                       {t("common.items")}
                     </p>
                   </div>
