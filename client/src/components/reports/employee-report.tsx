@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -124,11 +123,11 @@ export function EmployeeReport() {
 
     filteredTransactions.forEach((transaction: any) => {
       const employeeName = transaction.cashierName || "Unknown";
-      
+
       if (!employeeSales[employeeName]) {
         employeeSales[employeeName] = { revenue: 0, returnValue: 0, netRevenue: 0 };
       }
-      
+
       const amount = Number(transaction.total);
       employeeSales[employeeName].revenue += amount;
       employeeSales[employeeName].netRevenue += amount;
@@ -155,7 +154,7 @@ export function EmployeeReport() {
 
     filteredTransactions.forEach((transaction: any) => {
       const employeeName = transaction.cashierName || "Unknown";
-      
+
       if (!employeeProfit[employeeName]) {
         employeeProfit[employeeName] = {
           totalAmount: 0,
@@ -167,10 +166,10 @@ export function EmployeeReport() {
           grossProfit: 0,
         };
       }
-      
+
       const amount = Number(transaction.total);
       const estimatedCost = amount * 0.6; // Estimated 60% cost ratio
-      
+
       employeeProfit[employeeName].totalAmount += amount;
       employeeProfit[employeeName].revenue += amount;
       employeeProfit[employeeName].netRevenue += amount;
@@ -197,7 +196,7 @@ export function EmployeeReport() {
 
     filteredTransactions.forEach((transaction: any) => {
       const employeeName = transaction.cashierName || "Unknown";
-      
+
       if (!employeeProductSales[employeeName]) {
         employeeProductSales[employeeName] = {
           quantitySold: 0,
@@ -207,7 +206,7 @@ export function EmployeeReport() {
           netRevenue: 0,
         };
       }
-      
+
       const amount = Number(transaction.total);
       employeeProductSales[employeeName].quantitySold += 1; // Estimate 1 item per transaction
       employeeProductSales[employeeName].revenue += amount;
@@ -386,7 +385,7 @@ export function EmployeeReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            Báo cáo danh sách hàng bán theo nhân viên
+            {t("reports.customerProductSales")}
           </CardTitle>
           <CardDescription>
             {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
@@ -654,7 +653,7 @@ export function EmployeeReport() {
         <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
           <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-indigo-50/20 rounded-xl"></div>
-            
+
             <div className="relative z-10 h-full">
               <ChartContainer config={chartConfig}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -708,7 +707,7 @@ export function EmployeeReport() {
                       width={70}
                     />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    
+
                     {concernType === "sales" && (
                       <>
                         <Bar
@@ -725,7 +724,7 @@ export function EmployeeReport() {
                         />
                       </>
                     )}
-                    
+
                     {concernType === "profit" && (
                       <>
                         <Bar
@@ -742,7 +741,7 @@ export function EmployeeReport() {
                         />
                       </>
                     )}
-                    
+
                     {concernType === "productSales" && (
                       <>
                         <Bar
