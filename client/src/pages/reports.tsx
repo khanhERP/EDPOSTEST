@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { POSHeader } from "@/components/pos/header";
 import { RightSidebar } from "@/components/ui/right-sidebar";
 import { SalesReport } from "@/components/reports/sales-report";
@@ -11,11 +11,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, PieChart, TrendingUp, Utensils, Package, Users, Calendar, FileText } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import { useTranslation } from "@/lib/i18n";
 
 export default function ReportsPage() {
   const { t } = useTranslation();
+  const search = useSearch();
+  const [activeTab, setActiveTab] = useState("overview");
+
+  useEffect(() => {
+    const params = new URLSearchParams(search);
+    const tab = params.get('tab');
+    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [search]);
   return (
     <div className="min-h-screen bg-green-50 grocery-bg">
       {/* Header */}
@@ -43,7 +53,7 @@ export default function ReportsPage() {
 
 
 
-          <Tabs defaultValue="overview" className="space-y-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="h-10 items-center justify-center rounded-md p-1 text-muted-foreground grid w-full grid-cols-6 bg-[#4ed17e]">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />

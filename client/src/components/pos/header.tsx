@@ -1,17 +1,22 @@
 import { useState, useEffect } from "react";
-import { ScanBarcode, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package, Settings as SettingsIcon, Building2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import { ScanBarcode, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package, Settings as SettingsIcon, Building2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import logoPath from "@assets/EDPOS_1753091767028.png";
 import { useTranslation } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { type StoreSettings, type Employee, type AttendanceRecord } from "@shared/schema";
+import {
+  TrendingUp,
+  PieChart,
+  FileText
+} from "lucide-react";
 
 export function POSHeader() {
-  const [currentTime, setCurrentTime] = useState(new Date());
-  const [location] = useLocation();
-  const [posMenuOpen, setPosMenuOpen] = useState(false);
   const { t } = useTranslation();
+  const [posMenuOpen, setPosMenuOpen] = useState(false);
+  const [reportsSubmenuOpen, setReportsSubmenuOpen] = useState(false);
+  const [location] = useLocation();
 
   // Fetch store settings
   const { data: storeSettings } = useQuery<StoreSettings>({
@@ -39,7 +44,7 @@ export function POSHeader() {
   // Find current working cashier
   const getCurrentCashier = () => {
     if (!employees || !todayAttendance) return null;
-    
+
     // Get cashiers who are currently clocked in (have clock in but no clock out)
     const workingCashiers = todayAttendance
       .filter(record => record.clockIn && !record.clockOut)
@@ -48,7 +53,7 @@ export function POSHeader() {
         return employee && employee.role === 'cashier' ? employee : null;
       })
       .filter(Boolean);
-    
+
     return workingCashiers.length > 0 ? workingCashiers[0] : null;
   };
 
@@ -99,7 +104,7 @@ export function POSHeader() {
           </div>
           <div className="opacity-90 font-semibold text-[20px]">{storeSettings?.storeName || t('common.restaurant')}</div>
         </div>
-        
+
         <div className="flex items-center space-x-6">
           <div className="text-right">
             <div className="text-sm opacity-90">{t('pos.cashierName')}</div>
@@ -126,7 +131,7 @@ export function POSHeader() {
                 {t('nav.pos')}
                 <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${posMenuOpen ? 'rotate-180' : ''}`} />
               </button>
-              
+
               {/* Dropdown Menu */}
               {posMenuOpen && (
                 <div className="absolute top-full right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50">
@@ -141,9 +146,9 @@ export function POSHeader() {
                       {t('nav.pos')}
                     </button>
                   </Link>
-                  
+
                   <div className="border-t border-gray-200 my-2"></div>
-                  
+
                   <Link href="/tables">
                     <button 
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
@@ -155,7 +160,7 @@ export function POSHeader() {
                       {t('nav.tables')}
                     </button>
                   </Link>
-                  
+
                   <Link href="/inventory">
                     <button 
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
@@ -167,21 +172,72 @@ export function POSHeader() {
                       {t('nav.inventory')}
                     </button>
                   </Link>
-                  
-                  <Link href="/reports">
-                    <button 
-                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                        location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
-                      }`}
-                      onClick={() => setPosMenuOpen(false)}
-                    >
-                      <BarChart3 className="w-4 h-4 mr-3" />
-                      {t('nav.reports')}
-                    </button>
-                  </Link>
-                  
+                    <div className="relative">
+                      <button
+                        className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                          location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
+                        }`}
+                        onClick={() => {
+                          setPosMenuOpen(false);
+                          setReportsSubmenuOpen(!reportsSubmenuOpen);
+                        }}
+                      >
+                        <BarChart3 className="w-4 h-4 mr-3" />
+                        {t('nav.reports')}
+                        <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${reportsSubmenuOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                      {reportsSubmenuOpen && (
+                        <div className="absolute top-full right-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50">
+                          <Link href="/reports/sales">
+                            <button
+                              className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                                location === "/reports/sales" ? "bg-green-50 text-green-600" : "text-gray-700"
+                              }`}
+                              onClick={() => setReportsSubmenuOpen(false)}
+                            >
+                              <TrendingUp className="w-4 h-4 mr-3" />
+                              {t('nav.salesReports')}
+                            </button>
+                          </Link>
+                          <Link href="/reports/inventory">
+                            <button
+                              className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                                location === "/reports/inventory" ? "bg-green-50 text-green-600" : "text-gray-700"
+                              }`}
+                              onClick={() => setReportsSubmenuOpen(false)}
+                            >
+                              <Package className="w-4 h-4 mr-3" />
+                              {t('nav.inventoryReports')}
+                            </button>
+                          </Link>
+                          <Link href="/reports/expenses">
+                            <button
+                              className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                                location === "/reports/expenses" ? "bg-green-50 text-green-600" : "text-gray-700"
+                              }`}
+                              onClick={() => setReportsSubmenuOpen(false)}
+                            >
+                              <FileText className="w-4 h-4 mr-3" />
+                              {t('nav.expensesReports')}
+                            </button>
+                          </Link>
+                          <Link href="/reports/profit">
+                            <button
+                              className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                                location === "/reports/profit" ? "bg-green-50 text-green-600" : "text-gray-700"
+                              }`}
+                              onClick={() => setReportsSubmenuOpen(false)}
+                            >
+                              <PieChart className="w-4 h-4 mr-3" />
+                              {t('nav.profitReports')}
+                            </button>
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+
                   <div className="border-t border-gray-200 my-2"></div>
-                  
+
                   <Link href="/employees">
                     <button 
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
@@ -193,7 +249,7 @@ export function POSHeader() {
                       {t('nav.employees')}
                     </button>
                   </Link>
-                  
+
                   <Link href="/attendance">
                     <button 
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
@@ -205,7 +261,7 @@ export function POSHeader() {
                       {t('nav.attendance')}
                     </button>
                   </Link>
-                  
+
                   <Link href="/suppliers">
                     <button 
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
@@ -217,9 +273,9 @@ export function POSHeader() {
                       {t('nav.suppliers')}
                     </button>
                   </Link>
-                  
+
                   <div className="border-t border-gray-200 my-2"></div>
-                  
+
                   <Link href="/settings">
                     <button 
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
@@ -235,7 +291,7 @@ export function POSHeader() {
               )}
             </div>
           </nav>
-          
+
           <LanguageSwitcher />
         </div>
       </div>
