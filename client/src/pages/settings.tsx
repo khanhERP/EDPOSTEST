@@ -1114,7 +1114,7 @@ export default function Settings() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">
-                          재고 총량
+                          {t("settings.totalStockQuantity")}
                         </p>
                         <p className="text-2xl font-bold text-purple-600">
                           {productsData

@@ -103,6 +103,10 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     // Product Management
     totalCategories: '총 카테고리',
     totalProducts: '총 상품',
+      lowStock: '재고 부족',
+      outOfStock: '품절',
+      totalValue: '총 재고 가치',
+      totalStockQuantity: '재고 총량',
     categoryTitle: '카테고리 관리',
     productTitle: '상품 관리',
     addCategory: '카테고리 추가',
@@ -197,6 +201,10 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     // Product Management
     totalCategories: 'Total Categories',
     totalProducts: 'Total Products',
+      lowStock: 'Low Stock',
+      outOfStock: 'Out of Stock',
+      totalValue: 'Total Value',
+      totalStockQuantity: 'Total Stock Quantity',
     categoryTitle: 'Category Management',
     productTitle: 'Product Management',
     addCategory: 'Add Category',
@@ -292,6 +300,10 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     // Product Management
     totalCategories: 'Tổng danh mục',
     totalProducts: 'Tổng sản phẩm',
+      lowStock: 'Sắp hết hàng',
+      outOfStock: 'Hết hàng',
+      totalValue: 'Tổng giá trị',
+      totalStockQuantity: 'Tổng số lượng tồn kho',
     categoryTitle: 'Quản lý danh mục',
     productTitle: 'Quản lý sản phẩm',
     addCategory: 'Thêm danh mục',
