@@ -1101,6 +1101,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     supplierProductPurchaseReportTitle: 'Báo cáo danh sách hàng nhập theo nhà cung cấp',
     supplierOverviewChart: 'Biểu đồ tổng quan nhà cung cấp',
 
+    // Supplier table headers
+    supplierCode: 'Mã nhà cung cấp',
+    supplierName: 'Tên nhà cung cấp',
+    purchaseValue: 'Giá trị nhập',
+
     // Customer report
     customerReport: 'Báo cáo khách hàng',
     customerReportTab: 'Báo cáo khách hàng',
