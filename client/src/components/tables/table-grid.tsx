@@ -8,10 +8,11 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OrderDialog } from "@/components/orders/order-dialog";
-import { Users, Clock, CheckCircle2, Eye, CreditCard } from "lucide-react";
+import { Users, Clock, CheckCircle2, Eye, CreditCard, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
+import QRCodeLib from "qrcode";
 import type { Table, Order } from "@shared/schema";
 
 interface TableGridProps {
@@ -29,6 +30,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [pointsAmount, setPointsAmount] = useState("");
+  const [showQRPayment, setShowQRPayment] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
@@ -268,10 +272,60 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }, 0);
   };
 
-  const handlePayment = (paymentMethod: string) => {
-    if (selectedOrder) {
-      completePaymentMutation.mutate({ orderId: selectedOrder.id, paymentMethod });
+  const handlePayment = async (paymentMethodKey: string) => {
+    if (!selectedOrder) return;
+
+    const method = getPaymentMethods().find(m => m.nameKey === paymentMethodKey);
+    if (!method) return;
+
+    // If cash payment, proceed directly
+    if (paymentMethodKey === "cash") {
+      completePaymentMutation.mutate({ orderId: selectedOrder.id, paymentMethod: paymentMethodKey });
+      return;
     }
+
+    // For non-cash payments, show QR code
+    try {
+      const qrData = `${method.name} Payment\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
+      const qrUrl = await QRCodeLib.toDataURL(qrData, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeUrl(qrUrl);
+      setSelectedPaymentMethod({ key: paymentMethodKey, method });
+      setShowQRPayment(true);
+      setPaymentMethodsOpen(false);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể tạo mã QR',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleQRPaymentConfirm = () => {
+    if (selectedOrder && selectedPaymentMethod) {
+      completePaymentMutation.mutate({ 
+        orderId: selectedOrder.id, 
+        paymentMethod: selectedPaymentMethod.key 
+      });
+      setShowQRPayment(false);
+      setQrCodeUrl("");
+      setSelectedPaymentMethod(null);
+    }
+  };
+
+  const handleQRPaymentClose = () => {
+    setShowQRPayment(false);
+    setQrCodeUrl("");
+    setSelectedPaymentMethod(null);
+    setPaymentMethodsOpen(true);
   };
 
   const filteredCustomers = customers?.filter((customer: any) =>
@@ -844,6 +898,67 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             >
               {pointsPaymentMutation.isPending ? 'Đang xử lý...' : 'Thanh toán bằng điểm'}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Payment Dialog */}
+      <Dialog open={showQRPayment} onOpenChange={setShowQRPayment}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode className="w-5 h-5" />
+              Thanh toán {selectedPaymentMethod?.method?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Quét mã QR để hoàn tất thanh toán
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 p-4">
+            {/* Order Summary */}
+            {selectedOrder && (
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">Đơn hàng: {selectedOrder.orderNumber}</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                </p>
+              </div>
+            )}
+
+            {/* QR Code */}
+            {qrCodeUrl && (
+              <div className="flex justify-center">
+                <div className="bg-white p-4 rounded-lg border-2 border-gray-200 shadow-lg">
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="QR Code for Payment" 
+                    className="w-64 h-64"
+                  />
+                </div>
+              </div>
+            )}
+
+            <p className="text-sm text-gray-600 text-center">
+              Sử dụng ứng dụng {selectedPaymentMethod?.method?.name} để quét mã QR và thực hiện thanh toán
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={handleQRPaymentClose} 
+                className="flex-1"
+              >
+                Quay lại
+              </Button>
+              <Button 
+                onClick={handleQRPaymentConfirm}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+              >
+                Xác nhận thanh toán
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
