@@ -76,6 +76,11 @@ export function CustomerReport() {
     queryKey: ["/api/customers"],
   });
 
+  const { data: customerDebts } = useQuery({
+    queryKey: ["/api/customer-debts"],
+    enabled: concernType === "debt",
+  });
+
   const formatCurrency = (amount: number) => {
     return `${amount.toLocaleString()} ₫`;
   };
@@ -202,43 +207,56 @@ export function CustomerReport() {
   };
 
   const getCustomerDebtData = () => {
-    // Mock debt data since we don't have debt management in the current system
-    const mockDebtData = [
-      {
-        customer: { id: "C001", name: "Nguyễn Văn A", phone: "0123456789" },
-        openingDebt: 500000,
-        debitAmount: 200000,
-        creditAmount: 150000,
-        closingDebt: 550000,
-      },
-      {
-        customer: { id: "C002", name: "Trần Thị B", phone: "0987654321" },
-        openingDebt: 300000,
-        debitAmount: 100000,
-        creditAmount: 400000,
-        closingDebt: 0,
-      },
-    ];
+    if (!customerDebts || !Array.isArray(customerDebts)) return [];
 
-    return mockDebtData
-      .filter((debt) => {
-        if (!customerSearch) return true;
-        return (
-          debt.customer.id
-            .toLowerCase()
-            .includes(customerSearch.toLowerCase()) ||
-          debt.customer.name
-            .toLowerCase()
-            .includes(customerSearch.toLowerCase()) ||
-          debt.customer.phone.includes(customerSearch)
-        );
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    return customerDebts
+      .filter((debt: any) => {
+        // Date filter
+        const debtDate = new Date(debt.createdAt || debt.created_at);
+        const dateMatch = debtDate >= start && debtDate <= end;
+
+        // Customer search filter
+        const customerMatch =
+          !customerSearch ||
+          (debt.customer?.id &&
+            debt.customer.id
+              .toLowerCase()
+              .includes(customerSearch.toLowerCase())) ||
+          (debt.customer?.name &&
+            debt.customer.name
+              .toLowerCase()
+              .includes(customerSearch.toLowerCase())) ||
+          (debt.customer?.phone && 
+            debt.customer.phone.includes(customerSearch)) ||
+          (debt.customerId &&
+            debt.customerId.toString().includes(customerSearch));
+
+        // Debt amount filter
+        const debtAmountMatch = (() => {
+          if (!debtFrom && !debtTo) return true;
+          const from = debtFrom ? Number(debtFrom) : 0;
+          const to = debtTo ? Number(debtTo) : Infinity;
+          const closingDebt = Number(debt.closingDebt || 0);
+          return closingDebt >= from && closingDebt <= to;
+        })();
+
+        return dateMatch && customerMatch && debtAmountMatch;
       })
-      .filter((debt) => {
-        if (!debtFrom && !debtTo) return true;
-        const from = debtFrom ? Number(debtFrom) : 0;
-        const to = debtTo ? Number(debtTo) : Infinity;
-        return debt.closingDebt >= from && debt.closingDebt <= to;
-      });
+      .map((debt: any) => ({
+        customer: {
+          id: debt.customer?.id || debt.customerId || debt.customerCode || "N/A",
+          name: debt.customer?.name || debt.customerName || "Khách lẻ",
+          phone: debt.customer?.phone || debt.customerPhone || "",
+        },
+        openingDebt: Number(debt.openingDebt || 0),
+        debitAmount: Number(debt.debitAmount || 0),
+        creditAmount: Number(debt.creditAmount || 0),
+        closingDebt: Number(debt.closingDebt || 0),
+      }));
   };
 
   const getCustomerProductSalesData = () => {
