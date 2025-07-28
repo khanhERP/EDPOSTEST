@@ -257,7 +257,7 @@ export default function InventoryPage() {
       product.categoryId.toString() === selectedCategory;
     const matchesStock =
       stockFilter === "all" ||
-      (stockFilter === "low" && product.stock <= 10) ||
+      (stockFilter === "low" && product.stock <= 10 && product.stock > 0) ||
       (stockFilter === "out" && product.stock === 0) ||
       (stockFilter === "in" && product.stock > 10);
 
