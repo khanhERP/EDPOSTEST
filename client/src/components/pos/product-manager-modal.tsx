@@ -58,7 +58,7 @@ export function ProductManagerModal({
   const { toast } = useToast();
   const { t } = useTranslation();
 
-  const { data: products = [], isLoading } = useQuery<Product[]>({
+  const { data: products = [], isLoading, refetch } = useQuery<Product[]>({
     queryKey: ["/api/products"],
     enabled: isOpen,
   });
