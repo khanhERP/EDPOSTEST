@@ -18,6 +18,7 @@ export function POSHeader() {
   const [reportsSubmenuOpen, setReportsSubmenuOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [location] = useLocation();
+  const [submenuTimer, setSubmenuTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Fetch store settings
   const { data: storeSettings } = useQuery<StoreSettings>({
@@ -68,6 +69,36 @@ export function POSHeader() {
     return () => clearInterval(timer);
   }, []);
 
+  // Handle submenu timing
+  const handleReportsMouseEnter = () => {
+    if (submenuTimer) {
+      clearTimeout(submenuTimer);
+      setSubmenuTimer(null);
+    }
+    setReportsSubmenuOpen(true);
+  };
+
+  const handleReportsMouseLeave = () => {
+    const timer = setTimeout(() => {
+      setReportsSubmenuOpen(false);
+    }, 300); // 300ms delay before hiding
+    setSubmenuTimer(timer);
+  };
+
+  const handleSubmenuMouseEnter = () => {
+    if (submenuTimer) {
+      clearTimeout(submenuTimer);
+      setSubmenuTimer(null);
+    }
+  };
+
+  const handleSubmenuMouseLeave = () => {
+    const timer = setTimeout(() => {
+      setReportsSubmenuOpen(false);
+    }, 300);
+    setSubmenuTimer(timer);
+  };
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -83,6 +114,15 @@ export function POSHeader() {
       return () => document.removeEventListener('click', handleClickOutside);
     }
   }, [posMenuOpen, reportsSubmenuOpen]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (submenuTimer) {
+        clearTimeout(submenuTimer);
+      }
+    };
+  }, [submenuTimer]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
@@ -184,8 +224,8 @@ export function POSHeader() {
                           e.stopPropagation();
                           setReportsSubmenuOpen(!reportsSubmenuOpen);
                         }}
-                        onMouseEnter={() => setReportsSubmenuOpen(true)}
-                        onMouseLeave={() => setReportsSubmenuOpen(false)}
+                        onMouseEnter={handleReportsMouseEnter}
+                        onMouseLeave={handleReportsMouseLeave}
                       >
                         <BarChart3 className="w-4 h-4 mr-3" />
                         {t('nav.reports')}
@@ -194,8 +234,8 @@ export function POSHeader() {
                       {reportsSubmenuOpen && (
                         <div 
                           className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50"
-                          onMouseEnter={() => setReportsSubmenuOpen(true)}
-                          onMouseLeave={() => setReportsSubmenuOpen(false)}
+                          onMouseEnter={handleSubmenuMouseEnter}
+                          onMouseLeave={handleSubmenuMouseLeave}
                         >
                           <Link href="/reports?tab=overview">
                             <button
