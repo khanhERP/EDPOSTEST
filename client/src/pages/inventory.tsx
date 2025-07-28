@@ -523,35 +523,53 @@ export default function InventoryPage() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full table-auto">
                     <thead>
                       <tr className="border-b border-green-200">
-                        <th className="text-left py-3 px-4 font-medium text-gray-700">
-                          {t("inventory.productName")}
+                        <th className="text-left py-3 px-2 font-medium text-gray-700 w-auto min-w-[120px]">
+                          <div className="leading-tight break-words">
+                            {t("inventory.productName")}
+                          </div>
                         </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-700">
-                          SKU
+                        <th className="text-left py-3 px-2 font-medium text-gray-700 w-auto min-w-[80px]">
+                          <div className="leading-tight break-words">
+                            SKU
+                          </div>
                         </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-700">
-                          {t("tables.productType")}
+                        <th className="text-left py-3 px-2 font-medium text-gray-700 w-auto min-w-[100px]">
+                          <div className="leading-tight break-words">
+                            {t("tables.productType")}
+                          </div>
                         </th>
-                        <th className="text-left py-3 px-4 font-medium text-gray-700">
-                          {t("common.category")}
+                        <th className="text-left py-3 px-2 font-medium text-gray-700 w-auto min-w-[90px]">
+                          <div className="leading-tight break-words">
+                            {t("common.category")}
+                          </div>
                         </th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">
-                          {t("inventory.currentStock")}
+                        <th className="text-center py-3 px-2 font-medium text-gray-700 w-auto min-w-[80px]">
+                          <div className="leading-tight break-words">
+                            {t("inventory.currentStock")}
+                          </div>
                         </th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">
-                          {t("common.status")}
+                        <th className="text-center py-3 px-2 font-medium text-gray-700 w-auto min-w-[80px]">
+                          <div className="leading-tight break-words">
+                            {t("common.status")}
+                          </div>
                         </th>
-                        <th className="text-right py-3 px-4 font-medium text-gray-700">
-                          {t("inventory.unitPrice")}
+                        <th className="text-right py-3 px-2 font-medium text-gray-700 w-auto min-w-[80px]">
+                          <div className="leading-tight break-words">
+                            {t("inventory.unitPrice")}
+                          </div>
                         </th>
-                        <th className="text-right py-3 px-4 font-medium text-gray-700">
-                          {t("inventory.stockValue")}
+                        <th className="text-right py-3 px-2 font-medium text-gray-700 w-auto min-w-[100px]">
+                          <div className="leading-tight break-words">
+                            {t("inventory.stockValue")}
+                          </div>
                         </th>
-                        <th className="text-center py-3 px-4 font-medium text-gray-700">
-                          {t("inventory.management")}
+                        <th className="text-center py-3 px-2 font-medium text-gray-700 w-auto min-w-[100px]">
+                          <div className="leading-tight break-words">
+                            {t("inventory.management")}
+                          </div>
                         </th>
                       </tr>
                     </thead>
@@ -569,18 +587,20 @@ export default function InventoryPage() {
                             key={product.id}
                             className="border-b border-gray-100 hover:bg-green-50/50"
                           >
-                            <td className="py-4 px-4">
-                              <div className="font-medium text-gray-900">
+                            <td className="py-4 px-2">
+                              <div className="font-medium text-gray-900 break-words">
                                 {product.name}
                               </div>
                             </td>
-                            <td className="py-4 px-4 text-gray-600">
-                              {product.sku}
+                            <td className="py-4 px-2 text-gray-600">
+                              <div className="break-words">
+                                {product.sku}
+                              </div>
                             </td>
-                            <td className="py-4 px-4">
+                            <td className="py-4 px-2">
                               <Badge
                                 variant="outline"
-                                className="text-blue-700 border-blue-300"
+                                className="text-blue-700 border-blue-300 text-xs"
                               >
                                 {product.productType === 1 ? t("tables.goodsType") : 
                                  product.productType === 2 ? t("tables.materialType") : 
@@ -588,31 +608,35 @@ export default function InventoryPage() {
                                  t("tables.goodsType")}
                               </Badge>
                             </td>
-                            <td className="py-4 px-4">
+                            <td className="py-4 px-2">
                               <Badge
                                 variant="outline"
-                                className="text-green-700 border-green-300"
+                                className="text-green-700 border-green-300 text-xs"
                               >
                                 {category?.name || t("inventory.uncategorized")}
                               </Badge>
                             </td>
-                            <td className="py-4 px-4 text-center">
+                            <td className="py-4 px-2 text-center">
                               <span className="text-lg font-semibold">
                                 {product.stock}
                               </span>
                             </td>
-                            <td className="py-4 px-4 text-center">
-                              <Badge className={`${status.color} text-white`}>
+                            <td className="py-4 px-2 text-center">
+                              <Badge className={`${status.color} text-white text-xs`}>
                                 {status.label}
                               </Badge>
                             </td>
-                            <td className="py-4 px-4 text-right text-gray-900">
-                              {parseFloat(product.price).toLocaleString()} ₫
+                            <td className="py-4 px-2 text-right text-gray-900">
+                              <div className="break-words">
+                                {parseFloat(product.price).toLocaleString()} ₫
+                              </div>
                             </td>
-                            <td className="py-4 px-4 text-right font-medium text-gray-900">
-                              {stockValue.toLocaleString()} ₫
+                            <td className="py-4 px-2 text-right font-medium text-gray-900">
+                              <div className="break-words">
+                                {stockValue.toLocaleString()} ₫
+                              </div>
                             </td>
-                            <td className="py-4 px-4 text-center">
+                            <td className="py-4 px-2 text-center">
                               <div className="flex gap-2 justify-center">
                                 <Button
                                   variant="outline"
