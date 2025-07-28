@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -17,7 +16,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { TrendingUp, FileText, Calendar } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import {
@@ -36,46 +42,50 @@ import {
 
 export function SalesChartReport() {
   const { t } = useTranslation();
-  
+
   const [concernType, setConcernType] = useState("time");
   const [startDate, setStartDate] = useState<string>(
-    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    new Date().toISOString().split("T")[0],
   );
   const [salesMethod, setSalesMethod] = useState("all");
   const [salesChannel, setSalesChannel] = useState("all");
 
   const { data: transactions } = useQuery({
-    queryKey: ['/api/transactions'],
+    queryKey: ["/api/transactions"],
   });
 
   const { data: employees } = useQuery({
-    queryKey: ['/api/employees'],
+    queryKey: ["/api/employees"],
   });
 
   const getFilteredData = () => {
     if (!transactions || !Array.isArray(transactions)) return [];
-    
+
     const filteredTransactions = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
-      
+
       const dateMatch = transactionDate >= start && transactionDate <= end;
-      
+
       // For now, we'll assume all transactions are "no delivery" and "direct"
       // In a real system, you would filter based on actual delivery and channel data
-      const methodMatch = salesMethod === "all" || 
-        (salesMethod === "no_delivery" && true) || 
+      const methodMatch =
+        salesMethod === "all" ||
+        (salesMethod === "no_delivery" && true) ||
         (salesMethod === "delivery" && false);
-      
-      const channelMatch = salesChannel === "all" || 
-        (salesChannel === "direct" && true) || 
+
+      const channelMatch =
+        salesChannel === "all" ||
+        (salesChannel === "direct" && true) ||
         (salesChannel === "other" && false);
-      
+
       return dateMatch && methodMatch && channelMatch;
     });
 
@@ -84,13 +94,16 @@ export function SalesChartReport() {
 
   const getReportTitle = () => {
     const concernTypes = {
-      time: t('reports.timeSalesReport'),
-      profit: t('reports.profitByInvoiceReport'),
-      discount: t('reports.invoiceDiscountReport'),
-      return: t('reports.returnByInvoiceReport'),
-      employee: t('reports.employeeSalesReport')
+      time: t("reports.timeSalesReport"),
+      profit: t("reports.profitByInvoiceReport"),
+      discount: t("reports.invoiceDiscountReport"),
+      return: t("reports.returnByInvoiceReport"),
+      employee: t("reports.employeeSalesReport"),
     };
-    return concernTypes[concernType as keyof typeof concernTypes] || t('reports.comprehensiveSalesReport');
+    return (
+      concernTypes[concernType as keyof typeof concernTypes] ||
+      t("reports.comprehensiveSalesReport")
+    );
   };
 
   const formatCurrency = (amount: number) => {
@@ -98,23 +111,27 @@ export function SalesChartReport() {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
+    return new Date(dateStr).toLocaleDateString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
     });
   };
 
   const renderTimeReport = () => {
     const filteredData = getFilteredData();
-    const dailyData: { [date: string]: { revenue: number; returnValue: number } } = {};
-    
+    const dailyData: {
+      [date: string]: { revenue: number; returnValue: number };
+    } = {};
+
     filteredData.forEach((transaction: any) => {
-      const date = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString('vi-VN');
+      const date = new Date(
+        transaction.createdAt || transaction.created_at,
+      ).toLocaleDateString("vi-VN");
       if (!dailyData[date]) {
         dailyData[date] = { revenue: 0, returnValue: 0 };
       }
-      
+
       const amount = Number(transaction.total);
       if (amount > 0) {
         dailyData[date].revenue += amount;
@@ -127,10 +144,10 @@ export function SalesChartReport() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t('reports.time')}</TableHead>
-            <TableHead>{t('reports.totalRevenue')}</TableHead>
-            <TableHead>{t('reports.returnValue')}</TableHead>
-            <TableHead>{t('reports.netRevenue')}</TableHead>
+            <TableHead>{t("reports.time")}</TableHead>
+            <TableHead>{t("reports.totalRevenue")}</TableHead>
+            <TableHead>{t("reports.returnValue")}</TableHead>
+            <TableHead>{t("reports.netRevenue")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -139,7 +156,9 @@ export function SalesChartReport() {
               <TableCell>{date}</TableCell>
               <TableCell>{formatCurrency(data.revenue)}</TableCell>
               <TableCell>{formatCurrency(data.returnValue)}</TableCell>
-              <TableCell>{formatCurrency(data.revenue - data.returnValue)}</TableCell>
+              <TableCell>
+                {formatCurrency(data.revenue - data.returnValue)}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -149,18 +168,27 @@ export function SalesChartReport() {
 
   const renderProfitReport = () => {
     const filteredData = getFilteredData();
-    const dailyData: { [date: string]: { totalAmount: number; discount: number; revenue: number; cost: number } } = {};
-    
+    const dailyData: {
+      [date: string]: {
+        totalAmount: number;
+        discount: number;
+        revenue: number;
+        cost: number;
+      };
+    } = {};
+
     filteredData.forEach((transaction: any) => {
-      const date = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString('vi-VN');
+      const date = new Date(
+        transaction.createdAt || transaction.created_at,
+      ).toLocaleDateString("vi-VN");
       if (!dailyData[date]) {
         dailyData[date] = { totalAmount: 0, discount: 0, revenue: 0, cost: 0 };
       }
-      
+
       const subtotal = Number(transaction.subtotal || transaction.total);
       const total = Number(transaction.total);
       const discount = subtotal - total;
-      
+
       dailyData[date].totalAmount += subtotal;
       dailyData[date].discount += discount;
       dailyData[date].revenue += total;
@@ -171,12 +199,12 @@ export function SalesChartReport() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t('reports.time')}</TableHead>
-            <TableHead>{t('reports.totalAmount')}</TableHead>
-            <TableHead>{t('reports.discount')}</TableHead>
-            <TableHead>{t('reports.revenue')}</TableHead>
-            <TableHead>{t('reports.totalCost')}</TableHead>
-            <TableHead>{t('reports.grossProfit')}</TableHead>
+            <TableHead>{t("reports.time")}</TableHead>
+            <TableHead>{t("reports.totalAmount")}</TableHead>
+            <TableHead>{t("reports.discount")}</TableHead>
+            <TableHead>{t("reports.revenue")}</TableHead>
+            <TableHead>{t("reports.totalCost")}</TableHead>
+            <TableHead>{t("reports.grossProfit")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -197,18 +225,26 @@ export function SalesChartReport() {
 
   const renderDiscountReport = () => {
     const filteredData = getFilteredData();
-    const dailyData: { [date: string]: { invoiceCount: number; invoiceValue: number; discount: number } } = {};
-    
+    const dailyData: {
+      [date: string]: {
+        invoiceCount: number;
+        invoiceValue: number;
+        discount: number;
+      };
+    } = {};
+
     filteredData.forEach((transaction: any) => {
-      const date = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString('vi-VN');
+      const date = new Date(
+        transaction.createdAt || transaction.created_at,
+      ).toLocaleDateString("vi-VN");
       if (!dailyData[date]) {
         dailyData[date] = { invoiceCount: 0, invoiceValue: 0, discount: 0 };
       }
-      
+
       const subtotal = Number(transaction.subtotal || transaction.total);
       const total = Number(transaction.total);
       const discount = subtotal - total;
-      
+
       dailyData[date].invoiceCount += 1;
       dailyData[date].invoiceValue += subtotal;
       dailyData[date].discount += discount;
@@ -218,10 +254,10 @@ export function SalesChartReport() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t('reports.time')}</TableHead>
-            <TableHead>{t('reports.totalInvoices')}</TableHead>
-            <TableHead>{t('reports.invoiceValue')}</TableHead>
-            <TableHead>{t('reports.invoiceDiscount')}</TableHead>
+            <TableHead>{t("reports.time")}</TableHead>
+            <TableHead>{t("reports.totalInvoices")}</TableHead>
+            <TableHead>{t("reports.invoiceValue")}</TableHead>
+            <TableHead>{t("reports.invoiceDiscount")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -240,13 +276,18 @@ export function SalesChartReport() {
 
   const renderReturnReport = () => {
     const filteredData = getFilteredData();
-    const dailyData: { [date: string]: { returnCount: number; returnValue: number } } = {};
-    
+    const dailyData: {
+      [date: string]: { returnCount: number; returnValue: number };
+    } = {};
+
     filteredData.forEach((transaction: any) => {
-      const date = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString('vi-VN');
+      const date = new Date(
+        transaction.createdAt || transaction.created_at,
+      ).toLocaleDateString("vi-VN");
       const amount = Number(transaction.total);
-      
-      if (amount < 0) { // Return transactions
+
+      if (amount < 0) {
+        // Return transactions
         if (!dailyData[date]) {
           dailyData[date] = { returnCount: 0, returnValue: 0 };
         }
@@ -259,9 +300,9 @@ export function SalesChartReport() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t('reports.time')}</TableHead>
-            <TableHead>{t('reports.returnTicketCount')}</TableHead>
-            <TableHead>{t('reports.returnValue')}</TableHead>
+            <TableHead>{t("reports.time")}</TableHead>
+            <TableHead>{t("reports.returnTicketCount")}</TableHead>
+            <TableHead>{t("reports.returnValue")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -276,7 +317,7 @@ export function SalesChartReport() {
           ) : (
             <TableRow>
               <TableCell colSpan={3} className="text-center text-gray-500">
-                {t('reports.noData')}
+                {t("reports.noData")}
               </TableCell>
             </TableRow>
           )}
@@ -287,14 +328,16 @@ export function SalesChartReport() {
 
   const renderEmployeeReport = () => {
     const filteredData = getFilteredData();
-    const employeeData: { [cashier: string]: { revenue: number; returnValue: number } } = {};
-    
+    const employeeData: {
+      [cashier: string]: { revenue: number; returnValue: number };
+    } = {};
+
     filteredData.forEach((transaction: any) => {
-      const cashier = transaction.cashierName || 'Unknown';
+      const cashier = transaction.cashierName || "Unknown";
       if (!employeeData[cashier]) {
         employeeData[cashier] = { revenue: 0, returnValue: 0 };
       }
-      
+
       const amount = Number(transaction.total);
       if (amount > 0) {
         employeeData[cashier].revenue += amount;
@@ -307,10 +350,10 @@ export function SalesChartReport() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t('reports.seller')}</TableHead>
-            <TableHead>{t('reports.totalRevenue')}</TableHead>
-            <TableHead>{t('reports.returnValue')}</TableHead>
-            <TableHead>{t('reports.netRevenue')}</TableHead>
+            <TableHead>{t("reports.seller")}</TableHead>
+            <TableHead>{t("reports.totalRevenue")}</TableHead>
+            <TableHead>{t("reports.returnValue")}</TableHead>
+            <TableHead>{t("reports.netRevenue")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -319,7 +362,9 @@ export function SalesChartReport() {
               <TableCell>{cashier}</TableCell>
               <TableCell>{formatCurrency(data.revenue)}</TableCell>
               <TableCell>{formatCurrency(data.returnValue)}</TableCell>
-              <TableCell>{formatCurrency(data.revenue - data.returnValue)}</TableCell>
+              <TableCell>
+                {formatCurrency(data.revenue - data.returnValue)}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -329,15 +374,15 @@ export function SalesChartReport() {
 
   const renderReportTable = () => {
     switch (concernType) {
-      case 'time':
+      case "time":
         return renderTimeReport();
-      case 'profit':
+      case "profit":
         return renderProfitReport();
-      case 'discount':
+      case "discount":
         return renderDiscountReport();
-      case 'return':
+      case "return":
         return renderReturnReport();
-      case 'employee':
+      case "employee":
         return renderEmployeeReport();
       default:
         return renderTimeReport();
@@ -345,22 +390,26 @@ export function SalesChartReport() {
   };
 
   const shouldShowChart = () => {
-    return ['time', 'profit', 'employee'].includes(concernType);
+    return ["time", "profit", "employee"].includes(concernType);
   };
 
   const getChartData = () => {
     const filteredData = getFilteredData();
-    
+
     switch (concernType) {
-      case 'time': {
-        const dailyData: { [date: string]: { revenue: number; returnValue: number } } = {};
-        
+      case "time": {
+        const dailyData: {
+          [date: string]: { revenue: number; returnValue: number };
+        } = {};
+
         filteredData.forEach((transaction: any) => {
-          const date = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString('vi-VN');
+          const date = new Date(
+            transaction.createdAt || transaction.created_at,
+          ).toLocaleDateString("vi-VN");
           if (!dailyData[date]) {
             dailyData[date] = { revenue: 0, returnValue: 0 };
           }
-          
+
           const amount = Number(transaction.total);
           if (amount > 0) {
             dailyData[date].revenue += amount;
@@ -376,20 +425,34 @@ export function SalesChartReport() {
           netRevenue: data.revenue - data.returnValue,
         }));
       }
-      
-      case 'profit': {
-        const dailyData: { [date: string]: { totalAmount: number; discount: number; revenue: number; cost: number } } = {};
-        
+
+      case "profit": {
+        const dailyData: {
+          [date: string]: {
+            totalAmount: number;
+            discount: number;
+            revenue: number;
+            cost: number;
+          };
+        } = {};
+
         filteredData.forEach((transaction: any) => {
-          const date = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString('vi-VN');
+          const date = new Date(
+            transaction.createdAt || transaction.created_at,
+          ).toLocaleDateString("vi-VN");
           if (!dailyData[date]) {
-            dailyData[date] = { totalAmount: 0, discount: 0, revenue: 0, cost: 0 };
+            dailyData[date] = {
+              totalAmount: 0,
+              discount: 0,
+              revenue: 0,
+              cost: 0,
+            };
           }
-          
+
           const subtotal = Number(transaction.subtotal || transaction.total);
           const total = Number(transaction.total);
           const discount = subtotal - total;
-          
+
           dailyData[date].totalAmount += subtotal;
           dailyData[date].discount += discount;
           dailyData[date].revenue += total;
@@ -403,16 +466,18 @@ export function SalesChartReport() {
           profit: data.revenue - data.cost,
         }));
       }
-      
-      case 'employee': {
-        const employeeData: { [cashier: string]: { revenue: number; returnValue: number } } = {};
-        
+
+      case "employee": {
+        const employeeData: {
+          [cashier: string]: { revenue: number; returnValue: number };
+        } = {};
+
         filteredData.forEach((transaction: any) => {
-          const cashier = transaction.cashierName || 'Unknown';
+          const cashier = transaction.cashierName || "Unknown";
           if (!employeeData[cashier]) {
             employeeData[cashier] = { revenue: 0, returnValue: 0 };
           }
-          
+
           const amount = Number(transaction.total);
           if (amount > 0) {
             employeeData[cashier].revenue += amount;
@@ -428,7 +493,7 @@ export function SalesChartReport() {
           netRevenue: data.revenue - data.returnValue,
         }));
       }
-      
+
       default:
         return [];
     }
@@ -436,48 +501,48 @@ export function SalesChartReport() {
 
   const getChartConfig = () => {
     switch (concernType) {
-      case 'time':
+      case "time":
         return {
           revenue: {
-            label: t('reports.totalRevenue'),
+            label: t("reports.totalRevenue"),
             color: "#10b981",
           },
           returnValue: {
-            label: t('reports.returnValue'),
+            label: t("reports.returnValue"),
             color: "#ef4444",
           },
           netRevenue: {
-            label: t('reports.netRevenue'),
+            label: t("reports.netRevenue"),
             color: "#3b82f6",
           },
         };
-      case 'profit':
+      case "profit":
         return {
           revenue: {
-            label: t('reports.revenue'),
+            label: t("reports.revenue"),
             color: "#10b981",
           },
           cost: {
-            label: t('reports.totalCost'),
+            label: t("reports.totalCost"),
             color: "#f59e0b",
           },
           profit: {
-            label: t('reports.grossProfit'),
+            label: t("reports.grossProfit"),
             color: "#3b82f6",
           },
         };
-      case 'employee':
+      case "employee":
         return {
           revenue: {
-            label: t('reports.totalRevenue'),
+            label: t("reports.totalRevenue"),
             color: "#10b981",
           },
           returnValue: {
-            label: t('reports.returnValue'),
+            label: t("reports.returnValue"),
             color: "#ef4444",
           },
           netRevenue: {
-            label: t('reports.netRevenue'),
+            label: t("reports.netRevenue"),
             color: "#3b82f6",
           },
         };
@@ -488,11 +553,10 @@ export function SalesChartReport() {
 
   const getTooltipLabel = (value: number, name: string) => {
     const chartConfig = getChartConfig();
-    const config = chartConfig[name as keyof typeof chartConfig] as { label: string };
-    return [
-      `${value.toLocaleString()} ₫`,
-      config?.label || name
-    ];
+    const config = chartConfig[name as keyof typeof chartConfig] as {
+      label: string;
+    };
+    return [`${value.toLocaleString()} ₫`, config?.label || name];
   };
 
   return (
@@ -502,7 +566,7 @@ export function SalesChartReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            {t('reports.salesChart')}
+            {t("reports.salesChart")}
           </CardTitle>
           <CardDescription>
             {t("reports.comprehensiveSalesReport")} - {getReportTitle()}
@@ -513,7 +577,7 @@ export function SalesChartReport() {
       {/* Filters */}
       <Card>
         <CardContent className="space-y-4 pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-4">
             {/* Concerns Filter */}
             <div>
               <Label>{t("reports.concernType")}</Label>
@@ -522,11 +586,21 @@ export function SalesChartReport() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="time">{t("reports.timeReport")}</SelectItem>
-                  <SelectItem value="profit">{t("reports.profitReport")}</SelectItem>
-                  <SelectItem value="discount">{t("reports.discountReport")}</SelectItem>
-                  <SelectItem value="return">{t("reports.returnReport")}</SelectItem>
-                  <SelectItem value="employee">{t("reports.employeeReport")}</SelectItem>
+                  <SelectItem value="time">
+                    {t("reports.timeReport")}
+                  </SelectItem>
+                  <SelectItem value="profit">
+                    {t("reports.profitReport")}
+                  </SelectItem>
+                  <SelectItem value="discount">
+                    {t("reports.discountReport")}
+                  </SelectItem>
+                  <SelectItem value="return">
+                    {t("reports.returnReport")}
+                  </SelectItem>
+                  <SelectItem value="employee">
+                    {t("reports.employeeReport")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -540,8 +614,12 @@ export function SalesChartReport() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("common.all")}</SelectItem>
-                  <SelectItem value="no_delivery">{t("reports.noDelivery")}</SelectItem>
-                  <SelectItem value="delivery">{t("reports.delivery")}</SelectItem>
+                  <SelectItem value="no_delivery">
+                    {t("reports.noDelivery")}
+                  </SelectItem>
+                  <SelectItem value="delivery">
+                    {t("reports.delivery")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -563,7 +641,7 @@ export function SalesChartReport() {
           </div>
 
           {/* Date Range */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <Label>{t("reports.startDate")}</Label>
               <Input
@@ -600,23 +678,27 @@ export function SalesChartReport() {
             <div className="h-96 w-full bg-white rounded-lg border border-green-100 p-4">
               <ChartContainer config={getChartConfig()}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart 
+                  <BarChart
                     data={getChartData()}
                     margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
                     barCategoryGap="20%"
                   >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.6} />
-                    <XAxis 
-                      dataKey="name" 
-                      tick={{ fontSize: 11, fill: '#374151' }}
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="#e5e7eb"
+                      opacity={0.6}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 11, fill: "#374151" }}
                       angle={-45}
                       textAnchor="end"
                       height={80}
                       interval={0}
                       tickMargin={10}
                     />
-                    <YAxis 
-                      tick={{ fontSize: 11, fill: '#374151' }}
+                    <YAxis
+                      tick={{ fontSize: 11, fill: "#374151" }}
                       tickFormatter={(value) => {
                         if (value >= 1000000) {
                           return `${(value / 1000000).toFixed(1)}M`;
@@ -627,90 +709,153 @@ export function SalesChartReport() {
                       }}
                       width={60}
                     />
-                    <ChartTooltip 
+                    <ChartTooltip
                       content={<ChartTooltipContent />}
                       formatter={getTooltipLabel}
-                      labelStyle={{ color: '#374151', fontWeight: 600 }}
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: '1px solid #d1d5db',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                      labelStyle={{ color: "#374151", fontWeight: 600 }}
+                      contentStyle={{
+                        backgroundColor: "white",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "8px",
+                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                       }}
                     />
-                    {concernType === 'time' && (
+                    {concernType === "time" && (
                       <>
-                        <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={60} />
-                        <Bar dataKey="returnValue" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={60} />
-                        <Bar dataKey="netRevenue" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                        <Bar
+                          dataKey="revenue"
+                          fill="#10b981"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="returnValue"
+                          fill="#ef4444"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="netRevenue"
+                          fill="#3b82f6"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
                       </>
                     )}
-                    {concernType === 'profit' && (
+                    {concernType === "profit" && (
                       <>
-                        <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={60} />
-                        <Bar dataKey="cost" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={60} />
-                        <Bar dataKey="profit" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                        <Bar
+                          dataKey="revenue"
+                          fill="#10b981"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="cost"
+                          fill="#f59e0b"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="profit"
+                          fill="#3b82f6"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
                       </>
                     )}
-                    {concernType === 'employee' && (
+                    {concernType === "employee" && (
                       <>
-                        <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={60} />
-                        <Bar dataKey="returnValue" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={60} />
-                        <Bar dataKey="netRevenue" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={60} />
+                        <Bar
+                          dataKey="revenue"
+                          fill="#10b981"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="returnValue"
+                          fill="#ef4444"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="netRevenue"
+                          fill="#3b82f6"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
                       </>
                     )}
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
             </div>
-            
+
             {/* Chart Legend */}
             <div className="mt-4 flex flex-wrap justify-center gap-4">
-              {concernType === 'time' && (
+              {concernType === "time" && (
                 <>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                    <span className="text-sm text-gray-600">{t('reports.totalRevenue')}</span>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.totalRevenue")}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-red-500"></div>
-                    <span className="text-sm text-gray-600">{t('reports.returnValue')}</span>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.returnValue")}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-blue-500"></div>
-                    <span className="text-sm text-gray-600">{t('reports.netRevenue')}</span>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.netRevenue")}
+                    </span>
                   </div>
                 </>
               )}
-              {concernType === 'profit' && (
+              {concernType === "profit" && (
                 <>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                    <span className="text-sm text-gray-600">{t('reports.revenue')}</span>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.revenue")}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-amber-500"></div>
-                    <span className="text-sm text-gray-600">{t('reports.totalCost')}</span>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.totalCost")}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-blue-500"></div>
-                    <span className="text-sm text-gray-600">{t('reports.grossProfit')}</span>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.grossProfit")}
+                    </span>
                   </div>
                 </>
               )}
-              {concernType === 'employee' && (
+              {concernType === "employee" && (
                 <>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                    <span className="text-sm text-gray-600">{t('reports.totalRevenue')}</span>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.totalRevenue")}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-red-500"></div>
-                    <span className="text-sm text-gray-600">{t('reports.returnValue')}</span>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.returnValue")}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-blue-500"></div>
-                    <span className="text-sm text-gray-600">{t('reports.netRevenue')}</span>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.netRevenue")}
+                    </span>
                   </div>
                 </>
               )}
@@ -727,12 +872,11 @@ export function SalesChartReport() {
             {getReportTitle()}
           </CardTitle>
           <CardDescription>
-            {t("reports.dataFrom")} {formatDate(startDate)} {t("reports.to")} {formatDate(endDate)}
+            {t("reports.dataFrom")} {formatDate(startDate)} {t("reports.to")}{" "}
+            {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          {renderReportTable()}
-        </CardContent>
+        <CardContent>{renderReportTable()}</CardContent>
       </Card>
     </div>
   );

@@ -60,7 +60,6 @@ export function ProductManagerModal({
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { toast } = useToast();
-  const { t } = useTranslation();
 
   const {
     data: products = [],
