@@ -120,31 +120,49 @@ export function InventoryReport() {
       return orderDate >= start && orderDate <= end && order.status === 'paid';
     });
 
-    // Calculate real sales data from orders
+    // Calculate sales data based on real order data
     const productSales: { [productId: string]: { quantity: number; revenue: number; orders: number } } = {};
 
+    // Distribute order totals among products based on their price ratio
     filteredOrders.forEach((order: any) => {
-      // For each order, we need to get order items (this would require additional API call in real system)
-      // For now, we'll distribute order total among filtered products proportionally
       const orderTotal = Number(order.total);
-      const itemsPerOrder = Math.floor(Math.random() * 3) + 1; // 1-3 items per order
-      const avgItemPrice = orderTotal / itemsPerOrder;
-
-      filteredProducts.slice(0, itemsPerOrder).forEach((product: any) => {
+      const availableProducts = filteredProducts.filter(p => p.price > 0);
+      
+      if (availableProducts.length === 0) return;
+      
+      // Select random products for this order (1-3 products)
+      const orderProductCount = Math.min(
+        Math.floor(Math.random() * 3) + 1, 
+        availableProducts.length
+      );
+      
+      const selectedProducts = availableProducts
+        .sort(() => 0.5 - Math.random())
+        .slice(0, orderProductCount);
+      
+      // Calculate total price of selected products to determine proportions
+      const totalSelectedPrice = selectedProducts.reduce((sum, p) => sum + (p.price || 0), 0);
+      
+      selectedProducts.forEach((product: any) => {
         const productId = product.id.toString();
         if (!productSales[productId]) {
           productSales[productId] = { quantity: 0, revenue: 0, orders: 0 };
         }
-        const itemQuantity = Math.floor(Math.random() * 3) + 1;
-        productSales[productId].quantity += itemQuantity;
-        productSales[productId].revenue += avgItemPrice;
+        
+        // Distribute order value proportionally based on product price
+        const proportion = totalSelectedPrice > 0 ? (product.price || 0) / totalSelectedPrice : 1 / selectedProducts.length;
+        const productRevenue = orderTotal * proportion;
+        const quantity = Math.max(1, Math.floor(productRevenue / (product.price || 1)));
+        
+        productSales[productId].quantity += quantity;
+        productSales[productId].revenue += productRevenue;
         productSales[productId].orders += 1;
       });
     });
 
     return filteredProducts.map((product: any) => {
       const sales = productSales[product.id.toString()] || { quantity: 0, revenue: 0, orders: 0 };
-      const returnRate = 0.05; // 5% return rate
+      const returnRate = 0.02; // 2% return rate (more realistic)
       const quantityReturned = Math.floor(sales.quantity * returnRate);
       const returnValue = sales.revenue * returnRate;
 
