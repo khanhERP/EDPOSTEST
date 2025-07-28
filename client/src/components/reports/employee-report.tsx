@@ -343,7 +343,7 @@ export function EmployeeReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            Báo cáo lợi nhuận theo nhân viên
+            {t("reports.employeeReport")}
           </CardTitle>
           <CardDescription>
             {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
