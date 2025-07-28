@@ -236,11 +236,11 @@ export function POSHeader() {
                       </button>
                       {reportsSubmenuOpen && (
                         <div 
-                          className="absolute top-0 right-full mr-0.5 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50"
+                          className="absolute top-0 right-full mr-0.5 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50 max-w-xs sm:max-w-none"
                         >
                           <Link href="/reports?tab=overview">
                             <button
-                              className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 transition-colors text-sm sm:text-base ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => {
@@ -248,13 +248,13 @@ export function POSHeader() {
                                 setPosMenuOpen(false);
                               }}
                             >
-                              <TrendingUp className="w-4 h-4 mr-3" />
-                              {t('reports.dashboard')}
+                              <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                              <span className="truncate">{t('reports.dashboard')}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=sales">
                             <button
-                              className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 transition-colors text-sm sm:text-base ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => {
@@ -262,13 +262,13 @@ export function POSHeader() {
                                 setPosMenuOpen(false);
                               }}
                             >
-                              <BarChart3 className="w-4 h-4 mr-3" />
-                              {t('reports.salesAnalysis')}
+                              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                              <span className="truncate">{t('reports.salesAnalysis')}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=saleschart">
                             <button
-                              className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 transition-colors text-sm sm:text-base ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => {
@@ -276,13 +276,13 @@ export function POSHeader() {
                                 setPosMenuOpen(false);
                               }}
                             >
-                              <BarChart3 className="w-4 h-4 mr-3" />
-                              {t('reports.salesChart')}
+                              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                              <span className="truncate">{t('reports.salesChart')}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=menu">
                             <button
-                              className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 transition-colors text-sm sm:text-base ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => {
@@ -290,13 +290,13 @@ export function POSHeader() {
                                 setPosMenuOpen(false);
                               }}
                             >
-                              <PieChart className="w-4 h-4 mr-3" />
-                              {t('reports.menuAnalysis')}
+                              <PieChart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                              <span className="truncate">{t('reports.menuAnalysis')}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=table">
                             <button
-                              className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 transition-colors text-sm sm:text-base ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => {
@@ -304,13 +304,13 @@ export function POSHeader() {
                                 setPosMenuOpen(false);
                               }}
                             >
-                              <Utensils className="w-4 h-4 mr-3" />
-                              {t('reports.tableAnalysis')}
+                              <Utensils className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                              <span className="truncate">{t('reports.tableAnalysis')}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=endofday">
                             <button
-                              className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 transition-colors text-sm sm:text-base ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
                               onClick={() => {
@@ -318,8 +318,8 @@ export function POSHeader() {
                                 setPosMenuOpen(false);
                               }}
                             >
-                              <FileText className="w-4 h-4 mr-3" />
-                              {t('reports.endOfDayReport')}
+                              <FileText className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                              <span className="truncate">{t('reports.endOfDayReport')}</span>
                             </button>
                           </Link>
                         </div>
