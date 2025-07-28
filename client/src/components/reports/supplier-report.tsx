@@ -73,113 +73,137 @@ export function SupplierReport() {
   };
 
   const getSupplierPurchaseData = () => {
-    if (!suppliers || !Array.isArray(suppliers)) return [];
+    if (!supplierPurchases || !Array.isArray(supplierPurchases)) return [];
 
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    // Mock purchase data based on suppliers
-    return suppliers
-      .filter((supplier: any) => {
+    return supplierPurchases
+      .filter((purchase: any) => {
+        // Date filter
+        const purchaseDate = new Date(purchase.createdAt || purchase.created_at);
+        const dateMatch = purchaseDate >= start && purchaseDate <= end;
+
+        // Supplier search filter
         const supplierMatch =
           !supplierSearch ||
-          (supplier.code &&
-            supplier.code.toLowerCase().includes(supplierSearch.toLowerCase())) ||
-          (supplier.name &&
-            supplier.name.toLowerCase().includes(supplierSearch.toLowerCase())) ||
-          (supplier.phone && supplier.phone.includes(supplierSearch));
+          (purchase.supplier?.code &&
+            purchase.supplier.code.toLowerCase().includes(supplierSearch.toLowerCase())) ||
+          (purchase.supplier?.name &&
+            purchase.supplier.name.toLowerCase().includes(supplierSearch.toLowerCase())) ||
+          (purchase.supplier?.phone && 
+            purchase.supplier.phone.includes(supplierSearch)) ||
+          (purchase.supplierCode &&
+            purchase.supplierCode.toLowerCase().includes(supplierSearch.toLowerCase())) ||
+          (purchase.supplierName &&
+            purchase.supplierName.toLowerCase().includes(supplierSearch.toLowerCase()));
 
-        return supplierMatch;
+        return dateMatch && supplierMatch;
       })
-      .map((supplier: any) => {
-        // Mock purchase values
-        const purchaseValue = Math.floor(Math.random() * 10000000) + 1000000;
-        const returnValue = Math.floor(Math.random() * 1000000);
-        const netValue = purchaseValue - returnValue;
-
-        return {
-          supplierCode: supplier.code || supplier.id,
-          supplierName: supplier.name,
-          purchaseValue,
-          returnValue,
-          netValue,
-        };
-      });
+      .map((purchase: any) => ({
+        supplierCode: purchase.supplier?.code || purchase.supplierCode || purchase.supplier?.id || "N/A",
+        supplierName: purchase.supplier?.name || purchase.supplierName || "Không xác định",
+        purchaseValue: Number(purchase.purchaseValue || purchase.totalValue || 0),
+        returnValue: Number(purchase.returnValue || 0),
+        netValue: Number(purchase.purchaseValue || purchase.totalValue || 0) - Number(purchase.returnValue || 0),
+      }));
   };
 
   const getSupplierDebtData = () => {
-    if (!suppliers || !Array.isArray(suppliers)) return [];
+    if (!supplierDebts || !Array.isArray(supplierDebts)) return [];
 
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    return suppliers
-      .filter((supplier: any) => {
+    return supplierDebts
+      .filter((debt: any) => {
+        // Date filter
+        const debtDate = new Date(debt.createdAt || debt.created_at);
+        const dateMatch = debtDate >= start && debtDate <= end;
+
+        // Supplier search filter
         const supplierMatch =
           !supplierSearch ||
-          (supplier.code &&
-            supplier.code.toLowerCase().includes(supplierSearch.toLowerCase())) ||
-          (supplier.name &&
-            supplier.name.toLowerCase().includes(supplierSearch.toLowerCase())) ||
-          (supplier.phone && supplier.phone.includes(supplierSearch));
+          (debt.supplier?.code &&
+            debt.supplier.code.toLowerCase().includes(supplierSearch.toLowerCase())) ||
+          (debt.supplier?.name &&
+            debt.supplier.name.toLowerCase().includes(supplierSearch.toLowerCase())) ||
+          (debt.supplier?.phone && 
+            debt.supplier.phone.includes(supplierSearch)) ||
+          (debt.supplierCode &&
+            debt.supplierCode.toLowerCase().includes(supplierSearch.toLowerCase())) ||
+          (debt.supplierName &&
+            debt.supplierName.toLowerCase().includes(supplierSearch.toLowerCase()));
 
-        return supplierMatch;
-      })
-      .map((supplier: any) => {
-        // Mock debt values
-        const openingDebt = Math.floor(Math.random() * 5000000);
-        const debitAmount = Math.floor(Math.random() * 3000000);
-        const creditAmount = Math.floor(Math.random() * 2000000);
-        const closingDebt = openingDebt + debitAmount - creditAmount;
+        // Debt amount filter
+        const debtAmountMatch = (() => {
+          if (!debtFrom && !debtTo) return true;
+          const from = debtFrom ? Number(debtFrom) : 0;
+          const to = debtTo ? Number(debtTo) : Infinity;
+          const closingDebt = Number(debt.closingDebt || 0);
+          return closingDebt >= from && closingDebt <= to;
+        })();
 
-        return {
-          supplierCode: supplier.code || supplier.id,
-          supplierName: supplier.name,
-          openingDebt,
-          debitAmount,
-          creditAmount,
-          closingDebt,
-        };
+        return dateMatch && supplierMatch && debtAmountMatch;
       })
-      .filter((debt) => {
-        if (!debtFrom && !debtTo) return true;
-        const from = debtFrom ? Number(debtFrom) : 0;
-        const to = debtTo ? Number(debtTo) : Infinity;
-        return debt.closingDebt >= from && debt.closingDebt <= to;
-      });
+      .map((debt: any) => ({
+        supplierCode: debt.supplier?.code || debt.supplierCode || debt.supplier?.id || "N/A",
+        supplierName: debt.supplier?.name || debt.supplierName || "Không xác định",
+        openingDebt: Number(debt.openingDebt || 0),
+        debitAmount: Number(debt.debitAmount || 0),
+        creditAmount: Number(debt.creditAmount || 0),
+        closingDebt: Number(debt.closingDebt || 0),
+      }));
   };
 
   const getSupplierProductData = () => {
-    if (!suppliers || !Array.isArray(suppliers)) return [];
+    if (!supplierPurchases || !Array.isArray(supplierPurchases)) return [];
 
-    return suppliers
-      .filter((supplier: any) => {
-        const supplierMatch =
-          !supplierSearch ||
-          (supplier.code &&
-            supplier.code.toLowerCase().includes(supplierSearch.toLowerCase())) ||
-          (supplier.name &&
-            supplier.name.toLowerCase().includes(supplierSearch.toLowerCase())) ||
-          (supplier.phone && supplier.phone.includes(supplierSearch));
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
 
-        return supplierMatch;
-      })
-      .map((supplier: any) => {
-        // Mock product purchase data
-        const productCount = Math.floor(Math.random() * 20) + 1;
-        const totalQuantity = Math.floor(Math.random() * 1000) + 100;
-        const totalValue = Math.floor(Math.random() * 10000000) + 1000000;
+    // Group purchases by supplier
+    const supplierProductMap = new Map();
 
-        return {
-          supplierCode: supplier.code || supplier.id,
-          supplierName: supplier.name,
-          productCount,
-          totalQuantity,
-          totalValue,
-        };
-      });
+    supplierPurchases.forEach((purchase: any) => {
+      const purchaseDate = new Date(purchase.createdAt || purchase.created_at);
+      const dateMatch = purchaseDate >= start && purchaseDate <= end;
+
+      if (!dateMatch) return;
+
+      const supplierCode = purchase.supplier?.code || purchase.supplierCode || purchase.supplier?.id || "N/A";
+      const supplierName = purchase.supplier?.name || purchase.supplierName || "Không xác định";
+      
+      // Supplier search filter
+      const supplierMatch =
+        !supplierSearch ||
+        supplierCode.toLowerCase().includes(supplierSearch.toLowerCase()) ||
+        supplierName.toLowerCase().includes(supplierSearch.toLowerCase()) ||
+        (purchase.supplier?.phone && purchase.supplier.phone.includes(supplierSearch));
+
+      if (!supplierMatch) return;
+
+      const key = supplierCode;
+      if (!supplierProductMap.has(key)) {
+        supplierProductMap.set(key, {
+          supplierCode,
+          supplierName,
+          productCount: 0,
+          totalQuantity: 0,
+          totalValue: 0,
+        });
+      }
+
+      const supplier = supplierProductMap.get(key);
+      supplier.productCount += Number(purchase.productCount || 1);
+      supplier.totalQuantity += Number(purchase.quantity || purchase.totalQuantity || 0);
+      supplier.totalValue += Number(purchase.totalValue || purchase.purchaseValue || 0);
+    });
+
+    return Array.from(supplierProductMap.values());
   };
 
   const renderPurchaseReport = () => {
