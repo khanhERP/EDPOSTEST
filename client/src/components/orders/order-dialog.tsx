@@ -421,7 +421,7 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
                   <>
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium text-gray-600">Món đã gọi trước đó:</h4>
-                      <div className="max-h-32 overflow-y-auto space-y-2">
+                      <div className="max-h-20 overflow-y-auto space-y-2">
                         {existingItems.map((item, index) => (
                           <Card key={`existing-${index}`} className="bg-gray-50">
                             <CardContent className="p-3">
