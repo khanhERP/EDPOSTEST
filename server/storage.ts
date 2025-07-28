@@ -211,7 +211,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProducts(): Promise<Product[]> {
-    return await db.select().from(products).where(eq(products.isActive, true));
+    const result = await db.select().from(products).where(eq(products.isActive, true));
+    // Ensure productType has a default value if missing
+    return result.map(product => ({
+      ...product,
+      productType: product.productType || 1
+    }));
   }
 
   async getProductsByCategory(categoryId: number): Promise<Product[]> {
@@ -303,7 +308,7 @@ export class DatabaseStorage implements IStorage {
         .delete(products)
         .where(eq(products.id, id))
         .returning();
-      
+
       return result.length > 0;
     } catch (error) {
       console.error("Error deleting product:", error);
@@ -1232,6 +1237,14 @@ export class DatabaseStorage implements IStorage {
           .where(eq(customers.id, customer.id));
       }
     }
+  }
+
+  async createProduct(productData: Omit<Product, "id">): Promise<Product> {
+    const [product] = await db.insert(products).values({
+      ...productData,
+      productType: productData.productType || 1
+    }).returning();
+    return product;
   }
 }
 

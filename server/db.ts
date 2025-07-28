@@ -49,6 +49,23 @@ export async function initializeSampleData() {
       console.log("Migration already applied or error:", migrationError);
     }
 
+    // Run migration for product_type column
+    try {
+      await db.execute(sql`
+        ALTER TABLE products ADD COLUMN IF NOT EXISTS product_type INTEGER DEFAULT 1
+      `);
+      await db.execute(sql`
+        UPDATE products SET product_type = 1 WHERE product_type IS NULL
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_products_product_type ON products(product_type)
+      `);
+      
+      console.log("Migration for product_type column completed successfully.");
+    } catch (migrationError) {
+      console.log("Product type migration already applied or error:", migrationError);
+    }
+
     // Check if customers table has data
     const customerCount = await db.select({ count: sql<number>`count(*)` }).from(customers);
     if (customerCount[0]?.count === 0) {
