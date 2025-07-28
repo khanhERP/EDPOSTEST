@@ -553,3 +553,5 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
         )}
       </DialogContent>
     </Dialog>
+  );
+}
