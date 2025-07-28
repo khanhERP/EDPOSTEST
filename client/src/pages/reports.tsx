@@ -59,53 +59,83 @@ export default function ReportsPage() {
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <div className="w-full overflow-x-auto">
-              <TabsList className="h-auto min-h-[40px] items-center justify-start rounded-md p-2 text-muted-foreground flex flex-wrap gap-1 bg-green-50 border border-green-200 w-full">
-                <TabsTrigger value="overview" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+              <TabsList className="h-auto min-h-[40px] items-center justify-start rounded-md p-2 text-muted-foreground flex flex-wrap gap-1 bg-white border border-green-200 w-full shadow-sm">
+                <TabsTrigger 
+                  value="overview" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
                   <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.dashboard')}</span>
                   <span className="sm:hidden">Dashboard</span>
                 </TabsTrigger>
-                <TabsTrigger value="sales" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                <TabsTrigger 
+                  value="sales" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.salesAnalysis')}</span>
                   <span className="sm:hidden">Sales</span>
                 </TabsTrigger>
-                <TabsTrigger value="saleschart" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                <TabsTrigger 
+                  value="saleschart" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.salesChart')}</span>
                   <span className="sm:hidden">Chart</span>
                 </TabsTrigger>
-                <TabsTrigger value="menu" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                <TabsTrigger 
+                  value="menu" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
                   <PieChart className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.menuAnalysis')}</span>
                   <span className="sm:hidden">Menu</span>
                 </TabsTrigger>
-                <TabsTrigger value="table" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                <TabsTrigger 
+                  value="table" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
                   <Utensils className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.tableAnalysis')}</span>
                   <span className="sm:hidden">Table</span>
                 </TabsTrigger>
-                <TabsTrigger value="endofday" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                <TabsTrigger 
+                  value="endofday" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
                   <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.endOfDayReportTab")}</span>
                   <span className="sm:hidden">EOD</span>
                 </TabsTrigger>
-                <TabsTrigger value="order" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                <TabsTrigger 
+                  value="order" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
                   <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.orderReportTab")}</span>
                   <span className="sm:hidden">Order</span>
                 </TabsTrigger>
-                <TabsTrigger value="inventory" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                <TabsTrigger 
+                  value="inventory" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
                   <Package className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.inventoryReport")}</span>
                   <span className="sm:hidden">Inventory</span>
                 </TabsTrigger>
-                <TabsTrigger value="customer" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                <TabsTrigger 
+                  value="customer" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
                   <Users className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.customerReportTab")}</span>
                   <span className="sm:hidden">Customer</span>
                 </TabsTrigger>
-                <TabsTrigger value="supplier" className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap">
+                <TabsTrigger 
+                  value="supplier" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
                   <Users className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.supplierReportTab")}</span>
                   <span className="sm:hidden">Supplier</span>
