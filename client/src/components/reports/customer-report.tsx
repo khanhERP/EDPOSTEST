@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -84,7 +83,7 @@ export function CustomerReport() {
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("vi-VN", {
       day: "2-digit",
-      month: "2-digit", 
+      month: "2-digit",
       year: "numeric",
     });
   };
@@ -100,10 +99,15 @@ export function CustomerReport() {
 
       const dateMatch = orderDate >= start && orderDate <= end;
 
-      const customerMatch = !customerSearch || 
-        (order.customerName && order.customerName.toLowerCase().includes(customerSearch.toLowerCase())) ||
+      const customerMatch =
+        !customerSearch ||
+        (order.customerName &&
+          order.customerName
+            .toLowerCase()
+            .includes(customerSearch.toLowerCase())) ||
         (order.customerPhone && order.customerPhone.includes(customerSearch)) ||
-        (order.customerId && order.customerId.toString().includes(customerSearch));
+        (order.customerId &&
+          order.customerId.toString().includes(customerSearch));
 
       return dateMatch && customerMatch && order.status === "paid";
     });
@@ -126,7 +130,7 @@ export function CustomerReport() {
     filteredOrders.forEach((order: any) => {
       const customerId = order.customerId || "guest";
       const customerName = order.customerName || "Khách lẻ";
-      
+
       if (!customerStats[customerId]) {
         customerStats[customerId] = {
           customer: {
@@ -168,7 +172,7 @@ export function CustomerReport() {
     filteredOrders.forEach((order: any) => {
       const customerId = order.customerId || "guest";
       const customerName = order.customerName || "Khách lẻ";
-      
+
       if (!customerStats[customerId]) {
         customerStats[customerId] = {
           customer: {
@@ -216,19 +220,25 @@ export function CustomerReport() {
       },
     ];
 
-    return mockDebtData.filter((debt) => {
-      if (!customerSearch) return true;
-      return (
-        debt.customer.id.toLowerCase().includes(customerSearch.toLowerCase()) ||
-        debt.customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
-        debt.customer.phone.includes(customerSearch)
-      );
-    }).filter((debt) => {
-      if (!debtFrom && !debtTo) return true;
-      const from = debtFrom ? Number(debtFrom) : 0;
-      const to = debtTo ? Number(debtTo) : Infinity;
-      return debt.closingDebt >= from && debt.closingDebt <= to;
-    });
+    return mockDebtData
+      .filter((debt) => {
+        if (!customerSearch) return true;
+        return (
+          debt.customer.id
+            .toLowerCase()
+            .includes(customerSearch.toLowerCase()) ||
+          debt.customer.name
+            .toLowerCase()
+            .includes(customerSearch.toLowerCase()) ||
+          debt.customer.phone.includes(customerSearch)
+        );
+      })
+      .filter((debt) => {
+        if (!debtFrom && !debtTo) return true;
+        const from = debtFrom ? Number(debtFrom) : 0;
+        const to = debtTo ? Number(debtTo) : Infinity;
+        return debt.closingDebt >= from && debt.closingDebt <= to;
+      });
   };
 
   const getCustomerProductSalesData = () => {
@@ -248,7 +258,7 @@ export function CustomerReport() {
       const customerId = order.customerId || "guest";
       const customerName = order.customerName || "Khách lẻ";
       const key = `${customerId}`;
-      
+
       if (!customerProductStats[key]) {
         customerProductStats[key] = {
           customer: {
@@ -276,28 +286,36 @@ export function CustomerReport() {
   const getChartData = () => {
     switch (concernType) {
       case "sales":
-        return getCustomerSalesData().slice(0, 10).map(item => ({
-          name: item.customer.name,
-          revenue: item.revenue,
-          netRevenue: item.netRevenue,
-        }));
+        return getCustomerSalesData()
+          .slice(0, 10)
+          .map((item) => ({
+            name: item.customer.name,
+            revenue: item.revenue,
+            netRevenue: item.netRevenue,
+          }));
       case "profit":
-        return getCustomerProfitData().slice(0, 10).map(item => ({
-          name: item.customer.name,
-          profit: item.grossProfit,
-          revenue: item.revenue,
-        }));
+        return getCustomerProfitData()
+          .slice(0, 10)
+          .map((item) => ({
+            name: item.customer.name,
+            profit: item.grossProfit,
+            revenue: item.revenue,
+          }));
       case "debt":
-        return getCustomerDebtData().slice(0, 10).map(item => ({
-          name: item.customer.name,
-          debt: item.closingDebt,
-        }));
+        return getCustomerDebtData()
+          .slice(0, 10)
+          .map((item) => ({
+            name: item.customer.name,
+            debt: item.closingDebt,
+          }));
       case "productSales":
-        return getCustomerProductSalesData().slice(0, 10).map(item => ({
-          name: item.customer.name,
-          quantity: item.purchaseQuantity,
-          revenue: item.revenue,
-        }));
+        return getCustomerProductSalesData()
+          .slice(0, 10)
+          .map((item) => ({
+            name: item.customer.name,
+            quantity: item.purchaseQuantity,
+            revenue: item.revenue,
+          }));
       default:
         return [];
     }
@@ -314,7 +332,8 @@ export function CustomerReport() {
             {t("reports.customerSalesReport")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -323,16 +342,24 @@ export function CustomerReport() {
               <TableRow>
                 <TableHead>{t("reports.customerId")}</TableHead>
                 <TableHead>{t("reports.customerName")}</TableHead>
-                <TableHead className="text-right">{t("reports.customerRevenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.customerReturnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.customerNetRevenue")}</TableHead>
+                <TableHead className="text-right">
+                  {t("reports.customerRevenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.customerReturnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.customerNetRevenue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.slice(0, 20).map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.customer.id}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.customer.id}
+                    </TableCell>
                     <TableCell>{item.customer.name}</TableCell>
                     <TableCell className="text-right text-green-600">
                       {formatCurrency(item.revenue)}
@@ -347,7 +374,10 @@ export function CustomerReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -370,7 +400,8 @@ export function CustomerReport() {
             {t("reports.customerProfitReport")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -378,13 +409,27 @@ export function CustomerReport() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.customerName")}</TableHead>
-                <TableHead className="text-right">{t("reports.totalProductValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.invoiceDiscount")}</TableHead>
-                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.customerReturnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.customerNetRevenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.totalCost")}</TableHead>
-                <TableHead className="text-right">{t("reports.grossProfit")}</TableHead>
+                <TableHead className="text-right">
+                  {t("reports.totalProductValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.invoiceDiscount")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.customerReturnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.customerNetRevenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.totalCost")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.grossProfit")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -392,18 +437,35 @@ export function CustomerReport() {
                 data.slice(0, 20).map((item, index) => (
                   <TableRow key={index}>
                     <TableCell>{item.customer.name}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.totalProductValue)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.invoiceDiscount)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.revenue)}</TableCell>
-                    <TableCell className="text-right text-red-600">{formatCurrency(item.returnValue)}</TableCell>
-                    <TableCell className="text-right text-blue-600">{formatCurrency(item.netRevenue)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.totalCost)}</TableCell>
-                    <TableCell className="text-right text-green-600">{formatCurrency(item.grossProfit)}</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.totalProductValue)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.invoiceDiscount)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.revenue)}
+                    </TableCell>
+                    <TableCell className="text-right text-red-600">
+                      {formatCurrency(item.returnValue)}
+                    </TableCell>
+                    <TableCell className="text-right text-blue-600">
+                      {formatCurrency(item.netRevenue)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.totalCost)}
+                    </TableCell>
+                    <TableCell className="text-right text-green-600">
+                      {formatCurrency(item.grossProfit)}
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={8}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -426,7 +488,8 @@ export function CustomerReport() {
             {t("reports.customerDebtReport")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -435,27 +498,48 @@ export function CustomerReport() {
               <TableRow>
                 <TableHead>{t("reports.customerId")}</TableHead>
                 <TableHead>{t("reports.customerName")}</TableHead>
-                <TableHead className="text-right">{t("reports.openingDebt")}</TableHead>
-                <TableHead className="text-right">{t("reports.debitAmount")}</TableHead>
-                <TableHead className="text-right">{t("reports.creditAmount")}</TableHead>
-                <TableHead className="text-right">{t("reports.closingDebt")}</TableHead>
+                <TableHead className="text-right">
+                  {t("reports.openingDebt")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.debitAmount")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.creditAmount")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.closingDebt")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.customer.id}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.customer.id}
+                    </TableCell>
                     <TableCell>{item.customer.name}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.openingDebt)}</TableCell>
-                    <TableCell className="text-right text-red-600">{formatCurrency(item.debitAmount)}</TableCell>
-                    <TableCell className="text-right text-green-600">{formatCurrency(item.creditAmount)}</TableCell>
-                    <TableCell className="text-right text-blue-600">{formatCurrency(item.closingDebt)}</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.openingDebt)}
+                    </TableCell>
+                    <TableCell className="text-right text-red-600">
+                      {formatCurrency(item.debitAmount)}
+                    </TableCell>
+                    <TableCell className="text-right text-green-600">
+                      {formatCurrency(item.creditAmount)}
+                    </TableCell>
+                    <TableCell className="text-right text-blue-600">
+                      {formatCurrency(item.closingDebt)}
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -478,7 +562,8 @@ export function CustomerReport() {
             {t("reports.customerProductSalesReport")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -487,29 +572,54 @@ export function CustomerReport() {
               <TableRow>
                 <TableHead>{t("reports.customerId")}</TableHead>
                 <TableHead>{t("reports.customerName")}</TableHead>
-                <TableHead className="text-center">{t("reports.customerPurchaseQuantity")}</TableHead>
-                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-center">{t("reports.customerReturnQuantity")}</TableHead>
-                <TableHead className="text-right">{t("reports.customerReturnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.customerNetRevenue")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.customerPurchaseQuantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.customerReturnQuantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.customerReturnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.customerNetRevenue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.slice(0, 20).map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.customer.id}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.customer.id}
+                    </TableCell>
                     <TableCell>{item.customer.name}</TableCell>
-                    <TableCell className="text-center">{item.purchaseQuantity}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.revenue)}</TableCell>
-                    <TableCell className="text-center">{item.returnQuantity}</TableCell>
-                    <TableCell className="text-right text-red-600">{formatCurrency(item.returnValue)}</TableCell>
-                    <TableCell className="text-right text-green-600">{formatCurrency(item.netRevenue)}</TableCell>
+                    <TableCell className="text-center">
+                      {item.purchaseQuantity}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.revenue)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.returnQuantity}
+                    </TableCell>
+                    <TableCell className="text-right text-red-600">
+                      {formatCurrency(item.returnValue)}
+                    </TableCell>
+                    <TableCell className="text-right text-green-600">
+                      {formatCurrency(item.netRevenue)}
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={7}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -567,10 +677,18 @@ export function CustomerReport() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sales">{t("reports.customerSales")}</SelectItem>
-                  <SelectItem value="profit">{t("reports.customerProfit")}</SelectItem>
-                  <SelectItem value="debt">{t("reports.customerDebt")}</SelectItem>
-                  <SelectItem value="productSales">{t("reports.customerProductSales")}</SelectItem>
+                  <SelectItem value="sales">
+                    {t("reports.customerSales")}
+                  </SelectItem>
+                  <SelectItem value="profit">
+                    {t("reports.customerProfit")}
+                  </SelectItem>
+                  <SelectItem value="debt">
+                    {t("reports.customerDebt")}
+                  </SelectItem>
+                  <SelectItem value="productSales">
+                    {t("reports.customerProductSales")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -579,15 +697,22 @@ export function CustomerReport() {
             {concernType === "productSales" && (
               <div>
                 <Label>{t("reports.productType")}</Label>
-                <Select value={selectedProductType} onValueChange={setSelectedProductType}>
+                <Select
+                  value={selectedProductType}
+                  onValueChange={setSelectedProductType}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={t("reports.productType")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t("common.all")}</SelectItem>
                     <SelectItem value="combo">{t("reports.combo")}</SelectItem>
-                    <SelectItem value="product">{t("reports.product")}</SelectItem>
-                    <SelectItem value="service">{t("reports.service")}</SelectItem>
+                    <SelectItem value="product">
+                      {t("reports.product")}
+                    </SelectItem>
+                    <SelectItem value="service">
+                      {t("reports.service")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -597,7 +722,10 @@ export function CustomerReport() {
             {concernType === "productSales" && (
               <div>
                 <Label>{t("reports.productGroup")}</Label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <Select
+                  value={selectedCategory}
+                  onValueChange={setSelectedCategory}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={t("reports.productGroup")} />
                   </SelectTrigger>
@@ -606,7 +734,10 @@ export function CustomerReport() {
                     {categories &&
                       Array.isArray(categories) &&
                       categories.map((category: any) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
+                        <SelectItem
+                          key={category.id}
+                          value={category.id.toString()}
+                        >
                           {category.name}
                         </SelectItem>
                       ))}
@@ -704,15 +835,19 @@ export function CustomerReport() {
                 {t("reports.chartView")}
               </div>
               <div className="text-white font-semibold">
-                {concernType === "sales" ? t("reports.customerSales") :
-                 concernType === "profit" ? t("reports.customerProfit") :
-                 concernType === "debt" ? t("reports.customerDebt") :
-                 t("reports.customerProductSales")}
+                {concernType === "sales"
+                  ? t("reports.customerSales")
+                  : concernType === "profit"
+                    ? t("reports.customerProfit")
+                    : concernType === "debt"
+                      ? t("reports.customerDebt")
+                      : t("reports.customerProductSales")}
               </div>
             </div>
           </CardTitle>
           <CardDescription className="text-blue-100 mt-2">
-            {t("reports.visualRepresentation")} - {t("reports.fromDate")}: {formatDate(startDate)} {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.visualRepresentation")} - {t("reports.fromDate")}:{" "}
+            {formatDate(startDate)} {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
@@ -722,7 +857,7 @@ export function CustomerReport() {
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
               Live Data
             </div>
-            
+
             <div className="relative z-10 h-full">
               <ChartContainer config={chartConfig}>
                 <ResponsiveContainer width="100%" height="100%">
@@ -732,13 +867,41 @@ export function CustomerReport() {
                     barCategoryGap="25%"
                   >
                     <defs>
-                      <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.6} />
+                      <linearGradient
+                        id="revenueGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#10b981"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#10b981"
+                          stopOpacity={0.6}
+                        />
                       </linearGradient>
-                      <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.6} />
+                      <linearGradient
+                        id="profitGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#3b82f6"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#3b82f6"
+                          stopOpacity={0.6}
+                        />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -775,19 +938,20 @@ export function CustomerReport() {
                     />
                     <ChartTooltip
                       content={<ChartTooltipContent />}
-                      labelStyle={{ 
-                        color: "#1e293b", 
+                      labelStyle={{
+                        color: "#1e293b",
                         fontWeight: 600,
                         fontSize: 13,
-                        marginBottom: 4
+                        marginBottom: 4,
                       }}
                       contentStyle={{
                         backgroundColor: "rgba(255, 255, 255, 0.98)",
                         border: "1px solid #e2e8f0",
                         borderRadius: "12px",
-                        boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.05)",
+                        boxShadow:
+                          "0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.05)",
                         padding: "12px 16px",
-                        backdropFilter: "blur(8px)"
+                        backdropFilter: "blur(8px)",
                       }}
                       cursor={{ fill: "rgba(59, 130, 246, 0.05)" }}
                     />
