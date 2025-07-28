@@ -153,11 +153,11 @@ export function EndOfDayReport() {
 
   const getDateDisplay = () => {
     if (concernType === "sales") {
-      return `Ngày bán: ${formatDate(startDate)}${dateType === "range" ? ` - Ngày thanh toán: ${formatDate(endDate)}` : ` - Ngày thanh toán: ${formatDate(startDate)}`}`;
+      return `${t("reports.saleDate")}: ${formatDate(startDate)}${dateType === "range" ? ` - ${t("reports.paymentDate")}: ${formatDate(endDate)}` : ` - ${t("reports.paymentDate")}: ${formatDate(startDate)}`}`;
     } else if (concernType === "revenue") {
-      return `Từ ngày: ${formatDate(startDate)}${dateType === "range" ? ` - Đến ngày: ${formatDate(endDate)}` : ` - Đến ngày: ${formatDate(startDate)}`}`;
+      return `${t("reports.fromDate")}: ${formatDate(startDate)}${dateType === "range" ? ` - ${t("reports.toDate")}: ${formatDate(endDate)}` : ` - ${t("reports.toDate")}: ${formatDate(startDate)}`}`;
     } else if (concernType === "inventory" || concernType === "summary") {
-      return `Ngày bán: ${formatDate(startDate)}${dateType === "range" ? ` - ${formatDate(endDate)}` : ""}`;
+      return `${t("reports.saleDate")}: ${formatDate(startDate)}${dateType === "range" ? ` - ${formatDate(endDate)}` : ""}`;
     }
     return "";
   };

@@ -218,6 +218,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inventoryReportTitle: '재고 보고서',
     summaryReportTitle: '요약 보고서',
 
+    // Date display labels
+    saleDate: '판매일',
+    paymentDate: '결제일',
+    fromDate: '시작일',
+    toDate: '종료일',
+
     // End of day report detailed table translations
     transactionTypeHeader: '거래 유형',
     orderNumberHeader: '주문 번호',
@@ -455,6 +461,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueReportTitle: 'Revenue Report',
     inventoryReportTitle: 'Inventory Report',
     summaryReportTitle: 'Summary Report',
+
+    // Date display labels
+    saleDate: 'Sale Date',
+    paymentDate: 'Payment Date',
+    fromDate: 'From Date',
+    toDate: 'To Date',
 
     // End of day report detailed table translations
     transactionTypeHeader: 'Transaction Type',
@@ -705,6 +717,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueReportTitle: 'Báo cáo thu chi',
     inventoryReportTitle: 'Báo cáo hàng hóa',
     summaryReportTitle: 'Báo cáo tổng hợp',
+
+    // Date display labels
+    saleDate: 'Ngày bán',
+    paymentDate: 'Ngày thanh toán',
+    fromDate: 'Từ ngày',
+    toDate: 'Đến ngày',
 
     // End of day report detailed table translations
     transactionTypeHeader: 'Loại giao dịch',
