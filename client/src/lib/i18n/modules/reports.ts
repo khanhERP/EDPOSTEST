@@ -443,7 +443,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     returnTicketCount: "SL Phiếu trả",
 
     // Chart related translations
-    chartView: "Xem biểu đồ",
     visualRepresentation: "Biểu diễn trực quan của dữ liệu",
 
     // Table headers for reports
@@ -1203,7 +1202,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inOutInventoryReport: "Báo cáo xuất nhập tồn",
     detailedInOutInventoryReport: "Báo cáo xuất nhập tồn chi tiết",
     disposalReport: "Báo cáo hàng hóa xuất hủy",
-    employeeSalesReport: "Báo cáo nhân viên theo hàng bán",
+    employeeSalesReport: "Báo cáo bán hàng theo nhân viên",
     customerSalesReport: "Báo cáo khách hàng theo hàng bán",
     supplierReportByProduct: "Báo cáo danh sách nhà cung cấp theo hàng nhập",
 
