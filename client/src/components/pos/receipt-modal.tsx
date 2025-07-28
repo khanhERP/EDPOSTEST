@@ -78,13 +78,13 @@ export function ReceiptModal({
             </div>
           </div>
 
-          <div className="text-center mb-4">
-            <p className="text-sm font-semibold mb-1">Easy Digital Point Of Sale Service</p>
-            <p className="text-sm">Main Store Location</p>
-            <p className="text-sm">123 Commerce St, City, State 12345</p>
-            <p className="text-sm mb-2">Phone: (555) 123-4567</p>
+          <div className="text-center mb-2">
+            <p className="text-xs font-semibold mb-0.5">Easy Digital Point Of Sale Service</p>
+            <p className="text-xs">Main Store Location</p>
+            <p className="text-xs">123 Commerce St, City, State 12345</p>
+            <p className="text-xs mb-1">Phone: (555) 123-4567</p>
             <div className="flex items-center justify-center">
-              <img src={logoPath} alt="EDPOS Logo" className="h-8" />
+              <img src={logoPath} alt="EDPOS Logo" className="h-6" />
             </div>
           </div>
 
