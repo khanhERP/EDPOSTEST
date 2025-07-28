@@ -241,7 +241,7 @@ export function POSHeader() {
                           <Link href="/reports?tab=overview">
                             <button
                               className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search.includes("tab=overview") ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                                location === "/reports" && window.location.search === "?tab=overview" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
                               }`}
                               onClick={() => {
                                 setReportsSubmenuOpen(false);
@@ -255,7 +255,7 @@ export function POSHeader() {
                           <Link href="/reports?tab=sales">
                             <button
                               className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search.includes("tab=sales") ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                                location === "/reports" && window.location.search === "?tab=sales" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
                               }`}
                               onClick={() => {
                                 setReportsSubmenuOpen(false);
@@ -269,7 +269,7 @@ export function POSHeader() {
                           <Link href="/reports?tab=saleschart">
                             <button
                               className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search.includes("tab=saleschart") ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                                location === "/reports" && window.location.search === "?tab=saleschart" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
                               }`}
                               onClick={() => {
                                 setReportsSubmenuOpen(false);
@@ -283,7 +283,7 @@ export function POSHeader() {
                           <Link href="/reports?tab=menu">
                             <button
                               className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search.includes("tab=menu") ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                                location === "/reports" && window.location.search === "?tab=menu" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
                               }`}
                               onClick={() => {
                                 setReportsSubmenuOpen(false);
@@ -297,7 +297,7 @@ export function POSHeader() {
                           <Link href="/reports?tab=table">
                             <button
                               className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search.includes("tab=table") ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                                location === "/reports" && window.location.search === "?tab=table" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
                               }`}
                               onClick={() => {
                                 setReportsSubmenuOpen(false);
@@ -311,7 +311,7 @@ export function POSHeader() {
                           <Link href="/reports?tab=endofday">
                             <button
                               className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search.includes("tab=endofday") ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                                location === "/reports" && window.location.search === "?tab=endofday" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
                               }`}
                               onClick={() => {
                                 setReportsSubmenuOpen(false);
