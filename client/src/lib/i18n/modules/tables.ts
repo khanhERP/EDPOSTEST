@@ -248,6 +248,9 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     materialType: "Nguyên vật liệu", 
     finishedProductType: "Thành phẩm",
     imageUrlOptional: "URL hình ảnh (tùy chọn)",
+    confirmDeleteProduct: "Bạn có chắc chắn muốn xóa sản phẩm này?",
+    productNameRequired: "Tên sản phẩm là bắt buộc",
+    skuRequired: "SKU là bắt buộc",
   },
   ko: {
     title: "테이블 관리",
@@ -544,5 +547,8 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     materialType: "Nguyên vật liệu", 
     finishedProductType: "Thành phẩm",
     imageUrlOptional: "URL hình ảnh (tùy chọn)",
+    confirmDeleteProduct: "Bạn có chắc chắn muốn xóa sản phẩm này?",
+    productNameRequired: "Tên sản phẩm là bắt buộc",
+    skuRequired: "SKU là bắt buộc",
   },
 };
