@@ -104,10 +104,13 @@ export function EmployeeReport() {
     end.setHours(23, 59, 59, 999);
 
     return transactions.filter((transaction: any) => {
-      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
       const dateMatch = transactionDate >= start && transactionDate <= end;
 
-      const employeeMatch = selectedEmployee === "all" || 
+      const employeeMatch =
+        selectedEmployee === "all" ||
         transaction.cashierName === selectedEmployee ||
         transaction.employeeId?.toString() === selectedEmployee ||
         transaction.cashierName?.includes(selectedEmployee);
@@ -119,13 +122,23 @@ export function EmployeeReport() {
   // Sales Report Data
   const getSalesReportData = () => {
     const filteredTransactions = getFilteredTransactions();
-    const employeeSales: { [employeeName: string]: { revenue: number; returnValue: number; netRevenue: number } } = {};
+    const employeeSales: {
+      [employeeName: string]: {
+        revenue: number;
+        returnValue: number;
+        netRevenue: number;
+      };
+    } = {};
 
     filteredTransactions.forEach((transaction: any) => {
       const employeeName = transaction.cashierName || "Unknown";
 
       if (!employeeSales[employeeName]) {
-        employeeSales[employeeName] = { revenue: 0, returnValue: 0, netRevenue: 0 };
+        employeeSales[employeeName] = {
+          revenue: 0,
+          returnValue: 0,
+          netRevenue: 0,
+        };
       }
 
       const amount = Number(transaction.total);
@@ -135,22 +148,24 @@ export function EmployeeReport() {
 
     return Object.entries(employeeSales).map(([employee, data]) => ({
       employee,
-      ...data
+      ...data,
     }));
   };
 
   // Profit Report Data
   const getProfitReportData = () => {
     const filteredTransactions = getFilteredTransactions();
-    const employeeProfit: { [employeeName: string]: {
-      totalAmount: number;
-      discount: number;
-      revenue: number;
-      returnValue: number;
-      netRevenue: number;
-      totalCost: number;
-      grossProfit: number;
-    } } = {};
+    const employeeProfit: {
+      [employeeName: string]: {
+        totalAmount: number;
+        discount: number;
+        revenue: number;
+        returnValue: number;
+        netRevenue: number;
+        totalCost: number;
+        grossProfit: number;
+      };
+    } = {};
 
     filteredTransactions.forEach((transaction: any) => {
       const employeeName = transaction.cashierName || "Unknown";
@@ -174,25 +189,27 @@ export function EmployeeReport() {
       employeeProfit[employeeName].revenue += amount;
       employeeProfit[employeeName].netRevenue += amount;
       employeeProfit[employeeName].totalCost += estimatedCost;
-      employeeProfit[employeeName].grossProfit += (amount - estimatedCost);
+      employeeProfit[employeeName].grossProfit += amount - estimatedCost;
     });
 
     return Object.entries(employeeProfit).map(([employee, data]) => ({
       employee,
-      ...data
+      ...data,
     }));
   };
 
   // Product Sales by Employee Data
   const getProductSalesData = () => {
     const filteredTransactions = getFilteredTransactions();
-    const employeeProductSales: { [employeeName: string]: {
-      quantitySold: number;
-      revenue: number;
-      returnQuantity: number;
-      returnValue: number;
-      netRevenue: number;
-    } } = {};
+    const employeeProductSales: {
+      [employeeName: string]: {
+        quantitySold: number;
+        revenue: number;
+        returnQuantity: number;
+        returnValue: number;
+        netRevenue: number;
+      };
+    } = {};
 
     filteredTransactions.forEach((transaction: any) => {
       const employeeName = transaction.cashierName || "Unknown";
@@ -215,25 +232,25 @@ export function EmployeeReport() {
 
     return Object.entries(employeeProductSales).map(([employee, data]) => ({
       employee,
-      ...data
+      ...data,
     }));
   };
 
   const getChartData = () => {
     if (concernType === "sales") {
-      return getSalesReportData().map(item => ({
+      return getSalesReportData().map((item) => ({
         name: item.employee,
         revenue: item.revenue,
         netRevenue: item.netRevenue,
       }));
     } else if (concernType === "profit") {
-      return getProfitReportData().map(item => ({
+      return getProfitReportData().map((item) => ({
         name: item.employee,
         revenue: item.revenue,
         grossProfit: item.grossProfit,
       }));
     } else {
-      return getProductSalesData().map(item => ({
+      return getProductSalesData().map((item) => ({
         name: item.employee,
         quantitySold: item.quantitySold,
         revenue: item.revenue,
@@ -273,16 +290,24 @@ export function EmployeeReport() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.seller")}</TableHead>
-                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.employee}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.employee}
+                    </TableCell>
                     <TableCell className="text-right text-green-600">
                       {formatCurrency(item.revenue)}
                     </TableCell>
@@ -296,7 +321,10 @@ export function EmployeeReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={4}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -327,20 +355,36 @@ export function EmployeeReport() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.employee")}</TableHead>
-                <TableHead className="text-right">{t("reports.totalAmount")}</TableHead>
-                <TableHead className="text-right">{t("reports.discount")}</TableHead>
-                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.totalCost")}</TableHead>
-                <TableHead className="text-right">{t("reports.grossProfit")}</TableHead>
+                <TableHead className="text-right">
+                  {t("reports.totalAmount")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.discount")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.totalCost")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.grossProfit")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.employee}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.employee}
+                    </TableCell>
                     <TableCell className="text-right">
                       {formatCurrency(item.totalAmount)}
                     </TableCell>
@@ -366,7 +410,10 @@ export function EmployeeReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={8}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -397,23 +444,39 @@ export function EmployeeReport() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.seller")}</TableHead>
-                <TableHead className="text-center">{t("reports.quantitySold")}</TableHead>
-                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-center">{t("reports.returnQuantity")}</TableHead>
-                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.quantitySold")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.returnQuantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
                 data.map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell className="font-medium">{item.employee}</TableCell>
-                    <TableCell className="text-center">{item.quantitySold}</TableCell>
+                    <TableCell className="font-medium">
+                      {item.employee}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.quantitySold}
+                    </TableCell>
                     <TableCell className="text-right text-green-600">
                       {formatCurrency(item.revenue)}
                     </TableCell>
-                    <TableCell className="text-center">{item.returnQuantity}</TableCell>
+                    <TableCell className="text-center">
+                      {item.returnQuantity}
+                    </TableCell>
                     <TableCell className="text-right text-red-600">
                       {formatCurrency(item.returnValue)}
                     </TableCell>
@@ -424,7 +487,10 @@ export function EmployeeReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-gray-500 italic">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-gray-500 italic"
+                  >
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -482,12 +548,8 @@ export function EmployeeReport() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sales">
-                    {t("reports.sales")}
-                  </SelectItem>
-                  <SelectItem value="profit">
-                    {t("reports.profit")}
-                  </SelectItem>
+                  <SelectItem value="sales">{t("reports.sales")}</SelectItem>
+                  <SelectItem value="profit">{t("reports.profit")}</SelectItem>
                   <SelectItem value="productSales">
                     Hàng bán theo nhân viên
                   </SelectItem>
@@ -499,7 +561,10 @@ export function EmployeeReport() {
             {concernType === "sales" && (
               <div>
                 <Label>{t("reports.seller")}</Label>
-                <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                <Select
+                  value={selectedEmployee}
+                  onValueChange={setSelectedEmployee}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={t("reports.seller")} />
                   </SelectTrigger>
@@ -560,8 +625,12 @@ export function EmployeeReport() {
                   <SelectContent>
                     <SelectItem value="all">{t("common.all")}</SelectItem>
                     <SelectItem value="combo">{t("reports.combo")}</SelectItem>
-                    <SelectItem value="product">{t("reports.product")}</SelectItem>
-                    <SelectItem value="service">{t("reports.service")}</SelectItem>
+                    <SelectItem value="product">
+                      {t("reports.product")}
+                    </SelectItem>
+                    <SelectItem value="service">
+                      {t("reports.service")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -569,7 +638,10 @@ export function EmployeeReport() {
               {/* Category */}
               <div>
                 <Label>{t("reports.productGroup")}</Label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <Select
+                  value={selectedCategory}
+                  onValueChange={setSelectedCategory}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={t("reports.productGroup")} />
                   </SelectTrigger>
@@ -578,7 +650,10 @@ export function EmployeeReport() {
                     {categories &&
                       Array.isArray(categories) &&
                       categories.map((category: any) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
+                        <SelectItem
+                          key={category.id}
+                          value={category.id.toString()}
+                        >
                           {category.name}
                         </SelectItem>
                       ))}
@@ -589,7 +664,10 @@ export function EmployeeReport() {
               {/* Employee */}
               <div>
                 <Label>{t("reports.seller")}</Label>
-                <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                <Select
+                  value={selectedEmployee}
+                  onValueChange={setSelectedEmployee}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder={t("reports.seller")} />
                   </SelectTrigger>
@@ -609,7 +687,7 @@ export function EmployeeReport() {
           )}
 
           {/* Date Range */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div>
               <Label>{t("reports.startDate")}</Label>
               <Input
@@ -641,13 +719,12 @@ export function EmployeeReport() {
               <div className="text-white/90 text-sm font-normal">
                 {t("reports.chartView")}
               </div>
-              <div className="text-white font-semibold">
-                {getReportTitle()}
-              </div>
+              <div className="text-white font-semibold">{getReportTitle()}</div>
             </div>
           </CardTitle>
           <CardDescription className="text-blue-100 mt-2">
-            {t("reports.visualRepresentation")} - {t("reports.fromDate")}: {formatDate(startDate)} {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.visualRepresentation")} - {t("reports.fromDate")}:{" "}
+            {formatDate(startDate)} {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
@@ -663,21 +740,77 @@ export function EmployeeReport() {
                     barCategoryGap="25%"
                   >
                     <defs>
-                      <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.6} />
+                      <linearGradient
+                        id="revenueGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#10b981"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#10b981"
+                          stopOpacity={0.6}
+                        />
                       </linearGradient>
-                      <linearGradient id="netRevenueGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.6} />
+                      <linearGradient
+                        id="netRevenueGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#3b82f6"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#3b82f6"
+                          stopOpacity={0.6}
+                        />
                       </linearGradient>
-                      <linearGradient id="profitGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.6} />
+                      <linearGradient
+                        id="profitGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#8b5cf6"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#8b5cf6"
+                          stopOpacity={0.6}
+                        />
                       </linearGradient>
-                      <linearGradient id="quantityGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
-                        <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.6} />
+                      <linearGradient
+                        id="quantityGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#f59e0b"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#f59e0b"
+                          stopOpacity={0.6}
+                        />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
