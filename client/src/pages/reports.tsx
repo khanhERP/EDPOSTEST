@@ -8,6 +8,7 @@ import { TableReport } from "@/components/reports/table-report";
 import { DashboardOverview } from "@/components/reports/dashboard-overview";
 import { EndOfDayReport } from "@/components/reports/end-of-day-report";
 import { OrderReport } from "@/components/reports/order-report";
+import { InventoryReport } from "@/components/reports/inventory-report";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
