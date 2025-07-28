@@ -4,6 +4,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -515,10 +516,10 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
 
           </div>
 
-        {/* Fixed Summary Footer - Horizontal layout at bottom right */}
+        {/* DialogFooter with Summary and Order Button */}
         {cart.length > 0 && (
-          <div className="absolute bottom-4 right-4 bg-white border rounded-lg shadow-2xl p-4 z-10">
-            <div className="flex items-center gap-6">
+          <DialogFooter className="pt-6">
+            <div className="flex items-center justify-between w-full">
               {/* Summary items in horizontal layout */}
               <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
@@ -542,15 +543,16 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
               {/* Action button */}
               <Button
                 onClick={handlePlaceOrder}
-                className="ml-4"
                 disabled={createOrderMutation.isPending}
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
+                size="lg"
               >
                 {createOrderMutation.isPending
                   ? (mode === "edit" ? "Đang cập nhật..." : t("tables.placing"))
                   : (mode === "edit" ? "Cập nhật đơn hàng" : t("tables.placeOrder"))}
               </Button>
             </div>
-          </div>
+          </DialogFooter>
         )}
       </DialogContent>
     </Dialog>
