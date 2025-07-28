@@ -7,10 +7,11 @@ import { MenuReport } from "@/components/reports/menu-report";
 import { TableReport } from "@/components/reports/table-report";
 import { DashboardOverview } from "@/components/reports/dashboard-overview";
 import { EndOfDayReport } from "@/components/reports/end-of-day-report";
+import { OrderReport } from "@/components/reports/order-report";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, PieChart, TrendingUp, Utensils, Package, Users, Calendar, FileText } from "lucide-react";
+import { BarChart3, PieChart, TrendingUp, Utensils, Package, Users, Calendar, FileText, ShoppingCart } from "lucide-react";
 import { Link, useSearch } from "wouter";
 import { useTranslation } from "@/lib/i18n";
 
@@ -22,7 +23,7 @@ export default function ReportsPage() {
   useEffect(() => {
     const params = new URLSearchParams(search);
     const tab = params.get('tab');
-    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday'].includes(tab)) {
+    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday', 'order'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [search]);
@@ -54,7 +55,7 @@ export default function ReportsPage() {
 
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="h-10 items-center justify-center rounded-md p-1 text-muted-foreground grid w-full grid-cols-6 bg-[#4ed17e] hidden">
+            <TabsList className="h-10 items-center justify-center rounded-md p-1 text-muted-foreground grid w-full grid-cols-7 bg-[#4ed17e] hidden">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />
                 {t('reports.dashboard')}
@@ -78,6 +79,10 @@ export default function ReportsPage() {
               <TabsTrigger value="endofday" className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
                 {t("reports.endOfDayReportTab")}
+              </TabsTrigger>
+              <TabsTrigger value="order" className="flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4" />
+                {t("reports.orderReportTab")}
               </TabsTrigger>
             </TabsList>
 
@@ -103,6 +108,10 @@ export default function ReportsPage() {
 
             <TabsContent value="endofday">
               <EndOfDayReport />
+            </TabsContent>
+
+            <TabsContent value="order">
+              <OrderReport />
             </TabsContent>
           </Tabs>
         </div>
