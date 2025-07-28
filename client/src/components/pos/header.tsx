@@ -216,7 +216,7 @@ export function POSHeader() {
                       onClick={() => setPosMenuOpen(false)}
                     >
                       <Home className="w-4 h-4 mr-3" />
-                      {t('nav.pos')}
+                      Bán hàng
                     </button>
                   </Link>
 
