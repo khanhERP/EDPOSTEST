@@ -457,16 +457,6 @@ export default function InventoryPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleCleanupInactiveProducts}
-                  className="text-red-600 border-red-300 hover:bg-red-50"
-                  disabled={cleanupMutation.isPending}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  {cleanupMutation.isPending ? "Đang xóa..." : "Xóa sản phẩm vô hiệu"}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
                   onClick={() => {
                     // Create a placeholder product for adding new items
                     const newProduct: Product = {
