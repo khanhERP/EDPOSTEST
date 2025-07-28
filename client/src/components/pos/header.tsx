@@ -7,10 +7,7 @@ import { useTranslation } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { type StoreSettings, type Employee, type AttendanceRecord } from "@shared/schema";
 import {
-  TrendingUp,
-  PieChart,
-  FileText,
-  ShoppingCart
+  PieChart
 } from "lucide-react";
 import {
   Search,
@@ -21,20 +18,13 @@ import {
   Calendar,
   TrendingUp,
   DollarSign,
-  Package,
-  Users as UsersIcon,
   FileText as ReportsIcon,
   ShoppingCart as CartIcon,
-  ChevronDown,
-  Users,
   FileText,
   ShoppingCart,
   Package2,
-  BarChart3,
-  Settings as SettingsIcon,
   UserCheck,
   Truck,
-  Building2,
 } from "lucide-react";
 
 export function POSHeader() {
@@ -469,4 +459,3 @@ export function POSHeader() {
     </header>
   );
 }
-</replit_final_file>
