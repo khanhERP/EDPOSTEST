@@ -512,14 +512,15 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
               )}
             </div>
           </div>
-        </div>
 
-        {/* Summary Footer Container - Below main content */}
+          </div>
+
+        {/* Fixed Summary Footer - Horizontal layout at bottom right */}
         {cart.length > 0 && (
-          <div className="mt-4 p-4 bg-gray-50 border-t">
-            <div className="flex items-center justify-between">
+          <div className="absolute bottom-4 right-4 bg-white border rounded-lg shadow-2xl p-4 z-10">
+            <div className="flex items-center gap-6">
               {/* Summary items in horizontal layout */}
-              <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600">{t("tables.subtotalLabel")}</span>
                   <span className="font-medium">{calculateTotal().toLocaleString()} ₫</span>
@@ -537,12 +538,12 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
                   </span>
                 </div>
               </div>
-
+              
               {/* Action button */}
               <Button
                 onClick={handlePlaceOrder}
+                className="ml-4"
                 disabled={createOrderMutation.isPending}
-                className="bg-green-600 hover:bg-green-700 text-white font-medium transition-colors duration-200"
               >
                 {createOrderMutation.isPending
                   ? (mode === "edit" ? "Đang cập nhật..." : t("tables.placing"))
