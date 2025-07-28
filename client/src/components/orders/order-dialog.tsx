@@ -515,36 +515,41 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
 
           </div>
 
-        {/* Fixed Summary Popup - Inside DialogContent at bottom right */}
+        {/* Fixed Summary Footer - Horizontal layout at bottom right */}
         {cart.length > 0 && (
-          <div className="absolute bottom-4 right-4 bg-white border rounded-lg shadow-2xl p-4 min-w-[300px] z-10">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>{t("tables.subtotalLabel")}</span>
-                <span>{calculateTotal().toLocaleString()} ₫</span>
+          <div className="absolute bottom-4 right-4 bg-white border rounded-lg shadow-2xl p-4 z-10">
+            <div className="flex items-center gap-6">
+              {/* Summary items in horizontal layout */}
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600">{t("tables.subtotalLabel")}</span>
+                  <span className="font-medium">{calculateTotal().toLocaleString()} ₫</span>
+                </div>
+                <div className="w-px h-4 bg-gray-300"></div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600">{t("tables.taxLabel")}</span>
+                  <span className="font-medium">{Math.round(calculateTax()).toLocaleString()} ₫</span>
+                </div>
+                <div className="w-px h-4 bg-gray-300"></div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600 font-bold">{t("tables.totalLabel")}</span>
+                  <span className="font-bold text-lg text-blue-600">
+                    {Math.round(calculateGrandTotal()).toLocaleString()} ₫
+                  </span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm">
-                <span>{t("tables.taxLabel")}</span>
-                <span>{Math.round(calculateTax()).toLocaleString()} ₫</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between font-bold">
-                <span>{t("tables.totalLabel")}</span>
-                <span>
-                  {Math.round(calculateGrandTotal()).toLocaleString()} ₫
-                </span>
-              </div>
+              
+              {/* Action button */}
+              <Button
+                onClick={handlePlaceOrder}
+                className="ml-4"
+                disabled={createOrderMutation.isPending}
+              >
+                {createOrderMutation.isPending
+                  ? (mode === "edit" ? "Đang cập nhật..." : t("tables.placing"))
+                  : (mode === "edit" ? "Cập nhật đơn hàng" : t("tables.placeOrder"))}
+              </Button>
             </div>
-
-            <Button
-              onClick={handlePlaceOrder}
-              className="w-full mt-4"
-              disabled={createOrderMutation.isPending}
-            >
-              {createOrderMutation.isPending
-                ? (mode === "edit" ? "Đang cập nhật..." : t("tables.placing"))
-                : (mode === "edit" ? "Cập nhật đơn hàng" : t("tables.placeOrder"))}
-            </Button>
           </div>
         )}
       </DialogContent>
