@@ -296,9 +296,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     supplierProductPurchaseReportTitle: 'Product Purchase List Report by Supplier',
     supplierOverviewChart: 'Biểu đồ tổng quan nhà cung cấp (Nhập hàng & Công nợ)',
 
+    // Supplier table headers
+    supplierCode: 'Mã nhà cung cấp',
+    supplierName: 'Tên nhà cung cấp',
+    purchaseValue: 'Giá trị nhập',
+
     // Customer report
-    customerReport: '고객 보고서',
-    customerReportTab: '고객 보고서',
+    customerReport: 'Báo cáo khách hàng',
+    customerReportTab: 'Báo cáo khách hàng',
     customerReportDescription: '고객 및 매출 분석',
     customerConcernType: '관심사 유형',
     customerSales: '매출',
@@ -415,7 +420,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscountReport: 'Báo cáo tổng hợp giảm giá hóa đơn',
     returnByInvoiceReport: 'Báo cáo trả hàng theo hóa đơn',
     employeeSalesReport: 'Báo cáo bán hàng theo nhân viên',
-    returnValue: 'Giá trị trả',
     netRevenue: 'Doanh thu thuần',
     totalAmount: 'Tổng tiền hàng',
     discount: 'Giảm giá',
@@ -695,7 +699,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     supplierDebtReportTitle: 'Debt Report by Supplier', 
     supplierProductPurchaseReportTitle: 'Product Purchase List Report by Supplier',
     supplierOverviewChart: 'Supplier Overview Chart (Purchase & Debt)',
-    
+
     // Supplier table headers
     supplierCode: 'Supplier Code',
     supplierName: 'Supplier Name',
@@ -1099,7 +1103,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     supplierDebtChart: 'Biểu đồ công nợ nhà cung cấp',
     supplierDebtReportTitle: 'Báo cáo công nợ theo nhà cung cấp',
     supplierProductPurchaseReportTitle: 'Báo cáo danh sách hàng nhập theo nhà cung cấp',
-    supplierOverviewChart: 'Biểu đồ tổng quan nhà cung cấp',
+    supplierOverviewChart: 'Biểu đồ tổng quan nhà cung cấp (Nhập hàng & Công nợ)',
 
     // Supplier table headers
     supplierCode: 'Mã nhà cung cấp',
@@ -1203,11 +1207,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerCount: 'SL khách hàng',
     quantityPurchased: 'SL mua',
     supplierCount: 'SL NCC',
-    supplierCode: 'Mã nhà cung cấp',
-    supplierName: 'Tên nhà cung cấp',
-    purchaseValue: 'Giá trị nhập',
-    returnValue: 'Giá trị trả',
-    netValue: 'Giá trị (thuần)',
     inValue: 'Giá trị nhập',
     value: 'Giá trị',
     quantity: 'Số lượng',
@@ -1230,7 +1229,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscountReport: 'Báo cáo tổng hợp giảm giá hóa đơn',
     returnByInvoiceReport: 'Báo cáo trả hàng theo hóa đơn',
     employeeSalesReport: 'Báo cáo bán hàng theo nhân viên',
-    returnValue: 'Giá trị trả',
     netRevenue: 'Doanh thu thuần',
     totalAmount: 'Tổng tiền hàng',
     discount: 'Giảm giá',
