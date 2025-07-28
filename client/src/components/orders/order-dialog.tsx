@@ -542,6 +542,7 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
               <Button
                 onClick={handlePlaceOrder}
                 disabled={createOrderMutation.isPending}
+                className="bg-green-600 hover:bg-green-700 text-white font-medium transition-colors duration-200"
               >
                 {createOrderMutation.isPending
                   ? (mode === "edit" ? "Đang cập nhật..." : t("tables.placing"))
