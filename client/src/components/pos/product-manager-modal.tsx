@@ -15,6 +15,7 @@ import { insertProductSchema, type Product, type Category } from "@shared/schema
 import { z } from "zod";
 import { useTranslation } from "@/lib/i18n";
 import { BulkImportModal } from "./bulk-import-modal";
+import * as XLSX from 'xlsx';
 
 interface ProductManagerModalProps {
   isOpen: boolean;
@@ -169,6 +170,61 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
     return categories.find(c => c.id === categoryId)?.name || "Unknown";
   };
 
+  const exportProductsToExcel = () => {
+    const exportData = [
+      ["STT", "Tên sản phẩm", "SKU", "Danh mục", "Giá bán", "Tồn kho", "Hình ảnh (URL)"]
+    ];
+
+    products.forEach((product, index) => {
+      exportData.push([
+        index + 1,
+        product.name,
+        product.sku,
+        getCategoryName(product.categoryId),
+        parseFloat(product.price),
+        product.stock,
+        product.imageUrl || ""
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(exportData);
+    
+    // Auto-fit column widths
+    const colWidths = [
+      { wch: 5 },  // STT
+      { wch: 25 }, // Tên sản phẩm
+      { wch: 15 }, // SKU
+      { wch: 15 }, // Danh mục
+      { wch: 12 }, // Giá bán
+      { wch: 10 }, // Tồn kho
+      { wch: 30 }, // Hình ảnh URL
+    ];
+    ws['!cols'] = colWidths;
+
+    // Style header row
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (!ws[cellAddress]) continue;
+      ws[cellAddress].s = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "059669" } }, // Green background
+        alignment: { horizontal: "center" }
+      };
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Danh sách sản phẩm");
+    
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    XLSX.writeFile(wb, `danh_sach_san_pham_${timestamp}.xlsx`);
+
+    toast({
+      title: "Thành công",
+      description: `Đã xuất ${products.length} sản phẩm ra file Excel`,
+    });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl w-full max-h-screen overflow-y-auto">
@@ -197,7 +253,11 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                   <Upload className="mr-2" size={16} />
                   {t('tables.bulkImport')}
                 </Button>
-                <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-100 hover:border-green-600">
+                <Button 
+                  variant="outline" 
+                  className="border-green-500 text-green-700 hover:bg-green-100 hover:border-green-600"
+                  onClick={exportProductsToExcel}
+                >
                   <Download className="mr-2" size={16} />
                   {t('tables.export')}
                 </Button>
