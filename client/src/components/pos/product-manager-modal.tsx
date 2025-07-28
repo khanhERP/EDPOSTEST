@@ -314,11 +314,8 @@ export function ProductManagerModal({
         onInteractOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
+          <DialogTitle>
             {t("tables.productManagement")}
-            <Button variant="ghost" size="sm" onClick={handleModalClose}>
-              <X size={20} />
-            </Button>
           </DialogTitle>
         </DialogHeader>
 
