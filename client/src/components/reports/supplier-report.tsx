@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Building2, Search, BarChart3 } from "lucide-react";
+import { Building2, Search, BarChart3, TrendingUp } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
@@ -206,27 +206,123 @@ export function SupplierReport() {
     return (
       <div className="space-y-6">
         {/* Chart */}
-        <Card>
-          <CardContent className="pt-6">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                  fontSize={12}
-                />
-                <YAxis 
-                  tickFormatter={(value) => (value / 1000000).toFixed(1) + "M"}
-                />
-                <Tooltip 
-                  formatter={(value: any) => [formatCurrency(value), t("reports.netValue")]}
-                />
-                <Bar dataKey="value" fill="#22c55e" />
-              </BarChart>
-            </ResponsiveContainer>
+        <Card className="shadow-xl border-0 bg-gradient-to-br from-green-50/50 to-emerald-50/30">
+          <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <BarChart3 className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-white/90 text-sm font-normal">
+                  {t("reports.chartView")}
+                </div>
+                <div className="text-white font-semibold">
+                  {t("reports.supplierPurchaseReportTitle")}
+                </div>
+              </div>
+            </CardTitle>
+            <CardDescription className="text-green-100 mt-2">
+              {t("reports.visualRepresentation")} - {t("reports.fromDate")}: {formatDate(startDate)} {t("reports.toDate")}: {formatDate(endDate)}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
+            <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-50/30 to-emerald-50/20 rounded-xl"></div>
+              <div className="absolute top-4 right-4 flex items-center gap-2 text-sm text-gray-500">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                Live Data
+              </div>
+
+              <div className="relative z-10 h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={chartData}
+                    margin={{ top: 30, right: 40, left: 30, bottom: 90 }}
+                    barCategoryGap="25%"
+                  >
+                    <defs>
+                      <linearGradient
+                        id="supplierGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#22c55e"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#22c55e"
+                          stopOpacity={0.6}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="2 4"
+                      stroke="#e2e8f0"
+                      opacity={0.4}
+                      horizontal={true}
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
+                      angle={-35}
+                      textAnchor="end"
+                      height={85}
+                      interval={0}
+                      tickMargin={12}
+                      axisLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                      tickLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
+                      tickFormatter={(value) => {
+                        if (value >= 1000000) {
+                          return `${(value / 1000000).toFixed(1)}M`;
+                        } else if (value >= 1000) {
+                          return `${(value / 1000).toFixed(0)}K`;
+                        }
+                        return value.toString();
+                      }}
+                      width={70}
+                      axisLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                      tickLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                    />
+                    <Tooltip
+                      formatter={(value: any) => [formatCurrency(value), t("reports.netValue")]}
+                      labelStyle={{
+                        color: "#1e293b",
+                        fontWeight: 600,
+                        fontSize: 13,
+                        marginBottom: 4,
+                      }}
+                      contentStyle={{
+                        backgroundColor: "rgba(255, 255, 255, 0.98)",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "12px",
+                        boxShadow:
+                          "0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.05)",
+                        padding: "12px 16px",
+                        backdropFilter: "blur(8px)",
+                      }}
+                      cursor={{ fill: "rgba(34, 197, 94, 0.05)" }}
+                    />
+                    <Bar
+                      dataKey="value"
+                      fill="url(#supplierGradient)"
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={45}
+                      stroke="#16a34a"
+                      strokeWidth={1}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -296,27 +392,123 @@ export function SupplierReport() {
     return (
       <div className="space-y-6">
         {/* Chart */}
-        <Card>
-          <CardContent className="pt-6">
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="name" 
-                  angle={-45}
-                  textAnchor="end"
-                  height={80}
-                  fontSize={12}
-                />
-                <YAxis 
-                  tickFormatter={(value) => (value / 1000000).toFixed(1) + "M"}
-                />
-                <Tooltip 
-                  formatter={(value: any) => [formatCurrency(value), t("reports.closingDebt")]}
-                />
-                <Bar dataKey="value" fill="#ef4444" />
-              </BarChart>
-            </ResponsiveContainer>
+        <Card className="shadow-xl border-0 bg-gradient-to-br from-red-50/50 to-rose-50/30">
+          <CardHeader className="bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <BarChart3 className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-white/90 text-sm font-normal">
+                  {t("reports.chartView")}
+                </div>
+                <div className="text-white font-semibold">
+                  {t("reports.supplierDebtReportTitle")}
+                </div>
+              </div>
+            </CardTitle>
+            <CardDescription className="text-red-100 mt-2">
+              {t("reports.visualRepresentation")} - {t("reports.fromDate")}: {formatDate(startDate)} {t("reports.toDate")}: {formatDate(endDate)}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
+            <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-50/30 to-rose-50/20 rounded-xl"></div>
+              <div className="absolute top-4 right-4 flex items-center gap-2 text-sm text-gray-500">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                Live Data
+              </div>
+
+              <div className="relative z-10 h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={chartData}
+                    margin={{ top: 30, right: 40, left: 30, bottom: 90 }}
+                    barCategoryGap="25%"
+                  >
+                    <defs>
+                      <linearGradient
+                        id="debtGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#ef4444"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#ef4444"
+                          stopOpacity={0.6}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="2 4"
+                      stroke="#e2e8f0"
+                      opacity={0.4}
+                      horizontal={true}
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
+                      angle={-35}
+                      textAnchor="end"
+                      height={85}
+                      interval={0}
+                      tickMargin={12}
+                      axisLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                      tickLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
+                      tickFormatter={(value) => {
+                        if (value >= 1000000) {
+                          return `${(value / 1000000).toFixed(1)}M`;
+                        } else if (value >= 1000) {
+                          return `${(value / 1000).toFixed(0)}K`;
+                        }
+                        return value.toString();
+                      }}
+                      width={70}
+                      axisLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                      tickLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                    />
+                    <Tooltip
+                      formatter={(value: any) => [formatCurrency(value), t("reports.closingDebt")]}
+                      labelStyle={{
+                        color: "#1e293b",
+                        fontWeight: 600,
+                        fontSize: 13,
+                        marginBottom: 4,
+                      }}
+                      contentStyle={{
+                        backgroundColor: "rgba(255, 255, 255, 0.98)",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "12px",
+                        boxShadow:
+                          "0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.05)",
+                        padding: "12px 16px",
+                        backdropFilter: "blur(8px)",
+                      }}
+                      cursor={{ fill: "rgba(239, 68, 68, 0.05)" }}
+                    />
+                    <Bar
+                      dataKey="value"
+                      fill="url(#debtGradient)"
+                      radius={[6, 6, 0, 0]}
+                      maxBarSize={45}
+                      stroke="#dc2626"
+                      strokeWidth={1}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
