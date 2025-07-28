@@ -566,7 +566,7 @@ export function SalesChartReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            {t("reports.salesChart")}
+            {t('reports.salesReport')}
           </CardTitle>
           <CardDescription>
             {t("reports.comprehensiveSalesReport")} - {getReportTitle()}
