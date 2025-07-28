@@ -277,7 +277,7 @@ export function POSHeader() {
                               }}
                             >
                               <PieChart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.comprehensiveSalesReport')}</span>
+                              <span className="truncate">Báo cáo bàn hàng</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=menu">
