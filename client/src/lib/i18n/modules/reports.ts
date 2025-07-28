@@ -134,32 +134,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     dataFrom: "데이터 기간",
     to: "~",
     printOptions: "인쇄 옵션",
-
-    // Order report
-    orderConcernType: "관심사 유형",
-    transactionConcern: "거래",
-    productConcern: "상품",
-    orderStatus: "상태",
-    draft: "임시저장",
-    confirmed: "확인됨",
-    delivering: "배송중",
-    completed: "완료",
-    customerSearch: "고객",
-    customerSearchPlaceholder: "이름 또는 전화번호로 검색",
-    productSearch: "상품 유형",
-    productSearchPlaceholder: "이름 또는 코드로 검색",
-    productGroup: "상품 그룹",
-
     // Order report headers and content
-    orderReportByProduct: "상품별 보고서",
-    orderReportByTransaction: "주문 목록 보고서",
-    orderListReport: "주문 목록",
     productCode: "상품 코드",
-    orderQuantity: "주문 수량",
-    orderValue: "주문 가치",
-    orderCode: "주문 코드",
-    customer: "고객",
-    orderTime: "시간",
     totalTransactions: "총 거래 수",
     income: "수입",
     expenses: "지출",
@@ -205,17 +181,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     returnTicketCount: "반품 표 수량",
     seller: "판매자",
 
-    // Chart related translations
-    chartView: "차트 보기",
-    visualRepresentation: "데이터의 시각적 표현",
-
     // Table headers for reports
     salesDetailsHeader: "판매 세부사항",
     revenueExpenseDetailsHeader: "수입 지출 세부사항",
     inventoryDetailsHeader: "재고 세부사항",
-    salesReportHeader: "판매 보고서",
-    revenueExpenseReportHeader: "수입 지출 보고서",
-    inventoryReportHeader: "재고 보고서",
     transactionCode: "거래 코드",
     quantity: "수량",
     otherRevenue: "기타 수입",
@@ -251,75 +220,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Sales chart report
     salesChart: "매출 차트",
     salesChartDescription: "차트를 통한 시각적 매출 분석",
-    salesReport: "매출 보고서",
 
     // Inventory report
     inventoryReport: "재고 보고서",
     inventoryReportDescription: "재고 및 상품 분석",
 
-    // Supplier report
-    supplierReportTab: "공급업체 보고서",
-    supplierReportDescription: "공급업체 및 구매 분석",
-    supplierConcernType: "관심사 유형",
-    supplierPurchase: "구매",
-    supplierDebt: "부채",
-    supplierPurchaseBySupplier: "공급업체별 구매",
-    supplierFilter: "공급업체",
-    supplierFilterPlaceholder: "코드, 이름, 전화번호로 검색",
-    supplierDebtFrom: "공급업체 부채",
-    supplierDebtTo: "부터",
-
-    // Supplier report tables
-    supplierPurchaseReport: "공급업체별 구매 보고서",
-    supplierDebtReport: "공급업체별 채무 보고서",
-    supplierProductPurchaseReport: "공급업체별 상품 구매 목록 보고서",
-    supplierPurchaseChart: "공급업체별 구매 가치 차트",
-    supplierPurchaseReportTitle: "공급업체별 구매 보고서",
-    supplierDebtChart: "공급업체 채무 차트",
-    supplierDebtReportTitle: "공급업체별 채무 보고서",
-    supplierProductPurchaseReportTitle: "공급업체별 상품 구매 목록 보고서",
-    supplierOverviewChart: "공급업체 개요 차트 (구매 & 채무)",
-
-    // Supplier table headers
-    supplierCode: "공급업체 코드",
-    supplierName: "공급업체 명",
-    purchaseValue: "구매 가치",
-
-    // Customer report
-    customerReport: "고객 보고서",
-    customerReportTab: "고객 보고서",
-    customerReportDescription: "고객 및 매출 분석",
-    customerConcernType: "관심사 유형",
-    customerSales: "매출",
-    customerProfit: "이익",
-    customerDebt: "채무",
-    customerProductSales: "고객별 상품 매출",
-    customerFilter: "고객",
-    customerFilterPlaceholder: "ID, 이름, 전화번호로 검색",
-    productFilter: "상품",
-    productFilterPlaceholder: "코드, 이름으로 검색",
-    debtRangeFrom: "기말 채무",
-    debtRangeTo: "부터",
-
     // Customer report tables
     customerSalesReport: "고객별 매출 보고서",
-    customerProfitReport: "고객별 이익 보고서",
-    customerDebtReport: "고객별 채무 보고서",
-    customerProductSalesReport: "고객별 상품 매출 보고서",
 
     // Customer report table headers
-    customerId: "고객 ID",
-    customerName: "고객",
-    customerRevenue: "매출",
-    customerReturnValue: "반품 가치",
-    customerNetRevenue: "순 매출",
-    totalProductValue: "총 상품 가치",
-    openingDebt: "기초 채무",
-    debitAmount: "차변 금액",
-    creditAmount: "대변 금액",
-    closingDebt: "기말 채무",
-    customerPurchaseQuantity: "구매 수량",
-    customerReturnQuantity: "반품 수량",
     productType: "상품 유형",
     combo: "콤보 - 패키지",
     product: "상품",
@@ -332,7 +241,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerBySales: "고객별 판매",
     supplierByPurchase: "공급업체별 구매",
     profit: "이익",
-    employeeProductSales: "직원별 상품 판매",
 
     // Inventory report tables
     salesReportByProduct: "상품별 판매 보고서",
