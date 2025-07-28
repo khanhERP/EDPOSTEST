@@ -6,15 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Eye, Clock, CheckCircle2, DollarSign, Users } from "lucide-react";
+import { Eye, Clock, CheckCircle2, DollarSign, Users, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
+import { PaymentMethodModal } from "@/components/pos/payment-method-modal";
 import type { Order, Table, Product, OrderItem } from "@shared/schema";
 
 export function OrderManagement() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [orderForPayment, setOrderForPayment] = useState<Order | null>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -57,6 +60,28 @@ export function OrderManagement() {
       toast({
         title: t('common.error'),
         description: t('orders.orderStatusUpdateFailed'),
+        variant: "destructive",
+      });
+    },
+  });
+
+  const completePaymentMutation = useMutation({
+    mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) =>
+      apiRequest('POST', `/api/orders/${orderId}/payment`, { paymentMethod }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      setPaymentModalOpen(false);
+      setOrderForPayment(null);
+      toast({
+        title: 'Thành công',
+        description: 'Đơn hàng đã được thanh toán thành công',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể hoàn thành thanh toán',
         variant: "destructive",
       });
     },
@@ -113,6 +138,20 @@ export function OrderManagement() {
 
   const handleStatusUpdate = (orderId: number, newStatus: string) => {
     updateOrderStatusMutation.mutate({ orderId, status: newStatus });
+  };
+
+  const handlePaymentClick = (order: Order) => {
+    setOrderForPayment(order);
+    setPaymentModalOpen(true);
+  };
+
+  const handlePaymentMethodSelect = (paymentMethod: string) => {
+    if (orderForPayment) {
+      completePaymentMutation.mutate({ 
+        orderId: orderForPayment.id, 
+        paymentMethod 
+      });
+    }
   };
 
   if (ordersLoading) {
@@ -252,6 +291,17 @@ export function OrderManagement() {
                           className="flex-1"
                         >
                           {t('orders.served')}
+                        </Button>
+                      )}
+
+                      {order.status === 'served' && (
+                        <Button
+                          size="sm"
+                          onClick={() => handlePaymentClick(order)}
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                        >
+                          <CreditCard className="w-3 h-3 mr-1" />
+                          Thanh toán
                         </Button>
                       )}
 
@@ -401,7 +451,7 @@ export function OrderManagement() {
                 </div>
 
                 {/* Status Update Actions */}
-                {selectedOrder.status !== 'served' && selectedOrder.status !== 'paid' && (
+                {selectedOrder.status !== 'paid' && selectedOrder.status !== 'cancelled' && (
                   <div className="flex gap-2 pt-4">
                     {selectedOrder.status === 'pending' && (
                       <Button
@@ -439,6 +489,16 @@ export function OrderManagement() {
                         {t('orders.served')}
                       </Button>
                     )}
+                    {selectedOrder.status === 'served' && (
+                      <Button
+                        onClick={() => handlePaymentClick(selectedOrder)}
+                        disabled={completePaymentMutation.isPending}
+                        className="flex-1 bg-green-600 hover:bg-green-700"
+                      >
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        Thanh toán
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>
@@ -446,6 +506,17 @@ export function OrderManagement() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Payment Method Modal */}
+      <PaymentMethodModal
+        isOpen={paymentModalOpen}
+        onClose={() => {
+          setPaymentModalOpen(false);
+          setOrderForPayment(null);
+        }}
+        onSelectMethod={handlePaymentMethodSelect}
+        total={orderForPayment?.total || 0}
+      />
     </div>
   );
 }
