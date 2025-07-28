@@ -179,23 +179,33 @@ export function POSHeader() {
                         className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
                           location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                         }`}
-                        onClick={() => {
-                          setPosMenuOpen(false);
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
                           setReportsSubmenuOpen(!reportsSubmenuOpen);
                         }}
+                        onMouseEnter={() => setReportsSubmenuOpen(true)}
+                        onMouseLeave={() => setReportsSubmenuOpen(false)}
                       >
                         <BarChart3 className="w-4 h-4 mr-3" />
                         {t('nav.reports')}
                         <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${reportsSubmenuOpen ? 'rotate-180' : ''}`} />
                       </button>
                       {reportsSubmenuOpen && (
-                        <div className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50">
+                        <div 
+                          className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50"
+                          onMouseEnter={() => setReportsSubmenuOpen(true)}
+                          onMouseLeave={() => setReportsSubmenuOpen(false)}
+                        >
                           <Link href="/reports?tab=overview">
                             <button
                               className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
-                              onClick={() => setReportsSubmenuOpen(false)}
+                              onClick={() => {
+                                setReportsSubmenuOpen(false);
+                                setPosMenuOpen(false);
+                              }}
                             >
                               <TrendingUp className="w-4 h-4 mr-3" />
                               {t('reports.dashboard')}
@@ -206,7 +216,10 @@ export function POSHeader() {
                               className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
-                              onClick={() => setReportsSubmenuOpen(false)}
+                              onClick={() => {
+                                setReportsSubmenuOpen(false);
+                                setPosMenuOpen(false);
+                              }}
                             >
                               <BarChart3 className="w-4 h-4 mr-3" />
                               {t('reports.salesAnalysis')}
@@ -217,7 +230,10 @@ export function POSHeader() {
                               className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
-                              onClick={() => setReportsSubmenuOpen(false)}
+                              onClick={() => {
+                                setReportsSubmenuOpen(false);
+                                setPosMenuOpen(false);
+                              }}
                             >
                               <BarChart3 className="w-4 h-4 mr-3" />
                               {t('reports.salesChart')}
@@ -228,7 +244,10 @@ export function POSHeader() {
                               className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
-                              onClick={() => setReportsSubmenuOpen(false)}
+                              onClick={() => {
+                                setReportsSubmenuOpen(false);
+                                setPosMenuOpen(false);
+                              }}
                             >
                               <PieChart className="w-4 h-4 mr-3" />
                               {t('reports.menuAnalysis')}
@@ -239,7 +258,10 @@ export function POSHeader() {
                               className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
-                              onClick={() => setReportsSubmenuOpen(false)}
+                              onClick={() => {
+                                setReportsSubmenuOpen(false);
+                                setPosMenuOpen(false);
+                              }}
                             >
                               <Utensils className="w-4 h-4 mr-3" />
                               {t('reports.tableAnalysis')}
@@ -250,7 +272,10 @@ export function POSHeader() {
                               className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
                                 location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
                               }`}
-                              onClick={() => setReportsSubmenuOpen(false)}
+                              onClick={() => {
+                                setReportsSubmenuOpen(false);
+                                setPosMenuOpen(false);
+                              }}
                             >
                               <FileText className="w-4 h-4 mr-3" />
                               {t('reports.endOfDayReport')}
