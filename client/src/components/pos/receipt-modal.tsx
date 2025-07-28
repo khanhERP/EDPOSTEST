@@ -169,18 +169,10 @@ export function ReceiptModal({
             <>
               <Button
                 onClick={handlePrint}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+                className="w-full bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
               >
                 <Printer className="mr-2" size={16} />
                 Print Receipt
-              </Button>
-              <Button
-                onClick={handleEmail}
-                variant="secondary"
-                className="flex-1"
-              >
-                <Mail className="mr-2" size={16} />
-                Email Receipt
               </Button>
             </>
           )}
