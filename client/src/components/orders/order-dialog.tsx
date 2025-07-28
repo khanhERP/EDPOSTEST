@@ -500,7 +500,7 @@ export function OrderDialog({
                 </div>
               ) : (
                 <div
-                  className={`${mode === "edit" ? "max-h-40" : "max-h-[480px]"} overflow-y-auto space-y-3`}
+                  className="max-h-[300px] overflow-y-auto space-y-3"
                 >
                   {cart.map((item) => (
                     <Card key={item.product.id}>
