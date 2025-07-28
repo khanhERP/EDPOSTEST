@@ -24,7 +24,7 @@ export default function ReportsPage() {
   useEffect(() => {
     const params = new URLSearchParams(search);
     const tab = params.get('tab');
-    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday', 'order'].includes(tab)) {
+    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday', 'order', 'inventory'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [search]);
@@ -56,7 +56,7 @@ export default function ReportsPage() {
 
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="h-10 items-center justify-center rounded-md p-1 text-muted-foreground grid w-full grid-cols-7 bg-[#4ed17e] hidden">
+            <TabsList className="h-10 items-center justify-center rounded-md p-1 text-muted-foreground grid w-full grid-cols-8 bg-[#4ed17e] hidden">
               <TabsTrigger value="overview" className="flex items-center gap-2">
                 <TrendingUp className="w-4 h-4" />
                 {t('reports.dashboard')}
@@ -84,6 +84,10 @@ export default function ReportsPage() {
               <TabsTrigger value="order" className="flex items-center gap-2">
                 <ShoppingCart className="w-4 h-4" />
                 {t("reports.orderReportTab")}
+              </TabsTrigger>
+              <TabsTrigger value="inventory" className="flex items-center gap-2">
+                <Package className="w-4 h-4" />
+                {t("reports.inventoryReport")}
               </TabsTrigger>
             </TabsList>
 
@@ -113,6 +117,10 @@ export default function ReportsPage() {
 
             <TabsContent value="order">
               <OrderReport />
+            </TabsContent>
+
+            <TabsContent value="inventory">
+              <InventoryReport />
             </TabsContent>
           </Tabs>
         </div>
