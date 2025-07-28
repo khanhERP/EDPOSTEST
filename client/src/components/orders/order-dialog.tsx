@@ -452,7 +452,7 @@ export function OrderDialog({ open, onOpenChange, table, existingOrder, mode = "
                   <p>{t("tables.noItemsSelected")}</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="max-h-48 overflow-y-auto space-y-3">
                   {cart.map((item) => (
                     <Card key={item.product.id}>
                       <CardContent className="p-3">
