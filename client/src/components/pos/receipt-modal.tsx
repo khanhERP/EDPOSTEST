@@ -8,6 +8,8 @@ import {
 import { Button } from "@/components/ui/button";
 import type { Receipt } from "@shared/schema";
 import logoPath from "@assets/EDPOS_1753091767028.png";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 interface ReceiptModalProps {
   isOpen: boolean;
@@ -24,6 +26,15 @@ export function ReceiptModal({
   onConfirm,
   isPreview = false,
 }: ReceiptModalProps) {
+  // Query store settings to get dynamic address
+  const { data: storeSettings } = useQuery({
+    queryKey: ["/api/store-settings"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/store-settings");
+      return response.json();
+    },
+  });
+
   if (!receipt) return null;
 
   const handlePrint = () => {
@@ -64,10 +75,10 @@ export function ReceiptModal({
           style={{ paddingTop: "1px" }}
         >
           <div className="text-center mb-4 mt-2">
-            <p className="text-xs font-semibold mb-0.5">Easy Digital Point Of Sale Service</p>
+            <p className="text-xs font-semibold mb-0.5">{storeSettings?.storeName || "Easy Digital Point Of Sale Service"}</p>
             <p className="text-xs">Main Store Location</p>
-            <p className="text-xs">123 Commerce St, City, State 12345</p>
-            <p className="text-xs mb-1">Phone: (555) 123-4567</p>
+            <p className="text-xs">{storeSettings?.address || "123 Commerce St, City, State 12345"}</p>
+            <p className="text-xs mb-1">Phone: {storeSettings?.phone || "(555) 123-4567"}</p>
             <div className="flex items-center justify-center">
               <img src={logoPath} alt="EDPOS Logo" className="h-6" />
             </div>
