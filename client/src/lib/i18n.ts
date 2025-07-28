@@ -15,11 +15,10 @@ export const useLanguageStore = create<LanguageStore>()(
     (set) => ({
       currentLanguage: "ko",
       renderTrigger: 0,
-      setLanguage: (language: Language) =>
-        set((state) => ({
-          currentLanguage: language,
-          renderTrigger: state.renderTrigger + 1,
-        })),
+      setLanguage: (language: Language) => set((state) => ({ 
+        currentLanguage: language,
+        renderTrigger: state.renderTrigger + 1
+      })),
     }),
     {
       name: "pos-language",
@@ -172,25 +171,6 @@ const translations = {
       itemsSelected: "개 선택됨",
       noItemsSelected: "선택된 항목 없음",
       tableNumberRequired: "테이블 번호는 필수입니다",
-      capacityMinimum: "최소 1명 이상이어야 합니다",
-      tableCreateSuccess: "테이블이 성공적으로 생성되었습니다",
-      tableUpdateSuccess: "테이블이 성공적으로 업데이트되었습니다",
-      tableDeleteSuccess: "테이블이 성공적으로 삭제되었습니다",
-      tableDeleteError: "사용된 테이블은 삭제할 수 없습니다",
-      tableNumberLabel: "테이블 번호",
-      capacityLabel: "수용 인원",
-      statusLabel: "상태",
-      qrCodeLabel: "QR 코드",
-      createdDate: "생성일",
-      addTable: "테이블 추가",
-      editTable: "테이블 수정",
-      addTableDesc: "새 테이블 정보를 입력하세요",
-      editTableDesc: "테이블 정보를 수정하세요",
-      tableNumberPlaceholder: "테이블 번호를 입력하세요",
-      capacityPlaceholder: "수용 인원을 입력하세요",
-      statusPlaceholder: "상태를 선택하세요",
-      qrCodePlaceholder: "QR 코드를 입력하세요",
-      confirmDelete: "정말로 삭제하시겠습니까?",
     },
     // Employees
     employees: {
@@ -623,24 +603,6 @@ const translations = {
       itemsSelected: "items selected",
       noItemsSelected: "No items selected",
       tableNumberRequired: "Table number is required",
-      tableCreateSuccess: "Table created successfully",
-      tableUpdateSuccess: "Table updated successfully",
-      tableDeleteSuccess: "Table deleted successfully",
-      tableDeleteError: "Cannot delete a table that has been used",
-      tableNumberLabel: "Table Number",
-      capacityLabel: "Capacity",
-      statusLabel: "Status",
-      qrCodeLabel: "QR Code",
-      createdDate: "Created Date",
-      addTable: "Add Table",
-      editTable: "Edit Table",
-      addTableDesc: "Enter new table information",
-      editTableDesc: "Edit table information",
-      tableNumberPlaceholder: "Enter table number",
-      capacityPlaceholder: "Enter capacity",
-      statusPlaceholder: "Select status",
-      qrCodePlaceholder: "Enter QR code",
-      confirmDelete: "Are you sure you want to delete?",
     },
     // Employees
     employees: {
@@ -1071,9 +1033,7 @@ const translations = {
       editTableDesc: "Chỉnh sửa thông tin bàn",
       tableNumberPlaceholder: "Nhập số bàn",
       capacityPlaceholder: "Nhập sức chứa",
-      statusPlaceholder: "Chọn trạng thái",
-      qrCodePlaceholder: "Nhập mã QR",
-      confirmDelete: "Bạn có chắc chắn muốn xóa?",
+      
     },
     // Employees
     employees: {
