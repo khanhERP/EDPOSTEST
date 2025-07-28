@@ -277,13 +277,13 @@ export class DatabaseStorage implements IStorage {
   async deleteProduct(id: number): Promise<boolean> {
     try {
       // Check if product exists in transactions
-      const transactionItems = await db
+      const transactionItemsCheck = await db
         .select()
         .from(transactionItems)
         .where(eq(transactionItems.productId, id))
         .limit(1);
 
-      if (transactionItems.length > 0) {
+      if (transactionItemsCheck.length > 0) {
         throw new Error("Cannot delete product: it has been used in transactions");
       }
 
