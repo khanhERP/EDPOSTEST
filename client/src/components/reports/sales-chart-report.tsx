@@ -502,7 +502,7 @@ export function SalesChartReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            Báo cáo bàn hàng
+            {t('reports.salesChart')}
           </CardTitle>
           <CardDescription>
             {t("reports.comprehensiveSalesReport")} - {getReportTitle()}
