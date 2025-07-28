@@ -514,7 +514,7 @@ export function OrderDialog({
                 </div>
               ) : (
                 <div
-                  className="max-h-[300px] overflow-y-auto space-y-3"
+                  className="max-h-[600px] overflow-y-auto space-y-3"
                 >
                   {cart.map((item) => (
                     <Card key={item.product.id}>
