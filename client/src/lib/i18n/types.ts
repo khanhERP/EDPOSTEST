@@ -923,6 +923,7 @@ export interface InventoryTranslations {
   duplicateSku: string;
   duplicateSkuDescription: string;
   quantityMinError: string;
+  trackInventory: string;
 }
 
 // Tables translations interface
