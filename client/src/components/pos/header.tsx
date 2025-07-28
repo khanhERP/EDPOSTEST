@@ -203,7 +203,7 @@ export function POSHeader() {
                         onClick={() => setPosMenuOpen(false)}
                       >
                         <Utensils className="w-4 h-4 mr-3" />
-                        {t('nav.tables')}
+                        Bán theo bàn
                       </button>
                     </Link>
                   )}
