@@ -270,9 +270,9 @@ export function ProductManagerModal({
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             {t("tables.productManagement")}
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            {/* <Button variant="ghost" size="sm" onClick={onClose}>
               <X size={20} />
-            </Button>
+            </Button> */}
           </DialogTitle>
         </DialogHeader>
 
