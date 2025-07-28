@@ -398,12 +398,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
     const getOrderStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { label: t('orders.pending'), variant: "secondary" as const },
-      preparing: { label: t('orders.preparing'), variant: "secondary" as const },
-      delivering: { label: t('orders.delivering'), variant: "secondary" as const },
-      completed: { label: t('orders.completed'), variant: "default" as const },
-      paid: { label: 'Đã thanh toán', variant: "default" as const },
-      cancelled: { label: t('orders.cancelled'), variant: "destructive" as const },
+      pending: { label: t('orders.status.pending'), variant: "secondary" as const },
+      preparing: { label: t('orders.status.preparing'), variant: "secondary" as const },
+      delivering: { label: t('orders.status.delivering'), variant: "secondary" as const },
+      completed: { label: t('orders.status.completed'), variant: "default" as const },
+      paid: { label: t('orders.status.paid'), variant: "default" as const },
+      cancelled: { label: t('orders.status.cancelled'), variant: "destructive" as const },
     };
 
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
