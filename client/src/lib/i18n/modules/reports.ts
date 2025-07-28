@@ -1097,7 +1097,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Supplier report
     supplierReport: "Báo cáo nhà cung cấp",
     supplierReportTab: "Báo cáo nhà cung cấp",
-    employeeReport: "Báo cáo nhân viên",
     employeeReportTab: "Báo cáo nhân viên",
     employeeReportDescription: "Phân tích nhân viên và hiệu suất",
     supplierReportDescription: "Phân tích nhà cung cấp và nhập hàng",
@@ -1185,7 +1184,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     detailedInOutInventoryReport: "Báo cáo xuất nhập tồn chi tiết",
     disposalReport: "Báo cáo hàng hóa xuất hủy",
     employeeSalesReport: "Báo cáo nhân viên theo hàng bán",
-    customerSalesReport: "Báo cáo khách theo hàng bán",
     supplierReportByProduct: "Báo cáo danh sách nhà cung cấp theo hàng nhập",
 
     // Table headers
@@ -1199,7 +1197,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salePrice: "Giá bán",
     saleValue: "Giá trị bán",
     costPrice: "Giá vốn",
-    inventoryValue: "Giá trị kho",
     openingStock: "Tồn đầu kỳ",
     openingValue: "Giá trị đầu kỳ",
     openingPrice: "Giá đầu kỳ",
