@@ -170,6 +170,7 @@ const translations = {
       orderHistory: "주문 내역",
       itemsSelected: "개 선택됨",
       noItemsSelected: "선택된 항목 없음",
+      tableNumberRequired:
     },
     // Employees
     employees: {
