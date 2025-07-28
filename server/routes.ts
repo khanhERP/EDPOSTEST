@@ -21,6 +21,7 @@ import { initializeSampleData, db } from "./db";
 import { z } from "zod";
 import { eq, desc, asc, and, or, like, count, sum, gte, lt } from "drizzle-orm";
 import { sql } from "drizzle-orm";
+import { orders, orderItems, products } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize sample data
@@ -622,75 +623,170 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/order-items/:orderId", async (req, res) => {
     try {
+      console.log('=== GET ORDER ITEMS API CALLED ===');
       const orderId = parseInt(req.params.orderId);
+      console.log('Order ID requested:', orderId);
 
       if (isNaN(orderId)) {
+        console.error('Invalid order ID provided:', req.params.orderId);
         return res.status(400).json({ message: "Invalid order ID" });
       }
 
+      console.log('Fetching order items from storage...');
       const items = await storage.getOrderItems(orderId);
+      console.log(`Found ${items.length} order items:`, items);
+      
       res.json(items);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch order items" });
+      console.error('=== GET ORDER ITEMS ERROR ===');
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Order ID:', req.params.orderId);
+      
+      res.status(500).json({ 
+        message: "Failed to fetch order items",
+        details: error.message,
+        timestamp: new Date().toISOString()
+      });
     }
   });
 
   // Add order items to existing order
   app.post('/api/orders/:orderId/items', async (req, res) => {
     try {
+      console.log('=== ADD ORDER ITEMS API CALLED ===');
       const orderId = parseInt(req.params.orderId);
       const { items } = req.body;
 
-      console.log(`Adding ${items.length} items to order ${orderId}`);
+      console.log('Request params:', req.params);
+      console.log('Order ID:', orderId);
+      console.log('Request body:', JSON.stringify(req.body, null, 2));
+      console.log('Items to add:', JSON.stringify(items, null, 2));
+
+      if (!orderId || isNaN(orderId)) {
+        console.error('Invalid order ID:', req.params.orderId);
+        return res.status(400).json({ error: 'Invalid order ID' });
+      }
+
+      if (!items || !Array.isArray(items) || items.length === 0) {
+        console.error('Invalid items data:', items);
+        return res.status(400).json({ error: 'Items array is required and cannot be empty' });
+      }
+
+      // Check if order exists
+      const [existingOrder] = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.id, orderId));
+
+      if (!existingOrder) {
+        console.error('Order not found:', orderId);
+        return res.status(404).json({ error: 'Order not found' });
+      }
+
+      console.log('Found existing order:', existingOrder);
 
       const createdItems = [];
-      for (const item of items) {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        console.log(`Processing item ${i + 1}/${items.length}:`, item);
+
+        // Validate item data
+        if (!item.productId || !item.quantity || !item.unitPrice || !item.total) {
+          console.error('Missing required item data:', item);
+          throw new Error(`Item ${i + 1} is missing required fields`);
+        }
+
         // Get product info to include in the order item
         const [product] = await db
           .select()
           .from(products)
           .where(eq(products.id, item.productId));
 
-        const [orderItem] = await db
-          .insert(orderItems)
-          .values({
-            orderId,
-            productId: item.productId,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            total: item.total,
-            notes: item.notes,
-            productName: product?.name || null,
-            productSku: product?.sku || null,
-          })
-          .returning();
+        if (!product) {
+          console.error('Product not found:', item.productId);
+          throw new Error(`Product with ID ${item.productId} not found`);
+        }
 
-        createdItems.push(orderItem);
+        console.log('Found product:', product);
+
+        try {
+          const [orderItem] = await db
+            .insert(orderItems)
+            .values({
+              orderId,
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              total: item.total,
+              notes: item.notes || null,
+            })
+            .returning();
+
+          console.log('Created order item:', orderItem);
+          createdItems.push(orderItem);
+        } catch (insertError) {
+          console.error('Error inserting order item:', insertError);
+          throw insertError;
+        }
       }
 
+      console.log(`Successfully created ${createdItems.length} items`);
+
       // Update order total
-      const [orderItemsSum] = await db
-        .select({
-          total: sql<number>`sum(${orderItems.total})`,
-        })
-        .from(orderItems)
-        .where(eq(orderItems.orderId, orderId));
+      try {
+        const [orderItemsSum] = await db
+          .select({
+            total: sql<number>`COALESCE(sum(CAST(${orderItems.total} AS DECIMAL)), 0)`,
+          })
+          .from(orderItems)
+          .where(eq(orderItems.orderId, orderId));
 
-      await db
-        .update(orders)
-        .set({
-          total: orderItemsSum.total?.toString() || "0",
-          subtotal: (orderItemsSum.total * 0.9)?.toString() || "0",
-          tax: (orderItemsSum.total * 0.1)?.toString() || "0",
-        })
-        .where(eq(orders.id, orderId));
+        console.log('Order items sum result:', orderItemsSum);
 
-      console.log(`Created ${createdItems.length} items for order ${orderId}:`, createdItems);
+        const totalAmount = Number(orderItemsSum.total) || 0;
+        const subtotalAmount = totalAmount / 1.1; // Remove 10% tax
+        const taxAmount = totalAmount - subtotalAmount;
 
+        console.log('Calculated amounts:', {
+          total: totalAmount,
+          subtotal: subtotalAmount,
+          tax: taxAmount
+        });
+
+        await db
+          .update(orders)
+          .set({
+            total: totalAmount.toFixed(2),
+            subtotal: subtotalAmount.toFixed(2),
+            tax: taxAmount.toFixed(2),
+          })
+          .where(eq(orders.id, orderId));
+
+        console.log('Updated order totals successfully');
+      } catch (updateError) {
+        console.error('Error updating order totals:', updateError);
+        // Don't throw here, as items were already created successfully
+      }
+
+      console.log('=== ADD ORDER ITEMS COMPLETED SUCCESSFULLY ===');
       res.json(createdItems);
     } catch (error) {
-      console.error('Error adding items to order:', error);
-      res.status(500).json({ error: 'Failed to add items to order' });
+      console.error('=== ADD ORDER ITEMS ERROR ===');
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Request data:', {
+        orderId: req.params.orderId,
+        body: req.body
+      });
+      
+      res.status(500).json({ 
+        error: 'Failed to add items to order',
+        details: error.message,
+        timestamp: new Date().toISOString()
+      });
     }
   });
 

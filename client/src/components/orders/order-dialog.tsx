@@ -85,50 +85,87 @@ export function OrderDialog({
 
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: { order: any; items: any[] }) => {
+      console.log('=== ORDER MUTATION STARTED ===');
+      console.log('Mode:', mode);
+      console.log('Existing order:', existingOrder);
       console.log(
         mode === "edit"
           ? "Updating order with data:"
           : "Creating order with data:",
-        orderData,
+        JSON.stringify(orderData, null, 2),
       );
-      if (mode === "edit" && existingOrder) {
-        // For edit mode, we add new items to the existing order
-        return apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
-          items: orderData.items,
-        });
-      } else {
-        // For create mode, create a new order
-        return apiRequest("POST", "/api/orders", orderData);
+      
+      try {
+        if (mode === "edit" && existingOrder) {
+          console.log(`Adding ${orderData.items.length} items to existing order ${existingOrder.id}`);
+          const response = await apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
+            items: orderData.items,
+          });
+          console.log('Add items response:', response);
+          return response;
+        } else {
+          console.log('Creating new order...');
+          const response = await apiRequest("POST", "/api/orders", orderData);
+          console.log('Create order response:', response);
+          return response;
+        }
+      } catch (error) {
+        console.error('=== ORDER MUTATION ERROR ===');
+        console.error('Error details:', error);
+        throw error;
       }
     },
     onSuccess: (response) => {
+      console.log('=== ORDER MUTATION SUCCESS ===');
       console.log(
         mode === "edit"
           ? "Order updated successfully:"
           : "Order created successfully:",
         response,
       );
+      
+      // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
+      
+      // Reset form state
       setCart([]);
       setCustomerName("");
       setCustomerCount(1);
       setExistingItems([]);
       onOpenChange(false);
+      
       toast({
         title: mode === "edit" ? "Cập nhật đơn hàng" : t("orders.orderPlaced"),
         description:
           mode === "edit"
-            ? "Đã thêm món mới vào đơn hàng"
+            ? "Đã thêm món mới vào đơn hàng thành công"
             : t("orders.orderPlacedSuccess"),
       });
     },
     onError: (error: any) => {
-      console.error("Order creation error:", error);
+      console.error('=== ORDER MUTATION ERROR ===');
+      console.error("Full error object:", error);
+      console.error("Error message:", error.message);
+      console.error("Error response:", error.response);
+      console.error("Error response data:", error.response?.data);
+      
+      let errorMessage = t("orders.orderFailed");
+      
+      if (error.response?.data?.details) {
+        errorMessage = error.response.data.details;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: t("common.error"),
-        description: error.response?.data?.message || t("orders.orderFailed"),
+        description: `Lỗi ${mode === "edit" ? "cập nhật" : "tạo"} đơn hàng: ${errorMessage}`,
         variant: "destructive",
       });
     },
