@@ -60,7 +60,7 @@ export function ReceiptModal({
 
         <div
           id="receipt-content"
-          className="px-10 pb-6 receipt-print bg-white"
+          className="px-6 pb-6 receipt-print bg-white"
           style={{ paddingTop: "1px" }}
         >
           <div className="text-center mb-4">
