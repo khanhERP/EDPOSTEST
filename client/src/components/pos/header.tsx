@@ -233,7 +233,7 @@ export function POSHeader() {
                       </button>
                       {reportsSubmenuOpen && (
                         <div 
-                          className="absolute top-full left-0 mt-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50"
+                          className="absolute top-full right-full mr-1 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50"
                           onMouseEnter={handleSubmenuMouseEnter}
                           onMouseLeave={handleSubmenuMouseLeave}
                         >
