@@ -263,9 +263,9 @@ export function EmployeeReport() {
       case "sales":
         return t("reports.employeeSalesReport");
       case "profit":
-        return "Báo cáo lợi nhuận theo nhân viên";
+        return t("reports.employeeProfitReport");
       case "productSales":
-        return "Báo cáo danh sách hàng bán theo nhân viên";
+        return t("reports.employeeProductSalesReport");
       default:
         return t("reports.employeeSalesReport");
     }
@@ -432,7 +432,7 @@ export function EmployeeReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            {t("reports.customerProductSales")}
+            {t("reports.employeeProductSalesReport")}
           </CardTitle>
           <CardDescription>
             {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
@@ -551,7 +551,7 @@ export function EmployeeReport() {
                   <SelectItem value="sales">{t("reports.sales")}</SelectItem>
                   <SelectItem value="profit">{t("reports.profit")}</SelectItem>
                   <SelectItem value="productSales">
-                    Hàng bán theo nhân viên
+                    {t("reports.employeeProductSales")}
                   </SelectItem>
                 </SelectContent>
               </Select>
