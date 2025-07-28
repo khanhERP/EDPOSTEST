@@ -332,6 +332,7 @@ export default function InventoryPage() {
         price: product.price,
         categoryId: product.categoryId,
         productType: product.productType || 1,
+        trackInventory: product.trackInventory !== false,
       });
     }
     setShowStockDialog(true);
@@ -374,8 +375,18 @@ export default function InventoryPage() {
       console.log("Creating product with data:", newProductData);
       createProductMutation.mutate(newProductData);
     } else {
-      // Updating existing product stock
+      // Updating existing product stock and track inventory
       console.log("Updating stock with data:", data);
+      
+      // First update track inventory if it changed
+      if (data.trackInventory !== undefined && selectedProduct && data.trackInventory !== selectedProduct.trackInventory) {
+        updateProductTrackInventoryMutation.mutate({
+          id: selectedProduct.id,
+          trackInventory: data.trackInventory
+        });
+      }
+      
+      // Then update stock
       updateStockMutation.mutate(data);
     }
   };
@@ -974,22 +985,44 @@ export default function InventoryPage() {
                 />
 
                 {selectedProduct?.id !== 0 && (
-                  <FormField
-                    control={stockUpdateForm.control}
-                    name="notes"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>{t("inventory.editReason")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder={t("inventory.changeReason")}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <>
+                    <FormField
+                      control={stockUpdateForm.control}
+                      name="trackInventory"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value !== false}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              {t("inventory.trackInventory")}
+                            </FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={stockUpdateForm.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("inventory.editReason")}</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder={t("inventory.changeReason")}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
                 )}
 
                 <div className="flex justify-end space-x-2 pt-4">
