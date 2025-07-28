@@ -627,13 +627,15 @@ export function SupplierReport() {
         </CardContent>
       </Card>
 
-      {/* Overview Chart */}
-      {renderOverviewChart()}
+      {/* Report Content - Show overview chart only for purchase and debt */}
+      {(concernType === "purchase" || concernType === "debt") && renderOverviewChart()}
 
-      {/* Report Content */}
-      {concernType === "purchase" && renderPurchaseReport()}
-      {concernType === "debt" && renderDebtReport()}
-      {concernType === "purchaseBySupplier" && renderProductsBySupplierReport()}
+      {/* Report Content Based on Concern Type */}
+      <div key={concernType}>
+        {concernType === "purchase" && renderPurchaseReport()}
+        {concernType === "debt" && renderDebtReport()}
+        {concernType === "purchaseBySupplier" && renderProductsBySupplierReport()}
+      </div>
     </div>
   );
 }
