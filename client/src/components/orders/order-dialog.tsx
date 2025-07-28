@@ -608,14 +608,10 @@ export function OrderDialog({
                     )}
                   </>
                 )}
-                {cart.length > 0 && (
+                {cart.length > 0 && mode === "edit" && (
                   <>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600">
-                        {mode === "edit"
-                          ? "Món mới thêm"
-                          : t("tables.subtotalLabel")}
-                      </span>
+                      <span className="text-gray-600">Món mới thêm</span>
                       <span className="font-medium">
                         {cart
                           .reduce(
