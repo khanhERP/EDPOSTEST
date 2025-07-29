@@ -1039,7 +1039,5 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Missing translation keys
     chartView: "Xem biểu đồ",
     visualRepresentation: "Biểu diễn trực quan của dữ liệu",
-    fromDate: "Từ ngày",
-    toDate: "Đến ngày",
   },
 };
