@@ -24,7 +24,7 @@ import { eq, desc, asc, and, or, like, count, sum, gte, lt } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import { orders, orderItems, products } from "@shared/schema";
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express): Promise {
   // Initialize sample data
   await initializeSampleData();
 
@@ -946,7 +946,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/suppliers", async (req, res) =>{
+  app.post("/api/api/suppliers", async (req, res) =>{
     try {
       const validatedData = insertSupplierSchema.parse(req.body);
       const supplier = await storage.createSupplier(validatedData);
@@ -1536,6 +1536,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to fetch employee sales data" });
     }
   });
+
+  // Sales channel sales data
+  // Sales Channel Sales API
+app.get('/api/sales-channel-sales/:startDate/:endDate/:seller/:channel', async (req, res) => {
+  try {
+    const { startDate, endDate, seller, channel } = req.params;
+
+    // Use storage instead of direct db queries
+    const orders = await storage.getOrders();
+    const filteredOrders = orders.filter(order => {
+      const orderDate = new Date(order.orderedAt);
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      const dateMatch = orderDate >= start && orderDate <= end;
+      const statusMatch = order.status === 'paid';
+      const sellerMatch = seller === 'all' || order.employeeId?.toString() === seller;
+      const channelMatch = channel === 'all' || order.salesChannel === channel;
+
+      return dateMatch && statusMatch && sellerMatch && channelMatch;
+    });
+
+    const salesData = [{
+      salesChannelName: 'Direct Sales',
+      revenue: filteredOrders.reduce((sum, order) => sum + Number(order.total), 0),
+      returnValue: 0,
+      netRevenue: filteredOrders.reduce((sum, order) => sum + Number(order.total), 0)
+    }];
+
+    res.json(salesData);
+  } catch (error) {
+    console.error('Error fetching sales channel sales data:', error);
+    res.status(500).json({ error: 'Failed to fetch sales channel sales data' });
+  }
+});
+
+// Sales Channel Profit API
+app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async (req, res) => {
+  try {
+    const { startDate, endDate, seller, channel } = req.params;
+
+    // Use storage instead of direct db queries
+    const orders = await storage.getOrders();
+    const filteredOrders = orders.filter(order => {
+      const orderDate = new Date(order.orderedAt);
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      const dateMatch = orderDate >= start && orderDate <= end;
+      const statusMatch = order.status === 'paid';
+      const sellerMatch = seller === 'all' || order.employeeId?.toString() === seller;
+      const channelMatch = channel === 'all' || order.salesChannel === channel;
+
+      return dateMatch && statusMatch && sellerMatch && channelMatch;
+    });
+
+    const totalAmount = filteredOrders.reduce((sum, order) => sum + Number(order.total), 0);
+    const profitData = [{
+      salesChannelName: 'Direct Sales',
+      totalAmount: totalAmount,
+      discount: 0,
+      revenue: totalAmount,
+      returnValue: 0,
+      netRevenue: totalAmount,
+      totalCost: totalAmount * 0.6,
+      grossProfit: totalAmount * 0.4,
+      platformFee: 0,
+      netProfit: totalAmount * 0.4
+    }];
+
+    res.json(profitData);
+  } catch (error) {
+    console.error('Error fetching sales channel profit data:', error);
+    res.status(500).json({ error: 'Failed to fetch sales channel profit data' });
+  }
+});
 
   // Sales channel sales data
   app.get("/api/sales-channel-sales/:startDate/:endDate/:sellerId/:salesChannel", async (req, res) => {

@@ -190,11 +190,11 @@ export interface ReportsTranslations {
   salesDetailsHeader: string;
   revenueExpenseDetailsHeader: string;
   inventoryDetailsHeader: string;
-  
+
   // Sales chart report
   salesChart: string;
   salesChartDescription: string;
-  
+
   // Inventory report
   inventoryReport: string;
   inventoryReportDescription: string;
@@ -258,7 +258,7 @@ export interface ReportsTranslations {
   inValue: string;
   value: string;
   quantity: string;
-  
+
   // Comprehensive sales report
   comprehensiveSalesReport: string;
   concernType: string;
@@ -303,7 +303,7 @@ export interface ReportsTranslations {
   pieChartDesc: string;
   lineChartDesc: string;
   paymentMethodDetails: string;
-  
+
   // Table headers for reports
   transactionCode: string;
   quantity: string;
@@ -973,15 +973,15 @@ export interface Translations {
 export type TranslationKey =
   | `common.${keyof CommonTranslations}`
   | `nav.${keyof NavigationTranslations}`
-  | `reports.${keyof ReportsTranslations}`
-  | `settings.${keyof SettingsTranslations}`
-  | `notFound.${keyof NotFoundTranslations}`
+  | `tables.${keyof TablesTranslations}`
+  | `inventory.${keyof InventoryTranslations}`
   | `orders.${keyof OrdersTranslations}`
-  | `customers.${keyof CustomersTranslations}`
   | `employees.${keyof EmployeesTranslations}`
   | `attendance.${keyof AttendanceTranslations}`
-  | `inventory.${keyof InventoryTranslations}`
-  | `tables.${keyof TablesTranslations}`;
+  | `settings.${keyof SettingsTranslations}`
+  | `customers.${keyof CustomersTranslations}`
+  | `reports.${keyof ReportsTranslations}`
+  | `notFound.${keyof NotFoundTranslations}`;
 
 // Language-specific translations type
 export interface LanguageTranslations {
