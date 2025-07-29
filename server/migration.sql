@@ -13,14 +13,3 @@ WHERE gold_threshold IS NULL OR vip_threshold IS NULL;
 
 -- Add businessType column to store_settings table
 ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS business_type TEXT DEFAULT 'restaurant';
--- Create inventory_transactions table
-CREATE TABLE IF NOT EXISTS inventory_transactions (
-  id SERIAL PRIMARY KEY,
-  product_id INTEGER REFERENCES products(id) NOT NULL,
-  type VARCHAR(20) NOT NULL,
-  quantity INTEGER NOT NULL,
-  previous_stock INTEGER NOT NULL,
-  new_stock INTEGER NOT NULL,
-  notes TEXT,
-  created_at VARCHAR(50) NOT NULL
-);

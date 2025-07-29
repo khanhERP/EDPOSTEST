@@ -376,17 +376,9 @@ export default function Settings() {
         categoryForm,
       );
       
-      // Force immediate refresh of all related queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["/api/categories"] }),
-        queryClient.invalidateQueries({ queryKey: ["/api/products"] }),
-        queryClient.refetchQueries({ queryKey: ["/api/categories"] }),
-        queryClient.refetchQueries({ queryKey: ["/api/products"] })
-      ]);
-      
-      // Force a re-render by clearing cache and refetching
-      queryClient.removeQueries({ queryKey: ["/api/categories"] });
-      await queryClient.fetchQuery({ queryKey: ["/api/categories"] });
+      // Invalidate and refetch categories data immediately
+      await queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/categories"] });
       
       toast({
         title: t("common.success"),
@@ -414,17 +406,12 @@ export default function Settings() {
         categoryForm,
       );
       
-      // Force immediate refresh of all related queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["/api/categories"] }),
-        queryClient.invalidateQueries({ queryKey: ["/api/products"] }),
-        queryClient.refetchQueries({ queryKey: ["/api/categories"] }),
-        queryClient.refetchQueries({ queryKey: ["/api/products"] })
-      ]);
+      // Invalidate both categories and products queries to refresh the lists
+      await queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       
-      // Force a re-render by clearing cache and refetching
-      queryClient.removeQueries({ queryKey: ["/api/categories"] });
-      await queryClient.fetchQuery({ queryKey: ["/api/categories"] });
+      // Refetch categories data immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/categories"] });
       
       toast({
         title: t("common.success"),
@@ -450,19 +437,8 @@ export default function Settings() {
     ) {
       try {
         await apiRequest("DELETE", `/api/categories/${categoryId}`);
-        
-        // Force immediate refresh of all related queries
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["/api/categories"] }),
-          queryClient.invalidateQueries({ queryKey: ["/api/products"] }),
-          queryClient.refetchQueries({ queryKey: ["/api/categories"] }),
-          queryClient.refetchQueries({ queryKey: ["/api/products"] })
-        ]);
-        
-        // Force a re-render by clearing cache and refetching
-        queryClient.removeQueries({ queryKey: ["/api/categories"] });
-        await queryClient.fetchQuery({ queryKey: ["/api/categories"] });
-        
+        queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/products"] });
         toast({
           title: t("common.success"),
           description: t("productManagement.categoryDeleteSuccess"),
