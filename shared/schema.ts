@@ -336,6 +336,7 @@ export type CartItem = {
   total: string;
   imageUrl?: string;
   stock: number;
+  taxRate?: string;
 };
 
 // Relations

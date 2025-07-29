@@ -113,6 +113,7 @@ export function usePOS() {
             total: product.price,
             imageUrl: product.imageUrl,
             stock: product.stock,
+            taxRate: product.taxRate,
           };
           return [...currentCart, newItem];
         }

@@ -138,7 +138,14 @@ export function ShoppingCart({
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0 pr-2">
                   <h4 className="font-medium pos-text-primary text-sm truncate">{item.name}</h4>
-                  <p className="text-xs pos-text-secondary">{parseFloat(item.price).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ each</p>
+                  <div className="space-y-1">
+                    <p className="text-xs pos-text-secondary">{parseFloat(item.price).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ each</p>
+                    {item.taxRate && parseFloat(item.taxRate) > 0 && (
+                      <p className="text-xs text-orange-600">
+                        Thuế: {(parseFloat(item.price) * parseFloat(item.taxRate) / 100 * item.quantity).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ ({item.taxRate}%)
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col items-end space-y-2">
                   <div className="flex items-center space-x-1">
