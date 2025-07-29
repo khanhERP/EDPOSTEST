@@ -34,8 +34,12 @@ export function ShoppingCart({
   const { t } = useTranslation();
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
-  const taxRate = 0.0825; // 8.25%
-  const tax = subtotal * taxRate;
+  const tax = cart.reduce((sum, item) => {
+    if (item.taxRate && parseFloat(item.taxRate) > 0) {
+      return sum + (parseFloat(item.price) * parseFloat(item.taxRate) / 100 * item.quantity);
+    }
+    return sum;
+  }, 0);
   const total = subtotal + tax;
   const change = paymentMethod === "cash" ? Math.max(0, parseFloat(amountReceived || "0") - total) : 0;
 
@@ -193,7 +197,7 @@ export function ShoppingCart({
               <span className="font-medium">{subtotal.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="pos-text-secondary">{t('tables.tax')} (8.25%):</span>
+              <span className="pos-text-secondary">{t('tables.tax')}:</span>
               <span className="font-medium">{tax.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
             </div>
             <div className="border-t pt-2">
