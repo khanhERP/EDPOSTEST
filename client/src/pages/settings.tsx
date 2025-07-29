@@ -96,6 +96,23 @@ export default function Settings() {
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
 
+  // E-invoice management state
+  const [showEInvoiceForm, setShowEInvoiceForm] = useState(false);
+  const [editingEInvoice, setEditingEInvoice] = useState<any>(null);
+  const [showEInvoiceDeleteDialog, setShowEInvoiceDeleteDialog] = useState(false);
+  const [eInvoiceToDelete, setEInvoiceToDelete] = useState<any>(null);
+  const [eInvoiceForm, setEInvoiceForm] = useState({
+    taxCode: "",
+    loginId: "",
+    password: "",
+    softwareName: "",
+    loginUrl: "",
+    signMethod: "Ký server",
+    cqtCode: "Cấp nhật",
+    notes: "",
+    isActive: true,
+  });
+
   // Product management state
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
@@ -738,6 +755,79 @@ export default function Settings() {
       })
     : [];
 
+  // E-invoice management functions
+  const resetEInvoiceForm = () => {
+    setEInvoiceForm({
+      taxCode: "",
+      loginId: "",
+      password: "",
+      softwareName: "",
+      loginUrl: "",
+      signMethod: "Ký server",
+      cqtCode: "Cấp nhật",
+      notes: "",
+      isActive: true,
+    });
+    setEditingEInvoice(null);
+  };
+
+  const handleCreateEInvoice = () => {
+    // Mock data for demonstration
+    const mockEInvoices = [
+      {
+        id: 1,
+        taxCode: "0101864535",
+        loginId: "ERP1",
+        password: "**************",
+        softwareName: "MINVOICE",
+        loginUrl: "https://minvoice.app",
+        signMethod: "Ký server",
+        cqtCode: "Cấp nhật",
+        notes: "",
+        isActive: true,
+      },
+      {
+        id: 2,
+        taxCode: "0101864535",
+        loginId: "0100109106-509",
+        password: "**************",
+        softwareName: "SINVOICE",
+        loginUrl: "https://api-vinvoice.viettel.vn/services/einvoiceapplication/api/",
+        signMethod: "Ký server",
+        cqtCode: "Cấp nhật",
+        notes: "",
+        isActive: true,
+      },
+    ];
+    
+    toast({
+      title: "Thành công",
+      description: "Kết nối HĐĐT đã được tạo thành công",
+    });
+    setShowEInvoiceForm(false);
+    resetEInvoiceForm();
+  };
+
+  const handleEditEInvoice = (eInvoice: any) => {
+    setEInvoiceForm(eInvoice);
+    setEditingEInvoice(eInvoice);
+    setShowEInvoiceForm(true);
+  };
+
+  const handleDeleteEInvoice = (id: number, softwareName: string) => {
+    setEInvoiceToDelete({ id, softwareName });
+    setShowEInvoiceDeleteDialog(true);
+  };
+
+  const confirmDeleteEInvoice = () => {
+    toast({
+      title: "Thành công",
+      description: "Kết nối HĐĐT đã được xóa thành công",
+    });
+    setShowEInvoiceDeleteDialog(false);
+    setEInvoiceToDelete(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pt-20 relative">
       {/* Background Pattern */}
@@ -780,7 +870,7 @@ export default function Settings() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-6 bg-white/80 backdrop-blur-sm">
             <TabsTrigger value="store" className="flex items-center gap-2">
               <Store className="w-4 h-4" />
               {t("settings.storeInfo")}
@@ -800,6 +890,10 @@ export default function Settings() {
             <TabsTrigger value="payments" className="flex items-center gap-2">
               <CreditCard className="w-5 h-5" />
               {t("settings.paymentMethods")}
+            </TabsTrigger>
+            <TabsTrigger value="einvoice" className="flex items-center gap-2">
+              <SettingsIcon className="w-4 h-4" />
+              Thiết lập HĐĐT
             </TabsTrigger>
           </TabsList>
 
@@ -1819,6 +1913,136 @@ export default function Settings() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* E-Invoice Settings Tab */}
+          <TabsContent value="einvoice">
+            <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <SettingsIcon className="w-5 h-5 text-green-600" />
+                  Thiết lập HĐĐT
+                </CardTitle>
+                <CardDescription>
+                  Quản lý kết nối với các nhà cung cấp dịch vụ hóa đơn điện tử
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Sub tabs for E-invoice */}
+                  <Tabs defaultValue="connections" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="connections">Kênh kết nối HĐĐT</TabsTrigger>
+                      <TabsTrigger value="settings">Mẫu số HĐĐT</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="connections" className="mt-6">
+                      <div className="flex justify-between items-center mb-6">
+                        <div>
+                          <h3 className="text-lg font-medium">Danh sách kết nối</h3>
+                          <p className="text-sm text-gray-600">Quản lý các kết nối với nhà cung cấp HĐĐT</p>
+                        </div>
+                        <Button
+                          onClick={() => {
+                            resetEInvoiceForm();
+                            setShowEInvoiceForm(true);
+                          }}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Kiểm tra
+                        </Button>
+                      </div>
+
+                      {/* E-invoice connections table */}
+                      <div className="rounded-md border bg-white">
+                        <div className="grid grid-cols-10 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                          <div className="text-center">Ký hiệu</div>
+                          <div>Mã số thuế</div>
+                          <div>ID đăng nhập</div>
+                          <div>Mật khẩu</div>
+                          <div>Phần mềm HĐ</div>
+                          <div>Đường dẫn đăng nhập</div>
+                          <div>Phương thức ký</div>
+                          <div>Loại mã CQT</div>
+                          <div>Ghi chú</div>
+                          <div className="text-center">Mặc định</div>
+                        </div>
+
+                        <div className="divide-y">
+                          {/* Row 1 */}
+                          <div className="grid grid-cols-10 gap-4 p-3 items-center text-sm">
+                            <div className="text-center">1</div>
+                            <div className="font-mono">0101864535</div>
+                            <div>ERP1</div>
+                            <div>**************</div>
+                            <div>MINVOICE</div>
+                            <div className="text-blue-600 hover:underline cursor-pointer">
+                              https://minvoice.app
+                            </div>
+                            <div>Ký server</div>
+                            <div>Cấp nhật</div>
+                            <div>-</div>
+                            <div className="text-center">
+                              <input type="checkbox" className="rounded" />
+                            </div>
+                          </div>
+
+                          {/* Row 2 */}
+                          <div className="grid grid-cols-10 gap-4 p-3 items-center text-sm">
+                            <div className="text-center">2</div>
+                            <div className="font-mono">0101864535</div>
+                            <div>0100109106-509</div>
+                            <div>**************</div>
+                            <div>SINVOICE</div>
+                            <div className="text-blue-600 hover:underline cursor-pointer">
+                              https://api-vinvoice.viettel.vn/services/einvoiceapplication/api/
+                            </div>
+                            <div>Ký server</div>
+                            <div>Cấp nhật</div>
+                            <div>-</div>
+                            <div className="text-center">
+                              <input type="checkbox" className="rounded" />
+                            </div>
+                          </div>
+
+                          {/* Row 3 - Empty */}
+                          <div className="grid grid-cols-10 gap-4 p-3 items-center text-sm">
+                            <div className="text-center">3</div>
+                            <div>-</div>
+                            <div>-</div>
+                            <div>-</div>
+                            <div>-</div>
+                            <div>-</div>
+                            <div>Ký server</div>
+                            <div>Cấp nhật</div>
+                            <div>-</div>
+                            <div className="text-center">
+                              <input type="checkbox" className="rounded" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end mt-6">
+                        <Button className="bg-green-600 hover:bg-green-700">
+                          <Save className="w-4 h-4 mr-2" />
+                          Lưu cấu hình
+                        </Button>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="settings" className="mt-6">
+                      <div className="text-center py-8">
+                        <SettingsIcon className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                        <p className="text-gray-500">Mẫu số HĐĐT sẽ được cấu hình tại đây</p>
+                        <p className="text-sm text-gray-400 mt-2">Tính năng đang được phát triển</p>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -2282,6 +2506,205 @@ export default function Settings() {
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Xóa nhân viên
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* E-invoice Form Modal */}
+      <Dialog open={showEInvoiceForm} onOpenChange={setShowEInvoiceForm}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingEInvoice ? "Sửa kết nối HĐĐT" : "Thêm kết nối HĐĐT"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingEInvoice 
+                ? "Cập nhật thông tin kết nối với nhà cung cấp HĐĐT"
+                : "Nhập thông tin kết nối mới với nhà cung cấp HĐĐT"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="taxCode">Mã số thuế</Label>
+                <Input
+                  id="taxCode"
+                  value={eInvoiceForm.taxCode}
+                  onChange={(e) =>
+                    setEInvoiceForm((prev) => ({ ...prev, taxCode: e.target.value }))
+                  }
+                  placeholder="Nhập mã số thuế"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="loginId">ID đăng nhập</Label>
+                <Input
+                  id="loginId"
+                  value={eInvoiceForm.loginId}
+                  onChange={(e) =>
+                    setEInvoiceForm((prev) => ({ ...prev, loginId: e.target.value }))
+                  }
+                  placeholder="Nhập ID đăng nhập"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="password">Mật khẩu</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={eInvoiceForm.password}
+                  onChange={(e) =>
+                    setEInvoiceForm((prev) => ({ ...prev, password: e.target.value }))
+                  }
+                  placeholder="Nhập mật khẩu"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="softwareName">Phần mềm HĐ</Label>
+                <Select
+                  value={eInvoiceForm.softwareName}
+                  onValueChange={(value) =>
+                    setEInvoiceForm((prev) => ({ ...prev, softwareName: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn phần mềm" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MINVOICE">MINVOICE</SelectItem>
+                    <SelectItem value="SINVOICE">SINVOICE</SelectItem>
+                    <SelectItem value="VNPT">VNPT INVOICE</SelectItem>
+                    <SelectItem value="MISA">MISA</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="loginUrl">Đường dẫn đăng nhập</Label>
+              <Input
+                id="loginUrl"
+                value={eInvoiceForm.loginUrl}
+                onChange={(e) =>
+                  setEInvoiceForm((prev) => ({ ...prev, loginUrl: e.target.value }))
+                }
+                placeholder="https://example.com/api"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="signMethod">Phương thức ký</Label>
+                <Select
+                  value={eInvoiceForm.signMethod}
+                  onValueChange={(value) =>
+                    setEInvoiceForm((prev) => ({ ...prev, signMethod: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ký server">Ký server</SelectItem>
+                    <SelectItem value="Ký USB Token">Ký USB Token</SelectItem>
+                    <SelectItem value="Ký HSM">Ký HSM</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cqtCode">Loại mã CQT</Label>
+                <Select
+                  value={eInvoiceForm.cqtCode}
+                  onValueChange={(value) =>
+                    setEInvoiceForm((prev) => ({ ...prev, cqtCode: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Cấp nhật">Cấp nhật</SelectItem>
+                    <SelectItem value="Cấp hai">Cấp hai</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="notes">Ghi chú</Label>
+              <Textarea
+                id="notes"
+                value={eInvoiceForm.notes}
+                onChange={(e) =>
+                  setEInvoiceForm((prev) => ({ ...prev, notes: e.target.value }))
+                }
+                placeholder="Nhập ghi chú (tùy chọn)"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEInvoiceForm(false)}>
+              Hủy
+            </Button>
+            <Button
+              onClick={handleCreateEInvoice}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {editingEInvoice ? "Cập nhật" : "Thêm kết nối"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* E-invoice Delete Confirmation Dialog */}
+      <AlertDialog open={showEInvoiceDeleteDialog} onOpenChange={setShowEInvoiceDeleteDialog}>
+        <AlertDialogContent className="sm:max-w-[425px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Xác nhận xóa kết nối HĐĐT
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              <div className="space-y-3">
+                <p>
+                  Bạn có chắc chắn muốn xóa kết nối{" "}
+                  <span className="font-semibold text-gray-900">
+                    "{eInvoiceToDelete?.softwareName}"
+                  </span>{" "}
+                  không?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-red-700">
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
+                      Kết nối HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Điều này có thể ảnh hưởng đến việc xuất hóa đơn điện tử.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel 
+              onClick={() => {
+                setShowEInvoiceDeleteDialog(false);
+                setEInvoiceToDelete(null);
+              }}
+              className="hover:bg-gray-100"
+            >
+              Hủy bỏ
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteEInvoice}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Xóa kết nối
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
