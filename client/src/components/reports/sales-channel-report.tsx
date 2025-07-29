@@ -233,37 +233,82 @@ export function SalesChannelReport() {
     if (!chartData || chartData.length === 0) return null;
 
     return (
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            {t("reports.salesChannelChart")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-              <Legend />
-              {concernType === "sales" && (
-                <>
-                  <Bar dataKey="revenue" fill="#3B82F6" name={t("reports.salesChannelRevenue")} />
-                  <Bar dataKey="netRevenue" fill="#10B981" name={t("reports.salesChannelNetRevenue")} />
-                </>
-              )}
-              {concernType === "profit" && (
-                <>
-                  <Bar dataKey="grossProfit" fill="#3B82F6" name={t("reports.salesChannelGrossProfit")} />
-                  <Bar dataKey="netProfit" fill="#10B981" name={t("reports.salesChannelNetProfit")} />
-                </>
-              )}
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+      <div className="mt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              {t("reports.salesChannelChart")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                  <XAxis 
+                    dataKey="name" 
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`}
+                  />
+                  <Tooltip 
+                    formatter={(value, name) => [formatCurrency(Number(value)), name]}
+                    labelStyle={{ color: '#374151' }}
+                    contentStyle={{
+                      backgroundColor: 'white',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                  <Legend 
+                    wrapperStyle={{ paddingTop: '20px' }}
+                  />
+                  {concernType === "sales" && (
+                    <>
+                      <Bar 
+                        dataKey="revenue" 
+                        fill="#3B82F6" 
+                        name={t("reports.salesChannelRevenue")}
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="netRevenue" 
+                        fill="#10B981" 
+                        name={t("reports.salesChannelNetRevenue")}
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </>
+                  )}
+                  {concernType === "profit" && (
+                    <>
+                      <Bar 
+                        dataKey="grossProfit" 
+                        fill="#3B82F6" 
+                        name={t("reports.salesChannelGrossProfit")}
+                        radius={[4, 4, 0, 0]}
+                      />
+                      <Bar 
+                        dataKey="netProfit" 
+                        fill="#10B981" 
+                        name={t("reports.salesChannelNetProfit")}
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </>
+                  )}
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   };
 
