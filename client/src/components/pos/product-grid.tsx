@@ -325,7 +325,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                       {t('pos.popular')}
                     </div>
                   )}
-                  {isLowStock && (
+                  {isLowStock && product.trackInventory !== false && (
                     <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                       {t('pos.lowStock')}
                     </div>
