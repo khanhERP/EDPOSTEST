@@ -10,7 +10,8 @@ import {
   ChevronRight,
   ChevronLeft,
   Menu,
-  Package
+  Package,
+  ShoppingCart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -49,7 +50,7 @@ export function RightSidebar() {
       href: "/tables",
     },
     {
-      icon: Home,
+      icon: ShoppingCart,
       label: t('nav.pos'),
       href: "/pos",
     },
