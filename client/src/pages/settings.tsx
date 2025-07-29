@@ -375,11 +375,21 @@ export default function Settings() {
         "/api/categories",
         categoryForm,
       );
-      
-      // Invalidate and refetch categories data immediately
-      await queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-      await queryClient.refetchQueries({ queryKey: ["/api/categories"] });
-      
+
+      // Force immediate refresh by clearing all caches first
+      queryClient.removeQueries({ queryKey: ["/api/categories"] });
+      queryClient.removeQueries({ queryKey: ["/api/products"] });
+
+      // Then refetch fresh data
+      await Promise.all([
+        queryClient.fetchQuery({ queryKey: ["/api/categories"] }),
+        queryClient.fetchQuery({ queryKey: ["/api/products"] })
+      ]);
+
+      // Also invalidate to ensure all components using these queries update
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+
       toast({
         title: t("common.success"),
         description: "Danh mục đã được tạo thành công",
@@ -405,14 +415,21 @@ export default function Settings() {
         `/api/categories/${editingCategory.id}`,
         categoryForm,
       );
-      
-      // Invalidate both categories and products queries to refresh the lists
-      await queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-      await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      
-      // Refetch categories data immediately
-      await queryClient.refetchQueries({ queryKey: ["/api/categories"] });
-      
+
+      // Force immediate refresh by clearing all caches first
+      queryClient.removeQueries({ queryKey: ["/api/categories"] });
+      queryClient.removeQueries({ queryKey: ["/api/products"] });
+
+      // Then refetch fresh data
+      await Promise.all([
+        queryClient.fetchQuery({ queryKey: ["/api/categories"] }),
+        queryClient.fetchQuery({ queryKey: ["/api/products"] })
+      ]);
+
+      // Also invalidate to ensure all components using these queries update
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+
       toast({
         title: t("common.success"),
         description: "Danh mục đã được cập nhật thành công",
@@ -437,8 +454,21 @@ export default function Settings() {
     ) {
       try {
         await apiRequest("DELETE", `/api/categories/${categoryId}`);
+
+        // Force immediate refresh by clearing all caches first
+        queryClient.removeQueries({ queryKey: ["/api/categories"] });
+        queryClient.removeQueries({ queryKey: ["/api/products"] });
+
+        // Then refetch fresh data
+        await Promise.all([
+          queryClient.fetchQuery({ queryKey: ["/api/categories"] }),
+          queryClient.fetchQuery({ queryKey: ["/api/products"] })
+        ]);
+
+        // Also invalidate to ensure all components using these queries update
         queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
         queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+
         toast({
           title: t("common.success"),
           description: t("productManagement.categoryDeleteSuccess"),
@@ -938,7 +968,7 @@ export default function Settings() {
                       className="bg-green-600 hover:bg-green-700"
                       onClick={() => setShowCustomerForm(true)}
                     >
-                      <Plus className="w-4 h-4 mr-2" />
+                      <Plus classNameName="w-4 h-4 mr-2" />
                       {t("customers.addCustomer")}
                     </Button>
                   </div>
