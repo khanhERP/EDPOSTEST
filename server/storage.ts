@@ -1050,7 +1050,6 @@ export class DatabaseStorage implements IStorage {
   ): Promise<Customer | undefined> {
     const [result] = await db
       .select()
-      .fromThis commit modifies the DatabaseStorage class to fetch all products, regardless of their active status, and adds a new method to fetch only active products.
       .from(customers)
       .where(eq(customers.customerId, customerId));
     return result || undefined;
