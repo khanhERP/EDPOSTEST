@@ -197,6 +197,8 @@ export interface IStorage {
   getMembershipThresholds(): Promise<{ GOLD: number; VIP: number }>;
   updateMembershipThresholds(thresholds: { GOLD: number; VIP: number }): Promise<{ GOLD: number; VIP: number }>;
   recalculateAllMembershipLevels(goldThreshold: number, vipThreshold: number): Promise<void>;
+
+  getAllProducts(includeInactive?: boolean): Promise<Product[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -271,7 +273,7 @@ export class DatabaseStorage implements IStorage {
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
     try {
       console.log("Storage: Creating product with data:", insertProduct);
-      
+
       const productData = {
         name: insertProduct.name,
         sku: insertProduct.sku,
@@ -290,7 +292,7 @@ export class DatabaseStorage implements IStorage {
         .insert(products)
         .values(productData)
         .returning();
-      
+
       console.log("Storage: Product created successfully:", product);
       return product;
     } catch (error) {
@@ -1051,7 +1053,8 @@ export class DatabaseStorage implements IStorage {
     return result || undefined;
   }
 
-  async createCustomer(customerData: InsertCustomer): Promise<Customer> {
+  async createCustomer(customerData:```text
+ InsertCustomer): Promise<Customer> {
     // Generate customer ID if not provided
     if (!customerData.customerId) {
       const count = await db
@@ -1271,6 +1274,21 @@ export class DatabaseStorage implements IStorage {
           })
           .where(eq(customers.id, customer.id));
       }
+    }
+  }
+
+  async getAllProducts(includeInactive: boolean = false): Promise<Product[]> {
+    if (includeInactive) {
+      return await db
+        .select()
+        .from(products)
+        .orderBy(products.name);
+    } else {
+      return await db
+        .select()
+        .from(products)
+        .where(eq(products.isActive, true))
+        .orderBy(products.name);
     }
   }
 

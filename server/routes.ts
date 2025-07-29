@@ -116,14 +116,14 @@ export async function registerRoutes(app: Express): Promise {
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting category:", error);
-      
+
       // Handle foreign key constraint errors
       if (error instanceof Error && error.message.includes('foreign key constraint')) {
         return res.status(400).json({ 
           error: "Không thể xóa danh mục vì vẫn còn sản phẩm thuộc danh mục này. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước." 
         });
       }
-      
+
       res.status(500).json({ error: "Có lỗi xảy ra khi xóa danh mục" });
     }
   });
@@ -168,7 +168,7 @@ export async function registerRoutes(app: Express): Promise {
   app.post("/api/products", async (req, res) => {
     try {
       console.log("Product creation request body:", req.body);
-      
+
       // Ensure required fields are present
       if (!req.body.name || !req.body.sku || !req.body.price || !req.body.categoryId) {
         return res.status(400).json({
@@ -195,7 +195,7 @@ export async function registerRoutes(app: Express): Promise {
         .select()
         .from(products)
         .where(eq(products.sku, validatedData.sku));
-        
+
       if (existingProduct) {
         console.log("SKU already exists:", validatedData.sku);
         return res.status(409).json({ 
@@ -1805,8 +1805,7 @@ app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async 
 
       if (salesChannel !== 'all') {
         if (salesChannel === 'direct') {
-          query += ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';
-        } else {
+          query += ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';        } else {
           query += ' AND t.salesChannel IS NOT NULL AND t.salesChannel != "Bán trực tiếp"';
         }
       }

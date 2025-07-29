@@ -1581,13 +1581,14 @@ export default function Settings() {
                     </div>
                   ) : (
                     <div className="rounded-md border">
-                      <div className="grid grid-cols-7 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                      <div className="grid grid-cols-8 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
                         <div>{t("settings.productName")}</div>
                         <div>{t("settings.productSku")}</div>
                         <div>{t("settings.productCategory")}</div>
                         <div>{t("settings.productPrice")}</div>
                         <div>{t("settings.productStock")}</div>
-                        <div>상태</div>
+                        <div>Trạng thái kho</div>
+                        <div>Trạng thái sử dụng</div>
                         <div className="text-center">{t("common.actions")}</div>
                       </div>
 
@@ -1599,7 +1600,7 @@ export default function Settings() {
                           return (
                             <div
                               key={product.id}
-                              className="grid grid-cols-7 gap-4 p-4 items-center"
+                              className="grid grid-cols-8 gap-4 p-4 items-center"
                             >
                               <div className="font-medium">{product.name}</div>
                               <div className="font-mono text-sm">
@@ -1632,7 +1633,23 @@ export default function Settings() {
                                       : ""
                                   }
                                 >
-                                  {product.stock > 0 ? "재고있음" : "품절"}
+                                  {product.stock > 0 ? "Còn hàng" : "Hết hàng"}
+                                </Badge>
+                              </div>
+                              <div>
+                                <Badge
+                                  variant={
+                                    product.isActive === true || product.isActive === 1
+                                      ? "default"
+                                      : "secondary"
+                                  }
+                                  className={
+                                    product.isActive === true || product.isActive === 1
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }
+                                >
+                                  {product.isActive === true || product.isActive === 1 ? "Có" : "Không"}
                                 </Badge>
                               </div>
                               <div className="flex items-center justify-center gap-2">
