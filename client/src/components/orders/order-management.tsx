@@ -29,6 +29,8 @@ export function OrderManagement() {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [pointsAmount, setPointsAmount] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [mixedPaymentOpen, setMixedPaymentOpen] = useState(false);
+  const [mixedPaymentData, setMixedPaymentData] = useState<any>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -104,7 +106,13 @@ export function OrderManagement() {
   });
 
   const pointsPaymentMutation = useMutation({
-    mutationFn: async ({ customerId, points, orderId }: { customerId: number; points: number; orderId: number }) => {
+    mutationFn: async ({ customerId, points, orderId, paymentMethod, remainingAmount }: { 
+      customerId: number; 
+      points: number; 
+      orderId: number; 
+      paymentMethod?: string;
+      remainingAmount?: number;
+    }) => {
       // First redeem points
       await apiRequest('POST', '/api/customers/redeem-points', {
         customerId,
@@ -114,8 +122,9 @@ export function OrderManagement() {
       // Then mark order as paid
       await apiRequest('PUT', `/api/orders/${orderId}/status`, { 
         status: 'paid', 
-        paymentMethod: 'points',
-        customerId 
+        paymentMethod: paymentMethod || 'points',
+        customerId,
+        remainingAmount: remainingAmount || 0
       });
     },
     onSuccess: () => {
@@ -137,6 +146,50 @@ export function OrderManagement() {
         title: 'Lỗi',
         description: 'Không thể hoàn tất thanh toán bằng điểm',
         variant: "destructive",
+      });
+    },
+  });
+
+  const mixedPaymentMutation = useMutation({
+    mutationFn: async ({ customerId, points, orderId, paymentMethod }: { 
+      customerId: number; 
+      points: number; 
+      orderId: number; 
+      paymentMethod: string;
+    }) => {
+      // First redeem all available points
+      await apiRequest('POST', '/api/customers/redeem-points', {
+        customerId,
+        points
+      });
+
+      // Then mark order as paid with mixed payment
+      await apiRequest('PUT', `/api/orders/${orderId}/status`, { 
+        status: 'paid', 
+        paymentMethod: `points + ${paymentMethod}`,
+        customerId 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+      setOrderDetailsOpen(false);
+      setMixedPaymentOpen(false);
+      setMixedPaymentData(null);
+      setSelectedCustomer(null);
+      setPointsAmount("");
+      setSearchTerm("");
+      toast({
+        title: 'Thanh toán thành công',
+        description: 'Đơn hàng đã được thanh toán bằng điểm + tiền mặt/chuyển khoản',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể hoàn tất thanh toán hỗn hợp',
+        variant: 'destructive',
       });
     },
   });
@@ -290,32 +343,41 @@ export function OrderManagement() {
   };
 
   const handlePointsPayment = () => {
-    if (!selectedCustomer || !pointsAmount || !selectedOrder) {
+    if (!selectedCustomer || !selectedOrder) {
       toast({
         title: 'Lỗi',
-        description: 'Vui lòng chọn khách hàng và nhập số điểm',
+        description: 'Vui lòng chọn khách hàng',
         variant: 'destructive',
       });
       return;
     }
 
-    const points = parseInt(pointsAmount);
     const currentPoints = selectedCustomer.points || 0;
+    const orderTotal = Number(selectedOrder.total);
+    const pointsValue = currentPoints * 1000; // 1 điểm = 1000đ
     
-    if (points > currentPoints) {
-      toast({
-        title: 'Không đủ điểm',
-        description: 'Khách hàng không có đủ điểm để thanh toán',
-        variant: 'destructive',
+    if (pointsValue >= orderTotal) {
+      // Đủ điểm để thanh toán toàn bộ
+      const pointsNeeded = Math.ceil(orderTotal / 1000);
+      pointsPaymentMutation.mutate({
+        customerId: selectedCustomer.id,
+        points: pointsNeeded,
+        orderId: selectedOrder.id,
+        paymentMethod: 'points',
+        remainingAmount: 0
       });
-      return;
+    } else {
+      // Không đủ điểm, cần thanh toán hỗn hợp
+      const remainingAmount = orderTotal - pointsValue;
+      setMixedPaymentData({
+        customerId: selectedCustomer.id,
+        pointsToUse: currentPoints,
+        remainingAmount: remainingAmount,
+        orderId: selectedOrder.id
+      });
+      setPointsPaymentOpen(false);
+      setMixedPaymentOpen(true);
     }
-
-    pointsPaymentMutation.mutate({
-      customerId: selectedCustomer.id,
-      points,
-      orderId: selectedOrder.id
-    });
   };
 
   const filteredCustomers = customers?.filter(customer => {
@@ -821,6 +883,21 @@ export function OrderManagement() {
                 <p className="text-2xl font-bold text-blue-600">
                   {Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
                 </p>
+                {selectedCustomer && (
+                  <div className="mt-2 pt-2 border-t border-blue-200">
+                    <p className="text-sm text-gray-600">
+                      Điểm có sẵn: {(selectedCustomer.points || 0).toLocaleString()}P 
+                      <span className="ml-2 text-green-600">
+                        (≈ {((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫)
+                      </span>
+                    </p>
+                    {((selectedCustomer.points || 0) * 1000) < Number(selectedOrder.total) && (
+                      <p className="text-sm text-orange-600 mt-1">
+                        Cần thanh toán thêm: {(Number(selectedOrder.total) - (selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -869,31 +946,34 @@ export function OrderManagement() {
               </div>
             </div>
 
-            {/* Points Amount Input */}
-            {selectedCustomer && (
+            {/* Payment Explanation */}
+            {selectedCustomer && selectedOrder && (
               <div className="space-y-3">
-                <Label>Số điểm sử dụng</Label>
-                <Input
-                  type="number"
-                  placeholder="Nhập số điểm muốn sử dụng..."
-                  value={pointsAmount}
-                  onChange={(e) => setPointsAmount(e.target.value)}
-                />
-                {pointsAmount && parseInt(pointsAmount) > (selectedCustomer.points || 0) && (
-                  <p className="text-sm text-red-600">
-                    Số điểm nhập vượt quá số điểm có sẵn
-                  </p>
-                )}
-                {pointsAmount && (
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <div className="flex justify-between text-sm">
-                      <span>Điểm sau thanh toán:</span>
-                      <span className="font-medium">
-                        {Math.max(0, (selectedCustomer.points || 0) - parseInt(pointsAmount || '0')).toLocaleString()}P
-                      </span>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium mb-2">Chi tiết thanh toán</h4>
+                  {((selectedCustomer.points || 0) * 1000) >= Number(selectedOrder.total) ? (
+                    <div className="text-green-600">
+                      <p className="text-sm">✓ Đủ điểm để thanh toán toàn bộ đơn hàng</p>
+                      <p className="text-sm">
+                        Sử dụng: {Math.ceil(Number(selectedOrder.total) / 1000).toLocaleString()}P
+                      </p>
+                      <p className="text-sm">
+                        Còn lại: {((selectedCustomer.points || 0) - Math.ceil(Number(selectedOrder.total) / 1000)).toLocaleString()}P
+                      </p>
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="text-orange-600">
+                      <p className="text-sm">⚠ Không đủ điểm, cần thanh toán hỗn hợp</p>
+                      <p className="text-sm">
+                        Sử dụng tất cả: {(selectedCustomer.points || 0).toLocaleString()}P 
+                        (≈ {((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫)
+                      </p>
+                      <p className="text-sm">
+                        Cần thanh toán thêm: {(Number(selectedOrder.total) - (selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -906,15 +986,105 @@ export function OrderManagement() {
               onClick={handlePointsPayment}
               disabled={
                 !selectedCustomer || 
-                !pointsAmount || 
-                parseInt(pointsAmount || '0') > (selectedCustomer?.points || 0) || 
-                pointsPaymentMutation.isPending
+                pointsPaymentMutation.isPending ||
+                (selectedCustomer.points || 0) === 0
               }
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {pointsPaymentMutation.isPending ? 'Đang xử lý...' : 'Thanh toán bằng điểm'}
+              {pointsPaymentMutation.isPending ? 'Đang xử lý...' : 
+               ((selectedCustomer?.points || 0) * 1000) >= Number(selectedOrder?.total || 0) ? 
+               'Thanh toán bằng điểm' : 'Thanh toán hỗn hợp'}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mixed Payment Dialog */}
+      <Dialog open={mixedPaymentOpen} onOpenChange={setMixedPaymentOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-orange-600" />
+              Thanh toán hỗn hợp
+            </DialogTitle>
+            <DialogDescription>
+              Không đủ điểm, cần thanh toán thêm bằng tiền mặt hoặc chuyển khoản
+            </DialogDescription>
+          </DialogHeader>
+
+          {mixedPaymentData && (
+            <div className="space-y-4">
+              {/* Payment Summary */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium mb-2">Tóm tắt thanh toán</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Tổng đơn hàng:</span>
+                    <span className="font-medium">{Number(selectedOrder?.total || 0).toLocaleString()} ₫</span>
+                  </div>
+                  <div className="flex justify-between text-blue-600">
+                    <span>Thanh toán bằng điểm:</span>
+                    <span className="font-medium">
+                      {mixedPaymentData.pointsToUse.toLocaleString()}P 
+                      <span className="ml-1">(-{(mixedPaymentData.pointsToUse * 1000).toLocaleString()} ₫)</span>
+                    </span>
+                  </div>
+                  <div className="border-t pt-2 flex justify-between font-medium text-orange-600">
+                    <span>Cần thanh toán thêm:</span>
+                    <span>{mixedPaymentData.remainingAmount.toLocaleString()} ₫</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Methods */}
+              <div className="space-y-3">
+                <h4 className="font-medium">Chọn phương thức thanh toán cho phần còn lại:</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto p-4"
+                    onClick={() => mixedPaymentMutation.mutate({
+                      customerId: mixedPaymentData.customerId,
+                      points: mixedPaymentData.pointsToUse,
+                      orderId: mixedPaymentData.orderId,
+                      paymentMethod: 'cash'
+                    })}
+                    disabled={mixedPaymentMutation.isPending}
+                  >
+                    <span className="text-2xl mr-3">💵</span>
+                    <div className="text-left">
+                      <p className="font-medium">Tiền mặt</p>
+                      <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
+                    </div>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto p-4"
+                    onClick={() => mixedPaymentMutation.mutate({
+                      customerId: mixedPaymentData.customerId,
+                      points: mixedPaymentData.pointsToUse,
+                      orderId: mixedPaymentData.orderId,
+                      paymentMethod: 'transfer'
+                    })}
+                    disabled={mixedPaymentMutation.isPending}
+                  >
+                    <span className="text-2xl mr-3">💳</span>
+                    <div className="text-left">
+                      <p className="font-medium">Chuyển khoản</p>
+                      <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
+                    </div>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setMixedPaymentOpen(false)}>
+                  Hủy
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
