@@ -173,6 +173,7 @@ export default function Settings() {
     stock: "0",
     categoryId: "",
     description: "",
+    isActive: "true",
   });
 
   // Fetch store settings
@@ -452,6 +453,7 @@ export default function Settings() {
       stock: "0",
       categoryId: "",
       description: "",
+      isActive: "true",
     });
     setEditingProduct(null);
   };
@@ -480,7 +482,7 @@ export default function Settings() {
       }
 
       const result = await response.json();
-      
+
       // Refetch data immediately
       await queryClient.refetchQueries({ queryKey: ["/api/categories"] });
       await queryClient.refetchQueries({ queryKey: ["/api/products"] });
@@ -534,7 +536,7 @@ export default function Settings() {
       }
 
       const result = await response.json();
-      
+
       // Close dialog and reset form
       setShowCategoryForm(false);
       resetCategoryForm();
@@ -604,7 +606,7 @@ export default function Settings() {
       setCategoryToDelete(null);
     } catch (error) {
       console.error("Category delete error:", error);
-      
+
       let errorMessage = "Có lỗi xảy ra khi xóa danh mục";
       if (error instanceof Error) {
         if (error.message.includes("products")) {
@@ -613,7 +615,7 @@ export default function Settings() {
           errorMessage = error.message;
         }
       }
-      
+
       toast({
         title: t("common.error"),
         description: errorMessage,
@@ -636,6 +638,7 @@ export default function Settings() {
         price: productForm.price,
         stock: parseInt(productForm.stock) || 0,
         categoryId: parseInt(productForm.categoryId),
+        isActive: productForm.isActive === "true",
       };
 
       const response = await apiRequest("POST", "/api/products", productData);
@@ -670,6 +673,7 @@ export default function Settings() {
         price: productForm.price,
         stock: parseInt(productForm.stock) || 0,
         categoryId: parseInt(productForm.categoryId),
+        isActive: productForm.isActive === "true",
       };
 
       const response = await apiRequest(
@@ -703,9 +707,9 @@ export default function Settings() {
 
     try {
       await apiRequest("DELETE", `/api/products/${productToDelete.id}`);
-      
+
       await queryClient.refetchQueries({ queryKey: ["/api/products"] });
-      
+
       toast({
         title: t("common.success"),
         description: "Sản phẩm đã được xóa thành công",
@@ -740,6 +744,7 @@ export default function Settings() {
       stock: product.stock.toString(),
       categoryId: product.categoryId.toString(),
       description: product.description || "",
+      isActive: product.isActive ? "true" : "false",
     });
     setEditingProduct(product);
     setShowProductForm(true);
@@ -804,7 +809,7 @@ export default function Settings() {
         isActive: true,
       },
     ];
-    
+
     toast({
       title: "Thành công",
       description: "Kết nối HĐĐT đã được tạo thành công",
@@ -998,6 +1003,7 @@ export default function Settings() {
                       rows={3}
                     />
                   </div>
+```text
                   <div className="space-y-2">
                     <Label htmlFor="phone">{t("settings.phone")}</Label>
                     <Input
@@ -2390,6 +2396,27 @@ export default function Settings() {
                 rows={3}
               />
             </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="productIsActive" className="text-right">
+                Trạng thái sử dụng
+              </Label>
+              <Select
+                value={productForm.isActive}
+                onValueChange={(value) =>
+                  setProductForm((prev) => ({ ...prev, isActive: value }))
+                }
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue
+                    placeholder="Chọn trạng thái"
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true">Có</SelectItem>
+                  <SelectItem value="false">Không</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowProductForm(false)}>
@@ -2620,152 +2647,6 @@ export default function Settings() {
       </AlertDialog>
 
       {/* E-invoice Form Modal */}
-      <Dialog open={showEInvoiceForm} onOpenChange={setShowEInvoiceForm}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>
-              {editingEInvoice ? "Sửa kết nối HĐĐT" : "Thêm kết nối HĐĐT"}
-            </DialogTitle>
-            <DialogDescription>
-              {editingEInvoice 
-                ? "Cập nhật thông tin kết nối với nhà cung cấp HĐĐT"
-                : "Nhập thông tin kết nối mới với nhà cung cấp HĐĐT"}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="taxCode">Mã số thuế</Label>
-                <Input
-                  id="taxCode"
-                  value={eInvoiceForm.taxCode}
-                  onChange={(e) =>
-                    setEInvoiceForm((prev) => ({ ...prev, taxCode: e.target.value }))
-                  }
-                  placeholder="Nhập mã số thuế"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="loginId">ID đăng nhập</Label>
-                <Input
-                  id="loginId"
-                  value={eInvoiceForm.loginId}
-                  onChange={(e) =>
-                    setEInvoiceForm((prev) => ({ ...prev, loginId: e.target.value }))
-                  }
-                  placeholder="Nhập ID đăng nhập"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="password">Mật khẩu</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={eInvoiceForm.password}
-                  onChange={(e) =>
-                    setEInvoiceForm((prev) => ({ ...prev, password: e.target.value }))
-                  }
-                  placeholder="Nhập mật khẩu"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="softwareName">Phần mềm HĐ</Label>
-                <Select
-                  value={eInvoiceForm.softwareName}
-                  onValueChange={(value) =>
-                    setEInvoiceForm((prev) => ({ ...prev, softwareName: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Chọn phần mềm" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MINVOICE">MINVOICE</SelectItem>
-                    <SelectItem value="SINVOICE">SINVOICE</SelectItem>
-                    <SelectItem value="VNPT">VNPT INVOICE</SelectItem>
-                    <SelectItem value="MISA">MISA</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="loginUrl">Đường dẫn đăng nhập</Label>
-              <Input
-                id="loginUrl"
-                value={eInvoiceForm.loginUrl}
-                onChange={(e) =>
-                  setEInvoiceForm((prev) => ({ ...prev, loginUrl: e.target.value }))
-                }
-                placeholder="https://example.com/api"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="signMethod">Phương thức ký</Label>
-                <Select
-                  value={eInvoiceForm.signMethod}
-                  onValueChange={(value) =>
-                    setEInvoiceForm((prev) => ({ ...prev, signMethod: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ký server">Ký server</SelectItem>
-                    <SelectItem value="Ký USB Token">Ký USB Token</SelectItem>
-                    <SelectItem value="Ký HSM">Ký HSM</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cqtCode">Loại mã CQT</Label>
-                <Select
-                  value={eInvoiceForm.cqtCode}
-                  onValueChange={(value) =>
-                    setEInvoiceForm((prev) => ({ ...prev, cqtCode: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Cấp nhật">Cấp nhật</SelectItem>
-                    <SelectItem value="Cấp hai">Cấp hai</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="notes">Ghi chú</Label>
-              <Textarea
-                id="notes"
-                value={eInvoiceForm.notes}
-                onChange={(e) =>
-                  setEInvoiceForm((prev) => ({ ...prev, notes: e.target.value }))
-                }
-                placeholder="Nhập ghi chú (tùy chọn)"
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEInvoiceForm(false)}>
-              Hủy
-            </Button>
-            <Button
-              onClick={handleCreateEInvoice}
-              className="bg-green-600 hover:bg-green-700"
-            >
-              {editingEInvoice ? "Cập nhật" : "Thêm kết nối"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* E-invoice Delete Confirmation Dialog */}
       <AlertDialog open={showEInvoiceDeleteDialog} onOpenChange={setShowEInvoiceDeleteDialog}>
         <AlertDialogContent className="sm:max-w-[425px]">
           <AlertDialogHeader>
