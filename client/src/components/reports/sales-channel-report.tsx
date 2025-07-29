@@ -83,28 +83,20 @@ export function SalesChannelReport() {
 
   const getChartData = () => {
     if (concernType === "sales") {
-      const salesData = salesChannelSalesData && Array.isArray(salesChannelSalesData) && salesChannelSalesData.length > 0 
-        ? salesChannelSalesData 
-        : [
-            { salesChannelName: "Shopee", revenue: 5000000, returnValue: 200000, netRevenue: 4800000 },
-            { salesChannelName: "Lazada", revenue: 3500000, returnValue: 150000, netRevenue: 3350000 },
-            { salesChannelName: "Direct Sales", revenue: 2800000, returnValue: 100000, netRevenue: 2700000 }
-          ];
-      return salesData.map((item: any) => ({
+      if (!salesChannelSalesData || !Array.isArray(salesChannelSalesData) || salesChannelSalesData.length === 0) {
+        return [];
+      }
+      return salesChannelSalesData.map((item: any) => ({
         name: item.salesChannelName || "N/A",
         revenue: item.revenue || 0,
         returnValue: item.returnValue || 0,
         netRevenue: item.netRevenue || 0,
       }));
     } else if (concernType === "profit") {
-      const profitData = salesChannelProfitData && Array.isArray(salesChannelProfitData) && salesChannelProfitData.length > 0 
-        ? salesChannelProfitData 
-        : [
-            { salesChannelName: "Shopee", grossProfit: 1800000, netProfit: 1500000, platformFee: 300000 },
-            { salesChannelName: "Lazada", grossProfit: 1250000, netProfit: 1050000, platformFee: 200000 },
-            { salesChannelName: "Direct Sales", grossProfit: 1100000, netProfit: 1100000, platformFee: 0 }
-          ];
-      return profitData.map((item: any) => ({
+      if (!salesChannelProfitData || !Array.isArray(salesChannelProfitData) || salesChannelProfitData.length === 0) {
+        return [];
+      }
+      return salesChannelProfitData.map((item: any) => ({
         name: item.salesChannelName || "N/A",
         grossProfit: item.grossProfit || 0,
         netProfit: item.netProfit || 0,
@@ -115,35 +107,13 @@ export function SalesChannelReport() {
   };
 
   const renderSalesTable = () => {
-    // Use sample data if no real data available
-    const dataToShow = salesChannelSalesData && Array.isArray(salesChannelSalesData) && salesChannelSalesData.length > 0 
-      ? salesChannelSalesData 
-      : [
-          { 
-            id: 1, 
-            salesChannelName: "Shopee", 
-            sellerName: "Nguyen Van A", 
-            revenue: 5000000, 
-            returnValue: 200000, 
-            netRevenue: 4800000 
-          },
-          { 
-            id: 2, 
-            salesChannelName: "Lazada", 
-            sellerName: "Tran Thi B", 
-            revenue: 3500000, 
-            returnValue: 150000, 
-            netRevenue: 3350000 
-          },
-          { 
-            id: 3, 
-            salesChannelName: "Direct Sales", 
-            sellerName: "Le Van C", 
-            revenue: 2800000, 
-            returnValue: 100000, 
-            netRevenue: 2700000 
-          }
-        ];
+    if (!salesChannelSalesData || !Array.isArray(salesChannelSalesData) || salesChannelSalesData.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <div className="text-gray-500">{t("reports.noReportData")}</div>
+        </div>
+      );
+    }
 
     return (
       <div className="overflow-x-auto">
@@ -157,7 +127,7 @@ export function SalesChannelReport() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {dataToShow.map((item: any, index: number) => (
+            {salesChannelSalesData.map((item: any, index: number) => (
               <TableRow key={item.id || index}>
                 <TableCell className="font-medium">
                   <div>
@@ -181,53 +151,13 @@ export function SalesChannelReport() {
   };
 
   const renderProfitTable = () => {
-    // Use sample data if no real data available
-    const dataToShow = salesChannelProfitData && Array.isArray(salesChannelProfitData) && salesChannelProfitData.length > 0 
-      ? salesChannelProfitData 
-      : [
-          { 
-            id: 1, 
-            salesChannelName: "Shopee", 
-            sellerName: "Nguyen Van A", 
-            totalAmount: 5200000,
-            discount: 200000,
-            revenue: 5000000, 
-            returnValue: 200000, 
-            netRevenue: 4800000,
-            totalCost: 3000000,
-            grossProfit: 1800000,
-            platformFee: 300000,
-            netProfit: 1500000
-          },
-          { 
-            id: 2, 
-            salesChannelName: "Lazada", 
-            sellerName: "Tran Thi B", 
-            totalAmount: 3650000,
-            discount: 150000,
-            revenue: 3500000, 
-            returnValue: 150000, 
-            netRevenue: 3350000,
-            totalCost: 2100000,
-            grossProfit: 1250000,
-            platformFee: 200000,
-            netProfit: 1050000
-          },
-          { 
-            id: 3, 
-            salesChannelName: "Direct Sales", 
-            sellerName: "Le Van C", 
-            totalAmount: 2900000,
-            discount: 100000,
-            revenue: 2800000, 
-            returnValue: 100000, 
-            netRevenue: 2700000,
-            totalCost: 1600000,
-            grossProfit: 1100000,
-            platformFee: 0,
-            netProfit: 1100000
-          }
-        ];
+    if (!salesChannelProfitData || !Array.isArray(salesChannelProfitData) || salesChannelProfitData.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <div className="text-gray-500">{t("reports.noReportData")}</div>
+        </div>
+      );
+    }
 
     return (
       <div className="overflow-x-auto">
@@ -247,7 +177,7 @@ export function SalesChannelReport() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {dataToShow.map((item: any, index: number) => (
+            {salesChannelProfitData.map((item: any, index: number) => (
               <TableRow key={item.id || index}>
                 <TableCell className="font-medium">
                   <div>
@@ -279,47 +209,13 @@ export function SalesChannelReport() {
   };
 
   const renderProductsTable = () => {
-    // Use sample data if no real data available
-    const dataToShow = salesChannelProductsData && Array.isArray(salesChannelProductsData) && salesChannelProductsData.length > 0 
-      ? salesChannelProductsData 
-      : [
-          { 
-            id: 1, 
-            salesChannelName: "Shopee", 
-            sellerName: "Nguyen Van A", 
-            productCode: "SP001",
-            productName: "Smartphone Samsung Galaxy A54",
-            quantitySold: 25,
-            revenue: 2500000, 
-            quantityReturned: 2,
-            returnValue: 200000, 
-            netRevenue: 2300000
-          },
-          { 
-            id: 2, 
-            salesChannelName: "Lazada", 
-            sellerName: "Tran Thi B", 
-            productCode: "SP002",
-            productName: "iPhone 14 Pro Max",
-            quantitySold: 15,
-            revenue: 2200000, 
-            quantityReturned: 1,
-            returnValue: 150000, 
-            netRevenue: 2050000
-          },
-          { 
-            id: 3, 
-            salesChannelName: "Direct Sales", 
-            sellerName: "Le Van C", 
-            productCode: "SP003",
-            productName: "MacBook Air M2",
-            quantitySold: 8,
-            revenue: 1800000, 
-            quantityReturned: 1,
-            returnValue: 100000, 
-            netRevenue: 1700000
-          }
-        ];
+    if (!salesChannelProductsData || !Array.isArray(salesChannelProductsData) || salesChannelProductsData.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <div className="text-gray-500">{t("reports.noReportData")}</div>
+        </div>
+      );
+    }
 
     return (
       <div className="overflow-x-auto">
@@ -337,7 +233,7 @@ export function SalesChannelReport() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {dataToShow.map((item: any, index: number) => (
+            {salesChannelProductsData.map((item: any, index: number) => (
               <TableRow key={item.id || index}>
                 <TableCell className="font-medium">
                   <div>
@@ -704,23 +600,6 @@ export function SalesChannelReport() {
           {concernType === "sales" && renderSalesTable()}
           {concernType === "profit" && renderProfitTable()}
           {concernType === "products" && renderProductsTable()}
-
-          {/* Show message when no data */}
-          {concernType === "sales" && (!salesChannelSalesData || salesChannelSalesData.length === 0) && (
-            <div className="text-center py-8">
-              <div className="text-gray-500">{t("reports.noReportData")}</div>
-            </div>
-          )}
-          {concernType === "profit" && (!salesChannelProfitData || salesChannelProfitData.length === 0) && (
-            <div className="text-center py-8">
-              <div className="text-gray-500">{t("reports.noReportData")}</div>
-            </div>
-          )}
-          {concernType === "products" && (!salesChannelProductsData || salesChannelProductsData.length === 0) && (
-            <div className="text-center py-8">
-              <div className="text-gray-500">{t("reports.noReportData")}</div>
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
