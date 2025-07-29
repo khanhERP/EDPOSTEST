@@ -1274,19 +1274,19 @@ export default function Settings() {
                           <CardContent className="p-4">
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                  <span className="text-xl">
-                                    {category.icon ? (
-                                      category.icon === "fas fa-utensils" ? "🍽️" :
-                                      category.icon === "fas fa-coffee" ? "☕" :
-                                      category.icon === "fas fa-cookie" ? "🍪" :
-                                      category.icon === "fas fa-ice-cream" ? "🍨" :
-                                      category.icon === "fas fa-beer" ? "🍺" :
-                                      category.icon === "fas fa-apple-alt" ? "🍎" :
-                                      "🍽️"
-                                    ) : ""}
-                                  </span>
-                                </div>
+                                {category.icon && (
+                                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <span className="text-xl">
+                                      {category.icon === "fas fa-utensils" ? "🍽️" :
+                                       category.icon === "fas fa-coffee" ? "☕" :
+                                       category.icon === "fas fa-cookie" ? "🍪" :
+                                       category.icon === "fas fa-ice-cream" ? "🍨" :
+                                       category.icon === "fas fa-beer" ? "🍺" :
+                                       category.icon === "fas fa-apple-alt" ? "🍎" :
+                                       "🍽️"}
+                                    </span>
+                                  </div>
+                                )}
                                 <div>
                                   <h3 className="font-semibold">
                                     {category.name}
