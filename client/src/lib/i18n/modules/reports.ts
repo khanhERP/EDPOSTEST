@@ -407,6 +407,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     investingCashFlow: "투자 현금 흐름",
     financingCashFlow: "재무 현금 흐름",
     netCashFlow: "순 현금 흐름",
+    financialProfitLoss: "손익",
+    financialYear: "년도",
+    financialMonth: "월",
+    financialQuarter: "분기",
+    categoryLabel: "카테고리",
+    amountLabel: "금액",
+    percentageLabel: "비율",
+    cashFlowDetails: "현금흐름 상세",
+    cashFlowType: "현금흐름 유형",
 
     // Common report keys
     chartView: "차트 보기",
@@ -820,6 +829,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     investingCashFlow: "Investing Cash Flow",
     financingCashFlow: "Financing Cash Flow",
     netCashFlow: "Net Cash Flow",
+    financialProfitLoss: "Profit & Loss",
+    financialYear: "Year",
+    financialMonth: "Month",
+    financialQuarter: "Quarter",
+    categoryLabel: "Category",
+    amountLabel: "Amount",
+    percentageLabel: "Percentage",
+    cashFlowDetails: "Cash Flow Details",
+    cashFlowType: "Cash Flow Type",
 
     // Common report keys
     chartView: "Chart View",
@@ -1233,6 +1251,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     investingCashFlow: "Dòng tiền đầu tư",
     financingCashFlow: "Dòng tiền tài chính",
     netCashFlow: "Dòng tiền ròng",
+    financialProfitLoss: "Lãi lỗ",
+    financialYear: "Năm",
+    financialMonth: "Tháng",
+    financialQuarter: "Quý",
+    categoryLabel: "Danh mục",
+    amountLabel: "Số tiền",
+    percentageLabel: "Tỷ lệ",
+    cashFlowDetails: "Chi tiết dòng tiền",
+    cashFlowType: "Loại dòng tiền",
 
     // Common report keys
     chartView: "Xem biểu đồ",

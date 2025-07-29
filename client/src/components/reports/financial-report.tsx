@@ -683,9 +683,9 @@ export function FinancialReport() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Danh mục</TableHead>
-                  <TableHead className="text-right">Số tiền</TableHead>
-                  <TableHead className="text-right">Tỷ lệ</TableHead>
+                  <TableHead>{t("reports.categoryLabel")}</TableHead>
+                  <TableHead className="text-right">{t("reports.amountLabel")}</TableHead>
+                  <TableHead className="text-right">{t("reports.percentageLabel")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -722,9 +722,9 @@ export function FinancialReport() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Danh mục</TableHead>
-                  <TableHead className="text-right">Số tiền</TableHead>
-                  <TableHead className="text-right">Tỷ lệ</TableHead>
+                  <TableHead>{t("reports.categoryLabel")}</TableHead>
+                  <TableHead className="text-right">{t("reports.amountLabel")}</TableHead>  
+                  <TableHead className="text-right">{t("reports.percentageLabel")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
