@@ -903,7 +903,7 @@ export default function Settings() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-6 bg-white/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
             <TabsTrigger value="store" className="flex items-center gap-2">
               <Store className="w-4 h-4" />
               {t("settings.storeInfo")}
@@ -924,176 +924,394 @@ export default function Settings() {
               <CreditCard className="w-5 h-5" />
               {t("settings.paymentMethods")}
             </TabsTrigger>
-            <TabsTrigger value="einvoice" className="flex items-center gap-2">
-              <SettingsIcon className="w-4 h-4" />
-              Thiết lập HĐĐT
-            </TabsTrigger>
           </TabsList>
 
           {/* Store Information Tab */}
           <TabsContent value="store">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Store className="w-5 h-5 text-green-600" />
-                    {t("settings.basicInfo")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("settings.basicInfoDesc")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="storeName">{t("settings.storeName")}</Label>
-                    <Input
-                      id="storeName"
-                      value={storeSettings.storeName}
-                      onChange={(e) =>
-                        handleStoreSettingChange("storeName", e.target.value)
-                      }
-                      placeholder={t("settings.storeNamePlaceholder")}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="storeCode">{t("settings.storeCode")}</Label>
-                    <Input
-                      id="storeCode"
-                      value={storeSettings.storeCode}
-                      onChange={(e) =>
-                        handleStoreSettingChange("storeCode", e.target.value)
-                      }
-                      placeholder={t("settings.storeCodePlaceholder")}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="taxId">{t("settings.taxId")}</Label>
-                    <Input
-                      id="taxId"
-                      value={storeSettings.taxId}
-                      onChange={(e) =>
-                        handleStoreSettingChange("taxId", e.target.value)
-                      }
-                      placeholder={t("settings.taxIdPlaceholder")}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="businessType">{t("settings.businessType")}</Label>
-                    <Select
-                      value={storeSettings.businessType}
-                      onValueChange={(value) =>
-                        handleStoreSettingChange("businessType", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={t("settings.businessTypePlaceholder")}
+            <Tabs defaultValue="basic" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm">
+                <TabsTrigger value="basic" className="flex items-center gap-2">
+                  <Store className="w-4 h-4" />
+                  Thông tin cơ bản
+                </TabsTrigger>
+                <TabsTrigger value="einvoice" className="flex items-center gap-2">
+                  <SettingsIcon className="w-4 h-4" />
+                  Thiết lập HĐĐT
+                </TabsTrigger>
+                <TabsTrigger value="operations" className="flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Hoạt động
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="basic">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Store className="w-5 h-5 text-green-600" />
+                        {t("settings.basicInfo")}
+                      </CardTitle>
+                      <CardDescription>
+                        {t("settings.basicInfoDesc")}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="storeName">{t("settings.storeName")}</Label>
+                        <Input
+                          id="storeName"
+                          value={storeSettings.storeName}
+                          onChange={(e) =>
+                            handleStoreSettingChange("storeName", e.target.value)
+                          }
+                          placeholder={t("settings.storeNamePlaceholder")}
                         />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="retail">
-                          {t("settings.posRetail")}
-                        </SelectItem>
-                        <SelectItem value="restaurant">
-                          {t("settings.posRestaurant")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="storeCode">{t("settings.storeCode")}</Label>
+                        <Input
+                          id="storeCode"
+                          value={storeSettings.storeCode}
+                          onChange={(e) =>
+                            handleStoreSettingChange("storeCode", e.target.value)
+                          }
+                          placeholder={t("settings.storeCodePlaceholder")}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="taxId">{t("settings.taxId")}</Label>
+                        <Input
+                          id="taxId"
+                          value={storeSettings.taxId}
+                          onChange={(e) =>
+                            handleStoreSettingChange("taxId", e.target.value)
+                          }
+                          placeholder={t("settings.taxIdPlaceholder")}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="businessType">{t("settings.businessType")}</Label>
+                        <Select
+                          value={storeSettings.businessType}
+                          onValueChange={(value) =>
+                            handleStoreSettingChange("businessType", value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={t("settings.businessTypePlaceholder")}
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="retail">
+                              {t("settings.posRetail")}
+                            </SelectItem>
+                            <SelectItem value="restaurant">
+                              {t("settings.posRestaurant")}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5 text-green-600" />
-                    {t("settings.contactInfo")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("settings.contactInfoDesc")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="address">{t("settings.address")}</Label>
-                    <Textarea
-                      id="address"
-                      value={storeSettings.address}
-                      onChange={(e) =>
-                        handleStoreSettingChange("address", e.target.value)
-                      }
-                      placeholder={t("settings.addressPlaceholder")}
-                      rows={3}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">{t("settings.phone")}</Label>
-                    <Input
-                      id="phone"
-                      type="tel"
-                      value={storeSettings.phone}
-                      onChange={(e) =>
-                        handleStoreSettingChange("phone", e.target.value)
-                      }
-                      placeholder={t("settings.phonePlaceholder")}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">{t("settings.email")}</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={storeSettings.email}
-                      onChange={(e) =>
-                        handleStoreSettingChange("email", e.target.value)
-                      }
-                      placeholder={t("settings.emailPlaceholder")}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <MapPin className="w-5 h-5 text-green-600" />
+                        {t("settings.contactInfo")}
+                      </CardTitle>
+                      <CardDescription>
+                        {t("settings.contactInfoDesc")}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="address">{t("settings.address")}</Label>
+                        <Textarea
+                          id="address"
+                          value={storeSettings.address}
+                          onChange={(e) =>
+                            handleStoreSettingChange("address", e.target.value)
+                          }
+                          placeholder={t("settings.addressPlaceholder")}
+                          rows={3}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phone">{t("settings.phone")}</Label>
+                        <Input
+                          id="phone"
+                          type="tel"
+                          value={storeSettings.phone}
+                          onChange={(e) =>
+                            handleStoreSettingChange("phone", e.target.value)
+                          }
+                          placeholder={t("settings.phonePlaceholder")}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">{t("settings.email")}</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={storeSettings.email}
+                          onChange={(e) =>
+                            handleStoreSettingChange("email", e.target.value)
+                          }
+                          placeholder={t("settings.emailPlaceholder")}
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
 
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <SettingsIcon className="w-5 h-5 text-green-600" />
-                    {t("settings.operationHours")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("settings.operationHoursDesc")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="openTime">{t("settings.openTime")}</Label>
-                      <Input
-                        id="openTime"
-                        type="time"
-                        value={storeSettings.openTime}
-                        onChange={(e) =>
-                          handleStoreSettingChange("openTime", e.target.value)
-                        }
-                      />
+              <TabsContent value="einvoice">
+                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <SettingsIcon className="w-5 h-5 text-green-600" />
+                      Thiết lập HĐĐT
+                    </CardTitle>
+                    <CardDescription>
+                      Quản lý kết nối với các nhà cung cấp dịch vụ hóa đơn điện tử
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      {/* Sub tabs for E-invoice */}
+                      <Tabs defaultValue="connections" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="connections">Kênh kết nối HĐĐT</TabsTrigger>
+                          <TabsTrigger value="settings">Mẫu số HĐĐT</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="connections" className="mt-6">
+                          <div className="flex justify-between items-center mb-6">
+                            <div>
+                              <h3 className="text-lg font-medium">Danh sách kết nối</h3>
+                              <p className="text-sm text-gray-600">Quản lý các kết nối với nhà cung cấp HĐĐT</p>
+                            </div>
+                            <Button
+                              onClick={() => {
+                                resetEInvoiceForm();
+                                setShowEInvoiceForm(true);
+                              }}
+                              className="bg-blue-600 hover:bg-blue-700"
+                            >
+                              <Plus className="w-4 h-4 mr-2" />
+                              Kiểm tra
+                            </Button>
+                          </div>
+
+                          {/* E-invoice connections table */}
+                          <div className="rounded-md border bg-white">
+                            <div className="grid grid-cols-10 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                              <div className="text-center">Ký hiệu</div>
+                              <div>Mã số thuế</div>
+                              <div>ID đăng nhập</div>
+                              <div>Mật khẩu</div>
+                              <div>Phần mềm HĐ</div>
+                              <div>Đường dẫn đăng nhập</div>
+                              <div>Phương thức ký</div>
+                              <div>Loại mã CQT</div>
+                              <div>Ghi chú</div>
+                              <div className="text-center">Mặc định</div>
+                            </div>
+
+                            <div className="divide-y">
+                              {/* Row 1 */}
+                              <div className="grid grid-cols-10 gap-4 p-3 items-center text-sm">
+                                <div className="text-center">1</div>
+                                <div className="font-mono">0101864535</div>
+                                <div>ERP1</div>
+                                <div>**************</div>
+                                <div>MINVOICE</div>
+                                <div className="text-blue-600 hover:underline cursor-pointer">
+                                  https://minvoice.app
+                                </div>
+                                <div>Ký server</div>
+                                <div>Cấp nhật</div>
+                                <div>-</div>
+                                <div className="text-center">
+                                  <input type="checkbox" className="rounded" />
+                                </div>
+                              </div>
+
+                              {/* Row 2 */}
+                              <div className="grid grid-cols-10 gap-4 p-3 items-center text-sm">
+                                <div className="text-center">2</div>
+                                <div className="font-mono">0101864535</div>
+                                <div>0100109106-509</div>
+                                <div>**************</div>
+                                <div>SINVOICE</div>
+                                <div className="text-blue-600 hover:underline cursor-pointer">
+                                  https://api-vinvoice.viettel.vn/services/einvoiceapplication/api/
+                                </div>
+                                <div>Ký server</div>
+                                <div>Cấp nhật</div>
+                                <div>-</div>
+                                <div className="text-center">
+                                  <input type="checkbox" className="rounded" />
+                                </div>
+                              </div>
+
+                              {/* Row 3 - Empty */}
+                              <div className="grid grid-cols-10 gap-4 p-3 items-center text-sm">
+                                <div className="text-center">3</div>
+                                <div>-</div>
+                                <div>-</div>
+                                <div>-</div>
+                                <div>-</div>
+                                <div>-</div>
+                                <div>Ký server</div>
+                                <div>Cấp nhật</div>
+                                <div>-</div>
+                                <div className="text-center">
+                                  <input type="checkbox" className="rounded" />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="settings" className="mt-6">
+                          <div className="space-y-6">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <h3 className="text-lg font-medium">Mẫu số HĐĐT</h3>
+                                <p className="text-sm text-gray-600">Quản lý các mẫu số hóa đơn điện tử</p>
+                              </div>
+                              <Button
+                                className="bg-blue-600 hover:bg-blue-700"
+                              >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Thêm mẫu số
+                              </Button>
+                            </div>
+
+                            {/* Invoice templates table */}
+                            <div className="rounded-md border bg-white">
+                              <div className="grid grid-cols-8 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                                <div className="text-center">STT</div>
+                                <div>Tên</div>
+                                <div>Mẫu số</div>
+                                <div>Ký hiệu</div>
+                                <div>Ký hiệu</div>
+                                <div>C/K sử dụng</div>
+                                <div>Ghi chú</div>
+                                <div className="text-center">Mặc định</div>
+                              </div>
+
+                              <div className="divide-y">
+                                {/* Row 1 */}
+                                <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
+                                  <div className="text-center">1</div>
+                                  <div>1C25TYY</div>
+                                  <div>1</div>
+                                  <div>-</div>
+                                  <div>C25TYY</div>
+                                  <div>
+                                    <Badge variant="default" className="bg-green-100 text-green-800">
+                                      Sử dụng
+                                    </Badge>
+                                  </div>
+                                  <div>-</div>
+                                  <div className="text-center">
+                                    <input type="checkbox" className="rounded" checked />
+                                  </div>
+                                </div>
+
+                                {/* Row 2 */}
+                                <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
+                                  <div className="text-center">2</div>
+                                  <div>1K21TGF</div>
+                                  <div>1</div>
+                                  <div>1005</div>
+                                  <div>K21TGF</div>
+                                  <div>
+                                    <Badge variant="default" className="bg-green-100 text-green-800">
+                                      Sử dụng
+                                    </Badge>
+                                  </div>
+                                  <div>-</div>
+                                  <div className="text-center">
+                                    <input type="checkbox" className="rounded" />
+                                  </div>
+                                </div>
+
+                                {/* Row 3 - Empty */}
+                                <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
+                                  <div className="text-center">3</div>
+                                  <div>-</div>
+                                  <div>-</div>
+                                  <div>-</div>
+                                  <div>-</div>
+                                  <div>
+                                    <Badge variant="default" className="bg-green-100 text-green-800">
+                                      Sử dụng
+                                    </Badge>
+                                  </div>
+                                  <div>-</div>
+                                  <div className="text-center">
+                                    <input type="checkbox" className="rounded" />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="closeTime">
-                        {t("settings.closeTime")}
-                      </Label>
-                      <Input
-                        id="closeTime"
-                        type="time"
-                        value={storeSettings.closeTime}
-                        onChange={(e) =>
-                          handleStoreSettingChange("closeTime", e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-              <div className="flex justify-end">
+              <TabsContent value="operations">
+                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="w-5 h-5 text-green-600" />
+                      {t("settings.operationHours")}
+                    </CardTitle>
+                    <CardDescription>
+                      {t("settings.operationHoursDesc")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="openTime">{t("settings.openTime")}</Label>
+                        <Input
+                          id="openTime"
+                          type="time"
+                          value={storeSettings.openTime}
+                          onChange={(e) =>
+                            handleStoreSettingChange("openTime", e.target.value)
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="closeTime">
+                          {t("settings.closeTime")}
+                        </Label>
+                        <Input
+                          id="closeTime"
+                          type="time"
+                          value={storeSettings.closeTime}
+                          onChange={(e) =>
+                            handleStoreSettingChange("closeTime", e.target.value)
+                          }
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <div className="flex justify-end mt-6">
                 <Button
                   onClick={saveStoreSettings}
                   disabled={updateStoreSettingsMutation.isPending}
@@ -1105,7 +1323,7 @@ export default function Settings() {
                     : t("common.save")}
                 </Button>
               </div>
-            </div>
+            </Tabs>
           </TabsContent>
 
           {/* Customers Tab */}
@@ -1959,221 +2177,7 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          {/* E-Invoice Settings Tab */}
-          <TabsContent value="einvoice">
-            <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <SettingsIcon className="w-5 h-5 text-green-600" />
-                  Thiết lập HĐĐT
-                </CardTitle>
-                <CardDescription>
-                  Quản lý kết nối với các nhà cung cấp dịch vụ hóa đơn điện tử
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {/* Sub tabs for E-invoice */}
-                  <Tabs defaultValue="connections" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="connections">Kênh kết nối HĐĐT</TabsTrigger>
-                      <TabsTrigger value="settings">Mẫu số HĐĐT</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="connections" className="mt-6">
-                      <div className="flex justify-between items-center mb-6">
-                        <div>
-                          <h3 className="text-lg font-medium">Danh sách kết nối</h3>
-                          <p className="text-sm text-gray-600">Quản lý các kết nối với nhà cung cấp HĐĐT</p>
-                        </div>
-                        <Button
-                          onClick={() => {
-                            resetEInvoiceForm();
-                            setShowEInvoiceForm(true);
-                          }}
-                          className="bg-blue-600 hover:bg-blue-700"
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          Kiểm tra
-                        </Button>
-                      </div>
-
-                      {/* E-invoice connections table */}
-                      <div className="rounded-md border bg-white">
-                        <div className="grid grid-cols-10 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                          <div className="text-center">Ký hiệu</div>
-                          <div>Mã số thuế</div>
-                          <div>ID đăng nhập</div>
-                          <div>Mật khẩu</div>
-                          <div>Phần mềm HĐ</div>
-                          <div>Đường dẫn đăng nhập</div>
-                          <div>Phương thức ký</div>
-                          <div>Loại mã CQT</div>
-                          <div>Ghi chú</div>
-                          <div className="text-center">Mặc định</div>
-                        </div>
-
-                        <div className="divide-y">
-                          {/* Row 1 */}
-                          <div className="grid grid-cols-10 gap-4 p-3 items-center text-sm">
-                            <div className="text-center">1</div>
-                            <div className="font-mono">0101864535</div>
-                            <div>ERP1</div>
-                            <div>**************</div>
-                            <div>MINVOICE</div>
-                            <div className="text-blue-600 hover:underline cursor-pointer">
-                              https://minvoice.app
-                            </div>
-                            <div>Ký server</div>
-                            <div>Cấp nhật</div>
-                            <div>-</div>
-                            <div className="text-center">
-                              <input type="checkbox" className="rounded" />
-                            </div>
-                          </div>
-
-                          {/* Row 2 */}
-                          <div className="grid grid-cols-10 gap-4 p-3 items-center text-sm">
-                            <div className="text-center">2</div>
-                            <div className="font-mono">0101864535</div>
-                            <div>0100109106-509</div>
-                            <div>**************</div>
-                            <div>SINVOICE</div>
-                            <div className="text-blue-600 hover:underline cursor-pointer">
-                              https://api-vinvoice.viettel.vn/services/einvoiceapplication/api/
-                            </div>
-                            <div>Ký server</div>
-                            <div>Cấp nhật</div>
-                            <div>-</div>
-                            <div className="text-center">
-                              <input type="checkbox" className="rounded" />
-                            </div>
-                          </div>
-
-                          {/* Row 3 - Empty */}
-                          <div className="grid grid-cols-10 gap-4 p-3 items-center text-sm">
-                            <div className="text-center">3</div>
-                            <div>-</div>
-                            <div>-</div>
-                            <div>-</div>
-                            <div>-</div>
-                            <div>-</div>
-                            <div>Ký server</div>
-                            <div>Cấp nhật</div>
-                            <div>-</div>
-                            <div className="text-center">
-                              <input type="checkbox" className="rounded" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end mt-6">
-                        <Button className="bg-green-600 hover:bg-green-700">
-                          <Save className="w-4 h-4 mr-2" />
-                          Lưu cấu hình
-                        </Button>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="settings" className="mt-6">
-                      <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h3 className="text-lg font-medium">Mẫu số HĐĐT</h3>
-                            <p className="text-sm text-gray-600">Quản lý các mẫu số hóa đơn điện tử</p>
-                          </div>
-                          <Button
-                            className="bg-blue-600 hover:bg-blue-700"
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Thêm mẫu số
-                          </Button>
-                        </div>
-
-                        {/* Invoice templates table */}
-                        <div className="rounded-md border bg-white">
-                          <div className="grid grid-cols-8 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                            <div className="text-center">STT</div>
-                            <div>Tên</div>
-                            <div>Mẫu số</div>
-                            <div>Ký hiệu</div>
-                            <div>Ký hiệu</div>
-                            <div>C/K sử dụng</div>
-                            <div>Ghi chú</div>
-                            <div className="text-center">Mặc định</div>
-                          </div>
-
-                          <div className="divide-y">
-                            {/* Row 1 */}
-                            <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
-                              <div className="text-center">1</div>
-                              <div>1C25TYY</div>
-                              <div>1</div>
-                              <div>-</div>
-                              <div>C25TYY</div>
-                              <div>
-                                <Badge variant="default" className="bg-green-100 text-green-800">
-                                  Sử dụng
-                                </Badge>
-                              </div>
-                              <div>-</div>
-                              <div className="text-center">
-                                <input type="checkbox" className="rounded" checked />
-                              </div>
-                            </div>
-
-                            {/* Row 2 */}
-                            <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
-                              <div className="text-center">2</div>
-                              <div>1K21TGF</div>
-                              <div>1</div>
-                              <div>1005</div>
-                              <div>K21TGF</div>
-                              <div>
-                                <Badge variant="default" className="bg-green-100 text-green-800">
-                                  Sử dụng
-                                </Badge>
-                              </div>
-                              <div>-</div>
-                              <div className="text-center">
-                                <input type="checkbox" className="rounded" />
-                              </div>
-                            </div>
-
-                            {/* Row 3 - Empty */}
-                            <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
-                              <div className="text-center">3</div>
-                              <div>-</div>
-                              <div>-</div>
-                              <div>-</div>
-                              <div>-</div>
-                              <div>
-                                <Badge variant="default" className="bg-green-100 text-green-800">
-                                  Sử dụng
-                                </Badge>
-                              </div>
-                              <div>-</div>
-                              <div className="text-center">
-                                <input type="checkbox" className="rounded" />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex justify-end mt-6">
-                          <Button className="bg-green-600 hover:bg-green-700">
-                            <Save className="w-4 h-4 mr-2" />
-                            Lưu cấu hình
-                          </Button>
-                        </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          
         </Tabs>
       </div>
 
