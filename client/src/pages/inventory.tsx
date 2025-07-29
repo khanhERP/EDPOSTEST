@@ -52,6 +52,7 @@ const stockUpdateSchema = (t: any) => z.object({
   quantity: z.number().min(1, t("inventory.quantityMinError") || "Quantity must be at least 1"),
   type: z.enum(["add", "subtract", "set"]),
   notes: z.string().optional(),
+  trackInventory: z.boolean().optional(),
   // Fields for new product creation
   name: z.string().min(1, "Tên sản phẩm là bắt buộc"),
   sku: z.string().min(1, "SKU là bắt buộc"),
@@ -314,6 +315,7 @@ export default function InventoryPage() {
         price: "0",
         categoryId: categories[0]?.id || 1,
         productType: 1,
+        trackInventory: true,
       });
     } else {
       // Load existing product data for editing
@@ -326,6 +328,7 @@ export default function InventoryPage() {
         price: product.price,
         categoryId: product.categoryId,
         productType: product.productType || 1,
+        trackInventory: product.trackInventory !== false,
       });
     }
     setShowStockDialog(true);
@@ -363,6 +366,7 @@ export default function InventoryPage() {
         productType: data.productType || 1,
         imageUrl: null,
         isActive: true,
+        trackInventory: data.trackInventory !== false,
       };
       console.log("Creating product with data:", newProductData);
       createProductMutation.mutate(newProductData);
@@ -909,6 +913,26 @@ export default function InventoryPage() {
                     )}
                   />
                 )}
+
+                <FormField
+                  control={stockUpdateForm.control}
+                  name="trackInventory"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value !== false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          {t("inventory.trackInventory")}
+                        </FormLabel>
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={stockUpdateForm.control}
