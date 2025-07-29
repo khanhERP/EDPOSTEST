@@ -662,13 +662,7 @@ export default function InventoryPage() {
                             <td className="py-4 px-2 text-center">
                               <Checkbox
                                 checked={product.trackInventory !== false}
-                                onCheckedChange={(checked) => {
-                                  updateProductTrackInventoryMutation.mutate({
-                                    id: product.id,
-                                    trackInventory: checked === true
-                                  });
-                                }}
-                                disabled={updateProductTrackInventoryMutation.isPending}
+                                disabled={true}
                               />
                             </td>
                             <td className="py-4 px-2 text-right text-gray-900">
