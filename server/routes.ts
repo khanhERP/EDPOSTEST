@@ -169,14 +169,23 @@ export async function registerRoutes(app: Express): Promise {
     try {
       console.log("Product creation request body:", req.body);
       
+      // Ensure required fields are present
+      if (!req.body.name || !req.body.sku || !req.body.price || !req.body.categoryId) {
+        return res.status(400).json({
+          message: "Missing required fields: name, sku, price, and categoryId are required"
+        });
+      }
+
       // Validate and transform the data
       const validatedData = insertProductSchema.parse({
-        ...req.body,
-        price: req.body.price ? req.body.price.toString() : "0",
+        name: req.body.name,
+        sku: req.body.sku,
+        price: req.body.price.toString(),
         stock: Number(req.body.stock) || 0,
         categoryId: Number(req.body.categoryId),
         productType: Number(req.body.productType) || 1,
-        trackInventory: req.body.trackInventory !== false
+        trackInventory: req.body.trackInventory !== false,
+        imageUrl: req.body.imageUrl || null
       });
 
       console.log("Validated product data:", validatedData);

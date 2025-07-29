@@ -198,14 +198,26 @@ export function ProductManagerModal({
   const onSubmit = (data: z.infer<typeof productFormSchema>) => {
     console.log("Form submission data:", data);
     
+    // Validate required fields
+    if (!data.name || !data.sku || !data.price || !data.categoryId) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields: Name, SKU, Price, and Category",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Transform data to ensure proper types
     const transformedData = {
-      ...data,
+      name: data.name.trim(),
+      sku: data.sku.trim().toUpperCase(),
       price: data.price.toString(),
       stock: Number(data.stock) || 0,
       categoryId: Number(data.categoryId),
-      productType: Number(data.productType),
-      trackInventory: data.trackInventory !== false
+      productType: Number(data.productType) || 1,
+      trackInventory: data.trackInventory !== false,
+      imageUrl: data.imageUrl?.trim() || null
     };
     
     console.log("Transformed data:", transformedData);

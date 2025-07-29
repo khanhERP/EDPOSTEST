@@ -269,14 +269,34 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const [product] = await db
-      .insert(products)
-      .values({
-        ...insertProduct,
+    try {
+      console.log("Storage: Creating product with data:", insertProduct);
+      
+      const productData = {
+        name: insertProduct.name,
+        sku: insertProduct.sku,
+        price: insertProduct.price,
+        stock: insertProduct.stock,
+        categoryId: insertProduct.categoryId,
+        productType: insertProduct.productType || 1,
+        trackInventory: insertProduct.trackInventory !== false,
         imageUrl: insertProduct.imageUrl || null,
-      })
-      .returning();
-    return product;
+        isActive: true
+      };
+
+      console.log("Storage: Inserting product data:", productData);
+
+      const [product] = await db
+        .insert(products)
+        .values(productData)
+        .returning();
+      
+      console.log("Storage: Product created successfully:", product);
+      return product;
+    } catch (error) {
+      console.error("Storage: Error creating product:", error);
+      throw error;
+    }
   }
 
   async updateProduct(
