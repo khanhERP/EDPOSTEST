@@ -805,37 +805,42 @@ export default function Settings() {
   };
 
   const handleCreateEInvoice = () => {
-    // Mock data for demonstration
-    const mockEInvoices = [
-      {
-        id: 1,
-        taxCode: "0101864535",
-        loginId: "ERP1",
-        password: "**************",
-        softwareName: "MINVOICE",
-        loginUrl: "https://minvoice.app",
-        signMethod: "Ký server",
-        cqtCode: "Cấp nhật",
-        notes: "",
-        isActive: true,
-      },
-      {
-        id: 2,
-        taxCode: "0101864535",
-        loginId: "0100109106-509",
-        password: "**************",
-        softwareName: "SINVOICE",
-        loginUrl: "https://api-vinvoice.viettel.vn/services/einvoiceapplication/api/",
-        signMethod: "Ký server",
-        cqtCode: "Cấp nhật",
-        notes: "",
-        isActive: true,
-      },
-    ];
+    // Validate required fields
+    if (!eInvoiceForm.taxCode.trim() || !eInvoiceForm.loginId.trim() || !eInvoiceForm.password.trim() || !eInvoiceForm.softwareName) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
+        variant: "destructive",
+      });
+      return;
+    }
 
+    // Here you would typically make an API call to save the connection
+    // For now, we'll simulate success
     toast({
       title: "Thành công",
       description: "Kết nối HĐĐT đã được tạo thành công",
+    });
+    setShowEInvoiceForm(false);
+    resetEInvoiceForm();
+  };
+
+  const handleUpdateEInvoice = () => {
+    // Validate required fields
+    if (!eInvoiceForm.taxCode.trim() || !eInvoiceForm.loginId.trim() || !eInvoiceForm.password.trim() || !eInvoiceForm.softwareName) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Here you would typically make an API call to update the connection
+    // For now, we'll simulate success
+    toast({
+      title: "Thành công",
+      description: "Kết nối HĐĐT đã được cập nhật thành công",
     });
     setShowEInvoiceForm(false);
     resetEInvoiceForm();
@@ -1114,7 +1119,7 @@ export default function Settings() {
                               className="bg-blue-600 hover:bg-blue-700"
                             >
                               <Plus className="w-4 h-4 mr-2" />
-                              Kiểm tra
+                              Thêm kết nối
                             </Button>
                           </div>
 
@@ -2697,6 +2702,193 @@ export default function Settings() {
       </AlertDialog>
 
       {/* E-invoice Form Modal */}
+      <Dialog open={showEInvoiceForm} onOpenChange={setShowEInvoiceForm}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingEInvoice ? "Sửa kết nối HĐĐT" : "Thêm kết nối HĐĐT"}
+            </DialogTitle>
+            <DialogDescription>
+              {editingEInvoice 
+                ? "Cập nhật thông tin kết nối với nhà cung cấp HĐĐT"
+                : "Nhập thông tin kết nối mới với nhà cung cấp HĐĐT"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="taxCode" className="text-right">
+                Mã số thuế
+              </Label>
+              <Input
+                id="taxCode"
+                value={eInvoiceForm.taxCode}
+                onChange={(e) =>
+                  setEInvoiceForm((prev) => ({ ...prev, taxCode: e.target.value }))
+                }
+                className="col-span-3"
+                placeholder="Nhập mã số thuế"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="loginId" className="text-right">
+                ID đăng nhập
+              </Label>
+              <Input
+                id="loginId"
+                value={eInvoiceForm.loginId}
+                onChange={(e) =>
+                  setEInvoiceForm((prev) => ({ ...prev, loginId: e.target.value }))
+                }
+                className="col-span-3"
+                placeholder="Nhập ID đăng nhập"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="password" className="text-right">
+                Mật khẩu
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={eInvoiceForm.password}
+                onChange={(e) =>
+                  setEInvoiceForm((prev) => ({ ...prev, password: e.target.value }))
+                }
+                className="col-span-3"
+                placeholder="Nhập mật khẩu"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="softwareName" className="text-right">
+                Phần mềm HĐ
+              </Label>
+              <Select
+                value={eInvoiceForm.softwareName}
+                onValueChange={(value) =>
+                  setEInvoiceForm((prev) => ({ ...prev, softwareName: value }))
+                }
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Chọn phần mềm HĐĐT" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="MINVOICE">MINVOICE</SelectItem>
+                  <SelectItem value="SINVOICE">SINVOICE</SelectItem>
+                  <SelectItem value="VNPT-INVOICE">VNPT-INVOICE</SelectItem>
+                  <SelectItem value="VIETTEL-SINVOICE">VIETTEL-SINVOICE</SelectItem>
+                  <SelectItem value="MISA-MEinvoice">MISA-MEinvoice</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="loginUrl" className="text-right">
+                Đường dẫn đăng nhập
+              </Label>
+              <Input
+                id="loginUrl"
+                value={eInvoiceForm.loginUrl}
+                onChange={(e) =>
+                  setEInvoiceForm((prev) => ({ ...prev, loginUrl: e.target.value }))
+                }
+                className="col-span-3"
+                placeholder="https://api.example.com"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="signMethod" className="text-right">
+                Phương thức ký
+              </Label>
+              <Select
+                value={eInvoiceForm.signMethod}
+                onValueChange={(value) =>
+                  setEInvoiceForm((prev) => ({ ...prev, signMethod: value }))
+                }
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Ký server">Ký server</SelectItem>
+                  <SelectItem value="Ký USB Token">Ký USB Token</SelectItem>
+                  <SelectItem value="Ký HSM">Ký HSM</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="cqtCode" className="text-right">
+                Loại mã CQT
+              </Label>
+              <Select
+                value={eInvoiceForm.cqtCode}
+                onValueChange={(value) =>
+                  setEInvoiceForm((prev) => ({ ...prev, cqtCode: value }))
+                }
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Cấp nhật">Cấp nhật</SelectItem>
+                  <SelectItem value="Cấp hai">Cấp hai</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="notes" className="text-right">
+                Ghi chú
+              </Label>
+              <Textarea
+                id="notes"
+                value={eInvoiceForm.notes}
+                onChange={(e) =>
+                  setEInvoiceForm((prev) => ({ ...prev, notes: e.target.value }))
+                }
+                className="col-span-3"
+                placeholder="Ghi chú thêm (tùy chọn)"
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="isActive" className="text-right">
+                Trạng thái
+              </Label>
+              <div className="col-span-3 flex items-center space-x-2">
+                <Switch
+                  id="isActive"
+                  checked={eInvoiceForm.isActive}
+                  onCheckedChange={(checked) =>
+                    setEInvoiceForm((prev) => ({ ...prev, isActive: checked }))
+                  }
+                />
+                <Label htmlFor="isActive" className="text-sm">
+                  Kích hoạt kết nối này
+                </Label>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowEInvoiceForm(false);
+                resetEInvoiceForm();
+              }}
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              onClick={
+                editingEInvoice ? handleUpdateEInvoice : handleCreateEInvoice
+              }
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {editingEInvoice ? "Cập nhật" : "Thêm kết nối"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* E-invoice Delete Confirmation Dialog */}
       <AlertDialog open={showEInvoiceDeleteDialog} onOpenChange={setShowEInvoiceDeleteDialog}>
         <AlertDialogContent className="sm:max-w-[425px]">
           <AlertDialogHeader>
