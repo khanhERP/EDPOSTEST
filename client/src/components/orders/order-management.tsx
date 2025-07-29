@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Eye, Clock, CheckCircle2, DollarSign, Users, CreditCard } from "lucide-react";
+import { Eye, Clock, CheckCircle2, DollarSign, Users, CreditCard, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import { PaymentMethodModal } from "@/components/pos/payment-method-modal";
+import QRCodeLib from "qrcode";
 import type { Order, Table, Product, OrderItem } from "@shared/schema";
 
 export function OrderManagement() {
@@ -18,6 +19,10 @@ export function OrderManagement() {
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [orderForPayment, setOrderForPayment] = useState<Order | null>(null);
+  const [paymentMethodsOpen, setPaymentMethodsOpen] = useState(false);
+  const [showQRPayment, setShowQRPayment] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -152,6 +157,78 @@ export function OrderManagement() {
         paymentMethod 
       });
     }
+  };
+
+  const getPaymentMethods = () => {
+    // Payment methods from settings - matches the structure in settings.tsx
+    const settingsPaymentMethods = [
+      { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
+      { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
+      { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
+      { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
+      { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
+      { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
+      { id: 7, name: "QR Code", nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
+    ];
+
+    // Filter to only return enabled payment methods
+    return settingsPaymentMethods.filter(method => method.enabled);
+  };
+
+  const handlePayment = async (paymentMethodKey: string) => {
+    if (!selectedOrder) return;
+
+    const method = getPaymentMethods().find(m => m.nameKey === paymentMethodKey);
+    if (!method) return;
+
+    // If cash payment, proceed directly
+    if (paymentMethodKey === "cash") {
+      completePaymentMutation.mutate({ orderId: selectedOrder.id, paymentMethod: paymentMethodKey });
+      return;
+    }
+
+    // For non-cash payments, show QR code
+    try {
+      const qrData = `${method.name} Payment\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
+      const qrUrl = await QRCodeLib.toDataURL(qrData, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeUrl(qrUrl);
+      setSelectedPaymentMethod({ key: paymentMethodKey, method });
+      setShowQRPayment(true);
+      setPaymentMethodsOpen(false);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể tạo mã QR',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleQRPaymentConfirm = () => {
+    if (selectedOrder && selectedPaymentMethod) {
+      completePaymentMutation.mutate({ 
+        orderId: selectedOrder.id, 
+        paymentMethod: selectedPaymentMethod.key 
+      });
+      setShowQRPayment(false);
+      setQrCodeUrl("");
+      setSelectedPaymentMethod(null);
+    }
+  };
+
+  const handleQRPaymentClose = () => {
+    setShowQRPayment(false);
+    setQrCodeUrl("");
+    setSelectedPaymentMethod(null);
+    setPaymentMethodsOpen(true);
   };
 
   if (ordersLoading) {
@@ -491,7 +568,7 @@ export function OrderManagement() {
                     )}
                     {selectedOrder.status === 'served' && (
                       <Button
-                        onClick={() => handlePaymentClick(selectedOrder)}
+                        onClick={() => setPaymentMethodsOpen(true)}
                         disabled={completePaymentMutation.isPending}
                         className="flex-1 bg-green-600 hover:bg-green-700"
                       >
@@ -517,6 +594,102 @@ export function OrderManagement() {
         onSelectMethod={handlePaymentMethodSelect}
         total={orderForPayment?.total || 0}
       />
+
+      {/* Payment Methods Dialog */}
+      <Dialog open={paymentMethodsOpen} onOpenChange={setPaymentMethodsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Chọn phương thức thanh toán</DialogTitle>
+            <DialogDescription>
+              Chọn phương thức thanh toán cho đơn hàng
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 gap-3">
+            {getPaymentMethods().map((method) => (
+              <Button
+                key={method.id}
+                variant="outline"
+                className="justify-start h-auto p-4"
+                onClick={() => handlePayment(method.nameKey)}
+                disabled={completePaymentMutation.isPending}
+              >
+                <span className="text-2xl mr-3">{method.icon}</span>
+                <div className="text-left">
+                  <p className="font-medium">{method.name}</p>
+                </div>
+              </Button>
+            ))}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setPaymentMethodsOpen(false)}>
+              Hủy
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Payment Dialog */}
+      <Dialog open={showQRPayment} onOpenChange={setShowQRPayment}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode className="w-5 h-5" />
+              Thanh toán {selectedPaymentMethod?.method?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Quét mã QR để hoàn tất thanh toán
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 p-4">
+            {/* Order Summary */}
+            {selectedOrder && (
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">Đơn hàng: {selectedOrder.orderNumber}</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                </p>
+              </div>
+            )}
+
+            {/* QR Code */}
+            {qrCodeUrl && (
+              <div className="flex justify-center">
+                <div className="bg-white p-4 rounded-lg border-2 border-gray-200 shadow-lg">
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="QR Code for Payment" 
+                    className="w-64 h-64"
+                  />
+                </div>
+              </div>
+            )}
+
+            <p className="text-sm text-gray-600 text-center">
+              Sử dụng ứng dụng {selectedPaymentMethod?.method?.name} để quét mã QR và thực hiện thanh toán
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={handleQRPaymentClose} 
+                className="flex-1"
+              >
+                Quay lại
+              </Button>
+              <Button 
+                onClick={handleQRPaymentConfirm}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+              >
+                Xác nhận thanh toán
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
