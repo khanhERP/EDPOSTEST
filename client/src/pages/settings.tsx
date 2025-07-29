@@ -1275,9 +1275,15 @@ export default function Settings() {
                             <div className="flex items-center justify-between mb-3">
                               <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                  <i
-                                    className={`${category.icon} text-green-600`}
-                                  ></i>
+                                  <span className="text-xl">
+                                    {category.icon === "fas fa-utensils" ? "🍽️" :
+                                     category.icon === "fas fa-coffee" ? "☕" :
+                                     category.icon === "fas fa-cookie" ? "🍪" :
+                                     category.icon === "fas fa-ice-cream" ? "🍨" :
+                                     category.icon === "fas fa-beer" ? "🍺" :
+                                     category.icon === "fas fa-apple-alt" ? "🍎" :
+                                     "🍽️"}
+                                  </span>
                                 </div>
                                 <div>
                                   <h3 className="font-semibold">
@@ -1844,12 +1850,12 @@ export default function Settings() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fas fa-utensils">🍽️ 식사</SelectItem>
-                  <SelectItem value="fas fa-coffee">☕ 음료</SelectItem>
-                  <SelectItem value="fas fa-cookie">🍪 간식</SelectItem>
-                  <SelectItem value="fas fa-ice-cream">🍨 디저트</SelectItem>
-                  <SelectItem value="fas fa-beer">🍺 주류</SelectItem>
-                  <SelectItem value="fas fa-apple-alt">🍎 과일</SelectItem>
+                  <SelectItem value="fas fa-utensils">🍽️ Món ăn chính</SelectItem>
+                  <SelectItem value="fas fa-coffee">☕ Đồ uống</SelectItem>
+                  <SelectItem value="fas fa-cookie">🍪 Đồ ăn vặt</SelectItem>
+                  <SelectItem value="fas fa-ice-cream">🍨 Tráng miệng</SelectItem>
+                  <SelectItem value="fas fa-beer">🍺 Đồ uống có cồn</SelectItem>
+                  <SelectItem value="fas fa-apple-alt">🍎 Trái cây</SelectItem>
                 </SelectContent>
               </Select>
             </div>
