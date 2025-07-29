@@ -1066,6 +1066,18 @@ export default function Settings() {
                     </CardContent>
                   </Card>
                 </div>
+                <div className="flex justify-end mt-6">
+                  <Button
+                    onClick={saveStoreSettings}
+                    disabled={updateStoreSettingsMutation.isPending}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {updateStoreSettingsMutation.isPending
+                      ? t("common.loading")
+                      : t("common.save")}
+                  </Button>
+                </div>
               </TabsContent>
 
               <TabsContent value="einvoice">
@@ -1307,22 +1319,21 @@ export default function Settings() {
                         />
                       </div>
                     </div>
+                    <div className="flex justify-end mt-6">
+                      <Button
+                        onClick={saveStoreSettings}
+                        disabled={updateStoreSettingsMutation.isPending}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        {updateStoreSettingsMutation.isPending
+                          ? t("common.loading")
+                          : t("common.save")}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
-
-              <div className="flex justify-end mt-6">
-                <Button
-                  onClick={saveStoreSettings}
-                  disabled={updateStoreSettingsMutation.isPending}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Save className="w-4 h-4 mr-2" />
-                  {updateStoreSettingsMutation.isPending
-                    ? t("common.loading")
-                    : t("common.save")}
-                </Button>
-              </div>
             </Tabs>
           </TabsContent>
 
