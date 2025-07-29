@@ -1053,8 +1053,7 @@ export class DatabaseStorage implements IStorage {
     return result || undefined;
   }
 
-  async createCustomer(customerData:```text
- InsertCustomer): Promise<Customer> {
+  async createCustomer(customerData: InsertCustomer): Promise<Customer> {
     // Generate customer ID if not provided
     if (!customerData.customerId) {
       const count = await db
