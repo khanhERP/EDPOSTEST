@@ -1948,7 +1948,9 @@ export default function Settings() {
                 : t("settings.addProduct")}
             </DialogTitle>
             <DialogDescription>
-              Nhập thông tin sản phẩm mới
+              {editingProduct 
+                ? "Cập nhật thông tin sản phẩm"
+                : "Nhập thông tin sản phẩm mới"}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
