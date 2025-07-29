@@ -382,11 +382,17 @@ export default function Settings() {
       enabled: false,
       icon: "💳",
     };
-    setPaymentMethods((prev) => [...prev, newMethod]);
+    const updatedMethods = [...paymentMethods, newMethod];
+    setPaymentMethods(updatedMethods);
+    // Save to localStorage immediately when added
+    localStorage.setItem('paymentMethods', JSON.stringify(updatedMethods));
   };
 
   const removePaymentMethod = (id: number) => {
-    setPaymentMethods((prev) => prev.filter((method) => method.id !== id));
+    const updatedMethods = paymentMethods.filter((method) => method.id !== id);
+    setPaymentMethods(updatedMethods);
+    // Save to localStorage immediately when removed
+    localStorage.setItem('paymentMethods', JSON.stringify(updatedMethods));
   };
 
   // Customer management functions
