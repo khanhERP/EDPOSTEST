@@ -53,11 +53,12 @@ export function ProductManagerModal({
   
   const productFormSchema = insertProductSchema.extend({
     categoryId: z.number().min(1, t("tables.categoryRequired")),
-    price: z.string().optional(),
+    price: z.string().min(1, "Price is required").refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, "Price must be a valid positive number"),
     sku: z.string().min(1, t("tables.skuRequired")),
     name: z.string().min(1, t("tables.productNameRequired")),
     productType: z.number().min(1, t("tables.productTypeRequired")),
     trackInventory: z.boolean().optional(),
+    stock: z.number().min(0, "Stock must be 0 or greater"),
   });
   const [showAddForm, setShowAddForm] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
@@ -80,26 +81,44 @@ export function ProductManagerModal({
 
   const createProductMutation = useMutation({
     mutationFn: async (data: z.infer<typeof productFormSchema>) => {
+      console.log("Sending product data:", data);
       const response = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to create product");
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Product creation error:", errorData);
+        throw new Error(errorData.message || "Failed to create product");
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setShowAddForm(false);
+      resetForm();
       toast({
         title: "Success",
         description: "Product created successfully",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error("Create product mutation error:", error);
+      
+      let errorMessage = "Failed to create product";
+      if (error.message.includes("already exists")) {
+        errorMessage = "SKU already exists. Please use a different SKU.";
+      } else if (error.message.includes("Invalid product data")) {
+        errorMessage = "Invalid product data. Please check all fields.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Error",
-        description: "Failed to create product",
+        title: "Error", 
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -177,10 +196,24 @@ export function ProductManagerModal({
   });
 
   const onSubmit = (data: z.infer<typeof productFormSchema>) => {
+    console.log("Form submission data:", data);
+    
+    // Transform data to ensure proper types
+    const transformedData = {
+      ...data,
+      price: data.price.toString(),
+      stock: Number(data.stock) || 0,
+      categoryId: Number(data.categoryId),
+      productType: Number(data.productType),
+      trackInventory: data.trackInventory !== false
+    };
+    
+    console.log("Transformed data:", transformedData);
+    
     if (editingProduct) {
-      updateProductMutation.mutate({ id: editingProduct.id, data });
+      updateProductMutation.mutate({ id: editingProduct.id, data: transformedData });
     } else {
-      createProductMutation.mutate(data);
+      createProductMutation.mutate(transformedData);
     }
   };
 
@@ -213,7 +246,7 @@ export function ProductManagerModal({
       sku: "",
       price: "",
       stock: 0,
-      categoryId: 0,
+      categoryId: categories.length > 0 ? categories[0].id : 0,
       productType: 1,
       imageUrl: "",
       trackInventory: true,

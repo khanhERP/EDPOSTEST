@@ -167,11 +167,24 @@ export async function registerRoutes(app: Express): Promise {
 
   app.post("/api/products", async (req, res) => {
     try {
-      const validatedData = insertProductSchema.parse(req.body);
+      console.log("Product creation request body:", req.body);
+      
+      // Validate and transform the data
+      const validatedData = insertProductSchema.parse({
+        ...req.body,
+        price: req.body.price ? req.body.price.toString() : "0",
+        stock: Number(req.body.stock) || 0,
+        categoryId: Number(req.body.categoryId),
+        productType: Number(req.body.productType) || 1,
+        trackInventory: req.body.trackInventory !== false
+      });
+
+      console.log("Validated product data:", validatedData);
 
       // Check if SKU already exists
       const existingProduct = await storage.getProductBySku(validatedData.sku);
       if (existingProduct) {
+        console.log("SKU already exists:", validatedData.sku);
         return res.status(409).json({ 
           message: "Product with this SKU already exists",
           code: "DUPLICATE_SKU"
@@ -179,14 +192,24 @@ export async function registerRoutes(app: Express): Promise {
       }
 
       const product = await storage.createProduct(validatedData);
+      console.log("Product created successfully:", product);
       res.status(201).json(product);
     } catch (error) {
+      console.error("Product creation error:", error);
       if (error instanceof z.ZodError) {
+        console.error("Validation errors:", error.errors);
         return res
           .status(400)
-          .json({ message: "Invalid product data", errors: error.errors });
+          .json({ 
+            message: "Invalid product data", 
+            errors: error.errors,
+            details: error.format()
+          });
       }
-      res.status(500).json({ message: "Failed to create product" });
+      res.status(500).json({ 
+        message: "Failed to create product",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
