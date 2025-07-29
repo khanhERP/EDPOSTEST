@@ -286,6 +286,23 @@ export const inventoryTransactions = pgTable('inventory_transactions', {
   createdAt: varchar('created_at', { length: 50 }).notNull(),
 });
 
+export const eInvoiceConnections = pgTable('einvoice_connections', {
+  id: serial('id').primaryKey(),
+  symbol: varchar('symbol', { length: 10 }).notNull(),
+  taxCode: varchar('tax_code', { length: 20 }).notNull(),
+  loginId: varchar('login_id', { length: 50 }).notNull(),
+  password: text('password').notNull(),
+  softwareName: varchar('software_name', { length: 50 }).notNull(),
+  loginUrl: text('login_url'),
+  signMethod: varchar('sign_method', { length: 20 }).notNull().default('Ký server'),
+  cqtCode: varchar('cqt_code', { length: 20 }).notNull().default('Cấp nhật'),
+  notes: text('notes'),
+  isDefault: boolean('is_default').notNull().default(false),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 export const insertCustomerSchema = createInsertSchema(customers).omit({
   id: true,
   createdAt: true,
@@ -326,6 +343,18 @@ export type InsertStoreSettings = z.infer<typeof insertStoreSettingsSchema>;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 export type InsertPointTransaction = z.infer<typeof insertPointTransactionSchema>;
+
+export const insertEInvoiceConnectionSchema = createInsertSchema(eInvoiceConnections).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  signMethod: z.enum(["Ký server", "Ký USB Token", "Ký HSM"]).optional(),
+  cqtCode: z.enum(["Cấp nhật", "Cấp hai"]).optional(),
+});
+
+export type EInvoiceConnection = typeof eInvoiceConnections.$inferSelect;
+export type InsertEInvoiceConnection = z.infer<typeof insertEInvoiceConnectionSchema>;
 
 // Cart item type for frontend use
 export type CartItem = {

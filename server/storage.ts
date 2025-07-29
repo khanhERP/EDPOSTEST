@@ -200,6 +200,13 @@ export interface IStorage {
 
   getAllProducts(includeInactive?: boolean): Promise<Product[]>;
   getActiveProducts(): Promise<Product[]>;
+
+  // E-invoice connections
+  getEInvoiceConnections(): Promise<any[]>;
+  getEInvoiceConnection(id: number): Promise<any>;
+  createEInvoiceConnection(data: any): Promise<any>;
+  updateEInvoiceConnection(id: number, data: any): Promise<any>;
+  deleteEInvoiceConnection(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1319,6 +1326,81 @@ export class DatabaseStorage implements IStorage {
       productType: productData.productType || 1
     }).returning();
     return product;
+  }
+
+  // E-invoice connections methods
+  async getEInvoiceConnections(): Promise<any[]> {
+    try {
+      const { eInvoiceConnections } = await import("@shared/schema");
+      return await db.select().from(eInvoiceConnections).orderBy(eInvoiceConnections.symbol);
+    } catch (error) {
+      console.error("Error fetching e-invoice connections:", error);
+      return [];
+    }
+  }
+
+  async getEInvoiceConnection(id: number): Promise<any> {
+    try {
+      const { eInvoiceConnections } = await import("@shared/schema");
+      const [result] = await db
+        .select()
+        .from(eInvoiceConnections)
+        .where(eq(eInvoiceConnections.id, id));
+      return result;
+    } catch (error) {
+      console.error("Error fetching e-invoice connection:", error);
+      return null;
+    }
+  }
+
+  async createEInvoiceConnection(data: any): Promise<any> {
+    try {
+      const { eInvoiceConnections } = await import("@shared/schema");
+      
+      // Generate next symbol number
+      const existingConnections = await this.getEInvoiceConnections();
+      const nextSymbol = (existingConnections.length + 1).toString();
+      
+      const [result] = await db.insert(eInvoiceConnections).values({
+        ...data,
+        symbol: nextSymbol,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }).returning();
+      return result;
+    } catch (error) {
+      console.error("Error creating e-invoice connection:", error);
+      throw error;
+    }
+  }
+
+  async updateEInvoiceConnection(id: number, data: any): Promise<any> {
+    try {
+      const { eInvoiceConnections } = await import("@shared/schema");
+      const [result] = await db
+        .update(eInvoiceConnections)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(eInvoiceConnections.id, id))
+        .returning();
+      return result;
+    } catch (error) {
+      console.error("Error updating e-invoice connection:", error);
+      throw error;
+    }
+  }
+
+  async deleteEInvoiceConnection(id: number): Promise<boolean> {
+    try {
+      const { eInvoiceConnections } = await import("@shared/schema");
+      const result = await db
+        .delete(eInvoiceConnections)
+        .where(eq(eInvoiceConnections.id, id))
+        .returning();
+      return result.length > 0;
+    } catch (error) {
+      console.error("Error deleting e-invoice connection:", error);
+      return false;
+    }
   }
 }
 

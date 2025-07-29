@@ -788,37 +788,80 @@ export default function Settings() {
       })
     : [];
 
-  // E-invoice connections state
-  const [eInvoiceConnections, setEInvoiceConnections] = useState([
-    {
-      id: 1,
-      symbol: "1",
-      taxCode: "0101864535",
-      loginId: "ERP1",
-      password: "**************",
-      softwareName: "MINVOICE",
-      loginUrl: "https://minvoice.app",
-      signMethod: "Ký server",
-      cqtCode: "Cấp nhật",
-      notes: "-",
-      isDefault: false,
-      isActive: true,
+  // Fetch E-invoice connections
+  const { data: eInvoiceConnections = [], isLoading: eInvoiceLoading } = useQuery<any[]>({
+    queryKey: ["/api/einvoice-connections"],
+  });
+
+  // E-invoice mutations
+  const createEInvoiceMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest("POST", "/api/einvoice-connections", data);
+      return response.json();
     },
-    {
-      id: 2,
-      symbol: "2",
-      taxCode: "0101864535",
-      loginId: "0100109106-509",
-      password: "**************",
-      softwareName: "SINVOICE",
-      loginUrl: "https://api-vinvoice.viettel.vn/services/einvoiceapplication/api/",
-      signMethod: "Ký server",
-      cqtCode: "Cấp nhật",
-      notes: "-",
-      isDefault: false,
-      isActive: true,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/einvoice-connections"] });
+      toast({
+        title: "Thành công",
+        description: "Kết nối HĐĐT đã được tạo thành công",
+      });
+      setShowEInvoiceForm(false);
+      resetEInvoiceForm();
     },
-  ]);
+    onError: () => {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi tạo kết nối HĐĐT",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateEInvoiceMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const response = await apiRequest("PUT", `/api/einvoice-connections/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/einvoice-connections"] });
+      toast({
+        title: "Thành công",
+        description: "Kết nối HĐĐT đã được cập nhật thành công",
+      });
+      setShowEInvoiceForm(false);
+      resetEInvoiceForm();
+    },
+    onError: () => {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi cập nhật kết nối HĐĐT",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteEInvoiceMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("DELETE", `/api/einvoice-connections/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/einvoice-connections"] });
+      toast({
+        title: "Thành công",
+        description: "Kết nối HĐĐT đã được xóa thành công",
+      });
+      setShowEInvoiceDeleteDialog(false);
+      setEInvoiceToDelete(null);
+    },
+    onError: () => {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi xóa kết nối HĐĐT",
+        variant: "destructive",
+      });
+    },
+  });
 
   // E-invoice management functions
   const resetEInvoiceForm = () => {
@@ -847,30 +890,7 @@ export default function Settings() {
       return;
     }
 
-    // Create new connection
-    const newConnection = {
-      id: eInvoiceConnections.length + 1,
-      symbol: (eInvoiceConnections.length + 1).toString(),
-      taxCode: eInvoiceForm.taxCode,
-      loginId: eInvoiceForm.loginId,
-      password: "**************", // Hide password in display
-      softwareName: eInvoiceForm.softwareName,
-      loginUrl: eInvoiceForm.loginUrl,
-      signMethod: eInvoiceForm.signMethod,
-      cqtCode: eInvoiceForm.cqtCode,
-      notes: eInvoiceForm.notes || "-",
-      isDefault: false,
-      isActive: eInvoiceForm.isActive,
-    };
-
-    setEInvoiceConnections([...eInvoiceConnections, newConnection]);
-    
-    toast({
-      title: "Thành công",
-      description: "Kết nối HĐĐT đã được tạo thành công",
-    });
-    setShowEInvoiceForm(false);
-    resetEInvoiceForm();
+    createEInvoiceMutation.mutate(eInvoiceForm);
   };
 
   const handleUpdateEInvoice = () => {
@@ -886,32 +906,10 @@ export default function Settings() {
 
     if (!editingEInvoice) return;
 
-    // Update connection
-    const updatedConnections = eInvoiceConnections.map(conn => 
-      conn.id === editingEInvoice.id 
-        ? {
-            ...conn,
-            taxCode: eInvoiceForm.taxCode,
-            loginId: eInvoiceForm.loginId,
-            password: eInvoiceForm.password === "**************" ? conn.password : "**************",
-            softwareName: eInvoiceForm.softwareName,
-            loginUrl: eInvoiceForm.loginUrl,
-            signMethod: eInvoiceForm.signMethod,
-            cqtCode: eInvoiceForm.cqtCode,
-            notes: eInvoiceForm.notes || "-",
-            isActive: eInvoiceForm.isActive,
-          }
-        : conn
-    );
-
-    setEInvoiceConnections(updatedConnections);
-    
-    toast({
-      title: "Thành công",
-      description: "Kết nối HĐĐT đã được cập nhật thành công",
+    updateEInvoiceMutation.mutate({
+      id: editingEInvoice.id,
+      data: eInvoiceForm
     });
-    setShowEInvoiceForm(false);
-    resetEInvoiceForm();
   };
 
   const handleEditEInvoice = (eInvoice: any) => {
@@ -937,24 +935,17 @@ export default function Settings() {
 
   const confirmDeleteEInvoice = () => {
     if (!eInvoiceToDelete) return;
-
-    const updatedConnections = eInvoiceConnections.filter(conn => conn.id !== eInvoiceToDelete.id);
-    setEInvoiceConnections(updatedConnections);
-    
-    toast({
-      title: "Thành công",
-      description: "Kết nối HĐĐT đã được xóa thành công",
-    });
-    setShowEInvoiceDeleteDialog(false);
-    setEInvoiceToDelete(null);
+    deleteEInvoiceMutation.mutate(eInvoiceToDelete.id);
   };
 
   const toggleEInvoiceDefault = (id: number) => {
-    const updatedConnections = eInvoiceConnections.map(conn => ({
-      ...conn,
-      isDefault: conn.id === id ? !conn.isDefault : false // Only one can be default
-    }));
-    setEInvoiceConnections(updatedConnections);
+    const connection = eInvoiceConnections.find(conn => conn.id === id);
+    if (!connection) return;
+    
+    updateEInvoiceMutation.mutate({
+      id,
+      data: { ...connection, isDefault: !connection.isDefault }
+    });
   };
 
   return (

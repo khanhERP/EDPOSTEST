@@ -1476,6 +1476,60 @@ export async function registerRoutes(app: Express): Promise {
     }
   });
 
+  // E-invoice connections management
+  app.get("/api/einvoice-connections", async (req, res) => {
+    try {
+      const connections = await storage.getEInvoiceConnections();
+      res.json(connections);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch e-invoice connections" });
+    }
+  });
+
+  app.post("/api/einvoice-connections", async (req, res) => {
+    try {
+      const connectionData = req.body;
+      const connection = await storage.createEInvoiceConnection(connectionData);
+      res.status(201).json(connection);
+    } catch (error) {
+      console.error("E-invoice connection creation error:", error);
+      res.status(500).json({ message: "Failed to create e-invoice connection" });
+    }
+  });
+
+  app.put("/api/einvoice-connections/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const connectionData = req.body;
+      const connection = await storage.updateEInvoiceConnection(id, connectionData);
+      
+      if (!connection) {
+        return res.status(404).json({ message: "E-invoice connection not found" });
+      }
+      
+      res.json(connection);
+    } catch (error) {
+      console.error("E-invoice connection update error:", error);
+      res.status(500).json({ message: "Failed to update e-invoice connection" });
+    }
+  });
+
+  app.delete("/api/einvoice-connections/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteEInvoiceConnection(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ message: "E-invoice connection not found" });
+      }
+      
+      res.json({ message: "E-invoice connection deleted successfully" });
+    } catch (error) {
+      console.error("E-invoice connection deletion error:", error);
+      res.status(500).json({ message: "Failed to delete e-invoice connection" });
+    }
+  });
+
   // Customer Reports APIs
   app.get("/api/customer-debts", async (req, res) => {
     try {
