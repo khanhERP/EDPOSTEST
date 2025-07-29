@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -228,44 +227,7 @@ export function SalesChannelReport() {
     );
   };
 
-  const renderChart = () => {
-    const chartData = getChartData();
-    if (!chartData || chartData.length === 0) return null;
-
-    return (
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            {t("reports.salesChannelChart")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-              <Legend />
-              {concernType === "sales" && (
-                <>
-                  <Bar dataKey="revenue" fill="#3B82F6" name={t("reports.salesChannelRevenue")} />
-                  <Bar dataKey="netRevenue" fill="#10B981" name={t("reports.salesChannelNetRevenue")} />
-                </>
-              )}
-              {concernType === "profit" && (
-                <>
-                  <Bar dataKey="grossProfit" fill="#3B82F6" name={t("reports.salesChannelGrossProfit")} />
-                  <Bar dataKey="netProfit" fill="#10B981" name={t("reports.salesChannelNetProfit")} />
-                </>
-              )}
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-    );
-  };
+  
 
   return (
     <div className="space-y-6">
@@ -429,7 +391,7 @@ export function SalesChannelReport() {
           {concernType === "sales" && renderSalesTable()}
           {concernType === "profit" && renderProfitTable()}
           {concernType === "products" && renderProductsTable()}
-          
+
           {!salesChannelSalesData && !salesChannelProfitData && !salesChannelProductsData && (
             <div className="text-center py-8">
               <div className="text-gray-500">{t("reports.noReportData")}</div>
@@ -439,7 +401,39 @@ export function SalesChannelReport() {
       </Card>
 
       {/* Chart */}
-      {(concernType === "sales" || concernType === "profit") && renderChart()}
+      {(concernType === "sales" || concernType === "profit") && (
+        <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            {t("reports.salesChannelChart")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={getChartData()}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+              <Legend />
+              {concernType === "sales" && (
+                <>
+                  <Bar dataKey="revenue" fill="#3B82F6" name={t("reports.salesChannelRevenue")} />
+                  <Bar dataKey="netRevenue" fill="#10B981" name={t("reports.salesChannelNetRevenue")} />
+                </>
+              )}
+              {concernType === "profit" && (
+                <>
+                  <Bar dataKey="grossProfit" fill="#3B82F6" name={t("reports.salesChannelGrossProfit")} />
+                  <Bar dataKey="netProfit" fill="#10B981" name={t("reports.salesChannelNetProfit")} />
+                </>
+              )}
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+      )}
     </div>
   );
 }
