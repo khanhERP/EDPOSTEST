@@ -1,3 +1,4 @@
+
 import type { ReportsTranslations } from "../types";
 
 export const reportsTranslations: { [key: string]: ReportsTranslations } = {
@@ -80,8 +81,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     period: "기간",
     thisMonth: "이번 달",
     noData: "데이터가 없습니다",
-    noDataDescription:
-      "선택한 기간에 대한 데이터가 없습니다. 다른 기간을 선택해보세요.",
+    noDataDescription: "선택한 기간에 대한 데이터가 없습니다. 다른 기간을 선택해보세요.",
     loading: "데이터 불러오는 중...",
 
     // Additional dashboard keys
@@ -95,8 +95,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesAchievementRate: "매출 달성률",
     peakHour: "피크 시간",
     tableTurnoverRate: "테이블 회전율",
-    targetAverageDailySales:
-      "목표 일평균 매출 {amount}, 목표 회전 {turnovers}회",
+    targetAverageDailySales: "목표 일평균 매출 {amount}, 목표 회전 {turnovers}회",
 
     // Category performance
     topSellingProducts: "인기 상품 (판매량 기준)",
@@ -225,10 +224,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscount: "송장 할인",
     returnTicketCount: "반품 표 수량",
     seller: "판매자",
-
-    // Chart related translations
-    chartView: "차트 보기",
-    visualRepresentation: "데이터의 시각적 표현",
 
     // Table headers for reports
     salesDetailsHeader: "판매 세부사항",
@@ -383,17 +378,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     directSales: "직접 판매",
     otherSales: "기타",
     salesChannelChart: "판매 채널 차트",
-     employeeProductSales: "직원별 상품 판매",
 
     // Common report keys
+    chartView: "차트 보기",
+    visualRepresentation: "데이터의 시각적 표현",
     filters: "필터",
     applyFilters: "필터 적용",
     resetFilters: "필터 초기화",
-    dateRange: "날짜 범위",
-    dataFrom: "데이터 기간",
-    to: "~",
-    seller: "판매자",
-    employee: "직원",
   },
   en: {
     title: "Reports",
@@ -446,8 +437,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cumulativeVisitors: "Cumulative Visitors",
     totalByTable: "Total by Table",
     detailedTablePerformance: "Detailed Table Performance",
-    detailedTablePerformanceDesc:
-      "Check detailed operational metrics for each table",
+    detailedTablePerformanceDesc: "Check detailed operational metrics for each table",
     currentStatus: "Current Status",
     orderCount: "Order Count",
     peakTime: "Peak Time",
@@ -474,8 +464,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     period: "Period",
     thisMonth: "This Month",
     noData: "No data available",
-    noDataDescription:
-      "No data available for the selected period. Please try a different date range.",
+    noDataDescription: "No data available for the selected period. Please try a different date range.",
     loading: "Loading data...",
     noPaymentData: "There is no payment data.",
 
@@ -490,8 +479,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesAchievementRate: "Sales Achievement Rate",
     peakHour: "Peak Hour",
     tableTurnoverRate: "Table Turnover Rate",
-    targetAverageDailySales:
-      "Target avg. daily sales {amount}, Target turnover {turnovers} times",
+    targetAverageDailySales: "Target avg. daily sales {amount}, Target turnover {turnovers} times",
 
     // Category performance
     topSellingProducts: "Top Selling Products (by Quantity)",
@@ -634,8 +622,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     supplierPurchaseReportTitle: "Purchase Report by Supplier",
     supplierDebtChart: "Debt Chart by Supplier",
     supplierDebtReportTitle: "Debt Report by Supplier",
-    supplierProductPurchaseReportTitle:
-      "Product Purchase List Report by Supplier",
+    supplierProductPurchaseReportTitle: "Product Purchase List Report by Supplier",
     supplierOverviewChart: "Supplier Overview Chart (Purchase & Debt)",
 
     // Supplier table headers
@@ -719,22 +706,69 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesChannelQuantityReturned: "Quantity Returned",
     directSales: "Direct Sales",
     otherSales: "Other Sales",
+    salesChannelChart: "Sales Channel Chart",
 
-        // Common report keys
+    // Comprehensive sales report
+    comprehensiveSalesReport: "Comprehensive Sales Report",
+    timeReport: "Time",
+    profitReport: "Profit",
+    discountReport: "Discount",
+    returnReport: "Return",
+    salesMethod: "Sales Method",
+    noDelivery: "No Delivery",
+    delivery: "Delivery",
+    salesChannel: "Sales Channel",
+    direct: "Direct",
+    other: "Other",
+    timeSalesReport: "Time Sales Report",
+    profitByInvoiceReport: "Profit by Invoice Report",
+    invoiceDiscountReport: "Invoice Discount Report",
+    returnByInvoiceReport: "Return by Invoice Report",
+    employeeSalesReport: "Employee Sales Report",
+    returnValue: "Return Value",
+    netRevenue: "Net Revenue",
+    totalAmount: "Total Amount",
+    discount: "Discount",
+    totalCost: "Total Cost",
+    grossProfit: "Gross Profit",
+    totalInvoices: "Total Invoices",
+    invoiceValue: "Invoice Value",
+    invoiceDiscount: "Invoice Discount",
+    returnTicketCount: "Return Ticket Count",
+    seller: "Seller",
+
+    // Table headers for reports
+    salesDetailsHeader: "Sales Details",
+    revenueExpenseDetailsHeader: "Revenue Expense Details",
+    inventoryDetailsHeader: "Inventory Details",
+    salesReportHeader: "Sales Report",
+    revenueExpenseReportHeader: "Revenue Expense Report",
+    inventoryReportHeader: "Inventory Report",
+    transactionCode: "Transaction Code",
+    quantity: "Quantity",
+    otherRevenue: "Other Revenue",
+    vat: "VAT",
+    actualRevenue: "Actual Revenue",
+    receiptCode: "Receipt Code",
+    payerReceiver: "Payer/Receiver",
+    revenueExpenseType: "Revenue/Expense",
+    productName: "Product Name",
+    soldQuantity: "Sold Quantity",
+    returnQuantity: "Return Quantity",
+
+    // Report specific content
+    salesDetails: "Sales Details",
+    revenueExpenseDetails: "Revenue Expense Details",
+    inventoryDetails: "Inventory Details",
+    noReportData: "No report data",
+    centralBranch: "Central Branch",
+
+    // Common report keys
     chartView: "Chart View",
     visualRepresentation: "Visual Representation",
-    fromDate: "From Date",
-    toDate: "To Date",
-    dataFrom: "Data from",
-    to: "to",
     filters: "Filters",
     applyFilters: "Apply Filters",
     resetFilters: "Reset Filters",
-    dateRange: "Date Range",
-    productFilter: "Product Filter",
-    productFilterPlaceholder: "Search by code, name",
-    seller: "Seller",
-    employee: "Employee",
   },
   vi: {
     title: "Báo cáo",
@@ -787,8 +821,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cumulativeVisitors: "Khách ghé thăm tích lũy",
     totalByTable: "Tổng theo bàn",
     detailedTablePerformance: "Hiệu suất chi tiết theo bàn",
-    detailedTablePerformanceDesc:
-      "Kiểm tra các chỉ số hoạt động chi tiết cho từng bàn",
+    detailedTablePerformanceDesc: "Kiểm tra các chỉ số hoạt động chi tiết cho từng bàn",
     currentStatus: "Trạng thái hiện tại",
     orderCount: "Số đơn hàng",
     peakTime: "Giờ cao điểm",
@@ -815,8 +848,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     period: "Kỳ",
     thisMonth: "Tháng này",
     noData: "Không có dữ liệu",
-    noDataDescription:
-      "Không có dữ liệu cho khoảng thời gian đã chọn. Vui lòng thử khoảng thời gian khác.",
+    noDataDescription: "Không có dữ liệu cho khoảng thời gian đã chọn. Vui lòng thử khoảng thời gian khác.",
     loading: "Đang tải dữ liệu...",
     noPaymentData: "Không có dữ liệu thanh toán.",
 
@@ -831,8 +863,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesAchievementRate: "Tỷ lệ đạt doanh thu",
     peakHour: "Giờ cao điểm",
     tableTurnoverRate: "Tỷ lệ luân chuyển bàn",
-    targetAverageDailySales:
-      "Mục tiêu doanh thu trung bình hàng ngày {amount}, Mục tiêu luân chuyển {turnovers} lần",
+    targetAverageDailySales: "Mục tiêu doanh thu trung bình hàng ngày {amount}, Mục tiêu luân chuyển {turnovers} lần",
 
     // Category performance
     topSellingProducts: "Sản phẩm bán chạy nhất (theo số lượng)",
@@ -847,7 +878,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     popularMenuByQuantity: "Món phổ biến (theo số lượng)",
     popularMenuByQuantityDesc: "Xếp hạng món theo số lượng bán.",
     highRevenueMenu: "Món doanh thu cao (theo doanh thu)",
-    highRevenueMenuDesc: "Xếp hạng món theo đóng gópdoanh thu.",
+    highRevenueMenuDesc: "Xếp hạng món theo đóng góp doanh thu.",
     noSalesData: "Không có dữ liệu bán hàng.",
     noRevenueData: "Không có dữ liệu doanh thu.",
     noCategoryData: "Không có dữ liệu danh mục.",
@@ -970,14 +1001,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Supplier report tables
     supplierPurchaseReport: "Báo cáo nhập hàng theo nhà cung cấp",
     supplierDebtReport: "Báo cáo công nợ theo nhà cung cấp",
-    supplierProductPurchaseReport:
-      "Báo cáo danh sách hàng nhập theo nhà cung cấp",
+    supplierProductPurchaseReport: "Báo cáo danh sách hàng nhập theo nhà cung cấp",
     supplierPurchaseChart: "Biểu đồ nhập hàng nhà cung cấp",
     supplierPurchaseReportTitle: "Báo cáo nhập hàng theo nhà cung cấp",
     supplierDebtChart: "Biểu đồ công nợ nhà cung cấp",
     supplierDebtReportTitle: "Báo cáo công nợ theo nhà cung cấp",
-    supplierProductPurchaseReportTitle:
-      "Báo cáo danh sách hàng nhập theo nhà cung cấp",
+    supplierProductPurchaseReportTitle: "Báo cáo danh sách hàng nhập theo nhà cung cấp",
     supplierOverviewChart: "Biểu đồ tổng quan nhà cung cấp",
 
     // Supplier table headers
@@ -1032,7 +1061,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerBySales: "Khách theo hàng bán",
     supplierByPurchase: "NCC theo hàng nhập",
     profit: "Lợi nhuận",
-     // Sales Channel Report
+    employeeProductSales: "Nhân viên theo hàng bán",
+
+    // Sales Channel Report
     salesChannelReport: "Báo cáo kênh bán hàng",
     salesChannelReportTab: "Báo cáo kênh bán hàng",
     salesChannelReportDescription: "Phân tích kênh bán hàng và hiệu suất",
@@ -1060,24 +1091,67 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     directSales: "Bán trực tiếp",
     otherSales: "Khác",
     salesChannelChart: "Biểu đồ kênh bán hàng",
-    employeeProductSales: "Nhân viên theo hàng bán",
 
-    // Missing translation keys
+    // Comprehensive sales report
+    comprehensiveSalesReport: "Báo cáo bán hàng toàn diện",
+    timeReport: "Thời gian",
+    profitReport: "Lợi nhuận",
+    discountReport: "Giảm giá",
+    returnReport: "Trả hàng",
+    salesMethod: "Phương thức bán hàng",
+    noDelivery: "Không giao hàng",
+    delivery: "Giao hàng",
+    salesChannel: "Kênh bán hàng",
+    direct: "Trực tiếp",
+    other: "Khác",
+    timeSalesReport: "Báo cáo bán hàng theo thời gian",
+    profitByInvoiceReport: "Báo cáo lợi nhuận theo hóa đơn",
+    invoiceDiscountReport: "Báo cáo giảm giá hóa đơn",
+    returnByInvoiceReport: "Báo cáo trả hàng theo hóa đơn",
+    employeeSalesReport: "Báo cáo bán hàng theo nhân viên",
+    returnValue: "Giá trị trả hàng",
+    netRevenue: "Doanh thu thuần",
+    totalAmount: "Tổng số tiền",
+    discount: "Giảm giá",
+    totalCost: "Tổng chi phí",
+    grossProfit: "Lợi nhuận gộp",
+    totalInvoices: "Tổng hóa đơn",
+    invoiceValue: "Giá trị hóa đơn",
+    invoiceDiscount: "Giảm giá hóa đơn",
+    returnTicketCount: "Số lượng phiếu trả",
+    seller: "Người bán",
 
-            // Common report keys
+    // Table headers for reports
+    salesDetailsHeader: "Chi tiết bán hàng",
+    revenueExpenseDetailsHeader: "Chi tiết thu chi",
+    inventoryDetailsHeader: "Chi tiết hàng hóa",
+    salesReportHeader: "Báo cáo bán hàng",
+    revenueExpenseReportHeader: "Báo cáo thu chi",
+    inventoryReportHeader: "Báo cáo hàng hóa",
+    transactionCode: "Mã giao dịch",
+    quantity: "Số lượng",
+    otherRevenue: "Doanh thu khác",
+    vat: "VAT",
+    actualRevenue: "Doanh thu thực tế",
+    receiptCode: "Mã biên lai",
+    payerReceiver: "Người trả/Người nhận",
+    revenueExpenseType: "Loại thu/chi",
+    productName: "Tên sản phẩm",
+    soldQuantity: "Số lượng bán",
+    returnQuantity: "Số lượng trả",
+
+    // Report specific content
+    salesDetails: "Chi tiết bán hàng",
+    revenueExpenseDetails: "Chi tiết thu chi",
+    inventoryDetails: "Chi tiết hàng hóa",
+    noReportData: "Không có dữ liệu báo cáo",
+    centralBranch: "Chi nhánh trung tâm",
+
+    // Common report keys
     chartView: "Xem biểu đồ",
     visualRepresentation: "Biểu diễn trực quan",
-    fromDate: "Từ ngày",
-    toDate: "Đến ngày",
-    dataFrom: "Dữ liệu từ",
-    to: "đến",
     filters: "Bộ lọc",
     applyFilters: "Áp dụng bộ lọc",
     resetFilters: "Đặt lại bộ lọc",
-    dateRange: "Khoảng thời gian",
-    productFilter: "Lọc sản phẩm",
-    productFilterPlaceholder: "Tìm kiếm theo mã, tên",
-    seller: "Người bán",
-    employee: "Nhân viên",
   },
 };
