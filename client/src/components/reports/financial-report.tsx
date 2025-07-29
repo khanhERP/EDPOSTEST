@@ -254,98 +254,104 @@ export function FinancialReport() {
 
       {/* Financial Summary Cards */}
       {financialSummary && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 lg:gap-6">
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs lg:text-sm font-medium text-gray-600 truncate">{t("reports.totalIncome")}</p>
-                  <p className="text-lg lg:text-xl xl:text-2xl font-bold text-green-600 mt-1 break-words">
-                    {formatCurrency(financialSummary.totalIncome)}
-                  </p>
+        <div className="space-y-4">
+          {/* First Row - 3 cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600 truncate">{t("reports.totalIncome")}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-green-600 mt-1 break-all">
+                      {formatCurrency(financialSummary.totalIncome)}
+                    </p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-green-500 ml-3 flex-shrink-0" />
                 </div>
-                <DollarSign className="w-6 h-6 lg:w-8 lg:h-8 text-green-500 ml-2 flex-shrink-0" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs lg:text-sm font-medium text-gray-600 truncate">{t("reports.totalExpenses")}</p>
-                  <p className="text-lg lg:text-xl xl:text-2xl font-bold text-red-600 mt-1 break-words">
-                    {formatCurrency(financialSummary.totalExpenses)}
-                  </p>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600 truncate">{t("reports.totalExpenses")}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-red-600 mt-1 break-all">
+                      {formatCurrency(financialSummary.totalExpenses)}
+                    </p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-red-500 ml-3 flex-shrink-0" />
                 </div>
-                <TrendingUp className="w-6 h-6 lg:w-8 lg:h-8 text-red-500 ml-2 flex-shrink-0" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs lg:text-sm font-medium text-gray-600 truncate">{t("reports.grossProfit")}</p>
-                  <p className="text-lg lg:text-xl xl:text-2xl font-bold text-blue-600 mt-1 break-words">
-                    {formatCurrency(financialSummary.grossProfit)}
-                  </p>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600 truncate">{t("reports.grossProfit")}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-blue-600 mt-1 break-all">
+                      {formatCurrency(financialSummary.grossProfit)}
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+                    <span className="text-blue-600 font-bold text-sm">₫</span>
+                  </div>
                 </div>
-                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-blue-100 rounded-full flex items-center justify-center ml-2 flex-shrink-0">
-                  <span className="text-blue-600 font-bold text-xs lg:text-sm">₫</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
 
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs lg:text-sm font-medium text-gray-600 truncate">{t("reports.operatingExpenses")}</p>
-                  <p className="text-lg lg:text-xl xl:text-2xl font-bold text-orange-600 mt-1 break-words">
-                    {formatCurrency(financialSummary.operatingExpenses)}
-                  </p>
+          {/* Second Row - 3 cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600 truncate">{t("reports.operatingExpenses")}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-orange-600 mt-1 break-all">
+                      {formatCurrency(financialSummary.operatingExpenses)}
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+                    <span className="text-orange-600 font-bold text-sm">-</span>
+                  </div>
                 </div>
-                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-orange-100 rounded-full flex items-center justify-center ml-2 flex-shrink-0">
-                  <span className="text-orange-600 font-bold text-xs lg:text-sm">-</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs lg:text-sm font-medium text-gray-600 truncate">{t("reports.netIncome")}</p>
-                  <p className="text-lg lg:text-xl xl:text-2xl font-bold text-purple-600 mt-1 break-words">
-                    {formatCurrency(financialSummary.netIncome)}
-                  </p>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600 truncate">{t("reports.netIncome")}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-purple-600 mt-1 break-all">
+                      {formatCurrency(financialSummary.netIncome)}
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+                    <span className="text-purple-600 font-bold text-sm">+</span>
+                  </div>
                 </div>
-                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-purple-100 rounded-full flex items-center justify-center ml-2 flex-shrink-0">
-                  <span className="text-purple-600 font-bold text-xs lg:text-sm">+</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs lg:text-sm font-medium text-gray-600 truncate">{t("reports.profitMargin")}</p>
-                  <p className="text-lg lg:text-xl xl:text-2xl font-bold text-indigo-600 mt-1 break-words">
-                    {formatPercentage(financialSummary.profitMargin)}
-                  </p>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex items-center justify-between">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-600 truncate">{t("reports.profitMargin")}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-indigo-600 mt-1 break-all">
+                      {formatPercentage(financialSummary.profitMargin)}
+                    </p>
+                  </div>
+                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center ml-3 flex-shrink-0">
+                    <span className="text-indigo-600 font-bold text-sm">%</span>
+                  </div>
                 </div>
-                <div className="w-6 h-6 lg:w-8 lg:h-8 bg-indigo-100 rounded-full flex items-center justify-center ml-2 flex-shrink-0">
-                  <span className="text-indigo-600 font-bold text-xs lg:text-sm">%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
 
