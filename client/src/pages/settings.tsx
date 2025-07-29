@@ -367,28 +367,33 @@ export default function Settings() {
   };
 
   const handleCreateCategory = async () => {
-    if (!categoryForm.name.trim()) return;
+    if (!categoryForm.name.trim()) {
+      toast({
+        title: t("common.error"),
+        description: "Vui lòng nhập tên danh mục",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      const response = await apiRequest(
-        "POST",
-        "/api/categories",
-        categoryForm,
-      );
+      const response = await fetch("/api/categories", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(categoryForm),
+      });
 
-      // Force immediate refresh by clearing all caches first
-      queryClient.removeQueries({ queryKey: ["/api/categories"] });
-      queryClient.removeQueries({ queryKey: ["/api/products"] });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-      // Then refetch fresh data
-      await Promise.all([
-        queryClient.fetchQuery({ queryKey: ["/api/categories"] }),
-        queryClient.fetchQuery({ queryKey: ["/api/products"] })
-      ]);
-
-      // Also invalidate to ensure all components using these queries update
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      const result = await response.json();
+      
+      // Refetch data immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/categories"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/products"] });
 
       toast({
         title: t("common.success"),
@@ -407,29 +412,46 @@ export default function Settings() {
   };
 
   const handleUpdateCategory = async () => {
-    if (!categoryForm.name.trim() || !editingCategory) return;
+    if (!categoryForm.name.trim()) {
+      toast({
+        title: t("common.error"),
+        description: "Vui lòng nhập tên danh mục",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!editingCategory) {
+      toast({
+        title: t("common.error"),
+        description: "Không tìm thấy danh mục cần cập nhật",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      const response = await apiRequest(
-        "PUT",
-        `/api/categories/${editingCategory.id}`,
-        categoryForm,
-      );
+      const response = await fetch(`/api/categories/${editingCategory.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(categoryForm),
+      });
 
-      // Close dialog first to avoid showing stale data
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      // Close dialog and reset form
       setShowCategoryForm(false);
       resetCategoryForm();
 
-      // Force complete cache invalidation and refetch
-      queryClient.clear();
-      
-      // Wait a moment then refetch all data
-      setTimeout(async () => {
-        await Promise.all([
-          queryClient.refetchQueries({ queryKey: ["/api/categories"] }),
-          queryClient.refetchQueries({ queryKey: ["/api/products"] })
-        ]);
-      }, 100);
+      // Refetch data immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/categories"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/products"] });
 
       toast({
         title: t("common.success"),
@@ -446,36 +468,47 @@ export default function Settings() {
   };
 
   const handleDeleteCategory = async (categoryId: number) => {
+    // Check if category has products
+    const categoryProducts = productsData?.filter(
+      (product: any) => product.categoryId === categoryId
+    );
+
+    if (categoryProducts && categoryProducts.length > 0) {
+      toast({
+        title: t("common.error"),
+        description: `Không thể xóa danh mục này vì còn ${categoryProducts.length} sản phẩm`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (
       confirm(
-        `${t("productManagement.deleteConfirm")} ${t("productManagement.categoryDeleteConfirm")}`,
+        "Bạn có chắc chắn muốn xóa danh mục này? Hành động này không thể hoàn tác."
       )
     ) {
       try {
-        await apiRequest("DELETE", `/api/categories/${categoryId}`);
+        const response = await fetch(`/api/categories/${categoryId}`, {
+          method: "DELETE",
+        });
 
-        // Force immediate refresh by clearing all caches first
-        queryClient.removeQueries({ queryKey: ["/api/categories"] });
-        queryClient.removeQueries({ queryKey: ["/api/products"] });
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-        // Then refetch fresh data
-        await Promise.all([
-          queryClient.fetchQuery({ queryKey: ["/api/categories"] }),
-          queryClient.fetchQuery({ queryKey: ["/api/products"] })
-        ]);
-
-        // Also invalidate to ensure all components using these queries update
-        queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+        // Refetch data immediately
+        await queryClient.refetchQueries({ queryKey: ["/api/categories"] });
+        await queryClient.refetchQueries({ queryKey: ["/api/products"] });
 
         toast({
           title: t("common.success"),
-          description: t("productManagement.categoryDeleteSuccess"),
+          description: "Danh mục đã được xóa thành công",
         });
       } catch (error) {
+        console.error("Category delete error:", error);
         toast({
           title: t("common.error"),
-          description: t("common.error"),
+          description: "Có lỗi xảy ra khi xóa danh mục",
           variant: "destructive",
         });
       }
@@ -573,7 +606,10 @@ export default function Settings() {
   };
 
   const handleEditCategory = (category: any) => {
-    setCategoryForm({ name: category.name, icon: category.icon });
+    setCategoryForm({ 
+      name: category.name || "", 
+      icon: category.icon || "fas fa-utensils" 
+    });
     setEditingCategory(category);
     setShowCategoryForm(true);
   };

@@ -52,7 +52,71 @@ export async function registerRoutes(app: Express): Promise {
       const categories = await storage.getCategories();
       res.json(categories);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch categories" });
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
+  app.post("/api/categories", async (req, res) => {
+    try {
+      const { name, icon } = req.body;
+
+      if (!name || !name.trim()) {
+        return res.status(400).json({ error: "Category name is required" });
+      }
+
+      const categoryData = {
+        name: name.trim(),
+        icon: icon || "fas fa-utensils"
+      };
+
+      const category = await storage.createCategory(categoryData);
+      res.json(category);
+    } catch (error) {
+      console.error("Error creating category:", error);
+      res.status(500).json({ error: "Failed to create category" });
+    }
+  });
+
+  app.put("/api/categories/:id", async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+      const { name, icon } = req.body;
+
+      if (!name || !name.trim()) {
+        return res.status(400).json({ error: "Category name is required" });
+      }
+
+      const categoryData = {
+        name: name.trim(),
+        icon: icon || "fas fa-utensils"
+      };
+
+      const category = await storage.updateCategory(categoryId, categoryData);
+      res.json(category);
+    } catch (error) {
+      console.error("Error updating category:", error);
+      res.status(500).json({ error: "Failed to update category" });
+    }
+  });
+
+  app.delete("/api/categories/:id", async (req, res) => {
+    try {
+      const categoryId = parseInt(req.params.id);
+
+      // Check if category has products
+      const products = await storage.getProductsByCategory(categoryId);
+      if (products.length > 0) {
+        return res.status(400).json({ 
+          error: `Cannot delete category. It has ${products.length} products.` 
+        });
+      }
+
+      await storage.deleteCategory(categoryId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      res.status(500).json({ error: "Failed to delete category" });
     }
   });
 
@@ -1736,8 +1800,7 @@ app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async 
           SUM(COALESCE(rti.quantity * rti.price, 0)) as returnValue,
           SUM(ti.quantity * ti.price - COALESCE(rti.quantity * rti.price, 0)) as netRevenue
         FROM transactions t
-        LEFT JOIN employees e ON t.employeeId = e.id
-        LEFT JOIN transaction_items ti ON t.id = ti.transactionId
+        LEFT JOIN employees e ON t.employeeId = e.id        LEFT JOIN transaction_items ti ON t.id = ti.transactionId
         LEFT JOIN products p ON ti.productId = p.id
         LEFT JOIN categories c ON p.categoryId = c.id
         LEFT JOIN transaction_items rti ON t.id = rti.transactionId AND rti.productId = p.id AND rti.isReturn = 1
@@ -1794,14 +1857,14 @@ app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async 
   app.get("/api/financial-summary/:period/:year/:month?/:quarter?", async (req, res) => {
     try {
       const { period, year, month, quarter } = req.params;
-      
+
       // Get transactions for financial calculations
       const transactions = await storage.getTransactions();
-      
+
       let filteredTransactions = transactions.filter(transaction => {
         const date = new Date(transaction.createdAt);
         const transactionYear = date.getFullYear();
-        
+
         if (period === 'yearly') {
           return transactionYear === parseInt(year);
         } else if (period === 'monthly') {
@@ -1842,13 +1905,13 @@ app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async 
   app.get("/api/income-breakdown/:period/:year/:month?/:quarter?", async (req, res) => {
     try {
       const { period, year, month, quarter } = req.params;
-      
+
       const transactions = await storage.getTransactions();
-      
+
       let filteredTransactions = transactions.filter(transaction => {
         const date = new Date(transaction.createdAt);
         const transactionYear = date.getFullYear();
-        
+
         if (period === 'yearly') {
           return transactionYear === parseInt(year);
         } else if (period === 'monthly') {
@@ -1903,13 +1966,13 @@ app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async 
   app.get("/api/cash-flow/:period/:year/:month?/:quarter?", async (req, res) => {
     try {
       const { period, year, month, quarter } = req.params;
-      
+
       const transactions = await storage.getTransactions();
-      
+
       let filteredTransactions = transactions.filter(transaction => {
         const date = new Date(transaction.createdAt);
         const transactionYear = date.getFullYear();
-        
+
         if (period === 'yearly') {
           return transactionYear === parseInt(year);
         } else if (period === 'monthly') {
@@ -1923,7 +1986,7 @@ app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async 
       });
 
       const totalIncome = filteredTransactions.reduce((sum, t) => sum + Number(t.total), 0);
-      
+
       // Mock cash flow calculations
       const operatingCashFlow = totalIncome * 0.25; // 25% of income
       const investingCashFlow = -totalIncome * 0.05; // 5% negative (investments)
