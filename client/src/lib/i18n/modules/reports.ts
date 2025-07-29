@@ -383,20 +383,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     directSales: "직접 판매",
     otherSales: "기타",
     salesChannelChart: "판매 채널 차트",
+     employeeProductSales: "직원별 상품 판매",
 
-        // Common report keys
-    chartView: "차트 보기",
-    visualRepresentation: "시각적 표현",
-    fromDate: "시작일",
-    toDate: "종료일",
-    dataFrom: "데이터 기간",
-    to: "~",
+    // Common report keys
     filters: "필터",
     applyFilters: "필터 적용",
     resetFilters: "필터 초기화",
     dateRange: "날짜 범위",
-    productFilter: "상품 필터",
-    productFilterPlaceholder: "코드, 이름으로 검색",
+    dataFrom: "데이터 기간",
+    to: "~",
     seller: "판매자",
     employee: "직원",
   },
@@ -1068,8 +1063,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     employeeProductSales: "Nhân viên theo hàng bán",
 
     // Missing translation keys
-    chartView: "Xem biểu đồ",
-    visualRepresentation: "Biểu diễn trực quan của dữ liệu",
 
             // Common report keys
     chartView: "Xem biểu đồ",
