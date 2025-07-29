@@ -16,6 +16,7 @@ import {
   insertPointTransactionSchema,
   attendanceRecords,
   products,
+  inventoryTransactions,
 } from "@shared/schema";
 import { initializeSampleData, db } from "./db";
 import { z } from "zod";
@@ -820,7 +821,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { productId, quantity, type, notes, trackInventory } = req.body;
 
       // Get current product
-      const product = await db.select().from(products).where(eq(products.id, productId)).get();
+      const [product] = await db.select().from(products).where(eq(products.id, productId)).limit(1);
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
       }
