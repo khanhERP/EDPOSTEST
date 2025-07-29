@@ -73,6 +73,7 @@ import { CustomerPointsModal } from "@/components/customers/customer-points-moda
 import { MembershipModal } from "@/components/membership/membership-modal";
 import { PointsManagementModal } from "@/components/customers/points-management-modal";
 import { EmployeeFormModal } from "@/components/employees/employee-form-modal";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -1025,7 +1026,6 @@ export default function Settings() {
                       rows={3}
                     />
                   </div>
-```text
                   <div className="space-y-2">
                     <Label htmlFor="phone">{t("settings.phone")}</Label>
                     <Input
@@ -1953,7 +1953,7 @@ export default function Settings() {
                     ))}
                   </div>
 
-                  
+
                 </div>
               </CardContent>
             </Card>
@@ -2325,17 +2325,35 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productSku" className="text-right">
-                {t("settings.productSku")}
+                SKU
               </Label>
               <Input
                 id="productSku"
                 value={productForm.sku}
                 onChange={(e) =>
-                  setProductForm((prev) => ({ ...prev, sku: e.target.value }))
+                  setProductForm({ ...productForm, sku: e.target.value })
                 }
                 className="col-span-3"
-                placeholder={t("settings.productSkuPlaceholder")}
+                placeholder="Nhập SKU sản phẩm"
+                disabled={!!editingProduct}
               />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="trackInventory" className="text-right">
+                Theo dõi tồn kho
+              </Label>
+              <div className="col-span-3 flex items-center space-x-2">
+                <Checkbox
+                  id="trackInventory"
+                  checked={productForm.trackInventory !== false}
+                  onCheckedChange={(checked) =>
+                    setProductForm({ ...productForm, trackInventory: checked as boolean })
+                  }
+                />
+                <Label htmlFor="trackInventory" className="text-sm">
+                  Kích hoạt theo dõi tồn kho cho sản phẩm này
+                </Label>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productCategory" className="text-right">
