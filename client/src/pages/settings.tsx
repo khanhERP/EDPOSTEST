@@ -1240,8 +1240,8 @@ export default function Settings() {
                                   <div>{connection.cqtCode}</div>
                                   <div>{connection.notes}</div>
                                   <div className="text-center">
-                                    <Badge variant={connection.isActive ? "default" : "secondary"}>
-                                      {connection.isActive ? "Hoạt động" : "Không hoạt động"}
+                                    <Badge variant={connection.isDefault ? "default" : "secondary"}>
+                                      {connection.isDefault ? "Mặc định" : "Không mặc định"}
                                     </Badge>
                                   </div>
                                   <div className="text-center">
