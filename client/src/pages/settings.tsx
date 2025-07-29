@@ -788,6 +788,38 @@ export default function Settings() {
       })
     : [];
 
+  // E-invoice connections state
+  const [eInvoiceConnections, setEInvoiceConnections] = useState([
+    {
+      id: 1,
+      symbol: "1",
+      taxCode: "0101864535",
+      loginId: "ERP1",
+      password: "**************",
+      softwareName: "MINVOICE",
+      loginUrl: "https://minvoice.app",
+      signMethod: "Ký server",
+      cqtCode: "Cấp nhật",
+      notes: "-",
+      isDefault: false,
+      isActive: true,
+    },
+    {
+      id: 2,
+      symbol: "2",
+      taxCode: "0101864535",
+      loginId: "0100109106-509",
+      password: "**************",
+      softwareName: "SINVOICE",
+      loginUrl: "https://api-vinvoice.viettel.vn/services/einvoiceapplication/api/",
+      signMethod: "Ký server",
+      cqtCode: "Cấp nhật",
+      notes: "-",
+      isDefault: false,
+      isActive: true,
+    },
+  ]);
+
   // E-invoice management functions
   const resetEInvoiceForm = () => {
     setEInvoiceForm({
@@ -815,8 +847,24 @@ export default function Settings() {
       return;
     }
 
-    // Here you would typically make an API call to save the connection
-    // For now, we'll simulate success
+    // Create new connection
+    const newConnection = {
+      id: eInvoiceConnections.length + 1,
+      symbol: (eInvoiceConnections.length + 1).toString(),
+      taxCode: eInvoiceForm.taxCode,
+      loginId: eInvoiceForm.loginId,
+      password: "**************", // Hide password in display
+      softwareName: eInvoiceForm.softwareName,
+      loginUrl: eInvoiceForm.loginUrl,
+      signMethod: eInvoiceForm.signMethod,
+      cqtCode: eInvoiceForm.cqtCode,
+      notes: eInvoiceForm.notes || "-",
+      isDefault: false,
+      isActive: eInvoiceForm.isActive,
+    };
+
+    setEInvoiceConnections([...eInvoiceConnections, newConnection]);
+    
     toast({
       title: "Thành công",
       description: "Kết nối HĐĐT đã được tạo thành công",
@@ -836,8 +884,28 @@ export default function Settings() {
       return;
     }
 
-    // Here you would typically make an API call to update the connection
-    // For now, we'll simulate success
+    if (!editingEInvoice) return;
+
+    // Update connection
+    const updatedConnections = eInvoiceConnections.map(conn => 
+      conn.id === editingEInvoice.id 
+        ? {
+            ...conn,
+            taxCode: eInvoiceForm.taxCode,
+            loginId: eInvoiceForm.loginId,
+            password: eInvoiceForm.password === "**************" ? conn.password : "**************",
+            softwareName: eInvoiceForm.softwareName,
+            loginUrl: eInvoiceForm.loginUrl,
+            signMethod: eInvoiceForm.signMethod,
+            cqtCode: eInvoiceForm.cqtCode,
+            notes: eInvoiceForm.notes || "-",
+            isActive: eInvoiceForm.isActive,
+          }
+        : conn
+    );
+
+    setEInvoiceConnections(updatedConnections);
+    
     toast({
       title: "Thành công",
       description: "Kết nối HĐĐT đã được cập nhật thành công",
@@ -847,7 +915,17 @@ export default function Settings() {
   };
 
   const handleEditEInvoice = (eInvoice: any) => {
-    setEInvoiceForm(eInvoice);
+    setEInvoiceForm({
+      taxCode: eInvoice.taxCode,
+      loginId: eInvoice.loginId,
+      password: eInvoice.password,
+      softwareName: eInvoice.softwareName,
+      loginUrl: eInvoice.loginUrl,
+      signMethod: eInvoice.signMethod,
+      cqtCode: eInvoice.cqtCode,
+      notes: eInvoice.notes === "-" ? "" : eInvoice.notes,
+      isActive: eInvoice.isActive,
+    });
     setEditingEInvoice(eInvoice);
     setShowEInvoiceForm(true);
   };
@@ -858,12 +936,25 @@ export default function Settings() {
   };
 
   const confirmDeleteEInvoice = () => {
+    if (!eInvoiceToDelete) return;
+
+    const updatedConnections = eInvoiceConnections.filter(conn => conn.id !== eInvoiceToDelete.id);
+    setEInvoiceConnections(updatedConnections);
+    
     toast({
       title: "Thành công",
       description: "Kết nối HĐĐT đã được xóa thành công",
     });
     setShowEInvoiceDeleteDialog(false);
     setEInvoiceToDelete(null);
+  };
+
+  const toggleEInvoiceDefault = (id: number) => {
+    const updatedConnections = eInvoiceConnections.map(conn => ({
+      ...conn,
+      isDefault: conn.id === id ? !conn.isDefault : false // Only one can be default
+    }));
+    setEInvoiceConnections(updatedConnections);
   };
 
   return (
@@ -1125,7 +1216,7 @@ export default function Settings() {
 
                           {/* E-invoice connections table */}
                           <div className="rounded-md border bg-white">
-                            <div className="grid grid-cols-10 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                            <div className="grid grid-cols-11 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
                               <div className="text-center">Ký hiệu</div>
                               <div>Mã số thuế</div>
                               <div>ID đăng nhập</div>
@@ -1136,60 +1227,68 @@ export default function Settings() {
                               <div>Loại mã CQT</div>
                               <div>Ghi chú</div>
                               <div className="text-center">Mặc định</div>
+                              <div className="text-center">Hành động</div>
                             </div>
 
                             <div className="divide-y">
-                              {/* Row 1 */}
-                              <div className="grid grid-cols-10 gap-4 p-3 items-center text-sm">
-                                <div className="text-center">1</div>
-                                <div className="font-mono">0101864535</div>
-                                <div>ERP1</div>
-                                <div>**************</div>
-                                <div>MINVOICE</div>
-                                <div className="text-blue-600 hover:underline cursor-pointer">
-                                  https://minvoice.app
+                              {eInvoiceConnections.map((connection) => (
+                                <div key={connection.id} className="grid grid-cols-11 gap-4 p-3 items-center text-sm">
+                                  <div className="text-center">{connection.symbol}</div>
+                                  <div className="font-mono">{connection.taxCode}</div>
+                                  <div>{connection.loginId}</div>
+                                  <div>{connection.password}</div>
+                                  <div>
+                                    <Badge variant={connection.isActive ? "default" : "secondary"}>
+                                      {connection.softwareName}
+                                    </Badge>
+                                  </div>
+                                  <div className="text-blue-600 hover:underline cursor-pointer truncate">
+                                    {connection.loginUrl}
+                                  </div>
+                                  <div>{connection.signMethod}</div>
+                                  <div>{connection.cqtCode}</div>
+                                  <div>{connection.notes}</div>
+                                  <div className="text-center">
+                                    <input 
+                                      type="checkbox" 
+                                      className="rounded" 
+                                      checked={connection.isDefault}
+                                      onChange={() => toggleEInvoiceDefault(connection.id)}
+                                    />
+                                  </div>
+                                  <div className="text-center">
+                                    <div className="flex items-center justify-center gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleEditEInvoice(connection)}
+                                      >
+                                        <Edit className="w-3 h-3" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-red-500 hover:text-red-700"
+                                        onClick={() => handleDeleteEInvoice(connection.id, connection.softwareName)}
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </Button>
+                                    </div>
+                                  </div>
                                 </div>
-                                <div>Ký server</div>
-                                <div>Cấp nhật</div>
-                                <div>-</div>
-                                <div className="text-center">
-                                  <input type="checkbox" className="rounded" />
+                              ))}
+                              
+                              {eInvoiceConnections.length === 0 && (
+                                <div className="grid grid-cols-11 gap-4 p-8 items-center text-sm text-gray-500">
+                                  <div className="col-span-11 text-center">
+                                    <div className="flex flex-col items-center gap-2">
+                                      <SettingsIcon className="w-8 h-8 text-gray-400" />
+                                      <p>Chưa có kết nối HĐĐT nào</p>
+                                      <p className="text-xs">Nhấn "Thêm kết nối" để bắt đầu</p>
+                                    </div>
+                                  </div>
                                 </div>
-                              </div>
-
-                              {/* Row 2 */}
-                              <div className="grid grid-cols-10 gap-4 p-3 items-center text-sm">
-                                <div className="text-center">2</div>
-                                <div className="font-mono">0101864535</div>
-                                <div>0100109106-509</div>
-                                <div>**************</div>
-                                <div>SINVOICE</div>
-                                <div className="text-blue-600 hover:underline cursor-pointer">
-                                  https://api-vinvoice.viettel.vn/services/einvoiceapplication/api/
-                                </div>
-                                <div>Ký server</div>
-                                <div>Cấp nhật</div>
-                                <div>-</div>
-                                <div className="text-center">
-                                  <input type="checkbox" className="rounded" />
-                                </div>
-                              </div>
-
-                              {/* Row 3 - Empty */}
-                              <div className="grid grid-cols-10 gap-4 p-3 items-center text-sm">
-                                <div className="text-center">3</div>
-                                <div>-</div>
-                                <div>-</div>
-                                <div>-</div>
-                                <div>-</div>
-                                <div>-</div>
-                                <div>Ký server</div>
-                                <div>Cấp nhật</div>
-                                <div>-</div>
-                                <div className="text-center">
-                                  <input type="checkbox" className="rounded" />
-                                </div>
-                              </div>
+                              )}
                             </div>
                           </div>
                         </TabsContent>
