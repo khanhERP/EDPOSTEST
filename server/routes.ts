@@ -1790,6 +1790,160 @@ app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async 
     }
   });
 
+  // Financial report endpoints
+  app.get("/api/financial-summary/:period/:year/:month?/:quarter?", async (req, res) => {
+    try {
+      const { period, year, month, quarter } = req.params;
+      
+      // Get transactions for financial calculations
+      const transactions = await storage.getTransactions();
+      
+      let filteredTransactions = transactions.filter(transaction => {
+        const date = new Date(transaction.createdAt);
+        const transactionYear = date.getFullYear();
+        
+        if (period === 'yearly') {
+          return transactionYear === parseInt(year);
+        } else if (period === 'monthly') {
+          const transactionMonth = date.getMonth() + 1;
+          return transactionYear === parseInt(year) && transactionMonth === parseInt(month);
+        } else if (period === 'quarterly') {
+          const transactionQuarter = Math.floor(date.getMonth() / 3) + 1;
+          return transactionYear === parseInt(year) && transactionQuarter === parseInt(quarter);
+        }
+        return false;
+      });
+
+      // Calculate financial metrics
+      const totalIncome = filteredTransactions.reduce((sum, t) => sum + Number(t.total), 0);
+      const totalExpenses = totalIncome * 0.6; // Mock expense calculation (60% of income)
+      const grossProfit = totalIncome - totalExpenses;
+      const operatingExpenses = totalIncome * 0.15; // Mock operating expenses (15% of income)
+      const netIncome = grossProfit - operatingExpenses;
+      const profitMargin = totalIncome > 0 ? (netIncome / totalIncome) * 100 : 0;
+
+      const summary = {
+        totalIncome,
+        totalExpenses,
+        grossProfit,
+        operatingExpenses,
+        netIncome,
+        profitMargin,
+        transactionCount: filteredTransactions.length
+      };
+
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching financial summary:", error);
+      res.status(500).json({ error: "Failed to fetch financial summary" });
+    }
+  });
+
+  app.get("/api/income-breakdown/:period/:year/:month?/:quarter?", async (req, res) => {
+    try {
+      const { period, year, month, quarter } = req.params;
+      
+      const transactions = await storage.getTransactions();
+      
+      let filteredTransactions = transactions.filter(transaction => {
+        const date = new Date(transaction.createdAt);
+        const transactionYear = date.getFullYear();
+        
+        if (period === 'yearly') {
+          return transactionYear === parseInt(year);
+        } else if (period === 'monthly') {
+          const transactionMonth = date.getMonth() + 1;
+          return transactionYear === parseInt(year) && transactionMonth === parseInt(month);
+        } else if (period === 'quarterly') {
+          const transactionQuarter = Math.floor(date.getMonth() / 3) + 1;
+          return transactionYear === parseInt(year) && transactionQuarter === parseInt(quarter);
+        }
+        return false;
+      });
+
+      // Group by payment method
+      const incomeByMethod = {};
+      filteredTransactions.forEach(transaction => {
+        const method = transaction.paymentMethod || 'cash';
+        incomeByMethod[method] = (incomeByMethod[method] || 0) + Number(transaction.total);
+      });
+
+      const breakdown = Object.entries(incomeByMethod).map(([method, amount]) => ({
+        category: method,
+        amount: amount,
+        percentage: filteredTransactions.length > 0 ? (amount / filteredTransactions.reduce((sum, t) => sum + Number(t.total), 0)) * 100 : 0
+      }));
+
+      res.json(breakdown);
+    } catch (error) {
+      console.error("Error fetching income breakdown:", error);
+      res.status(500).json({ error: "Failed to fetch income breakdown" });
+    }
+  });
+
+  app.get("/api/expense-breakdown/:period/:year/:month?/:quarter?", async (req, res) => {
+    try {
+      // Mock expense data since we don't have a dedicated expenses table
+      const mockExpenses = [
+        { category: 'Cost of Goods Sold', amount: 2500000, percentage: 60 },
+        { category: 'Rent', amount: 500000, percentage: 12 },
+        { category: 'Utilities', amount: 200000, percentage: 5 },
+        { category: 'Staff Salaries', amount: 800000, percentage: 19 },
+        { category: 'Marketing', amount: 100000, percentage: 2 },
+        { category: 'Other', amount: 83333, percentage: 2 }
+      ];
+
+      res.json(mockExpenses);
+    } catch (error) {
+      console.error("Error fetching expense breakdown:", error);
+      res.status(500).json({ error: "Failed to fetch expense breakdown" });
+    }
+  });
+
+  app.get("/api/cash-flow/:period/:year/:month?/:quarter?", async (req, res) => {
+    try {
+      const { period, year, month, quarter } = req.params;
+      
+      const transactions = await storage.getTransactions();
+      
+      let filteredTransactions = transactions.filter(transaction => {
+        const date = new Date(transaction.createdAt);
+        const transactionYear = date.getFullYear();
+        
+        if (period === 'yearly') {
+          return transactionYear === parseInt(year);
+        } else if (period === 'monthly') {
+          const transactionMonth = date.getMonth() + 1;
+          return transactionYear === parseInt(year) && transactionMonth === parseInt(month);
+        } else if (period === 'quarterly') {
+          const transactionQuarter = Math.floor(date.getMonth() / 3) + 1;
+          return transactionYear === parseInt(year) && transactionQuarter === parseInt(quarter);
+        }
+        return false;
+      });
+
+      const totalIncome = filteredTransactions.reduce((sum, t) => sum + Number(t.total), 0);
+      
+      // Mock cash flow calculations
+      const operatingCashFlow = totalIncome * 0.25; // 25% of income
+      const investingCashFlow = -totalIncome * 0.05; // 5% negative (investments)
+      const financingCashFlow = totalIncome * 0.02; // 2% positive (financing)
+      const netCashFlow = operatingCashFlow + investingCashFlow + financingCashFlow;
+
+      const cashFlow = {
+        operatingCashFlow,
+        investingCashFlow,
+        financingCashFlow,
+        netCashFlow
+      };
+
+      res.json(cashFlow);
+    } catch (error) {
+      console.error("Error fetching cash flow:", error);
+      res.status(500).json({ error: "Failed to fetch cash flow" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
