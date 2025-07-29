@@ -2032,10 +2032,96 @@ export default function Settings() {
                     </TabsContent>
 
                     <TabsContent value="settings" className="mt-6">
-                      <div className="text-center py-8">
-                        <SettingsIcon className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                        <p className="text-gray-500">Mẫu số HĐĐT sẽ được cấu hình tại đây</p>
-                        <p className="text-sm text-gray-400 mt-2">Tính năng đang được phát triển</p>
+                      <div className="space-y-6">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h3 className="text-lg font-medium">Mẫu số HĐĐT</h3>
+                            <p className="text-sm text-gray-600">Quản lý các mẫu số hóa đơn điện tử</p>
+                          </div>
+                          <Button
+                            className="bg-blue-600 hover:bg-blue-700"
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Thêm mẫu số
+                          </Button>
+                        </div>
+
+                        {/* Invoice templates table */}
+                        <div className="rounded-md border bg-white">
+                          <div className="grid grid-cols-8 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                            <div className="text-center">STT</div>
+                            <div>Tên</div>
+                            <div>Mẫu số</div>
+                            <div>Ký hiệu</div>
+                            <div>Ký hiệu</div>
+                            <div>C/K sử dụng</div>
+                            <div>Ghi chú</div>
+                            <div className="text-center">Mặc định</div>
+                          </div>
+
+                          <div className="divide-y">
+                            {/* Row 1 */}
+                            <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
+                              <div className="text-center">1</div>
+                              <div>1C25TYY</div>
+                              <div>1</div>
+                              <div>-</div>
+                              <div>C25TYY</div>
+                              <div>
+                                <Badge variant="default" className="bg-green-100 text-green-800">
+                                  Sử dụng
+                                </Badge>
+                              </div>
+                              <div>-</div>
+                              <div className="text-center">
+                                <input type="checkbox" className="rounded" checked />
+                              </div>
+                            </div>
+
+                            {/* Row 2 */}
+                            <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
+                              <div className="text-center">2</div>
+                              <div>1K21TGF</div>
+                              <div>1</div>
+                              <div>1005</div>
+                              <div>K21TGF</div>
+                              <div>
+                                <Badge variant="default" className="bg-green-100 text-green-800">
+                                  Sử dụng
+                                </Badge>
+                              </div>
+                              <div>-</div>
+                              <div className="text-center">
+                                <input type="checkbox" className="rounded" />
+                              </div>
+                            </div>
+
+                            {/* Row 3 - Empty */}
+                            <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
+                              <div className="text-center">3</div>
+                              <div>-</div>
+                              <div>-</div>
+                              <div>-</div>
+                              <div>-</div>
+                              <div>
+                                <Badge variant="default" className="bg-green-100 text-green-800">
+                                  Sử dụng
+                                </Badge>
+                              </div>
+                              <div>-</div>
+                              <div className="text-center">
+                                <input type="checkbox" className="rounded" />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end mt-6">
+                          <Button className="bg-green-600 hover:bg-green-700">
+                            <Save className="w-4 h-4 mr-2" />
+                            Lưu cấu hình
+                          </Button>
+                        </div>
                       </div>
                     </TabsContent>
                   </Tabs>
