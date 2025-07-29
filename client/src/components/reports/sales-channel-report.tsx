@@ -9,6 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { TrendingUp, Search, Calendar, Filter } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 export function SalesChannelReport() {
   const { t } = useTranslation();
@@ -244,13 +249,7 @@ export function SalesChannelReport() {
 
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            {t("common.filters")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4 pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Concern Type */}
             <div>
@@ -400,39 +399,184 @@ export function SalesChannelReport() {
         </CardContent>
       </Card>
 
-      {/* Chart */}
+      {/* Chart Display - Only show for sales and profit */}
       {(concernType === "sales" || concernType === "profit") && (
-        <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            {t("reports.salesChannelChart")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={getChartData()}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-              <Legend />
-              {concernType === "sales" && (
-                <>
-                  <Bar dataKey="revenue" fill="#3B82F6" name={t("reports.salesChannelRevenue")} />
-                  <Bar dataKey="netRevenue" fill="#10B981" name={t("reports.salesChannelNetRevenue")} />
-                </>
-              )}
-              {concernType === "profit" && (
-                <>
-                  <Bar dataKey="grossProfit" fill="#3B82F6" name={t("reports.salesChannelGrossProfit")} />
-                  <Bar dataKey="netProfit" fill="#10B981" name={t("reports.salesChannelNetProfit")} />
-                </>
-              )}
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
+        <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+              <div className="p-2 bg-white/20 rounded-lg">
+                <TrendingUp className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="text-white/90 text-sm font-normal">
+                  {t("reports.chartView")}
+                </div>
+                <div className="text-white font-semibold">
+                  {concernType === "sales"
+                    ? t("reports.salesChannelSales")
+                    : t("reports.salesChannelProfit")}
+                </div>
+              </div>
+            </CardTitle>
+            <CardDescription className="text-blue-100 mt-2">
+              {t("reports.visualRepresentation")} - {t("reports.fromDate")}:{" "}
+              {formatDate(startDate)} {t("reports.toDate")}: {formatDate(endDate)}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
+            <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-indigo-50/20 rounded-xl"></div>
+              <div className="absolute top-4 right-4 flex items-center gap-2 text-sm text-gray-500">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                Live Data
+              </div>
+
+              <div className="relative z-10 h-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={getChartData()}
+                    margin={{ top: 30, right: 40, left: 30, bottom: 90 }}
+                    barCategoryGap="25%"
+                  >
+                    <defs>
+                      <linearGradient
+                        id="revenueGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#10b981"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#10b981"
+                          stopOpacity={0.6}
+                        />
+                      </linearGradient>
+                      <linearGradient
+                        id="profitGradient"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                      >
+                        <stop
+                          offset="0%"
+                          stopColor="#3b82f6"
+                          stopOpacity={0.9}
+                        />
+                        <stop
+                          offset="100%"
+                          stopColor="#3b82f6"
+                          stopOpacity={0.6}
+                        />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="2 4"
+                      stroke="#e2e8f0"
+                      opacity={0.4}
+                      horizontal={true}
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
+                      angle={-35}
+                      textAnchor="end"
+                      height={85}
+                      interval={0}
+                      tickMargin={12}
+                      axisLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                      tickLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                    />
+                    <YAxis
+                      tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
+                      tickFormatter={(value) => {
+                        if (value >= 1000000) {
+                          return `${(value / 1000000).toFixed(1)}M`;
+                        } else if (value >= 1000) {
+                          return `${(value / 1000).toFixed(0)}K`;
+                        }
+                        return value.toString();
+                      }}
+                      width={70}
+                      axisLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                      tickLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                    />
+                    <Tooltip
+                      formatter={(value) => formatCurrency(Number(value))}
+                      labelStyle={{
+                        color: "#1e293b",
+                        fontWeight: 600,
+                        fontSize: 13,
+                        marginBottom: 4,
+                      }}
+                      contentStyle={{
+                        backgroundColor: "rgba(255, 255, 255, 0.98)",
+                        border: "1px solid #e2e8f0",
+                        borderRadius: "12px",
+                        boxShadow:
+                          "0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.05)",
+                        padding: "12px 16px",
+                        backdropFilter: "blur(8px)",
+                      }}
+                      cursor={{ fill: "rgba(59, 130, 246, 0.05)" }}
+                    />
+                    {concernType === "sales" && (
+                      <>
+                        <Bar
+                          dataKey="revenue"
+                          fill="url(#revenueGradient)"
+                          radius={[6, 6, 0, 0]}
+                          maxBarSize={45}
+                          stroke="#059669"
+                          strokeWidth={1}
+                          name={t("reports.salesChannelRevenue")}
+                        />
+                        <Bar
+                          dataKey="netRevenue"
+                          fill="url(#profitGradient)"
+                          radius={[6, 6, 0, 0]}
+                          maxBarSize={45}
+                          stroke="#2563eb"
+                          strokeWidth={1}
+                          name={t("reports.salesChannelNetRevenue")}
+                        />
+                      </>
+                    )}
+                    {concernType === "profit" && (
+                      <>
+                        <Bar
+                          dataKey="grossProfit"
+                          fill="url(#profitGradient)"
+                          radius={[6, 6, 0, 0]}
+                          maxBarSize={45}
+                          stroke="#2563eb"
+                          strokeWidth={1}
+                          name={t("reports.salesChannelGrossProfit")}
+                        />
+                        <Bar
+                          dataKey="netProfit"
+                          fill="url(#revenueGradient)"
+                          radius={[6, 6, 0, 0]}
+                          maxBarSize={45}
+                          stroke="#059669"
+                          strokeWidth={1}
+                          name={t("reports.salesChannelNetProfit")}
+                        />
+                      </>
+                    )}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
