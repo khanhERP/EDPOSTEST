@@ -28,6 +28,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize sample data
   await initializeSampleData();
 
+  // Ensure inventory_transactions table exists
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS inventory_transactions (
+        id SERIAL PRIMARY KEY,
+        product_id INTEGER REFERENCES products(id) NOT NULL,
+        type VARCHAR(20) NOT NULL,
+        quantity INTEGER NOT NULL,
+        previous_stock INTEGER NOT NULL,
+        new_stock INTEGER NOT NULL,
+        notes TEXT,
+        created_at VARCHAR(50) NOT NULL
+      )
+    `);
+  } catch (error) {
+    console.log("Inventory transactions table already exists or creation failed:", error);
+  }
+
   // Categories
   app.get("/api/categories", async (req, res) => {
     try {

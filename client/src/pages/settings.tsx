@@ -375,17 +375,22 @@ export default function Settings() {
         "/api/categories",
         categoryForm,
       );
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      
+      // Invalidate and refetch categories data immediately
+      await queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/categories"] });
+      
       toast({
         title: t("common.success"),
-        description: t("productManagement.categoryCreateSuccess"),
+        description: "Danh mục đã được tạo thành công",
       });
       setShowCategoryForm(false);
       resetCategoryForm();
     } catch (error) {
+      console.error("Category creation error:", error);
       toast({
         title: t("common.error"),
-        description: t("common.error"),
+        description: "Có lỗi xảy ra khi tạo danh mục",
         variant: "destructive",
       });
     }
@@ -400,17 +405,25 @@ export default function Settings() {
         `/api/categories/${editingCategory.id}`,
         categoryForm,
       );
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      
+      // Invalidate both categories and products queries to refresh the lists
+      await queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      
+      // Refetch categories data immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/categories"] });
+      
       toast({
         title: t("common.success"),
-        description: t("productManagement.categoryUpdateSuccess"),
+        description: "Danh mục đã được cập nhật thành công",
       });
       setShowCategoryForm(false);
       resetCategoryForm();
     } catch (error) {
+      console.error("Category update error:", error);
       toast({
         title: t("common.error"),
-        description: t("common.error"),
+        description: "Có lỗi xảy ra khi cập nhật danh mục",
         variant: "destructive",
       });
     }
