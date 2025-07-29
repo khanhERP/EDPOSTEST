@@ -941,7 +941,7 @@ export default function Settings() {
   const toggleEInvoiceDefault = (id: number) => {
     const connection = eInvoiceConnections.find(conn => conn.id === id);
     if (!connection) return;
-    
+
     updateEInvoiceMutation.mutate({
       id,
       data: { ...connection, isDefault: !connection.isDefault }
@@ -1265,7 +1265,7 @@ export default function Settings() {
                                   </div>
                                 </div>
                               ))}
-                              
+
                               {eInvoiceConnections.length === 0 && (
                                 <div className="grid grid-cols-11 gap-4 p-8 items-center text-sm text-gray-500">
                                   <div className="col-span-11 text-center">
@@ -2280,7 +2280,7 @@ export default function Settings() {
             </Card>
           </TabsContent>
 
-          
+
         </Tabs>
       </div>
 
@@ -2468,7 +2468,7 @@ export default function Settings() {
               </Label>
               <Select
                 value={productForm.categoryId}
-                onValueChange={(value) =>
+                onChange={(value) =>
                   setProductForm((prev) => ({ ...prev, categoryId: value }))
                 }
               >
@@ -2544,7 +2544,7 @@ export default function Settings() {
               </Label>
               <Select
                 value={productForm.isActive}
-                onValueChange={(value) =>
+                onChange={(value) =>
                   setProductForm((prev) => ({ ...prev, isActive: value }))
                 }
               >
@@ -2789,7 +2789,60 @@ export default function Settings() {
       </AlertDialog>
 
       {/* E-invoice Form Modal */}
-      <Dialog open={showEInvoiceForm} onOpenChange={setShowEInvoiceForm}>
+      <AlertDialog open={showEInvoiceDeleteDialog} onOpenChange={setShowEInvoiceDeleteDialog}>
+        <AlertDialogContent className="sm:max-w-[425px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Xác nhận xóa kết nối HĐĐT
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              <div className="space-y-3">
+                <p>
+                  Bạn có chắc chắn muốn xóa kết nối{" "}
+                  <span className="font-semibold text-gray-900">
+                    "{eInvoiceToDelete?.softwareName}"
+                  </span>{" "}
+                  không?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-red-700">
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
+                      Kết nối HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Điều này có thể ảnh hưởng đến việc xuất hóa đơn điện tử.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel 
+              onClick={() => {
+                setShowEInvoiceDeleteDialog(false);
+                setEInvoiceToDelete(null);
+              }}
+              className="hover:bg-gray-100"
+            >
+              Hủy bỏ
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteEInvoice}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Xóa kết nối
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+       {/* E-invoice Form Modal */}
+       <Dialog open={showEInvoiceForm} onOpenChange={setShowEInvoiceForm}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
@@ -2974,59 +3027,7 @@ export default function Settings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* E-invoice Delete Confirmation Dialog */}
-      <AlertDialog open={showEInvoiceDeleteDialog} onOpenChange={setShowEInvoiceDeleteDialog}>
-        <AlertDialogContent className="sm:max-w-[425px]">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-              <Trash2 className="w-5 h-5" />
-              Xác nhận xóa kết nối HĐĐT
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-left">
-              <div className="space-y-3">
-                <p>
-                  Bạn có chắc chắn muốn xóa kết nối{" "}
-                  <span className="font-semibold text-gray-900">
-                    "{eInvoiceToDelete?.softwareName}"
-                  </span>{" "}
-                  không?
-                </p>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-sm text-red-700">
-                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
-                      Kết nối HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Điều này có thể ảnh hưởng đến việc xuất hóa đơn điện tử.
-                </p>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel 
-              onClick={() => {
-                setShowEInvoiceDeleteDialog(false);
-                setEInvoiceToDelete(null);
-              }}
-              className="hover:bg-gray-100"
-            >
-              Hủy bỏ
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteEInvoice}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Xóa kết nối
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      
     </div>
   );
 }
