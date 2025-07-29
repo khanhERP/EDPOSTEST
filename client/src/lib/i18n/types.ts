@@ -845,7 +845,6 @@ export interface OrdersTranslations {
   payment: string;
   tableOrder: string;
   tableCapacity: string;
-  unitPrice: string;
   status: {
     pending: string;
     confirmed: string;
@@ -956,6 +955,7 @@ export interface TablesTranslations {
   capacityPlaceholder: string;
   qrCodePlaceholder: string;
   selectStatus: string;
+  unitPrice: string;
 }
 
 export interface Translations {

@@ -39,7 +39,6 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     orderFailed: "주문 접수에 실패했습니다",
     tableOrder: "테이블 주문",
     tableCapacity: "테이블 주문",
-    unitPrice: "단가",
     status: {
       pending: "대기중",
       confirmed: "확인됨",
@@ -90,7 +89,6 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     orderFailed: "Failed to place order",
     tableOrder: "Table Order",
     tableCapacity: "테이블 주문",
-    unitPrice: "Unit Price",
     status: {
       pending: "Pending",
       confirmed: "Confirmed",
@@ -142,7 +140,6 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     orderFailed: "Đặt hàng thất bại",
     tableOrder: "Đặt hàng bàn",
     tableCapacity: "Số Người",
-    unitPrice: "Đơn giá",
     status: {
       pending: "Chờ xử lý",
       confirmed: "Đã xác nhận",
