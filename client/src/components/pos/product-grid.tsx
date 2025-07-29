@@ -33,7 +33,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
       if (searchQuery) {
         params.append("search", searchQuery);
       }
-      
+
       const response = await fetch(`/api/products?${params}`);
       if (!response.ok) throw new Error('Failed to fetch products');
       return response.json();
@@ -60,7 +60,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
   const getPlaceholderImage = (categoryId: number, productName: string) => {
     // Determine the best placeholder based on category and product name
     const name = productName.toLowerCase();
-    
+
     if (categoryId === 1 || name.includes('coffee') || name.includes('tea') || name.includes('juice') || name.includes('drink') || name.includes('beverage')) {
       return placeholderBeverage;
     } else if (categoryId === 2 || name.includes('chip') || name.includes('snack') || name.includes('cookie')) {
@@ -72,7 +72,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
 
   const getPlaceholderIcon = (categoryId: number, productName: string) => {
     const name = productName.toLowerCase();
-    
+
     if (categoryId === 1 || name.includes('coffee') || name.includes('tea') || name.includes('juice') || name.includes('drink') || name.includes('beverage')) {
       return Coffee;
     } else if (categoryId === 2 || name.includes('chip') || name.includes('snack') || name.includes('cookie')) {
@@ -229,7 +229,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
               const stockStatus = getStockStatus(product.stock);
               const isPopular = getPopularBadge(product.name);
               const isLowStock = getLowStockBadge(product.stock);
-              
+
               return (
                 <div
                   key={product.id}
@@ -271,15 +271,17 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                           />
                         </div>
                       )}
-                      
+
                       <div className="p-3">
                         <h3 className="font-medium pos-text-primary mb-1 line-clamp-2">{product.name}</h3>
                         <p className="text-sm pos-text-secondary mb-2">SKU: {product.sku}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-bold text-green-600">{parseFloat(product.price).toLocaleString()} ₫</span>
-                          <span className={`text-xs font-medium ${stockStatus.color}`}>
-                            {stockStatus.text}
-                          </span>
+                          {product.trackInventory !== false && (
+                            <span className={`text-xs font-medium ${stockStatus.color}`}>
+                              {stockStatus.text}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </>
@@ -307,14 +309,16 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                         <p className="text-sm pos-text-secondary mb-1">SKU: {product.sku}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-bold text-green-600">{parseFloat(product.price).toLocaleString()} ₫</span>
-                          <span className={`text-xs font-medium ${stockStatus.color}`}>
-                            {stockStatus.text}
-                          </span>
+                          {product.trackInventory !== false && (
+                            <span className={`text-xs font-medium ${stockStatus.color}`}>
+                              {stockStatus.text}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </>
                   )}
-                  
+
                   {/* Badges */}
                   {isPopular && (
                     <div className="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded-full">
