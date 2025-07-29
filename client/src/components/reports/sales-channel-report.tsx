@@ -107,14 +107,6 @@ export function SalesChannelReport() {
   };
 
   const renderSalesTable = () => {
-    if (!salesChannelSalesData || !Array.isArray(salesChannelSalesData) || salesChannelSalesData.length === 0) {
-      return (
-        <div className="text-center py-8">
-          <div className="text-gray-500">{t("reports.noReportData")}</div>
-        </div>
-      );
-    }
-
     return (
       <div className="overflow-x-auto">
         <Table>
@@ -127,23 +119,31 @@ export function SalesChannelReport() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {salesChannelSalesData.map((item: any, index: number) => (
-              <TableRow key={item.id || index}>
-                <TableCell className="font-medium">
-                  <div>
-                    <div className="font-semibold">{item.salesChannelName || "N/A"}</div>
-                    {item.sellerName && (
-                      <div className="text-sm text-gray-500">{item.sellerName}</div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">{formatCurrency(item.revenue || 0)}</TableCell>
-                <TableCell className="text-right">{formatCurrency(item.returnValue || 0)}</TableCell>
-                <TableCell className="text-right font-semibold text-green-600">
-                  {formatCurrency(item.netRevenue || 0)}
+            {salesChannelSalesData && Array.isArray(salesChannelSalesData) && salesChannelSalesData.length > 0 ? (
+              salesChannelSalesData.map((item: any, index: number) => (
+                <TableRow key={item.id || index}>
+                  <TableCell className="font-medium">
+                    <div>
+                      <div className="font-semibold">{item.salesChannelName || "N/A"}</div>
+                      {item.sellerName && (
+                        <div className="text-sm text-gray-500">{item.sellerName}</div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">{formatCurrency(item.revenue || 0)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(item.returnValue || 0)}</TableCell>
+                  <TableCell className="text-right font-semibold text-green-600">
+                    {formatCurrency(item.netRevenue || 0)}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                  {t("reports.noReportData")}
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
@@ -151,14 +151,6 @@ export function SalesChannelReport() {
   };
 
   const renderProfitTable = () => {
-    if (!salesChannelProfitData || !Array.isArray(salesChannelProfitData) || salesChannelProfitData.length === 0) {
-      return (
-        <div className="text-center py-8">
-          <div className="text-gray-500">{t("reports.noReportData")}</div>
-        </div>
-      );
-    }
-
     return (
       <div className="overflow-x-auto">
         <Table>
@@ -177,31 +169,39 @@ export function SalesChannelReport() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {salesChannelProfitData.map((item: any, index: number) => (
-              <TableRow key={item.id || index}>
-                <TableCell className="font-medium">
-                  <div>
-                    <div className="font-semibold">{item.salesChannelName || "N/A"}</div>
-                    {item.sellerName && (
-                      <div className="text-sm text-gray-500">{item.sellerName}</div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">{formatCurrency(item.totalAmount || 0)}</TableCell>
-                <TableCell className="text-right">{formatCurrency(item.discount || 0)}</TableCell>
-                <TableCell className="text-right">{formatCurrency(item.revenue || 0)}</TableCell>
-                <TableCell className="text-right">{formatCurrency(item.returnValue || 0)}</TableCell>
-                <TableCell className="text-right">{formatCurrency(item.netRevenue || 0)}</TableCell>
-                <TableCell className="text-right">{formatCurrency(item.totalCost || 0)}</TableCell>
-                <TableCell className="text-right font-semibold text-green-600">
-                  {formatCurrency(item.grossProfit || 0)}
-                </TableCell>
-                <TableCell className="text-right">{formatCurrency(item.platformFee || 0)}</TableCell>
-                <TableCell className="text-right font-semibold text-blue-600">
-                  {formatCurrency(item.netProfit || 0)}
+            {salesChannelProfitData && Array.isArray(salesChannelProfitData) && salesChannelProfitData.length > 0 ? (
+              salesChannelProfitData.map((item: any, index: number) => (
+                <TableRow key={item.id || index}>
+                  <TableCell className="font-medium">
+                    <div>
+                      <div className="font-semibold">{item.salesChannelName || "N/A"}</div>
+                      {item.sellerName && (
+                        <div className="text-sm text-gray-500">{item.sellerName}</div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right">{formatCurrency(item.totalAmount || 0)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(item.discount || 0)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(item.revenue || 0)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(item.returnValue || 0)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(item.netRevenue || 0)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(item.totalCost || 0)}</TableCell>
+                  <TableCell className="text-right font-semibold text-green-600">
+                    {formatCurrency(item.grossProfit || 0)}
+                  </TableCell>
+                  <TableCell className="text-right">{formatCurrency(item.platformFee || 0)}</TableCell>
+                  <TableCell className="text-right font-semibold text-blue-600">
+                    {formatCurrency(item.netProfit || 0)}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                  {t("reports.noReportData")}
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
@@ -209,14 +209,6 @@ export function SalesChannelReport() {
   };
 
   const renderProductsTable = () => {
-    if (!salesChannelProductsData || !Array.isArray(salesChannelProductsData) || salesChannelProductsData.length === 0) {
-      return (
-        <div className="text-center py-8">
-          <div className="text-gray-500">{t("reports.noReportData")}</div>
-        </div>
-      );
-    }
-
     return (
       <div className="overflow-x-auto">
         <Table>
@@ -233,29 +225,37 @@ export function SalesChannelReport() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {salesChannelProductsData.map((item: any, index: number) => (
-              <TableRow key={item.id || index}>
-                <TableCell className="font-medium">
-                  <div>
-                    <div className="font-semibold">{item.salesChannelName || "N/A"}</div>
-                    {item.sellerName && (
-                      <div className="text-sm text-gray-500">{item.sellerName}</div>
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="outline">{item.productCode || "N/A"}</Badge>
-                </TableCell>
-                <TableCell>{item.productName || "N/A"}</TableCell>
-                <TableCell className="text-center">{item.quantitySold || 0}</TableCell>
-                <TableCell className="text-right">{formatCurrency(item.revenue || 0)}</TableCell>
-                <TableCell className="text-center">{item.quantityReturned || 0}</TableCell>
-                <TableCell className="text-right">{formatCurrency(item.returnValue || 0)}</TableCell>
-                <TableCell className="text-right font-semibold text-green-600">
-                  {formatCurrency(item.netRevenue || 0)}
+            {salesChannelProductsData && Array.isArray(salesChannelProductsData) && salesChannelProductsData.length > 0 ? (
+              salesChannelProductsData.map((item: any, index: number) => (
+                <TableRow key={item.id || index}>
+                  <TableCell className="font-medium">
+                    <div>
+                      <div className="font-semibold">{item.salesChannelName || "N/A"}</div>
+                      {item.sellerName && (
+                        <div className="text-sm text-gray-500">{item.sellerName}</div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{item.productCode || "N/A"}</Badge>
+                  </TableCell>
+                  <TableCell>{item.productName || "N/A"}</TableCell>
+                  <TableCell className="text-center">{item.quantitySold || 0}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(item.revenue || 0)}</TableCell>
+                  <TableCell className="text-center">{item.quantityReturned || 0}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(item.returnValue || 0)}</TableCell>
+                  <TableCell className="text-right font-semibold text-green-600">
+                    {formatCurrency(item.netRevenue || 0)}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                  {t("reports.noReportData")}
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>

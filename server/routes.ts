@@ -1537,6 +1537,181 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sales channel sales data
+  app.get("/api/sales-channel-sales/:startDate/:endDate/:sellerId/:salesChannel", async (req, res) => {
+    try {
+      const { startDate, endDate, sellerId, salesChannel } = req.params;
+
+      let query = `
+        SELECT 
+          COALESCE(t.salesChannel, 'Bán trực tiếp') as salesChannelName,
+          e.name as sellerName,
+          SUM(t.totalAmount) as revenue,
+          SUM(COALESCE(t.refundAmount, 0)) as returnValue,
+          SUM(t.totalAmount - COALESCE(t.refundAmount, 0)) as netRevenue
+        FROM transactions t
+        LEFT JOIN employees e ON t.employeeId = e.id
+        WHERE DATE(t.createdAt) BETWEEN ? AND ?
+      `;
+
+      const params = [startDate, endDate];
+
+      if (sellerId !== 'all') {
+        query += ' AND t.employeeId = ?';
+        params.push(sellerId);
+      }
+
+      if (salesChannel !== 'all') {
+        if (salesChannel === 'direct') {
+          query += ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';
+        } else {
+          query += ' AND t.salesChannel IS NOT NULL AND t.salesChannel != "Bán trực tiếp"';
+        }
+      }
+
+      query += ' GROUP BY COALESCE(t.salesChannel, "Bán trực tiếp"), t.employeeId ORDER BY netRevenue DESC';
+
+      const salesData = await new Promise((resolve, reject) => {
+        db.all(query, params, (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+
+      res.json(salesData);
+    } catch (error) {
+      console.error("Error fetching sales channel sales data:", error);
+      res.status(500).json({ error: "Failed to fetch sales channel sales data" });
+    }
+  });
+
+  // Sales channel profit data
+  app.get("/api/sales-channel-profit/:startDate/:endDate/:sellerId/:salesChannel", async (req, res) => {
+    try {
+      const { startDate, endDate, sellerId, salesChannel } = req.params;
+
+      let query = `
+        SELECT 
+          COALESCE(t.salesChannel, 'Bán trực tiếp') as salesChannelName,
+          e.name as sellerName,
+          SUM(t.totalAmount) as totalAmount,
+          SUM(COALESCE(t.discountAmount, 0)) as discount,
+          SUM(t.totalAmount - COALESCE(t.discountAmount, 0)) as revenue,
+          SUM(COALESCE(t.refundAmount, 0)) as returnValue,
+          SUM(t.totalAmount - COALESCE(t.discountAmount, 0) - COALESCE(t.refundAmount, 0)) as netRevenue,
+          SUM(COALESCE(ti.quantity * p.costPrice, 0)) as totalCost,
+          SUM(t.totalAmount - COALESCE(t.discountAmount, 0) - COALESCE(ti.quantity * p.costPrice, 0)) as grossProfit,
+          SUM(COALESCE(t.platformFee, 0)) as platformFee,
+          SUM(t.totalAmount - COALESCE(t.discountAmount, 0) - COALESCE(ti.quantity * p.costPrice, 0) - COALESCE(t.platformFee, 0)) as netProfit
+        FROM transactions t
+        LEFT JOIN employees e ON t.employeeId = e.id
+        LEFT JOIN transaction_items ti ON t.id = ti.transactionId
+        LEFT JOIN products p ON ti.productId = p.id
+        WHERE DATE(t.createdAt) BETWEEN ? AND ?
+      `;
+
+      const params = [startDate, endDate];
+
+      if (sellerId !== 'all') {
+        query += ' AND t.employeeId = ?';
+        params.push(sellerId);
+      }
+
+      if (salesChannel !== 'all') {
+        if (salesChannel === 'direct') {
+          query += ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';
+        } else {
+          query += ' AND t.salesChannel IS NOT NULL AND t.salesChannel != "Bán trực tiếp"';
+        }
+      }
+
+      query += ' GROUP BY COALESCE(t.salesChannel, "Bán trực tiếp"), t.employeeId ORDER BY netProfit DESC';
+
+      const profitData = await new Promise((resolve, reject) => {
+        db.all(query, params, (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+
+      res.json(profitData);
+    } catch (error) {
+      console.error("Error fetching sales channel profit data:", error);
+      res.status(500).json({ error: "Failed to fetch sales channel profit data" });
+    }
+  });
+
+  // Sales channel products data
+  app.get("/api/sales-channel-products/:startDate/:endDate/:sellerId/:salesChannel/:productSearch/:productType/:categoryId", async (req, res) => {
+    try {
+      const { startDate, endDate, sellerId, salesChannel, productSearch, productType, categoryId } = req.params;
+
+      let query = `
+        SELECT 
+          COALESCE(t.salesChannel, 'Bán trực tiếp') as salesChannelName,
+          e.name as sellerName,
+          p.sku as productCode,
+          p.name as productName,
+          SUM(ti.quantity) as quantitySold,
+          SUM(ti.quantity * ti.price) as revenue,
+          SUM(COALESCE(rti.quantity, 0)) as quantityReturned,
+          SUM(COALESCE(rti.quantity * rti.price, 0)) as returnValue,
+          SUM(ti.quantity * ti.price - COALESCE(rti.quantity * rti.price, 0)) as netRevenue
+        FROM transactions t
+        LEFT JOIN employees e ON t.employeeId = e.id
+        LEFT JOIN transaction_items ti ON t.id = ti.transactionId
+        LEFT JOIN products p ON ti.productId = p.id
+        LEFT JOIN categories c ON p.categoryId = c.id
+        LEFT JOIN transaction_items rti ON t.id = rti.transactionId AND rti.productId = p.id AND rti.isReturn = 1
+        WHERE DATE(t.createdAt) BETWEEN ? AND ? AND ti.isReturn != 1
+      `;
+
+      const params = [startDate, endDate];
+
+      if (sellerId !== 'all') {
+        query += ' AND t.employeeId = ?';
+        params.push(sellerId);
+      }
+
+      if (salesChannel !== 'all') {
+        if (salesChannel === 'direct') {
+          query += ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';
+        } else {
+          query += ' AND t.salesChannel IS NOT NULL AND t.salesChannel != "Bán trực tiếp"';
+        }
+      }
+
+      if (productSearch !== 'all' && productSearch) {
+        query += ' AND (p.name LIKE ? OR p.sku LIKE ?)';
+        params.push(`%${productSearch}%`, `%${productSearch}%`);
+      }
+
+      if (productType !== 'all') {
+        query += ' AND p.type = ?';
+        params.push(productType);
+      }
+
+      if (categoryId !== 'all') {
+        query += ' AND p.categoryId = ?';
+        params.push(categoryId);
+      }
+
+      query += ' GROUP BY COALESCE(t.salesChannel, "Bán trực tiếp"), t.employeeId, p.id ORDER BY netRevenue DESC';
+
+      const productsData = await new Promise((resolve, reject) => {
+        db.all(query, params, (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      });
+
+      res.json(productsData);
+    } catch (error) {
+      console.error("Error fetching sales channel products data:", error);
+      res.status(500).json({ error: "Failed to fetch sales channel products data" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
