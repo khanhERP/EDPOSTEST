@@ -25,7 +25,7 @@ export function ShoppingCart({
   onCheckout,
   isProcessing
 }: ShoppingCartProps) {
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [amountReceived, setAmountReceived] = useState<string>("");
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
@@ -38,6 +38,31 @@ export function ShoppingCart({
   const tax = subtotal * taxRate;
   const total = subtotal + tax;
   const change = paymentMethod === "cash" ? Math.max(0, parseFloat(amountReceived || "0") - total) : 0;
+
+  const getPaymentMethods = () => {
+    // Get payment methods from localStorage (saved from settings)
+    const savedPaymentMethods = localStorage.getItem('paymentMethods');
+    
+    // Default payment methods if none saved
+    const defaultPaymentMethods = [
+      { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
+      { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
+      { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
+      { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
+      { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
+      { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
+      { id: 7, name: "QR Code", nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
+      { id: 8, name: "ShopeePay", nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
+      { id: 9, name: "GrabPay", nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
+    ];
+
+    const paymentMethods = savedPaymentMethods 
+      ? JSON.parse(savedPaymentMethods) 
+      : defaultPaymentMethods;
+
+    // Filter to only return enabled payment methods
+    return paymentMethods.filter(method => method.enabled);
+  };
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
@@ -56,7 +81,7 @@ export function ShoppingCart({
       };
       onCheckout(paymentData);
     } else {
-      // Show receipt preview first for card payments
+      // Show receipt preview first for non-cash payments
       const receipt = {
         transactionId: `TXN-${Date.now()}`,
         items: cart.map(item => ({
@@ -69,7 +94,7 @@ export function ShoppingCart({
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
         total: total.toFixed(2),
-        paymentMethod: "card",
+        paymentMethod: paymentMethod,
         amountReceived: total.toFixed(2),
         change: "0.00",
         cashierName: "John Smith",
@@ -88,7 +113,7 @@ export function ShoppingCart({
   const handleCardPaymentMethodSelect = (method: string) => {
     setSelectedCardMethod(method);
     const paymentData = {
-      paymentMethod: "card",
+      paymentMethod: method,
       cardType: method,
       amountReceived: total,
       change: 0,
@@ -97,7 +122,7 @@ export function ShoppingCart({
   };
 
   const canCheckout = cart.length > 0 && 
-    (paymentMethod === "card" || (paymentMethod === "cash" && parseFloat(amountReceived || "0") >= total));
+    (paymentMethod !== "cash" || (paymentMethod === "cash" && parseFloat(amountReceived || "0") >= total));
 
   return (
     <aside className="w-96 bg-white shadow-material border-l pos-border flex flex-col">
@@ -191,23 +216,28 @@ export function ShoppingCart({
           <div className="space-y-2">
             <Label className="text-sm font-medium pos-text-primary">{t('tables.paymentMethod')}</Label>
             <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant={paymentMethod === "cash" ? "default" : "outline"}
-                onClick={() => setPaymentMethod("cash")}
-                className="text-sm"
-              >
-                <Banknote className="mr-1" size={16} />
-                {t('tables.cash')}
-              </Button>
-              <Button
-                variant={paymentMethod === "card" ? "default" : "outline"}
-                onClick={() => setPaymentMethod("card")}
-                className="text-sm"
-              >
-                <CreditCard className="mr-1" size={16} />
-                {t('tables.card')}
-              </Button>
+              {getPaymentMethods().slice(0, 4).map((method) => (
+                <Button
+                  key={method.id}
+                  variant={paymentMethod === method.nameKey ? "default" : "outline"}
+                  onClick={() => setPaymentMethod(method.nameKey)}
+                  className="text-sm flex items-center justify-center"
+                >
+                  <span className="mr-1">{method.icon}</span>
+                  {method.name}
+                </Button>
+              ))}
             </div>
+            {getPaymentMethods().length > 4 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowPaymentMethodModal(true)}
+                className="w-full mt-2"
+              >
+                Xem thêm phương thức thanh toán
+              </Button>
+            )}
           </div>
           
           {/* Cash Payment */}
