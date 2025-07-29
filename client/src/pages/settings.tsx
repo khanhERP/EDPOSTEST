@@ -1719,11 +1719,13 @@ export default function Settings() {
           <DialogHeader>
             <DialogTitle>
               {editingCategory
-                ? t("settings.editCategory")
+                ? "Sửa danh mục"
                 : t("settings.addCategory")}
             </DialogTitle>
             <DialogDescription>
-              {t("settings.categoryManagementDesc")}
+              {editingCategory 
+                ? "Cập nhật thông tin danh mục sản phẩm"
+                : t("settings.categoryManagementDesc")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -1768,7 +1770,10 @@ export default function Settings() {
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setShowCategoryForm(false)}
+              onClick={() => {
+                setShowCategoryForm(false);
+                resetCategoryForm();
+              }}
             >
               {t("common.cancel")}
             </Button>
@@ -1778,7 +1783,7 @@ export default function Settings() {
               }
               className="bg-green-600 hover:bg-green-700"
             >
-              {editingCategory ? t("common.update") : t("common.create")}
+              {editingCategory ? "Cập nhật" : t("common.create")}
             </Button>
           </DialogFooter>
         </DialogContent>
