@@ -280,32 +280,7 @@ export default function InventoryPage() {
     },
   });
 
-  const updateProductTrackInventoryMutation = useMutation({
-    mutationFn: async (data: { id: number; trackInventory: boolean }) => {
-      const response = await fetch(`/api/products/${data.id}/track-inventory`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ trackInventory: data.trackInventory }),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to update track inventory");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-    },
-    onError: (error) => {
-      console.error("Update track inventory error:", error);
-      toast({
-        title: "Cập nhật thất bại",
-        description: "Không thể cập nhật trạng thái theo dõi tồn kho. Vui lòng thử lại.",
-        variant: "destructive",
-      });
-    },
-  });
+  
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
