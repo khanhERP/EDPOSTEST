@@ -569,7 +569,7 @@ export function SalesChartReport() {
             {t('reports.salesReport')}
           </CardTitle>
           <CardDescription>
-            {t("reports.comprehensiveSalesReport")} - {getReportTitle()}
+            {getReportTitle()}
           </CardDescription>
         </CardHeader>
       </Card>
