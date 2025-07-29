@@ -1229,8 +1229,8 @@ export default function Settings() {
                                   <div>{connection.loginId}</div>
                                   <div>{'*'.repeat(connection.password.length)}</div>
                                   <div>
-                                    <Badge variant="outline">
-                                      {connection.softwareName}
+                                    <Badge variant={connection.isActive ? "default" : "secondary"}>
+                                      {connection.isActive ? "Hoạt động" : "Không hoạt động"}
                                     </Badge>
                                   </div>
                                   <div className="text-blue-600 hover:underline cursor-pointer truncate">
@@ -1240,9 +1240,12 @@ export default function Settings() {
                                   <div>{connection.cqtCode}</div>
                                   <div>{connection.notes}</div>
                                   <div className="text-center">
-                                    <Badge variant={connection.isActive ? "default" : "secondary"}>
-                                      {connection.isActive ? "Hoạt động" : "Không hoạt động"}
-                                    </Badge>
+                                    <input 
+                                      type="checkbox" 
+                                      className="rounded" 
+                                      checked={connection.isDefault}
+                                      onChange={() => toggleEInvoiceDefault(connection.id)}
+                                    />
                                   </div>
                                   <div className="text-center">
                                     <div className="flex items-center justify-center gap-1">
