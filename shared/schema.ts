@@ -21,6 +21,7 @@ export const products = pgTable("products", {
   isActive: boolean("is_active").notNull().default(true),
   productType: integer("product_type").notNull().default(1),
   trackInventory: boolean("track_inventory").notNull().default(true),
+  taxRate: decimal("tax_rate", { precision: 5, scale: 2 }).notNull().default("10.00"),
 });
 
 export const transactions = pgTable("transactions", {
@@ -155,6 +156,9 @@ export const insertProductSchema = createInsertSchema(products).omit({
   }),
   stock: z.number().min(0, "Stock cannot be negative"),
   productType: z.number().min(1).max(3, "Product type is required"),
+  taxRate: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 100, {
+    message: "Tax rate must be between 0 and 100",
+  }),
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({

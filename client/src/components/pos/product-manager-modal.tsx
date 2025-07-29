@@ -59,6 +59,7 @@ export function ProductManagerModal({
     productType: z.number().min(1, t("tables.productTypeRequired")),
     trackInventory: z.boolean().optional(),
     stock: z.number().min(0, "Stock must be 0 or greater"),
+    taxRate: z.string().min(1, "Tax rate is required").refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0 && parseFloat(val) <= 100, "Tax rate must be between 0 and 100"),
   });
   const [showAddForm, setShowAddForm] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
@@ -195,6 +196,7 @@ export function ProductManagerModal({
       productType: 1,
       imageUrl: "",
       trackInventory: true,
+      taxRate: "10.00",
     },
   });
 
@@ -202,10 +204,10 @@ export function ProductManagerModal({
     console.log("Form submission data:", data);
 
     // Validate required fields
-    if (!data.name || !data.sku || !data.price || !data.categoryId) {
+    if (!data.name || !data.sku || !data.price || !data.categoryId || !data.taxRate) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields: Name, SKU, Price, and Category",
+        description: "Please fill in all required fields: Name, SKU, Price, Category, and Tax Rate",
         variant: "destructive",
       });
       return;
@@ -220,7 +222,8 @@ export function ProductManagerModal({
       categoryId: Number(data.categoryId),
       productType: Number(data.productType) || 1,
       trackInventory: data.trackInventory !== false,
-      imageUrl: data.imageUrl?.trim() || null
+      imageUrl: data.imageUrl?.trim() || null,
+      taxRate: data.taxRate.toString()
     };
 
     console.log("Transformed data:", transformedData);
@@ -243,6 +246,7 @@ export function ProductManagerModal({
       productType: product.productType || 1,
       imageUrl: product.imageUrl || "",
       trackInventory: product.trackInventory !== false,
+      taxRate: product.taxRate || "10.00",
     });
     setShowAddForm(true);
   };
@@ -265,6 +269,7 @@ export function ProductManagerModal({
       productType: 1,
       imageUrl: "",
       trackInventory: true,
+      taxRate: "10.00",
     });
   };
 
@@ -358,6 +363,7 @@ export function ProductManagerModal({
           productType: 1,
           imageUrl: "",
           trackInventory: true,
+          taxRate: "10.00",
         });
       }
     }
@@ -376,6 +382,7 @@ export function ProductManagerModal({
       productType: 1,
       imageUrl: "",
       trackInventory: true,
+      taxRate: "10.00",
     });
     onClose();
   };
@@ -447,6 +454,9 @@ export function ProductManagerModal({
                           {t("tables.price")}
                         </th>
                         <th className="text-left py-3 px-4 font-medium pos-text-primary">
+                          % Thuế
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">
                           {t("tables.stock")}
                         </th>
                         <th className="text-left py-3 px-4 font-medium pos-text-primary">
@@ -490,6 +500,9 @@ export function ProductManagerModal({
                               style: "currency",
                               currency: "VND",
                             }).format(parseFloat(product.price))}
+                          </td>
+                          <td className="py-3 px-4 pos-text-secondary">
+                            {product.taxRate || "10.00"}%
                           </td>
                           <td className="py-3 px-4">
                             <span
@@ -600,6 +613,27 @@ export function ProductManagerModal({
                               type="number"
                               step="0.01"
                               placeholder={t("tables.pricePlaceholder")}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="taxRate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>% Thuế</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="100"
+                              placeholder="10.00"
                             />
                           </FormControl>
                           <FormMessage />

@@ -183,9 +183,9 @@ export async function registerRoutes(app: Express): Promise {
       console.log("Product creation request body:", req.body);
 
       // Ensure required fields are present
-      if (!req.body.name || !req.body.sku || !req.body.price || !req.body.categoryId) {
+      if (!req.body.name || !req.body.sku || !req.body.price || !req.body.categoryId || req.body.taxRate === undefined) {
         return res.status(400).json({
-          message: "Missing required fields: name, sku, price, and categoryId are required"
+          message: "Missing required fields: name, sku, price, categoryId, and taxRate are required"
         });
       }
 
@@ -198,7 +198,8 @@ export async function registerRoutes(app: Express): Promise {
         categoryId: Number(req.body.categoryId),
         productType: Number(req.body.productType) || 1,
         trackInventory: req.body.trackInventory !== false,
-        imageUrl: req.body.imageUrl || null
+        imageUrl: req.body.imageUrl || null,
+        taxRate: req.body.taxRate.toString()
       });
 
       console.log("Validated product data:", validatedData);

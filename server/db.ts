@@ -66,6 +66,20 @@ export async function initializeSampleData() {
       console.log("Product type migration already applied or error:", migrationError);
     }
 
+    // Run migration for tax_rate column
+    try {
+      await db.execute(sql`
+        ALTER TABLE products ADD COLUMN IF NOT EXISTS tax_rate DECIMAL(5,2) DEFAULT 10.00
+      `);
+      await db.execute(sql`
+        UPDATE products SET tax_rate = 10.00 WHERE tax_rate IS NULL
+      `);
+      
+      console.log("Migration for tax_rate column completed successfully.");
+    } catch (migrationError) {
+      console.log("Tax rate migration already applied or error:", migrationError);
+    }
+
     // Check if customers table has data
     const customerCount = await db.select({ count: sql<number>`count(*)` }).from(customers);
     if (customerCount[0]?.count === 0) {
