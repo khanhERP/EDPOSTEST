@@ -270,6 +270,17 @@ export const pointTransactions = pgTable('point_transactions', {
   createdAt: timestamp('created_at').defaultNow()
 });
 
+export const inventoryTransactions = pgTable('inventory_transactions', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id').references(() => products.id).notNull(),
+  type: varchar('type', { length: 20 }).notNull(), // 'add', 'subtract', 'set', 'sale', 'return'
+  quantity: integer('quantity').notNull(),
+  previousStock: integer('previous_stock').notNull(),
+  newStock: integer('new_stock').notNull(),
+  notes: text('notes'),
+  createdAt: varchar('created_at', { length: 50 }).notNull(),
+});
+
 export const insertCustomerSchema = createInsertSchema(customers).omit({
   id: true,
   createdAt: true,
