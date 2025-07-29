@@ -2948,7 +2948,7 @@ export default function Settings() {
                   }
                 />
                 <Label htmlFor="isActive" className="text-sm">
-                  Mặc định kết nối này
+                  Mặc định kết nối
                 </Label>
               </div>
             </div>
