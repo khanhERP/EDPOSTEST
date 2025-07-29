@@ -280,7 +280,7 @@ export default function InventoryPage() {
     },
   });
 
-  
+
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
@@ -378,8 +378,11 @@ export default function InventoryPage() {
     } else {
       // Updating existing product stock - include trackInventory
       const updateData = {
-        ...data,
-        trackInventory: data.trackInventory !== false
+        productId: selectedProduct.id,
+        quantity: data.quantity,
+        type: data.type,
+        notes: data.notes,
+        trackInventory: data.trackInventory
       };
       console.log("Updating stock with data:", updateData);
       updateStockMutation.mutate(updateData);

@@ -20,6 +20,7 @@ export const products = pgTable("products", {
   imageUrl: text("image_url"),
   isActive: boolean("is_active").notNull().default(true),
   productType: integer("product_type").notNull().default(1),
+  trackInventory: boolean("track_inventory").notNull().default(true),
 });
 
 export const transactions = pgTable("transactions", {

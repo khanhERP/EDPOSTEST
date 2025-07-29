@@ -946,7 +946,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/suppliers", async (req, res) => {
+  app.post("/api/suppliers", async (req, res) =>{
     try {
       const validatedData = insertSupplierSchema.parse(req.body);
       const supplier = await storage.createSupplier(validatedData);
