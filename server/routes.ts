@@ -625,7 +625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const { paymentMethod } = req.body;
-      
+
       // Update order status to paid
       const order = await storage.updateOrderStatus(id, 'paid');
 
@@ -817,35 +817,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Inventory Management
   app.post("/api/inventory/update-stock", async (req, res) => {
     try {
-      const stockUpdateSchema = z.object({
-        productId: z.number(),
-        quantity: z.number().min(1),
-        type: z.enum(["add", "subtract", "set"]),
-        notes: z.string().optional(),
+      const { productId, quantity, type, notes, trackInventory } = req.body;
+
+      // Get current product
+      const product = await db.select().from(products).where(eq(products.id, productId)).get();
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      let newStock = product.stock;
+      switch (type) {
+        case "add":
+          newStock += quantity;
+          break;
+        case "subtract":
+          newStock = Math.max(0, product.stock - quantity);
+          break;
+        case "set":
+          newStock = quantity;
+          break;
+      }
+
+      // Update product stock and trackInventory
+      const updateData: any = { stock: newStock };
+      if (trackInventory !== undefined) {
+        updateData.trackInventory = trackInventory;
+      }
+
+      await db.update(products)
+        .set(updateData)
+        .where(eq(products.id, productId));
+
+      // Create inventory transaction record
+      await db.insert(inventoryTransactions).values({
+        productId,
+        type,
+        quantity,
+        previousStock: product.stock,
+        newStock,
+        notes: notes || null,
+        createdAt: new Date().toISOString(),
       });
 
-      const { productId, quantity, type, notes } = stockUpdateSchema.parse(
-        req.body,
-      );
-      const product = await storage.updateInventoryStock(
-        productId,
-        quantity,
-        type,
-        notes,
-      );
-
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-
-      res.json(product);
+      res.json({ success: true, newStock });
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res
-          .status(400)
-          .json({ message: "Invalid stock update data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to update stock" });
+      console.error("Stock update error:", error);
+      res.status(500).json({ error: "Failed to update stock" });
     }
   });
 
@@ -925,7 +942,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/suppliers/:id", async (req, res) => {
+  app.put("/apii/suppliers/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertSupplierSchema.partial().parse(req.body);

@@ -18,6 +18,7 @@ import { Link, useSearch } from "wouter";
 import { useTranslation } from "@/lib/i18n";
 import { SupplierReport } from "@/components/reports/supplier-report";
 import { EmployeeReport } from "@/components/reports/employee-report";
+import { SalesChannelReport } from "@/components/reports/sales-channel-report";
 
 export default function ReportsPage() {
   const { t } = useTranslation();
