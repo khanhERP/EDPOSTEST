@@ -931,7 +931,7 @@ export async function registerRoutes(app: Express): Promise {
         // Don't throw here, as items were already created successfully
       }
 
-      console.log('=== ADD ORDER ITEMS COMPLETED SUCCESSFULLY ===');```python
+      console.log('=== ADD ORDER ITEMS COMPLETED SUCCESSFULLY ===');
       res.json(createdItems);
     } catch (error) {
       console.error('=== ADD ORDER ITEMS ERROR ===');
