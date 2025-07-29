@@ -416,26 +416,25 @@ export default function Settings() {
         categoryForm,
       );
 
-      // Force immediate refresh by clearing all caches first
-      queryClient.removeQueries({ queryKey: ["/api/categories"] });
-      queryClient.removeQueries({ queryKey: ["/api/products"] });
+      // Close dialog first to avoid showing stale data
+      setShowCategoryForm(false);
+      resetCategoryForm();
 
-      // Then refetch fresh data
-      await Promise.all([
-        queryClient.fetchQuery({ queryKey: ["/api/categories"] }),
-        queryClient.fetchQuery({ queryKey: ["/api/products"] })
-      ]);
-
-      // Also invalidate to ensure all components using these queries update
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      // Force complete cache invalidation and refetch
+      queryClient.clear();
+      
+      // Wait a moment then refetch all data
+      setTimeout(async () => {
+        await Promise.all([
+          queryClient.refetchQueries({ queryKey: ["/api/categories"] }),
+          queryClient.refetchQueries({ queryKey: ["/api/products"] })
+        ]);
+      }, 100);
 
       toast({
         title: t("common.success"),
         description: "Danh mục đã được cập nhật thành công",
       });
-      setShowCategoryForm(false);
-      resetCategoryForm();
     } catch (error) {
       console.error("Category update error:", error);
       toast({
