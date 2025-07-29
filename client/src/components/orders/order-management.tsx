@@ -160,8 +160,11 @@ export function OrderManagement() {
   };
 
   const getPaymentMethods = () => {
-    // Payment methods from settings - matches the structure in settings.tsx
-    const settingsPaymentMethods = [
+    // Get payment methods from localStorage (saved from settings)
+    const savedPaymentMethods = localStorage.getItem('paymentMethods');
+    
+    // Default payment methods if none saved
+    const defaultPaymentMethods = [
       { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
       { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
       { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
@@ -169,10 +172,16 @@ export function OrderManagement() {
       { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
       { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
       { id: 7, name: "QR Code", nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
+      { id: 8, name: "ShopeePay", nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
+      { id: 9, name: "GrabPay", nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
     ];
 
+    const paymentMethods = savedPaymentMethods 
+      ? JSON.parse(savedPaymentMethods) 
+      : defaultPaymentMethods;
+
     // Filter to only return enabled payment methods
-    return settingsPaymentMethods.filter(method => method.enabled);
+    return paymentMethods.filter(method => method.enabled);
   };
 
   const handlePayment = async (paymentMethodKey: string) => {

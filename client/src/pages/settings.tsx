@@ -240,6 +240,19 @@ export default function Settings() {
     }
   }, [storeData]);
 
+  // Load payment methods from localStorage on mount
+  useEffect(() => {
+    const savedPaymentMethods = localStorage.getItem('paymentMethods');
+    if (savedPaymentMethods) {
+      try {
+        const parsed = JSON.parse(savedPaymentMethods);
+        setPaymentMethods(parsed);
+      } catch (error) {
+        console.error('Error parsing saved payment methods:', error);
+      }
+    }
+  }, []);
+
   // Mutation to update store settings
   const updateStoreSettingsMutation = useMutation({
     mutationFn: async (settings: Partial<InsertStoreSettings>) => {
@@ -347,14 +360,17 @@ export default function Settings() {
 
   const saveStoreSettings = () => {
     updateStoreSettingsMutation.mutate(storeSettings);
+    // Save payment methods to localStorage so other components can access them
+    localStorage.setItem('paymentMethods', JSON.stringify(paymentMethods));
   };
 
   const togglePaymentMethod = (id: number) => {
-    setPaymentMethods((prev) =>
-      prev.map((method) =>
-        method.id === id ? { ...method, enabled: !method.enabled } : method,
-      ),
+    const updatedMethods = paymentMethods.map((method) =>
+      method.id === id ? { ...method, enabled: !method.enabled } : method,
     );
+    setPaymentMethods(updatedMethods);
+    // Save to localStorage immediately when toggled
+    localStorage.setItem('paymentMethods', JSON.stringify(updatedMethods));
   };
 
   const addPaymentMethod = () => {
