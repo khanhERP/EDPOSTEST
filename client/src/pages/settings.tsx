@@ -28,6 +28,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useTranslation } from "@/lib/i18n";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -90,6 +101,8 @@ export default function Settings() {
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<any>(null);
   const [selectedCategoryFilter, setSelectedCategoryFilter] =
     useState<string>("all");
   const [productSearchTerm, setProductSearchTerm] = useState("");
@@ -482,47 +495,53 @@ export default function Settings() {
       return;
     }
 
-    if (
-      confirm(
-        "Bạn có chắc chắn muốn xóa danh mục này? Hành động này không thể hoàn tác."
-      )
-    ) {
-      try {
-        const response = await fetch(`/api/categories/${categoryId}`, {
-          method: "DELETE",
-        });
+    // Find category to show in dialog
+    const category = categoriesData?.find((c: any) => c.id === categoryId);
+    setCategoryToDelete(category);
+    setShowDeleteDialog(true);
+  };
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-        }
+  const confirmDeleteCategory = async () => {
+    if (!categoryToDelete) return;
 
-        // Refetch data immediately
-        await queryClient.refetchQueries({ queryKey: ["/api/categories"] });
-        await queryClient.refetchQueries({ queryKey: ["/api/products"] });
+    try {
+      const response = await fetch(`/api/categories/${categoryToDelete.id}`, {
+        method: "DELETE",
+      });
 
-        toast({
-          title: t("common.success"),
-          description: "Danh mục đã được xóa thành công",
-        });
-      } catch (error) {
-        console.error("Category delete error:", error);
-        
-        let errorMessage = "Có lỗi xảy ra khi xóa danh mục";
-        if (error instanceof Error) {
-          if (error.message.includes("products")) {
-            errorMessage = "Không thể xóa danh mục vì vẫn còn sản phẩm trong danh mục này. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.";
-          } else {
-            errorMessage = error.message;
-          }
-        }
-        
-        toast({
-          title: t("common.error"),
-          description: errorMessage,
-          variant: "destructive",
-        });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
+
+      // Refetch data immediately
+      await queryClient.refetchQueries({ queryKey: ["/api/categories"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/products"] });
+
+      toast({
+        title: t("common.success"),
+        description: "Danh mục đã được xóa thành công",
+      });
+
+      setShowDeleteDialog(false);
+      setCategoryToDelete(null);
+    } catch (error) {
+      console.error("Category delete error:", error);
+      
+      let errorMessage = "Có lỗi xảy ra khi xóa danh mục";
+      if (error instanceof Error) {
+        if (error.message.includes("products")) {
+          errorMessage = "Không thể xóa danh mục vì vẫn còn sản phẩm trong danh mục này. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      toast({
+        title: t("common.error"),
+        description: errorMessage,
+        variant: "destructive",
+      });
     }
   };
 
@@ -2018,6 +2037,59 @@ export default function Settings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Category Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent className="sm:max-w-[425px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Xác nhận xóa danh mục
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              <div className="space-y-3">
+                <p>
+                  Bạn có chắc chắn muốn xóa danh mục{" "}
+                  <span className="font-semibold text-gray-900">
+                    "{categoryToDelete?.name}"
+                  </span>{" "}
+                  không?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-red-700">
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
+                      Danh mục sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Hãy đảm bảo rằng không còn sản phẩm nào trong danh mục này trước khi xóa.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel 
+              onClick={() => {
+                setShowDeleteDialog(false);
+                setCategoryToDelete(null);
+              }}
+              className="hover:bg-gray-100"
+            >
+              Hủy bỏ
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteCategory}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Xóa danh mục
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
