@@ -103,6 +103,45 @@ export default function Settings() {
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<any>(null);
+  const [showCustomerDeleteDialog, setShowCustomerDeleteDialog] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState<any>(null);
+  const [showProductDeleteDialog, setShowProductDeleteDialog] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<any>(null);
+  const [showEmployeeDeleteDialog, setShowEmployeeDeleteDialog] = useState(false);
+  const [employeeToDelete, setEmployeeToDelete] = useState<any>(null);
+
+  const confirmDeleteEmployee = async () => {
+    if (!employeeToDelete) return;
+
+    try {
+      const response = await fetch(`/api/employees/${employeeToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await queryClient.refetchQueries({
+        queryKey: ["/api/employees"],
+      });
+
+      toast({
+        title: "Thành công",
+        description: "Nhân viên đã được xóa thành công",
+      });
+
+      setShowEmployeeDeleteDialog(false);
+      setEmployeeToDelete(null);
+    } catch (error) {
+      console.error("Employee delete error:", error);
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi xóa nhân viên",
+        variant: "destructive",
+      });
+    }
+  };
   const [selectedCategoryFilter, setSelectedCategoryFilter] =
     useState<string>("all");
   const [productSearchTerm, setProductSearchTerm] = useState("");
@@ -317,23 +356,39 @@ export default function Settings() {
     setShowCustomerForm(true);
   };
 
-  const handleDeleteCustomer = (customerId: number) => {
-    if (confirm("정말로 이 고객을 t제하시겠습니까?")) {
-      fetch(`/api/customers/${customerId}`, { method: "DELETE" })
-        .then(() => {
-          queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
-          toast({
-            title: "성공",
-            description: "고객이 삭제되었습니다.",
-          });
-        })
-        .catch(() => {
-          toast({
-            title: "오류",
-            description: "고객 삭제에 실패했습니다.",
-            variant: "destructive",
-          });
-        });
+  const handleDeleteCustomer = (customerId: number, customerName: string) => {
+    setCustomerToDelete({ id: customerId, name: customerName });
+    setShowCustomerDeleteDialog(true);
+  };
+
+  const confirmDeleteCustomer = async () => {
+    if (!customerToDelete) return;
+
+    try {
+      const response = await fetch(`/api/customers/${customerToDelete.id}`, { 
+        method: "DELETE" 
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await queryClient.refetchQueries({ queryKey: ["/api/customers"] });
+
+      toast({
+        title: "Thành công",
+        description: "Khách hàng đã được xóa thành công",
+      });
+
+      setShowCustomerDeleteDialog(false);
+      setCustomerToDelete(null);
+    } catch (error) {
+      console.error("Customer delete error:", error);
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi xóa khách hàng",
+        variant: "destructive",
+      });
     }
   };
 
@@ -616,22 +671,33 @@ export default function Settings() {
     }
   };
 
-  const handleDeleteProduct = async (productId: number) => {
-    if (confirm(t("productManagement.deleteConfirm"))) {
-      try {
-        await apiRequest("DELETE", `/api/products/${productId}`);
-        queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-        toast({
-          title: t("common.success"),
-          description: t("productManagement.productDeleteSuccess"),
-        });
-      } catch (error) {
-        toast({
-          title: t("common.error"),
-          description: t("common.error"),
-          variant: "destructive",
-        });
-      }
+  const handleDeleteProduct = async (productId: number, productName: string) => {
+    setProductToDelete({ id: productId, name: productName });
+    setShowProductDeleteDialog(true);
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!productToDelete) return;
+
+    try {
+      await apiRequest("DELETE", `/api/products/${productToDelete.id}`);
+      
+      await queryClient.refetchQueries({ queryKey: ["/api/products"] });
+      
+      toast({
+        title: t("common.success"),
+        description: "Sản phẩm đã được xóa thành công",
+      });
+
+      setShowProductDeleteDialog(false);
+      setProductToDelete(null);
+    } catch (error) {
+      console.error("Product delete error:", error);
+      toast({
+        title: t("common.error"),
+        description: "Có lỗi xảy ra khi xóa sản phẩm",
+        variant: "destructive",
+      });
     }
   };
 
@@ -1138,7 +1204,7 @@ export default function Settings() {
                                 size="sm"
                                 className="text-red-500 hover:text-red-700"
                                 onClick={() =>
-                                  handleDeleteCustomer(customer.id)
+                                  handleDeleteCustomer(customer.id, customer.name)
                                 }
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -1488,7 +1554,7 @@ export default function Settings() {
                                   size="sm"
                                   className="text-red-500 hover:text-red-700"
                                   onClick={() =>
-                                    handleDeleteProduct(product.id)
+                                    handleDeleteProduct(product.id, product.name)
                                   }
                                 >
                                   <Trash2 className="w-4 h-4" />
@@ -1636,39 +1702,8 @@ export default function Settings() {
                                 size="sm"
                                 className="text-red-500 hover:text-red-700"
                                 onClick={() => {
-                                  if (
-                                    confirm(
-                                      `${t("employeesSettings.deleteConfirm")} ${employee.name} ${t("employeesSettings.employeeDeleteConfirm")}`,
-                                    )
-                                  ) {
-                                    fetch(`/api/employees/${employee.id}`, {
-                                      method: "DELETE",
-                                    })
-                                      .then(() => {
-                                        queryClient.invalidateQueries({
-                                          queryKey: ["/api/employees"],
-                                        });
-                                        toast({
-                                          title: t(
-                                            "employeesSettings.deleteSuccess",
-                                          ),
-                                          description: t(
-                                            "employeesSettings.employeeDeleted",
-                                          ),
-                                        });
-                                      })
-                                      .catch(() => {
-                                        toast({
-                                          title: t(
-                                            "employeesSettings.deleteError",
-                                          ),
-                                          description: t(
-                                            "employeesSettings.employeeDeleteFailed",
-                                          ),
-                                          variant: "destructive",
-                                        });
-                                      });
-                                  }
+                                  setEmployeeToDelete(employee);
+                                  setShowEmployeeDeleteDialog(true);
                                 }}
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -2086,6 +2121,165 @@ export default function Settings() {
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Xóa danh mục
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Customer Delete Confirmation Dialog */}
+      <AlertDialog open={showCustomerDeleteDialog} onOpenChange={setShowCustomerDeleteDialog}>
+        <AlertDialogContent className="sm:max-w-[425px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Xác nhận xóa khách hàng
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              <div className="space-y-3">
+                <p>
+                  Bạn có chắc chắn muốn xóa khách hàng{" "}
+                  <span className="font-semibold text-gray-900">
+                    "{customerToDelete?.name}"
+                  </span>{" "}
+                  không?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-red-700">
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
+                      Tất cả dữ liệu của khách hàng sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Điều này bao gồm lịch sử mua hàng, điểm tích lũy và thông tin cá nhân.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel 
+              onClick={() => {
+                setShowCustomerDeleteDialog(false);
+                setCustomerToDelete(null);
+              }}
+              className="hover:bg-gray-100"
+            >
+              Hủy bỏ
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteCustomer}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Xóa khách hàng
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Product Delete Confirmation Dialog */}
+      <AlertDialog open={showProductDeleteDialog} onOpenChange={setShowProductDeleteDialog}>
+        <AlertDialogContent className="sm:max-w-[425px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Xác nhận xóa sản phẩm
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              <div className="space-y-3">
+                <p>
+                  Bạn có chắc chắn muốn xóa sản phẩm{" "}
+                  <span className="font-semibold text-gray-900">
+                    "{productToDelete?.name}"
+                  </span>{" "}
+                  không?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-red-700">
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
+                      Sản phẩm sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Điều này sẽ ảnh hưởng đến các đơn hàng và báo cáo có chứa sản phẩm này.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel 
+              onClick={() => {
+                setShowProductDeleteDialog(false);
+                setProductToDelete(null);
+              }}
+              className="hover:bg-gray-100"
+            >
+              Hủy bỏ
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteProduct}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Xóa sản phẩm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Employee Delete Confirmation Dialog */}
+      <AlertDialog open={showEmployeeDeleteDialog} onOpenChange={setShowEmployeeDeleteDialog}>
+        <AlertDialogContent className="sm:max-w-[425px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Xác nhận xóa nhân viên
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              <div className="space-y-3">
+                <p>
+                  Bạn có chắc chắn muốn xóa nhân viên{" "}
+                  <span className="font-semibold text-gray-900">
+                    "{employeeToDelete?.name}"
+                  </span>{" "}
+                  không?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-red-700">
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
+                      Thông tin nhân viên sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Điều này bao gồm lịch sử làm việc, chấm công và các quyền truy cập.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel 
+              onClick={() => {
+                setShowEmployeeDeleteDialog(false);
+                setEmployeeToDelete(null);
+              }}
+              className="hover:bg-gray-100"
+            >
+              Hủy bỏ
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteEmployee}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Xóa nhân viên
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
