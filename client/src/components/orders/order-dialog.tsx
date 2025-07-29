@@ -296,7 +296,7 @@ export function OrderDialog({
         subtotal: subtotalAmount.toString(),
         tax: taxAmount.toString(),
         total: totalAmount.toString(),
-        status: "pending",
+        status: "served",
         paymentStatus: "pending",
         orderedAt: new Date().toISOString(),
       };
