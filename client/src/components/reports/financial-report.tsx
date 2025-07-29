@@ -132,9 +132,9 @@ export function FinancialReport() {
 
   const getPeriodText = () => {
     if (period === 'yearly') {
-      return `Năm ${selectedYear}`;
+      return `${t("reports.financialYear")} ${selectedYear}`;
     } else if (period === 'monthly') {
-      return `Tháng ${selectedMonth}/${selectedYear}`;
+      return `${t("reports.financialMonth")} ${selectedMonth}/${selectedYear}`;
     } else if (period === 'quarterly') {
       return `${quarterOptions.find(q => q.value === selectedQuarter)?.label} ${selectedYear}`;
     }
@@ -146,18 +146,18 @@ export function FinancialReport() {
 
   // Prepare chart data
   const profitLossData = financialSummary ? [
-    { name: 'Tổng thu nhập', value: financialSummary.totalIncome },
-    { name: 'Tổng chi phí', value: -financialSummary.totalExpenses },
-    { name: 'Lợi nhuận gộp', value: financialSummary.grossProfit },
-    { name: 'Chi phí hoạt động', value: -financialSummary.operatingExpenses },
-    { name: 'Thu nhập ròng', value: financialSummary.netIncome },
+    { name: t("reports.totalIncome"), value: financialSummary.totalIncome },
+    { name: t("reports.totalExpenses"), value: -financialSummary.totalExpenses },
+    { name: t("reports.grossProfit"), value: financialSummary.grossProfit },
+    { name: t("reports.operatingExpenses"), value: -financialSummary.operatingExpenses },
+    { name: t("reports.netIncome"), value: financialSummary.netIncome },
   ] : [];
 
   const cashFlowData = cashFlow ? [
-    { name: 'Dòng tiền hoạt động', value: cashFlow.operatingCashFlow },
-    { name: 'Dòng tiền đầu tư', value: cashFlow.investingCashFlow },
-    { name: 'Dòng tiền tài chính', value: cashFlow.financingCashFlow },
-    { name: 'Dòng tiền ròng', value: cashFlow.netCashFlow },
+    { name: t("reports.operatingCashFlow"), value: cashFlow.operatingCashFlow },
+    { name: t("reports.investingCashFlow"), value: cashFlow.investingCashFlow },
+    { name: t("reports.financingCashFlow"), value: cashFlow.financingCashFlow },
+    { name: t("reports.netCashFlow"), value: cashFlow.netCashFlow },
   ] : [];
 
   return (
@@ -196,7 +196,7 @@ export function FinancialReport() {
 
             {/* Year Filter */}
             <div>
-              <Label>Năm</Label>
+              <Label>{t("reports.financialYear")}</Label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
                 <SelectTrigger>
                   <SelectValue />
@@ -214,7 +214,7 @@ export function FinancialReport() {
             {/* Month Filter (only for monthly period) */}
             {period === "monthly" && (
               <div>
-                <Label>Tháng</Label>
+                <Label>{t("reports.financialMonth")}</Label>
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                   <SelectTrigger>
                     <SelectValue />
@@ -233,7 +233,7 @@ export function FinancialReport() {
             {/* Quarter Filter (only for quarterly period) */}
             {period === "quarterly" && (
               <div>
-                <Label>Quý</Label>
+                <Label>{t("reports.financialQuarter")}</Label>
                 <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
                   <SelectTrigger>
                     <SelectValue />
@@ -369,7 +369,7 @@ export function FinancialReport() {
                   {t("reports.chartView")}
                 </div>
                 <div className="text-white font-semibold">
-                  Lãi lỗ ({getPeriodText()})
+                  {t("reports.financialProfitLoss")} ({getPeriodText()})
                 </div>
               </div>
             </CardTitle>
@@ -470,7 +470,7 @@ export function FinancialReport() {
                       maxBarSize={45}
                       stroke="#2563eb"
                       strokeWidth={1}
-                      name="Giá trị"
+                      name={t("reports.amountLabel")}
                     />
                   </RechartsBarChart>
                 </ResponsiveContainer>
@@ -592,7 +592,7 @@ export function FinancialReport() {
                       maxBarSize={45}
                       stroke="#059669"
                       strokeWidth={1}
-                      name="Dòng tiền"
+                      name={t("reports.cashFlow")}
                     />
                   </RechartsBarChart>
                 </ResponsiveContainer>
@@ -756,7 +756,7 @@ export function FinancialReport() {
       {/* Cash Flow Detail Table */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("reports.cashFlow")} - Chi tiết</CardTitle>
+          <CardTitle>{t("reports.cashFlowDetails")}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
