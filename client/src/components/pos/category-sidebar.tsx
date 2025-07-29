@@ -39,7 +39,7 @@ export function CategorySidebar({
   });
 
   const { data: products = [] } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
+    queryKey: ["/api/products/active"],
   });
 
   const getProductCountForCategory = (categoryId: number | "all") => {

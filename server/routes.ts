@@ -150,6 +150,16 @@ export async function registerRoutes(app: Express): Promise {
     }
   });
 
+  // Endpoint for POS to get only active products
+  app.get("/api/products/active", async (req, res) => {
+    try {
+      const products = await storage.getActiveProducts();
+      res.json(products);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch active products" });
+    }
+  });
+
   app.get("/api/products/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
@@ -921,7 +931,7 @@ export async function registerRoutes(app: Express): Promise {
         // Don't throw here, as items were already created successfully
       }
 
-      console.log('=== ADD ORDER ITEMS COMPLETED SUCCESSFULLY ===');
+      console.log('=== ADD ORDER ITEMS COMPLETED SUCCESSFULLY ===');```python
       res.json(createdItems);
     } catch (error) {
       console.error('=== ADD ORDER ITEMS ERROR ===');

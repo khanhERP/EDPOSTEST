@@ -50,7 +50,7 @@ export function ProductManagerModal({
   onClose,
 }: ProductManagerModalProps) {
   const { t } = useTranslation();
-  
+
   const productFormSchema = insertProductSchema.extend({
     categoryId: z.number().min(1, t("tables.categoryRequired")),
     price: z.string().min(1, "Price is required").refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, "Price must be a valid positive number"),
@@ -87,7 +87,7 @@ export function ProductManagerModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Product creation error:", errorData);
@@ -97,6 +97,7 @@ export function ProductManagerModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/active"] });
       setShowAddForm(false);
       resetForm();
       toast({
@@ -106,7 +107,7 @@ export function ProductManagerModal({
     },
     onError: (error: Error) => {
       console.error("Create product mutation error:", error);
-      
+
       let errorMessage = "Failed to create product";
       if (error.message.includes("already exists")) {
         errorMessage = "SKU already exists. Please use a different SKU.";
@@ -115,7 +116,7 @@ export function ProductManagerModal({
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast({
         title: "Error", 
         description: errorMessage,
@@ -142,6 +143,7 @@ export function ProductManagerModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/active"] });
       setEditingProduct(null);
       toast({
         title: "Success",
@@ -167,6 +169,7 @@ export function ProductManagerModal({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/active"] });
       toast({
         title: "Success",
         description: "Product deleted successfully",
@@ -197,7 +200,7 @@ export function ProductManagerModal({
 
   const onSubmit = (data: z.infer<typeof productFormSchema>) => {
     console.log("Form submission data:", data);
-    
+
     // Validate required fields
     if (!data.name || !data.sku || !data.price || !data.categoryId) {
       toast({
@@ -219,9 +222,9 @@ export function ProductManagerModal({
       trackInventory: data.trackInventory !== false,
       imageUrl: data.imageUrl?.trim() || null
     };
-    
+
     console.log("Transformed data:", transformedData);
-    
+
     if (editingProduct) {
       updateProductMutation.mutate({ id: editingProduct.id, data: transformedData });
     } else {

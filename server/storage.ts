@@ -199,6 +199,7 @@ export interface IStorage {
   recalculateAllMembershipLevels(goldThreshold: number, vipThreshold: number): Promise<void>;
 
   getAllProducts(includeInactive?: boolean): Promise<Product[]>;
+  getActiveProducts(): Promise<Product[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -237,12 +238,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProductsByCategory(categoryId: number): Promise<Product[]> {
-    return await db
+    const result = await db
       .select()
       .from(products)
-      .where(
-        and(eq(products.categoryId, categoryId), eq(products.isActive, true)),
-      );
+      .where(eq(products.categoryId, categoryId))
+      .orderBy(products.name);
+
+    return result;
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
@@ -1048,6 +1050,7 @@ export class DatabaseStorage implements IStorage {
   ): Promise<Customer | undefined> {
     const [result] = await db
       .select()
+      .fromThis commit modifies the DatabaseStorage class to fetch all products, regardless of their active status, and adds a new method to fetch only active products.
       .from(customers)
       .where(eq(customers.customerId, customerId));
     return result || undefined;
@@ -1289,6 +1292,16 @@ export class DatabaseStorage implements IStorage {
         .where(eq(products.isActive, true))
         .orderBy(products.name);
     }
+  }
+
+  async getActiveProducts(): Promise<Product[]> {
+    const result = await db
+      .select()
+      .from(products)
+      .where(eq(products.isActive, true))
+      .orderBy(products.name);
+
+    return result;
   }
 
   async createProduct(productData: Omit<Product, "id">): Promise<Product> {
