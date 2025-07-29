@@ -199,9 +199,14 @@ export default function Settings() {
     queryKey: ["/api/categories"],
   });
 
-  // Fetch products
+  // Fetch products (include inactive products in settings)
   const { data: productsData, isLoading: productsLoading } = useQuery<any[]>({
-    queryKey: ["/api/products"],
+    queryKey: ["/api/products", { includeInactive: true }],
+    queryFn: async () => {
+      const response = await fetch("/api/products?includeInactive=true");
+      if (!response.ok) throw new Error('Failed to fetch products');
+      return response.json();
+    },
   });
 
   // Store settings state

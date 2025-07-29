@@ -51,10 +51,10 @@ export interface IStorage {
 
   // Products
   getProducts(): Promise<Product[]>;
-  getProductsByCategory(categoryId: number): Promise<Product[]>;
+  getProductsByCategory(categoryId: number, includeInactive?: boolean): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
   getProductBySku(sku: string): Promise<Product | undefined>;
-  searchProducts(query: string): Promise<Product[]>;
+  searchProducts(query: string, includeInactive?: boolean): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(
     id: number,
@@ -237,11 +237,17 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getProductsByCategory(categoryId: number): Promise<Product[]> {
+  async getProductsByCategory(categoryId: number, includeInactive: boolean = false): Promise<Product[]> {
+    let whereCondition = eq(products.categoryId, categoryId);
+    
+    if (!includeInactive) {
+      whereCondition = and(whereCondition, eq(products.isActive, true));
+    }
+
     const result = await db
       .select()
       .from(products)
-      .where(eq(products.categoryId, categoryId))
+      .where(whereCondition)
       .orderBy(products.name);
 
     return result;
@@ -263,13 +269,17 @@ export class DatabaseStorage implements IStorage {
     return product || undefined;
   }
 
-  async searchProducts(query: string): Promise<Product[]> {
+  async searchProducts(query: string, includeInactive: boolean = false): Promise<Product[]> {
+    let whereCondition = ilike(products.name, `%${query}%`);
+    
+    if (!includeInactive) {
+      whereCondition = and(whereCondition, eq(products.isActive, true));
+    }
+
     return await db
       .select()
       .from(products)
-      .where(
-        and(eq(products.isActive, true), ilike(products.name, `%${query}%`)),
-      );
+      .where(whereCondition);
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {

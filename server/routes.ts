@@ -131,17 +131,20 @@ export async function registerRoutes(app: Express): Promise {
   // Products
   app.get("/api/products", async (req, res) => {
     try {
-      const { category, search } = req.query;
+      const { category, search, includeInactive } = req.query;
       let products;
 
+      const shouldIncludeInactive = includeInactive === 'true';
+
       if (search) {
-        products = await storage.searchProducts(search as string);
+        products = await storage.searchProducts(search as string, shouldIncludeInactive);
       } else if (category && category !== "all") {
         products = await storage.getProductsByCategory(
           parseInt(category as string),
+          shouldIncludeInactive
         );
       } else {
-        products = await storage.getProducts();
+        products = await storage.getAllProducts(shouldIncludeInactive);
       }
 
       res.json(products);
