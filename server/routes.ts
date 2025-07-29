@@ -190,12 +190,16 @@ export async function registerRoutes(app: Express): Promise {
 
       console.log("Validated product data:", validatedData);
 
-      // Check if SKU already exists
-      const existingProduct = await storage.getProductBySku(validatedData.sku);
+      // Check if SKU already exists (including inactive products)
+      const [existingProduct] = await db
+        .select()
+        .from(products)
+        .where(eq(products.sku, validatedData.sku));
+        
       if (existingProduct) {
         console.log("SKU already exists:", validatedData.sku);
         return res.status(409).json({ 
-          message: "Product with this SKU already exists",
+          message: `SKU "${validatedData.sku}" đã tồn tại trong hệ thống`,
           code: "DUPLICATE_SKU"
         });
       }
