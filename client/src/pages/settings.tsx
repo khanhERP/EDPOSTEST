@@ -1227,7 +1227,7 @@ export default function Settings() {
                                   <div className="text-center">{connection.symbol}</div>
                                   <div className="font-mono">{connection.taxCode}</div>
                                   <div>{connection.loginId}</div>
-                                  <div>{connection.password}</div>
+                                  <div>{'*'.repeat(connection.password.length)}</div>
                                   <div>
                                     <Badge variant={connection.isActive ? "default" : "secondary"}>
                                       {connection.softwareName}
