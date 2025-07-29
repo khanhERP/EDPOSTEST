@@ -28,7 +28,7 @@ export default function ReportsPage() {
   useEffect(() => {
     const params = new URLSearchParams(search);
     const tab = params.get('tab');
-    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday', 'order', 'inventory', 'customer', 'supplier', 'employee'].includes(tab)) {
+    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday', 'order', 'inventory', 'customer', 'supplier', 'employee', 'saleschannel'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [search]);
@@ -195,6 +195,10 @@ export default function ReportsPage() {
 
             <TabsContent value="employee">
               <EmployeeReport />
+            </TabsContent>
+
+            <TabsContent value="saleschannel">
+              <SalesChannelReport />
             </TabsContent>
 
             <TabsContent value="eod" className="hidden">
