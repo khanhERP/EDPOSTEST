@@ -26,32 +26,51 @@ export function PaymentMethodModal({
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
 
-  const paymentMethods = [
-    {
-      id: "credit_card",
-      name: "Thẻ tín dụng",
-      icon: CreditCard,
-      description: "Visa, Mastercard"
-    },
-    {
-      id: "debit_card", 
-      name: "Thẻ ghi nợ",
-      icon: CreditCard,
-      description: "ATM Card"
-    },
-    {
-      id: "mobile_payment",
-      name: "Ví điện tử",
-      icon: Smartphone,
-      description: "MoMo, ZaloPay, ViettelPay"
-    },
-    {
-      id: "bank_transfer",
-      name: "Chuyển khoản",
-      icon: Wallet,
-      description: "QR Banking"
-    }
-  ];
+  const getPaymentMethods = () => {
+    // Get payment methods from localStorage (saved from settings)
+    const savedPaymentMethods = localStorage.getItem('paymentMethods');
+
+    // Default payment methods if none saved
+    const defaultPaymentMethods = [
+      { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
+      { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
+      { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
+      { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
+      { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
+      { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
+      { id: 7, name: "QR Code", nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
+      { id: 8, name: "ShopeePay", nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
+      { id: 9, name: "GrabPay", nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
+    ];
+
+    const paymentMethods = savedPaymentMethods 
+      ? JSON.parse(savedPaymentMethods) 
+      : defaultPaymentMethods;
+
+    // Filter to only return enabled payment methods and map to the format expected by this modal
+    return paymentMethods
+      .filter(method => method.enabled)
+      .slice(0, 2) // Only show first 2 methods (cash and bank transfer)
+      .map(method => {
+        if (method.nameKey === "cash") {
+          return {
+            id: "cash",
+            name: method.name,
+            icon: Banknote,
+            description: "Thanh toán bằng tiền mặt"
+          };
+        } else {
+          return {
+            id: "bank_transfer",
+            name: "Chuyển khoản",
+            icon: Wallet,
+            description: "QR Banking"
+          };
+        }
+      });
+  };
+
+  const paymentMethods = getPaymentMethods();
 
   const handleSelect = async (method: string) => {
     if (method === "bank_transfer") {
