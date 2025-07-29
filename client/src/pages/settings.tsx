@@ -1230,7 +1230,7 @@ export default function Settings() {
                                   <div>{'*'.repeat(connection.password.length)}</div>
                                   <div>
                                     <Badge variant={connection.isActive ? "default" : "secondary"}>
-                                      {connection.softwareName}
+                                      {connection.isActive ? "Hoạt động" : "Không hoạt động"}
                                     </Badge>
                                   </div>
                                   <div className="text-blue-600 hover:underline cursor-pointer truncate">
