@@ -1947,12 +1947,7 @@ export default function Settings() {
                     ))}
                   </div>
 
-                  <div className="flex justify-end mt-6">
-                    <Button className="bg-green-600 hover:bg-green-700">
-                      <Save className="w-4 h-4 mr-2" />
-                      {t("common.save")}
-                    </Button>
-                  </div>
+                  
                 </div>
               </CardContent>
             </Card>
