@@ -843,6 +843,9 @@ export interface OrdersTranslations {
   noTableInfo: string;
   noInput: string;
   payment: string;
+  tableOrder: string;
+  tableCapacity: string;
+  unitPrice: string;
   status: {
     pending: string;
     confirmed: string;

@@ -595,7 +595,7 @@ export function OrderDialog({
                               </Button>
                             </div>
                             <span className="text-xs text-gray-500">
-                              @{Number(item.product.price).toLocaleString()} ₫
+                              {t("tables.unitPrice")}: {Number(item.product.price).toLocaleString()} ₫
                             </span>
                           </div>
 
