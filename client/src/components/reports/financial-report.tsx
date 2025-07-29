@@ -762,8 +762,8 @@ export function FinancialReport() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Loại dòng tiền</TableHead>
-                <TableHead className="text-right">Số tiền</TableHead>
+                <TableHead>{t("reports.cashFlowType")}</TableHead>
+                <TableHead className="text-right">{t("reports.amountLabel")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
