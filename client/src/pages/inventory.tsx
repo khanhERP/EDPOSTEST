@@ -39,6 +39,7 @@ import {
   Trash2,
   RotateCcw,
 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { POSHeader } from "@/components/pos/header";
 import { RightSidebar } from "@/components/ui/right-sidebar";
 import { useTranslation } from "@/lib/i18n";
@@ -659,16 +660,16 @@ export default function InventoryPage() {
                               </Badge>
                             </td>
                             <td className="py-4 px-2 text-center">
-                              <Badge 
-                                variant="outline" 
-                                className={`text-xs ${
-                                  product.trackInventory !== false 
-                                    ? "text-green-700 border-green-300" 
-                                    : "text-gray-500 border-gray-300"
-                                }`}
-                              >
-                                {product.trackInventory !== false ? "Có theo dõi" : "Không theo dõi"}
-                              </Badge>
+                              <Checkbox
+                                checked={product.trackInventory !== false}
+                                onCheckedChange={(checked) => {
+                                  updateProductTrackInventoryMutation.mutate({
+                                    id: product.id,
+                                    trackInventory: checked === true
+                                  });
+                                }}
+                                disabled={updateProductTrackInventoryMutation.isPending}
+                              />
                             </td>
                             <td className="py-4 px-2 text-right text-gray-900">
                               <div className="break-words">
