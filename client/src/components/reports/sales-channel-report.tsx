@@ -82,153 +82,177 @@ export function SalesChannelReport() {
   };
 
   const getChartData = () => {
-    if (concernType === "sales" && salesChannelSalesData) {
+    if (concernType === "sales" && salesChannelSalesData && Array.isArray(salesChannelSalesData)) {
       return salesChannelSalesData.map((item: any) => ({
-        name: item.salesChannelName,
-        revenue: item.revenue,
-        returnValue: item.returnValue,
-        netRevenue: item.netRevenue,
+        name: item.salesChannelName || "N/A",
+        revenue: item.revenue || 0,
+        returnValue: item.returnValue || 0,
+        netRevenue: item.netRevenue || 0,
       }));
-    } else if (concernType === "profit" && salesChannelProfitData) {
+    } else if (concernType === "profit" && salesChannelProfitData && Array.isArray(salesChannelProfitData)) {
       return salesChannelProfitData.map((item: any) => ({
-        name: item.salesChannelName,
-        grossProfit: item.grossProfit,
-        netProfit: item.netProfit,
-        platformFee: item.platformFee,
+        name: item.salesChannelName || "N/A",
+        grossProfit: item.grossProfit || 0,
+        netProfit: item.netProfit || 0,
+        platformFee: item.platformFee || 0,
       }));
     }
     return [];
   };
 
   const renderSalesTable = () => {
-    if (!salesChannelSalesData) return null;
+    if (!salesChannelSalesData || !Array.isArray(salesChannelSalesData) || salesChannelSalesData.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <div className="text-gray-500">{t("reports.noReportData")}</div>
+        </div>
+      );
+    }
 
     return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t("reports.salesChannelFilter")}</TableHead>
-            <TableHead>{t("reports.salesChannelRevenue")}</TableHead>
-            <TableHead>{t("reports.salesChannelReturnValue")}</TableHead>
-            <TableHead>{t("reports.salesChannelNetRevenue")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {salesChannelSalesData.map((item: any) => (
-            <TableRow key={item.id}>
-              <TableCell className="font-medium">
-                <div>
-                  <div className="font-semibold">{item.salesChannelName}</div>
-                  {item.sellerName && (
-                    <div className="text-sm text-gray-500">{item.sellerName}</div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>{formatCurrency(item.revenue)}</TableCell>
-              <TableCell>{formatCurrency(item.returnValue)}</TableCell>
-              <TableCell className="font-semibold text-green-600">
-                {formatCurrency(item.netRevenue)}
-              </TableCell>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="min-w-[150px]">{t("reports.salesChannelFilter")}</TableHead>
+              <TableHead className="text-right min-w-[120px]">{t("reports.salesChannelRevenue")}</TableHead>
+              <TableHead className="text-right min-w-[120px]">{t("reports.salesChannelReturnValue")}</TableHead>
+              <TableHead className="text-right min-w-[120px]">{t("reports.salesChannelNetRevenue")}</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {salesChannelSalesData.map((item: any, index: number) => (
+              <TableRow key={item.id || index}>
+                <TableCell className="font-medium">
+                  <div>
+                    <div className="font-semibold">{item.salesChannelName || "N/A"}</div>
+                    {item.sellerName && (
+                      <div className="text-sm text-gray-500">{item.sellerName}</div>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">{formatCurrency(item.revenue || 0)}</TableCell>
+                <TableCell className="text-right">{formatCurrency(item.returnValue || 0)}</TableCell>
+                <TableCell className="text-right font-semibold text-green-600">
+                  {formatCurrency(item.netRevenue || 0)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     );
   };
 
   const renderProfitTable = () => {
-    if (!salesChannelProfitData) return null;
+    if (!salesChannelProfitData || !Array.isArray(salesChannelProfitData) || salesChannelProfitData.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <div className="text-gray-500">{t("reports.noReportData")}</div>
+        </div>
+      );
+    }
 
     return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t("reports.salesChannelFilter")}</TableHead>
-            <TableHead>{t("reports.salesChannelTotalAmount")}</TableHead>
-            <TableHead>{t("reports.salesChannelDiscount")}</TableHead>
-            <TableHead>{t("reports.salesChannelRevenue")}</TableHead>
-            <TableHead>{t("reports.salesChannelReturnValue")}</TableHead>
-            <TableHead>{t("reports.salesChannelNetRevenue")}</TableHead>
-            <TableHead>{t("reports.salesChannelTotalCost")}</TableHead>
-            <TableHead>{t("reports.salesChannelGrossProfit")}</TableHead>
-            <TableHead>{t("reports.salesChannelFee")}</TableHead>
-            <TableHead>{t("reports.salesChannelNetProfit")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {salesChannelProfitData.map((item: any) => (
-            <TableRow key={item.id}>
-              <TableCell className="font-medium">
-                <div>
-                  <div className="font-semibold">{item.salesChannelName}</div>
-                  {item.sellerName && (
-                    <div className="text-sm text-gray-500">{item.sellerName}</div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>{formatCurrency(item.totalAmount)}</TableCell>
-              <TableCell>{formatCurrency(item.discount)}</TableCell>
-              <TableCell>{formatCurrency(item.revenue)}</TableCell>
-              <TableCell>{formatCurrency(item.returnValue)}</TableCell>
-              <TableCell>{formatCurrency(item.netRevenue)}</TableCell>
-              <TableCell>{formatCurrency(item.totalCost)}</TableCell>
-              <TableCell className="font-semibold text-green-600">
-                {formatCurrency(item.grossProfit)}
-              </TableCell>
-              <TableCell>{formatCurrency(item.platformFee)}</TableCell>
-              <TableCell className="font-semibold text-blue-600">
-                {formatCurrency(item.netProfit)}
-              </TableCell>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="min-w-[150px]">{t("reports.salesChannelFilter")}</TableHead>
+              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelTotalAmount")}</TableHead>
+              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelDiscount")}</TableHead>
+              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelRevenue")}</TableHead>
+              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelReturnValue")}</TableHead>
+              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelNetRevenue")}</TableHead>
+              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelTotalCost")}</TableHead>
+              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelGrossProfit")}</TableHead>
+              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelFee")}</TableHead>
+              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelNetProfit")}</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {salesChannelProfitData.map((item: any, index: number) => (
+              <TableRow key={item.id || index}>
+                <TableCell className="font-medium">
+                  <div>
+                    <div className="font-semibold">{item.salesChannelName || "N/A"}</div>
+                    {item.sellerName && (
+                      <div className="text-sm text-gray-500">{item.sellerName}</div>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">{formatCurrency(item.totalAmount || 0)}</TableCell>
+                <TableCell className="text-right">{formatCurrency(item.discount || 0)}</TableCell>
+                <TableCell className="text-right">{formatCurrency(item.revenue || 0)}</TableCell>
+                <TableCell className="text-right">{formatCurrency(item.returnValue || 0)}</TableCell>
+                <TableCell className="text-right">{formatCurrency(item.netRevenue || 0)}</TableCell>
+                <TableCell className="text-right">{formatCurrency(item.totalCost || 0)}</TableCell>
+                <TableCell className="text-right font-semibold text-green-600">
+                  {formatCurrency(item.grossProfit || 0)}
+                </TableCell>
+                <TableCell className="text-right">{formatCurrency(item.platformFee || 0)}</TableCell>
+                <TableCell className="text-right font-semibold text-blue-600">
+                  {formatCurrency(item.netProfit || 0)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     );
   };
 
   const renderProductsTable = () => {
-    if (!salesChannelProductsData) return null;
+    if (!salesChannelProductsData || !Array.isArray(salesChannelProductsData) || salesChannelProductsData.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <div className="text-gray-500">{t("reports.noReportData")}</div>
+        </div>
+      );
+    }
 
     return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t("reports.salesChannelFilter")}</TableHead>
-            <TableHead>{t("reports.productCode")}</TableHead>
-            <TableHead>{t("reports.productName")}</TableHead>
-            <TableHead>{t("reports.salesChannelQuantitySold")}</TableHead>
-            <TableHead>{t("reports.salesChannelRevenue")}</TableHead>
-            <TableHead>{t("reports.salesChannelQuantityReturned")}</TableHead>
-            <TableHead>{t("reports.salesChannelReturnValue")}</TableHead>
-            <TableHead>{t("reports.salesChannelNetRevenue")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {salesChannelProductsData.map((item: any) => (
-            <TableRow key={item.id}>
-              <TableCell className="font-medium">
-                <div>
-                  <div className="font-semibold">{item.salesChannelName}</div>
-                  {item.sellerName && (
-                    <div className="text-sm text-gray-500">{item.sellerName}</div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge variant="outline">{item.productCode}</Badge>
-              </TableCell>
-              <TableCell>{item.productName}</TableCell>
-              <TableCell>{item.quantitySold}</TableCell>
-              <TableCell>{formatCurrency(item.revenue)}</TableCell>
-              <TableCell>{item.quantityReturned}</TableCell>
-              <TableCell>{formatCurrency(item.returnValue)}</TableCell>
-              <TableCell className="font-semibold text-green-600">
-                {formatCurrency(item.netRevenue)}
-              </TableCell>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="min-w-[150px]">{t("reports.salesChannelFilter")}</TableHead>
+              <TableHead className="min-w-[100px]">{t("reports.productCode")}</TableHead>
+              <TableHead className="min-w-[150px]">{t("reports.productName")}</TableHead>
+              <TableHead className="text-center min-w-[80px]">{t("reports.salesChannelQuantitySold")}</TableHead>
+              <TableHead className="text-right min-w-[120px]">{t("reports.salesChannelRevenue")}</TableHead>
+              <TableHead className="text-center min-w-[80px]">{t("reports.salesChannelQuantityReturned")}</TableHead>
+              <TableHead className="text-right min-w-[120px]">{t("reports.salesChannelReturnValue")}</TableHead>
+              <TableHead className="text-right min-w-[120px]">{t("reports.salesChannelNetRevenue")}</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {salesChannelProductsData.map((item: any, index: number) => (
+              <TableRow key={item.id || index}>
+                <TableCell className="font-medium">
+                  <div>
+                    <div className="font-semibold">{item.salesChannelName || "N/A"}</div>
+                    {item.sellerName && (
+                      <div className="text-sm text-gray-500">{item.sellerName}</div>
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline">{item.productCode || "N/A"}</Badge>
+                </TableCell>
+                <TableCell>{item.productName || "N/A"}</TableCell>
+                <TableCell className="text-center">{item.quantitySold || 0}</TableCell>
+                <TableCell className="text-right">{formatCurrency(item.revenue || 0)}</TableCell>
+                <TableCell className="text-center">{item.quantityReturned || 0}</TableCell>
+                <TableCell className="text-right">{formatCurrency(item.returnValue || 0)}</TableCell>
+                <TableCell className="text-right font-semibold text-green-600">
+                  {formatCurrency(item.netRevenue || 0)}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     );
   };
 

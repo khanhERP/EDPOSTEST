@@ -1035,5 +1035,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     otherSales: "Khác",
     salesChannelChart: "Biểu đồ kênh bán hàng",
     employeeProductSales: "Nhân viên theo hàng bán",
+    
+    // Missing translation keys
+    chartView: "Xem biểu đồ",
+    visualRepresentation: "Biểu diễn trực quan của dữ liệu",
+    fromDate: "Từ ngày",
+    toDate: "Đến ngày",
   },
 };
