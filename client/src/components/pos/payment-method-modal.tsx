@@ -26,38 +26,70 @@ export function PaymentMethodModal({
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
 
-  const paymentMethods = [
-    {
-      id: "credit_card",
-      name: "Thẻ tín dụng",
-      icon: CreditCard,
-      description: "Visa, Mastercard"
-    },
-    {
-      id: "debit_card", 
-      name: "Thẻ ghi nợ",
-      icon: CreditCard,
-      description: "ATM Card"
-    },
-    {
-      id: "mobile_payment",
-      name: "Ví điện tử",
-      icon: Smartphone,
-      description: "MoMo, ZaloPay, ViettelPay"
-    },
-    {
-      id: "bank_transfer",
-      name: "Chuyển khoản",
-      icon: Wallet,
-      description: "QR Banking"
+  // Load payment methods from settings
+  const getPaymentMethods = () => {
+    const savedPaymentMethods = localStorage.getItem('paymentMethods');
+    
+    const defaultPaymentMethods = [
+      { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
+      { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
+      { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
+      { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
+      { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
+      { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
+      { id: 7, name: "QR Code", nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
+      { id: 8, name: "ShopeePay", nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
+      { id: 9, name: "GrabPay", nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
+    ];
+
+    const paymentMethods = savedPaymentMethods 
+      ? JSON.parse(savedPaymentMethods) 
+      : defaultPaymentMethods;
+
+    // Filter to only return enabled payment methods and map to modal format
+    return paymentMethods
+      .filter(method => method.enabled)
+      .map(method => ({
+        id: method.nameKey,
+        name: method.name,
+        icon: getIconComponent(method.type),
+        description: getMethodDescription(method.nameKey)
+      }));
+  };
+
+  const getIconComponent = (type: string) => {
+    switch (type) {
+      case 'cash': return Banknote;
+      case 'card':
+      case 'debit': 
+      case 'digital': return CreditCard;
+      case 'qr': return QrCode;
+      default: return Wallet;
     }
-  ];
+  };
+
+  const getMethodDescription = (nameKey: string) => {
+    const descriptions = {
+      cash: "Tiền mặt",
+      creditCard: "Visa, Mastercard",
+      debitCard: "ATM Card", 
+      momo: "Ví điện tử MoMo",
+      zalopay: "Ví điện tử ZaloPay",
+      vnpay: "Ví điện tử VNPay",
+      qrCode: "QR Banking",
+      shopeepay: "Ví điện tử ShopeePay",
+      grabpay: "Ví điện tử GrabPay"
+    };
+    return descriptions[nameKey as keyof typeof descriptions] || "Phương thức thanh toán";
+  };
+
+  const paymentMethods = getPaymentMethods();
 
   const handleSelect = async (method: string) => {
-    if (method === "bank_transfer") {
-      // Generate QR code for bank transfer
+    if (method === "qrCode" || method === "vnpay") {
+      // Generate QR code for QR-based payments
       try {
-        const qrData = `Bank Transfer Payment\nAmount: ${total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nTime: ${new Date().toLocaleString('vi-VN')}`;
+        const qrData = `Payment via ${method}\nAmount: ${total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nTime: ${new Date().toLocaleString('vi-VN')}`;
         const qrUrl = await QRCodeLib.toDataURL(qrData, {
           width: 256,
           margin: 2,
@@ -78,7 +110,7 @@ export function PaymentMethodModal({
   };
 
   const handleQRComplete = () => {
-    onSelectMethod("bank_transfer");
+    onSelectMethod("qrCode");
     setShowQRCode(false);
     setQrCodeUrl("");
     onClose();
