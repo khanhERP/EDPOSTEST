@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -353,7 +352,7 @@ export function FinancialReport() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
-            <div className="h-[400px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
+            <div className="h-[300px] sm:h-[350px] lg:h-[400px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-3 sm:p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-indigo-50/20 rounded-xl"></div>
               <div className="absolute top-4 right-4 flex items-center gap-2 text-sm text-gray-500">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -475,7 +474,7 @@ export function FinancialReport() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
-            <div className="h-[400px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
+            <div className="h-[300px] sm:h-[350px] lg:h-[400px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-3 sm:p-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-green-50/30 to-emerald-50/20 rounded-xl"></div>
               <div className="absolute top-4 right-4 flex items-center gap-2 text-sm text-gray-500">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
