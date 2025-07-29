@@ -36,7 +36,10 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
 
       const response = await fetch(`/api/products?${params}`);
       if (!response.ok) throw new Error('Failed to fetch products');
-      return response.json();
+      const allProducts = await response.json();
+      
+      // Filter out raw materials (productType = 2)
+      return allProducts.filter((product: any) => product.productType !== 2);
     },
   });
 
