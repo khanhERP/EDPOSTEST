@@ -376,9 +376,13 @@ export default function InventoryPage() {
       console.log("Creating product with data:", newProductData);
       createProductMutation.mutate(newProductData);
     } else {
-      // Updating existing product stock
-      console.log("Updating stock with data:", data);
-      updateStockMutation.mutate(data);
+      // Updating existing product stock - include trackInventory
+      const updateData = {
+        ...data,
+        trackInventory: data.trackInventory !== false
+      };
+      console.log("Updating stock with data:", updateData);
+      updateStockMutation.mutate(updateData);
     }
   };
 
