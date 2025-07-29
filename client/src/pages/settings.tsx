@@ -1243,8 +1243,7 @@ export default function Settings() {
                                           (p: any) =>
                                             p.categoryId === category.id,
                                         ).length
-                                      : 0}{" "}
-                                    품목
+                                      : 0} sản phẩm
                                   </p>
                                 </div>
                               </div>
@@ -1431,8 +1430,7 @@ export default function Settings() {
 
                   <div className="flex justify-between items-center mt-6">
                     <div className="text-sm text-gray-600">
-                      {t("settings.total")} {filteredProducts.length}개
-                      품목 표시 중
+                      {t("settings.total")} {filteredProducts.length} sản phẩm đang hiển thị
                     </div>
                   </div>
                 </CardContent>
