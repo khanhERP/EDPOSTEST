@@ -476,7 +476,7 @@ export default function Settings() {
     if (categoryProducts && categoryProducts.length > 0) {
       toast({
         title: t("common.error"),
-        description: `Không thể xóa danh mục này vì còn ${categoryProducts.length} sản phẩm`,
+        description: `Không thể xóa danh mục này vì còn ${categoryProducts.length} sản phẩm. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.`,
         variant: "destructive",
       });
       return;
@@ -493,7 +493,8 @@ export default function Settings() {
         });
 
         if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          const errorData = await response.json();
+          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
         }
 
         // Refetch data immediately
@@ -506,9 +507,19 @@ export default function Settings() {
         });
       } catch (error) {
         console.error("Category delete error:", error);
+        
+        let errorMessage = "Có lỗi xảy ra khi xóa danh mục";
+        if (error instanceof Error) {
+          if (error.message.includes("products")) {
+            errorMessage = "Không thể xóa danh mục vì vẫn còn sản phẩm trong danh mục này. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.";
+          } else {
+            errorMessage = error.message;
+          }
+        }
+        
         toast({
           title: t("common.error"),
-          description: "Có lỗi xảy ra khi xóa danh mục",
+          description: errorMessage,
           variant: "destructive",
         });
       }

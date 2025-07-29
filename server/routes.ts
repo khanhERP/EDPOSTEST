@@ -108,7 +108,7 @@ export async function registerRoutes(app: Express): Promise {
       const products = await storage.getProductsByCategory(categoryId);
       if (products.length > 0) {
         return res.status(400).json({ 
-          error: `Cannot delete category. It has ${products.length} products.` 
+          error: `Không thể xóa danh mục vì còn ${products.length} sản phẩm. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.` 
         });
       }
 
@@ -116,7 +116,15 @@ export async function registerRoutes(app: Express): Promise {
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting category:", error);
-      res.status(500).json({ error: "Failed to delete category" });
+      
+      // Handle foreign key constraint errors
+      if (error instanceof Error && error.message.includes('foreign key constraint')) {
+        return res.status(400).json({ 
+          error: "Không thể xóa danh mục vì vẫn còn sản phẩm thuộc danh mục này. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước." 
+        });
+      }
+      
+      res.status(500).json({ error: "Có lỗi xảy ra khi xóa danh mục" });
     }
   });
 
