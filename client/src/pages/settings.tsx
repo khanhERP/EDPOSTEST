@@ -96,6 +96,7 @@ export default function Settings() {
   // Employee management state
   const [showEmployeeForm, setShowEmployeeForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
+  const [employeeSearchTerm, setEmployeeSearchTerm] = useState("");
 
   // E-invoice management state
   const [showEInvoiceForm, setShowEInvoiceForm] = useState(false);
@@ -196,6 +197,20 @@ export default function Settings() {
 
   // Sort employees by ID descending (newest first)
   const employeesData = employeesRawData?.sort((a, b) => b.id - a.id);
+
+  // Filter employees based on search term
+  const filteredEmployees = employeesData
+    ? employeesData.filter(
+        (employee: any) =>
+          employee.name
+            .toLowerCase()
+            .includes(employeeSearchTerm.toLowerCase()) ||
+          employee.employeeId
+            .toLowerCase()
+            .includes(employeeSearchTerm.toLowerCase()) ||
+          (employee.phone && employee.phone.includes(employeeSearchTerm)),
+      )
+    : [];
 
   // Fetch categories
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery<
@@ -2108,11 +2123,11 @@ export default function Settings() {
             <div className="space-y-6">
               <Card className="bg-white/80 backdrop-blur-sm border-white/20">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 font-medium">
                     <Users className="w-5 h-5 text-green-600" />
                     {t("settings.employeeManagement")}
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="font-normal">
                     {t("settings.employeeManagementDesc")}
                   </CardDescription>
                 </CardHeader>
@@ -2121,15 +2136,17 @@ export default function Settings() {
                     <div className="flex items-center gap-4">
                       <Input
                         placeholder={t("employees.searchPlaceholder")}
-                        className="w-64"
+                        className="w-64 font-normal"
+                        value={employeeSearchTerm}
+                        onChange={(e) => setEmployeeSearchTerm(e.target.value)}
                       />
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="font-normal">
                         <Search className="w-4 h-4 mr-2" />
                         {t("common.search")}
                       </Button>
                     </div>
                     <Button
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-green-600 hover:bg-green-700 font-normal"
                       onClick={() => setShowEmployeeForm(true)}
                     >
                       <Plus className="w-4 h-4 mr-2" />
@@ -2139,18 +2156,18 @@ export default function Settings() {
 
                   {employeesLoading ? (
                     <div className="text-center py-8">
-                      <p className="text-gray-500">
+                      <p className="text-gray-500 font-normal">
                         {t("employeesSettings.loadingEmployeeData")}
                       </p>
                     </div>
-                  ) : !employeesData || employeesData.length === 0 ? (
+                  ) : !filteredEmployees || filteredEmployees.length === 0 ? (
                     <div className="text-center py-8">
                       <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-500">
-                        {t("employeesSettings.noRegisteredEmployees")}
+                      <p className="text-gray-500 font-normal">
+                        {employeeSearchTerm ? "Không tìm thấy nhân viên nào phù hợp" : t("employeesSettings.noRegisteredEmployees")}
                       </p>
-                      <p className="text-sm text-gray-400 mt-2">
-                        {t("employeesSettings.addEmployeeToStart")}
+                      <p className="text-sm text-gray-400 mt-2 font-normal">
+                        {employeeSearchTerm ? "Thử tìm kiếm với từ khóa khác" : t("employeesSettings.addEmployeeToStart")}
                       </p>
                     </div>
                   ) : (
@@ -2179,15 +2196,15 @@ export default function Settings() {
                           </tr>
                         </thead>
                         <tbody className="divide-y">
-                          {employeesData.map((employee: any) => (
+                          {filteredEmployees.map((employee: any) => (
                             <tr key={employee.id} className="hover:bg-gray-50">
                               <td className="px-4 py-3">
-                                <div className="font-mono text-sm truncate" title={employee.employeeId}>
+                                <div className="font-mono text-sm truncate font-normal" title={employee.employeeId}>
                                   {employee.employeeId}
                                 </div>
                               </td>
                               <td className="px-4 py-3">
-                                <div className="font-medium truncate" title={employee.name}>
+                                <div className="font-normal text-sm truncate" title={employee.name}>
                                   {employee.name}
                                 </div>
                               </td>
@@ -2200,7 +2217,7 @@ export default function Settings() {
                                         ? "default"
                                         : "secondary"
                                   }
-                                  className="text-xs"
+                                  className="text-xs font-normal"
                                 >
                                   {employee.role === "admin"
                                     ? t("employees.roles.admin")
@@ -2212,7 +2229,7 @@ export default function Settings() {
                                 </Badge>
                               </td>
                               <td className="px-4 py-3">
-                                <div className="text-sm text-gray-600 truncate" title={employee.phone || "-"}>
+                                <div className="text-sm text-gray-600 truncate font-normal" title={employee.phone || "-"}>
                                   {employee.phone || "-"}
                                 </div>
                               </td>
@@ -2221,7 +2238,7 @@ export default function Settings() {
                                   variant={
                                     employee.isActive ? "default" : "secondary"
                                   }
-                                  className={`text-xs ${
+                                  className={`text-xs font-normal ${
                                     employee.isActive
                                       ? "bg-green-100 text-green-800"
                                       : ""
@@ -2265,16 +2282,11 @@ export default function Settings() {
                   )}
 
                   <div className="flex justify-between items-center mt-6">
-                    <div className="text-sm text-gray-600">
-                      {t("employees.total")}{" "}
-                      {employeesData ? employeesData.length : 0} nhân viên
+                    <div className="text-sm text-gray-600 font-normal">
+                      Tổng số nhân viên: {employeesData ? employeesData.length : 0}
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Users className="w-4 h-4 mr-2" />
-                        {t("settings.goToEmployees")}
-                      </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="font-normal">
                         <Clock className="w-4 h-4 mr-2" />
                         {t("attendance.title")}
                       </Button>
