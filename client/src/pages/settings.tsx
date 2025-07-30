@@ -2189,7 +2189,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                   <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-4">
                       <Input
-                        placeholder={t("employees.searchPlaceholder")}
+                        placeholder="Tìm kiếm theo tên, mã NV, số điện thoại..."
                         className="w-64"
                         value={employeeSearchTerm}
                         onChange={(e) => setEmployeeSearchTerm(e.target.value)}
