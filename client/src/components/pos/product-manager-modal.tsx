@@ -303,6 +303,7 @@ export function ProductManagerModal({
         "SKU",
         "Danh mục",
         "Giá bán",
+        "% Thuế",
         "Tồn kho",
         "Hình ảnh (URL)",
       ],
@@ -315,6 +316,7 @@ export function ProductManagerModal({
         product.sku,
         getCategoryName(product.categoryId),
         parseFloat(product.price),
+        product.taxRate || "8.00",
         product.stock,
         product.imageUrl || "",
       ]);
@@ -329,6 +331,7 @@ export function ProductManagerModal({
       { wch: 15 }, // SKU
       { wch: 15 }, // Danh mục
       { wch: 12 }, // Giá bán
+      { wch: 10 }, // % Thuế
       { wch: 10 }, // Tồn kho
       { wch: 30 }, // Hình ảnh URL
     ];
