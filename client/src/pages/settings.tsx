@@ -1620,17 +1620,10 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                     <div>{connection.cqtCode}</div>
                                     <div>{connection.notes}</div>
                                     <div className="text-center">
-                                      <Badge
-                                        variant={
-                                          connection.isDefault
-                                            ? "default"
-                                            : "secondary"
-                                        }
-                                      >
-                                        {connection.isDefault
-                                          ? "Mặc định"
-                                          : "Không mặc định"}
-                                      </Badge>
+                                      <Checkbox
+                                        checked={connection.isDefault}
+                                        readOnly
+                                      />
                                     </div>
                                     <div className="text-center">
                                       <div className="flex items-center justify-center gap-1">
