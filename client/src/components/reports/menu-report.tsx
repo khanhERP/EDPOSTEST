@@ -249,7 +249,7 @@ export function MenuReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{t("reports.totalItemsSold")}</p>
+                <p className="text-sm font-medium text-gray-600">{t("reports.totalOrders")}</p>
                 <p className="text-2xl font-bold text-blue-600">
                   {displayData.totalQuantity.toLocaleString()}
                 </p>
