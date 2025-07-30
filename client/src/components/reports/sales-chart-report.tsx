@@ -45,7 +45,7 @@ export function SalesChartReport() {
 
   const [concernType, setConcernType] = useState("time");
   const [startDate, setStartDate] = useState<string>(
-    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    new Date().toISOString().split("T")[0],
   );
   const [endDate, setEndDate] = useState<string>(
     new Date().toISOString().split("T")[0],
@@ -566,11 +566,9 @@ export function SalesChartReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            {t('reports.salesReport')}
+            {t("reports.salesReport")}
           </CardTitle>
-          <CardDescription>
-            {getReportTitle()}
-          </CardDescription>
+          <CardDescription>{getReportTitle()}</CardDescription>
         </CardHeader>
       </Card>
 

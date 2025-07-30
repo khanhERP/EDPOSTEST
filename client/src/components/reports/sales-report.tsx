@@ -14,12 +14,8 @@ export function SalesReport() {
   const { t } = useTranslation();
   
   const [dateRange, setDateRange] = useState("week");
-  const [startDate, setStartDate] = useState<string>(
-    "2025-01-15" // Start from when sample data begins
-  );
-  const [endDate, setEndDate] = useState<string>(
-    "2025-01-20" // End at date with sample data
-  );
+  const [startDate, setStartDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [endDate, setEndDate] = useState<string>(new Date().toISOString().split("T")[0]);
 
   const { data: transactions } = useQuery({
     queryKey: ['/api/transactions'],

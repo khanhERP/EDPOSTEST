@@ -101,7 +101,8 @@ export default function Settings() {
   // E-invoice management state
   const [showEInvoiceForm, setShowEInvoiceForm] = useState(false);
   const [editingEInvoice, setEditingEInvoice] = useState<any>(null);
-  const [showEInvoiceDeleteDialog, setShowEInvoiceDeleteDialog] = useState(false);
+  const [showEInvoiceDeleteDialog, setShowEInvoiceDeleteDialog] =
+    useState(false);
   const [eInvoiceToDelete, setEInvoiceToDelete] = useState<any>(null);
   const [eInvoiceForm, setEInvoiceForm] = useState({
     taxCode: "",
@@ -129,11 +130,13 @@ export default function Settings() {
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<any>(null);
-  const [showCustomerDeleteDialog, setShowCustomerDeleteDialog] = useState(false);
+  const [showCustomerDeleteDialog, setShowCustomerDeleteDialog] =
+    useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<any>(null);
   const [showProductDeleteDialog, setShowProductDeleteDialog] = useState(false);
   const [productToDelete, setProductToDelete] = useState<any>(null);
-  const [showEmployeeDeleteDialog, setShowEmployeeDeleteDialog] = useState(false);
+  const [showEmployeeDeleteDialog, setShowEmployeeDeleteDialog] =
+    useState(false);
   const [employeeToDelete, setEmployeeToDelete] = useState<any>(null);
 
   const confirmDeleteEmployee = async () => {
@@ -198,7 +201,9 @@ export default function Settings() {
   });
 
   // Fetch employees
-  const { data: employeesRawData, isLoading: employeesLoading } = useQuery<any[]>({
+  const { data: employeesRawData, isLoading: employeesLoading } = useQuery<
+    any[]
+  >({
     queryKey: ["/api/employees"],
   });
 
@@ -231,7 +236,7 @@ export default function Settings() {
     queryKey: ["/api/products", { includeInactive: true }],
     queryFn: async () => {
       const response = await fetch("/api/products?includeInactive=true");
-      if (!response.ok) throw new Error('Failed to fetch products');
+      if (!response.ok) throw new Error("Failed to fetch products");
       return response.json();
     },
   });
@@ -268,13 +273,13 @@ export default function Settings() {
 
   // Load payment methods from localStorage on mount
   useEffect(() => {
-    const savedPaymentMethods = localStorage.getItem('paymentMethods');
+    const savedPaymentMethods = localStorage.getItem("paymentMethods");
     if (savedPaymentMethods) {
       try {
         const parsed = JSON.parse(savedPaymentMethods);
         setPaymentMethods(parsed);
       } catch (error) {
-        console.error('Error parsing saved payment methods:', error);
+        console.error("Error parsing saved payment methods:", error);
       }
     }
   }, []);
@@ -387,7 +392,7 @@ export default function Settings() {
   const saveStoreSettings = () => {
     updateStoreSettingsMutation.mutate(storeSettings);
     // Save payment methods to localStorage so other components can access them
-    localStorage.setItem('paymentMethods', JSON.stringify(paymentMethods));
+    localStorage.setItem("paymentMethods", JSON.stringify(paymentMethods));
   };
 
   const togglePaymentMethod = (id: number) => {
@@ -396,7 +401,7 @@ export default function Settings() {
     );
     setPaymentMethods(updatedMethods);
     // Save to localStorage immediately when toggled
-    localStorage.setItem('paymentMethods', JSON.stringify(updatedMethods));
+    localStorage.setItem("paymentMethods", JSON.stringify(updatedMethods));
   };
 
   const addPaymentMethod = () => {
@@ -411,14 +416,14 @@ export default function Settings() {
     const updatedMethods = [...paymentMethods, newMethod];
     setPaymentMethods(updatedMethods);
     // Save to localStorage immediately when added
-    localStorage.setItem('paymentMethods', JSON.stringify(updatedMethods));
+    localStorage.setItem("paymentMethods", JSON.stringify(updatedMethods));
   };
 
   const removePaymentMethod = (id: number) => {
     const updatedMethods = paymentMethods.filter((method) => method.id !== id);
     setPaymentMethods(updatedMethods);
     // Save to localStorage immediately when removed
-    localStorage.setItem('paymentMethods', JSON.stringify(updatedMethods));
+    localStorage.setItem("paymentMethods", JSON.stringify(updatedMethods));
   };
 
   // Customer management functions
@@ -436,8 +441,8 @@ export default function Settings() {
     if (!customerToDelete) return;
 
     try {
-      const response = await fetch(`/api/customers/${customerToDelete.id}`, { 
-        method: "DELETE" 
+      const response = await fetch(`/api/customers/${customerToDelete.id}`, {
+        method: "DELETE",
       });
 
       if (!response.ok) {
@@ -610,7 +615,7 @@ export default function Settings() {
   const handleDeleteCategory = async (categoryId: number) => {
     // Check if category has products
     const categoryProducts = productsData?.filter(
-      (product: any) => product.categoryId === categoryId
+      (product: any) => product.categoryId === categoryId,
     );
 
     if (categoryProducts && categoryProducts.length > 0) {
@@ -638,7 +643,9 @@ export default function Settings() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        throw new Error(
+          errorData.error || `HTTP error! status: ${response.status}`,
+        );
       }
 
       // Refetch data immediately
@@ -658,7 +665,8 @@ export default function Settings() {
       let errorMessage = "Có lỗi xảy ra khi xóa danh mục";
       if (error instanceof Error) {
         if (error.message.includes("products")) {
-          errorMessage = "Không thể xóa danh mục vì vẫn còn sản phẩm trong danh mục này. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.";
+          errorMessage =
+            "Không thể xóa danh mục vì vẫn còn sản phẩm trong danh mục này. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.";
         } else {
           errorMessage = error.message;
         }
@@ -745,7 +753,10 @@ export default function Settings() {
     }
   };
 
-  const handleDeleteProduct = async (productId: number, productName: string) => {
+  const handleDeleteProduct = async (
+    productId: number,
+    productName: string,
+  ) => {
     setProductToDelete({ id: productId, name: productName });
     setShowProductDeleteDialog(true);
   };
@@ -776,9 +787,9 @@ export default function Settings() {
   };
 
   const handleEditCategory = (category: any) => {
-    setCategoryForm({ 
-      name: category.name || "", 
-      icon: category.icon || "fas fa-utensils" 
+    setCategoryForm({
+      name: category.name || "",
+      icon: category.icon || "fas fa-utensils",
     });
     setEditingCategory(category);
     setShowCategoryForm(true);
@@ -814,18 +825,25 @@ export default function Settings() {
     : [];
 
   // Fetch E-invoice connections
-  const { data: eInvoiceConnections = [], isLoading: eInvoiceLoading } = useQuery<any[]>({
-    queryKey: ["/api/einvoice-connections"],
-  });
+  const { data: eInvoiceConnections = [], isLoading: eInvoiceLoading } =
+    useQuery<any[]>({
+      queryKey: ["/api/einvoice-connections"],
+    });
 
   // E-invoice mutations
   const createEInvoiceMutation = useMutation({
     mutationFn: async (data: any) => {
-      const response = await apiRequest("POST", "/api/einvoice-connections", data);
+      const response = await apiRequest(
+        "POST",
+        "/api/einvoice-connections",
+        data,
+      );
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/einvoice-connections"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/einvoice-connections"],
+      });
       toast({
         title: "Thành công",
         description: "Kết nối HĐĐT đã được tạo thành công",
@@ -836,7 +854,7 @@ export default function Settings() {
     onError: () => {
       toast({
         title: "Lỗi",
-        description: "Có lỗi xảy ra khi tạo kết nối HĐĐT",
+        description: "Có l ��i xảy ra khi tạo kết nối HĐĐT",
         variant: "destructive",
       });
     },
@@ -844,11 +862,17 @@ export default function Settings() {
 
   const updateEInvoiceMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const response = await apiRequest("PUT", `/api/einvoice-connections/${id}`, data);
+      const response = await apiRequest(
+        "PUT",
+        `/api/einvoice-connections/${id}`,
+        data,
+      );
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/einvoice-connections"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/einvoice-connections"],
+      });
       toast({
         title: "Thành công",
         description: "Kết nối HĐĐT đã được cập nhật thành công",
@@ -867,11 +891,16 @@ export default function Settings() {
 
   const deleteEInvoiceMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest("DELETE", `/api/einvoice-connections/${id}`);
+      const response = await apiRequest(
+        "DELETE",
+        `/api/einvoice-connections/${id}`,
+      );
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/einvoice-connections"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/einvoice-connections"],
+      });
       toast({
         title: "Thành công",
         description: "Kết nối HĐĐT đã được xóa thành công",
@@ -941,7 +970,7 @@ export default function Settings() {
     }
 
     setEInvoiceFormErrors(errors);
-    return !Object.values(errors).some(error => error !== "");
+    return !Object.values(errors).some((error) => error !== "");
   };
 
   const handleCreateEInvoice = () => {
@@ -971,7 +1000,7 @@ export default function Settings() {
 
     updateEInvoiceMutation.mutate({
       id: editingEInvoice.id,
-      data: eInvoiceForm
+      data: eInvoiceForm,
     });
   };
 
@@ -1009,12 +1038,12 @@ export default function Settings() {
   };
 
   const toggleEInvoiceDefault = (id: number) => {
-    const connection = eInvoiceConnections.find(conn => conn.id === id);
+    const connection = eInvoiceConnections.find((conn) => conn.id === id);
     if (!connection) return;
 
     updateEInvoiceMutation.mutate({
       id,
-      data: { ...connection, isDefault: !connection.isDefault }
+      data: { ...connection, isDefault: !connection.isDefault },
     });
   };
 
@@ -1062,1313 +1091,1032 @@ export default function Settings() {
             className="space-y-6"
           >
             <div className="w-full overflow-hidden">
-              <TabsList className="w-full flex flex-wrap items-center justify-center gap-2 bg-white/80 backdrop-blur-sm border border```text
+              <TabsList
+                className="w-full flex flex-wrap items-center justify-center gap-2 bg-white/80 backdrop-blur-sm border border```text
 gray-200 rounded-xl p-4 min-h-[70px]"
               >
-                <TabsTrigger 
-                  value="store" 
+                <TabsTrigger
+                  value="store"
                   className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium text-center flex-shrink-0"
                 >
                   <Store className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden lg:inline">{t("settings.storeInfo")}</span>
+                  <span className="hidden lg:inline">
+                    {t("settings.storeInfo")}
+                  </span>
                   <span className="lg:hidden">Cửa hàng</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="customers" 
+                <TabsTrigger
+                  value="customers"
                   className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium text-center flex-shrink-0"
                 >
                   <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden lg:inline">{t("customers.title")}</span>
+                  <span className="hidden lg:inline">
+                    {t("customers.title")}
+                  </span>
                   <span className="lg:hidden">Khách hàng</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="categories" 
+                <TabsTrigger
+                  value="categories"
                   className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium text-center flex-shrink-0"
                 >
                   <Package className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden lg:inline">{t("settings.categories")}</span>
+                  <span className="hidden lg:inline">
+                    {t("settings.categories")}
+                  </span>
                   <span className="lg:hidden">Sản phẩm</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="employees" 
+                <TabsTrigger
+                  value="employees"
                   className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium text-center flex-shrink-0"
                 >
                   <Users className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden lg:inline">{t("settings.employees")}</span>
+                  <span className="hidden lg:inline">
+                    {t("settings.employees")}
+                  </span>
                   <span className="lg:hidden">Nhân viên</span>
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="payments" 
+                <TabsTrigger
+                  value="payments"
                   className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium text-center flex-shrink-0"
                 >
                   <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden lg:inline">{t("settings.paymentMethods")}</span>
+                  <span className="hidden lg:inline">
+                    {t("settings.paymentMethods")}
+                  </span>
                   <span className="lg:hidden">Thanh toán</span>
                 </TabsTrigger>
               </TabsList>
             </div>
 
-          {/* Store Information Tab */}
-          <TabsContent value="store">
-            <Tabs defaultValue="basic" className="space-y-6">
-              <TabsList className="flex overflow-x-auto justify-start md:justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2 scrollbar-hide"
-                style={{
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                }}
-              >
-                <TabsTrigger 
-                  value="basic" 
-                  className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
+            {/* Store Information Tab */}
+            <TabsContent value="store">
+              <Tabs defaultValue="basic" className="space-y-6">
+                <TabsList
+                  className="flex overflow-x-auto justify-start md:justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2 scrollbar-hide"
+                  style={{
+                    scrollbarWidth: "none",
+                    msOverflowStyle: "none",
+                  }}
                 >
-                  <Store className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden md:inline">Thông tin cơ bản</span>
-                  <span className="md:hidden">Cơ bản</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="einvoice" 
-                  className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
-                >
-                  <SettingsIcon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden md:inline">Thiết lập HĐĐT</span>
-                  <span className="md:hidden">HĐĐT</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="operations" 
-                  className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
-                >
-                  <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                  <span className="hidden md:inline">Hoạt động</span>
-                  <span className="md:hidden">HĐ</span>
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="basic">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <Store className="w-5 h-5 text-green-600" />
-                        {t("settings.basicInfo")}
-                      </CardTitle>
-                      <CardDescription>
-                        {t("settings.basicInfoDesc")}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="storeName">{t("settings.storeName")}</Label>
-                        <Input
-                          id="storeName"
-                          value={storeSettings.storeName}
-                          onChange={(e) =>
-                            handleStoreSettingChange("storeName", e.target.value)
-                          }
-                          placeholder={t("settings.storeNamePlaceholder")}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="storeCode">{t("settings.storeCode")}</Label>
-                        <Input
-                          id="storeCode"
-                          value={storeSettings.storeCode}
-                          onChange={(e) =>
-                            handleStoreSettingChange("storeCode", e.target.value)
-                          }
-                          placeholder={t("settings.storeCodePlaceholder")}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="taxId">{t("settings.taxId")}</Label>
-                        <Input
-                          id="taxId"
-                          value={storeSettings.taxId}
-                          onChange={(e) =>
-                            handleStoreSettingChange("taxId", e.target.value)
-                          }
-                          placeholder={t("settings.taxIdPlaceholder")}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="businessType">{t("settings.businessType")}</Label>
-                        <Select
-                          value={storeSettings.businessType}
-                          onValueChange={(value) =>
-                            handleStoreSettingChange("businessType", value)
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder={t("settings.businessTypePlaceholder")}
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="retail">
-                              {t("settings.posRetail")}
-                            </SelectItem>
-                            <SelectItem value="restaurant">
-                              {t("settings.posRestaurant")}
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <MapPin className="w-5 h-5 text-green-600" />
-                        {t("settings.contactInfo")}
-                      </CardTitle>
-                      <CardDescription>
-                        {t("settings.contactInfoDesc")}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="address">{t("settings.address")}</Label>
-                        <Textarea
-                          id="address"
-                          value={storeSettings.address}
-                          onChange={(e) =>
-                            handleStoreSettingChange("address", e.target.value)
-                          }
-                          placeholder={t("settings.addressPlaceholder")}
-                          rows={3}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">{t("settings.phone")}</Label>
-                        <Input
-                          id="phone"
-                          type="tel"
-                          value={storeSettings.phone}
-                          onChange={(e) =>
-                            handleStoreSettingChange("phone", e.target.value)
-                          }
-                          placeholder={t("settings.phonePlaceholder")}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">{t("settings.email")}</Label>
-                        <Input
-                          id="email"
-                          type="email"
-                          value={storeSettings.email}
-                          onChange={(e) =>
-                            handleStoreSettingChange("email", e.target.value)
-                          }
-                          placeholder={t("settings.emailPlaceholder")}
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-                <div className="flex justify-end mt-6">
-                  <Button
-                    onClick={saveStoreSettings}
-                    disabled={updateStoreSettingsMutation.isPending}
-                    className="bg-green-600 hover:bg-green-700"
+                  <TabsTrigger
+                    value="basic"
+                    className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
                   >
-                    <Save className="w-4 h-4 mr-2" />
-                    {updateStoreSettingsMutation.isPending
-                      ? t("common.loading")
-                      : t("common.save")}
-                  </Button>
-                </div>
-              </TabsContent>
+                    <Store className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                    <span className="hidden md:inline">Thông tin cơ bản</span>
+                    <span className="md:hidden">Cơ bản</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="einvoice"
+                    className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
+                  >
+                    <SettingsIcon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                    <span className="hidden md:inline">Thiết lập HĐĐT</span>
+                    <span className="md:hidden">HĐĐT</span>
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="operations"
+                    className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
+                  >
+                    <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                    <span className="hidden md:inline">Hoạt động</span>
+                    <span className="md:hidden">HĐ</span>
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="einvoice">
-                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <SettingsIcon className="w-5 h-5 text-green-600" />
-                      Thiết lập HĐĐT
-                    </CardTitle>
-                    <CardDescription>
-                      Quản lý kết nối với các nhà cung cấp dịch vụ hóa đơn điện tử
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-6">
-                      {/* Sub tabs for E-invoice */}
-                      <Tabs defaultValue="connections" className="w-full">
-                        <TabsList className="flex overflow-x-auto justify-start md:justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2 scrollbar-hide"
-                          style={{
-                            scrollbarWidth: 'none',
-                            msOverflowStyle: 'none',
-                          }}
-                        >
-                          <TabsTrigger 
-                            value="connections"
-                            className="text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
+                <TabsContent value="basic">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Store className="w-5 h-5 text-green-600" />
+                          {t("settings.basicInfo")}
+                        </CardTitle>
+                        <CardDescription>
+                          {t("settings.basicInfoDesc")}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="storeName">
+                            {t("settings.storeName")}
+                          </Label>
+                          <Input
+                            id="storeName"
+                            value={storeSettings.storeName}
+                            onChange={(e) =>
+                              handleStoreSettingChange(
+                                "storeName",
+                                e.target.value,
+                              )
+                            }
+                            placeholder={t("settings.storeNamePlaceholder")}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="storeCode">
+                            {t("settings.storeCode")}
+                          </Label>
+                          <Input
+                            id="storeCode"
+                            value={storeSettings.storeCode}
+                            onChange={(e) =>
+                              handleStoreSettingChange(
+                                "storeCode",
+                                e.target.value,
+                              )
+                            }
+                            placeholder={t("settings.storeCodePlaceholder")}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="taxId">{t("settings.taxId")}</Label>
+                          <Input
+                            id="taxId"
+                            value={storeSettings.taxId}
+                            onChange={(e) =>
+                              handleStoreSettingChange("taxId", e.target.value)
+                            }
+                            placeholder={t("settings.taxIdPlaceholder")}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="businessType">
+                            {t("settings.businessType")}
+                          </Label>
+                          <Select
+                            value={storeSettings.businessType}
+                            onValueChange={(value) =>
+                              handleStoreSettingChange("businessType", value)
+                            }
                           >
-                            <span className="hidden md:inline">Kênh kết nối HĐĐT</span>
-                            <span className="md:hidden">Kết nối</span>
-                          </TabsTrigger>
-                          <TabsTrigger 
-                            value="settings"
-                            className="text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
-                          >
-                            <span className="hidden md:inline">Mẫu số HĐĐT</span>
-                            <span className="md:hidden">Mẫu số</span>
-                          </TabsTrigger>
-                        </TabsList>
+                            <SelectTrigger>
+                              <SelectValue
+                                placeholder={t(
+                                  "settings.businessTypePlaceholder",
+                                )}
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="retail">
+                                {t("settings.posRetail")}
+                              </SelectItem>
+                              <SelectItem value="restaurant">
+                                {t("settings.posRestaurant")}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                        <TabsContent value="connections" className="mt-6">
-                          <div className="flex justify-between items-center mb-6">
-                            <div>
-                              <h3 className="text-lg font-medium">Danh sách kết nối</h3>
-                              <p className="text-sm text-gray-600">Quản lý các kết nối với nhà cung cấp HĐĐT</p>
-                            </div>
-                            <Button
-                              onClick={() => {
-                                resetEInvoiceForm();
-                                setShowEInvoiceForm(true);
-                              }}
-                              className="bg-blue-600 hover:bg-blue-700"
+                    <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <MapPin className="w-5 h-5 text-green-600" />
+                          {t("settings.contactInfo")}
+                        </CardTitle>
+                        <CardDescription>
+                          {t("settings.contactInfoDesc")}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="address">
+                            {t("settings.address")}
+                          </Label>
+                          <Textarea
+                            id="address"
+                            value={storeSettings.address}
+                            onChange={(e) =>
+                              handleStoreSettingChange(
+                                "address",
+                                e.target.value,
+                              )
+                            }
+                            placeholder={t("settings.addressPlaceholder")}
+                            rows={3}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="phone">{t("settings.phone")}</Label>
+                          <Input
+                            id="phone"
+                            type="tel"
+                            value={storeSettings.phone}
+                            onChange={(e) =>
+                              handleStoreSettingChange("phone", e.target.value)
+                            }
+                            placeholder={t("settings.phonePlaceholder")}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="email">{t("settings.email")}</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={storeSettings.email}
+                            onChange={(e) =>
+                              handleStoreSettingChange("email", e.target.value)
+                            }
+                            placeholder={t("settings.emailPlaceholder")}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  <div className="flex justify-end mt-6">
+                    <Button
+                      onClick={saveStoreSettings}
+                      disabled={updateStoreSettingsMutation.isPending}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {updateStoreSettingsMutation.isPending
+                        ? t("common.loading")
+                        : t("common.save")}
+                    </Button>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="einvoice">
+                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <SettingsIcon className="w-5 h-5 text-green-600" />
+                        Thiết lập HĐĐT
+                      </CardTitle>
+                      <CardDescription>
+                        Quản lý kết nối với các nhà cung cấp dịch vụ hóa đơn
+                        điện tử
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-6">
+                        {/* Sub tabs for E-invoice */}
+                        <Tabs defaultValue="connections" className="w-full">
+                          <TabsList
+                            className="flex overflow-x-auto justify-start md:justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2 scrollbar-hide"
+                            style={{
+                              scrollbarWidth: "none",
+                              msOverflowStyle: "none",
+                            }}
+                          >
+                            <TabsTrigger
+                              value="connections"
+                              className="text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
                             >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Thêm kết nối
-                            </Button>
-                          </div>
+                              <span className="hidden md:inline">
+                                Kênh kết nối HĐĐT
+                              </span>
+                              <span className="md:hidden">Kết nối</span>
+                            </TabsTrigger>
+                            <TabsTrigger
+                              value="settings"
+                              className="text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
+                            >
+                              <span className="hidden md:inline">
+                                Mẫu số HĐĐT
+                              </span>
+                              <span className="md:hidden">Mẫu số</span>
+                            </TabsTrigger>
+                          </TabsList>
 
-                          {/* E-invoice connections table */}
-                          <div className="rounded-md border bg-white">
-                            <div className="grid grid-cols-11 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                              <div className="text-center">Ký hiệu</div>
-                              <div>Mã số thuế</div>
-                              <div>ID đăng nhập</div>
-                              <div>Mật khẩu</div>
-                              <div>Phần mềm HĐ</div>
-                              <div>Đường dẫn đăng nhập</div>
-                              <div>Phương thức ký</div>
-                              <div>Loại mã CQT</div>
-                              <div>Ghi chú</div>
-                              <div className="text-center">Mặc định</div>
-                              <div className="text-center">Hành động</div>
-                            </div>
-
-                            <div className="divide-y">
-                              {eInvoiceConnections.map((connection) => (
-                                <div key={connection.id} className="grid grid-cols-11 gap-4 p-3 items-center text-sm">
-                                  <div className="text-center">{connection.symbol}</div>
-                                  <div className="font-mono">{connection.taxCode}</div>
-                                  <div>{connection.loginId}</div>
-                                  <div>{'*'.repeat(connection.password.length)}</div>
-                                  <div>
-                                    <Badge variant="outline">
-                                      {connection.softwareName}
-                                    </Badge>
-                                  </div>
-                                  <div className="text-blue-600 hover:underline cursor-pointer truncate">
-                                    {connection.loginUrl}
-                                  </div>
-                                  <div>{connection.signMethod}</div>
-                                  <div>{connection.cqtCode}</div>
-                                  <div>{connection.notes}</div>
-                                  <div className="text-center">
-                                    <Badge variant={connection.isDefault ? "default" : "secondary"}>
-                                      {connection.isDefault ? "Mặc định" : "Không mặc định"}
-                                    </Badge>
-                                  </div>
-                                  <div className="text-center">
-                                    <div className="flex items-center justify-center gap-1">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleEditEInvoice(connection)}
-                                      >
-                                        <Edit className="w-3 h-3" />
-                                      </Button>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="text-red-500 hover:text-red-700"
-                                        onClick={() => handleDeleteEInvoice(connection.id, connection.softwareName)}
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-
-                              {eInvoiceConnections.length === 0 && (
-                                <div className="grid grid-cols-11 gap-4 p-8 items-center text-sm text-gray-500">
-                                  <div className="col-span-11 text-center">
-                                    <div className="flex flex-col items-center gap-2">
-                                      <SettingsIcon className="w-8 h-8 text-gray-400" />
-                                      <p>Chưa có kết nối HĐĐT nào</p>
-                                      <p className="text-xs">Nhấn "Thêm kết nối" để bắt đầu</p>
-                                    </div>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </TabsContent>
-
-                        <TabsContent value="settings" className="mt-6">
-                          <div className="space-y-6">
-                            <div className="flex justify-between items-center">
+                          <TabsContent value="connections" className="mt-6">
+                            <div className="flex justify-between items-center mb-6">
                               <div>
-                                <h3 className="text-lg font-medium">Mẫu số HĐĐT</h3>
-                                <p className="text-sm text-gray-600">Quản lý các mẫu số hóa đơn điện tử</p>
+                                <h3 className="text-lg font-medium">
+                                  Danh sách kết nối
+                                </h3>
+                                <p className="text-sm text-gray-600">
+                                  Quản lý các kết nối với nhà cung cấp HĐĐT
+                                </p>
                               </div>
                               <Button
+                                onClick={() => {
+                                  resetEInvoiceForm();
+                                  setShowEInvoiceForm(true);
+                                }}
                                 className="bg-blue-600 hover:bg-blue-700"
                               >
                                 <Plus className="w-4 h-4 mr-2" />
-                                Thêm mẫu số
+                                Thêm kết nối
                               </Button>
                             </div>
 
-                            {/* Invoice templates table */}
+                            {/* E-invoice connections table */}
                             <div className="rounded-md border bg-white">
-                              <div className="grid grid-cols-8 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                                <div className="text-center">STT</div>
-                                <div>Tên</div>
-                                <div>Mẫu số</div>
-                                <div>Ký hiệu</div>
-                                <div>Ký hiệu</div>
-                                <div>C/K sử dụng</div>
+                              <div className="grid grid-cols-11 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                                <div className="text-center">Ký hiệu</div>
+                                <div>Mã số thuế</div>
+                                <div>ID đăng nhập</div>
+                                <div>Mật khẩu</div>
+                                <div>Phần mềm HĐ</div>
+                                <div>Đường dẫn đăng nhập</div>
+                                <div>Phương thức ký</div>
+                                <div>Loại mã CQT</div>
                                 <div>Ghi chú</div>
                                 <div className="text-center">Mặc định</div>
+                                <div className="text-center">Hành động</div>
                               </div>
 
                               <div className="divide-y">
-                                {/* Row 1 */}
-                                <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
-                                  <div className="text-center">1</div>
-                                  <div>1C25TYY</div>
-                                  <div>1</div>
-                                  <div>-</div>
-                                  <div>C25TYY</div>
-                                  <div>
-                                    <Badge variant="default" className="bg-green-100 text-green-800">
-                                      Sử dụng
-                                    </Badge>
+                                {eInvoiceConnections.map((connection) => (
+                                  <div
+                                    key={connection.id}
+                                    className="grid grid-cols-11 gap-4 p-3 items-center text-sm"
+                                  >
+                                    <div className="text-center">
+                                      {connection.symbol}
+                                    </div>
+                                    <div className="font-mono">
+                                      {connection.taxCode}
+                                    </div>
+                                    <div>{connection.loginId}</div>
+                                    <div>
+                                      {"*".repeat(connection.password.length)}
+                                    </div>
+                                    <div>
+                                      <Badge variant="outline">
+                                        {connection.softwareName}
+                                      </Badge>
+                                    </div>
+                                    <div className="text-blue-600 hover:underline cursor-pointer truncate">
+                                      {connection.loginUrl}
+                                    </div>
+                                    <div>{connection.signMethod}</div>
+                                    <div>{connection.cqtCode}</div>
+                                    <div>{connection.notes}</div>
+                                    <div className="text-center">
+                                      <Badge
+                                        variant={
+                                          connection.isDefault
+                                            ? "default"
+                                            : "secondary"
+                                        }
+                                      >
+                                        {connection.isDefault
+                                          ? "Mặc định"
+                                          : "Không mặc định"}
+                                      </Badge>
+                                    </div>
+                                    <div className="text-center">
+                                      <div className="flex items-center justify-center gap-1">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleEditEInvoice(connection)
+                                          }
+                                        >
+                                          <Edit className="w-3 h-3" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="text-red-500 hover:text-red-700"
+                                          onClick={() =>
+                                            handleDeleteEInvoice(
+                                              connection.id,
+                                              connection.softwareName,
+                                            )
+                                          }
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </Button>
+                                      </div>
+                                    </div>
                                   </div>
-                                  <div>-</div>
-                                  <div className="text-center">
-                                    <input type="checkbox" className="rounded" checked />
+                                ))}
+
+                                {eInvoiceConnections.length === 0 && (
+                                  <div className="grid grid-cols-11 gap-4 p-8 items-center text-sm text-gray-500">
+                                    <div className="col-span-11 text-center">
+                                      <div className="flex flex-col items-center gap-2">
+                                        <SettingsIcon className="w-8 h-8 text-gray-400" />
+                                        <p>Chưa có kết nối HĐĐT nào</p>
+                                        <p className="text-xs">
+                                          Nhấn "Thêm kết nối" để bắt đầu
+                                        </p>
+                                      </div>
+                                    </div>
                                   </div>
+                                )}
+                              </div>
+                            </div>
+                          </TabsContent>
+
+                          <TabsContent value="settings" className="mt-6">
+                            <div className="space-y-6">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <h3 className="text-lg font-medium">
+                                    Mẫu số HĐĐT
+                                  </h3>
+                                  <p className="text-sm text-gray-600">
+                                    Quản lý các mẫu số hóa đơn điện tử
+                                  </p>
+                                </div>
+                                <Button className="bg-blue-600 hover:bg-blue-700">
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  Thêm mẫu số
+                                </Button>
+                              </div>
+
+                              {/* Invoice templates table */}
+                              <div className="rounded-md border bg-white">
+                                <div className="grid grid-cols-8 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                                  <div className="text-center">STT</div>
+                                  <div>Tên</div>
+                                  <div>Mẫu số</div>
+                                  <div>Ký hiệu</div>
+                                  <div>Ký hiệu</div>
+                                  <div>C/K sử dụng</div>
+                                  <div>Ghi chú</div>
+                                  <div className="text-center">Mặc định</div>
                                 </div>
 
-                                {/* Row 2 */}
-                                <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
-                                  <div className="text-center">2</div>
-                                  <div>1K21TGF</div>
-                                  <div>1</div>
-                                  <div>1005</div>
-                                  <div>K21TGF</div>
-                                  <div>
-                                    <Badge variant="default" className="bg-green-100 text-green-800">
-                                      Sử dụng
-                                    </Badge>
+                                <div className="divide-y">
+                                  {/* Row 1 */}
+                                  <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
+                                    <div className="text-center">1</div>
+                                    <div>1C25TYY</div>
+                                    <div>1</div>
+                                    <div>-</div>
+                                    <div>C25TYY</div>
+                                    <div>
+                                      <Badge
+                                        variant="default"
+                                        className="bg-green-100 text-green-800"
+                                      >
+                                        Sử dụng
+                                      </Badge>
+                                    </div>
+                                    <div>-</div>
+                                    <div className="text-center">
+                                      <input
+                                        type="checkbox"
+                                        className="rounded"
+                                        checked
+                                      />
+                                    </div>
                                   </div>
-                                  <div>-</div>
-                                  <div className="text-center">
-                                    <input type="checkbox" className="rounded" />
-                                  </div>
-                                </div>
 
-                                {/* Row 3 - Empty */}
-                                <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
-                                  <div className="text-center">3</div>
-                                  <div>-</div>
-                                  <div>-</div>
-                                  <div>-</div>
-                                  <div>-</div>
-                                  <div>
-                                    <Badge variant="default" className="bg-green-100 text-green-800">
-                                      Sử dụng
-                                    </Badge>
+                                  {/* Row 2 */}
+                                  <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
+                                    <div className="text-center">2</div>
+                                    <div>1K21TGF</div>
+                                    <div>1</div>
+                                    <div>1005</div>
+                                    <div>K21TGF</div>
+                                    <div>
+                                      <Badge
+                                        variant="default"
+                                        className="bg-green-100 text-green-800"
+                                      >
+                                        Sử dụng
+                                      </Badge>
+                                    </div>
+                                    <div>-</div>
+                                    <div className="text-center">
+                                      <input
+                                        type="checkbox"
+                                        className="rounded"
+                                      />
+                                    </div>
                                   </div>
-                                  <div>-</div>
-                                  <div className="text-center">
-                                    <input type="checkbox" className="rounded" />
+
+                                  {/* Row 3 - Empty */}
+                                  <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
+                                    <div className="text-center">3</div>
+                                    <div>-</div>
+                                    <div>-</div>
+                                    <div>-</div>
+                                    <div>-</div>
+                                    <div>
+                                      <Badge
+                                        variant="default"
+                                        className="bg-green-100 text-green-800"
+                                      >
+                                        Sử dụng
+                                      </Badge>
+                                    </div>
+                                    <div>-</div>
+                                    <div className="text-center">
+                                      <input
+                                        type="checkbox"
+                                        className="rounded"
+                                      />
+                                    </div>
                                   </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        </TabsContent>
-                      </Tabs>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                          </TabsContent>
+                        </Tabs>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
 
-              <TabsContent value="operations">
+                <TabsContent value="operations">
+                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-green-600" />
+                        {t("settings.operationHours")}
+                      </CardTitle>
+                      <CardDescription>
+                        {t("settings.operationHoursDesc")}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="openTime">
+                            {t("settings.openTime")}
+                          </Label>
+                          <Input
+                            id="openTime"
+                            type="time"
+                            value={storeSettings.openTime}
+                            onChange={(e) =>
+                              handleStoreSettingChange(
+                                "openTime",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="closeTime">
+                            {t("settings.closeTime")}
+                          </Label>
+                          <Input
+                            id="closeTime"
+                            type="time"
+                            value={storeSettings.closeTime}
+                            onChange={(e) =>
+                              handleStoreSettingChange(
+                                "closeTime",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end mt-6">
+                        <Button
+                          onClick={saveStoreSettings}
+                          disabled={updateStoreSettingsMutation.isPending}
+                          className="bg-green-600 hover:bg-green-700"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {updateStoreSettingsMutation.isPending
+                            ? t("common.loading")
+                            : t("common.save")}
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+            </TabsContent>
+
+            {/* Customers Tab */}
+            <TabsContent value="customers">
+              <div className="space-y-6">
+                {/* Customer Statistics */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">
+                            {t("customers.totalCustomers")}
+                          </p>
+                          <p className="text-2xl font-bold text-green-600">
+                            {customersData ? customersData.length : 0}
+                          </p>
+                        </div>
+                        <UserCheck className="w-8 h-8 text-green-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">
+                            {t("customers.activeCustomers")}
+                          </p>
+                          <p className="text-2xl font-bold text-blue-600">
+                            {customersData
+                              ? customersData.filter(
+                                  (c) => c.status === "active",
+                                ).length
+                              : 0}
+                          </p>
+                        </div>
+                        <Users className="w-8 h-8 text-blue-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">
+                            {t("customers.pointsIssued")}
+                          </p>
+                          <p className="text-2xl font-bold text-purple-600">
+                            {customersData
+                              ? customersData
+                                  .reduce(
+                                    (total, c) => total + (c.points || 0),
+                                    0,
+                                  )
+                                  .toLocaleString()
+                              : 0}
+                          </p>
+                        </div>
+                        <CreditCard className="w-8 h-8 text-purple-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">
+                            {t("customers.averageSpent")}
+                          </p>
+                          <p className="text-2xl font-bold text-orange-600">
+                            {customersData && customersData.length > 0
+                              ? Math.round(
+                                  customersData.reduce(
+                                    (total, c) =>
+                                      total + parseFloat(c.totalSpent || "0"),
+                                    0,
+                                  ) / customersData.length,
+                                ).toLocaleString()
+                              : "0"}{" "}
+                            ₫
+                          </p>
+                        </div>
+                        <CreditCard className="w-8 h-8 text-orange-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Customer Management */}
                 <Card className="bg-white/80 backdrop-blur-sm border-white/20">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Clock className="w-5 h-5 text-green-600" />
-                      {t("settings.operationHours")}
+                      <UserCheck className="w-5 h-5 text-green-600" />
+                      {t("customers.customerManagement")}
                     </CardTitle>
                     <CardDescription>
-                      {t("settings.operationHoursDesc")}
+                      {t("customers.description")}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="openTime">{t("settings.openTime")}</Label>
+                  <CardContent>
+                    <div className="flex justify-between items-center mb-6">
+                      <div className="flex items-center gap-4">
                         <Input
-                          id="openTime"
-                          type="time"
-                          value={storeSettings.openTime}
+                          placeholder={t("customers.searchPlaceholder")}
+                          className="w-64"
+                          value={customerSearchTerm}
                           onChange={(e) =>
-                            handleStoreSettingChange("openTime", e.target.value)
+                            setCustomerSearchTerm(e.target.value)
                           }
                         />
+                        <Button variant="outline" size="sm">
+                          <Search className="w-4 h-4 mr-2" />
+                          {t("common.search")}
+                        </Button>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="closeTime">
-                          {t("settings.closeTime")}
-                        </Label>
-                        <Input
-                          id="closeTime"
-                          type="time"
-                          value={storeSettings.closeTime}
-                          onChange={(e) =>
-                            handleStoreSettingChange("closeTime", e.target.value)
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="flex justify-end mt-6">
                       <Button
-                        onClick={saveStoreSettings}
-                        disabled={updateStoreSettingsMutation.isPending}
                         className="bg-green-600 hover:bg-green-700"
+                        onClick={() => setShowCustomerForm(true)}
                       >
-                        <Save className="w-4 h-4 mr-2" />
-                        {updateStoreSettingsMutation.isPending
-                          ? t("common.loading")
-                          : t("common.save")}
+                        <Plus classNameName="w-4 h-4 mr-2" />
+                        {t("customers.addCustomer")}
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </TabsContent>
 
-          {/* Customers Tab */}
-          <TabsContent value="customers">
-            <div className="space-y-6">
-              {/* Customer Statistics */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">
-                          {t("customers.totalCustomers")}
-                        </p>
-                        <p className="text-2xl font-bold text-green-600">
-                          {customersData ? customersData.length : 0}
+                    {customersLoading ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500">
+                          {t("customers.loadingCustomerData")}
                         </p>
                       </div>
-                      <UserCheck className="w-8 h-8 text-green-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">
-                          {t("customers.activeCustomers")}
-                        </p>
-                        <p className="text-2xl font-bold text-blue-600">
-                          {customersData
-                            ? customersData.filter((c) => c.status === "active")
-                                .length
-                            : 0}
+                    ) : filteredCustomers.length === 0 ? (
+                      <div className="text-center py-8">
+                        <UserCheck className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                        <p className="text-gray-500">
+                          {t("customers.noRegisteredCustomers")}
                         </p>
                       </div>
-                      <Users className="w-8 h-8 text-blue-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">
-                          {t("customers.pointsIssued")}
-                        </p>
-                        <p className="text-2xl font-bold text-purple-600">
-                          {customersData
-                            ? customersData
-                                .reduce(
-                                  (total, c) => total + (c.points || 0),
-                                  0,
-                                )
-                                .toLocaleString()
-                            : 0}
-                        </p>
-                      </div>
-                      <CreditCard className="w-8 h-8 text-purple-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">
-                          {t("customers.averageSpent")}
-                        </p>
-                        <p className="text-2xl font-bold text-orange-600">
-                          {customersData && customersData.length > 0
-                            ? Math.round(
-                                customersData.reduce(
-                                  (total, c) =>
-                                    total + parseFloat(c.totalSpent || "0"),
-                                  0,
-                                ) / customersData.length,
-                              ).toLocaleString()
-                            : "0"}{" "}
-                          ₫
-                        </p>
-                      </div>
-                      <CreditCard className="w-8 h-8 text-orange-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Customer Management */}
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <UserCheck className="w-5 h-5 text-green-600" />
-                    {t("customers.customerManagement")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("customers.description")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-4">
-                      <Input
-                        placeholder={t("customers.searchPlaceholder")}
-                        className="w-64"
-                        value={customerSearchTerm}
-                        onChange={(e) => setCustomerSearchTerm(e.target.value)}
-                      />
-                      <Button variant="outline" size="sm">
-                        <Search className="w-4 h-4 mr-2" />
-                        {t("common.search")}
-                      </Button>
-                    </div>
-                    <Button
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={() => setShowCustomerForm(true)}
-                    >
-                      <Plus classNameName="w-4 h-4 mr-2" />
-                      {t("customers.addCustomer")}
-                    </Button>
-                  </div>
-
-                  {customersLoading ? (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">
-                        {t("customers.loadingCustomerData")}
-                      </p>
-                    </div>
-                  ) : filteredCustomers.length === 0 ? (
-                    <div className="text-center py-8">
-                      <UserCheck className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-500">
-                        {t("customers.noRegisteredCustomers")}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="rounded-md border">
-                      <div className="grid grid-cols-8 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                        <div>{t("customers.customerId")}</div>
-                        <div>{t("customers.name")}</div>
-                        <div>{t("customers.phone")}</div>
-                        <div>{t("customers.visitCount")}</div>
-                        <div>{t("customers.totalSpent")}</div>
-                        <div>{t("customers.points")}</div>
-                        <div>{t("customers.membershipLevel")}</div>
-                        <div className="text-center">{t("common.actions")}</div>
-                      </div>
-
-                      <div className="divide-y">
-                        {filteredCustomers.map((customer) => (
-                          <div
-                            key={customer.id}
-                            className="grid grid-cols-8 gap-4 p-4 items-center"
-                          >
-                            <div className="font-mono text-sm">
-                              {customer.customerId}
-                            </div>
-                            <div className="font-medium">{customer.name}</div>
-                            <div className="text-sm text-gray-600">
-                              {customer.phone || "-"}
-                            </div>
-                            <div className="text-center">
-                              {customer.visitCount || 0}
-                            </div>
-                            <div className="text-sm font-medium">
-                              {parseFloat(
-                                customer.totalSpent || "0",
-                              ).toLocaleString()}{" "}
-                              ₫
-                            </div>
-                            <div className="text-center">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                                onClick={() => handleManagePoints(customer)}
-                              >
-                                {customer.points || 0}P
-                              </Button>
-                            </div>
-                            <div><Badge
-                                variant="default"
-                                className={`${
-                                  customer.membershipLevel === "VIP"
-                                    ? "bg-purple-500"
-                                    : customer.membershipLevel === "GOLD"
-                                      ? "bg-yellow-500"
-                                      : customer.membershipLevel === "SILVER"
-                                        ? "bg-gray-300 text-black"
-                                        : "bg-gray-400"
-                                } text-white`}
-                              >
-                                {customer.membershipLevel === "VIP"
-                                  ? t("customers.vip")
-                                  : customer.membershipLevel === "GOLD"
-                                    ? t("customers.gold")
-                                    : customer.membershipLevel === "SILVER"
-                                      ? t("customers.silver")
-                                      : customer.membershipLevel}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center justify-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditCustomer(customer)}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-blue-500 hover:text-blue-700"
-                                onClick={() => handleManagePoints(customer)}
-                              >
-                                <CreditCard className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-500 hover:text-red-700"
-                                onClick={() =>
-                                  handleDeleteCustomer(customer.id, customer.name)
-                                }
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
+                    ) : (
+                      <div className="rounded-md border">
+                        <div className="grid grid-cols-8 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                          <div>{t("customers.customerId")}</div>
+                          <div>{t("customers.name")}</div>
+                          <div>{t("customers.phone")}</div>
+                          <div>{t("customers.visitCount")}</div>
+                          <div>{t("customers.totalSpent")}</div>
+                          <div>{t("customers.points")}</div>
+                          <div>{t("customers.membershipLevel")}</div>
+                          <div className="text-center">
+                            {t("common.actions")}
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                        </div>
 
-                  <div className="flex justify-between items-center mt-6">
-                    <div className="text-sm text-gray-600">
-                      {t("customers.total")}{" "}
-                      {customersData ? customersData.length : 0}{" "}
-                      {t("customers.totalCustomersRegistered")}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowMembershipModal(true)}
-                      >
-                        <UserCheck className="w-4 h-4 mr-2" />
-                        {t("customers.membershipManagement")}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowPointsManagementModal(true)}
-                      >
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        {t("customers.pointsManagement")}
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* Categories Tab - Product Management */}
-          <TabsContent value="categories">
-            <div className="space-y-6">
-              {/* Statistics Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">
-                          {t("settings.totalCategories")}
-                        </p>
-                        <p className="text-2xl font-bold text-green-600">
-                          {categoriesData ? categoriesData.length : 0}
-                        </p>
-                      </div>
-                      <Tag className="w-8 h-8 text-green-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">
-                          {t("settings.totalProducts")}
-                        </p>
-                        <p className="text-2xl font-bold text-blue-600">
-                          {productsData ? productsData.length : 0}
-                        </p>
-                      </div>
-                      <ShoppingCart className="w-8h-8 text-blue-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">
-                          {t("settings.totalStockQuantity")}
-                        </p>
-                        <p className="text-2xl font-bold text-purple-600">
-                          {productsData
-                            ? productsData.reduce(
-                                (total: number, product: any) =>
-                                  total + (product.stock || 0),
-                                0,
-                              )
-                            : 0}
-                        </p>
-                      </div>
-                      <Package className="w-8 h-8 text-purple-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Category Management */}
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Tag className="w-5 h-5 text-green-600" />
-                    {t("settings.categoryTitle")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("settings.categoryManagementDesc")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-4">
-                      <Input placeholder="품목군 검색..." className="w-64" />
-                      <Button variant="outline" size="sm">
-                        <Search className="w-4 h-4 mr-2" />
-                        {t("common.search")}
-                      </Button>
-                    </div>
-                    <Button
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={() => {
-                        resetCategoryForm();
-                        setShowCategoryForm(true);
-                      }}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      {t("settings.addCategory")}
-                    </Button>
-                  </div>
-
-                  {categoriesLoading ? (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">{t("common.loading")}</p>
-                    </div>
-                  ) : !categoriesData || categoriesData.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Tag className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-500">
-                        {t("settings.noCategories")}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {categoriesData.map((category: any) => (
-                        <Card
-                          key={category.id}
-                          className="border-2 hover:border-green-300 transition-colors"
-                        >
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                {category.icon && (
-                                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                    <span className="text-xl">
-                                      {category.icon === "fas fa-utensils" ? "🍽️" :
-                                       category.icon === "fas fa-coffee" ? "☕" :
-                                       category.icon === "fas fa-cookie" ? "🍪" :
-                                       category.icon === "fas fa-ice-cream" ? "🍨" :
-                                       category.icon === "fas fa-beer" ? "🍺" :
-                                       category.icon === "fas fa-apple-alt" ? "🍎" :
-                                       "🍽️"}
-                                    </span>
-                                  </div>
-                                )}
-                                <div>
-                                  <h3 className="font-semibold">
-                                    {category.name}
-                                  </h3>
-                                  <p className="text-sm text-gray-500">
-                                    {productsData
-                                      ? productsData.filter(
-                                          (p: any) =>
-                                            p.categoryId === category.id,
-                                        ).length
-                                      : 0} sản phẩm
-                                  </p>
-                                </div>
+                        <div className="divide-y">
+                          {filteredCustomers.map((customer) => (
+                            <div
+                              key={customer.id}
+                              className="grid grid-cols-8 gap-4 p-4 items-center"
+                            >
+                              <div className="font-mono text-sm">
+                                {customer.customerId}
                               </div>
-                              <div className="flex gap-1">
+                              <div className="font-medium">{customer.name}</div>
+                              <div className="text-sm text-gray-600">
+                                {customer.phone || "-"}
+                              </div>
+                              <div className="text-center">
+                                {customer.visitCount || 0}
+                              </div>
+                              <div className="text-sm font-medium">
+                                {parseFloat(
+                                  customer.totalSpent || "0",
+                                ).toLocaleString()}{" "}
+                                ₫
+                              </div>
+                              <div className="text-center">
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleEditCategory(category)}
+                                  className="font-medium text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                  onClick={() => handleManagePoints(customer)}
+                                >
+                                  {customer.points || 0}P
+                                </Button>
+                              </div>
+                              <div>
+                                <Badge
+                                  variant="default"
+                                  className={`${
+                                    customer.membershipLevel === "VIP"
+                                      ? "bg-purple-500"
+                                      : customer.membershipLevel === "GOLD"
+                                        ? "bg-yellow-500"
+                                        : customer.membershipLevel === "SILVER"
+                                          ? "bg-gray-300 text-black"
+                                          : "bg-gray-400"
+                                  } text-white`}
+                                >
+                                  {customer.membershipLevel === "VIP"
+                                    ? t("customers.vip")
+                                    : customer.membershipLevel === "GOLD"
+                                      ? t("customers.gold")
+                                      : customer.membershipLevel === "SILVER"
+                                        ? t("customers.silver")
+                                        : customer.membershipLevel}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center justify-center gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEditCustomer(customer)}
                                 >
                                   <Edit className="w-4 h-4" />
                                 </Button>
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  className="text-blue-500 hover:text-blue-700"
+                                  onClick={() => handleManagePoints(customer)}
+                                >
+                                  <CreditCard className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
                                   className="text-red-500 hover:text-red-700"
                                   onClick={() =>
-                                    handleDeleteCategory(category.id)
+                                    handleDeleteCustomer(
+                                      customer.id,
+                                      customer.name,
+                                    )
                                   }
                                 >
                                   <Trash2 className="w-4 h-4" />
                                 </Button>
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Product Management */}
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ShoppingCart className="w-5 h-5 text-green-600" />
-                    {t("settings.productTitle")}
-                  </CardTitle>
-                  <CardDescription>
-                    Quản lý thông tin sản phẩm và giá cả
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-4">
-                      <Input
-                        placeholder={t("settings.productNamePlaceholder")}
-                        className="w-64"
-                        value={productSearchTerm}
-                        onChange={(e) => setProductSearchTerm(e.target.value)}
-                      />
-                      <Select
-                        value={selectedCategoryFilter}
-                        onValueChange={setSelectedCategoryFilter}
-                      >
-                        <SelectTrigger className="w-48">
-                          <SelectValue
-                            placeholder={t("settings.selectCategory")}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">
-                            {t("settings.allCategories")}
-                          </SelectItem>
-                          {categoriesData?.map((category: any) => (
-                            <SelectItem
-                              key={category.id}
-                              value={category.id.toString()}
-                            >
-                              {category.name}
-                            </SelectItem>
                           ))}
-                        </SelectContent>
-                      </Select>
-                      <Button variant="outline" size="sm">
-                        <Search className="w-4 h-4 mr-2" />
-                        {t("common.search")}
-                      </Button>
-                    </div>
-                    <Button
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={() => {
-                        resetProductForm();
-                        setShowProductForm(true);
-                      }}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      {t("settings.addProduct")}
-                    </Button>
-                  </div>
+                        </div>
+                      </div>
+                    )}
 
-                  {productsLoading ? (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">{t("common.loading")}</p>
+                    <div className="flex justify-between items-center mt-6">
+                      <div className="text-sm text-gray-600">
+                        {t("customers.total")}{" "}
+                        {customersData ? customersData.length : 0}{" "}
+                        {t("customers.totalCustomersRegistered")}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowMembershipModal(true)}
+                        >
+                          <UserCheck className="w-4 h-4 mr-2" />
+                          {t("customers.membershipManagement")}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowPointsManagementModal(true)}
+                        >
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          {t("customers.pointsManagement")}
+                        </Button>
+                      </div>
                     </div>
-                  ) : filteredProducts.length === 0 ? (
-                    <div className="text-center py-8">
-                      <ShoppingCart className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-500">
-                        {t("settings.noProducts")}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="w-full overflow-x-auto border rounded-md">
-                      <table className="w-full min-w-[1100px] table-fixed">
-                        <thead>
-                          <tr className="bg-gray-50 border-b">
-                            <th className="w-[200px] px-4 py-3 text-left font-medium text-sm text-gray-600">
-                              <div className="leading-tight break-words">
-                                {t("settings.productName")}
-                              </div>
-                            </th>
-                            <th className="w-[120px] px-4 py-3 text-left font-medium text-sm text-gray-600">
-                              <div className="leading-tight break-words">
-                                {t("settings.productSku")}
-                              </div>
-                            </th>
-                            <th className="w-[120px] px-4 py-3 text-left font-medium text-sm text-gray-600">
-                              <div className="leading-tight break-words">
-                                {t("settings.productCategory")}
-                              </div>
-                            </th>
-                            <th className="w-[120px] px-4 py-3 text-right font-medium text-sm text-gray-600">
-                              <div className="leading-tight break-words">
-                                {t("settings.productPrice")}
-                              </div>
-                            </th>
-                            <th className="w-[80px] px-4 py-3 text-center font-medium text-sm text-gray-600">
-                              <div className="leading-tight break-words">
-                                {t("settings.productStock")}
-                              </div>
-                            </th>
-                            <th className="w-[120px] px-4 py-3 text-center font-medium text-sm text-gray-600">
-                              <div className="leading-tight break-words">
-                                Trạng thái kho
-                              </div>
-                            </th>
-                            <th className="w-[140px] px-4 py-3 text-center font-medium text-sm text-gray-600">
-                              <div className="leading-tight break-words">
-                                Trạng thái sử dụng
-                              </div>
-                            </th>
-                            <th className="w-[120px] px-4 py-3 text-center font-medium text-sm text-gray-600">
-                              <div className="leading-tight break-words">
-                                {t("common.actions")}
-                              </div>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          {filteredProducts.map((product: any) => {
-                            const category = categoriesData?.find(
-                              (c: any) => c.id === product.categoryId,
-                            );
-                            return (
-                              <tr key={product.id} className="hover:bg-gray-50">
-                                <td className="px-4 py-3">
-                                  <div className="font-medium truncate" title={product.name}>
-                                    {product.name}
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <div className="font-mono text-sm truncate" title={product.sku}>
-                                    {product.sku}
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <Badge variant="outline" className="text-xs truncate">
-                                    {category?.name || "N/A"}
-                                  </Badge>
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                  <div className="font-medium text-sm">
-                                    {parseFloat(
-                                      product.price || "0",
-                                    ).toLocaleString()}{" "}
-                                    ₫
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3 text-center">
-                                  <div className="text-sm">
-                                    {product.stock || 0}
-                                  </div>
-                                </td>
-                                <td className="px-4 py-3 text-center">
-                                  <Badge
-                                    variant={
-                                      product.stock > 0
-                                        ? "default"
-                                        : "destructive"
-                                    }
-                                    className={`text-xs ${
-                                      product.stock > 0
-                                        ? "bg-green-100 text-green-800"
-                                        : ""
-                                    }`}
-                                  >
-                                    {product.stock > 0 ? "Còn hàng" : "Hết hàng"}
-                                  </Badge>
-                                </td>
-                                <td className="px-4 py-3 text-center">
-                                  <Badge
-                                    variant={
-                                      product.isActive === true || product.isActive === 1
-                                        ? "default"
-                                        : "secondary"
-                                    }
-                                    className={`text-xs ${
-                                      product.isActive === true || product.isActive === 1
-                                        ? "bg-blue-100 text-blue-800"
-                                        : "bg-gray-100 text-gray-800"
-                                    }`}
-                                  >
-                                    {product.isActive === true || product.isActive === 1 ? "Có" : "Không"}
-                                  </Badge>
-                                </td>
-                                <td className="px-4 py-3">
-                                  <div className="flex items-center justify-center gap-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => handleEditProduct(product)}
-                                    >
-                                      <Edit className="w-4 h-4" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="text-red-500 hover:text-red-700"
-                                      onClick={() =>
-                                        handleDeleteProduct(product.id, product.name)
-                                      }
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
 
+            {/* Categories Tab - Product Management */}
+            <TabsContent value="categories">
+              <div className="space-y-6">
+                {/* Statistics Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">
+                            {t("settings.totalCategories")}
+                          </p>
+                          <p className="text-2xl font-bold text-green-600">
+                            {categoriesData ? categoriesData.length : 0}
+                          </p>
+                        </div>
+                        <Tag className="w-8 h-8 text-green-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
 
-                  <div className="flex justify-between items-center mt-6">
-                    <div className="text-sm text-gray-600">
-                      {t("settings.total")} {filteredProducts.length} {t("settings.productsShowing")}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">
+                            {t("settings.totalProducts")}
+                          </p>
+                          <p className="text-2xl font-bold text-blue-600">
+                            {productsData ? productsData.length : 0}
+                          </p>
+                        </div>
+                        <ShoppingCart className="w-8h-8 text-blue-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
 
-          {/* Employees Tab */}
-          <TabsContent value="employees">
-            <div className="space-y-6">
-              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-green-600" />
-                    {t("settings.employeeManagement")}
-                  </CardTitle>
-                  <CardDescription>
-                    {t("settings.employeeManagementDesc")}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex justify-between items-center mb-6">
-                    <div className="flex items-center gap-4">
-                      <Input
-                        placeholder="Tìm kiếm theo tên, mã NV, số điện thoại..."
-                        className="w-64"
-                        value={employeeSearchTerm}
-                        onChange={(e) => setEmployeeSearchTerm(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter') {
-                            // Trigger search when Enter is pressed
-                            setEmployeeSearchTerm(e.currentTarget.value);
-                          }
-                        }}
-                      />
-                      <Button 
-                        variant="outline" 
-                        size="sm"
+                  <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                    <CardContent className="p-6">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">
+                            {t("settings.totalStockQuantity")}
+                          </p>
+                          <p className="text-2xl font-bold text-purple-600">
+                            {productsData
+                              ? productsData.reduce(
+                                  (total: number, product: any) =>
+                                    total + (product.stock || 0),
+                                  0,
+                                )
+                              : 0}
+                          </p>
+                        </div>
+                        <Package className="w-8 h-8 text-purple-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Category Management */}
+                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Tag className="w-5 h-5 text-green-600" />
+                      {t("settings.categoryTitle")}
+                    </CardTitle>
+                    <CardDescription>
+                      {t("settings.categoryManagementDesc")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center mb-6">
+                      <div className="flex items-center gap-4">
+                        <Input
+                          placeholder={t(
+                            "settings.searchCategoriesPlaceholder",
+                          )}
+                          className="w-64"
+                        />
+                        <Button variant="outline" size="sm">
+                          <Search className="w-4 h-4 mr-2" />
+                          {t("common.search")}
+                        </Button>
+                      </div>
+                      <Button
+                        className="bg-green-600 hover:bg-green-700"
                         onClick={() => {
-                          // Force re-render of filtered results
-                          setEmployeeSearchTerm(employeeSearchTerm);
+                          resetCategoryForm();
+                          setShowCategoryForm(true);
                         }}
                       >
-                        <Search className="w-4 h-4 mr-2" />
-                        {t("common.search")}
+                        <Plus className="w-4 h-4 mr-2" />
+                        {t("settings.addCategory")}
                       </Button>
                     </div>
-                    <Button
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={() => setShowEmployeeForm(true)}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      {t("employees.addEmployee")}
-                    </Button>
-                  </div>
 
-                  {employeesLoading ? (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500">
-                        Đang tải dữ liệu nhân viên...
-                      </p>
-                    </div>
-                  ) : !filteredEmployees || filteredEmployees.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-500">
-                        {employeeSearchTerm ? "Không tìm thấy nhân viên nào phù hợp" : "Chưa có nhân viên nào được đăng ký"}
-                      </p>
-                      <p className="text-sm text-gray-400 mt-2">
-                        {employeeSearchTerm ? "Thử tìm kiếm với từ khóa khác" : "Thêm nhân viên đầu tiên để bắt đầu"}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="w-full overflow-x-auto border rounded-md">
-                      <table className="w-full min-w-[900px] table-fixed">
-                        <thead>
-                          <tr className="bg-gray-50 border-b">
-                            <th className="w-[140px] px-4 py-3 text-left font-medium text-sm text-gray-600">
-                              {t("employees.employeeId")}
-                            </th>
-                            <th className="w-[180px] px-4 py-3 text-left font-medium text-sm text-gray-600">
-                              {t("employees.name")}
-                            </th>
-                            <th className="w-[140px] px-4 py-3 text-left font-medium text-sm text-gray-600">
-                              {t("employees.role")}
-                            </th>
-                            <th className="w-[150px] px-4 py-3 text-left font-medium text-sm text-gray-600">
-                              {t("employees.phone")}
-                            </th>
-                            <th className="w-[120px] px-4 py-3 text-left font-medium text-sm text-gray-600">
-                              {t("employees.status")}
-                            </th>
-                            <th className="w-[130px] px-4 py-3 text-center font-medium text-sm text-gray-600">
-                              {t("common.actions")}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                          {filteredEmployees.map((employee: any) => (
-                            <tr key={employee.id} className="hover:bg-gray-50">
-                              <td className="px-4 py-3">
-                                <div className="font-mono text-sm truncate" title={employee.employeeId}>
-                                  {employee.employeeId}
+                    {categoriesLoading ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500">{t("common.loading")}</p>
+                      </div>
+                    ) : !categoriesData || categoriesData.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Tag className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                        <p className="text-gray-500">
+                          {t("settings.noCategories")}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {categoriesData.map((category: any) => (
+                          <Card
+                            key={category.id}
+                            className="border-2 hover:border-green-300 transition-colors"
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-3">
+                                  {category.icon && (
+                                    <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                      <span className="text-xl">
+                                        {category.icon === "fas fa-utensils"
+                                          ? "🍽️"
+                                          : category.icon === "fas fa-coffee"
+                                            ? "☕"
+                                            : category.icon === "fas fa-cookie"
+                                              ? "🍪"
+                                              : category.icon ===
+                                                  "fas fa-ice-cream"
+                                                ? "🍨"
+                                                : category.icon ===
+                                                    "fas fa-beer"
+                                                  ? "🍺"
+                                                  : category.icon ===
+                                                      "fas fa-apple-alt"
+                                                    ? "🍎"
+                                                    : "🍽️"}
+                                      </span>
+                                    </div>
+                                  )}
+                                  <div>
+                                    <h3 className="font-semibold">
+                                      {category.name}
+                                    </h3>
+                                    <p className="text-sm text-gray-500">
+                                      {productsData
+                                        ? productsData.filter(
+                                            (p: any) =>
+                                              p.categoryId === category.id,
+                                          ).length
+                                        : 0}{" "}
+                                      sản phẩm
+                                    </p>
+                                  </div>
                                 </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="text-sm truncate" title={employee.name}>
-                                  {employee.name}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <Badge
-                                  variant={
-                                    employee.role === "admin"
-                                      ? "destructive"
-                                      : employee.role === "manager"
-                                        ? "default"
-                                        : "secondary"
-                                  }
-                                  className="text-xs"
-                                >
-                                  {employee.role === "admin"
-                                    ? t("employees.roles.admin")
-                                    : employee.role === "manager"
-                                      ? t("employees.roles.manager")
-                                      : employee.role === "cashier"
-                                        ? t("employees.roles.cashier")
-                                        : employee.role}
-                                </Badge>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="text-sm text-gray-600 truncate" title={employee.phone || "-"}>
-                                  {employee.phone || "-"}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <Badge
-                                  variant={
-                                    employee.isActive ? "default" : "secondary"
-                                  }
-                                  className={`text-xs ${
-                                    employee.isActive
-                                      ? "bg-green-100 text-green-800"
-                                      : ""
-                                  }`}
-                                >
-                                  {employee.isActive
-                                    ? t("employees.active")
-                                    : t("employees.inactive")}
-                                </Badge>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex items-center justify-center gap-1">
+                                <div className="flex gap-1">
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => {
-                                      setEditingEmployee(employee);
-                                      setShowEmployeeForm(true);
-                                    }}
+                                    onClick={() => handleEditCategory(category)}
                                   >
                                     <Edit className="w-4 h-4" />
                                   </Button>
@@ -2376,119 +2124,561 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                     variant="ghost"
                                     size="sm"
                                     className="text-red-500 hover:text-red-700"
-                                    onClick={() => {
-                                      setEmployeeToDelete(employee);
-                                      setShowEmployeeDeleteDialog(true);
-                                    }}
+                                    onClick={() =>
+                                      handleDeleteCategory(category.id)
+                                    }
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </Button>
                                 </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
-                  <div className="flex justify-between items-center mt-6">
-                    <div className="text-sm text-gray-600">
-                      Tổng số nhân viên: {employeesData ? employeesData.length : 0}
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">
-                        <Clock className="w-4 h-4 mr-2" />
-                        {t("attendance.title")}
+                {/* Product Management */}
+                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ShoppingCart className="w-5 h-5 text-green-600" />
+                      {t("settings.productTitle")}
+                    </CardTitle>
+                    <CardDescription>
+                      Quản lý thông tin sản phẩm và giá cả
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center mb-6">
+                      <div className="flex items-center gap-4">
+                        <Input
+                          placeholder={t("settings.productNamePlaceholder")}
+                          className="w-64"
+                          value={productSearchTerm}
+                          onChange={(e) => setProductSearchTerm(e.target.value)}
+                        />
+                        <Select
+                          value={selectedCategoryFilter}
+                          onValueChange={setSelectedCategoryFilter}
+                        >
+                          <SelectTrigger className="w-48">
+                            <SelectValue
+                              placeholder={t("settings.selectCategory")}
+                            />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">
+                              {t("settings.allCategories")}
+                            </SelectItem>
+                            {categoriesData?.map((category: any) => (
+                              <SelectItem
+                                key={category.id}
+                                value={category.id.toString()}
+                              >
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button variant="outline" size="sm">
+                          <Search className="w-4 h-4 mr-2" />
+                          {t("common.search")}
+                        </Button>
+                      </div>
+                      <Button
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() => {
+                          resetProductForm();
+                          setShowProductForm(true);
+                        }}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        {t("settings.addProduct")}
                       </Button>
+                    </div>
+
+                    {productsLoading ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500">{t("common.loading")}</p>
+                      </div>
+                    ) : filteredProducts.length === 0 ? (
+                      <div className="text-center py-8">
+                        <ShoppingCart className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                        <p className="text-gray-500">
+                          {t("settings.noProducts")}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="w-full overflow-x-auto border rounded-md">
+                        <table className="w-full min-w-[1100px] table-fixed">
+                          <thead>
+                            <tr className="bg-gray-50 border-b">
+                              <th className="w-[200px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                                <div className="leading-tight break-words">
+                                  {t("settings.productName")}
+                                </div>
+                              </th>
+                              <th className="w-[120px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                                <div className="leading-tight break-words">
+                                  {t("settings.productSku")}
+                                </div>
+                              </th>
+                              <th className="w-[120px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                                <div className="leading-tight break-words">
+                                  {t("settings.productCategory")}
+                                </div>
+                              </th>
+                              <th className="w-[120px] px-4 py-3 text-right font-medium text-sm text-gray-600">
+                                <div className="leading-tight break-words">
+                                  {t("settings.productPrice")}
+                                </div>
+                              </th>
+                              <th className="w-[80px] px-4 py-3 text-center font-medium text-sm text-gray-600">
+                                <div className="leading-tight break-words">
+                                  {t("settings.productStock")}
+                                </div>
+                              </th>
+                              <th className="w-[120px] px-4 py-3 text-center font-medium text-sm text-gray-600">
+                                <div className="leading-tight break-words">
+                                  Trạng thái kho
+                                </div>
+                              </th>
+                              <th className="w-[140px] px-4 py-3 text-center font-medium text-sm text-gray-600">
+                                <div className="leading-tight break-words">
+                                  Trạng thái sử dụng
+                                </div>
+                              </th>
+                              <th className="w-[120px] px-4 py-3 text-center font-medium text-sm text-gray-600">
+                                <div className="leading-tight break-words">
+                                  {t("common.actions")}
+                                </div>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {filteredProducts.map((product: any) => {
+                              const category = categoriesData?.find(
+                                (c: any) => c.id === product.categoryId,
+                              );
+                              return (
+                                <tr
+                                  key={product.id}
+                                  className="hover:bg-gray-50"
+                                >
+                                  <td className="px-4 py-3">
+                                    <div
+                                      className="font-medium truncate"
+                                      title={product.name}
+                                    >
+                                      {product.name}
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div
+                                      className="font-mono text-sm truncate"
+                                      title={product.sku}
+                                    >
+                                      {product.sku}
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs truncate"
+                                    >
+                                      {category?.name || "N/A"}
+                                    </Badge>
+                                  </td>
+                                  <td className="px-4 py-3 text-right">
+                                    <div className="font-medium text-sm">
+                                      {parseFloat(
+                                        product.price || "0",
+                                      ).toLocaleString()}{" "}
+                                      ₫
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    <div className="text-sm">
+                                      {product.stock || 0}
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    <Badge
+                                      variant={
+                                        product.stock > 0
+                                          ? "default"
+                                          : "destructive"
+                                      }
+                                      className={`text-xs ${
+                                        product.stock > 0
+                                          ? "bg-green-100 text-green-800"
+                                          : ""
+                                      }`}
+                                    >
+                                      {product.stock > 0
+                                        ? "Còn hàng"
+                                        : "Hết hàng"}
+                                    </Badge>
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    <Badge
+                                      variant={
+                                        product.isActive === true ||
+                                        product.isActive === 1
+                                          ? "default"
+                                          : "secondary"
+                                      }
+                                      className={`text-xs ${
+                                        product.isActive === true ||
+                                        product.isActive === 1
+                                          ? "bg-blue-100 text-blue-800"
+                                          : "bg-gray-100 text-gray-800"
+                                      }`}
+                                    >
+                                      {product.isActive === true ||
+                                      product.isActive === 1
+                                        ? "Có"
+                                        : "Không"}
+                                    </Badge>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center justify-center gap-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleEditProduct(product)
+                                        }
+                                      >
+                                        <Edit className="w-4 h-4" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-red-500 hover:text-red-700"
+                                        onClick={() =>
+                                          handleDeleteProduct(
+                                            product.id,
+                                            product.name,
+                                          )
+                                        }
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center mt-6">
+                      <div className="text-sm text-gray-600">
+                        {t("settings.total")} {filteredProducts.length}{" "}
+                        {t("settings.productsShowing")}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Employees Tab */}
+            <TabsContent value="employees">
+              <div className="space-y-6">
+                <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-green-600" />
+                      {t("settings.employeeManagement")}
+                    </CardTitle>
+                    <CardDescription>
+                      {t("settings.employeeManagementDesc")}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex justify-between items-center mb-6">
+                      <div className="flex items-center gap-4">
+                        <Input
+                          placeholder="Tìm kiếm theo tên, mã NV, số điện thoại..."
+                          className="w-64"
+                          value={employeeSearchTerm}
+                          onChange={(e) =>
+                            setEmployeeSearchTerm(e.target.value)
+                          }
+                          onKeyPress={(e) => {
+                            if (e.key === "Enter") {
+                              // Trigger search when Enter is pressed
+                              setEmployeeSearchTerm(e.currentTarget.value);
+                            }
+                          }}
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Force re-render of filtered results
+                            setEmployeeSearchTerm(employeeSearchTerm);
+                          }}
+                        >
+                          <Search className="w-4 h-4 mr-2" />
+                          {t("common.search")}
+                        </Button>
+                      </div>
+                      <Button
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() => setShowEmployeeForm(true)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        {t("employees.addEmployee")}
+                      </Button>
+                    </div>
+
+                    {employeesLoading ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500">
+                          Đang tải dữ liệu nhân viên...
+                        </p>
+                      </div>
+                    ) : !filteredEmployees || filteredEmployees.length === 0 ? (
+                      <div className="text-center py-8">
+                        <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                        <p className="text-gray-500">
+                          {employeeSearchTerm
+                            ? "Không tìm thấy nhân viên nào phù hợp"
+                            : "Chưa có nhân viên nào được đăng ký"}
+                        </p>
+                        <p className="text-sm text-gray-400 mt-2">
+                          {employeeSearchTerm
+                            ? "Thử tìm kiếm với từ khóa khác"
+                            : "Thêm nhân viên đầu tiên để bắt đầu"}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="w-full overflow-x-auto border rounded-md">
+                        <table className="w-full min-w-[900px] table-fixed">
+                          <thead>
+                            <tr className="bg-gray-50 border-b">
+                              <th className="w-[140px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                                {t("employees.employeeId")}
+                              </th>
+                              <th className="w-[180px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                                {t("employees.name")}
+                              </th>
+                              <th className="w-[140px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                                {t("employees.role")}
+                              </th>
+                              <th className="w-[150px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                                {t("employees.phone")}
+                              </th>
+                              <th className="w-[120px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                                {t("employees.status")}
+                              </th>
+                              <th className="w-[130px] px-4 py-3 text-center font-medium text-sm text-gray-600">
+                                {t("common.actions")}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y">
+                            {filteredEmployees.map((employee: any) => (
+                              <tr
+                                key={employee.id}
+                                className="hover:bg-gray-50"
+                              >
+                                <td className="px-4 py-3">
+                                  <div
+                                    className="font-mono text-sm truncate"
+                                    title={employee.employeeId}
+                                  >
+                                    {employee.employeeId}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div
+                                    className="text-sm truncate"
+                                    title={employee.name}
+                                  >
+                                    {employee.name}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <Badge
+                                    variant={
+                                      employee.role === "admin"
+                                        ? "destructive"
+                                        : employee.role === "manager"
+                                          ? "default"
+                                          : "secondary"
+                                    }
+                                    className="text-xs"
+                                  >
+                                    {employee.role === "admin"
+                                      ? t("employees.roles.admin")
+                                      : employee.role === "manager"
+                                        ? t("employees.roles.manager")
+                                        : employee.role === "cashier"
+                                          ? t("employees.roles.cashier")
+                                          : employee.role}
+                                  </Badge>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div
+                                    className="text-sm text-gray-600 truncate"
+                                    title={employee.phone || "-"}
+                                  >
+                                    {employee.phone || "-"}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <Badge
+                                    variant={
+                                      employee.isActive
+                                        ? "default"
+                                        : "secondary"
+                                    }
+                                    className={`text-xs ${
+                                      employee.isActive
+                                        ? "bg-green-100 text-green-800"
+                                        : ""
+                                    }`}
+                                  >
+                                    {employee.isActive
+                                      ? t("employees.active")
+                                      : t("employees.inactive")}
+                                  </Badge>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center justify-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setEditingEmployee(employee);
+                                        setShowEmployeeForm(true);
+                                      }}
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-red-500 hover:text-red-700"
+                                      onClick={() => {
+                                        setEmployeeToDelete(employee);
+                                        setShowEmployeeDeleteDialog(true);
+                                      }}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center mt-6">
+                      <div className="text-sm text-gray-600">
+                        Tổng số nhân viên:{" "}
+                        {employeesData ? employeesData.length : 0}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm">
+                          <Clock className="w-4 h-4 mr-2" />
+                          {t("attendance.title")}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+
+            {/* Payment Methods Tab */}
+            <TabsContent value="payments">
+              <Card className="bg-white/80 backdrop-blur-sm border-white/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-green-600" />
+                    {t("settings.paymentMethods")}
+                  </CardTitle>
+                  <CardDescription>
+                    {t("settings.paymentMethodsDesc")}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-medium">
+                        {t("settings.availablePayments")}
+                      </h3>
+                      <Button
+                        onClick={addPaymentMethod}
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        {t("settings.addPayment")}
+                      </Button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {paymentMethods.map((method) => (
+                        <div
+                          key={method.id}
+                          className={`p-4 rounded-lg border-2 transition-all ${
+                            method.enabled
+                              ? "border-green-200 bg-green-50"
+                              : "border-gray-200 bg-gray-50"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-2xl">{method.icon}</span>
+                              <span className="font-medium">
+                                {t(`settings.payments.${method.nameKey}`)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={method.enabled}
+                                onCheckedChange={() =>
+                                  togglePaymentMethod(method.id)
+                                }
+                              />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => removePaymentMethod(method.id)}
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <Badge
+                            variant={method.enabled ? "default" : "secondary"}
+                          >
+                            {method.enabled
+                              ? t("settings.enabled")
+                              : t("settings.disabled")}
+                          </Badge>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          </TabsContent>
-
-          {/* Payment Methods Tab */}
-          <TabsContent value="payments">
-            <Card className="bg-white/80 backdrop-blur-sm border-white/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-green-600" />
-                  {t("settings.paymentMethods")}
-                </CardTitle>
-                <CardDescription>
-                  {t("settings.paymentMethodsDesc")}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">
-                      {t("settings.availablePayments")}
-                    </h3>
-                    <Button
-                      onClick={addPaymentMethod}
-                      size="sm"
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      {t("settings.addPayment")}
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {paymentMethods.map((method) => (
-                      <div
-                        key={method.id}
-                        className={`p-4 rounded-lg border-2 transition-all ${
-                          method.enabled
-                            ? "border-green-200 bg-green-50"
-                            : "border-gray-200 bg-gray-50"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="text-2xl">{method.icon}</span>
-                            <span className="font-medium">
-                              {t(`settings.payments.${method.nameKey}`)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Switch
-                              checked={method.enabled}
-                              onCheckedChange={() =>
-                                togglePaymentMethod(method.id)
-                              }
-                            />
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removePaymentMethod(method.id)}
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        <Badge
-                          variant={method.enabled ? "default" : "secondary"}
-                        >
-                          {method.enabled
-                            ? t("settings.enabled")
-                            : t("settings.disabled")}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-
-
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-
-        </Tabs>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
 
@@ -2537,12 +2727,10 @@ gray-200 rounded-xl p-4 min-h-[70px]"
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
-              {editingCategory
-                ? "Sửa danh mục"
-                : t("settings.addCategory")}
+              {editingCategory ? "Sửa danh mục" : t("settings.addCategory")}
             </DialogTitle>
             <DialogDescription>
-              {editingCategory 
+              {editingCategory
                 ? "Cập nhật thông tin danh mục sản phẩm"
                 : t("settings.categoryManagementDesc")}
             </DialogDescription>
@@ -2576,10 +2764,14 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fas fa-utensils">🍽️ Món ăn chính</SelectItem>
+                  <SelectItem value="fas fa-utensils">
+                    🍽️ Món ăn chính
+                  </SelectItem>
                   <SelectItem value="fas fa-coffee">☕ Đồ uống</SelectItem>
                   <SelectItem value="fas fa-cookie">🍪 Đồ ăn vặt</SelectItem>
-                  <SelectItem value="fas fa-ice-cream">🍨 Tráng miệng</SelectItem>
+                  <SelectItem value="fas fa-ice-cream">
+                    🍨 Tráng miệng
+                  </SelectItem>
                   <SelectItem value="fas fa-beer">🍺 Đồ uống có cồn</SelectItem>
                   <SelectItem value="fas fa-apple-alt">🍎 Trái cây</SelectItem>
                 </SelectContent>
@@ -2618,7 +2810,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                 : t("settings.addProduct")}
             </DialogTitle>
             <DialogDescription>
-              {editingProduct 
+              {editingProduct
                 ? "Cập nhật thông tin sản phẩm"
                 : "Nhập thông tin sản phẩm mới"}
             </DialogDescription>
@@ -2662,7 +2854,10 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                   id="trackInventory"
                   checked={productForm.trackInventory !== false}
                   onCheckedChange={(checked) =>
-                    setProductForm({ ...productForm, trackInventory: checked as boolean })
+                    setProductForm({
+                      ...productForm,
+                      trackInventory: checked as boolean,
+                    })
                   }
                 />
                 <Label htmlFor="trackInventory" className="text-sm">
@@ -2681,9 +2876,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                 }
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue
-                    placeholder={t("settings.selectCategory")}
-                  />
+                  <SelectValue placeholder={t("settings.selectCategory")} />
                 </SelectTrigger>
                 <SelectContent>
                   {categoriesData?.map((category: any) => (
@@ -2757,9 +2950,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                 }
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue
-                    placeholder="Chọn trạng thái"
-                  />
+                  <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="true">Có</SelectItem>
@@ -2805,19 +2996,20 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                   <div className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
                     <p className="text-sm text-red-700">
-                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
-                      Danh mục sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn
+                      tác. Danh mục sẽ bị xóa vĩnh viễn khỏi hệ thống.
                     </p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Hãy đảm bảo rằng không còn sản phẩm nào trong danh mục này trước khi xóa.
+                  Hãy đảm bảo rằng không còn sản phẩm nào trong danh mục này
+                  trước khi xóa.
                 </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => {
                 setShowDeleteDialog(false);
                 setCategoryToDelete(null);
@@ -2838,7 +3030,10 @@ gray-200 rounded-xl p-4 min-h-[70px]"
       </AlertDialog>
 
       {/* Customer Delete Confirmation Dialog */}
-      <AlertDialog open={showCustomerDeleteDialog} onOpenChange={setShowCustomerDeleteDialog}>
+      <AlertDialog
+        open={showCustomerDeleteDialog}
+        onOpenChange={setShowCustomerDeleteDialog}
+      >
         <AlertDialogContent className="sm:max-w-[425px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
@@ -2858,19 +3053,21 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                   <div className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
                     <p className="text-sm text-red-700">
-                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
-                      Tất cả dữ liệu của khách hàng sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn
+                      tác. Tất cả dữ liệu của khách hàng sẽ bị xóa vĩnh viễn
+                      khỏi hệ thống.
                     </p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Điều này bao gồm lịch sử mua hàng, điểm tích lũy và thông tin cá nhân.
+                  Điều này bao gồm lịch sử mua hàng, điểm tích lũy và thông tin
+                  cá nhân.
                 </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => {
                 setShowCustomerDeleteDialog(false);
                 setCustomerToDelete(null);
@@ -2891,7 +3088,10 @@ gray-200 rounded-xl p-4 min-h-[70px]"
       </AlertDialog>
 
       {/* Product Delete Confirmation Dialog */}
-      <AlertDialog open={showProductDeleteDialog} onOpenChange={setShowProductDeleteDialog}>
+      <AlertDialog
+        open={showProductDeleteDialog}
+        onOpenChange={setShowProductDeleteDialog}
+      >
         <AlertDialogContent className="sm:max-w-[425px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
@@ -2911,19 +3111,20 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                   <div className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
                     <p className="text-sm text-red-700">
-                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
-                      Sản phẩm sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn
+                      tác. Sản phẩm sẽ bị xóa vĩnh viễn khỏi hệ thống.
                     </p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Điều này sẽ ảnh hưởng đến các đơn hàng và báo cáo có chứa sản phẩm này.
+                  Điều này sẽ ảnh hưởng đến các đơn hàng và báo cáo có chứa sản
+                  phẩm này.
                 </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => {
                 setShowProductDeleteDialog(false);
                 setProductToDelete(null);
@@ -2944,7 +3145,10 @@ gray-200 rounded-xl p-4 min-h-[70px]"
       </AlertDialog>
 
       {/* Employee Delete Confirmation Dialog */}
-      <AlertDialog open={showEmployeeDeleteDialog} onOpenChange={setShowEmployeeDeleteDialog}>
+      <AlertDialog
+        open={showEmployeeDeleteDialog}
+        onOpenChange={setShowEmployeeDeleteDialog}
+      >
         <AlertDialogContent className="sm:max-w-[425px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
@@ -2964,19 +3168,21 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                   <div className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
                     <p className="text-sm text-red-700">
-                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
-                      Thông tin nhân viên sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn
+                      tác. Thông tin nhân viên sẽ bị xóa vĩnh viễn khỏi hệ
+                      thống.
                     </p>
                   </div>
                 </div>
                 <p className="text-sm text-gray-600">
-                  Điều này bao gồm lịch sử làm việc, chấm công và các quyền truy cập.
+                  Điều này bao gồm lịch sử làm việc, chấm công và các quyền truy
+                  cập.
                 </p>
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => {
                 setShowEmployeeDeleteDialog(false);
                 setEmployeeToDelete(null);
@@ -2997,7 +3203,10 @@ gray-200 rounded-xl p-4 min-h-[70px]"
       </AlertDialog>
 
       {/* E-invoice Form Modal */}
-      <AlertDialog open={showEInvoiceDeleteDialog} onOpenChange={setShowEInvoiceDeleteDialog}>
+      <AlertDialog
+        open={showEInvoiceDeleteDialog}
+        onOpenChange={setShowEInvoiceDeleteDialog}
+      >
         <AlertDialogContent className="sm:max-w-[425px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2 text-red-600">
@@ -3017,8 +3226,8 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                   <div className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
                     <p className="text-sm text-red-700">
-                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
-                      Kết nối HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn
+                      tác. Kết nối HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.
                     </p>
                   </div>
                 </div>
@@ -3029,7 +3238,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => {
                 setShowEInvoiceDeleteDialog(false);
                 setEInvoiceToDelete(null);
@@ -3056,10 +3265,10 @@ gray-200 rounded-xl p-4 min-h-[70px]"
               {editingEInvoice ? "Sửa kết nối HĐĐT" : "Thêm kết nối HĐĐT"}
             </DialogTitle>
             <DialogDescription>
-              {editingEInvoice 
+              {editingEInvoice
                 ? "Cập nhật thông tin kết nối với nhà cung cấp HĐĐT"
                 : "Nhập thông tin kết nối mới với nhà cung cấp HĐĐT"}
-                      </DialogDescription>
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-start gap-4">
@@ -3071,16 +3280,24 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                   id="taxCode"
                   value={eInvoiceForm.taxCode}
                   onChange={(e) => {
-                    setEInvoiceForm((prev) => ({ ...prev, taxCode: e.target.value }));
+                    setEInvoiceForm((prev) => ({
+                      ...prev,
+                      taxCode: e.target.value,
+                    }));
                     if (eInvoiceFormErrors.taxCode) {
-                      setEInvoiceFormErrors(prev => ({ ...prev, taxCode: "" }));
+                      setEInvoiceFormErrors((prev) => ({
+                        ...prev,
+                        taxCode: "",
+                      }));
                     }
                   }}
                   className={`${eInvoiceFormErrors.taxCode ? "border-red-500" : ""}`}
                   placeholder="Nhập mã số thuế"
                 />
                 {eInvoiceFormErrors.taxCode && (
-                  <p className="text-sm text-red-500">{eInvoiceFormErrors.taxCode}</p>
+                  <p className="text-sm text-red-500">
+                    {eInvoiceFormErrors.taxCode}
+                  </p>
                 )}
               </div>
             </div>
@@ -3093,16 +3310,24 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                   id="loginId"
                   value={eInvoiceForm.loginId}
                   onChange={(e) => {
-                    setEInvoiceForm((prev) => ({ ...prev, loginId: e.target.value }));
+                    setEInvoiceForm((prev) => ({
+                      ...prev,
+                      loginId: e.target.value,
+                    }));
                     if (eInvoiceFormErrors.loginId) {
-                      setEInvoiceFormErrors(prev => ({ ...prev, loginId: "" }));
+                      setEInvoiceFormErrors((prev) => ({
+                        ...prev,
+                        loginId: "",
+                      }));
                     }
                   }}
                   className={`${eInvoiceFormErrors.loginId ? "border-red-500" : ""}`}
                   placeholder="Nhập ID đăng nhập"
                 />
                 {eInvoiceFormErrors.loginId && (
-                  <p className="text-sm text-red-500">{eInvoiceFormErrors.loginId}</p>
+                  <p className="text-sm text-red-500">
+                    {eInvoiceFormErrors.loginId}
+                  </p>
                 )}
               </div>
             </div>
@@ -3116,16 +3341,24 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                   type="password"
                   value={eInvoiceForm.password}
                   onChange={(e) => {
-                    setEInvoiceForm((prev) => ({ ...prev, password: e.target.value }));
+                    setEInvoiceForm((prev) => ({
+                      ...prev,
+                      password: e.target.value,
+                    }));
                     if (eInvoiceFormErrors.password) {
-                      setEInvoiceFormErrors(prev => ({ ...prev, password: "" }));
+                      setEInvoiceFormErrors((prev) => ({
+                        ...prev,
+                        password: "",
+                      }));
                     }
                   }}
                   className={`${eInvoiceFormErrors.password ? "border-red-500" : ""}`}
                   placeholder="Nhập mật khẩu"
                 />
                 {eInvoiceFormErrors.password && (
-                  <p className="text-sm text-red-500">{eInvoiceFormErrors.password}</p>
+                  <p className="text-sm text-red-500">
+                    {eInvoiceFormErrors.password}
+                  </p>
                 )}
               </div>
             </div>
@@ -3137,25 +3370,39 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                 <Select
                   value={eInvoiceForm.softwareName}
                   onValueChange={(value) => {
-                    setEInvoiceForm((prev) => ({ ...prev, softwareName: value }));
+                    setEInvoiceForm((prev) => ({
+                      ...prev,
+                      softwareName: value,
+                    }));
                     if (eInvoiceFormErrors.softwareName) {
-                      setEInvoiceFormErrors(prev => ({ ...prev, softwareName: "" }));
+                      setEInvoiceFormErrors((prev) => ({
+                        ...prev,
+                        softwareName: "",
+                      }));
                     }
                   }}
                 >
-                  <SelectTrigger className={`${eInvoiceFormErrors.softwareName ? "border-red-500" : ""}`}>
+                  <SelectTrigger
+                    className={`${eInvoiceFormErrors.softwareName ? "border-red-500" : ""}`}
+                  >
                     <SelectValue placeholder="Chọn phần mềm HĐĐT" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="MINVOICE">MINVOICE</SelectItem>
                     <SelectItem value="SINVOICE">SINVOICE</SelectItem>
                     <SelectItem value="VNPT-INVOICE">VNPT-INVOICE</SelectItem>
-                    <SelectItem value="VIETTEL-SINVOICE">VIETTEL-SINVOICE</SelectItem>
-                    <SelectItem value="MISA-MEinvoice">MISA-MEinvoice</SelectItem>
+                    <SelectItem value="VIETTEL-SINVOICE">
+                      VIETTEL-SINVOICE
+                    </SelectItem>
+                    <SelectItem value="MISA-MEinvoice">
+                      MISA-MEinvoice
+                    </SelectItem>
                   </SelectContent>
                 </Select>
                 {eInvoiceFormErrors.softwareName && (
-                  <p className="text-sm text-red-500">{eInvoiceFormErrors.softwareName}</p>
+                  <p className="text-sm text-red-500">
+                    {eInvoiceFormErrors.softwareName}
+                  </p>
                 )}
               </div>
             </div>
@@ -3168,16 +3415,24 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                   id="loginUrl"
                   value={eInvoiceForm.loginUrl}
                   onChange={(e) => {
-                    setEInvoiceForm((prev) => ({ ...prev, loginUrl: e.target.value }));
+                    setEInvoiceForm((prev) => ({
+                      ...prev,
+                      loginUrl: e.target.value,
+                    }));
                     if (eInvoiceFormErrors.loginUrl) {
-                      setEInvoiceFormErrors(prev => ({ ...prev, loginUrl: "" }));
+                      setEInvoiceFormErrors((prev) => ({
+                        ...prev,
+                        loginUrl: "",
+                      }));
                     }
                   }}
                   className={`${eInvoiceFormErrors.loginUrl ? "border-red-500" : ""}`}
                   placeholder="https://api.example.com"
                 />
                 {eInvoiceFormErrors.loginUrl && (
-                  <p className="text-sm text-red-500">{eInvoiceFormErrors.loginUrl}</p>
+                  <p className="text-sm text-red-500">
+                    {eInvoiceFormErrors.loginUrl}
+                  </p>
                 )}
               </div>
             </div>
@@ -3228,7 +3483,10 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                 id="notes"
                 value={eInvoiceForm.notes}
                 onChange={(e) =>
-                  setEInvoiceForm((prev) => ({ ...prev, notes: e.target.value }))
+                  setEInvoiceForm((prev) => ({
+                    ...prev,
+                    notes: e.target.value,
+                  }))
                 }
                 className="col-span-3"
                 placeholder="Ghi chú thêm (tùy chọn)"
