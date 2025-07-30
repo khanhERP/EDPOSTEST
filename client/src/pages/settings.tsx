@@ -995,7 +995,7 @@ export default function Settings() {
             className="space-y-6"
           >
             <div className="w-full overflow-hidden">
-              <TabsList className="w-full flex flex-wrap items-center justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-3 min-h-[auto]"
+              <TabsList className="w-full flex flex-wrap items-center justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-4 min-h-[70px]"
               >
                 <TabsTrigger 
                   value="store" 
