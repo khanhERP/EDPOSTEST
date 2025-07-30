@@ -3778,13 +3778,18 @@ gray-200 rounded-xl p-4 min-h-[70px]"
               <Label htmlFor="isDefault" className="text-right">
                 Mặc định
               </Label>
-              <Switch
-                id="isDefault"
-                checked={templateForm.isDefault}
-                onCheckedChange={(checked) =>
-                  setTemplateForm((prev) => ({ ...prev, isDefault: checked }))
-                }
-              />
+              <div className="col-span-3 flex items-center space-x-2">
+                <Switch
+                  id="isDefault"
+                  checked={templateForm.isDefault}
+                  onCheckedChange={(checked) =>
+                    setTemplateForm((prev) => ({ ...prev, isDefault: checked }))
+                  }
+                />
+                <Label htmlFor="isDefault" className="text-sm">
+                  Đặt làm mẫu số mặc định
+                </Label>
+              </div>
             </div>
           </div>
           <DialogFooter>
