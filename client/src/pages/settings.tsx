@@ -993,51 +993,47 @@ export default function Settings() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="flex overflow-x-auto justify-start md:justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-3 min-h-[70px] scrollbar-hide"
-            style={{
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-            }}
+          <TabsList className="flex flex-wrap justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-3 min-h-[70px] max-w-full"
           >
             <TabsTrigger 
               value="store" 
-              className="flex items-center gap-1.5 text-xs sm:text-sm px-2.5 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap min-w-[70px] sm:min-w-[100px] justify-center flex-shrink-0"
+              className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-normal text-center min-w-[100px] sm:min-w-[120px] justify-center"
             >
               <Store className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden md:inline">{t("settings.storeInfo")}</span>
-              <span className="md:hidden">Cửa hàng</span>
+              <span className="md:hidden">Thông tin cửa hàng</span>
             </TabsTrigger>
             <TabsTrigger 
               value="customers" 
-              className="flex items-center gap-1.5 text-xs sm:text-sm px-2.5 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap min-w-[80px] sm:min-w-[110px] justify-center flex-shrink-0"
+              className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-normal text-center min-w-[100px] sm:min-w-[130px] justify-center"
             >
               <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden md:inline">{t("customers.title")}</span>
-              <span className="md:hidden">KH</span>
+              <span className="md:hidden">Quản lý khách hàng</span>
             </TabsTrigger>
             <TabsTrigger 
               value="categories" 
-              className="flex items-center gap-1.5 text-xs sm:text-sm px-2.5 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap min-w-[70px] sm:min-w-[110px] justify-center flex-shrink-0"
+              className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-normal text-center min-w-[100px] sm:min-w-[120px] justify-center"
             >
               <Package className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden md:inline">{t("settings.categories")}</span>
-              <span className="md:hidden">SP</span>
+              <span className="md:hidden">Danh mục & Sản phẩm</span>
             </TabsTrigger>
             <TabsTrigger 
               value="employees" 
-              className="flex items-center gap-1.5 text-xs sm:text-sm px-2.5 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap min-w-[70px] sm:min-w-[105px] justify-center flex-shrink-0"
+              className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-normal text-center min-w-[100px] sm:min-w-[110px] justify-center"
             >
               <Users className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden md:inline">{t("settings.employees")}</span>
-              <span className="md:hidden">NV</span>
+              <span className="md:hidden">Nhân viên</span>
             </TabsTrigger>
             <TabsTrigger 
               value="payments" 
-              className="flex items-center gap-1.5 text-xs sm:text-sm px-2.5 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap min-w-[70px] sm:min-w-[115px] justify-center flex-shrink-0"
+              className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-normal text-center min-w-[100px] sm:min-w-[130px] justify-center"
             >
               <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden md:inline">{t("settings.paymentMethods")}</span>
-              <span className="md:hidden">TT</span>
+              <span className="md:hidden">Phương thức thanh toán</span>
             </TabsTrigger>
           </TabsList>
 
