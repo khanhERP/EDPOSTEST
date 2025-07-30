@@ -114,6 +114,13 @@ export default function Settings() {
     notes: "",
     isActive: true,
   });
+  const [eInvoiceFormErrors, setEInvoiceFormErrors] = useState({
+    taxCode: "",
+    loginId: "",
+    password: "",
+    softwareName: "",
+    loginUrl: "",
+  });
 
   // Product management state
   const [showCategoryForm, setShowCategoryForm] = useState(false);
@@ -894,12 +901,51 @@ export default function Settings() {
       notes: "",
       isActive: true,
     });
+    setEInvoiceFormErrors({
+      taxCode: "",
+      loginId: "",
+      password: "",
+      softwareName: "",
+      loginUrl: "",
+    });
     setEditingEInvoice(null);
   };
 
+  const validateEInvoiceForm = () => {
+    const errors = {
+      taxCode: "",
+      loginId: "",
+      password: "",
+      softwareName: "",
+      loginUrl: "",
+    };
+
+    if (!eInvoiceForm.taxCode.trim()) {
+      errors.taxCode = "Mã số thuế là bắt buộc";
+    }
+
+    if (!eInvoiceForm.loginId.trim()) {
+      errors.loginId = "ID đăng nhập là bắt buộc";
+    }
+
+    if (!eInvoiceForm.password.trim()) {
+      errors.password = "Mật khẩu là bắt buộc";
+    }
+
+    if (!eInvoiceForm.softwareName.trim()) {
+      errors.softwareName = "Phần mềm HĐĐT là bắt buộc";
+    }
+
+    if (!eInvoiceForm.loginUrl.trim()) {
+      errors.loginUrl = "Đường dẫn đăng nhập là bắt buộc";
+    }
+
+    setEInvoiceFormErrors(errors);
+    return !Object.values(errors).some(error => error !== "");
+  };
+
   const handleCreateEInvoice = () => {
-    // Validate required fields
-    if (!eInvoiceForm.taxCode.trim() || !eInvoiceForm.loginId.trim() || !eInvoiceForm.password.trim() || !eInvoiceForm.softwareName) {
+    if (!validateEInvoiceForm()) {
       toast({
         title: "Lỗi",
         description: "Vui lòng điền đầy đủ thông tin bắt buộc",
@@ -912,8 +958,7 @@ export default function Settings() {
   };
 
   const handleUpdateEInvoice = () => {
-    // Validate required fields
-    if (!eInvoiceForm.taxCode.trim() || !eInvoiceForm.loginId.trim() || !eInvoiceForm.password.trim() || !eInvoiceForm.softwareName) {
+    if (!validateEInvoiceForm()) {
       toast({
         title: "Lỗi",
         description: "Vui lòng điền đầy đủ thông tin bắt buộc",
@@ -941,6 +986,13 @@ export default function Settings() {
       cqtCode: eInvoice.cqtCode,
       notes: eInvoice.notes === "-" ? "" : eInvoice.notes,
       isActive: eInvoice.isActive,
+    });
+    setEInvoiceFormErrors({
+      taxCode: "",
+      loginId: "",
+      password: "",
+      softwareName: "",
+      loginUrl: "",
     });
     setEditingEInvoice(eInvoice);
     setShowEInvoiceForm(true);
@@ -2967,84 +3019,124 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                       </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="taxCode" className="text-right">
-                Mã số thuế
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="taxCode" className="text-right mt-2">
+                Mã số thuế <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="taxCode"
-                value={eInvoiceForm.taxCode}
-                onChange={(e) =>
-                  setEInvoiceForm((prev) => ({ ...prev, taxCode: e.target.value }))
-                }
-                className="col-span-3"
-                placeholder="Nhập mã số thuế"
-              />
+              <div className="col-span-3 space-y-1">
+                <Input
+                  id="taxCode"
+                  value={eInvoiceForm.taxCode}
+                  onChange={(e) => {
+                    setEInvoiceForm((prev) => ({ ...prev, taxCode: e.target.value }));
+                    if (eInvoiceFormErrors.taxCode) {
+                      setEInvoiceFormErrors(prev => ({ ...prev, taxCode: "" }));
+                    }
+                  }}
+                  className={`${eInvoiceFormErrors.taxCode ? "border-red-500" : ""}`}
+                  placeholder="Nhập mã số thuế"
+                />
+                {eInvoiceFormErrors.taxCode && (
+                  <p className="text-sm text-red-500">{eInvoiceFormErrors.taxCode}</p>
+                )}
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="loginId" className="text-right">
-                ID đăng nhập
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="loginId" className="text-right mt-2">
+                ID đăng nhập <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="loginId"
-                value={eInvoiceForm.loginId}
-                onChange={(e) =>
-                  setEInvoiceForm((prev) => ({ ...prev, loginId: e.target.value }))
-                }
-                className="col-span-3"
-                placeholder="Nhập ID đăng nhập"
-              />
+              <div className="col-span-3 space-y-1">
+                <Input
+                  id="loginId"
+                  value={eInvoiceForm.loginId}
+                  onChange={(e) => {
+                    setEInvoiceForm((prev) => ({ ...prev, loginId: e.target.value }));
+                    if (eInvoiceFormErrors.loginId) {
+                      setEInvoiceFormErrors(prev => ({ ...prev, loginId: "" }));
+                    }
+                  }}
+                  className={`${eInvoiceFormErrors.loginId ? "border-red-500" : ""}`}
+                  placeholder="Nhập ID đăng nhập"
+                />
+                {eInvoiceFormErrors.loginId && (
+                  <p className="text-sm text-red-500">{eInvoiceFormErrors.loginId}</p>
+                )}
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="password" className="text-right">
-                Mật khẩu
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="password" className="text-right mt-2">
+                Mật khẩu <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="password"
-                type="password"
-                value={eInvoiceForm.password}
-                onChange={(e) =>
-                  setEInvoiceForm((prev) => ({ ...prev, password: e.target.value }))
-                }
-                className="col-span-3"
-                placeholder="Nhập mật khẩu"
-              />
+              <div className="col-span-3 space-y-1">
+                <Input
+                  id="password"
+                  type="password"
+                  value={eInvoiceForm.password}
+                  onChange={(e) => {
+                    setEInvoiceForm((prev) => ({ ...prev, password: e.target.value }));
+                    if (eInvoiceFormErrors.password) {
+                      setEInvoiceFormErrors(prev => ({ ...prev, password: "" }));
+                    }
+                  }}
+                  className={`${eInvoiceFormErrors.password ? "border-red-500" : ""}`}
+                  placeholder="Nhập mật khẩu"
+                />
+                {eInvoiceFormErrors.password && (
+                  <p className="text-sm text-red-500">{eInvoiceFormErrors.password}</p>
+                )}
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="softwareName" className="text-right">
-                Phần mềm HĐ
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="softwareName" className="text-right mt-2">
+                Phần mềm HĐ <span className="text-red-500">*</span>
               </Label>
-              <Select
-                value={eInvoiceForm.softwareName}
-                onValueChange={(value) =>
-                  setEInvoiceForm((prev) => ({ ...prev, softwareName: value }))
-                }
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Chọn phần mềm HĐĐT" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MINVOICE">MINVOICE</SelectItem>
-                  <SelectItem value="SINVOICE">SINVOICE</SelectItem>
-                  <SelectItem value="VNPT-INVOICE">VNPT-INVOICE</SelectItem>
-                  <SelectItem value="VIETTEL-SINVOICE">VIETTEL-SINVOICE</SelectItem>
-                  <SelectItem value="MISA-MEinvoice">MISA-MEinvoice</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="col-span-3 space-y-1">
+                <Select
+                  value={eInvoiceForm.softwareName}
+                  onValueChange={(value) => {
+                    setEInvoiceForm((prev) => ({ ...prev, softwareName: value }));
+                    if (eInvoiceFormErrors.softwareName) {
+                      setEInvoiceFormErrors(prev => ({ ...prev, softwareName: "" }));
+                    }
+                  }}
+                >
+                  <SelectTrigger className={`${eInvoiceFormErrors.softwareName ? "border-red-500" : ""}`}>
+                    <SelectValue placeholder="Chọn phần mềm HĐĐT" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MINVOICE">MINVOICE</SelectItem>
+                    <SelectItem value="SINVOICE">SINVOICE</SelectItem>
+                    <SelectItem value="VNPT-INVOICE">VNPT-INVOICE</SelectItem>
+                    <SelectItem value="VIETTEL-SINVOICE">VIETTEL-SINVOICE</SelectItem>
+                    <SelectItem value="MISA-MEinvoice">MISA-MEinvoice</SelectItem>
+                  </SelectContent>
+                </Select>
+                {eInvoiceFormErrors.softwareName && (
+                  <p className="text-sm text-red-500">{eInvoiceFormErrors.softwareName}</p>
+                )}
+              </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="loginUrl" className="text-right">
-                Đường dẫn đăng nhập
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label htmlFor="loginUrl" className="text-right mt-2">
+                Đường dẫn <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="loginUrl"
-                value={eInvoiceForm.loginUrl}
-                onChange={(e) =>
-                  setEInvoiceForm((prev) => ({ ...prev, loginUrl: e.target.value }))
-                }
-                className="col-span-3"
-                placeholder="https://api.example.com"
-              />
+              <div className="col-span-3 space-y-1">
+                <Input
+                  id="loginUrl"
+                  value={eInvoiceForm.loginUrl}
+                  onChange={(e) => {
+                    setEInvoiceForm((prev) => ({ ...prev, loginUrl: e.target.value }));
+                    if (eInvoiceFormErrors.loginUrl) {
+                      setEInvoiceFormErrors(prev => ({ ...prev, loginUrl: "" }));
+                    }
+                  }}
+                  className={`${eInvoiceFormErrors.loginUrl ? "border-red-500" : ""}`}
+                  placeholder="https://api.example.com"
+                />
+                {eInvoiceFormErrors.loginUrl && (
+                  <p className="text-sm text-red-500">{eInvoiceFormErrors.loginUrl}</p>
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="signMethod" className="text-right">
