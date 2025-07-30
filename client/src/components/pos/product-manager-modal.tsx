@@ -196,7 +196,7 @@ export function ProductManagerModal({
       productType: 1,
       imageUrl: "",
       trackInventory: true,
-      taxRate: "10.00",
+      taxRate: "8.00",
     },
   });
 
@@ -246,7 +246,7 @@ export function ProductManagerModal({
       productType: product.productType || 1,
       imageUrl: product.imageUrl || "",
       trackInventory: product.trackInventory !== false,
-      taxRate: product.taxRate || "10.00",
+      taxRate: product.taxRate || "8.00",
     });
     setShowAddForm(true);
   };
@@ -269,7 +269,7 @@ export function ProductManagerModal({
       productType: 1,
       imageUrl: "",
       trackInventory: true,
-      taxRate: "10.00",
+      taxRate: "8.00",
     });
   };
 
@@ -363,7 +363,7 @@ export function ProductManagerModal({
           productType: 1,
           imageUrl: "",
           trackInventory: true,
-          taxRate: "10.00",
+          taxRate: "8.00",
         });
       }
     }
@@ -382,7 +382,7 @@ export function ProductManagerModal({
       productType: 1,
       imageUrl: "",
       trackInventory: true,
-      taxRate: "10.00",
+      taxRate: "8.00",
     });
     onClose();
   };
@@ -502,7 +502,7 @@ export function ProductManagerModal({
                             }).format(parseFloat(product.price))}
                           </td>
                           <td className="py-3 px-4 pos-text-secondary">
-                            {product.taxRate || "10.00"}%
+                            {product.taxRate || "8.00"}%
                           </td>
                           <td className="py-3 px-4">
                             <span
@@ -633,7 +633,7 @@ export function ProductManagerModal({
                               step="0.01"
                               min="0"
                               max="100"
-                              placeholder="10.00"
+                              placeholder="8.00"
                             />
                           </FormControl>
                           <FormMessage />
