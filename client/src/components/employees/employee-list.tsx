@@ -18,9 +18,12 @@ export function EmployeeList() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
-  const { data: employees, isLoading } = useQuery<Employee[]>({
+  const { data: employeesData, isLoading } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
   });
+
+  // Sort employees by ID descending (newest first)
+  const employees = employeesData?.sort((a, b) => b.id - a.id);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
