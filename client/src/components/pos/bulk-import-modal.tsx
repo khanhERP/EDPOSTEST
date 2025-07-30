@@ -150,6 +150,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
             !row[0] ||
             !row[1] ||
             !row[2] ||
+            row[3] === undefined ||
             row[4] === undefined ||
             !row[5]
           ) {
@@ -236,7 +237,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
     const template = [
       [
         "Tên sản phẩm",
-        "SKU",
+        "SKU", 
         "Giá",
         "% Thuế",
         "Số lượng",
