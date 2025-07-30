@@ -9,22 +9,27 @@ import {
 import { Button } from "@/components/ui/button";
 import QRCodeLib from "qrcode";
 import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
+import { EInvoiceModal } from "./einvoice-modal";
 
 interface PaymentMethodModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelectMethod: (method: string) => void;
   total: number;
+  onShowEInvoice?: () => void;
 }
 
 export function PaymentMethodModal({ 
   isOpen, 
   onClose, 
   onSelectMethod,
-  total 
+  total,
+  onShowEInvoice 
 }: PaymentMethodModalProps) {
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [showEInvoice, setShowEInvoice] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
 
   // Load payment methods from settings
   const getPaymentMethods = () => {
@@ -86,6 +91,8 @@ export function PaymentMethodModal({
   const paymentMethods = getPaymentMethods();
 
   const handleSelect = async (method: string) => {
+    setSelectedPaymentMethod(method);
+    
     if (method === "qrCode") {
       // Call CreateQRPos API for QR payment
       try {
@@ -175,16 +182,15 @@ export function PaymentMethodModal({
         console.error('Error generating QR code:', error);
       }
     } else {
-      onSelectMethod(method);
-      onClose();
+      // Show E-invoice modal for other payment methods
+      setShowEInvoice(true);
     }
   };
 
   const handleQRComplete = () => {
-    onSelectMethod("qrCode");
     setShowQRCode(false);
     setQrCodeUrl("");
-    onClose();
+    setShowEInvoice(true);
   };
 
   const handleBack = () => {
@@ -192,11 +198,30 @@ export function PaymentMethodModal({
     setQrCodeUrl("");
   };
 
-  // Reset QR state when modal closes
+  const handleEInvoiceConfirm = (eInvoiceData: any) => {
+    // Process E-invoice data here
+    console.log("E-invoice data:", eInvoiceData);
+    setShowEInvoice(false);
+    onSelectMethod(selectedPaymentMethod);
+    onClose();
+    // Trigger receipt modal
+    if (onShowEInvoice) {
+      onShowEInvoice();
+    }
+  };
+
+  const handleEInvoiceClose = () => {
+    setShowEInvoice(false);
+    setSelectedPaymentMethod("");
+  };
+
+  // Reset all states when modal closes
   useEffect(() => {
     if (!isOpen) {
       setShowQRCode(false);
       setQrCodeUrl("");
+      setShowEInvoice(false);
+      setSelectedPaymentMethod("");
     }
   }, [isOpen]);
 
@@ -288,6 +313,13 @@ export function PaymentMethodModal({
           )}
         </div>
       </DialogContent>
+      
+      <EInvoiceModal
+        isOpen={showEInvoice}
+        onClose={handleEInvoiceClose}
+        onConfirm={handleEInvoiceConfirm}
+        total={total}
+      />
     </Dialog>
   );
 }
