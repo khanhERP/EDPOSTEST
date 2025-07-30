@@ -1636,6 +1636,7 @@ export async function registerRoutes(app: Express): Promise {
             stock: parseInt(productData.stock) || 0,
             categoryId: parseInt(productData.categoryId),
             imageUrl: productData.imageUrl || null,
+            taxRate: productData.taxRate ? productData.taxRate.toString() : "8.00",
           }).returning();
 
           console.log(`Successfully created product: ${product.name}`);
