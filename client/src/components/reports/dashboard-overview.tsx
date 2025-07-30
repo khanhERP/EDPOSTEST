@@ -112,24 +112,8 @@ export function DashboardOverview() {
       (table: TableType) => table.status === "occupied",
     );
 
-    // This month stats
-    const thisMonth = new Date();
-    const monthStart = new Date(
-      thisMonth.getFullYear(),
-      thisMonth.getMonth(),
-      1,
-    );
-    const monthTransactions = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at,
-      );
-      return transactionDate >= monthStart;
-    });
-
-    const monthRevenue = monthTransactions.reduce(
-      (total: number, transaction: any) => total + Number(transaction.total),
-      0,
-    );
+    // Revenue for selected date range (displayed as "month revenue")
+    const monthRevenue = periodRevenue;
 
     // Average order value
     const averageOrderValue =
@@ -303,7 +287,10 @@ export function DashboardOverview() {
                   {formatCurrency(stats.monthRevenue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {t("reports.monthAccumulated")}
+                  {startDate === endDate 
+                    ? formatDate(startDate)
+                    : `${formatDate(startDate)} - ${formatDate(endDate)}`
+                  }
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-blue-500" />
