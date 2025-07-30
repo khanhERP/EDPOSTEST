@@ -64,6 +64,7 @@ export function ProductManagerModal({
   const [showAddForm, setShowAddForm] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
   const {
@@ -286,6 +287,14 @@ export function ProductManagerModal({
     return types[productType as keyof typeof types] || "Unknown";
   };
 
+  const filteredProducts = products.filter((product) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      product.name.toLowerCase().includes(searchLower) ||
+      product.sku.toLowerCase().includes(searchLower)
+    );
+  });
+
   const exportProductsToExcel = () => {
     const exportData = [
       [
@@ -405,35 +414,65 @@ export function ProductManagerModal({
         <div className="p-6">
           {!showAddForm ? (
             <>
-              <div className="flex space-x-4 mb-6">
-                <Button
-                  onClick={() => setShowAddForm(true)}
-                  className="bg-green-600 hover:bg-green-700 text-white font-medium transition-colors duration-200"
-                >
-                  <Plus className="mr-2" size={16} />
-                  {t("tables.addNewProduct")}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-orange-500 text-orange-700 hover:bg-orange-100 hover:border-orange-600"
-                  onClick={() => setShowBulkImport(true)}
-                >
-                  <Upload className="mr-2" size={16} />
-                  {t("tables.bulkImport")}
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-green-500 text-green-700 hover:bg-green-100 hover:border-green-600"
-                  onClick={exportProductsToExcel}
-                >
-                  <Download className="mr-2" size={16} />
-                  {t("tables.export")}
-                </Button>
+              <div className="flex flex-col space-y-4 mb-6">
+                <div className="flex space-x-4">
+                  <Button
+                    onClick={() => setShowAddForm(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white font-medium transition-colors duration-200"
+                  >
+                    <Plus className="mr-2" size={16} />
+                    {t("tables.addNewProduct")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-orange-500 text-orange-700 hover:bg-orange-100 hover:border-orange-600"
+                    onClick={() => setShowBulkImport(true)}
+                  >
+                    <Upload className="mr-2" size={16} />
+                    {t("tables.bulkImport")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-green-500 text-green-700 hover:bg-green-100 hover:border-green-600"
+                    onClick={exportProductsToExcel}
+                  >
+                    <Download className="mr-2" size={16} />
+                    {t("tables.export")}
+                  </Button>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="Tìm kiếm theo tên hoặc mã SKU..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="max-w-md"
+                  />
+                  {searchTerm && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSearchTerm("")}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <X size={16} />
+                    </Button>
+                  )}
+                </div>
               </div>
 
               <div className="bg-gray-50 rounded-lg overflow-hidden">
                 {isLoading ? (
                   <div className="p-8 text-center">{t("tables.loading")}</div>
+                ) : filteredProducts.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <p className="text-gray-500">
+                      {searchTerm 
+                        ? `Không tìm thấy sản phẩm nào với từ khóa "${searchTerm}"`
+                        : "Không có sản phẩm nào"
+                      }
+                    </p>
+                  </div>
                 ) : (
                   <table className="w-full">
                     <thead className="bg-gray-100">
@@ -465,7 +504,7 @@ export function ProductManagerModal({
                       </tr>
                     </thead>
                     <tbody className="bg-white">
-                      {products.map((product) => (
+                      {filteredProducts.map((product) => (
                         <tr
                           key={product.id}
                           className="border-b border-gray-200"
