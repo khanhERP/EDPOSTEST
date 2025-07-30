@@ -2323,13 +2323,16 @@ app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async 
 
   // QR Payment API proxy endpoint
   app.post("/api/pos/create-qr", async (req, res) => {
+    // Stock update error
     try {
       const { bankCode, clientID } = req.query;
       const body = req.body;
 
       console.log('CreateQRPos request:', { bankCode, clientID, body });
 
-      const response = await fetch(`http://localhost:7114/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
+      // Use external server URL
+      const apiBaseUrl = process.env.QR_API_BASE_URL || 'http://1.55.212.135:9335';
+      const response = await fetch(`${apiBaseUrl}/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
