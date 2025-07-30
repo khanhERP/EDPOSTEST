@@ -133,7 +133,7 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     copySuccess: 'Copied',
     copySuccessDesc: 'URL has been copied to clipboard',
     breakEndSuccess: 'Break Ended',
-    breakEndSuccessDesc: 'Break time has ended',
+    breakEndSuccessDesc: 'Break has ended',
     breakEndError: 'Error ending break',
     loading: 'Loading...',
     noAttendanceData: 'No attendance data',
@@ -198,7 +198,6 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     lateCount: 'Late',
     absentCount: 'Absent',
     times: 'times',
-    monthPickerPlaceholder: 'YYYY-MM',
   },
   vi: {
     title: 'Quản lý chấm công',
@@ -275,9 +274,6 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     urlCopy: 'Sao chép URL',
     copySuccess: 'Đã sao chép',
     copySuccessDesc: 'URL đã được sao chép vào clipboard',
-    breakEndSuccess: 'Kết thúc nghỉ',
-    breakEndSuccessDesc: 'Đã kết thúc thời gian nghỉ',
-    breakEndError: 'Lỗi kết thúc nghỉ',
 
     // Additional missing keys for attendance management
     loading: 'Đang tải...',
@@ -298,7 +294,6 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     filterByEmployee: 'Lọc theo nhân viên',
     exportData: 'Xuất dữ liệu',
     printReport: 'In báo cáo',
-
     status: {
       present: 'Có mặt',
       absent: 'Vắng mặt',

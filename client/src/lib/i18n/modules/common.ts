@@ -126,7 +126,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     carousel: "캐러셀",
     slider: "슬라이더",
     progress: "진행률",
-    loading: "로딩",
     spinner: "스피너",
     skeleton: "스켈레톤",
     placeholder: "플레이스홀더",
