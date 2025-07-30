@@ -113,9 +113,9 @@ export function EmployeeList() {
                     <TableHead className="min-w-[150px]">{t('employees.name')}</TableHead>
                     <TableHead className="min-w-[200px]">{t('employees.email')}</TableHead>
                     <TableHead className="min-w-[150px]">{t('employees.phone')}</TableHead>
-                    <TableHead className="min-w-[120px]">{t('employees.role')}</TableHead>
+                    <TableHead className="min-w-[160px]">{t('employees.role')}</TableHead>
                     <TableHead className="min-w-[130px]">{t('employees.hireDate')}</TableHead>
-                    <TableHead className="min-w-[100px]">{t('employees.status')}</TableHead>
+                    <TableHead className="min-w-[140px]">{t('employees.status')}</TableHead>
                     <TableHead className="min-w-[150px]">{t('employees.employeeManagement')}</TableHead>
                   </TableRow>
                 </TableHeader>
