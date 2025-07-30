@@ -2205,7 +2205,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                     </div>
                   )}
 
-                  
+
                   <div className="flex justify-between items-center mt-6">
                     <div className="text-sm text-gray-600">
                       {t("settings.total")} {filteredProducts.length} {t("settings.productsShowing")}
@@ -2802,7 +2802,6 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                   không?
                 </p>
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  ```text
                   <div className="flex items-start gap-2">
                     <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
                     <p className="text-sm text-red-700">
