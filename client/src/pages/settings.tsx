@@ -1578,7 +1578,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
 
                             {/* E-invoice connections table */}
                             <div className="rounded-md border bg-white">
-                              <div className="grid grid-cols-11 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                              <div className="grid grid-cols-10 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
                                 <div className="text-center">Ký hiệu</div>
                                 <div>Mã số thuế</div>
                                 <div>ID đăng nhập</div>
@@ -1588,7 +1588,6 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                 <div>Phương thức ký</div>
                                 <div>Loại mã CQT</div>
                                 <div>Ghi chú</div>
-                                <div className="text-center">Mặc định</div>
                                 <div className="text-center">Hành động</div>
                               </div>
 
@@ -1596,7 +1595,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                 {eInvoiceConnections.map((connection) => (
                                   <div
                                     key={connection.id}
-                                    className="grid grid-cols-11 gap-4 p-3 items-center text-sm"
+                                    className="grid grid-cols-10 gap-4 p-3 items-center text-sm"
                                   >
                                     <div className="text-center">
                                       {connection.symbol}
@@ -1619,19 +1618,6 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                     <div>{connection.signMethod}</div>
                                     <div>{connection.cqtCode}</div>
                                     <div>{connection.notes}</div>
-                                    <div className="text-center">
-                                      <Badge
-                                        variant={
-                                          connection.isDefault
-                                            ? "default"
-                                            : "secondary"
-                                        }
-                                      >
-                                        {connection.isDefault
-                                          ? "Mặc định"
-                                          : "Không mặc định"}
-                                      </Badge>
-                                    </div>
                                     <div className="text-center">
                                       <div className="flex items-center justify-center gap-1">
                                         <Button
@@ -1663,8 +1649,8 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                 ))}
 
                                 {eInvoiceConnections.length === 0 && (
-                                  <div className="grid grid-cols-11 gap-4 p-8 items-center text-sm text-gray-500">
-                                    <div className="col-span-11 text-center">
+                                  <div className="grid grid-cols-10 gap-4 p-8 items-center text-sm text-gray-500">
+                                    <div className="col-span-10 text-center">
                                       <div className="flex flex-col items-center gap-2">
                                         <SettingsIcon className="w-8 h-8 text-gray-400" />
                                         <p>Chưa có kết nối HĐĐT nào</p>
