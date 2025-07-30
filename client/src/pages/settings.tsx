@@ -2140,31 +2140,44 @@ export default function Settings() {
                       </p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <div className="min-w-[800px] rounded-md border">
-                        <div className="grid grid-cols-6 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b" style={{gridTemplateColumns: "120px 150px 120px 130px 100px 120px"}}>
-                          <div className="truncate">{t("employees.employeeId")}</div>
-                          <div className="truncate">{t("employees.name")}</div>
-                          <div className="truncate">{t("employees.role")}</div>
-                          <div className="truncate">{t("employees.phone")}</div>
-                          <div className="truncate">{t("employees.status")}</div>
-                          <div className="text-center truncate">{t("common.actions")}</div>
-                        </div>
-
-                        <div className="divide-y">
+                    <div className="w-full overflow-x-auto border rounded-md">
+                      <table className="w-full min-w-[900px] table-fixed">
+                        <thead>
+                          <tr className="bg-gray-50 border-b">
+                            <th className="w-[140px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                              {t("employees.employeeId")}
+                            </th>
+                            <th className="w-[180px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                              {t("employees.name")}
+                            </th>
+                            <th className="w-[140px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                              {t("employees.role")}
+                            </th>
+                            <th className="w-[150px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                              {t("employees.phone")}
+                            </th>
+                            <th className="w-[120px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                              {t("employees.status")}
+                            </th>
+                            <th className="w-[130px] px-4 py-3 text-center font-medium text-sm text-gray-600">
+                              {t("common.actions")}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
                           {employeesData.map((employee: any) => (
-                            <div
-                              key={employee.id}
-                              className="grid grid-cols-6 gap-4 p-4 items-center"
-                              style={{gridTemplateColumns: "120px 150px 120px 130px 100px 120px"}}
-                            >
-                              <div className="font-mono text-sm truncate">
-                                {employee.employeeId}
-                              </div>
-                              <div className="font-medium truncate" title={employee.name}>
-                                {employee.name}
-                              </div>
-                              <div className="truncate">
+                            <tr key={employee.id} className="hover:bg-gray-50">
+                              <td className="px-4 py-3">
+                                <div className="font-mono text-sm truncate" title={employee.employeeId}>
+                                  {employee.employeeId}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="font-medium truncate" title={employee.name}>
+                                  {employee.name}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
                                 <Badge
                                   variant={
                                     employee.role === "admin"
@@ -2173,6 +2186,7 @@ export default function Settings() {
                                         ? "default"
                                         : "secondary"
                                   }
+                                  className="text-xs"
                                 >
                                   {employee.role === "admin"
                                     ? t("employees.roles.admin")
@@ -2182,53 +2196,57 @@ export default function Settings() {
                                         ? t("employees.roles.cashier")
                                         : employee.role}
                                 </Badge>
-                              </div>
-                              <div className="text-sm text-gray-600 truncate">
-                                {employee.phone || "-"}
-                              </div>
-                              <div className="truncate">
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="text-sm text-gray-600 truncate" title={employee.phone || "-"}>
+                                  {employee.phone || "-"}
+                                </div>
+                              </td>
+                              <td className="px-4 py-3">
                                 <Badge
                                   variant={
                                     employee.isActive ? "default" : "secondary"
                                   }
-                                  className={
+                                  className={`text-xs ${
                                     employee.isActive
                                       ? "bg-green-100 text-green-800"
                                       : ""
-                                  }
+                                  }`}
                                 >
                                   {employee.isActive
                                     ? t("employees.active")
                                     : t("employees.inactive")}
                                 </Badge>
-                              </div>
-                              <div className="flex items-center justify-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    setEditingEmployee(employee);
-                                    setShowEmployeeForm(true);
-                                  }}
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-500 hover:text-red-700"
-                                  onClick={() => {
-                                    setEmployeeToDelete(employee);
-                                    setShowEmployeeDeleteDialog(true);
-                                  }}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </div>
+                              </td>
+                              <td className="px-4 py-3">
+                                <div className="flex items-center justify-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setEditingEmployee(employee);
+                                      setShowEmployeeForm(true);
+                                    }}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-red-500 hover:text-red-700"
+                                    onClick={() => {
+                                      setEmployeeToDelete(employee);
+                                      setShowEmployeeDeleteDialog(true);
+                                    }}
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
                           ))}
-                        </div>
-                      </div>
+                        </tbody>
+                      </table>
                     </div>
                   )}
 
