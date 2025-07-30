@@ -190,9 +190,12 @@ export default function Settings() {
   });
 
   // Fetch employees
-  const { data: employeesData, isLoading: employeesLoading } = useQuery<any[]>({
+  const { data: employeesRawData, isLoading: employeesLoading } = useQuery<any[]>({
     queryKey: ["/api/employees"],
   });
+
+  // Sort employees by ID descending (newest first)
+  const employeesData = employeesRawData?.sort((a, b) => b.id - a.id);
 
   // Fetch categories
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery<
