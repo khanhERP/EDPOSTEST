@@ -3664,7 +3664,23 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                 rows={3}
               />
             </div>
-            
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="isDefault" className="text-right">
+                Mặc định
+              </Label>
+              <div className="col-span-3 flex items-center space-x-2">
+                <Switch
+                  id="isDefault"
+                  checked={eInvoiceForm.isActive}
+                  onCheckedChange={(checked) =>
+                    setEInvoiceForm((prev) => ({ ...prev, isActive: checked }))
+                  }
+                />
+                <Label htmlFor="isDefault" className="text-sm">
+                  Đặt làm kết nối mặc định
+                </Label>
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button
