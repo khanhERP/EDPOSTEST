@@ -1328,6 +1328,91 @@ export class DatabaseStorage implements IStorage {
     return product;
   }
 
+  // Invoice templates methods
+  async getInvoiceTemplates(): Promise<any[]> {
+    try {
+      const { invoiceTemplates } = await import("@shared/schema");
+      return await db.select().from(invoiceTemplates).orderBy(invoiceTemplates.id);
+    } catch (error) {
+      console.error("Error fetching invoice templates:", error);
+      return [];
+    }
+  }
+
+  async getInvoiceTemplate(id: number): Promise<any> {
+    try {
+      const { invoiceTemplates } = await import("@shared/schema");
+      const [result] = await db
+        .select()
+        .from(invoiceTemplates)
+        .where(eq(invoiceTemplates.id, id));
+      return result;
+    } catch (error) {
+      console.error("Error fetching invoice template:", error);
+      return null;
+    }
+  }
+
+  async createInvoiceTemplate(data: any): Promise<any> {
+    try {
+      const { invoiceTemplates } = await import("@shared/schema");
+      
+      // If this template is set as default, unset all other defaults
+      if (data.isDefault) {
+        await db.update(invoiceTemplates)
+          .set({ isDefault: false })
+          .where(eq(invoiceTemplates.isDefault, true));
+      }
+      
+      const [result] = await db.insert(invoiceTemplates).values({
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }).returning();
+      return result;
+    } catch (error) {
+      console.error("Error creating invoice template:", error);
+      throw error;
+    }
+  }
+
+  async updateInvoiceTemplate(id: number, data: any): Promise<any> {
+    try {
+      const { invoiceTemplates } = await import("@shared/schema");
+      
+      // If this template is set as default, unset all other defaults
+      if (data.isDefault) {
+        await db.update(invoiceTemplates)
+          .set({ isDefault: false })
+          .where(eq(invoiceTemplates.isDefault, true));
+      }
+      
+      const [result] = await db.update(invoiceTemplates)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(eq(invoiceTemplates.id, id))
+        .returning();
+      return result;
+    } catch (error) {
+      console.error("Error updating invoice template:", error);
+      throw error;
+    }
+  }
+
+  async deleteInvoiceTemplate(id: number): Promise<boolean> {
+    try {
+      const { invoiceTemplates } = await import("@shared/schema");
+      const result = await db.delete(invoiceTemplates)
+        .where(eq(invoiceTemplates.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error deleting invoice template:", error);
+      return false;
+    }
+  }
+
   // E-invoice connections methods
   async getEInvoiceConnections(): Promise<any[]> {
     try {

@@ -1476,6 +1476,60 @@ export async function registerRoutes(app: Express): Promise {
     }
   });
 
+  // Invoice templates management
+  app.get("/api/invoice-templates", async (req, res) => {
+    try {
+      const templates = await storage.getInvoiceTemplates();
+      res.json(templates);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch invoice templates" });
+    }
+  });
+
+  app.post("/api/invoice-templates", async (req, res) => {
+    try {
+      const templateData = req.body;
+      const template = await storage.createInvoiceTemplate(templateData);
+      res.status(201).json(template);
+    } catch (error) {
+      console.error("Invoice template creation error:", error);
+      res.status(500).json({ message: "Failed to create invoice template" });
+    }
+  });
+
+  app.put("/api/invoice-templates/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const templateData = req.body;
+      const template = await storage.updateInvoiceTemplate(id, templateData);
+
+      if (!template) {
+        return res.status(404).json({ message: "Invoice template not found" });
+      }
+
+      res.json(template);
+    } catch (error) {
+      console.error("Invoice template update error:", error);
+      res.status(500).json({ message: "Failed to update invoice template" });
+    }
+  });
+
+  app.delete("/api/invoice-templates/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const deleted = await storage.deleteInvoiceTemplate(id);
+
+      if (!deleted) {
+        return res.status(404).json({ message: "Invoice template not found" });
+      }
+
+      res.json({ message: "Invoice template deleted successfully" });
+    } catch (error) {
+      console.error("Invoice template deletion error:", error);
+      res.status(500).json({ message: "Failed to delete invoice template" });
+    }
+  });
+
   // E-invoice connections management
   app.get("/api/einvoice-connections", async (req, res) => {
     try {

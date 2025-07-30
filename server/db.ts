@@ -154,6 +154,36 @@ export async function initializeSampleData() {
     } catch (error) {
       console.log("E-invoice connections table already exists or initialization failed:", error);
     }
+
+    // Initialize invoice_templates table if it doesn't exist
+    try {
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS invoice_templates (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) NOT NULL,
+          template_number VARCHAR(50) NOT NULL,
+          symbol VARCHAR(20) NOT NULL,
+          use_ck BOOLEAN NOT NULL DEFAULT true,
+          notes TEXT,
+          is_default BOOLEAN NOT NULL DEFAULT false,
+          is_active BOOLEAN NOT NULL DEFAULT true,
+          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+        )
+      `);
+
+      // Create indexes for better performance
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_invoice_templates_symbol ON invoice_templates(symbol)
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_invoice_templates_default ON invoice_templates(is_default)
+      `);
+
+      console.log("Invoice templates table initialized");
+    } catch (error) {
+      console.log("Invoice templates table already exists or initialization failed:", error);
+    }
   } catch (error) {
     console.log("⚠️ Sample data initialization skipped:", error);
   }

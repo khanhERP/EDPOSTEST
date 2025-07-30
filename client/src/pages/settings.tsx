@@ -1068,6 +1068,48 @@ export default function Settings() {
     });
   };
 
+  // Fetch invoice templates
+  const { data: invoiceTemplates = [], isLoading: templatesLoading } = useQuery<any[]>({
+    queryKey: ["/api/invoice-templates"],
+  });
+
+  // Invoice template mutations
+  const createTemplateMutation = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await apiRequest("POST", "/api/invoice-templates", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoice-templates"] });
+      toast({
+        title: "Thành công",
+        description: "Mẫu số HĐĐT đã được tạo thành công",
+      });
+      setShowTemplateForm(false);
+      resetTemplateForm();
+    },
+    onError: () => {
+      toast({
+        title: "Lỗi", 
+        description: "Có lỗi xảy ra khi tạo mẫu số HĐĐT",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateTemplate = () => {
+    if (!templateForm.name.trim() || !templateForm.templateNumber.trim() || !templateForm.symbol.trim()) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createTemplateMutation.mutate(templateForm);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pt-20 relative">
       {/* Background Pattern */}
@@ -1528,7 +1570,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                           </TabsContent>
 
                           <TabsContent value="settings" className="mt-6">
-                            
+                            <div className="space-y-6">
                                 <div className="flex justify-between items-center">
                                   <div>
                                     <h3 className="text-lg font-medium">
@@ -1557,88 +1599,71 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                   <div>Tên</div>
                                   <div>Mẫu số</div>
                                   <div>Ký hiệu</div>
-                                  <div>Ký hiệu</div>
                                   <div>C/K sử dụng</div>
                                   <div>Ghi chú</div>
                                   <div className="text-center">Mặc định</div>
+                                  <div className="text-center">Hành động</div>
                                 </div>
 
                                 <div className="divide-y">
-                                  {/* Row 1 */}
-                                  <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
-                                    <div className="text-center">1</div>
-                                    <div>1C25TYY</div>
-                                    <div>1</div>
-                                    <div>-</div>
-                                    <div>C25TYY</div>
-                                    <div>
-                                      <Badge
-                                        variant="default"
-                                        className="bg-green-100 text-green-800"
-                                      >
-                                        Sử dụng
-                                      </Badge>
+                                  {templatesLoading ? (
+                                    <div className="grid grid-cols-8 gap-4 p-8 items-center text-sm text-gray-500">
+                                      <div className="col-span-8 text-center">
+                                        Đang tải dữ liệu...
+                                      </div>
                                     </div>
-                                    <div>-</div>
-                                    <div className="text-center">
-                                      <input
-                                        type="checkbox"
-                                        className="rounded"
-                                        checked
-                                      />
+                                  ) : invoiceTemplates.length === 0 ? (
+                                    <div className="grid grid-cols-8 gap-4 p-8 items-center text-sm text-gray-500">
+                                      <div className="col-span-8 text-center">
+                                        <div className="flex flex-col items-center gap-2">
+                                          <SettingsIcon className="w-8 h-8 text-gray-400" />
+                                          <p>Chưa có mẫu số HĐĐT nào</p>
+                                          <p className="text-xs">
+                                            Nhấn "Thêm mẫu số" để bắt đầu
+                                          </p>
+                                        </div>
+                                      </div>
                                     </div>
-                                  </div>
-
-                                  {/* Row 2 */}
-                                  <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
-                                    <div className="text-center">2</div>
-                                    <div>1K21TGF</div>
-                                    <div>1</div>
-                                    <div>1005</div>
-                                    <div>K21TGF</div>
-                                    <div>
-                                      <Badge
-                                        variant="default"
-                                        className="bg-green-100 text-green-800"
-                                      >
-                                        Sử dụng
-                                      </Badge>
-                                    </div>
-                                    <div>-</div>
-                                    <div className="text-center">
-                                      <input
-                                        type="checkbox"
-                                        className="rounded"
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Row 3 - Empty */}
-                                  <div className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
-                                    <div className="text-center">3</div>
-                                    <div>-</div>
-                                    <div>-</div>
-                                    <div>-</div>
-                                    <div>-</div>
-                                    <div>
-                                      <Badge
-                                        variant="default"
-                                        className="bg-green-100 text-green-800"
-                                      >
-                                        Sử dụng
-                                      </Badge>
-                                    </div>
-                                    <div>-</div>
-                                    <div className="text-center">
-                                      <input
-                                        type="checkbox"
-                                        className="rounded"
-                                      />
-                                    </div>
-                                  </div>
+                                  ) : (
+                                    invoiceTemplates.map((template, index) => (
+                                      <div key={template.id} className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
+                                        <div className="text-center">{index + 1}</div>
+                                        <div>{template.name}</div>
+                                        <div>{template.templateNumber}</div>
+                                        <div>{template.symbol}</div>
+                                        <div>
+                                          <Badge
+                                            variant="default"
+                                            className={template.useCK ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
+                                          >
+                                            {template.useCK ? "Sử dụng" : "Không sử dụng"}
+                                          </Badge>
+                                        </div>
+                                        <div>{template.notes || "-"}</div>
+                                        <div className="text-center">
+                                          <input
+                                            type="checkbox"
+                                            className="rounded"
+                                            checked={template.isDefault}
+                                            readOnly
+                                          />
+                                        </div>
+                                        <div className="text-center">
+                                          <div className="flex items-center justify-center gap-1">
+                                            <Button variant="ghost" size="sm">
+                                              <Edit className="w-3 h-3" />
+                                            </Button>
+                                            <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                                              <Trash2 className="w-3 h-3" />
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))
+                                  )}
                                 </div>
                               </div>
-                            
+                            </div>
                           </TabsContent>
                         </Tabs>
                       </div>
@@ -3665,14 +3690,11 @@ gray-200 rounded-xl p-4 min-h-[70px]"
               Hủy bỏ
             </Button>
             <Button
-              onClick={() => {
-                // Handle create template logic here
-                setShowTemplateForm(false);
-                resetTemplateForm();
-              }}
+              onClick={handleCreateTemplate}
+              disabled={createTemplateMutation.isPending}
               className="bg-green-600 hover:bg-green-700"
             >
-              Thêm mẫu số
+              {createTemplateMutation.isPending ? "Đang tạo..." : "Thêm mẫu số"}
             </Button>
           </DialogFooter>
         </DialogContent>

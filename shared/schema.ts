@@ -303,6 +303,19 @@ export const eInvoiceConnections = pgTable('einvoice_connections', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+export const invoiceTemplates = pgTable('invoice_templates', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  templateNumber: varchar('template_number', { length: 50 }).notNull(),
+  symbol: varchar('symbol', { length: 20 }).notNull(),
+  useCK: boolean('use_ck').notNull().default(true),
+  notes: text('notes'),
+  isDefault: boolean('is_default').notNull().default(false),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 export const insertCustomerSchema = createInsertSchema(customers).omit({
   id: true,
   createdAt: true,
@@ -353,8 +366,16 @@ export const insertEInvoiceConnectionSchema = createInsertSchema(eInvoiceConnect
   cqtCode: z.enum(["Cấp nhật", "Cấp hai"]).optional(),
 });
 
+export const insertInvoiceTemplateSchema = createInsertSchema(invoiceTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type EInvoiceConnection = typeof eInvoiceConnections.$inferSelect;
 export type InsertEInvoiceConnection = z.infer<typeof insertEInvoiceConnectionSchema>;
+export type InvoiceTemplate = typeof invoiceTemplates.$inferSelect;
+export type InsertInvoiceTemplate = z.infer<typeof insertInvoiceTemplateSchema>;
 
 // Cart item type for frontend use
 export type CartItem = {
