@@ -2123,11 +2123,11 @@ export default function Settings() {
             <div className="space-y-6">
               <Card className="bg-white/80 backdrop-blur-sm border-white/20">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-medium">
+                  <CardTitle className="flex items-center gap-2">
                     <Users className="w-5 h-5 text-green-600" />
                     {t("settings.employeeManagement")}
                   </CardTitle>
-                  <CardDescription className="font-normal">
+                  <CardDescription>
                     {t("settings.employeeManagementDesc")}
                   </CardDescription>
                 </CardHeader>
@@ -2136,17 +2136,30 @@ export default function Settings() {
                     <div className="flex items-center gap-4">
                       <Input
                         placeholder={t("employees.searchPlaceholder")}
-                        className="w-64 font-normal"
+                        className="w-64"
                         value={employeeSearchTerm}
                         onChange={(e) => setEmployeeSearchTerm(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            // Trigger search when Enter is pressed
+                            setEmployeeSearchTerm(e.currentTarget.value);
+                          }
+                        }}
                       />
-                      <Button variant="outline" size="sm" className="font-normal">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          // Force re-render of filtered results
+                          setEmployeeSearchTerm(employeeSearchTerm);
+                        }}
+                      >
                         <Search className="w-4 h-4 mr-2" />
                         {t("common.search")}
                       </Button>
                     </div>
                     <Button
-                      className="bg-green-600 hover:bg-green-700 font-normal"
+                      className="bg-green-600 hover:bg-green-700"
                       onClick={() => setShowEmployeeForm(true)}
                     >
                       <Plus className="w-4 h-4 mr-2" />
@@ -2156,18 +2169,18 @@ export default function Settings() {
 
                   {employeesLoading ? (
                     <div className="text-center py-8">
-                      <p className="text-gray-500 font-normal">
-                        {t("employeesSettings.loadingEmployeeData")}
+                      <p className="text-gray-500">
+                        Đang tải dữ liệu nhân viên...
                       </p>
                     </div>
                   ) : !filteredEmployees || filteredEmployees.length === 0 ? (
                     <div className="text-center py-8">
                       <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                      <p className="text-gray-500 font-normal">
-                        {employeeSearchTerm ? "Không tìm thấy nhân viên nào phù hợp" : t("employeesSettings.noRegisteredEmployees")}
+                      <p className="text-gray-500">
+                        {employeeSearchTerm ? "Không tìm thấy nhân viên nào phù hợp" : "Chưa có nhân viên nào được đăng ký"}
                       </p>
-                      <p className="text-sm text-gray-400 mt-2 font-normal">
-                        {employeeSearchTerm ? "Thử tìm kiếm với từ khóa khác" : t("employeesSettings.addEmployeeToStart")}
+                      <p className="text-sm text-gray-400 mt-2">
+                        {employeeSearchTerm ? "Thử tìm kiếm với từ khóa khác" : "Thêm nhân viên đầu tiên để bắt đầu"}
                       </p>
                     </div>
                   ) : (
@@ -2199,12 +2212,12 @@ export default function Settings() {
                           {filteredEmployees.map((employee: any) => (
                             <tr key={employee.id} className="hover:bg-gray-50">
                               <td className="px-4 py-3">
-                                <div className="font-mono text-sm truncate font-normal" title={employee.employeeId}>
+                                <div className="font-mono text-sm truncate" title={employee.employeeId}>
                                   {employee.employeeId}
                                 </div>
                               </td>
                               <td className="px-4 py-3">
-                                <div className="font-normal text-sm truncate" title={employee.name}>
+                                <div className="text-sm truncate" title={employee.name}>
                                   {employee.name}
                                 </div>
                               </td>
@@ -2217,7 +2230,7 @@ export default function Settings() {
                                         ? "default"
                                         : "secondary"
                                   }
-                                  className="text-xs font-normal"
+                                  className="text-xs"
                                 >
                                   {employee.role === "admin"
                                     ? t("employees.roles.admin")
@@ -2229,7 +2242,7 @@ export default function Settings() {
                                 </Badge>
                               </td>
                               <td className="px-4 py-3">
-                                <div className="text-sm text-gray-600 truncate font-normal" title={employee.phone || "-"}>
+                                <div className="text-sm text-gray-600 truncate" title={employee.phone || "-"}>
                                   {employee.phone || "-"}
                                 </div>
                               </td>
@@ -2238,7 +2251,7 @@ export default function Settings() {
                                   variant={
                                     employee.isActive ? "default" : "secondary"
                                   }
-                                  className={`text-xs font-normal ${
+                                  className={`text-xs ${
                                     employee.isActive
                                       ? "bg-green-100 text-green-800"
                                       : ""
@@ -2282,11 +2295,11 @@ export default function Settings() {
                   )}
 
                   <div className="flex justify-between items-center mt-6">
-                    <div className="text-sm text-gray-600 font-normal">
+                    <div className="text-sm text-gray-600">
                       Tổng số nhân viên: {employeesData ? employeesData.length : 0}
                     </div>
                     <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="font-normal">
+                      <Button variant="outline" size="sm">
                         <Clock className="w-4 h-4 mr-2" />
                         {t("attendance.title")}
                       </Button>
