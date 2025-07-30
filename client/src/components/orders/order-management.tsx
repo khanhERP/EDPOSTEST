@@ -673,19 +673,41 @@ export function OrderManagement() {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <h4 className="font-medium mb-2">{t('orders.totalAmount')}</h4>
                   <div className="space-y-1 text-sm">
-                    <div className="flex justify-between">
-                      <span>Subtotal:</span>
-                      <span>{Number(selectedOrder.subtotal).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Tax:</span>
-                      <span>{Number(selectedOrder.tax).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between font-medium">
-                      <span>{t('orders.totalAmount')}:</span>
-                      <span>{Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
-                    </div>
+                    {(() => {
+                      // Calculate total tax from all items
+                      let totalItemTax = 0;
+                      let totalItemSubtotal = 0;
+                      
+                      if (Array.isArray(orderItems) && Array.isArray(products)) {
+                        orderItems.forEach((item: any) => {
+                          const product = products.find((p: any) => p.id === item.productId);
+                          const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
+                          const itemSubtotal = Number(item.unitPrice || 0) * item.quantity;
+                          const itemTax = (itemSubtotal * taxRate) / 100;
+                          
+                          totalItemSubtotal += itemSubtotal;
+                          totalItemTax += itemTax;
+                        });
+                      }
+
+                      return (
+                        <>
+                          <div className="flex justify-between">
+                            <span>Subtotal:</span>
+                            <span>{totalItemSubtotal.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Tax:</span>
+                            <span>{totalItemTax.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
+                          </div>
+                          <Separator />
+                          <div className="flex justify-between font-medium">
+                            <span>{t('orders.totalAmount')}:</span>
+                            <span>{(totalItemSubtotal + totalItemTax).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 
