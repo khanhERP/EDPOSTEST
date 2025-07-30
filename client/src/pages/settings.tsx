@@ -993,24 +993,39 @@ export default function Settings() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm">
-            <TabsTrigger value="store" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-1">
+            <TabsTrigger 
+              value="store" 
+              className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+            >
               <Store className="w-4 h-4" />
               {t("settings.storeInfo")}
             </TabsTrigger>
-            <TabsTrigger value="customers" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="customers" 
+              className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+            >
               <UserCheck className="w-4 h-4" />
               {t("customers.title")}
             </TabsTrigger>
-            <TabsTrigger value="categories" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="categories" 
+              className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+            >
               <Package className="w-4 h-4" />
               {t("settings.categories")}
             </TabsTrigger>
-            <TabsTrigger value="employees" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="employees" 
+              className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+            >
               <Users className="w-4 h-4" />
               {t("settings.employees")}
             </TabsTrigger>
-            <TabsTrigger value="payments" className="flex items-center gap-2">
+            <TabsTrigger 
+              value="payments" 
+              className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+            >
               <CreditCard className="w-5 h-5" />
               {t("settings.paymentMethods")}
             </TabsTrigger>
@@ -1019,16 +1034,25 @@ export default function Settings() {
           {/* Store Information Tab */}
           <TabsContent value="store">
             <Tabs defaultValue="basic" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm">
-                <TabsTrigger value="basic" className="flex items-center gap-2">
+              <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-1">
+                <TabsTrigger 
+                  value="basic" 
+                  className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+                >
                   <Store className="w-4 h-4" />
                   Thông tin cơ bản
                 </TabsTrigger>
-                <TabsTrigger value="einvoice" className="flex items-center gap-2">
+                <TabsTrigger 
+                  value="einvoice" 
+                  className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+                >
                   <SettingsIcon className="w-4 h-4" />
                   Thiết lập HĐĐT
                 </TabsTrigger>
-                <TabsTrigger value="operations" className="flex items-center gap-2">
+                <TabsTrigger 
+                  value="operations" 
+                  className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+                >
                   <Clock className="w-4 h-4" />
                   Hoạt động
                 </TabsTrigger>
@@ -1185,9 +1209,19 @@ export default function Settings() {
                     <div className="space-y-6">
                       {/* Sub tabs for E-invoice */}
                       <Tabs defaultValue="connections" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="connections">Kênh kết nối HĐĐT</TabsTrigger>
-                          <TabsTrigger value="settings">Mẫu số HĐĐT</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-1">
+                          <TabsTrigger 
+                            value="connections"
+                            className="data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+                          >
+                            Kênh kết nối HĐĐT
+                          </TabsTrigger>
+                          <TabsTrigger 
+                            value="settings"
+                            className="data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+                          >
+                            Mẫu số HĐĐT
+                          </TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="connections" className="mt-6">
