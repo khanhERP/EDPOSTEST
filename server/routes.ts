@@ -2321,6 +2321,44 @@ app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async 
     }
   });
 
+  // QR Payment API proxy endpoint
+  app.post("/api/pos/create-qr", async (req, res) => {
+    try {
+      const { bankCode, clientID } = req.query;
+      const body = req.body;
+
+      console.log('CreateQRPos request:', { bankCode, clientID, body });
+
+      const response = await fetch(`http://localhost:7114/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        console.error('CreateQRPos API error:', response.status, response.statusText);
+        return res.status(response.status).json({ 
+          error: 'Failed to create QR payment',
+          details: `API returned ${response.status}: ${response.statusText}`
+        });
+      }
+
+      const result = await response.json();
+      console.log('CreateQRPos response:', result);
+
+      res.json(result);
+    } catch (error) {
+      console.error('CreateQRPos proxy error:', error);
+      res.status(500).json({ 
+        error: 'Failed to create QR payment',
+        details: error.message 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

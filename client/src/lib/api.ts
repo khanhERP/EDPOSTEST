@@ -14,6 +14,18 @@ export const loginPosAsync = async (request: LoginPosRequest): Promise<LoginResp
   return response.json();
 };
 
+export interface LoginPosRequest {
+  clientID: string;
+  clientSecret: string;
+  masterId: string;
+  bankCode: string;
+}
+
+export interface LoginResponse {
+  token: string;
+  // Add other response fields as needed
+}
+
 export interface CreateQRPosRequest {
   transactionUuid: string;
   depositAmt: string;
@@ -40,7 +52,9 @@ export const createQRPosAsync = async (request: CreateQRPosRequest, bankCode: st
   });
 
   if (!response.ok) {
-    throw new Error('Failed to create QR payment');
+    const errorText = await response.text();
+    console.error('CreateQRPos API error:', response.status, errorText);
+    throw new Error(`Failed to create QR payment: ${response.status} ${response.statusText}`);
   }
 
   return response.json();

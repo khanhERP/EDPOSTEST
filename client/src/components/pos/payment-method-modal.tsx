@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import QRCodeLib from "qrcode";
+import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
 
 interface PaymentMethodModalProps {
   isOpen: boolean;
@@ -85,8 +86,79 @@ export function PaymentMethodModal({
   const paymentMethods = getPaymentMethods();
 
   const handleSelect = async (method: string) => {
-    if (method === "qrCode" || method === "vnpay") {
-      // Generate QR code for QR-based payments
+    if (method === "qrCode") {
+      // Call CreateQRPos API for QR payment
+      try {
+        const transactionUuid = `TXN-${Date.now()}`;
+        const depositAmt = total;
+        
+        const qrRequest: CreateQRPosRequest = {
+          transactionUuid,
+          depositAmt: depositAmt.toString(),
+          posUniqueId: "POS003",
+          accntNo: "700033348984",
+          posfranchiseeName: "DOOKI-HANOI",
+          posCompanyName: "HYOJUNG",
+          posBillNo: `BILL-${Date.now()}`
+        };
+
+        const bankCode = "79616001";
+        const clientID = "91a3a3668724e631e1baf4f8526524f3";
+
+        console.log('Calling CreateQRPos API with:', { qrRequest, bankCode, clientID });
+
+        const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
+        
+        console.log('CreateQRPos API response:', qrResponse);
+
+        // Generate QR code from the received QR data
+        if (qrResponse.qrDataDecode) {
+          const qrUrl = await QRCodeLib.toDataURL(qrResponse.qrDataDecode, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          setQrCodeUrl(qrUrl);
+          setShowQRCode(true);
+        } else {
+          console.error('No QR data received from API');
+          // Fallback to mock QR code
+          const fallbackData = `Payment via QR\nAmount: ${total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nTime: ${new Date().toLocaleString('vi-VN')}`;
+          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          setQrCodeUrl(qrUrl);
+          setShowQRCode(true);
+        }
+      } catch (error) {
+        console.error('Error calling CreateQRPos API:', error);
+        // Fallback to mock QR code on error
+        try {
+          const fallbackData = `Payment via QR\nAmount: ${total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nTime: ${new Date().toLocaleString('vi-VN')}`;
+          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          setQrCodeUrl(qrUrl);
+          setShowQRCode(true);
+        } catch (fallbackError) {
+          console.error('Error generating fallback QR code:', fallbackError);
+        }
+      }
+    } else if (method === "vnpay") {
+      // Generate QR code for VNPay
       try {
         const qrData = `Payment via ${method}\nAmount: ${total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nTime: ${new Date().toLocaleString('vi-VN')}`;
         const qrUrl = await QRCodeLib.toDataURL(qrData, {
