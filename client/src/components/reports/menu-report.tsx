@@ -104,13 +104,17 @@ export function MenuReport() {
     );
   }
 
-  if (!menuData) {
-    return (
-      <div className="flex justify-center py-8">
-        <div className="text-gray-500">{t("reports.noReportData")}</div>
-      </div>
-    );
-  }
+  // Initialize default empty data structure if no data or error
+  const defaultData = {
+    totalRevenue: 0,
+    totalQuantity: 0,
+    categoryStats: [],
+    productStats: [],
+    topSellingProducts: [],
+    topRevenueProducts: []
+  };
+
+  const displayData = menuData || defaultData;
 
   return (
     <div className="space-y-6">
@@ -233,7 +237,7 @@ export function MenuReport() {
               <div>
                 <p className="text-sm font-medium text-gray-600">{t("reports.totalRevenue")}</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(menuData.totalRevenue)}
+                  {formatCurrency(displayData.totalRevenue)}
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-green-500" />
@@ -247,7 +251,7 @@ export function MenuReport() {
               <div>
                 <p className="text-sm font-medium text-gray-600">{t("reports.totalItemsSold")}</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {menuData.totalQuantity.toLocaleString()}
+                  {displayData.totalQuantity.toLocaleString()}
                 </p>
               </div>
               <Award className="w-8 h-8 text-blue-500" />
@@ -261,7 +265,7 @@ export function MenuReport() {
               <div>
                 <p className="text-sm font-medium text-gray-600">{t("reports.uniqueProducts")}</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {menuData.productStats.length}
+                  {displayData.productStats.length}
                 </p>
               </div>
               <PieChart className="w-8 h-8 text-purple-500" />
@@ -278,14 +282,14 @@ export function MenuReport() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {menuData.categoryStats.map((category: any) => {
+            {displayData.categoryStats.map((category: any) => {
               const revenuePercentage =
-                menuData.totalRevenue > 0
-                  ? (category.revenue / menuData.totalRevenue) * 100
+                displayData.totalRevenue > 0
+                  ? (category.revenue / displayData.totalRevenue) * 100
                   : 0;
               const quantityPercentage =
-                menuData.totalQuantity > 0
-                  ? (category.quantity / menuData.totalQuantity) * 100
+                displayData.totalQuantity > 0
+                  ? (category.quantity / displayData.totalQuantity) * 100
                   : 0;
 
               return (
@@ -340,7 +344,7 @@ export function MenuReport() {
               );
             })}
 
-            {menuData.categoryStats.length === 0 && (
+            {displayData.categoryStats.length === 0 && (
               <div className="text-center text-gray-500 py-4">
                 {t("reports.noCategoryData")}
               </div>
@@ -372,7 +376,7 @@ export function MenuReport() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {menuData.topSellingProducts
+                {displayData.topSellingProducts
                   .slice(0, 10)
                   .map((item: any, index: number) => (
                     <TableRow key={item.product.id}>
@@ -390,7 +394,7 @@ export function MenuReport() {
                       <TableCell>{formatCurrency(item.revenue)}</TableCell>
                     </TableRow>
                   ))}
-                {menuData.topSellingProducts.length === 0 && (
+                {displayData.topSellingProducts.length === 0 && (
                   <TableRow>
                     <TableCell
                       colSpan={4}
@@ -427,7 +431,7 @@ export function MenuReport() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {menuData.topRevenueProducts
+                {displayData.topRevenueProducts
                   .slice(0, 10)
                   .map((item: any, index: number) => (
                     <TableRow key={item.product.id}>
@@ -447,7 +451,7 @@ export function MenuReport() {
                       </TableCell>
                     </TableRow>
                   ))}
-                {menuData.topRevenueProducts.length === 0 && (
+                {displayData.topRevenueProducts.length === 0 && (
                   <TableRow>
                     <TableCell
                       colSpan={4}

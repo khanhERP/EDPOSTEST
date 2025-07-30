@@ -1530,160 +1530,130 @@ export async function registerRoutes(app: Express): Promise {
     }
   });
 
-  // Menu Analysis API - optimized for reports
+  // Menu Analysis API
   app.get("/api/menu-analysis", async (req, res) => {
     try {
       const { startDate, endDate, search, categoryId, productType } = req.query;
 
-      if (!startDate || !endDate) {
-        return res.status(400).json({ error: "Start date and end date are required" });
+      // Build query conditions
+      const conditions = [];
+
+      if (startDate && endDate) {
+        conditions.push(
+          sql`${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate + ' 23:59:59'}`
+        );
       }
 
-      // Convert dates to proper format
-      const startDateTime = new Date(startDate as string);
-      const endDateTime = new Date(endDate as string);
-      endDateTime.setHours(23, 59, 59, 999);
-
-      // Get all transactions first
-      const allTransactions = await storage.getTransactions();
-      
-      // Filter transactions by date
-      const filteredTransactions = allTransactions.filter((transaction: any) => {
-        const transactionDate = new Date(transaction.createdAt);
-        return transactionDate >= startDateTime && transactionDate <= endDateTime;
-      });
-
-      // Get all transaction items for filtered transactions
-      const transactionIds = filteredTransactions.map((t: any) => t.id);
-      if (transactionIds.length === 0) {
-        return res.json({
-          totalRevenue: 0,
-          totalQuantity: 0,
-          categoryStats: [],
-          productStats: [],
-          topSellingProducts: [],
-          topRevenueProducts: []
-        });
+      if (search) {
+        conditions.push(
+          sql`${products.name} ILIKE ${'%' + search + '%'}`
+        );
       }
 
-      // Get transaction items using Drizzle
-      const transactionItems = await db
+      if (categoryId && categoryId !== 'all') {
+        conditions.push(eq(products.categoryId, parseInt(categoryId as string)));
+      }
+
+      if (productType && productType !== 'all') {
+        conditions.push(eq(products.productType, productType as string)));
+      }
+
+      // Get order items with product and category info
+      let orderItemsQuery = db
         .select({
-          productId: transactionItemsTable.productId,
-          quantity: transactionItemsTable.quantity,
-          unitPrice: transactionItemsTable.unitPrice,
-          totalPrice: transactionItemsTable.totalPrice,
-          transactionId: transactionItemsTable.transactionId
+          productId: orderItems.productId,
+          quantity: orderItems.quantity,
+          totalPrice: orderItems.totalPrice,
+          product: {
+            id: products.id,
+            name: products.name,
+            price: products.price,
+            categoryId: products.categoryId,
+            productType: products.productType,
+          },
+          category: {
+            id: categories.id,
+            name: categories.name,
+          }
         })
-        .from(transactionItemsTable)
-        .where(sql`${transactionItemsTable.transactionId} IN (${transactionIds.join(',')})`);
+        .from(orderItems)
+        .innerJoin(products, eq(orderItems.productId, products.id))
+        .innerJoin(categories, eq(products.categoryId, categories.id))
+        .innerJoin(orders, eq(orderItems.orderId, orders.id));
 
-      // Get all products and categories for reference
-      const allProducts = await storage.getAllProducts(true);
-      const allCategories = await storage.getCategories();
+      // Only add where clause if there are conditions
+      if (conditions.length > 0) {
+        const whereCondition = conditions.reduce((acc, condition, index) => 
+          index === 0 ? condition : sql`${acc} AND ${condition}`, sql``
+        );
+        orderItemsQuery = orderItemsQuery.where(whereCondition);
+      }
 
-      // Create lookup maps
-      const productMap = new Map(allProducts.map(p => [p.id, p]));
-      const categoryMap = new Map(allCategories.map(c => [c.id, c]));
+      const orderItemsResult = await orderItemsQuery;
 
-      // Apply filters
-      let filteredItems = transactionItems.filter((item: any) => {
-        const product = productMap.get(item.productId);
-        if (!product) return false;
-
-        // Search filter
-        if (search && search !== 'all') {
-          const searchTerm = search.toLowerCase();
-          if (!product.name.toLowerCase().includes(searchTerm) && 
-              !product.sku.toLowerCase().includes(searchTerm)) {
-            return false;
-          }
-        }
-
-        // Category filter
-        if (categoryId && categoryId !== 'all') {
-          if (product.categoryId !== parseInt(categoryId as string)) {
-            return false;
-          }
-        }
-
-        // Product type filter
-        if (productType && productType !== 'all') {
-          if (product.productType?.toString() !== productType) {
-            return false;
-          }
-        }
-
-        return true;
-      });
-
-      // Calculate statistics
-      const categoryStatsMap = new Map();
-      const productStatsMap = new Map();
+      // Initialize default values
       let totalRevenue = 0;
       let totalQuantity = 0;
+      let categoryStats = [];
+      let productStats = [];
+      let topSellingProducts = [];
+      let topRevenueProducts = [];
 
-      for (const item of filteredItems) {
-        const product = productMap.get(item.productId);
-        if (!product) continue;
+      // Process data if we have results
+      if (orderItemsResult && orderItemsResult.length > 0) {
+        // Calculate totals
+        totalRevenue = orderItemsResult.reduce((sum, item) => sum + parseFloat(item.totalPrice || '0'), 0);
+        totalQuantity = orderItemsResult.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
-        const category = categoryMap.get(product.categoryId);
-        const revenue = Number(item.totalPrice);
-        const quantity = Number(item.quantity);
+        // Group by category
+        const categoryStatsMap = new Map();
+        const productStatsMap = new Map();
 
-        totalRevenue += revenue;
-        totalQuantity += quantity;
+        orderItemsResult.forEach(item => {
+          if (!item.category || !item.product) return;
 
-        // Category stats
-        const categoryKey = product.categoryId || 'uncategorized';
-        if (!categoryStatsMap.has(categoryKey)) {
-          categoryStatsMap.set(categoryKey, {
-            category: {
-              id: product.categoryId,
-              name: category?.name || 'Uncategorized'
-            },
-            revenue: 0,
-            quantity: 0,
-            productCount: 0,
-            products: new Set()
-          });
-        }
+          const categoryKey = item.category.id;
+          const productKey = item.product.id;
 
-        const categoryData = categoryStatsMap.get(categoryKey);
-        categoryData.revenue += revenue;
-        categoryData.quantity += quantity;
-        categoryData.products.add(item.productId);
+          // Category stats
+          if (!categoryStatsMap.has(categoryKey)) {
+            categoryStatsMap.set(categoryKey, {
+              category: item.category,
+              revenue: 0,
+              quantity: 0,
+              productCount: new Set()
+            });
+          }
+          const categoryStatsItem = categoryStatsMap.get(categoryKey);
+          categoryStatsItem.revenue += parseFloat(item.totalPrice || '0');
+          categoryStatsItem.quantity += item.quantity || 0;
+          categoryStatsItem.productCount.add(item.product.id);
 
-        // Product stats
-        const productKey = item.productId;
-        if (!productStatsMap.has(productKey)) {
-          productStatsMap.set(productKey, {
-            product: {
-              id: item.productId,
-              name: product.name,
-              code: product.sku
-            },
-            quantity: 0,
-            revenue: 0
-          });
-        }
+          // Product stats
+          if (!productStatsMap.has(productKey)) {
+            productStatsMap.set(productKey, {
+              product: item.product,
+              revenue: 0,
+              quantity: 0
+            });
+          }
+          const productStatsItem = productStatsMap.get(productKey);
+          productStatsItem.revenue += parseFloat(item.totalPrice || '0');
+          productStatsItem.quantity += item.quantity || 0;
+        });
 
-        const productData = productStatsMap.get(productKey);
-        productData.quantity += quantity;
-        productData.revenue += revenue;
+        // Convert to arrays and add productCount
+        categoryStats = Array.from(categoryStatsMap.values()).map(cat => ({
+          ...cat,
+          productCount: cat.productCount.size
+        }));
+
+        productStats = Array.from(productStatsMap.values());
+
+        // Sort products by quantity and revenue
+        topSellingProducts = [...productStats].sort((a, b) => b.quantity - a.quantity);
+        topRevenueProducts = [...productStats].sort((a, b) => b.revenue - a.revenue);
       }
-
-      // Convert maps to arrays and add product counts
-      const categoryStats = Array.from(categoryStatsMap.values()).map(cat => ({
-        ...cat,
-        productCount: cat.products.size
-      }));
-
-      const productStats = Array.from(productStatsMap.values());
-
-      // Sort products by quantity and revenue
-      const topSellingProducts = [...productStats].sort((a, b) => b.quantity - a.quantity);
-      const topRevenueProducts = [...productStats].sort((a, b) => b.revenue - a.revenue);
 
       res.json({
         totalRevenue,
@@ -1696,7 +1666,15 @@ export async function registerRoutes(app: Express): Promise {
 
     } catch (error) {
       console.error("Error fetching menu analysis data:", error);
-      res.status(500).json({ error: "Failed to fetch menu analysis data" });
+      res.status(500).json({ 
+        error: "Failed to fetch menu analysis data",
+        totalRevenue: 0,
+        totalQuantity: 0,
+        categoryStats: [],
+        productStats: [],
+        topSellingProducts: [],
+        topRevenueProducts: []
+      });
     }
   });
 
