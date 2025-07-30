@@ -26,161 +26,30 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { PieChart, TrendingUp, Award } from "lucide-react";
-import type { Order, OrderItem, Product, Category } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 
 export function MenuReport() {
   const { t } = useTranslation();
   const [dateRange, setDateRange] = useState("week");
   const [startDate, setStartDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
+    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
   );
   const [endDate, setEndDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
 
-  const { data: orders } = useQuery({
-    queryKey: ["/api/orders"],
+  // Use the new optimized API endpoint
+  const { data: menuData, isLoading } = useQuery({
+    queryKey: ["/api/menu-analysis", startDate, endDate],
+    queryFn: async () => {
+      const response = await fetch(`/api/menu-analysis?startDate=${startDate}&endDate=${endDate}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch menu analysis data');
+      }
+      return response.json();
+    },
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });
-
-  const { data: products } = useQuery({
-    queryKey: ["/api/products"],
-  });
-
-  const { data: categories } = useQuery({
-    queryKey: ["/api/categories"],
-  });
-
-  const getMenuData = async () => {
-    if (
-      !orders ||
-      !products ||
-      !categories ||
-      !Array.isArray(orders) ||
-      !Array.isArray(products) ||
-      !Array.isArray(categories)
-    )
-      return null;
-
-    const filteredOrders = orders.filter((order: Order) => {
-      const orderDate = new Date(order.orderedAt);
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-
-      return orderDate >= start && orderDate <= end && order.status === "paid";
-    });
-
-    // Get all order items for the filtered orders
-    const allOrderItems: OrderItem[] = [];
-
-    for (const order of filteredOrders) {
-      try {
-        const response = await fetch(`/api/orders/${order.id}`);
-        const orderData = await response.json();
-        if (orderData.items) {
-          allOrderItems.push(
-            ...orderData.items.map((item: OrderItem) => ({
-              ...item,
-              orderId: order.id,
-            })),
-          );
-        }
-      } catch (error) {
-        console.error("Error fetching order items:", error);
-      }
-    }
-
-    // Product performance analysis
-    const productStats: {
-      [productId: number]: {
-        product: Product;
-        quantity: number;
-        revenue: number;
-        orders: Set<number>;
-      };
-    } = {};
-
-    allOrderItems.forEach((item: OrderItem) => {
-      const product = Array.isArray(products)
-        ? products.find((p: Product) => p.id === item.productId)
-        : undefined;
-      if (!product) return;
-
-      if (!productStats[item.productId]) {
-        productStats[item.productId] = {
-          product,
-          quantity: 0,
-          revenue: 0,
-          orders: new Set(),
-        };
-      }
-
-      productStats[item.productId].quantity += item.quantity;
-      productStats[item.productId].revenue += Number(item.total);
-      productStats[item.productId].orders.add(item.orderId);
-    });
-
-    // Category performance
-    const categoryStats: {
-      [categoryId: number]: {
-        category: Category;
-        quantity: number;
-        revenue: number;
-        productCount: number;
-      };
-    } = {};
-
-    Object.values(productStats).forEach(({ product, quantity, revenue }) => {
-      if (!categoryStats[product.categoryId]) {
-        const category = Array.isArray(categories)
-          ? categories.find((c: Category) => c.id === product.categoryId)
-          : undefined;
-        if (category) {
-          categoryStats[product.categoryId] = {
-            category,
-            quantity: 0,
-            revenue: 0,
-            productCount: 0,
-          };
-        }
-      }
-
-      if (categoryStats[product.categoryId]) {
-        categoryStats[product.categoryId].quantity += quantity;
-        categoryStats[product.categoryId].revenue += revenue;
-        categoryStats[product.categoryId].productCount += 1;
-      }
-    });
-
-    // Sort products by various metrics
-    const productList = Object.values(productStats);
-    const topSellingProducts = [...productList].sort(
-      (a, b) => b.quantity - a.quantity,
-    );
-    const topRevenueProducts = [...productList].sort(
-      (a, b) => b.revenue - a.revenue,
-    );
-
-    // Total stats
-    const totalQuantity = productList.reduce(
-      (sum, item) => sum + item.quantity,
-      0,
-    );
-    const totalRevenue = productList.reduce(
-      (sum, item) => sum + item.revenue,
-      0,
-    );
-
-    return {
-      productStats: productList,
-      categoryStats: Object.values(categoryStats),
-      topSellingProducts,
-      topRevenueProducts,
-      totalQuantity,
-      totalRevenue,
-    };
-  };
 
   const handleDateRangeChange = (range: string) => {
     setDateRange(range);
@@ -211,22 +80,18 @@ export function MenuReport() {
     return `${amount.toLocaleString()} ₫`;
   };
 
-  const [menuData, setMenuData] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-
-  // Fetch menu data when dates change
-  useEffect(() => {
-    setLoading(true);
-    getMenuData().then((data) => {
-      setMenuData(data);
-      setLoading(false);
-    });
-  }, [orders, products, categories, startDate, endDate]);
-
-  if (loading || !menuData) {
+  if (isLoading) {
     return (
       <div className="flex justify-center py-8">
         <div className="text-gray-500">{t("reports.loading")}</div>
+      </div>
+    );
+  }
+
+  if (!menuData) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="text-gray-500">{t("reports.noReportData")}</div>
       </div>
     );
   }
@@ -285,6 +150,51 @@ export function MenuReport() {
           </div>
         </CardHeader>
       </Card>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">{t("reports.totalRevenue")}</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {formatCurrency(menuData.totalRevenue)}
+                </p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">{t("reports.totalItemsSold")}</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {menuData.totalQuantity.toLocaleString()}
+                </p>
+              </div>
+              <Award className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">{t("reports.uniqueProducts")}</p>
+                <p className="text-2xl font-bold text-purple-600">
+                  {menuData.productStats.length}
+                </p>
+              </div>
+              <PieChart className="w-8 h-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Category Performance */}
       <Card>
@@ -394,15 +304,14 @@ export function MenuReport() {
                     <TableRow key={item.product.id}>
                       <TableCell>
                         <Badge variant={index < 3 ? "default" : "outline"}>
-                          {t("reports.rank")} {index + 1}
+                          {index + 1}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">
                         {item.product.name}
                       </TableCell>
                       <TableCell>
-                        {item.quantity}
-                        {t("common.items")}
+                        {item.quantity} {t("common.items")}
                       </TableCell>
                       <TableCell>{formatCurrency(item.revenue)}</TableCell>
                     </TableRow>
@@ -450,7 +359,7 @@ export function MenuReport() {
                     <TableRow key={item.product.id}>
                       <TableCell>
                         <Badge variant={index < 3 ? "default" : "outline"}>
-                          {t("reports.rank")} {index + 1}
+                          {index + 1}
                         </Badge>
                       </TableCell>
                       <TableCell className="font-medium">
@@ -460,8 +369,7 @@ export function MenuReport() {
                         {formatCurrency(item.revenue)}
                       </TableCell>
                       <TableCell>
-                        {item.quantity}
-                        {t("common.items")}
+                        {item.quantity} {t("common.items")}
                       </TableCell>
                     </TableRow>
                   ))}

@@ -20,9 +20,9 @@ import {
 } from "@shared/schema";
 import { initializeSampleData, db } from "./db";
 import { z } from "zod";
-import { eq, desc, asc, and, or, like, count, sum, gte, lt } from "drizzle-orm";
+import { eq, desc, asc, and, or, like, count, sum, gte, lt, lte } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { orders, orderItems, products } from "@shared/schema";
+import { orders, orderItems, products, categories } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise {
   // Initialize sample data
@@ -1527,6 +1527,123 @@ export async function registerRoutes(app: Express): Promise {
     } catch (error) {
       console.error("E-invoice connection deletion error:", error);
       res.status(500).json({ message: "Failed to delete e-invoice connection" });
+    }
+  });
+
+  // Menu Analysis API - optimized for reports
+  app.get("/api/menu-analysis", async (req, res) => {
+    try {
+      const { startDate, endDate } = req.query;
+
+      if (!startDate || !endDate) {
+        return res.status(400).json({ error: "Start date and end date are required" });
+      }
+
+      // Get paid orders within date range with items and products
+      const menuAnalysisData = await db
+        .select({
+          productId: orderItems.productId,
+          productName: products.name,
+          productSku: products.sku,
+          categoryId: products.categoryId,
+          categoryName: categories.name,
+          quantity: orderItems.quantity,
+          total: orderItems.total,
+          unitPrice: orderItems.unitPrice,
+          orderId: orders.id,
+          orderDate: orders.orderedAt
+        })
+        .from(orderItems)
+        .innerJoin(orders, eq(orders.id, orderItems.orderId))
+        .innerJoin(products, eq(products.id, orderItems.productId))
+        .innerJoin(categories, eq(categories.id, products.categoryId))
+        .where(
+          and(
+            eq(orders.status, 'paid'),
+            gte(orders.orderedAt, startDate as string),
+            lt(orders.orderedAt, new Date(new Date(endDate as string).getTime() + 24 * 60 * 60 * 1000).toISOString())
+          )
+        );
+
+      // Process data for analysis
+      const productStats = {};
+      const categoryStats = {};
+      const orderSet = new Set();
+
+      menuAnalysisData.forEach(item => {
+        const productId = item.productId;
+        const categoryId = item.categoryId;
+
+        // Product statistics
+        if (!productStats[productId]) {
+          productStats[productId] = {
+            product: {
+              id: productId,
+              name: item.productName,
+              sku: item.productSku,
+              categoryId: categoryId
+            },
+            quantity: 0,
+            revenue: 0,
+            orders: new Set()
+          };
+        }
+
+        productStats[productId].quantity += item.quantity;
+        productStats[productId].revenue += Number(item.total);
+        productStats[productId].orders.add(item.orderId);
+
+        // Category statistics
+        if (!categoryStats[categoryId]) {
+          categoryStats[categoryId] = {
+            category: {
+              id: categoryId,
+              name: item.categoryName
+            },
+            quantity: 0,
+            revenue: 0,
+            productCount: 0
+          };
+        }
+
+        categoryStats[categoryId].quantity += item.quantity;
+        categoryStats[categoryId].revenue += Number(item.total);
+
+        orderSet.add(item.orderId);
+      });
+
+      // Count unique products per category
+      Object.values(productStats).forEach((stat: any) => {
+        const categoryId = stat.product.categoryId;
+        if (categoryStats[categoryId]) {
+          categoryStats[categoryId].productCount = Object.values(productStats)
+            .filter((p: any) => p.product.categoryId === categoryId).length;
+        }
+      });
+
+      // Sort products by metrics
+      const productList = Object.values(productStats);
+      const topSellingProducts = [...productList].sort((a: any, b: any) => b.quantity - a.quantity);
+      const topRevenueProducts = [...productList].sort((a: any, b: any) => b.revenue - a.revenue);
+
+      // Calculate totals
+      const totalQuantity = productList.reduce((sum: number, item: any) => sum + item.quantity, 0);
+      const totalRevenue = productList.reduce((sum: number, item: any) => sum + item.revenue, 0);
+
+      const result = {
+        productStats: productList,
+        categoryStats: Object.values(categoryStats),
+        topSellingProducts,
+        topRevenueProducts,
+        totalQuantity,
+        totalRevenue,
+        dateRange: { startDate, endDate }
+      };
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching menu analysis data:", error);
+      res.status(500).json({ error: "Failed to fetch menu analysis data" });
     }
   });
 
