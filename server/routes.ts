@@ -927,7 +927,7 @@ export async function registerRoutes(app: Express): Promise {
             subtotal: subtotalAmount.toFixed(2),
             tax: taxAmount.toFixed(2),
           })
-          .where(eq(orders.id, orderId));
+          .where(eq(orders.id, orderId));```text
 
         console.log('Updated order totals successfully');
       } catch (updateError) {
@@ -1502,11 +1502,11 @@ export async function registerRoutes(app: Express): Promise {
       const id = parseInt(req.params.id);
       const connectionData = req.body;
       const connection = await storage.updateEInvoiceConnection(id, connectionData);
-      
+
       if (!connection) {
         return res.status(404).json({ message: "E-invoice connection not found" });
       }
-      
+
       res.json(connection);
     } catch (error) {
       console.error("E-invoice connection update error:", error);
@@ -1518,11 +1518,11 @@ export async function registerRoutes(app: Express): Promise {
     try {
       const id = parseInt(req.params.id);
       const deleted = await storage.deleteEInvoiceConnection(id);
-      
+
       if (!deleted) {
         return res.status(404).json({ message: "E-invoice connection not found" });
       }
-      
+
       res.json({ message: "E-invoice connection deleted successfully" });
     } catch (error) {
       console.error("E-invoice connection deletion error:", error);
@@ -1533,114 +1533,132 @@ export async function registerRoutes(app: Express): Promise {
   // Menu Analysis API - optimized for reports
   app.get("/api/menu-analysis", async (req, res) => {
     try {
-      const { startDate, endDate } = req.query;
+      const { startDate, endDate, search, categoryId, productType } = req.query;
 
       if (!startDate || !endDate) {
         return res.status(400).json({ error: "Start date and end date are required" });
       }
 
-      // Get paid orders within date range with items and products
-      const menuAnalysisData = await db
-        .select({
-          productId: orderItems.productId,
-          productName: products.name,
-          productSku: products.sku,
-          categoryId: products.categoryId,
-          categoryName: categories.name,
-          quantity: orderItems.quantity,
-          total: orderItems.total,
-          unitPrice: orderItems.unitPrice,
-          orderId: orders.id,
-          orderDate: orders.orderedAt
-        })
-        .from(orderItems)
-        .innerJoin(orders, eq(orders.id, orderItems.orderId))
-        .innerJoin(products, eq(products.id, orderItems.productId))
-        .innerJoin(categories, eq(categories.id, products.categoryId))
-        .where(
-          and(
-            eq(orders.status, 'paid'),
-            gte(orders.orderedAt, startDate as string),
-            lt(orders.orderedAt, new Date(new Date(endDate as string).getTime() + 24 * 60 * 60 * 1000).toISOString())
-          )
-        );
+      // Convert dates to proper format for SQLite
+      const startDateTime = new Date(startDate as string);
+      const endDateTime = new Date(endDate as string);
+      endDateTime.setHours(23, 59, 59, 999);
 
-      // Process data for analysis
-      const productStats = {};
-      const categoryStats = {};
-      const orderSet = new Set();
+      let whereConditions = [
+        `datetime(t.createdAt) >= datetime('${startDateTime.toISOString()}')`,
+        `datetime(t.createdAt) <= datetime('${endDateTime.toISOString()}')`
+      ];
 
-      menuAnalysisData.forEach(item => {
-        const productId = item.productId;
-        const categoryId = item.categoryId;
+      // Add search filter
+      if (search) {
+        whereConditions.push(`(p.name LIKE '%${search}%' OR p.sku LIKE '%${search}%')`);
+      }
 
-        // Product statistics
-        if (!productStats[productId]) {
-          productStats[productId] = {
-            product: {
-              id: productId,
-              name: item.productName,
-              sku: item.productSku,
-              categoryId: categoryId
-            },
-            quantity: 0,
-            revenue: 0,
-            orders: new Set()
-          };
-        }
+      // Add category filter
+      if (categoryId && categoryId !== 'all') {
+        whereConditions.push(`p.categoryId = ${categoryId}`);
+      }
 
-        productStats[productId].quantity += item.quantity;
-        productStats[productId].revenue += Number(item.total);
-        productStats[productId].orders.add(item.orderId);
+      // Add product type filter
+      if (productType && productType !== 'all') {
+        whereConditions.push(`p.productType = '${productType}'`);
+      }
 
-        // Category statistics
-        if (!categoryStats[categoryId]) {
-          categoryStats[categoryId] = {
+      const query = `
+        SELECT 
+          ti.productId,
+          p.name as productName,
+          p.sku as productCode,
+          p.categoryId,
+          c.name as categoryName,
+          ti.quantity,
+          ti.unitPrice,
+          ti.totalPrice,
+          t.createdAt as transactionDate
+        FROM transaction_items ti
+        INNER JOIN products p ON ti.productId = p.id
+        INNER JOIN transactions t ON ti.transactionId = t.id
+        LEFT JOIN categories c ON p.categoryId = c.id
+        WHERE ${whereConditions.join(' AND ')}
+      `;
+
+      const transactionItems = await new Promise((resolve, reject) => {
+        db.all(query, [], (err, rows) => {
+          if (err) reject(err);
+          else resolve(rows);
+        });
+      }) as any[];
+
+      // Calculate category stats
+      const categoryMap = new Map();
+      const productMap = new Map();
+      let totalRevenue = 0;
+      let totalQuantity = 0;
+
+      for (const item of transactionItems) {
+        totalRevenue += Number(item.totalPrice);
+        totalQuantity += Number(item.quantity);
+
+        // Category stats
+        const categoryKey = item.categoryId || 'uncategorized';
+        if (!categoryMap.has(categoryKey)) {
+          categoryMap.set(categoryKey, {
             category: {
-              id: categoryId,
-              name: item.categoryName
+              id: item.categoryId,
+              name: item.categoryName || 'Uncategorized'
+            },
+            revenue: 0,
+            quantity: 0,
+            productCount: 0,
+            products: new Set()
+          });
+        }
+
+        const categoryData = categoryMap.get(categoryKey);
+        categoryData.revenue += Number(item.totalPrice);
+        categoryData.quantity += Number(item.quantity);
+        categoryData.products.add(item.productId);
+
+        // Product stats
+        const productKey = item.productId;
+        if (!productMap.has(productKey)) {
+          productMap.set(productKey, {
+            product: {
+              id: item.productId,
+              name: item.productName,
+              code: item.productCode
             },
             quantity: 0,
-            revenue: 0,
-            productCount: 0
-          };
+            revenue: 0
+          });
         }
 
-        categoryStats[categoryId].quantity += item.quantity;
-        categoryStats[categoryId].revenue += Number(item.total);
+        const productData = productMap.get(productKey);
+        productData.quantity += Number(item.quantity);
+        productData.revenue += Number(item.totalPrice);
+      }
 
-        orderSet.add(item.orderId);
-      });
+      // Convert maps to arrays and add product counts
+      const categoryStats = Array.from(categoryMap.values()).map(cat => ({
+        ...cat,
+        productCount: cat.products.size
+      }));
 
-      // Count unique products per category
-      Object.values(productStats).forEach((stat: any) => {
-        const categoryId = stat.product.categoryId;
-        if (categoryStats[categoryId]) {
-          categoryStats[categoryId].productCount = Object.values(productStats)
-            .filter((p: any) => p.product.categoryId === categoryId).length;
-        }
-      });
+      const productStats = Array.from(productMap.values());
 
-      // Sort products by metrics
-      const productList = Object.values(productStats);
-      const topSellingProducts = [...productList].sort((a: any, b: any) => b.quantity - a.quantity);
-      const topRevenueProducts = [...productList].sort((a: any, b: any) => b.revenue - a.revenue);
+      // Sort products by quantity and revenue
+      const topSellingProducts = [...productStats].sort((a, b) => b.quantity - a.quantity);
+      const topRevenueProducts = [...productStats].sort((a, b) => b.revenue - a.revenue);
 
-      // Calculate totals
-      const totalQuantity = productList.reduce((sum: number, item: any) => sum + item.quantity, 0);
-      const totalRevenue = productList.reduce((sum: number, item: any) => sum + item.revenue, 0);
-
-      const result = {
-        productStats: productList,
-        categoryStats: Object.values(categoryStats),
-        topSellingProducts,
-        topRevenueProducts,
-        totalQuantity,
+      res.json({
         totalRevenue,
-        dateRange: { startDate, endDate }
-      };
+        totalQuantity,
+        categoryStats,
+        productStats,
+        topSellingProducts,
+        topRevenueProducts
+      });
 
-      res.json(result);
     } catch (error) {
       console.error("Error fetching menu analysis data:", error);
       res.status(500).json({ error: "Failed to fetch menu analysis data" });

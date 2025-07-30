@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { PieChart, TrendingUp, Award } from "lucide-react";
+import { PieChart, TrendingUp, Award, Search, Filter } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
 export function MenuReport() {
@@ -37,12 +37,28 @@ export function MenuReport() {
   const [endDate, setEndDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
+  const [productSearch, setProductSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [productType, setProductType] = useState("all");
 
-  // Use the new optimized API endpoint
+  // Categories query for filter
+  const { data: categories } = useQuery({
+    queryKey: ["/api/categories"],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Use the new optimized API endpoint with filters
   const { data: menuData, isLoading } = useQuery({
-    queryKey: ["/api/menu-analysis", startDate, endDate],
+    queryKey: ["/api/menu-analysis", startDate, endDate, productSearch, selectedCategory, productType],
     queryFn: async () => {
-      const response = await fetch(`/api/menu-analysis?startDate=${startDate}&endDate=${endDate}`);
+      const params = new URLSearchParams({
+        startDate,
+        endDate,
+        ...(productSearch && { search: productSearch }),
+        ...(selectedCategory !== "all" && { categoryId: selectedCategory }),
+        ...(productType !== "all" && { productType }),
+      });
+      const response = await fetch(`/api/menu-analysis?${params}`);
       if (!response.ok) {
         throw new Error('Failed to fetch menu analysis data');
       }
@@ -98,20 +114,32 @@ export function MenuReport() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <PieChart className="w-5 h-5" />
+            {t("reports.menuAnalysis")}
+          </CardTitle>
+          <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+        </CardHeader>
+      </Card>
+
       {/* Filters */}
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="w-4 h-4" />
+            {t("reports.filterOptions")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Date Range Filter */}
+          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <PieChart className="w-5 h-5" />
-                {t("reports.menuAnalysis")}
-              </CardTitle>
-              <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
-            </div>
-            <div className="flex items-center gap-4">
+              <Label>{t("reports.dateRange")}</Label>
               <Select value={dateRange} onValueChange={handleDateRangeChange}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -123,32 +151,78 @@ export function MenuReport() {
                   <SelectItem value="custom">{t("reports.custom")}</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
 
-              {dateRange === "custom" && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <Label>{t("reports.startDate")}:</Label>
-                    <Input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-auto"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label>{t("reports.endDate")}:</Label>
-                    <Input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-auto"
-                    />
-                  </div>
-                </>
-              )}
+            {dateRange === "custom" && (
+              <>
+                <div>
+                  <Label>{t("reports.startDate")}</Label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>{t("reports.endDate")}</Label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Product Search */}
+            <div>
+              <Label>{t("reports.productFilter")}</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder={t("reports.productFilterPlaceholder")}
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            {/* Category Filter */}
+            <div>
+              <Label>{t("common.category")}</Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("common.all")}</SelectItem>
+                  {categories?.map((category: any) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Product Type Filter */}
+            <div>
+              <Label>{t("reports.productType")}</Label>
+              <Select value={productType} onValueChange={setProductType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("common.all")}</SelectItem>
+                  <SelectItem value="combo">{t("reports.combo")}</SelectItem>
+                  <SelectItem value="product">{t("reports.product")}</SelectItem>
+                  <SelectItem value="service">{t("reports.service")}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        </CardHeader>
+        </CardContent>
       </Card>
 
       {/* Summary Stats */}
