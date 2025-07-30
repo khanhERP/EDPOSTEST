@@ -1005,16 +1005,17 @@ export default function Settings() {
   };
 
   const handleEditEInvoice = (eInvoice: any) => {
+    console.log("Editing E-invoice:", eInvoice);
     setEInvoiceForm({
-      taxCode: eInvoice.taxCode,
-      loginId: eInvoice.loginId,
-      password: eInvoice.password,
-      softwareName: eInvoice.softwareName,
-      loginUrl: eInvoice.loginUrl,
-      signMethod: eInvoice.signMethod,
-      cqtCode: eInvoice.cqtCode,
-      notes: eInvoice.notes === "-" ? "" : eInvoice.notes,
-      isActive: eInvoice.isActive,
+      taxCode: eInvoice.taxCode || "",
+      loginId: eInvoice.loginId || "",
+      password: eInvoice.password || "",
+      softwareName: eInvoice.softwareName || "",
+      loginUrl: eInvoice.loginUrl || "",
+      signMethod: eInvoice.signMethod || "Ký server",
+      cqtCode: eInvoice.cqtCode || "Cấp nhật",
+      notes: eInvoice.notes === "-" ? "" : (eInvoice.notes || ""),
+      isActive: eInvoice.isActive !== undefined ? eInvoice.isActive : true,
     });
     setEInvoiceFormErrors({
       taxCode: "",
@@ -1537,9 +1538,10 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          onClick={() =>
-                                            handleEditEInvoice(connection)
-                                          }
+                                          onClick={() => {
+                                            console.log("Edit button clicked for connection:", connection);
+                                            handleEditEInvoice(connection);
+                                          }}
                                         >
                                           <Edit className="w-3 h-3" />
                                         </Button>
