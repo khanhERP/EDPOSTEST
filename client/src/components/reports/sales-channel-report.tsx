@@ -1,12 +1,40 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import { TrendingUp, Search, Calendar, Filter } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import {
@@ -21,10 +49,10 @@ export function SalesChannelReport() {
   // Filters
   const [concernType, setConcernType] = useState("sales");
   const [startDate, setStartDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
+    new Date().toISOString().split("T")[0],
   );
   const [selectedSeller, setSelectedSeller] = useState("all");
   const [selectedSalesChannel, setSelectedSalesChannel] = useState("all");
@@ -44,17 +72,25 @@ export function SalesChannelReport() {
 
   // Sales channel sales data query
   const { data: salesChannelSalesData, isLoading: salesLoading } = useQuery({
-    queryKey: ["/api/sales-channel-sales", startDate, endDate, selectedSeller, selectedSalesChannel],
+    queryKey: [
+      "/api/sales-channel-sales",
+      startDate,
+      endDate,
+      selectedSeller,
+      selectedSalesChannel,
+    ],
     queryFn: async () => {
       const params = new URLSearchParams({
         startDate,
         endDate,
         ...(selectedSeller !== "all" && { sellerId: selectedSeller }),
-        ...(selectedSalesChannel !== "all" && { salesChannel: selectedSalesChannel }),
+        ...(selectedSalesChannel !== "all" && {
+          salesChannel: selectedSalesChannel,
+        }),
       });
       const response = await fetch(`/api/sales-channel-sales?${params}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch sales channel sales data');
+        throw new Error("Failed to fetch sales channel sales data");
       }
       return response.json();
     },
@@ -63,17 +99,25 @@ export function SalesChannelReport() {
 
   // Sales channel profit data query
   const { data: salesChannelProfitData, isLoading: profitLoading } = useQuery({
-    queryKey: ["/api/sales-channel-profit", startDate, endDate, selectedSeller, selectedSalesChannel],
+    queryKey: [
+      "/api/sales-channel-profit",
+      startDate,
+      endDate,
+      selectedSeller,
+      selectedSalesChannel,
+    ],
     queryFn: async () => {
       const params = new URLSearchParams({
         startDate,
         endDate,
         ...(selectedSeller !== "all" && { sellerId: selectedSeller }),
-        ...(selectedSalesChannel !== "all" && { salesChannel: selectedSalesChannel }),
+        ...(selectedSalesChannel !== "all" && {
+          salesChannel: selectedSalesChannel,
+        }),
       });
       const response = await fetch(`/api/sales-channel-profit?${params}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch sales channel profit data');
+        throw new Error("Failed to fetch sales channel profit data");
       }
       return response.json();
     },
@@ -81,26 +125,38 @@ export function SalesChannelReport() {
   });
 
   // Sales channel products data query
-  const { data: salesChannelProductsData, isLoading: productsLoading } = useQuery({
-    queryKey: ["/api/sales-channel-products", startDate, endDate, selectedSeller, selectedSalesChannel, productSearch, productType, selectedCategory],
-    queryFn: async () => {
-      const params = new URLSearchParams({
+  const { data: salesChannelProductsData, isLoading: productsLoading } =
+    useQuery({
+      queryKey: [
+        "/api/sales-channel-products",
         startDate,
         endDate,
-        ...(selectedSeller !== "all" && { sellerId: selectedSeller }),
-        ...(selectedSalesChannel !== "all" && { salesChannel: selectedSalesChannel }),
-        ...(productSearch && { search: productSearch }),
-        ...(productType !== "all" && { productType }),
-        ...(selectedCategory !== "all" && { categoryId: selectedCategory }),
-      });
-      const response = await fetch(`/api/sales-channel-products?${params}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch sales channel products data');
-      }
-      return response.json();
-    },
-    staleTime: 2 * 60 * 1000,
-  });
+        selectedSeller,
+        selectedSalesChannel,
+        productSearch,
+        productType,
+        selectedCategory,
+      ],
+      queryFn: async () => {
+        const params = new URLSearchParams({
+          startDate,
+          endDate,
+          ...(selectedSeller !== "all" && { sellerId: selectedSeller }),
+          ...(selectedSalesChannel !== "all" && {
+            salesChannel: selectedSalesChannel,
+          }),
+          ...(productSearch && { search: productSearch }),
+          ...(productType !== "all" && { productType }),
+          ...(selectedCategory !== "all" && { categoryId: selectedCategory }),
+        });
+        const response = await fetch(`/api/sales-channel-products?${params}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch sales channel products data");
+        }
+        return response.json();
+      },
+      staleTime: 2 * 60 * 1000,
+    });
 
   const formatCurrency = (amount: number) => {
     return `${amount.toLocaleString()} ₫`;
@@ -120,12 +176,19 @@ export function SalesChannelReport() {
       profit: t("reports.profitBySalesChannel"),
       products: t("reports.productsBySalesChannel"),
     };
-    return concernTypes[concernType as keyof typeof concernTypes] || t("reports.salesChannelReport");
+    return (
+      concernTypes[concernType as keyof typeof concernTypes] ||
+      t("reports.salesChannelReport")
+    );
   };
 
   const getChartData = () => {
     if (concernType === "sales") {
-      if (!salesChannelSalesData || !Array.isArray(salesChannelSalesData) || salesChannelSalesData.length === 0) {
+      if (
+        !salesChannelSalesData ||
+        !Array.isArray(salesChannelSalesData) ||
+        salesChannelSalesData.length === 0
+      ) {
         return [];
       }
       return salesChannelSalesData.map((item: any) => ({
@@ -135,7 +198,11 @@ export function SalesChannelReport() {
         netRevenue: item.netRevenue || 0,
       }));
     } else if (concernType === "profit") {
-      if (!salesChannelProfitData || !Array.isArray(salesChannelProfitData) || salesChannelProfitData.length === 0) {
+      if (
+        !salesChannelProfitData ||
+        !Array.isArray(salesChannelProfitData) ||
+        salesChannelProfitData.length === 0
+      ) {
         return [];
       }
       return salesChannelProfitData.map((item: any) => ({
@@ -162,26 +229,44 @@ export function SalesChannelReport() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[150px]">{t("reports.salesChannelFilter")}</TableHead>
-              <TableHead className="text-right min-w-[120px]">{t("reports.salesChannelRevenue")}</TableHead>
-              <TableHead className="text-right min-w-[120px]">{t("reports.salesChannelReturnValue")}</TableHead>
-              <TableHead className="text-right min-w-[120px]">{t("reports.salesChannelNetRevenue")}</TableHead>
+              <TableHead className="min-w-[150px]">
+                {t("reports.salesChannelFilter")}
+              </TableHead>
+              <TableHead className="text-right min-w-[120px]">
+                {t("reports.salesChannelRevenue")}
+              </TableHead>
+              <TableHead className="text-right min-w-[120px]">
+                {t("reports.salesChannelReturnValue")}
+              </TableHead>
+              <TableHead className="text-right min-w-[120px]">
+                {t("reports.salesChannelNetRevenue")}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {salesChannelSalesData && Array.isArray(salesChannelSalesData) && salesChannelSalesData.length > 0 ? (
+            {salesChannelSalesData &&
+            Array.isArray(salesChannelSalesData) &&
+            salesChannelSalesData.length > 0 ? (
               salesChannelSalesData.map((item: any, index: number) => (
                 <TableRow key={item.id || index}>
                   <TableCell className="font-medium">
                     <div>
-                      <div className="font-semibold">{item.salesChannelName || "N/A"}</div>
+                      <div className="font-semibold">
+                        {item.salesChannelName || "N/A"}
+                      </div>
                       {item.sellerName && (
-                        <div className="text-sm text-gray-500">{item.sellerName}</div>
+                        <div className="text-sm text-gray-500">
+                          {item.sellerName}
+                        </div>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.revenue || 0)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.returnValue || 0)}</TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.revenue || 0)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.returnValue || 0)}
+                  </TableCell>
                   <TableCell className="text-right font-semibold text-green-600">
                     {formatCurrency(item.netRevenue || 0)}
                   </TableCell>
@@ -189,7 +274,10 @@ export function SalesChannelReport() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                <TableCell
+                  colSpan={4}
+                  className="text-center py-8 text-gray-500"
+                >
                   {t("reports.noReportData")}
                 </TableCell>
               </TableRow>
@@ -214,40 +302,80 @@ export function SalesChannelReport() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[150px]">{t("reports.salesChannelFilter")}</TableHead>
-              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelTotalAmount")}</TableHead>
-              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelDiscount")}</TableHead>
-              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelRevenue")}</TableHead>
-              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelReturnValue")}</TableHead>
-              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelNetRevenue")}</TableHead>
-              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelTotalCost")}</TableHead>
-              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelGrossProfit")}</TableHead>
-              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelFee")}</TableHead>
-              <TableHead className="text-right min-w-[100px]">{t("reports.salesChannelNetProfit")}</TableHead>
+              <TableHead className="min-w-[150px]">
+                {t("reports.salesChannelFilter")}
+              </TableHead>
+              <TableHead className="text-right min-w-[100px]">
+                {t("reports.salesChannelTotalAmount")}
+              </TableHead>
+              <TableHead className="text-right min-w-[100px]">
+                {t("reports.salesChannelDiscount")}
+              </TableHead>
+              <TableHead className="text-right min-w-[100px]">
+                {t("reports.salesChannelRevenue")}
+              </TableHead>
+              <TableHead className="text-right min-w-[100px]">
+                {t("reports.salesChannelReturnValue")}
+              </TableHead>
+              <TableHead className="text-right min-w-[100px]">
+                {t("reports.salesChannelNetRevenue")}
+              </TableHead>
+              <TableHead className="text-right min-w-[100px]">
+                {t("reports.salesChannelTotalCost")}
+              </TableHead>
+              <TableHead className="text-right min-w-[100px]">
+                {t("reports.salesChannelGrossProfit")}
+              </TableHead>
+              <TableHead className="text-right min-w-[100px]">
+                {t("reports.salesChannelFee")}
+              </TableHead>
+              <TableHead className="text-right min-w-[100px]">
+                {t("reports.salesChannelNetProfit")}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {salesChannelProfitData && Array.isArray(salesChannelProfitData) && salesChannelProfitData.length > 0 ? (
+            {salesChannelProfitData &&
+            Array.isArray(salesChannelProfitData) &&
+            salesChannelProfitData.length > 0 ? (
               salesChannelProfitData.map((item: any, index: number) => (
                 <TableRow key={item.id || index}>
                   <TableCell className="font-medium">
                     <div>
-                      <div className="font-semibold">{item.salesChannelName || "N/A"}</div>
+                      <div className="font-semibold">
+                        {item.salesChannelName || "N/A"}
+                      </div>
                       {item.sellerName && (
-                        <div className="text-sm text-gray-500">{item.sellerName}</div>
+                        <div className="text-sm text-gray-500">
+                          {item.sellerName}
+                        </div>
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.totalAmount || 0)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.discount || 0)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.revenue || 0)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.returnValue || 0)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.netRevenue || 0)}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.totalCost || 0)}</TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.totalAmount || 0)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.discount || 0)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.revenue || 0)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.returnValue || 0)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.netRevenue || 0)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.totalCost || 0)}
+                  </TableCell>
                   <TableCell className="text-right font-semibold text-green-600">
                     {formatCurrency(item.grossProfit || 0)}
                   </TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.platformFee || 0)}</TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.platformFee || 0)}
+                  </TableCell>
                   <TableCell className="text-right font-semibold text-blue-600">
                     {formatCurrency(item.netProfit || 0)}
                   </TableCell>
@@ -255,7 +383,10 @@ export function SalesChannelReport() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                <TableCell
+                  colSpan={10}
+                  className="text-center py-8 text-gray-500"
+                >
                   {t("reports.noReportData")}
                 </TableCell>
               </TableRow>
@@ -280,25 +411,47 @@ export function SalesChannelReport() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[150px]">{t("reports.salesChannelFilter")}</TableHead>
-              <TableHead className="min-w-[100px]">{t("reports.productCode")}</TableHead>
-              <TableHead className="min-w-[150px]">{t("reports.productName")}</TableHead>
-              <TableHead className="text-center min-w-[80px]">{t("reports.salesChannelQuantitySold")}</TableHead>
-              <TableHead className="text-right min-w-[120px]">{t("reports.salesChannelRevenue")}</TableHead>
-              <TableHead className="text-center min-w-[80px]">{t("reports.salesChannelQuantityReturned")}</TableHead>
-              <TableHead className="text-right min-w-[120px]">{t("reports.salesChannelReturnValue")}</TableHead>
-              <TableHead className="text-right min-w-[120px]">{t("reports.salesChannelNetRevenue")}</TableHead>
+              <TableHead className="min-w-[150px]">
+                {t("reports.salesChannelFilter")}
+              </TableHead>
+              <TableHead className="min-w-[100px]">
+                {t("reports.productCode")}
+              </TableHead>
+              <TableHead className="min-w-[150px]">
+                {t("reports.productName")}
+              </TableHead>
+              <TableHead className="text-center min-w-[80px]">
+                {t("reports.salesChannelQuantitySold")}
+              </TableHead>
+              <TableHead className="text-right min-w-[120px]">
+                {t("reports.salesChannelRevenue")}
+              </TableHead>
+              <TableHead className="text-center min-w-[80px]">
+                {t("reports.salesChannelQuantityReturned")}
+              </TableHead>
+              <TableHead className="text-right min-w-[120px]">
+                {t("reports.salesChannelReturnValue")}
+              </TableHead>
+              <TableHead className="text-right min-w-[120px]">
+                {t("reports.salesChannelNetRevenue")}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {salesChannelProductsData && Array.isArray(salesChannelProductsData) && salesChannelProductsData.length > 0 ? (
+            {salesChannelProductsData &&
+            Array.isArray(salesChannelProductsData) &&
+            salesChannelProductsData.length > 0 ? (
               salesChannelProductsData.map((item: any, index: number) => (
                 <TableRow key={item.id || index}>
                   <TableCell className="font-medium">
                     <div>
-                      <div className="font-semibold">{item.salesChannelName || "N/A"}</div>
+                      <div className="font-semibold">
+                        {item.salesChannelName || "N/A"}
+                      </div>
                       {item.sellerName && (
-                        <div className="text-sm text-gray-500">{item.sellerName}</div>
+                        <div className="text-sm text-gray-500">
+                          {item.sellerName}
+                        </div>
                       )}
                     </div>
                   </TableCell>
@@ -306,10 +459,18 @@ export function SalesChannelReport() {
                     <Badge variant="outline">{item.productCode || "N/A"}</Badge>
                   </TableCell>
                   <TableCell>{item.productName || "N/A"}</TableCell>
-                  <TableCell className="text-center">{item.quantitySold || 0}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.revenue || 0)}</TableCell>
-                  <TableCell className="text-center">{item.quantityReturned || 0}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.returnValue || 0)}</TableCell>
+                  <TableCell className="text-center">
+                    {item.quantitySold || 0}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.revenue || 0)}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {item.quantityReturned || 0}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(item.returnValue || 0)}
+                  </TableCell>
                   <TableCell className="text-right font-semibold text-green-600">
                     {formatCurrency(item.netRevenue || 0)}
                   </TableCell>
@@ -317,7 +478,10 @@ export function SalesChannelReport() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                <TableCell
+                  colSpan={8}
+                  className="text-center py-8 text-gray-500"
+                >
                   {t("reports.noReportData")}
                 </TableCell>
               </TableRow>
@@ -328,8 +492,6 @@ export function SalesChannelReport() {
     );
   };
 
-  
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -339,14 +501,16 @@ export function SalesChannelReport() {
             <TrendingUp className="w-5 h-5" />
             {t("reports.salesChannelReport")}
           </CardTitle>
-          <CardDescription>{t("reports.salesChannelReportDescription")}</CardDescription>
+          <CardDescription>
+            {t("reports.salesChannelReportDescription")}
+          </CardDescription>
         </CardHeader>
       </Card>
 
       {/* Filters */}
       <Card>
         <CardContent className="space-y-4 pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4">
             {/* Concern Type */}
             <div>
               <Label>{t("reports.salesChannelConcernType")}</Label>
@@ -355,9 +519,15 @@ export function SalesChannelReport() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sales">{t("reports.salesChannelSales")}</SelectItem>
-                  <SelectItem value="profit">{t("reports.salesChannelProfit")}</SelectItem>
-                  <SelectItem value="products">{t("reports.salesChannelProducts")}</SelectItem>
+                  <SelectItem value="sales">
+                    {t("reports.salesChannelSales")}
+                  </SelectItem>
+                  <SelectItem value="profit">
+                    {t("reports.salesChannelProfit")}
+                  </SelectItem>
+                  <SelectItem value="products">
+                    {t("reports.salesChannelProducts")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -392,7 +562,10 @@ export function SalesChannelReport() {
                 <SelectContent>
                   <SelectItem value="all">{t("common.all")}</SelectItem>
                   {employees?.map((employee: any) => (
-                    <SelectItem key={employee.id} value={employee.id.toString()}>
+                    <SelectItem
+                      key={employee.id}
+                      value={employee.id.toString()}
+                    >
                       {employee.name}
                     </SelectItem>
                   ))}
@@ -403,14 +576,21 @@ export function SalesChannelReport() {
             {/* Sales Channel Filter */}
             <div>
               <Label>{t("reports.salesChannelFilter")}</Label>
-              <Select value={selectedSalesChannel} onValueChange={setSelectedSalesChannel}>
+              <Select
+                value={selectedSalesChannel}
+                onValueChange={setSelectedSalesChannel}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("common.all")}</SelectItem>
-                  <SelectItem value="direct">{t("reports.directSales")}</SelectItem>
-                  <SelectItem value="other">{t("reports.otherSales")}</SelectItem>
+                  <SelectItem value="direct">
+                    {t("reports.directSales")}
+                  </SelectItem>
+                  <SelectItem value="other">
+                    {t("reports.otherSales")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -441,9 +621,15 @@ export function SalesChannelReport() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t("common.all")}</SelectItem>
-                      <SelectItem value="combo">{t("reports.combo")}</SelectItem>
-                      <SelectItem value="product">{t("reports.product")}</SelectItem>
-                      <SelectItem value="service">{t("reports.service")}</SelectItem>
+                      <SelectItem value="combo">
+                        {t("reports.combo")}
+                      </SelectItem>
+                      <SelectItem value="product">
+                        {t("reports.product")}
+                      </SelectItem>
+                      <SelectItem value="service">
+                        {t("reports.service")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -451,14 +637,20 @@ export function SalesChannelReport() {
                 {/* Category Filter */}
                 <div>
                   <Label>{t("common.category")}</Label>
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <Select
+                    value={selectedCategory}
+                    onValueChange={setSelectedCategory}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t("common.all")}</SelectItem>
                       {categories?.map((category: any) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
+                        <SelectItem
+                          key={category.id}
+                          value={category.id.toString()}
+                        >
                           {category.name}
                         </SelectItem>
                       ))}
@@ -492,7 +684,8 @@ export function SalesChannelReport() {
             </CardTitle>
             <CardDescription className="text-blue-100 mt-2">
               {t("reports.visualRepresentation")} - {t("reports.fromDate")}:{" "}
-              {formatDate(startDate)} {t("reports.toDate")}: {formatDate(endDate)}
+              {formatDate(startDate)} {t("reports.toDate")}:{" "}
+              {formatDate(endDate)}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
@@ -659,7 +852,8 @@ export function SalesChannelReport() {
             {getReportTitle()}
           </CardTitle>
           <CardDescription>
-            {t("reports.dataFrom")} {formatDate(startDate)} {t("reports.to")} {formatDate(endDate)}
+            {t("reports.dataFrom")} {formatDate(startDate)} {t("reports.to")}{" "}
+            {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
