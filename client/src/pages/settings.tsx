@@ -1049,6 +1049,9 @@ export default function Settings() {
   };
   // Invoice template management state
   const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<any>(null);
+  const [showTemplateDeleteDialog, setShowTemplateDeleteDialog] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<any>(null);
   const [templateForm, setTemplateForm] = useState({
     name: "",
     templateNumber: "",
@@ -1067,6 +1070,7 @@ export default function Settings() {
       notes: "",
       isDefault: false,
     });
+    setEditingTemplate(null);
   };
 
   // Fetch invoice templates
@@ -1098,6 +1102,52 @@ export default function Settings() {
     },
   });
 
+  const updateTemplateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      const response = await apiRequest("PUT", `/api/invoice-templates/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoice-templates"] });
+      toast({
+        title: "Thành công",
+        description: "Mẫu số HĐĐT đã được cập nhật thành công",
+      });
+      setShowTemplateForm(false);
+      resetTemplateForm();
+    },
+    onError: () => {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi cập nhật mẫu số HĐĐT",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteTemplateMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await apiRequest("DELETE", `/api/invoice-templates/${id}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/invoice-templates"] });
+      toast({
+        title: "Thành công",
+        description: "Mẫu số HĐĐT đã được xóa thành công",
+      });
+      setShowTemplateDeleteDialog(false);
+      setTemplateToDelete(null);
+    },
+    onError: () => {
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi xóa mẫu số HĐĐT",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCreateTemplate = () => {
     if (!templateForm.name.trim() || !templateForm.templateNumber.trim() || !templateForm.symbol.trim()) {
       toast({
@@ -1118,6 +1168,55 @@ export default function Settings() {
     };
 
     createTemplateMutation.mutate(templateData);
+  };
+
+  const handleUpdateTemplate = () => {
+    if (!templateForm.name.trim() || !templateForm.templateNumber.trim() || !templateForm.symbol.trim()) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin bắt buộc",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!editingTemplate) return;
+
+    const templateData = {
+      ...templateForm,
+      name: templateForm.name.trim(),
+      templateNumber: templateForm.templateNumber.trim(),
+      symbol: templateForm.symbol.trim(),
+      notes: templateForm.notes.trim() || null,
+    };
+
+    updateTemplateMutation.mutate({
+      id: editingTemplate.id,
+      data: templateData,
+    });
+  };
+
+  const handleEditTemplate = (template: any) => {
+    setTemplateForm({
+      name: template.name || "",
+      templateNumber: template.templateNumber || "",
+      symbol: template.symbol || "",
+      useCK: template.useCK !== undefined ? template.useCK : true,
+      notes: template.notes || "",
+      isDefault: template.isDefault !== undefined ? template.isDefault : false,
+    });
+    setEditingTemplate(template);
+    setShowTemplateForm(true);
+  };
+
+  const handleDeleteTemplate = (id: number, name: string) => {
+    setTemplateToDelete({ id, name });
+    setShowTemplateDeleteDialog(true);
+  };
+
+  const confirmDeleteTemplate = () => {
+    if (!templateToDelete) return;
+    deleteTemplateMutation.mutate(templateToDelete.id);
   };
 
   return (
@@ -1661,10 +1760,19 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                         </div>
                                         <div className="text-center">
                                           <div className="flex items-center justify-center gap-1">
-                                            <Button variant="ghost" size="sm">
+                                            <Button 
+                                              variant="ghost" 
+                                              size="sm"
+                                              onClick={() => handleEditTemplate(template)}
+                                            >
                                               <Edit className="w-3 h-3" />
                                             </Button>
-                                            <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                                            <Button 
+                                              variant="ghost" 
+                                              size="sm" 
+                                              className="text-red-500 hover:text-red-700"
+                                              onClick={() => handleDeleteTemplate(template.id, template.name)}
+                                            >
                                               <Trash2 className="w-3 h-3" />
                                             </Button>
                                           </div>
@@ -3599,9 +3707,14 @@ gray-200 rounded-xl p-4 min-h-[70px]"
       <Dialog open={showTemplateForm} onOpenChange={setShowTemplateForm}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Thêm mẫu số HĐĐT</DialogTitle>
+            <DialogTitle>
+              {editingTemplate ? "Sửa mẫu số HĐĐT" : "Thêm mẫu số HĐĐT"}
+            </DialogTitle>
             <DialogDescription>
-              Nhập thông tin chi tiết của mẫu số HĐĐT
+              {editingTemplate 
+                ? "Cập nhật thông tin chi tiết của mẫu số HĐĐT" 
+                : "Nhập thông tin chi tiết của mẫu số HĐĐT"
+              }
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -3701,15 +3814,74 @@ gray-200 rounded-xl p-4 min-h-[70px]"
               Hủy bỏ
             </Button>
             <Button
-              onClick={handleCreateTemplate}
-              disabled={createTemplateMutation.isPending}
+              onClick={editingTemplate ? handleUpdateTemplate : handleCreateTemplate}
+              disabled={createTemplateMutation.isPending || updateTemplateMutation.isPending}
               className="bg-green-600 hover:bg-green-700"
             >
-              {createTemplateMutation.isPending ? "Đang tạo..." : "Thêm mẫu số"}
+              {(createTemplateMutation.isPending || updateTemplateMutation.isPending) 
+                ? (editingTemplate ? "Đang cập nhật..." : "Đang tạo...") 
+                : (editingTemplate ? "Cập nhật mẫu số" : "Thêm mẫu số")
+              }
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Template Delete Confirmation Dialog */}
+      <AlertDialog
+        open={showTemplateDeleteDialog}
+        onOpenChange={setShowTemplateDeleteDialog}
+      >
+        <AlertDialogContent className="sm:max-w-[425px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Xác nhận xóa mẫu số HĐĐT
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              <div className="space-y-3">
+                <p>
+                  Bạn có chắc chắn muốn xóa mẫu số{" "}
+                  <span className="font-semibold text-gray-900">
+                    "{templateToDelete?.name}"
+                  </span>{" "}
+                  không?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-red-700">
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn
+                      tác. Mẫu số HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Điều này có thể ảnh hưởng đến việc xuất hóa đơn điện tử.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel
+              onClick={() => {
+                setShowTemplateDeleteDialog(false);
+                setTemplateToDelete(null);
+              }}
+              className="hover:bg-gray-100"
+            >
+              Hủy bỏ
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteTemplate}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Xóa mẫu số
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
