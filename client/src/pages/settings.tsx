@@ -2063,101 +2063,145 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                       </p>
                     </div>
                   ) : (
-                    <div className="rounded-md border">
-                      <div className="grid grid-cols-8 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                        <div>{t("settings.productName")}</div>
-                        <div>{t("settings.productSku")}</div>
-                        <div>{t("settings.productCategory")}</div>
-                        <div>{t("settings.productPrice")}</div>
-                        <div>{t("settings.productStock")}</div>
-                        <div>Trạng thái kho</div>
-                        <div>Trạng thái sử dụng</div>
-                        <div className="text-center">{t("common.actions")}</div>
-                      </div>
-
-                      <div className="divide-y">
-                        {filteredProducts.map((product: any) => {
-                          const category = categoriesData?.find(
-                            (c: any) => c.id === product.categoryId,
-                          );
-                          return (
-                            <div
-                              key={product.id}
-                              className="grid grid-cols-8 gap-4 p-4 items-center"
-                            >
-                              <div className="font-medium">{product.name}</div>
-                              <div className="font-mono text-sm">
-                                {product.sku}
+                    <div className="w-full overflow-x-auto border rounded-md">
+                      <table className="w-full min-w-[1100px] table-fixed">
+                        <thead>
+                          <tr className="bg-gray-50 border-b">
+                            <th className="w-[200px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                              <div className="leading-tight break-words">
+                                {t("settings.productName")}
                               </div>
-                              <div className="text-sm">
-                                <Badge variant="outline">
-                                  {category?.name || "N/A"}
-                                </Badge>
+                            </th>
+                            <th className="w-[120px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                              <div className="leading-tight break-words">
+                                {t("settings.productSku")}
                               </div>
-                              <div className="font-medium">
-                                {parseFloat(
-                                  product.price || "0",
-                                ).toLocaleString()}{" "}
-                                ₫
+                            </th>
+                            <th className="w-[120px] px-4 py-3 text-left font-medium text-sm text-gray-600">
+                              <div className="leading-tight break-words">
+                                {t("settings.productCategory")}
                               </div>
-                              <div className="text-center">
-                                {product.stock || 0}
+                            </th>
+                            <th className="w-[120px] px-4 py-3 text-right font-medium text-sm text-gray-600">
+                              <div className="leading-tight break-words">
+                                {t("settings.productPrice")}
                               </div>
-                              <div>
-                                <Badge
-                                  variant={
-                                    product.stock > 0
-                                      ? "default"
-                                      : "destructive"
-                                  }
-                                  className={
-                                    product.stock > 0
-                                      ? "bg-green-100 text-green-800"
-                                      : ""
-                                  }
-                                >
-                                  {product.stock > 0 ? "Còn hàng" : "Hết hàng"}
-                                </Badge>
+                            </th>
+                            <th className="w-[80px] px-4 py-3 text-center font-medium text-sm text-gray-600">
+                              <div className="leading-tight break-words">
+                                {t("settings.productStock")}
                               </div>
-                              <div>
-                                <Badge
-                                  variant={
-                                    product.isActive === true || product.isActive === 1
-                                      ? "default"
-                                      : "secondary"
-                                  }
-                                  className={
-                                    product.isActive === true || product.isActive === 1
-                                      ? "bg-blue-100 text-blue-800"
-                                      : "bg-gray-100 text-gray-800"
-                                  }
-                                >
-                                  {product.isActive === true || product.isActive === 1 ? "Có" : "Không"}
-                                </Badge>
+                            </th>
+                            <th className="w-[120px] px-4 py-3 text-center font-medium text-sm text-gray-600">
+                              <div className="leading-tight break-words">
+                                Trạng thái kho
                               </div>
-                              <div className="flex items-center justify-center gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditProduct(product)}
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-500 hover:text-red-700"
-                                  onClick={() =>
-                                    handleDeleteProduct(product.id, product.name)
-                                  }
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
+                            </th>
+                            <th className="w-[140px] px-4 py-3 text-center font-medium text-sm text-gray-600">
+                              <div className="leading-tight break-words">
+                                Trạng thái sử dụng
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                            </th>
+                            <th className="w-[120px] px-4 py-3 text-center font-medium text-sm text-gray-600">
+                              <div className="leading-tight break-words">
+                                {t("common.actions")}
+                              </div>
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {filteredProducts.map((product: any) => {
+                            const category = categoriesData?.find(
+                              (c: any) => c.id === product.categoryId,
+                            );
+                            return (
+                              <tr key={product.id} className="hover:bg-gray-50">
+                                <td className="px-4 py-3">
+                                  <div className="font-medium truncate" title={product.name}>
+                                    {product.name}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="font-mono text-sm truncate" title={product.sku}>
+                                    {product.sku}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <Badge variant="outline" className="text-xs truncate">
+                                    {category?.name || "N/A"}
+                                  </Badge>
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                  <div className="font-medium text-sm">
+                                    {parseFloat(
+                                      product.price || "0",
+                                    ).toLocaleString()}{" "}
+                                    ₫
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <div className="text-sm">
+                                    {product.stock || 0}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <Badge
+                                    variant={
+                                      product.stock > 0
+                                        ? "default"
+                                        : "destructive"
+                                    }
+                                    className={`text-xs ${
+                                      product.stock > 0
+                                        ? "bg-green-100 text-green-800"
+                                        : ""
+                                    }`}
+                                  >
+                                    {product.stock > 0 ? "Còn hàng" : "Hết hàng"}
+                                  </Badge>
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                  <Badge
+                                    variant={
+                                      product.isActive === true || product.isActive === 1
+                                        ? "default"
+                                        : "secondary"
+                                    }
+                                    className={`text-xs ${
+                                      product.isActive === true || product.isActive === 1
+                                        ? "bg-blue-100 text-blue-800"
+                                        : "bg-gray-100 text-gray-800"
+                                    }`}
+                                  >
+                                    {product.isActive === true || product.isActive === 1 ? "Có" : "Không"}
+                                  </Badge>
+                                </td>
+                                <td className="px-4 py-3">
+                                  <div className="flex items-center justify-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => handleEditProduct(product)}
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-red-500 hover:text-red-700"
+                                      onClick={() =>
+                                        handleDeleteProduct(product.id, product.name)
+                                      }
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   )}
 
