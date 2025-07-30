@@ -1555,8 +1555,8 @@ export async function registerRoutes(app: Express): Promise {
       }
 
       if (productType && productType !== 'all') {
-        conditions.push(eq(products.productType, productType as string)));
-      }
+          conditions.push(eq(products.productType, productType as string));
+        }
 
       // Get order items with product and category info
       let orderItemsQuery = db
@@ -1841,7 +1841,7 @@ export async function registerRoutes(app: Express): Promise {
         })
         .from(transactionsTable);
 
-      if (startDate && endDate) {
+            if (startDate && endDate) {
         query = query.where(
           and(
             gte(transactionsTable.createdAt, startDate as string),
