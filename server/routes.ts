@@ -927,7 +927,7 @@ export async function registerRoutes(app: Express): Promise {
             subtotal: subtotalAmount.toFixed(2),
             tax: taxAmount.toFixed(2),
           })
-          .where(eq(orders.id, orderId));```text
+          .where(eq(orders.id, orderId));
 
         console.log('Updated order totals successfully');
       } catch (updateError) {
