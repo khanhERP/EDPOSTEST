@@ -1107,7 +1107,16 @@ export default function Settings() {
       return;
     }
 
-    createTemplateMutation.mutate(templateForm);
+    // If this template is set as default, we need to handle that
+    const templateData = {
+      ...templateForm,
+      name: templateForm.name.trim(),
+      templateNumber: templateForm.templateNumber.trim(),
+      symbol: templateForm.symbol.trim(),
+      notes: templateForm.notes.trim() || null,
+    };
+
+    createTemplateMutation.mutate(templateData);
   };
 
   return (
