@@ -150,8 +150,8 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
             !row[0] ||
             !row[1] ||
             !row[2] ||
-            row[3] === undefined ||
-            !row[4]
+            row[4] === undefined ||
+            !row[5]
           ) {
             newErrors.push(`Dòng ${rowNumber}: Thiếu thông tin bắt buộc`);
             return;
@@ -161,10 +161,10 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
             name: row[0]?.toString().trim(),
             sku: row[1]?.toString().trim(),
             price: row[2]?.toString().trim(),
-            stock: parseInt(row[3]?.toString()) || 0,
-            categoryId: parseInt(row[4]?.toString()) || 0,
-            imageUrl: row[5]?.toString().trim() || "",
-            taxRate: row[6]?.toString().trim() || "8.00",
+            taxRate: row[3]?.toString().trim() || "8.00",
+            stock: parseInt(row[4]?.toString()) || 0,
+            categoryId: parseInt(row[5]?.toString()) || 0,
+            imageUrl: row[6]?.toString().trim() || "",
           };
 
           // Validate data
@@ -238,13 +238,13 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
         "Tên sản phẩm",
         "SKU",
         "Giá",
+        "% Thuế",
         "Số lượng",
         "Category ID",
         "Hình ảnh (URL)",
-        "% Thuế",
       ],
-      ["Cà phê đen", "COFFEE-001", "25000", "100", "1", "", "8.00"],
-      ["Bánh mì", "FOOD-001", "15000", "50", "2", "", "8.00"],
+      ["Cà phê đen", "COFFEE-001", "25000", "8.00", "100", "1", ""],
+      ["Bánh mì", "FOOD-001", "15000", "8.00", "50", "2", ""],
     ];
 
     const ws = XLSX.utils.aoa_to_sheet(template);
@@ -259,10 +259,10 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
         "Tên sản phẩm",
         "SKU",
         "Giá",
+        "% Thuế",
         "Số lượng",
         "Category ID",
         "Hình ảnh (URL)",
-        "% Thuế",
         "Lỗi chi tiết",
       ],
     ];
@@ -273,10 +273,10 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
           result.data.name || "",
           result.data.sku || "",
           result.data.price || "",
+          result.data.taxRate || "",
           result.data.stock || "",
           result.data.categoryId || "",
           result.data.imageUrl || "",
-          result.data.taxRate || "",
           result.error || "Lỗi không xác định",
         ]);
       }
@@ -289,10 +289,10 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
       { wch: 20 }, // Tên sản phẩm
       { wch: 15 }, // SKU
       { wch: 10 }, // Giá
+      { wch: 10 }, // % Thuế
       { wch: 10 }, // Số lượng
       { wch: 12 }, // Category ID
       { wch: 30 }, // Hình ảnh URL
-      { wch: 10 }, // % Thuế
       { wch: 40 }, // Lỗi chi tiết
     ];
     ws["!cols"] = colWidths;
@@ -411,9 +411,9 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
                       <th className="text-left py-2 px-3">Tên sản phẩm</th>
                       <th className="text-left py-2 px-3">SKU</th>
                       <th className="text-left py-2 px-3">Giá</th>
+                      <th className="text-left py-2 px-3">% Thuế</th>
                       <th className="text-left py-2 px-3">Số lượng</th>
                       <th className="text-left py-2 px-3">Category ID</th>
-                      <th className="text-left py-2 px-3">% Thuế</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white">
@@ -427,9 +427,9 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
                             currency: "VND",
                           }).format(parseFloat(product.price))}
                         </td>
+                        <td className="py-2 px-3">{product.taxRate || "8.00"}%</td>
                         <td className="py-2 px-3">{product.stock}</td>
                         <td className="py-2 px-3">{product.categoryId}</td>
-                        <td className="py-2 px-3">{product.taxRate || "8.00"}%</td>
                       </tr>
                     ))}
                   </tbody>
