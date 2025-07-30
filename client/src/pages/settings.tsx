@@ -1004,7 +1004,7 @@ export default function Settings() {
             </TabsTrigger>
             <TabsTrigger 
               value="customers" 
-              className="flex items-center gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap min-w-[90px] justify-center"
+              className="flex items-center gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-md sm:rounded-lg font-medium whitespace-nowrap min-w-[90px] justify-center"
             >
               <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t("customers.title")}</span>
@@ -1012,7 +1012,7 @@ export default function Settings() {
             </TabsTrigger>
             <TabsTrigger 
               value="categories" 
-              className="flex items-center gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap min-w-[90px] justify-center"
+              className="flex items-center gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-md sm:rounded-lg font-medium whitespace-nowrap min-w-[90px] justify-center"
             >
               <Package className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t("settings.categories")}</span>
@@ -1028,7 +1028,7 @@ export default function Settings() {
             </TabsTrigger>
             <TabsTrigger 
               value="payments" 
-              className="flex items-center gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap min-w-[90px] justify-center"
+              className="flex items-center gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-md sm:rounded-lg font-medium whitespace-nowrap min-w-[90px] justify-center"
             >
               <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t("settings.paymentMethods")}</span>
@@ -1773,7 +1773,7 @@ export default function Settings() {
                           {productsData ? productsData.length : 0}
                         </p>
                       </div>
-                      <ShoppingCart className="w-8 h-8 text-blue-600" />
+                      <ShoppingCart className="w-8h-8 text-blue-600" />
                     </div>
                   </CardContent>
                 </Card>
@@ -2515,7 +2515,7 @@ export default function Settings() {
               </Label>
               <Select
                 value={productForm.categoryId}
-                onValueChange={(value) =>
+                onChange={(value) =>
                   setProductForm((prev) => ({ ...prev, categoryId: value }))
                 }
               >
@@ -2836,6 +2836,58 @@ export default function Settings() {
       </AlertDialog>
 
       {/* E-invoice Form Modal */}
+      <AlertDialog open={showEInvoiceDeleteDialog} onOpenChange={setShowEInvoiceDeleteDialog}>
+        <AlertDialogContent className="sm:max-w-[425px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+              <Trash2 className="w-5 h-5" />
+              Xác nhận xóa kết nối HĐĐT
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-left">
+              <div className="space-y-3">
+                <p>
+                  Bạn có chắc chắn muốn xóa kết nối{" "}
+                  <span className="font-semibold text-gray-900">
+                    "{eInvoiceToDelete?.softwareName}"
+                  </span>{" "}
+                  không?
+                </p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+                    <p className="text-sm text-red-700">
+                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
+                      Kết nối HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                    </p>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Điều này có thể ảnh hưởng đến việc xuất hóa đơn điện tử.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel 
+              onClick={() => {
+                setShowEInvoiceDeleteDialog(false);
+                setEInvoiceToDelete(null);
+              }}
+              className="hover:bg-gray-100"
+            >
+              Hủy bỏ
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteEInvoice}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Xóa kết nối
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* E-invoice Form Modal */}
       <Dialog open={showEInvoiceForm} onOpenChange={setShowEInvoiceForm}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
@@ -3021,59 +3073,6 @@ export default function Settings() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* E-invoice Delete Confirmation Dialog */}
-      <AlertDialog open={showEInvoiceDeleteDialog} onOpenChange={setShowEInvoiceDeleteDialog}>
-        <AlertDialogContent className="sm:max-w-[425px]">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-red-600">
-              <Trash2 className="w-5 h-5" />
-              Xác nhận xóa kết nối HĐĐT
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-left">
-              <div className="space-y-3">
-                <p>
-                  Bạn có chắc chắn muốn xóa kết nối{" "}
-                  <span className="font-semibold text-gray-900">
-                    "{eInvoiceToDelete?.softwareName}"
-                  </span>{" "}
-                  không?
-                </p>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <div className="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-sm text-red-700">
-                      <strong>Cảnh báo:</strong> Hành động này không thể hoàn tác. 
-                      Kết nối HĐĐT sẽ bị xóa vĩnh viễn khỏi hệ thống.
-                    </p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Điều này có thể ảnh hưởng đến việc xuất hóa đơn điện tử.
-                </p>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel 
-              onClick={() => {
-                setShowEInvoiceDeleteDialog(false);
-                setEInvoiceToDelete(null);
-              }}
-              className="hover:bg-gray-100"
-            >
-              Hủy bỏ
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteEInvoice}
-              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Xóa kết nối
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
