@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { CreditCard, Banknote, Smartphone, Wallet, QrCode } from "lucide-react";
 import {
