@@ -854,7 +854,7 @@ export default function Settings() {
     onError: () => {
       toast({
         title: "Lỗi",
-        description: "Có l ��i xảy ra khi tạo kết nối HĐĐT",
+        description: "Có l i xảy ra khi tạo kết nối HĐĐT",
         variant: "destructive",
       });
     },
@@ -1044,6 +1044,27 @@ export default function Settings() {
     updateEInvoiceMutation.mutate({
       id,
       data: { ...connection, isDefault: !connection.isDefault },
+    });
+  };
+  // Invoice template management state
+  const [showTemplateForm, setShowTemplateForm] = useState(false);
+  const [templateForm, setTemplateForm] = useState({
+    name: "",
+    templateNumber: "",
+    symbol: "",
+    useCK: true,
+    notes: "",
+    isDefault: false,
+  });
+
+  const resetTemplateForm = () => {
+    setTemplateForm({
+      name: "",
+      templateNumber: "",
+      symbol: "",
+      useCK: true,
+      notes: "",
+      isDefault: false,
     });
   };
 
@@ -1507,21 +1528,27 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                           </TabsContent>
 
                           <TabsContent value="settings" className="mt-6">
-                            <div className="space-y-6">
-                              <div className="flex justify-between items-center">
-                                <div>
-                                  <h3 className="text-lg font-medium">
-                                    Mẫu số HĐĐT
-                                  </h3>
-                                  <p className="text-sm text-gray-600">
-                                    Quản lý các mẫu số hóa đơn điện tử
-                                  </p>
+                            
+                                <div className="flex justify-between items-center">
+                                  <div>
+                                    <h3 className="text-lg font-medium">
+                                      Mẫu số HĐĐT
+                                    </h3>
+                                    <p className="text-sm text-gray-600">
+                                      Quản lý các mẫu số hóa đơn điện tử
+                                    </p>
+                                  </div>
+                                  <Button 
+                                    className="bg-blue-600 hover:bg-blue-700"
+                                    onClick={() => {
+                                      resetTemplateForm();
+                                      setShowTemplateForm(true);
+                                    }}
+                                  >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Thêm mẫu số
+                                  </Button>
                                 </div>
-                                <Button className="bg-blue-600 hover:bg-blue-700">
-                                  <Plus className="w-4 h-4 mr-2" />
-                                  Thêm mẫu số
-                                </Button>
-                              </div>
 
                               {/* Invoice templates table */}
                               <div className="rounded-md border bg-white">
@@ -1611,7 +1638,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                   </div>
                                 </div>
                               </div>
-                            </div>
+                            
                           </TabsContent>
                         </Tabs>
                       </div>
@@ -1871,7 +1898,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                               </div>
                               <div>
                                 <Badge
-                                  variant="default"
+                                                                 variant="default"
                                   className={`${
                                     customer.membershipLevel === "VIP"
                                       ? "bg-purple-500"
@@ -3528,6 +3555,124 @@ gray-200 rounded-xl p-4 min-h-[70px]"
               className="bg-green-600 hover:bg-green-700"
             >
               {editingEInvoice ? "Cập nhật" : "Thêm kết nối"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Invoice Template Form Modal */}
+      <Dialog open={showTemplateForm} onOpenChange={setShowTemplateForm}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Thêm mẫu số HĐĐT</DialogTitle>
+            <DialogDescription>
+              Nhập thông tin chi tiết của mẫu số HĐĐT
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="templateName" className="text-right">
+                Tên mẫu số
+              </Label>
+              <Input
+                id="templateName"
+                value={templateForm.name}
+                onChange={(e) =>
+                  setTemplateForm((prev) => ({ ...prev, name: e.target.value }))
+                }
+                className="col-span-3"
+                placeholder="Ví dụ: Mẫu số 1"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="templateNumber" className="text-right">
+                Mẫu số
+              </Label>
+              <Input
+                id="templateNumber"
+                value={templateForm.templateNumber}
+                onChange={(e) =>
+                  setTemplateForm((prev) => ({
+                    ...prev,
+                    templateNumber: e.target.value,
+                  }))
+                }
+                className="col-span-3"
+                placeholder="Ví dụ: 01GTKT0/001"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="symbol" className="text-right">
+                Ký hiệu
+              </Label>
+              <Input
+                id="symbol"
+                value={templateForm.symbol}
+                onChange={(e) =>
+                  setTemplateForm((prev) => ({ ...prev, symbol: e.target.value }))
+                }
+                className="col-span-3"
+                placeholder="Ví dụ: AA/19E"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="useCK" className="text-right">
+                C/K sử dụng
+              </Label>
+              <Switch
+                id="useCK"
+                checked={templateForm.useCK}
+                onCheckedChange={(checked) =>
+                  setTemplateForm((prev) => ({ ...prev, useCK: checked }))
+                }
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="notes" className="text-right">
+                Ghi chú
+              </Label>
+              <Textarea
+                id="notes"
+                value={templateForm.notes}
+                onChange={(e) =>
+                  setTemplateForm((prev) => ({ ...prev, notes: e.target.value }))
+                }
+                className="col-span-3"
+                placeholder="Ghi chú thêm (tùy chọn)"
+                rows={3}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="isDefault" className="text-right">
+                Mặc định
+              </Label>
+              <Switch
+                id="isDefault"
+                checked={templateForm.isDefault}
+                onCheckedChange={(checked) =>
+                  setTemplateForm((prev) => ({ ...prev, isDefault: checked }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowTemplateForm(false);
+                resetTemplateForm();
+              }}
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              onClick={() => {
+                // Handle create template logic here
+                setShowTemplateForm(false);
+                resetTemplateForm();
+              }}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Thêm mẫu số
             </Button>
           </DialogFooter>
         </DialogContent>
