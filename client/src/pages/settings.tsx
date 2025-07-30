@@ -993,10 +993,10 @@ export default function Settings() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="flex flex-wrap justify-center gap-1 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2 min-h-[60px]">
+          <TabsList className="flex flex-wrap justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-3 min-h-[70px]">
             <TabsTrigger 
               value="store" 
-              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
+              className="flex items-center gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap min-w-[80px] justify-center"
             >
               <Store className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t("settings.storeInfo")}</span>
@@ -1004,7 +1004,7 @@ export default function Settings() {
             </TabsTrigger>
             <TabsTrigger 
               value="customers" 
-              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
+              className="flex items-center gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap min-w-[90px] justify-center"
             >
               <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t("customers.title")}</span>
@@ -1012,7 +1012,7 @@ export default function Settings() {
             </TabsTrigger>
             <TabsTrigger 
               value="categories" 
-              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
+              className="flex items-center gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap min-w-[90px] justify-center"
             >
               <Package className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t("settings.categories")}</span>
@@ -1020,7 +1020,7 @@ export default function Settings() {
             </TabsTrigger>
             <TabsTrigger 
               value="employees" 
-              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
+              className="flex items-center gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap min-w-[85px] justify-center"
             >
               <Users className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t("settings.employees")}</span>
@@ -1028,7 +1028,7 @@ export default function Settings() {
             </TabsTrigger>
             <TabsTrigger 
               value="payments" 
-              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
+              className="flex items-center gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap min-w-[90px] justify-center"
             >
               <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
               <span className="hidden sm:inline">{t("settings.paymentMethods")}</span>
