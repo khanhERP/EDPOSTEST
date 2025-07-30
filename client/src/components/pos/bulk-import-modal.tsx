@@ -31,6 +31,7 @@ interface ProductRow {
   stock: number;
   categoryId: number;
   imageUrl?: string;
+  taxRate?: string;
 }
 
 export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
@@ -163,6 +164,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
             stock: parseInt(row[3]?.toString()) || 0,
             categoryId: parseInt(row[4]?.toString()) || 0,
             imageUrl: row[5]?.toString().trim() || "",
+            taxRate: row[6]?.toString().trim() || "8.00",
           };
 
           // Validate data
@@ -179,6 +181,9 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
           }
           if (product.categoryId <= 0) {
             newErrors.push(`Dòng ${rowNumber}: Category ID không hợp lệ`);
+          }
+          if (product.taxRate && (isNaN(parseFloat(product.taxRate)) || parseFloat(product.taxRate) < 0 || parseFloat(product.taxRate) > 100)) {
+            newErrors.push(`Dòng ${rowNumber}: Phần trăm thuế không hợp lệ (0-100)`);
           }
 
           // Check for duplicate SKU within the imported data
@@ -236,9 +241,10 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
         "Số lượng",
         "Category ID",
         "Hình ảnh (URL)",
+        "% Thuế",
       ],
-      ["Cà phê đen", "COFFEE-001", "25000", "100", "1", ""],
-      ["Bánh mì", "FOOD-001", "15000", "50", "2", ""],
+      ["Cà phê đen", "COFFEE-001", "25000", "100", "1", "", "8.00"],
+      ["Bánh mì", "FOOD-001", "15000", "50", "2", "", "8.00"],
     ];
 
     const ws = XLSX.utils.aoa_to_sheet(template);
@@ -256,6 +262,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
         "Số lượng",
         "Category ID",
         "Hình ảnh (URL)",
+        "% Thuế",
         "Lỗi chi tiết",
       ],
     ];
@@ -269,6 +276,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
           result.data.stock || "",
           result.data.categoryId || "",
           result.data.imageUrl || "",
+          result.data.taxRate || "",
           result.error || "Lỗi không xác định",
         ]);
       }
@@ -284,6 +292,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
       { wch: 10 }, // Số lượng
       { wch: 12 }, // Category ID
       { wch: 30 }, // Hình ảnh URL
+      { wch: 10 }, // % Thuế
       { wch: 40 }, // Lỗi chi tiết
     ];
     ws["!cols"] = colWidths;
@@ -404,6 +413,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
                       <th className="text-left py-2 px-3">Giá</th>
                       <th className="text-left py-2 px-3">Số lượng</th>
                       <th className="text-left py-2 px-3">Category ID</th>
+                      <th className="text-left py-2 px-3">% Thuế</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white">
@@ -419,6 +429,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
                         </td>
                         <td className="py-2 px-3">{product.stock}</td>
                         <td className="py-2 px-3">{product.categoryId}</td>
+                        <td className="py-2 px-3">{product.taxRate || "8.00"}%</td>
                       </tr>
                     ))}
                   </tbody>
