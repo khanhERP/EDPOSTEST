@@ -43,21 +43,63 @@ export function SalesChannelReport() {
   });
 
   // Sales channel sales data query
-  const { data: salesChannelSalesData } = useQuery({
+  const { data: salesChannelSalesData, isLoading: salesLoading } = useQuery({
     queryKey: ["/api/sales-channel-sales", startDate, endDate, selectedSeller, selectedSalesChannel],
-    staleTime: 1 * 60 * 1000,
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        startDate,
+        endDate,
+        ...(selectedSeller !== "all" && { sellerId: selectedSeller }),
+        ...(selectedSalesChannel !== "all" && { salesChannel: selectedSalesChannel }),
+      });
+      const response = await fetch(`/api/sales-channel-sales?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch sales channel sales data');
+      }
+      return response.json();
+    },
+    staleTime: 2 * 60 * 1000,
   });
 
   // Sales channel profit data query
-  const { data: salesChannelProfitData } = useQuery({
+  const { data: salesChannelProfitData, isLoading: profitLoading } = useQuery({
     queryKey: ["/api/sales-channel-profit", startDate, endDate, selectedSeller, selectedSalesChannel],
-    staleTime: 1 * 60 * 1000,
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        startDate,
+        endDate,
+        ...(selectedSeller !== "all" && { sellerId: selectedSeller }),
+        ...(selectedSalesChannel !== "all" && { salesChannel: selectedSalesChannel }),
+      });
+      const response = await fetch(`/api/sales-channel-profit?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch sales channel profit data');
+      }
+      return response.json();
+    },
+    staleTime: 2 * 60 * 1000,
   });
 
   // Sales channel products data query
-  const { data: salesChannelProductsData } = useQuery({
+  const { data: salesChannelProductsData, isLoading: productsLoading } = useQuery({
     queryKey: ["/api/sales-channel-products", startDate, endDate, selectedSeller, selectedSalesChannel, productSearch, productType, selectedCategory],
-    staleTime: 1 * 60 * 1000,
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        startDate,
+        endDate,
+        ...(selectedSeller !== "all" && { sellerId: selectedSeller }),
+        ...(selectedSalesChannel !== "all" && { salesChannel: selectedSalesChannel }),
+        ...(productSearch && { search: productSearch }),
+        ...(productType !== "all" && { productType }),
+        ...(selectedCategory !== "all" && { categoryId: selectedCategory }),
+      });
+      const response = await fetch(`/api/sales-channel-products?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch sales channel products data');
+      }
+      return response.json();
+    },
+    staleTime: 2 * 60 * 1000,
   });
 
   const formatCurrency = (amount: number) => {
@@ -107,6 +149,14 @@ export function SalesChannelReport() {
   };
 
   const renderSalesTable = () => {
+    if (salesLoading) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}</div>
+        </div>
+      );
+    }
+
     return (
       <div className="overflow-x-auto">
         <Table>
@@ -151,6 +201,14 @@ export function SalesChannelReport() {
   };
 
   const renderProfitTable = () => {
+    if (profitLoading) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}</div>
+        </div>
+      );
+    }
+
     return (
       <div className="overflow-x-auto">
         <Table>
@@ -209,6 +267,14 @@ export function SalesChannelReport() {
   };
 
   const renderProductsTable = () => {
+    if (productsLoading) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}</div>
+        </div>
+      );
+    }
+
     return (
       <div className="overflow-x-auto">
         <Table>
