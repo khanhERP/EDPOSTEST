@@ -993,68 +993,76 @@ export default function Settings() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-1">
+          <TabsList className="flex flex-wrap justify-center gap-1 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2 min-h-[60px]">
             <TabsTrigger 
               value="store" 
-              className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
             >
-              <Store className="w-4 h-4" />
-              {t("settings.storeInfo")}
+              <Store className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">{t("settings.storeInfo")}</span>
+              <span className="sm:hidden">Cửa hàng</span>
             </TabsTrigger>
             <TabsTrigger 
               value="customers" 
-              className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
             >
-              <UserCheck className="w-4 h-4" />
-              {t("customers.title")}
+              <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">{t("customers.title")}</span>
+              <span className="sm:hidden">Khách hàng</span>
             </TabsTrigger>
             <TabsTrigger 
               value="categories" 
-              className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
             >
-              <Package className="w-4 h-4" />
-              {t("settings.categories")}
+              <Package className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">{t("settings.categories")}</span>
+              <span className="sm:hidden">Sản phẩm</span>
             </TabsTrigger>
             <TabsTrigger 
               value="employees" 
-              className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
             >
-              <Users className="w-4 h-4" />
-              {t("settings.employees")}
+              <Users className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">{t("settings.employees")}</span>
+              <span className="sm:hidden">Nhân viên</span>
             </TabsTrigger>
             <TabsTrigger 
               value="payments" 
-              className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+              className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
             >
-              <CreditCard className="w-5 h-5" />
-              {t("settings.paymentMethods")}
+              <CreditCard className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+              <span className="hidden sm:inline">{t("settings.paymentMethods")}</span>
+              <span className="sm:hidden">Thanh toán</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Store Information Tab */}
           <TabsContent value="store">
             <Tabs defaultValue="basic" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-1">
+              <TabsList className="flex flex-wrap justify-center gap-1 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2">
                 <TabsTrigger 
                   value="basic" 
-                  className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+                  className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
                 >
-                  <Store className="w-4 h-4" />
-                  Thông tin cơ bản
+                  <Store className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Thông tin cơ bản</span>
+                  <span className="sm:hidden">Cơ bản</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="einvoice" 
-                  className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+                  className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
                 >
-                  <SettingsIcon className="w-4 h-4" />
-                  Thiết lập HĐĐT
+                  <SettingsIcon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Thiết lập HĐĐT</span>
+                  <span className="sm:hidden">HĐĐT</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="operations" 
-                  className="flex items-center gap-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+                  className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
                 >
-                  <Clock className="w-4 h-4" />
-                  Hoạt động
+                  <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Hoạt động</span>
+                  <span className="sm:hidden">Hoạt động</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -1209,18 +1217,20 @@ export default function Settings() {
                     <div className="space-y-6">
                       {/* Sub tabs for E-invoice */}
                       <Tabs defaultValue="connections" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-1">
+                        <TabsList className="flex flex-wrap justify-center gap-1 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2">
                           <TabsTrigger 
                             value="connections"
-                            className="data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+                            className="text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
                           >
-                            Kênh kết nối HĐĐT
+                            <span className="hidden sm:inline">Kênh kết nối HĐĐT</span>
+                            <span className="sm:hidden">Kết nối</span>
                           </TabsTrigger>
                           <TabsTrigger 
                             value="settings"
-                            className="data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium"
+                            className="text-xs sm:text-sm px-2 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap"
                           >
-                            Mẫu số HĐĐT
+                            <span className="hidden sm:inline">Mẫu số HĐĐT</span>
+                            <span className="sm:hidden">Mẫu số</span>
                           </TabsTrigger>
                         </TabsList>
 
