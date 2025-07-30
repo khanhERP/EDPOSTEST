@@ -22,7 +22,7 @@ import { initializeSampleData, db } from "./db";
 import { z } from "zod";
 import { eq, desc, asc, and, or, like, count, sum, gte, lt, lte } from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { orders, orderItems, products, categories } from "@shared/schema";
+import { orders, orderItems, products, categories, transactions as transactionsTable, transactionItems as transactionItemsTable } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise {
   // Initialize sample data
@@ -1539,73 +1539,108 @@ export async function registerRoutes(app: Express): Promise {
         return res.status(400).json({ error: "Start date and end date are required" });
       }
 
-      // Convert dates to proper format for SQLite
+      // Convert dates to proper format
       const startDateTime = new Date(startDate as string);
       const endDateTime = new Date(endDate as string);
       endDateTime.setHours(23, 59, 59, 999);
 
-      let whereConditions = [
-        `datetime(t.createdAt) >= datetime('${startDateTime.toISOString()}')`,
-        `datetime(t.createdAt) <= datetime('${endDateTime.toISOString()}')`
-      ];
+      // Get all transactions first
+      const allTransactions = await storage.getTransactions();
+      
+      // Filter transactions by date
+      const filteredTransactions = allTransactions.filter((transaction: any) => {
+        const transactionDate = new Date(transaction.createdAt);
+        return transactionDate >= startDateTime && transactionDate <= endDateTime;
+      });
 
-      // Add search filter
-      if (search) {
-        whereConditions.push(`(p.name LIKE '%${search}%' OR p.sku LIKE '%${search}%')`);
-      }
-
-      // Add category filter
-      if (categoryId && categoryId !== 'all') {
-        whereConditions.push(`p.categoryId = ${categoryId}`);
-      }
-
-      // Add product type filter
-      if (productType && productType !== 'all') {
-        whereConditions.push(`p.productType = '${productType}'`);
-      }
-
-      const query = `
-        SELECT 
-          ti.productId,
-          p.name as productName,
-          p.sku as productCode,
-          p.categoryId,
-          c.name as categoryName,
-          ti.quantity,
-          ti.unitPrice,
-          ti.totalPrice,
-          t.createdAt as transactionDate
-        FROM transaction_items ti
-        INNER JOIN products p ON ti.productId = p.id
-        INNER JOIN transactions t ON ti.transactionId = t.id
-        LEFT JOIN categories c ON p.categoryId = c.id
-        WHERE ${whereConditions.join(' AND ')}
-      `;
-
-      const transactionItems = await new Promise((resolve, reject) => {
-        db.all(query, [], (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
+      // Get all transaction items for filtered transactions
+      const transactionIds = filteredTransactions.map((t: any) => t.id);
+      if (transactionIds.length === 0) {
+        return res.json({
+          totalRevenue: 0,
+          totalQuantity: 0,
+          categoryStats: [],
+          productStats: [],
+          topSellingProducts: [],
+          topRevenueProducts: []
         });
-      }) as any[];
+      }
 
-      // Calculate category stats
-      const categoryMap = new Map();
-      const productMap = new Map();
+      // Get transaction items using Drizzle
+      const transactionItems = await db
+        .select({
+          productId: transactionItemsTable.productId,
+          quantity: transactionItemsTable.quantity,
+          unitPrice: transactionItemsTable.unitPrice,
+          totalPrice: transactionItemsTable.totalPrice,
+          transactionId: transactionItemsTable.transactionId
+        })
+        .from(transactionItemsTable)
+        .where(sql`${transactionItemsTable.transactionId} IN (${transactionIds.join(',')})`);
+
+      // Get all products and categories for reference
+      const allProducts = await storage.getAllProducts(true);
+      const allCategories = await storage.getCategories();
+
+      // Create lookup maps
+      const productMap = new Map(allProducts.map(p => [p.id, p]));
+      const categoryMap = new Map(allCategories.map(c => [c.id, c]));
+
+      // Apply filters
+      let filteredItems = transactionItems.filter((item: any) => {
+        const product = productMap.get(item.productId);
+        if (!product) return false;
+
+        // Search filter
+        if (search && search !== 'all') {
+          const searchTerm = search.toLowerCase();
+          if (!product.name.toLowerCase().includes(searchTerm) && 
+              !product.sku.toLowerCase().includes(searchTerm)) {
+            return false;
+          }
+        }
+
+        // Category filter
+        if (categoryId && categoryId !== 'all') {
+          if (product.categoryId !== parseInt(categoryId as string)) {
+            return false;
+          }
+        }
+
+        // Product type filter
+        if (productType && productType !== 'all') {
+          if (product.productType?.toString() !== productType) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      // Calculate statistics
+      const categoryStatsMap = new Map();
+      const productStatsMap = new Map();
       let totalRevenue = 0;
       let totalQuantity = 0;
 
-      for (const item of transactionItems) {
-        totalRevenue += Number(item.totalPrice);
-        totalQuantity += Number(item.quantity);
+      for (const item of filteredItems) {
+        const product = productMap.get(item.productId);
+        if (!product) continue;
+
+        const category = categoryMap.get(product.categoryId);
+        const revenue = Number(item.totalPrice);
+        const quantity = Number(item.quantity);
+
+        totalRevenue += revenue;
+        totalQuantity += quantity;
 
         // Category stats
-        const categoryKey = item.categoryId || 'uncategorized';
-        if (!categoryMap.has(categoryKey)) {
-          categoryMap.set(categoryKey, {
+        const categoryKey = product.categoryId || 'uncategorized';
+        if (!categoryStatsMap.has(categoryKey)) {
+          categoryStatsMap.set(categoryKey, {
             category: {
-              id: item.categoryId,
-              name: item.categoryName || 'Uncategorized'
+              id: product.categoryId,
+              name: category?.name || 'Uncategorized'
             },
             revenue: 0,
             quantity: 0,
@@ -1614,37 +1649,37 @@ export async function registerRoutes(app: Express): Promise {
           });
         }
 
-        const categoryData = categoryMap.get(categoryKey);
-        categoryData.revenue += Number(item.totalPrice);
-        categoryData.quantity += Number(item.quantity);
+        const categoryData = categoryStatsMap.get(categoryKey);
+        categoryData.revenue += revenue;
+        categoryData.quantity += quantity;
         categoryData.products.add(item.productId);
 
         // Product stats
         const productKey = item.productId;
-        if (!productMap.has(productKey)) {
-          productMap.set(productKey, {
+        if (!productStatsMap.has(productKey)) {
+          productStatsMap.set(productKey, {
             product: {
               id: item.productId,
-              name: item.productName,
-              code: item.productCode
+              name: product.name,
+              code: product.sku
             },
             quantity: 0,
             revenue: 0
           });
         }
 
-        const productData = productMap.get(productKey);
-        productData.quantity += Number(item.quantity);
-        productData.revenue += Number(item.totalPrice);
+        const productData = productStatsMap.get(productKey);
+        productData.quantity += quantity;
+        productData.revenue += revenue;
       }
 
       // Convert maps to arrays and add product counts
-      const categoryStats = Array.from(categoryMap.values()).map(cat => ({
+      const categoryStats = Array.from(categoryStatsMap.values()).map(cat => ({
         ...cat,
         productCount: cat.products.size
       }));
 
-      const productStats = Array.from(productMap.values());
+      const productStats = Array.from(productStatsMap.values());
 
       // Sort products by quantity and revenue
       const topSellingProducts = [...productStats].sort((a, b) => b.quantity - a.quantity);
