@@ -2140,89 +2140,94 @@ export default function Settings() {
                       </p>
                     </div>
                   ) : (
-                    <div className="rounded-md border">
-                      <div className="grid grid-cols-6 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                        <div>{t("employees.employeeId")}</div>
-                        <div>{t("employees.name")}</div>
-                        <div>{t("employees.role")}</div>
-                        <div>{t("employees.phone")}</div>
-                        <div>{t("employees.status")}</div>
-                        <div className="text-center">{t("common.actions")}</div>
-                      </div>
+                    <div className="overflow-x-auto">
+                      <div className="min-w-[800px] rounded-md border">
+                        <div className="grid grid-cols-6 gap-4 p-4 font-medium text-sm text-gray-600 bg-gray-50 border-b" style={{gridTemplateColumns: "120px 150px 120px 130px 100px 120px"}}>
+                          <div className="truncate">{t("employees.employeeId")}</div>
+                          <div className="truncate">{t("employees.name")}</div>
+                          <div className="truncate">{t("employees.role")}</div>
+                          <div className="truncate">{t("employees.phone")}</div>
+                          <div className="truncate">{t("employees.status")}</div>
+                          <div className="text-center truncate">{t("common.actions")}</div>
+                        </div>
 
-                      <div className="divide-y">
-                        {employeesData.map((employee: any) => (
-                          <div
-                            key={employee.id}
-                            className="grid grid-cols-6 gap-4 p-4 items-center"
-                          >
-                            <div className="font-mono text-sm">
-                              {employee.employeeId}
-                            </div>
-                            <div className="font-medium">{employee.name}</div>
-                            <div>
-                              <Badge
-                                variant={
-                                  employee.role === "admin"
-                                    ? "destructive"
+                        <div className="divide-y">
+                          {employeesData.map((employee: any) => (
+                            <div
+                              key={employee.id}
+                              className="grid grid-cols-6 gap-4 p-4 items-center"
+                              style={{gridTemplateColumns: "120px 150px 120px 130px 100px 120px"}}
+                            >
+                              <div className="font-mono text-sm truncate">
+                                {employee.employeeId}
+                              </div>
+                              <div className="font-medium truncate" title={employee.name}>
+                                {employee.name}
+                              </div>
+                              <div className="truncate">
+                                <Badge
+                                  variant={
+                                    employee.role === "admin"
+                                      ? "destructive"
+                                      : employee.role === "manager"
+                                        ? "default"
+                                        : "secondary"
+                                  }
+                                >
+                                  {employee.role === "admin"
+                                    ? t("employees.roles.admin")
                                     : employee.role === "manager"
-                                      ? "default"
-                                      : "secondary"
-                                }
-                              >
-                                {employee.role === "admin"
-                                  ? t("employees.roles.admin")
-                                  : employee.role === "manager"
-                                    ? t("employees.roles.manager")
-                                    : employee.role === "cashier"
-                                      ? t("employees.roles.cashier")
-                                      : employee.role}
-                              </Badge>
+                                      ? t("employees.roles.manager")
+                                      : employee.role === "cashier"
+                                        ? t("employees.roles.cashier")
+                                        : employee.role}
+                                </Badge>
+                              </div>
+                              <div className="text-sm text-gray-600 truncate">
+                                {employee.phone || "-"}
+                              </div>
+                              <div className="truncate">
+                                <Badge
+                                  variant={
+                                    employee.isActive ? "default" : "secondary"
+                                  }
+                                  className={
+                                    employee.isActive
+                                      ? "bg-green-100 text-green-800"
+                                      : ""
+                                  }
+                                >
+                                  {employee.isActive
+                                    ? t("employees.active")
+                                    : t("employees.inactive")}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center justify-center gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingEmployee(employee);
+                                    setShowEmployeeForm(true);
+                                  }}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-500 hover:text-red-700"
+                                  onClick={() => {
+                                    setEmployeeToDelete(employee);
+                                    setShowEmployeeDeleteDialog(true);
+                                  }}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
                             </div>
-                            <div className="text-sm text-gray-600">
-                              {employee.phone || "-"}
-                            </div>
-                            <div>
-                              <Badge
-                                variant={
-                                  employee.isActive ? "default" : "secondary"
-                                }
-                                className={
-                                  employee.isActive
-                                    ? "bg-green-100 text-green-800"
-                                    : ""
-                                }
-                              >
-                                {employee.isActive
-                                  ? t("employees.active")
-                                  : t("employees.inactive")}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center justify-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  setEditingEmployee(employee);
-                                  setShowEmployeeForm(true);
-                                }}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-500 hover:text-red-700"
-                                onClick={() => {
-                                  setEmployeeToDelete(employee);
-                                  setShowEmployeeDeleteDialog(true);
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
