@@ -134,17 +134,19 @@ export function EmployeeFormModal({
       });
     },
     onError: (error: any) => {
+      console.log("Error adding employee:", error);
       let errorMessage = t("employees.addEmployeeError");
-      
+
       if (error?.code === "DUPLICATE_EMAIL") {
-        errorMessage = "Email này đã được sử dụng bởi nhân viên khác. Vui lòng sử dụng email khác.";
+        errorMessage =
+          "Email này đã được sử dụng bởi nhân viên khác. Vui lòng sử dụng email khác.";
         // Set error on the email field
         form.setError("email", {
           type: "manual",
-          message: "Email đã tồn tại trong hệ thống"
+          message: "Email đã tồn tại trong hệ thống",
         });
       }
-      
+
       toast({
         title: t("common.error"),
         description: errorMessage,
@@ -176,16 +178,17 @@ export function EmployeeFormModal({
     },
     onError: (error: any) => {
       let errorMessage = t("employees.updateEmployeeError");
-      
+
       if (error?.code === "DUPLICATE_EMAIL") {
-        errorMessage = "Email này đã được sử dụng bởi nhân viên khác. Vui lòng sử dụng email khác.";
+        errorMessage =
+          "Email này đã được sử dụng bởi nhân viên khác. Vui lòng sử dụng email khác.";
         // Set error on the email field
         form.setError("email", {
           type: "manual",
-          message: "Email đã tồn tại trong hệ thống"
+          message: "Email đã tồn tại trong hệ thống",
         });
       }
-      
+
       toast({
         title: t("common.error"),
         description: errorMessage,
@@ -229,9 +232,9 @@ export function EmployeeFormModal({
                 <FormItem>
                   <FormLabel>{t("employees.employeeId")}</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="EMP001" 
-                      {...field} 
+                    <Input
+                      placeholder="EMP001"
+                      {...field}
                       readOnly={true}
                       className="bg-gray-100"
                     />
@@ -247,11 +250,12 @@ export function EmployeeFormModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {t("employees.name")} <span className="text-red-500">*</span>
+                    {t("employees.name")}{" "}
+                    <span className="text-red-500">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder={t("employees.namePlaceholder")} 
+                    <Input
+                      placeholder={t("employees.namePlaceholder")}
                       {...field}
                       required
                     />
