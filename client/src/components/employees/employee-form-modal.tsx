@@ -181,10 +181,9 @@ export function EmployeeFormModal({
     onError: (error: any) => {
       let errorMessage = t("employees.updateEmployeeError");
 
-      if (error?.code === "DUPLICATE_EMAIL") {
-        errorMessage =
-          "Email này đã được sử dụng bởi nhân viên khác. Vui lòng sử dụng email khác.";
-        // Set error on the email field
+      // Parse error similar to createMutation
+      if (error && typeof error === 'object' && error.code === "DUPLICATE_EMAIL") {
+        errorMessage = "Email đã được sử dụng.";
         form.setError("email", {
           type: "manual",
           message: "Email đã tồn tại trong hệ thống",
