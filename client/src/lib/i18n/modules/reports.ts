@@ -152,7 +152,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     reportGenerated: "보고서 생성됨",
     dataFrom: "데이터 기간",
     to: "~",
-    printOptions: "인쇄 옵션",
+    printOptions: "인쇄 옵",
 
     // Order report
     orderReport: "주문 보고서",
@@ -391,7 +391,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     yearlyFilter: "연도별",
     totalIncome: "총 수입",
     totalExpenses: "총 지출",
-    grossProfit: "총 이익",
     operatingExpenses: "운영비",
     netIncome: "순수익",
     profitMargin: "이익률",
@@ -820,7 +819,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     yearlyFilter: "Yearly",
     totalIncome: "Total Income",
     totalExpenses: "Total Expenses",
-    grossProfit: "Gross Profit",
     operatingExpenses: "Operating Expenses",
     netIncome: "Net Income",
     profitMargin: "Profit Margin",
@@ -1250,7 +1248,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     yearlyFilter: "Theo năm",
     totalIncome: "Tổng thu nhập",
     totalExpenses: "Tổng chi phí",
-    grossProfit: "Lợi nhuận gộp",
     operatingExpenses: "Chi phí hoạt động",
     netIncome: "Thu nhập ròng",
     profitMargin: "Tỷ suất lợi nhuận",
