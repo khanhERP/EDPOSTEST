@@ -161,6 +161,10 @@ export function SalesReport() {
         setStartDate(lastMonth.toISOString().split("T")[0]);
         setEndDate(lastMonthEnd.toISOString().split("T")[0]);
         break;
+      case "custom":
+        setStartDate(today.toISOString().split("T")[0]);
+        setEndDate(today.toISOString().split("T")[0]);
+        break;
     }
   };
 
