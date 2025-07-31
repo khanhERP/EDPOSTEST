@@ -1158,13 +1158,25 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           </DialogHeader>
 
           <div className="space-y-4 p-4">
-            {/* Order Summary */}
+            {/* Payment Amount Summary */}
             {selectedOrder && (
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600">Đơn hàng: {selectedOrder.orderNumber}</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                <p className="text-sm text-gray-500 mb-2">Số tiền cần thanh toán:</p>
+                <p className="text-3xl font-bold text-green-600">
+                  {mixedPaymentData ? 
+                    mixedPaymentData.remainingAmount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) :
+                    Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  } ₫
                 </p>
+                {mixedPaymentData && (
+                  <div className="mt-2 pt-2 border-t border-gray-300">
+                    <p className="text-xs text-blue-600">
+                      Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}P 
+                      (-{(mixedPaymentData.pointsToUse * 1000).toLocaleString()} ₫)
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
