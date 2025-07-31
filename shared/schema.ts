@@ -213,6 +213,7 @@ export const insertEmployeeSchema = createInsertSchema(employees)
   })
   .extend({
     name: z.string().min(1, "Tên nhân viên là bắt buộc"),
+    email: z.string().optional().or(z.literal("")),
     role: z.enum(["manager", "cashier", "admin"], {
       errorMap: () => ({ message: "Role must be manager, cashier, or admin" }),
     }),
