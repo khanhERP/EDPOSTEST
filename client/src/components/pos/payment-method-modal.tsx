@@ -101,9 +101,9 @@ export function PaymentMethodModal({
         
         const qrRequest: CreateQRPosRequest = {
           transactionUuid,
-          depositAmt: depositAmt.toString(),
-          posUniqueId: "POS003",
-          accntNo: "700033348984",
+          depositAmt: depositAmt,
+          posUniqueId: "ER002",
+          accntNo: "0900993023",
           posfranchiseeName: "DOOKI-HANOI",
           posCompanyName: "HYOJUNG",
           posBillNo: `BILL-${Date.now()}`
@@ -119,8 +119,18 @@ export function PaymentMethodModal({
         console.log('CreateQRPos API response:', qrResponse);
 
         // Generate QR code from the received QR data
-        if (qrResponse.qrDataDecode) {
-          const qrUrl = await QRCodeLib.toDataURL(qrResponse.qrDataDecode, {
+        if (qrResponse.qrData) {
+          // Decode base64 qrData to get the actual QR content
+          let qrContent = qrResponse.qrData;
+          try {
+            // Try to decode if it's base64 encoded
+            qrContent = atob(qrResponse.qrData);
+          } catch (e) {
+            // If decode fails, use the raw qrData
+            console.log('Using raw qrData as it is not base64 encoded');
+          }
+          
+          const qrUrl = await QRCodeLib.toDataURL(qrContent, {
             width: 256,
             margin: 2,
             color: {

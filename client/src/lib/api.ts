@@ -28,7 +28,7 @@ export interface LoginResponse {
 
 export interface CreateQRPosRequest {
   transactionUuid: string;
-  depositAmt: string;
+  depositAmt: number;
   posUniqueId: string;
   accntNo: string;
   posfranchiseeName: string;
