@@ -134,7 +134,6 @@ export function EmployeeFormModal({
       });
     },
     onError: (error: any) => {
-      console.log("Received error:", error);
       let errorMessage = t("employees.addEmployeeError");
       // Checking for the error in the expected format
       if (error instanceof Error && error.message) {
