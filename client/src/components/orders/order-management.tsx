@@ -31,6 +31,7 @@ export function OrderManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [mixedPaymentOpen, setMixedPaymentOpen] = useState(false);
   const [mixedPaymentData, setMixedPaymentData] = useState<any>(null);
+  const [qrLoading, setQrLoading] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -302,6 +303,7 @@ export function OrderManagement() {
     // For QR Code payment, use CreateQRPos API
     if (paymentMethodKey === "qrCode") {
       try {
+        setQrLoading(true);
         const { createQRPosAsync, CreateQRPosRequest } = await import("@/lib/api");
 
         const transactionUuid = `TXN-${Date.now()}`;
@@ -392,6 +394,8 @@ export function OrderManagement() {
             variant: 'destructive',
           });
         }
+      } finally {
+        setQrLoading(false);
       }
       return;
     }
@@ -879,12 +883,19 @@ export function OrderManagement() {
                 variant="outline"
                 className="justify-start h-auto p-4"
                 onClick={() => handlePayment(method.nameKey)}
-                disabled={completePaymentMutation.isPending}
+                disabled={completePaymentMutation.isPending || (qrLoading && method.nameKey === 'qrCode')}
               >
                 <span className="text-2xl mr-3">{method.icon}</span>
                 <div className="text-left">
-                  <p className="font-medium">{method.name}</p>
+                  <p className="font-medium">
+                    {qrLoading && method.nameKey === 'qrCode' ? 'Đang tạo QR...' : method.name}
+                  </p>
                 </div>
+                {qrLoading && method.nameKey === 'qrCode' && (
+                  <div className="ml-auto">
+                    <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                  </div>
+                )}
               </Button>
             ))}
           </div>
@@ -1160,6 +1171,7 @@ export function OrderManagement() {
                     onClick={async () => {
                       // Use CreateQRPos API for transfer payment like QR Code
                       try {
+                        setQrLoading(true);
                         const { createQRPosAsync } = await import("@/lib/api");
                         const { CreateQRPosRequest } = await import("@/lib/api");
 
@@ -1232,15 +1244,24 @@ export function OrderManagement() {
                           orderId: mixedPaymentData.orderId,
                           paymentMethod: 'transfer'
                         });
+                      } finally {
+                        setQrLoading(false);
                       }
                     }}
-                    disabled={mixedPaymentMutation.isPending}
+                    disabled={mixedPaymentMutation.isPending || qrLoading}
                   >
                     <span className="text-2xl mr-3">💳</span>
                     <div className="text-left">
-                      <p className="font-medium">Chuyển khoản</p>
+                      <p className="font-medium">
+                        {qrLoading ? 'Đang tạo QR...' : 'Chuyển khoản'}
+                      </p>
                       <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
                     </div>
+                    {qrLoading && (
+                      <div className="ml-auto">
+                        <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                      </div>
+                    )}
                   </Button>
                 </div>
               </div>

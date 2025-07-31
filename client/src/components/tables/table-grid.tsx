@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -40,6 +39,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [editingTable, setEditingTable] = useState<Table | null>(null);
   const [mixedPaymentOpen, setMixedPaymentOpen] = useState(false);
   const [mixedPaymentData, setMixedPaymentData] = useState<any>(null);
+  const [qrLoading, setQrLoading] = useState(false);
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
@@ -338,9 +338,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     // For QR Code payment, use CreateQRPos API
     if (paymentMethodKey === "qrCode") {
       try {
+        setQrLoading(true);
+        const { createQRPosAsync, CreateQRPosRequest } = await import("@/lib/api");
+
         const transactionUuid = `TXN-${Date.now()}`;
         const depositAmt = Number(selectedOrder.total);
-        
+
         const qrRequest: CreateQRPosRequest = {
           transactionUuid,
           depositAmt: depositAmt,
@@ -357,7 +360,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         console.log('Calling CreateQRPos API with:', { qrRequest, bankCode, clientID });
 
         const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
-        
+
         console.log('CreateQRPos API response:', qrResponse);
 
         // Generate QR code from the received QR data
@@ -371,7 +374,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             // If decode fails, use the raw qrData
             console.log('Using raw qrData as it is not base64 encoded');
           }
-          
+
           const qrUrl = await QRCodeLib.toDataURL(qrContent, {
             width: 256,
             margin: 2,
@@ -426,6 +429,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             variant: 'destructive',
           });
         }
+      } finally {
+        setQrLoading(false);
       }
       return;
     }
@@ -482,7 +487,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     setShowQRPayment(false);
     setQrCodeUrl("");
     setSelectedPaymentMethod(null);
-    
+
     // Check if this came from mixed payment modal
     if (mixedPaymentData) {
       setMixedPaymentOpen(true);
@@ -516,7 +521,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     const currentPoints = selectedCustomer.points || 0;
     const orderTotal = Number(selectedOrder.total);
     const pointsValue = currentPoints * 1000; // 1 điểm = 1000đ
-    
+
     if (pointsValue >= orderTotal) {
       // Đủ điểm để thanh toán toàn bộ
       const pointsNeeded = Math.ceil(orderTotal / 1000);
@@ -528,7 +533,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     } else if (currentPoints > 0) {
       // Không đủ điểm, thanh toán hỗn hợp
       const remainingAmount = orderTotal - pointsValue;
-      
+
       // Hiển thị dialog chọn phương thức thanh toán cho phần còn lại
       setMixedPaymentData({
         customerId: selectedCustomer.id,
@@ -853,7 +858,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                         const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
                                         const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
                                         const taxAmount = taxRate > 0 ? (Number(item.unitPrice || 0) * taxRate / 100 * item.quantity) : 0;
-                                        
+
                                         return taxAmount > 0 ? (
                                           <p className="text-xs text-orange-600">
                                             Thuế: {taxAmount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ ({taxRate}%)
@@ -1100,7 +1105,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     </p>
                   </div>
                 </div>
-                
+
                 {/* Payment calculation */}
                 <div className="pt-2 border-t border-green-200">
                   <div className="flex justify-between text-sm mb-1">
@@ -1120,7 +1125,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               </div>
             )}
 
-            
+
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
@@ -1275,16 +1280,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
                     </div>
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     className="justify-start h-auto p-4"
                     onClick={async () => {
                       // Use CreateQRPos API for transfer payment like QR Code
                       try {
+                        setQrLoading(true);
                         const transactionUuid = `TXN-TRANSFER-${Date.now()}`;
                         const depositAmt = Number(mixedPaymentData.remainingAmount);
-                        
+
                         const qrRequest: CreateQRPosRequest = {
                           transactionUuid,
                           depositAmt: depositAmt,
@@ -1301,7 +1307,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         console.log('Calling CreateQRPos API for transfer payment:', { qrRequest, bankCode, clientID });
 
                         const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
-                        
+
                         console.log('CreateQRPos API response for transfer:', qrResponse);
 
                         // Generate QR code from the received QR data and show QR modal
@@ -1314,7 +1320,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             // If decode fails, use the raw qrData
                             console.log('Using raw qrData for transfer as it is not base64 encoded');
                           }
-                          
+
                           const qrUrl = await QRCodeLib.toDataURL(qrContent, {
                             width: 256,
                             margin: 2,
@@ -1323,7 +1329,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                               light: '#FFFFFF'
                             }
                           });
-                          
+
                           // Set QR code data and show QR payment modal
                           setQrCodeUrl(qrUrl);
                           setSelectedPaymentMethod({ 
@@ -1351,9 +1357,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           orderId: mixedPaymentData.orderId,
                           paymentMethod: 'transfer'
                         });
+                      } finally {
+                        setQrLoading(false);
                       }
                     }}
-                    disabled={mixedPaymentMutation.isPending}
+                    disabled={mixedPaymentMutation.isPending || qrLoading}
                   >
                     <span className="text-2xl mr-3">💳</span>
                     <div className="text-left">

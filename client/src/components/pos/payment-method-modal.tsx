@@ -30,6 +30,7 @@ export function PaymentMethodModal({
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [showEInvoice, setShowEInvoice] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+  const [qrLoading, setQrLoading] = useState(false);
 
   // Load payment methods from settings
   const getPaymentMethods = () => {
@@ -96,6 +97,7 @@ export function PaymentMethodModal({
     if (method === "qrCode") {
       // Call CreateQRPos API for QR payment
       try {
+        setQrLoading(true);
         const transactionUuid = `TXN-${Date.now()}`;
         const depositAmt = total;
         
@@ -173,10 +175,13 @@ export function PaymentMethodModal({
         } catch (fallbackError) {
           console.error('Error generating fallback QR code:', fallbackError);
         }
+      } finally {
+        setQrLoading(false);
       }
     } else if (method === "vnpay") {
       // Generate QR code for VNPay
       try {
+        setQrLoading(true);
         const qrData = `Payment via ${method}\nAmount: ${total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nTime: ${new Date().toLocaleString('vi-VN')}`;
         const qrUrl = await QRCodeLib.toDataURL(qrData, {
           width: 256,
@@ -190,6 +195,8 @@ export function PaymentMethodModal({
         setShowQRCode(true);
       } catch (error) {
         console.error('Error generating QR code:', error);
+      } finally {
+        setQrLoading(false);
       }
     } else {
       // Show E-invoice modal for other payment methods
@@ -232,6 +239,7 @@ export function PaymentMethodModal({
       setQrCodeUrl("");
       setShowEInvoice(false);
       setSelectedPaymentMethod("");
+      setQrLoading(false);
     }
   }, [isOpen]);
 
@@ -255,18 +263,29 @@ export function PaymentMethodModal({
               <div className="grid gap-3">
                 {paymentMethods.map((method) => {
                   const IconComponent = method.icon;
+                  const isQRMethod = method.id === 'qrCode' || method.id === 'vnpay';
+                  const isLoading = qrLoading && isQRMethod;
+                  
                   return (
                     <Button
                       key={method.id}
                       variant="outline"
                       className="flex items-center justify-start p-4 h-auto"
                       onClick={() => handleSelect(method.id)}
+                      disabled={isLoading}
                     >
                       <IconComponent className="mr-3" size={24} />
-                      <div className="text-left">
-                        <div className="font-medium">{method.name}</div>
+                      <div className="text-left flex-1">
+                        <div className="font-medium">
+                          {isLoading ? 'Đang tạo QR...' : method.name}
+                        </div>
                         <div className="text-sm text-gray-500">{method.description}</div>
                       </div>
+                      {isLoading && (
+                        <div className="ml-auto">
+                          <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                        </div>
+                      )}
                     </Button>
                   );
                 })}
