@@ -1324,11 +1324,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
             <TabsContent value="store">
               <Tabs defaultValue="basic" className="space-y-6">
                 <TabsList
-                  className="flex overflow-x-auto justify-start md:justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2 scrollbar-hide"
-                  style={{
-                    scrollbarWidth: "none",
-                    msOverflowStyle: "none",
-                  }}
+                  className="flex justify-start md:justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2 py-4"
                 >
                   <TabsTrigger
                     value="basic"
