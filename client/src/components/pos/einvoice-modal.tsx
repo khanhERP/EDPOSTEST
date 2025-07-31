@@ -106,7 +106,7 @@ export function EInvoiceModal({
       const publishRequest = {
         Login: {
           ProviderId: providerId,
-          url: connectionInfo.loginUrl || "https://infoerpvn.com:9442",
+          url: connectionInfo.loginUrl || "https://infoerpvn.com:9440",
           ma_dvcs: connectionInfo.taxCode,
           username: connectionInfo.loginId,
           password: connectionInfo.password,
