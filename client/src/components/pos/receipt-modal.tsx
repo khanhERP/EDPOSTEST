@@ -44,7 +44,7 @@ export function ReceiptModal({
       if (printWindow) {
         printWindow.document.write("<html><head><title>Receipt</title>");
         printWindow.document.write(
-          "<style>body { font-family: monospace; font-size: 12px; margin: 0; padding: 10px; } .text-center { text-align: center; } .text-right { text-align: right; } .border-t { border-top: 1px solid #000; } .border-b { border-bottom: 1px solid #000; } .py-2 { padding: 4px 0; } .mb-4 { margin-bottom: 8px; } .mb-2 { margin-bottom: 4px; } .mt-4 { margin-top: 8px; } .mt-2 { margin-top: 4px; } .space-y-1 > * + * { margin-top: 2px; } .flex { display: flex; } .justify-between { justify-content: space-between; } .text-sm { font-size: 11px; } .text-xs { font-size: 10px; } .font-bold { font-weight: bold; }</style>",
+          "<style>body { font-family: monospace; font-size: 11px; margin: 0; padding: 2px; line-height: 1.1; } .text-center { text-align: center; } .text-right { text-align: right; } .border-t { border-top: 1px solid #000; } .border-b { border-bottom: 1px solid #000; } .py-2 { padding: 2px 0; } .mb-4 { margin-bottom: 2px; } .mb-2 { margin-bottom: 1px; } .mt-4 { margin-top: 3px; } .mt-2 { margin-top: 1px; } .space-y-1 > * + * { margin-top: 1px; } .flex { display: flex; } .justify-between { justify-content: space-between; } .text-sm { font-size: 10px; } .text-xs { font-size: 9px; } .font-bold { font-weight: bold; } p { margin: 0 !important; } div { margin: 0 !important; }</style>",
         );
         printWindow.document.write("</head><body>");
         printWindow.document.write(printContent.innerHTML);
@@ -71,90 +71,87 @@ export function ReceiptModal({
 
         <div
           id="receipt-content"
-          className="px-6 pb-6 receipt-print bg-white"
-          style={{ padding: "10px 0" }}
+          className="receipt-print bg-white"
+          style={{ padding: "5px", margin: 0, fontSize: "11px", lineHeight: "1.1" }}
         >
-          <div className="text-center mb-2">
-            <p className="text-xs font-semibold mb-0.5">
+          <div className="text-center" style={{ marginBottom: "3px" }}>
+            <p style={{ margin: "0", fontSize: "11px", fontWeight: "bold" }}>
               {storeSettings?.storeName || "Easy Digital Point Of Sale Service"}
             </p>
-            <p className="text-xs">Main Store Location</p>
-            <p className="text-xs">
+            <p style={{ margin: "0", fontSize: "10px" }}>Main Store Location</p>
+            <p style={{ margin: "0", fontSize: "10px" }}>
               {storeSettings?.address || "123 Commerce St, City, State 12345"}
             </p>
-            <p className="text-xs mb-1">
+            <p style={{ margin: "0 0 2px 0", fontSize: "10px" }}>
               Phone: {storeSettings?.phone || "(555) 123-4567"}
             </p>
-            <div className="flex items-center justify-center">
-              <img src={logoPath} alt="EDPOS Logo" className="h-6" />
-            </div>
           </div>
 
-          <div className="border-t border-b border-gray-300 py-2 mb-2">
-            <div className="flex justify-between text-sm">
+          <div style={{ borderTop: "1px solid #000", borderBottom: "1px solid #000", padding: "2px 0", margin: "2px 0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", margin: "0" }}>
               <span>Transaction #:</span>
               <span>{receipt.transactionId}</span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", margin: "0" }}>
               <span>Date:</span>
               <span>{new Date(receipt.createdAt).toLocaleString()}</span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", margin: "0" }}>
               <span>Cashier:</span>
               <span>{receipt.cashierName}</span>
             </div>
           </div>
 
-          <div className="space-y-1 mb-2">
+          <div style={{ margin: "2px 0" }}>
             {receipt.items.map((item) => (
-              <div key={item.id}>
-                <div className="flex justify-between text-sm">
-                  <div className="flex-1">
-                    <div>{item.productName}</div>
-                    <div className="text-xs text-gray-600">
+              <div key={item.id} style={{ margin: "1px 0" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px" }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ margin: "0" }}>{item.productName}</div>
+                    <div style={{ fontSize: "9px", color: "#666", margin: "0" }}>
                       {item.quantity} x {item.price} ₫
                     </div>
                   </div>
-                  <div>{item.total} ₫</div>
+                  <div style={{ margin: "0" }}>{item.total} ₫</div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="border-t border-gray-300 pt-2 space-y-1">
-            <div className="flex justify-between text-sm">
+          <div style={{ borderTop: "1px solid #000", paddingTop: "2px", margin: "2px 0 0 0" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", margin: "0" }}>
               <span>Subtotal:</span>
               <span>{receipt.subtotal} ₫</span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", margin: "0" }}>
               <span>Tax (8.25%):</span>
               <span>{receipt.tax} ₫</span>
             </div>
-            <div className="flex justify-between font-bold">
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "11px", fontWeight: "bold", margin: "0" }}>
               <span>Total:</span>
               <span>{receipt.total} ₫</span>
             </div>
-            <div className="flex justify-between text-sm mt-2">
+            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", margin: "1px 0 0 0" }}>
               <span>Payment Method:</span>
-              <span className="capitalize">{receipt.paymentMethod}</span>
+              <span style={{ textTransform: "capitalize" }}>{receipt.paymentMethod}</span>
             </div>
             {receipt.amountReceived && (
-              <div className="flex justify-between text-sm">
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", margin: "0" }}>
                 <span>Amount Received:</span>
                 <span>{receipt.amountReceived} ₫</span>
               </div>
             )}
             {receipt.change && parseFloat(receipt.change) > 0 && (
-              <div className="flex justify-between text-sm">
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "10px", margin: "0" }}>
                 <span>Change:</span>
                 <span>{receipt.change} ₫</span>
               </div>
             )}
           </div>
 
-          <div className="text-center mt-4 text-xs text-gray-600">
-            <p>Thank you for your business!</p>
-            <p>Please keep this receipt for your records</p>
+          <div style={{ textAlign: "center", marginTop: "3px", fontSize: "9px", color: "#666" }}>
+            <p style={{ margin: "0" }}>Thank you for your business!</p>
+            <p style={{ margin: "0" }}>Please keep this receipt for your records</p>
           </div>
         </div>
 
