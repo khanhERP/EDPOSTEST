@@ -1,10 +1,29 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Utensils, Clock, Users, TrendingUp } from "lucide-react";
 import type { Order, Table as TableType } from "@shared/schema";
@@ -12,21 +31,21 @@ import { useTranslation } from "@/lib/i18n";
 
 export function TableReport() {
   const { t } = useTranslation();
-  
+
   const [dateRange, setDateRange] = useState("week");
   const [startDate, setStartDate] = useState<string>(
-    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    new Date().toISOString().split("T")[0],
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
+    new Date().toISOString().split("T")[0],
   );
 
   const { data: orders = [] } = useQuery({
-    queryKey: ['/api/orders'],
+    queryKey: ["/api/orders"],
   });
 
   const { data: tables = [] } = useQuery({
-    queryKey: ['/api/tables'],
+    queryKey: ["/api/tables"],
   });
 
   const getTableData = () => {
@@ -37,20 +56,22 @@ export function TableReport() {
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
-      
-      return orderDate >= start && orderDate <= end && order.status === 'paid';
+
+      return orderDate >= start && orderDate <= end && order.status === "paid";
     });
 
     // Table performance analysis
-    const tableStats: { [tableId: number]: {
-      table: TableType;
-      orderCount: number;
-      revenue: number;
-      customerCount: number;
-      averageOrderValue: number;
-      turnoverRate: number;
-      peakHours: { [hour: number]: number };
-    } } = {};
+    const tableStats: {
+      [tableId: number]: {
+        table: TableType;
+        orderCount: number;
+        revenue: number;
+        customerCount: number;
+        averageOrderValue: number;
+        turnoverRate: number;
+        peakHours: { [hour: number]: number };
+      };
+    } = {};
 
     // Initialize stats for all tables
     (tables as TableType[]).forEach((table: TableType) => {
@@ -72,7 +93,7 @@ export function TableReport() {
         stats.orderCount += 1;
         stats.revenue += Number(order.total);
         stats.customerCount += order.customerCount || 0;
-        
+
         // Track peak hours
         const hour = new Date(order.orderedAt).getHours();
         stats.peakHours[hour] = (stats.peakHours[hour] || 0) + 1;
@@ -80,28 +101,51 @@ export function TableReport() {
     });
 
     // Calculate derived metrics
-    Object.values(tableStats).forEach(stats => {
+    Object.values(tableStats).forEach((stats) => {
       if (stats.orderCount > 0) {
         stats.averageOrderValue = stats.revenue / stats.orderCount;
         // Calculate turnover rate (orders per day over the period)
-        const days = Math.max(1, Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)));
+        const days = Math.max(
+          1,
+          Math.ceil(
+            (new Date(endDate).getTime() - new Date(startDate).getTime()) /
+              (1000 * 60 * 60 * 24),
+          ),
+        );
         stats.turnoverRate = stats.orderCount / days;
       }
     });
 
     // Sort tables by different metrics
     const tableList = Object.values(tableStats);
-    const topRevenueTables = [...tableList].sort((a, b) => b.revenue - a.revenue);
-    const topTurnoverTables = [...tableList].sort((a, b) => b.turnoverRate - a.turnoverRate);
-    const topUtilizationTables = [...tableList].sort((a, b) => b.orderCount - a.orderCount);
+    const topRevenueTables = [...tableList].sort(
+      (a, b) => b.revenue - a.revenue,
+    );
+    const topTurnoverTables = [...tableList].sort(
+      (a, b) => b.turnoverRate - a.turnoverRate,
+    );
+    const topUtilizationTables = [...tableList].sort(
+      (a, b) => b.orderCount - a.orderCount,
+    );
 
     // Overall stats
-    const totalRevenue = tableList.reduce((sum, stats) => sum + stats.revenue, 0);
-    const totalOrders = tableList.reduce((sum, stats) => sum + stats.orderCount, 0);
-    const totalCustomers = tableList.reduce((sum, stats) => sum + stats.customerCount, 0);
-    const averageUtilization = tableList.length > 0 
-      ? tableList.reduce((sum, stats) => sum + stats.orderCount, 0) / tableList.length 
-      : 0;
+    const totalRevenue = tableList.reduce(
+      (sum, stats) => sum + stats.revenue,
+      0,
+    );
+    const totalOrders = tableList.reduce(
+      (sum, stats) => sum + stats.orderCount,
+      0,
+    );
+    const totalCustomers = tableList.reduce(
+      (sum, stats) => sum + stats.customerCount,
+      0,
+    );
+    const averageUtilization =
+      tableList.length > 0
+        ? tableList.reduce((sum, stats) => sum + stats.orderCount, 0) /
+          tableList.length
+        : 0;
 
     return {
       tableStats: tableList,
@@ -118,20 +162,24 @@ export function TableReport() {
   const handleDateRangeChange = (range: string) => {
     setDateRange(range);
     const today = new Date();
-    
+
     switch (range) {
       case "today":
-        setStartDate(today.toISOString().split('T')[0]);
-        setEndDate(today.toISOString().split('T')[0]);
+        setStartDate(today.toISOString().split("T")[0]);
+        setEndDate(today.toISOString().split("T")[0]);
         break;
       case "week":
-        setStartDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
-        setEndDate(today.toISOString().split('T')[0]);
+        setStartDate(
+          new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0],
+        );
+        setEndDate(today.toISOString().split("T")[0]);
         break;
       case "month":
         const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-        setStartDate(monthStart.toISOString().split('T')[0]);
-        setEndDate(today.toISOString().split('T')[0]);
+        setStartDate(monthStart.toISOString().split("T")[0]);
+        setEndDate(today.toISOString().split("T")[0]);
         break;
     }
   };
@@ -143,20 +191,29 @@ export function TableReport() {
   const getTableStatusBadge = (status: string) => {
     const statusConfig = {
       available: { label: t("common.available"), variant: "default" as const },
-      occupied: { label: t("common.occupied"), variant: "destructive" as const },
+      occupied: {
+        label: t("common.occupied"),
+        variant: "destructive" as const,
+      },
       reserved: { label: t("common.reserved"), variant: "secondary" as const },
-      maintenance: { label: t("common.maintenance"), variant: "outline" as const },
+      maintenance: {
+        label: t("common.maintenance"),
+        variant: "outline" as const,
+      },
     };
-    
-    return statusConfig[status as keyof typeof statusConfig] || statusConfig.available;
+
+    return (
+      statusConfig[status as keyof typeof statusConfig] ||
+      statusConfig.available
+    );
   };
 
   const getPeakHour = (peakHours: { [hour: number]: number }) => {
     const hours = Object.keys(peakHours);
     if (hours.length === 0) return null;
-    
-    const peak = hours.reduce((max, hour) => 
-      peakHours[parseInt(hour)] > peakHours[parseInt(max)] ? hour : max
+
+    const peak = hours.reduce((max, hour) =>
+      peakHours[parseInt(hour)] > peakHours[parseInt(max)] ? hour : max,
     );
     return parseInt(peak);
   };
@@ -192,11 +249,13 @@ export function TableReport() {
                 <SelectContent>
                   <SelectItem value="today">{t("reports.toDay")}</SelectItem>
                   <SelectItem value="week">{t("reports.lastWeek")}</SelectItem>
-                  <SelectItem value="month">{t("reports.lastMonth")}</SelectItem>
+                  <SelectItem value="month">
+                    {t("reports.lastMonth")}
+                  </SelectItem>
                   <SelectItem value="custom">{t("reports.custom")}</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               {dateRange === "custom" && (
                 <>
                   <div className="flex items-center gap-2">
@@ -230,11 +289,15 @@ export function TableReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{t("reports.averageUtilization")}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.averageUtilization")}
+                </p>
                 <p className="text-2xl font-bold">
                   {tableData.averageUtilization.toFixed(1)} {t("reports.times")}
                 </p>
-                <p className="text-xs text-gray-500">{t("reports.averageOrdersPerTable")}</p>
+                <p className="text-xs text-gray-500">
+                  {t("reports.averageOrdersPerTable")}
+                </p>
               </div>
               <TrendingUp className="w-8 h-8 text-blue-500" />
             </div>
@@ -245,9 +308,13 @@ export function TableReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{t("reports.totalOrders")}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.totalOrders")}
+                </p>
                 <p className="text-2xl font-bold">{tableData.totalOrders}</p>
-                <p className="text-xs text-gray-500">{t("reports.allTables")}</p>
+                <p className="text-xs text-gray-500">
+                  {t("reports.allTables")}
+                </p>
               </div>
               <Clock className="w-8 h-8 text-green-500" />
             </div>
@@ -258,9 +325,13 @@ export function TableReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{t("reports.totalCustomers")}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.totalCustomers")}
+                </p>
                 <p className="text-2xl font-bold">{tableData.totalCustomers}</p>
-                <p className="text-xs text-gray-500">{t("reports.cumulativeVisitors")}</p>
+                <p className="text-xs text-gray-500">
+                  {t("reports.cumulativeVisitors")}
+                </p>
               </div>
               <Users className="w-8 h-8 text-purple-500" />
             </div>
@@ -271,11 +342,15 @@ export function TableReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{t("reports.totalRevenue")}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.totalRevenue")}
+                </p>
                 <p className="text-2xl font-bold text-green-600">
                   {formatCurrency(tableData.totalRevenue)}
                 </p>
-                <p className="text-xs text-gray-500">{t("reports.totalByTable")}</p>
+                <p className="text-xs text-gray-500">
+                  {t("reports.totalByTable")}
+                </p>
               </div>
               <Utensils className="w-8 h-8 text-green-500" />
             </div>
@@ -287,7 +362,9 @@ export function TableReport() {
       <Card>
         <CardHeader>
           <CardTitle>{t("reports.detailedTablePerformance")}</CardTitle>
-          <CardDescription>{t("reports.detailedTablePerformanceDesc")}</CardDescription>
+          <CardDescription>
+            {t("reports.detailedTablePerformanceDesc")}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -309,14 +386,18 @@ export function TableReport() {
                 .map((stats) => {
                   const statusConfig = getTableStatusBadge(stats.table.status);
                   const peakHour = getPeakHour(stats.peakHours);
-                  
+
                   return (
                     <TableRow key={stats.table.id}>
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
-                          <div className={`w-3 h-3 rounded-full ${
-                            stats.table.status === 'occupied' ? 'bg-red-500' : 'bg-green-500'
-                          }`}></div>
+                          <div
+                            className={`w-3 h-3 rounded-full ${
+                              stats.table.status === "occupied"
+                                ? "bg-red-500"
+                                : "bg-green-500"
+                            }`}
+                          ></div>
                           {stats.table.tableNumber}
                           <span className="text-xs text-gray-500">
                             ({stats.table.capacity} {t("common.people")})
@@ -328,21 +409,34 @@ export function TableReport() {
                           {statusConfig.label}
                         </Badge>
                       </TableCell>
-                      <TableCell>{stats.orderCount} {t("common.count")}</TableCell>
+                      <TableCell>
+                        {stats.orderCount} {t("common.count")}
+                      </TableCell>
                       <TableCell className="font-semibold">
                         {formatCurrency(stats.revenue)}
                       </TableCell>
-                      <TableCell>{stats.customerCount} {t("common.people")}</TableCell>
                       <TableCell>
-                        {stats.orderCount > 0 ? formatCurrency(stats.averageOrderValue) : '-'}
+                        {stats.customerCount} {t("common.people")}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={stats.turnoverRate > 1 ? "default" : "outline"}>
-                          {stats.turnoverRate.toFixed(1)} {t("reports.timesPerDay")}
+                        {stats.orderCount > 0
+                          ? formatCurrency(stats.averageOrderValue)
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            stats.turnoverRate > 1 ? "default" : "outline"
+                          }
+                        >
+                          {stats.turnoverRate.toFixed(1)}{" "}
+                          {t("reports.timesPerDay")}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {peakHour !== null ? `${peakHour} ${t("reports.hour")}` : '-'}
+                        {peakHour !== null
+                          ? `${peakHour} ${t("reports.hour")}`
+                          : "-"}
                       </TableCell>
                     </TableRow>
                   );
@@ -363,19 +457,29 @@ export function TableReport() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {tableData.topRevenueTables.slice(0, 5).map((stats: any, index: number) => (
-                <div key={stats.table.id} className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={index < 3 ? "default" : "outline"} className="text-xs">
-                      {index + 1}
-                    </Badge>
-                    <span className="font-medium">{stats.table.tableNumber}</span>
+              {tableData.topRevenueTables
+                .slice(0, 5)
+                .map((stats: any, index: number) => (
+                  <div
+                    key={stats.table.id}
+                    className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={index < 3 ? "default" : "outline"}
+                        className="text-xs"
+                      >
+                        {index + 1}
+                      </Badge>
+                      <span className="font-medium">
+                        {stats.table.tableNumber}
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold text-green-600">
+                      {formatCurrency(stats.revenue)}
+                    </span>
                   </div>
-                  <span className="text-sm font-semibold text-green-600">
-                    {formatCurrency(stats.revenue)}
-                  </span>
-                </div>
-              ))}
+                ))}
             </div>
           </CardContent>
         </Card>
@@ -390,19 +494,29 @@ export function TableReport() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {tableData.topTurnoverTables.slice(0, 5).map((stats: any, index: number) => (
-                <div key={stats.table.id} className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={index < 3 ? "default" : "outline"} className="text-xs">
-                      {index + 1}
-                    </Badge>
-                    <span className="font-medium">{stats.table.tableNumber}</span>
+              {tableData.topTurnoverTables
+                .slice(0, 5)
+                .map((stats: any, index: number) => (
+                  <div
+                    key={stats.table.id}
+                    className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={index < 3 ? "default" : "outline"}
+                        className="text-xs"
+                      >
+                        {index + 1}
+                      </Badge>
+                      <span className="font-medium">
+                        {stats.table.tableNumber}
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold">
+                      {stats.turnoverRate.toFixed(1)} {t("reports.timesPerDay")}
+                    </span>
                   </div>
-                  <span className="text-sm font-semibold">
-                    {stats.turnoverRate.toFixed(1)} {t("reports.timesPerDay")}
-                  </span>
-                </div>
-              ))}
+                ))}
             </div>
           </CardContent>
         </Card>
@@ -417,19 +531,29 @@ export function TableReport() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {tableData.topUtilizationTables.slice(0, 5).map((stats: any, index: number) => (
-                <div key={stats.table.id} className="flex justify-between items-center p-2 rounded-lg bg-gray-50">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={index < 3 ? "default" : "outline"} className="text-xs">
-                      {index + 1}
-                    </Badge>
-                    <span className="font-medium">{stats.table.tableNumber}</span>
+              {tableData.topUtilizationTables
+                .slice(0, 5)
+                .map((stats: any, index: number) => (
+                  <div
+                    key={stats.table.id}
+                    className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={index < 3 ? "default" : "outline"}
+                        className="text-xs"
+                      >
+                        {index + 1}
+                      </Badge>
+                      <span className="font-medium">
+                        {stats.table.tableNumber}
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold">
+                      {stats.orderCount} {t("common.count")}
+                    </span>
                   </div>
-                  <span className="text-sm font-semibold">
-                    {stats.orderCount} {t("common.count")}
-                  </span>
-                </div>
-              ))}
+                ))}
             </div>
           </CardContent>
         </Card>

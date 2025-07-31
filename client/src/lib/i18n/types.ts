@@ -101,6 +101,8 @@ export interface ReportsTranslations {
   activeOrders: string;
   occupiedTables: string;
   monthlyRevenue: string;
+  uniqueProducts: string;
+  credit_card: string;
 
   // Sales analysis
   analyzeRevenue: string;

@@ -1,4 +1,3 @@
-
 import type { ReportsTranslations } from "../types";
 
 export const reportsTranslations: { [key: string]: ReportsTranslations } = {
@@ -82,7 +81,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     period: "기간",
     thisMonth: "이번 달",
     noData: "데이터가 없습니다",
-    noDataDescription: "선택한 기간에 대한 데이터가 없습니다. 다른 기간을 선택해보세요.",
+    noDataDescription:
+      "선택한 기간에 대한 데이터가 없습니다. 다른 기간을 선택해보세요.",
     loading: "데이터 불러오는 중...",
 
     // Additional dashboard keys
@@ -96,7 +96,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesAchievementRate: "매출 달성률",
     peakHour: "피크 시간",
     tableTurnoverRate: "테이블 회전율",
-    targetAverageDailySales: "목표 일평균 매출 {amount}, 목표 회전 {turnovers}회",
+    targetAverageDailySales:
+      "목표 일평균 매출 {amount}, 목표 회전 {turnovers}회",
 
     // Category performance
     topSellingProducts: "인기 상품 (판매량 기준)",
@@ -399,7 +400,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     expenseBreakdown: "지출 분석",
     financialSummary: "재무 요약",
     quarter1: "1분기",
-    quarter2: "2분기", 
+    quarter2: "2분기",
     quarter3: "3분기",
     quarter4: "4분기",
     cashFlow: "현금 흐름",
@@ -423,6 +424,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     filters: "필터",
     applyFilters: "필터 적용",
     resetFilters: "필터 초기화",
+    uniqueProducts: "고유 상품",
+    credit_card: "신용카드",
   },
   en: {
     title: "Reports",
@@ -476,7 +479,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cumulativeVisitors: "Cumulative Visitors",
     totalByTable: "Total by Table",
     detailedTablePerformance: "Detailed Table Performance",
-    detailedTablePerformanceDesc: "Check detailed operational metrics for each table",
+    detailedTablePerformanceDesc:
+      "Check detailed operational metrics for each table",
     currentStatus: "Current Status",
     orderCount: "Order Count",
     peakTime: "Peak Time",
@@ -503,7 +507,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     period: "Period",
     thisMonth: "This Month",
     noData: "No data available",
-    noDataDescription: "No data available for the selected period. Please try a different date range.",
+    noDataDescription:
+      "No data available for the selected period. Please try a different date range.",
     loading: "Loading data...",
     noPaymentData: "There is no payment data.",
 
@@ -518,7 +523,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesAchievementRate: "Sales Achievement Rate",
     peakHour: "Peak Hour",
     tableTurnoverRate: "Table Turnover Rate",
-    targetAverageDailySales: "Target avg. daily sales {amount}, Target turnover {turnovers} times",
+    targetAverageDailySales:
+      "Target avg. daily sales {amount}, Target turnover {turnovers} times",
 
     // Category performance
     topSellingProducts: "Top Selling Products (by Quantity)",
@@ -661,7 +667,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     supplierPurchaseReportTitle: "Purchase Report by Supplier",
     supplierDebtChart: "Debt Chart by Supplier",
     supplierDebtReportTitle: "Debt Report by Supplier",
-    supplierProductPurchaseReportTitle: "Product Purchase List Report by Supplier",
+    supplierProductPurchaseReportTitle:
+      "Product Purchase List Report by Supplier",
     supplierOverviewChart: "Supplier Overview Chart (Purchase & Debt)",
 
     // Supplier table headers
@@ -805,10 +812,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Financial report
     financialReport: "Financial Report",
     financialReportTab: "Financial Report",
-    financialReportDescription: "Profitability and financial performance analysis",
+    financialReportDescription:
+      "Profitability and financial performance analysis",
     periodFilter: "Period Filter",
     monthlyFilter: "Monthly",
-    quarterlyFilter: "Quarterly", 
+    quarterlyFilter: "Quarterly",
     yearlyFilter: "Yearly",
     totalIncome: "Total Income",
     totalExpenses: "Total Expenses",
@@ -822,7 +830,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     financialSummary: "Financial Summary",
     quarter1: "Q1",
     quarter2: "Q2",
-    quarter3: "Q3", 
+    quarter3: "Q3",
     quarter4: "Q4",
     cashFlow: "Cash Flow",
     operatingCashFlow: "Operating Cash Flow",
@@ -845,6 +853,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     filters: "Filters",
     applyFilters: "Apply Filters",
     resetFilters: "Reset Filters",
+    uniqueProducts: "Unique Products",
+    credit_card: "Credit Card",
   },
   vi: {
     title: "Báo cáo",
@@ -885,6 +895,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customers: "Khách hàng",
     cash: "Tiền mặt",
     card: "Thẻ",
+    credit_card: "Thẻ tín dụng",
 
     // Table analysis specific
     customerCount: "Số khách hàng",
@@ -892,13 +903,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     topRevenueTables: "Bàn doanh thu cao nhất",
     topTurnoverTables: "Bàn luân chuyển cao nhất",
     topUtilizationTables: "Bàn sử dụng cao nhất",
-    averageUtilization: "Tỷ lệ sử dụng trung bình", 
+    averageUtilization: "Tỷ lệ sử dụng trung bình",
     averageOrdersPerTable: "Số đơn hàng trung bình mỗi bàn",
     allTables: "Tất cả bàn",
     cumulativeVisitors: "Khách ghé thăm tích lũy",
     totalByTable: "Tổng theo bàn",
     detailedTablePerformance: "Hiệu suất chi tiết theo bàn",
-    detailedTablePerformanceDesc: "Kiểm tra các chỉ số hoạt động chi tiết cho từng bàn",
+    detailedTablePerformanceDesc:
+      "Kiểm tra các chỉ số hoạt động chi tiết cho từng bàn",
     currentStatus: "Trạng thái hiện tại",
     orderCount: "Số đơn hàng",
     peakTime: "Giờ cao điểm",
@@ -925,7 +937,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     period: "Kỳ",
     thisMonth: "Tháng này",
     noData: "Không có dữ liệu",
-    noDataDescription: "Không có dữ liệu cho khoảng thời gian đã chọn. Vui lòng thử khoảng thời gian khác.",
+    noDataDescription:
+      "Không có dữ liệu cho khoảng thời gian đã chọn. Vui lòng thử khoảng thời gian khác.",
     loading: "Đang tải dữ liệu...",
     noPaymentData: "Không có dữ liệu thanh toán.",
 
@@ -940,7 +953,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesAchievementRate: "Tỷ lệ đạt doanh thu",
     peakHour: "Giờ cao điểm",
     tableTurnoverRate: "Tỷ lệ luân chuyển bàn",
-    targetAverageDailySales: "Mục tiêu doanh thu trung bình hàng ngày {amount}, Mục tiêu luân chuyển {turnovers} lần",
+    targetAverageDailySales:
+      "Mục tiêu doanh thu trung bình hàng ngày {amount}, Mục tiêu luân chuyển {turnovers} lần",
 
     // Category performance
     topSellingProducts: "Sản phẩm bán chạy nhất (theo số lượng)",
@@ -1078,12 +1092,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Supplier report tables
     supplierPurchaseReport: "Báo cáo nhập hàng theo nhà cung cấp",
     supplierDebtReport: "Báo cáo công nợ theo nhà cung cấp",
-    supplierProductPurchaseReport: "Báo cáo danh sách hàng nhập theo nhà cung cấp",
+    supplierProductPurchaseReport:
+      "Báo cáo danh sách hàng nhập theo nhà cung cấp",
     supplierPurchaseChart: "Biểu đồ nhập hàng nhà cung cấp",
     supplierPurchaseReportTitle: "Báo cáo nhập hàng theo nhà cung cấp",
     supplierDebtChart: "Biểu đồ công nợ nhà cung cấp",
     supplierDebtReportTitle: "Báo cáo công nợ theo nhà cung cấp",
-    supplierProductPurchaseReportTitle: "Báo cáo danh sách hàng nhập theo nhà cung cấp",
+    supplierProductPurchaseReportTitle:
+      "Báo cáo danh sách hàng nhập theo nhà cung cấp",
     supplierOverviewChart: "Biểu đồ tổng quan nhà cung cấp",
 
     // Supplier table headers
@@ -1234,7 +1250,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     yearlyFilter: "Theo năm",
     totalIncome: "Tổng thu nhập",
     totalExpenses: "Tổng chi phí",
-    grossProfit: "Lợi nhuận gộp", 
+    grossProfit: "Lợi nhuận gộp",
     operatingExpenses: "Chi phí hoạt động",
     netIncome: "Thu nhập ròng",
     profitMargin: "Tỷ suất lợi nhuận",
@@ -1267,5 +1283,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     filters: "Bộ lọc",
     applyFilters: "Áp dụng bộ lọc",
     resetFilters: "Đặt lại bộ lọc",
+    uniqueProducts: "Sản phẩm duy nhất",
   },
 };
