@@ -68,24 +68,42 @@ export function EmployeeFormModal({
   const form = useForm<InsertEmployee>({
     resolver: zodResolver(insertEmployeeSchema),
     defaultValues: {
-      employeeId: employee?.employeeId || "",
-      name: employee?.name || "",
-      email: employee?.email || "",
-      phone: employee?.phone || null,
-      role: employee?.role || "cashier",
-      isActive: employee?.isActive ?? true,
-      hireDate: employee?.hireDate ? new Date(employee.hireDate) : new Date(),
+      employeeId: "",
+      name: "",
+      email: "",
+      phone: null,
+      role: "cashier",
+      isActive: true,
+      hireDate: new Date(),
     },
   });
 
-  // Set employee ID for new employees
+  // Set employee ID for new employees or populate form for edit
   React.useEffect(() => {
     if (mode === "create" && !employee?.employeeId) {
       generateEmployeeId().then((nextId) => {
-        form.setValue("employeeId", nextId);
+        form.reset({
+          employeeId: nextId,
+          name: "",
+          email: "",
+          phone: null,
+          role: "cashier",
+          isActive: true,
+          hireDate: new Date(),
+        });
+      });
+    } else if (mode === "edit" && employee) {
+      form.reset({
+        employeeId: employee.employeeId,
+        name: employee.name,
+        email: employee.email || "",
+        phone: employee.phone || null,
+        role: employee.role,
+        isActive: employee.isActive ?? true,
+        hireDate: employee.hireDate ? new Date(employee.hireDate) : new Date(),
       });
     }
-  }, [mode, employee?.employeeId]);
+  }, [mode, employee, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertEmployee) => {
