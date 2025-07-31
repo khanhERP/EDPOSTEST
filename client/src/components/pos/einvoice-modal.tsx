@@ -179,7 +179,7 @@ export function EInvoiceModal({
       console.log("Publishing invoice with data:", publishRequest);
 
       // Call the API
-      const response = await fetch("https://infoerpvn.com:9442/api/invoice/publish", {
+      const response = await fetch("https://infoerpvn.com:9440/api/invoice/publish", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
