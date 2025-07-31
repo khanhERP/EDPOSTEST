@@ -302,8 +302,7 @@ export function OrderManagement() {
     // For QR Code payment, use CreateQRPos API
     if (paymentMethodKey === "qrCode") {
       try {
-        const { createQRPosAsync } = await import("@/lib/api");
-        const { CreateQRPosRequest } = await import("@/lib/api");
+        const { createQRPosAsync, type CreateQRPosRequest } = await import("@/lib/api");
         
         const transactionUuid = `TXN-${Date.now()}`;
         const depositAmt = Number(selectedOrder.total);
