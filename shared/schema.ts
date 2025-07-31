@@ -99,6 +99,7 @@ export const storeSettings = pgTable("store_settings", {
   storeCode: text("store_code"),
   taxId: text("tax_id"),
   businessType: text("business_type").default("restaurant"),
+  pinCode: text("pin_code"),
   address: text("address"),
   phone: text("phone"),
   email: text("email"),
