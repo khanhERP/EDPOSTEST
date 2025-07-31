@@ -75,6 +75,19 @@ import { PointsManagementModal } from "@/components/customers/points-management-
 import { EmployeeFormModal } from "@/components/employees/employee-form-modal";
 import { Checkbox } from "@/components/ui/checkbox";
 
+// E-invoice software providers mapping
+const EINVOICE_PROVIDERS = [
+  { name: "EasyInvoice", value: "1" },
+  { name: "VnInvoice", value: "2" },
+  { name: "FptInvoice", value: "3" },
+  { name: "MifiInvoice", value: "4" },
+  { name: "EHoaDon", value: "5" },
+  { name: "BkavInvoice", value: "6" },
+  { name: "MInvoice", value: "7" },
+  { name: "SInvoice", value: "8" },
+  { name: "WinInvoice", value: "9" }
+];
+
 export default function Settings() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -3548,15 +3561,11 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                     <SelectValue placeholder="Chọn phần mềm HĐĐT" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="MINVOICE">MINVOICE</SelectItem>
-                    <SelectItem value="SINVOICE">SINVOICE</SelectItem>
-                    <SelectItem value="VNPT-INVOICE">VNPT-INVOICE</SelectItem>
-                    <SelectItem value="VIETTEL-SINVOICE">
-                      VIETTEL-SINVOICE
-                    </SelectItem>
-                    <SelectItem value="MISA-MEinvoice">
-                      MISA-MEinvoice
-                    </SelectItem>
+                    {EINVOICE_PROVIDERS.map((provider) => (
+                      <SelectItem key={provider.value} value={provider.name}>
+                        {provider.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {eInvoiceFormErrors.softwareName && (
