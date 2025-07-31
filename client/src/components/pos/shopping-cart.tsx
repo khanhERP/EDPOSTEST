@@ -15,6 +15,11 @@ interface ShoppingCartProps {
   onClearCart: () => void;
   onCheckout: (paymentData: any) => void;
   isProcessing: boolean;
+  orders?: Array<{ id: string; name: string; cart: CartItem[]; }>;
+  activeOrderId?: string;
+  onCreateNewOrder?: () => void;
+  onSwitchOrder?: (orderId: string) => void;
+  onRemoveOrder?: (orderId: string) => void;
 }
 
 export function ShoppingCart({
@@ -23,7 +28,12 @@ export function ShoppingCart({
   onRemoveItem,
   onClearCart,
   onCheckout,
-  isProcessing
+  isProcessing,
+  orders = [],
+  activeOrderId,
+  onCreateNewOrder,
+  onSwitchOrder,
+  onRemoveOrder
 }: ShoppingCartProps) {
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
   const [amountReceived, setAmountReceived] = useState<string>("");
@@ -116,7 +126,51 @@ export function ShoppingCart({
   return (
     <aside className="w-96 bg-white shadow-material border-l pos-border flex flex-col">
       <div className="p-4 border-b pos-border">
-        <h2 className="text-xl pos-text-primary font-semibold pt-[0px] pb-[0px] mt-[10px] mb-[10px]">{t('pos.purchaseHistory')}</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl pos-text-primary font-semibold">{t('pos.purchaseHistory')}</h2>
+          {onCreateNewOrder && (
+            <Button
+              onClick={onCreateNewOrder}
+              size="sm"
+              variant="outline"
+              className="text-xs px-2 py-1"
+            >
+              + Đơn mới
+            </Button>
+          )}
+        </div>
+
+        {/* Order Tabs */}
+        {orders.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3 max-h-20 overflow-y-auto">
+            {orders.map((order) => (
+              <div
+                key={order.id}
+                className={`flex items-center px-2 py-1 rounded text-xs cursor-pointer transition-colors ${
+                  activeOrderId === order.id
+                    ? "bg-blue-100 text-blue-800 border border-blue-300"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+                onClick={() => onSwitchOrder?.(order.id)}
+              >
+                <span className="truncate max-w-16">{order.name}</span>
+                <span className="ml-1 text-xs">({order.cart.length})</span>
+                {orders.length > 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveOrder?.(order.id);
+                    }}
+                    className="ml-1 text-red-500 hover:text-red-700"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-sm pos-text-secondary">
           <span>{cart.length} {t('common.items')}</span>
           {cart.length > 0 && (

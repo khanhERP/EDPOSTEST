@@ -3,11 +3,20 @@ import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import type { CartItem, Receipt } from "@shared/schema";
+import { v4 as uuidv4 } from 'uuid';
+
+interface Order {
+  id: string;
+  cart: CartItem[];
+}
 
 export function usePOS() {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [orders, setOrders] = useState<Order[]>([{ id: uuidv4(), cart: [] }]);
+  const [activeOrderId, setActiveOrderId] = useState<string>(orders[0].id);
   const [lastReceipt, setLastReceipt] = useState<Receipt | null>(null);
   const { toast } = useToast();
+
+  const cart = orders.find(order => order.id === activeOrderId)?.cart || [];
 
   const checkoutMutation = useMutation({
     mutationFn: async ({ paymentData }: { paymentData: any }) => {
@@ -51,7 +60,7 @@ export function usePOS() {
     },
     onSuccess: (receipt) => {
       setLastReceipt(receipt);
-      setCart([]);
+      updateActiveOrderCart([]);
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
         title: "Transaction Complete",
@@ -67,68 +76,85 @@ export function usePOS() {
     },
   });
 
-  const addToCart = async (productId: number) => {
-    try {
-      const response = await fetch(`/api/products/${productId}`);
-      if (!response.ok) throw new Error("Product not found");
-      
-      const product = await response.json();
-      
-      if (product.stock <= 0) {
+  const updateActiveOrderCart = (newCart: CartItem[]) => {
+    setOrders(prevOrders =>
+      prevOrders.map(order =>
+        order.id === activeOrderId ? { ...order, cart: newCart } : order
+      )
+    );
+  };
+
+
+  const createNewOrder = () => {
+    const newOrderId = uuidv4();
+    setOrders([...orders, { id: newOrderId, cart: [] }]);
+    setActiveOrderId(newOrderId);
+  };
+
+  const switchOrder = (orderId: string) => {
+    setActiveOrderId(orderId);
+  };
+
+  const removeOrder = (orderId: string) => {
+    if (orders.length <= 1) {
+      toast({
+        title: "Cannot remove",
+        description: "Must have at least one order.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
+    setActiveOrderId(orders[0].id);
+  };
+
+  const addToCart = (product: any) => {
+    const currentCart = orders.find(order => order.id === activeOrderId)?.cart || [];
+    const existingItem = currentCart.find(item => item.id === product.id);
+
+    let newCart;
+    if (existingItem) {
+      if (existingItem.quantity >= product.stock) {
         toast({
-          title: "Out of Stock",
-          description: `${product.name} is currently out of stock`,
+          title: "Không thể thêm",
+          description: "Đã đạt số lượng tối đa trong kho",
           variant: "destructive",
         });
         return;
       }
-
-      setCart(currentCart => {
-        const existingItem = currentCart.find(item => item.id === productId);
-        
-        if (existingItem) {
-          if (existingItem.quantity >= product.stock) {
-            toast({
-              title: "Stock Limit Reached",
-              description: `Cannot add more ${product.name}. Only ${product.stock} available.`,
-              variant: "destructive",
-            });
-            return currentCart;
-          }
-          
-          const newQuantity = existingItem.quantity + 1;
-          const newTotal = (parseFloat(product.price) * newQuantity).toFixed(2);
-          
-          return currentCart.map(item =>
-            item.id === productId
-              ? { ...item, quantity: newQuantity, total: newTotal }
-              : item
-          );
-        } else {
-          const newItem: CartItem = {
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            quantity: 1,
-            total: product.price,
-            imageUrl: product.imageUrl,
-            stock: product.stock,
-            taxRate: product.taxRate,
-          };
-          return [...currentCart, newItem];
-        }
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add product to cart",
-        variant: "destructive",
-      });
+      newCart = currentCart.map(item =>
+        item.id === product.id
+          ? {
+              ...item,
+              quantity: item.quantity + 1,
+              total: (parseFloat(item.price) * (item.quantity + 1)).toFixed(2)
+            }
+          : item
+      );
+    } else {
+      newCart = [...currentCart, {
+        id: product.id,
+        name: product.name,
+        price: product.price.toString(),
+        quantity: 1,
+        total: product.price.toString(),
+        stock: product.stock,
+        taxRate: product.taxRate || "0"
+      }];
     }
+
+    updateActiveOrderCart(newCart);
+    toast({
+      title: "Đã thêm vào giỏ",
+      description: `${product.name} đã được thêm vào đơn hàng`,
+    });
   };
 
   const removeFromCart = (productId: number) => {
-    setCart(currentCart => currentCart.filter(item => item.id !== productId));
+    const currentCart = orders.find(order => order.id === activeOrderId)?.cart || [];
+    const newCart = currentCart.filter(item => item.id !== productId);
+    updateActiveOrderCart(newCart);
   };
 
   const updateQuantity = (productId: number, newQuantity: number) => {
@@ -137,28 +163,21 @@ export function usePOS() {
       return;
     }
 
-    setCart(currentCart =>
-      currentCart.map(item => {
-        if (item.id === productId) {
-          if (newQuantity > item.stock) {
-            toast({
-              title: "Stock Limit Reached",
-              description: `Cannot set quantity to ${newQuantity}. Only ${item.stock} available.`,
-              variant: "destructive",
-            });
-            return item;
+    const currentCart = orders.find(order => order.id === activeOrderId)?.cart || [];
+    const newCart = currentCart.map(item =>
+      item.id === productId
+        ? {
+            ...item,
+            quantity: newQuantity,
+            total: (parseFloat(item.price) * newQuantity).toFixed(2)
           }
-          
-          const newTotal = (parseFloat(item.price) * newQuantity).toFixed(2);
-          return { ...item, quantity: newQuantity, total: newTotal };
-        }
-        return item;
-      })
+        : item
     );
+    updateActiveOrderCart(newCart);
   };
 
   const clearCart = () => {
-    setCart([]);
+    updateActiveOrderCart([]);
   };
 
   const processCheckout = async (paymentData: any): Promise<Receipt | null> => {
@@ -181,12 +200,17 @@ export function usePOS() {
 
   return {
     cart,
+    orders,
+    activeOrderId,
     addToCart,
     removeFromCart,
     updateQuantity,
     clearCart,
+    createNewOrder,
+    switchOrder,
+    removeOrder,
     lastReceipt,
     isProcessingCheckout: checkoutMutation.isPending,
-    processCheckout,
+    processCheckout
   };
 }

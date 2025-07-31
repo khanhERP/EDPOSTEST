@@ -16,10 +16,15 @@ export default function POSPage() {
 
   const {
     cart,
+    orders,
+    activeOrderId,
     addToCart,
     removeFromCart,
     updateQuantity,
     clearCart,
+    createNewOrder,
+    switchOrder,
+    removeOrder,
     lastReceipt,
     isProcessingCheckout,
     processCheckout
@@ -66,6 +71,11 @@ export default function POSPage() {
           onClearCart={clearCart}
           onCheckout={handleCheckout}
           isProcessing={isProcessingCheckout}
+          orders={orders}
+          activeOrderId={activeOrderId}
+          onCreateNewOrder={createNewOrder}
+          onSwitchOrder={switchOrder}
+          onRemoveOrder={removeOrder}
         />
       </div>
 
