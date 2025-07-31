@@ -1458,12 +1458,19 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                             id="pinCode"
                             type="password"
                             value={storeSettings.pinCode}
-                            onChange={(e) =>
-                              handleStoreSettingChange("pinCode", e.target.value)
-                            }
-                            placeholder="Nhập mã PIN cho cửa hàng"
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, ''); // Chỉ cho phép số
+                              handleStoreSettingChange("pinCode", value);
+                            }}
+                            placeholder="Nhập mã PIN 4-6 chữ số"
                             maxLength={6}
+                            pattern="[0-9]*"
                           />
+                          {storeSettings.pinCode && storeSettings.pinCode.length < 4 && (
+                            <p className="text-sm text-orange-500">
+                              Mã PIN nên có ít nhất 4 chữ số
+                            </p>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
