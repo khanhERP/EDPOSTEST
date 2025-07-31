@@ -158,9 +158,9 @@ export function ReceiptModal({
           </div>
         </div>
 
-        <div className="flex space-x-3 p-4 border-t">
+        <div className="flex justify-center p-2 border-t">
           {isPreview ? (
-            <>
+            <div className="flex space-x-3 w-full">
               <Button onClick={onClose} variant="outline" className="flex-1">
                 Hủy
               </Button>
@@ -170,18 +170,18 @@ export function ReceiptModal({
               >
                 Xác nhận & Chọn thanh toán
               </Button>
-            </>
+            </div>
           ) : (
-            <>
+            <div className="flex justify-center">
               <Button
                 onClick={handlePrint}
                 className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
-                style={{ width: "80mm" }}
+                style={{ width: '80mm' }}
               >
                 <Printer className="mr-2" size={16} />
                 Print Receipt
               </Button>
-            </>
+            </div>
           )}
         </div>
       </DialogContent>
