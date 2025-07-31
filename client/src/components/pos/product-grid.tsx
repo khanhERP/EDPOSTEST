@@ -44,7 +44,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
   });
 
   const handleAddToCart = (product: Product) => {
-    if (product.stock <= 0) {
+    if (product.trackInventory !== false && product.stock <= 0) {
       toast({
         title: t('pos.outOfStock'),
         description: `${product.name} ${t('pos.currentlyOutOfStock')}`,
@@ -53,11 +53,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
       return;
     }
 
-    onAddToCart(product.id);
-    toast({
-      title: t('pos.addedToCart'),
-      description: `${product.name} ${t('pos.addedToCart')}`,
-    });
+    onAddToCart(product);
   };
 
   const getPlaceholderImage = (categoryId: number, productName: string) => {

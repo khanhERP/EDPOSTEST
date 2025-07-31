@@ -60,7 +60,7 @@ export default function POSPage() {
         <ProductGrid
           selectedCategory={selectedCategory}
           searchQuery={searchQuery}
-          onAddToCart={addToCart}
+          onAddToCart={(product) => addToCart(product)}
         />
 
         {/* Shopping Cart */}

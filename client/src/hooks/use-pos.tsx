@@ -105,17 +105,43 @@ export function usePOS() {
       return;
     }
 
-    setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
-    setActiveOrderId(orders[0].id);
+    const filteredOrders = orders.filter(order => order.id !== orderId);
+    setOrders(filteredOrders);
+    
+    // If removing active order, switch to first remaining order
+    if (orderId === activeOrderId) {
+      setActiveOrderId(filteredOrders[0].id);
+    }
   };
 
   const addToCart = (product: any) => {
-    const currentCart = orders.find(order => order.id === activeOrderId)?.cart || [];
+    // Ensure we have a valid active order
+    const activeOrder = orders.find(order => order.id === activeOrderId);
+    if (!activeOrder) {
+      toast({
+        title: "Lỗi",
+        description: "Không tìm thấy đơn hàng hiện tại",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const currentCart = activeOrder.cart || [];
     const existingItem = currentCart.find(item => item.id === product.id);
+
+    // Check if product has stock tracking enabled and if so, check stock
+    if (product.trackInventory !== false && product.stock <= 0) {
+      toast({
+        title: "Không thể thêm",
+        description: "Sản phẩm đã hết hàng",
+        variant: "destructive",
+      });
+      return;
+    }
 
     let newCart;
     if (existingItem) {
-      if (existingItem.quantity >= product.stock) {
+      if (product.trackInventory !== false && existingItem.quantity >= product.stock) {
         toast({
           title: "Không thể thêm",
           description: "Đã đạt số lượng tối đa trong kho",
@@ -136,9 +162,9 @@ export function usePOS() {
       newCart = [...currentCart, {
         id: product.id,
         name: product.name,
-        price: product.price.toString(),
+        price: parseFloat(product.price).toFixed(2),
         quantity: 1,
-        total: product.price.toString(),
+        total: parseFloat(product.price).toFixed(2),
         stock: product.stock,
         taxRate: product.taxRate || "0"
       }];
