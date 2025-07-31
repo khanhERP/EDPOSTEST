@@ -156,9 +156,10 @@ export function SalesReport() {
         setEndDate(today.toISOString().split("T")[0]);
         break;
       case "month":
-        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-        setStartDate(monthStart.toISOString().split("T")[0]);
-        setEndDate(today.toISOString().split("T")[0]);
+        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+        setStartDate(lastMonth.toISOString().split("T")[0]);
+        setEndDate(lastMonthEnd.toISOString().split("T")[0]);
         break;
     }
   };
