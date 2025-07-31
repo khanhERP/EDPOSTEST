@@ -110,7 +110,7 @@ export function RightSidebar() {
         <Button
           variant="ghost"
           size="sm"
-          className="mt-1"
+          className="w-full flex items-center justify-center mt-1"
           onClick={() => {
             if (isExpanded) {
               setIsNavCollapsed(true);
@@ -120,7 +120,6 @@ export function RightSidebar() {
               setIsNavCollapsed(false); // Auto show text when expanding
             }
           }}
-          className="w-full flex items-center justify-center"
         >
           {isExpanded ? (
             <>
