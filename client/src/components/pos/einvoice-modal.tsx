@@ -178,12 +178,11 @@ export function EInvoiceModal({
 
       console.log("Publishing invoice with data:", publishRequest);
 
-      // Call the API
-      const response = await fetch("https://infoerpvn.com:9440/api/invoice/publish", {
+      // Call the proxy API instead of direct external API
+      const response = await fetch("/api/einvoice/publish", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "token": "EnURbbnPhUm4GjNgE4Ogrw=="
+          "Content-Type": "application/json"
         },
         body: JSON.stringify(publishRequest)
       });
