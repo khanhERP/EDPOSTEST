@@ -1152,94 +1152,26 @@ export function OrderManagement() {
                       <p className="font-medium">Tiền mặt</p>
                       <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
                     </div>
-                  </Button>```python
+                  </Button>
 
-                        <Button
-                          onClick={async () => {
-                            // Use CreateQRPos API for transfer payment like QR Code
-                            try {
-                              const { createQRPosAsync } = await import("@/lib/api");
-                              const { CreateQRPosRequest } = await import("@/lib/api");
-
-                              const transactionUuid = `TXN-TRANSFER-${Date.now()}`;
-                              const depositAmt = Number(mixedPaymentData.remainingAmount);
-
-                              const qrRequest: CreateQRPosRequest = {
-                                transactionUuid,
-                                depositAmt: depositAmt,
-                                posUniqueId: "ER002",
-                                accntNo: "0900993023",
-                                posfranchiseeName: "DOOKI-HANOI",
-                                posCompanyName: "HYOJUNG",
-                                posBillNo: `TRANSFER-${Date.now()}`
-                              };
-
-                              const bankCode = "79616001";
-                              const clientID = "91a3a3668724e631e1baf4f8526524f3";
-
-                              console.log('Calling CreateQRPos API for transfer payment:', { qrRequest, bankCode, clientID });
-
-                              const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
-
-                              console.log('CreateQRPos API response for transfer:', qrResponse);
-
-                              // Generate QR code from the received QR data and show QR modal
-                              if (qrResponse.qrData) {
-                                let qrContent = qrResponse.qrData;
-                                try {
-                                  // Try to decode if it's base64 encoded
-                                  qrContent = atob(qrResponse.qrData);
-                                } catch (e) {
-                                  // If decode fails, use the raw qrData
-                                  console.log('Using raw qrData for transfer as it is not base64 encoded');
-                                }
-
-                                const qrUrl = await QRCodeLib.toDataURL(qrContent, {
-                                  width: 256,
-                                  margin: 2,
-                                  color: {
-                                    dark: '#000000',
-                                    light: '#FFFFFF'
-                                  }
-                                });
-
-                                // Set QR code data and show QR payment modal
-                                setQrCodeUrl(qrUrl);
-                                setSelectedPaymentMethod({ 
-                                  key: 'transfer', 
-                                  method: { name: 'Chuyển khoản', icon: '💳' } 
-                                });
-                                setShowQRPayment(true);
-                                setMixedPaymentOpen(false);
-                              } else {
-                                console.error('No QR data received from API for transfer');
-                                // Fallback to direct payment
-                                mixedPaymentMutation.mutate({
-                                  customerId: mixedPaymentData.customerId,
-                                  points: mixedPaymentData.pointsToUse,
-                                  orderId: mixedPaymentData.orderId,
-                                  paymentMethod: 'transfer'
-                                });
-                              }
-                            } catch (error) {
-                              console.error('Error calling CreateQRPos API for transfer:', error);
-                              // Fallback to direct payment on error
-                              mixedPaymentMutation.mutate({
-                                customerId: mixedPaymentData.customerId,
-                                points: mixedPaymentData.pointsToUse,
-                                orderId: mixedPaymentData.orderId,
-                                paymentMethod: 'transfer'
-                              });
-                            }
-                          }}
-                          disabled={mixedPaymentMutation.isPending}
-                        >
-                          <span className="text-2xl mr-3">💳</span>
-                          <div className="text-left">
-                            <p className="font-medium">Chuyển khoản</p>
-                            <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
-                          </div>
-                        </Button>
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto p-4"
+                    onClick={() => mixedPaymentMutation.mutate({
+                      customerId: mixedPaymentData.customerId,
+                      points: mixedPaymentData.pointsToUse,
+                      orderId: mixedPaymentData.orderId,
+                      paymentMethod: 'transfer'
+                    })}
+                    disabled={mixedPaymentMutation.isPending}
+                  >
+                    <span className="text-2xl mr-3">💳</span>
+                    <div className="text-left">
+                      <p className="font-medium">Chuyển khoản</p>
+                      <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
+                    </div>
+                  </Button>
+                </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
