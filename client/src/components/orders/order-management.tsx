@@ -299,104 +299,7 @@ export function OrderManagement() {
       return;
     }
 
-    // For QR Code payment, use CreateQRPos API
-    if (paymentMethodKey === "qrCode") {
-      try {
-        const { createQRPosAsync, type CreateQRPosRequest } = await import("@/lib/api");
-        
-        const transactionUuid = `TXN-${Date.now()}`;
-        const depositAmt = Number(selectedOrder.total);
-        
-        const qrRequest: CreateQRPosRequest = {
-          transactionUuid,
-          depositAmt: depositAmt,
-          posUniqueId: "ER002",
-          accntNo: "0900993023",
-          posfranchiseeName: "DOOKI-HANOI",
-          posCompanyName: "HYOJUNG",
-          posBillNo: `BILL-${Date.now()}`
-        };
-
-        const bankCode = "79616001";
-        const clientID = "91a3a3668724e631e1baf4f8526524f3";
-
-        console.log('Calling CreateQRPos API with:', { qrRequest, bankCode, clientID });
-
-        const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
-        
-        console.log('CreateQRPos API response:', qrResponse);
-
-        // Generate QR code from the received QR data
-        if (qrResponse.qrData) {
-          // Use qrData directly for QR code generation
-          let qrContent = qrResponse.qrData;
-          try {
-            // Try to decode if it's base64 encoded
-            qrContent = atob(qrResponse.qrData);
-          } catch (e) {
-            // If decode fails, use the raw qrData
-            console.log('Using raw qrData as it is not base64 encoded');
-          }
-          
-          const qrUrl = await QRCodeLib.toDataURL(qrContent, {
-            width: 256,
-            margin: 2,
-            color: {
-              dark: '#000000',
-              light: '#FFFFFF'
-            }
-          });
-          setQrCodeUrl(qrUrl);
-          setSelectedPaymentMethod({ key: paymentMethodKey, method });
-          setShowQRPayment(true);
-          setPaymentMethodsOpen(false);
-        } else {
-          console.error('No QR data received from API');
-          // Fallback to mock QR code
-          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
-          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
-            width: 256,
-            margin: 2,
-            color: {
-              dark: '#000000',
-              light: '#FFFFFF'
-            }
-          });
-          setQrCodeUrl(qrUrl);
-          setSelectedPaymentMethod({ key: paymentMethodKey, method });
-          setShowQRPayment(true);
-          setPaymentMethodsOpen(false);
-        }
-      } catch (error) {
-        console.error('Error calling CreateQRPos API:', error);
-        // Fallback to mock QR code on error
-        try {
-          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
-          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
-            width: 256,
-            margin: 2,
-            color: {
-              dark: '#000000',
-              light: '#FFFFFF'
-            }
-          });
-          setQrCodeUrl(qrUrl);
-          setSelectedPaymentMethod({ key: paymentMethodKey, method });
-          setShowQRPayment(true);
-          setPaymentMethodsOpen(false);
-        } catch (fallbackError) {
-          console.error('Error generating fallback QR code:', fallbackError);
-          toast({
-            title: 'Lỗi',
-            description: 'Không thể tạo mã QR',
-            variant: 'destructive',
-          });
-        }
-      }
-      return;
-    }
-
-    // For other non-cash payments, show mock QR code
+    // For non-cash payments, show QR code
     try {
       const qrData = `${method.name} Payment\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
       const qrUrl = await QRCodeLib.toDataURL(qrData, {
@@ -935,16 +838,15 @@ export function OrderManagement() {
           </DialogHeader>
 
           <div className="space-y-4 p-4">
-            {/* Payment Amount Summary */}
+            {/* Order Summary */}
             {selectedOrder && (
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600">Đơn hàng: {selectedOrder.orderNumber}</p>
-                <p className="text-sm text-gray-500 mb-2">Số tiền cần thanh toán:</p>
-                <p className="text-3xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-blue-600">
                   {Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
                 </p>
               </div>
-            )}</div>
+            )}
 
             {/* QR Code */}
             {qrCodeUrl && (
