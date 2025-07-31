@@ -113,7 +113,7 @@ export function EInvoiceModal({
           TenantId: ""
         },
         transactionID_old: null,
-        transactionID: `TXN-${Date.now()}`,
+        transactionID: `${}`,
         numbtext: null,
         invRef: `INV-${Date.now()}`,
         poNo: null,
