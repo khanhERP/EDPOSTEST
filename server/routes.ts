@@ -1912,7 +1912,7 @@ export async function registerRoutes(app: Express): Promise {
       if (customerId) {
         filteredSales = customerSales.filter(
           (sale) => sale.id === parseInt(customerId as string),
-        );
+                );
       }
 
       res.json(filteredSales);
@@ -2618,6 +2618,43 @@ export async function registerRoutes(app: Express): Promise {
       res.status(500).json({
         error: "Failed to create QR payment",
         details: error.message,
+      });
+    }
+  });
+
+  // E-invoice publish endpoint
+  app.post("/api/einvoice/publish", async (req, res) => {
+    try {
+      const publishRequest = req.body;
+      console.log("Publishing invoice with data:", JSON.stringify(publishRequest, null, 2));
+
+      // Mock successful response for testing
+      const mockResponse = {
+        success: true,
+        message: "Hóa đơn điện tử đã được phát hành thành công",
+        invoiceNumber: `INV-${Date.now()}`,
+        publishDate: new Date().toISOString(),
+        data: {
+          transactionID: publishRequest.transactionID,
+          invRef: publishRequest.invRef,
+          totalAmount: publishRequest.invTotalAmount,
+          customer: publishRequest.Customer
+        }
+      };
+
+      console.log("Mock invoice published successfully:", mockResponse);
+      res.json(mockResponse);
+
+    } catch (error) {
+      console.error("E-invoice publish proxy error details:");
+      console.error("- Error type:", error.constructor.name);
+      console.error("- Error message:", error.message);
+      console.error("- Full error:", error);
+
+      res.status(500).json({
+        error: "Failed to publish invoice",
+        details: error.message,
+        errorType: error.constructor.name
       });
     }
   });
