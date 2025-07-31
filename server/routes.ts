@@ -2626,11 +2626,30 @@ export async function registerRoutes(app: Express): Promise {
   app.post("/api/einvoice/publish", async (req, res) => {
     try {
       const publishRequest = req.body;
+      const connectionInfo = publishRequest.Login;
 
       console.log("Publishing invoice with data:", publishRequest);
+      console.log("Using connection URL:", connectionInfo?.url);
+
+      // Determine the correct API URL based on the connection info
+      let apiUrl = "https://infoerpvn.com:9442/api/invoice/publish";
+      
+      if (connectionInfo?.url) {
+        // If it's minvoice.app, use their API endpoint
+        if (connectionInfo.url.includes("minvoice.app")) {
+          apiUrl = "https://minvoice.app/api/invoice/publish";
+        } else if (connectionInfo.url.includes("infoerpvn.com")) {
+          apiUrl = "https://infoerpvn.com:9442/api/invoice/publish";
+        } else {
+          // Use the provided URL and append the API path
+          apiUrl = `${connectionInfo.url}/api/invoice/publish`;
+        }
+      }
+
+      console.log("Final API URL:", apiUrl);
 
       // Call the external E-invoice API
-      const response = await fetch("https://infoerpvn.com:9442/api/invoice/publish", {
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -2639,13 +2658,22 @@ export async function registerRoutes(app: Express): Promise {
         body: JSON.stringify(publishRequest)
       });
 
+      console.log("Response status:", response.status);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("E-invoice API error:", response.status, response.statusText, errorText);
+        console.error("E-invoice API error details:");
+        console.error("- Status:", response.status);
+        console.error("- Status Text:", response.statusText);
+        console.error("- Response Body:", errorText);
+        console.error("- API URL used:", apiUrl);
+        
         return res.status(response.status).json({
           error: "Failed to publish invoice",
           details: `API returned ${response.status}: ${response.statusText}`,
-          message: errorText
+          message: errorText,
+          apiUrl: apiUrl
         });
       }
 
@@ -2654,10 +2682,17 @@ export async function registerRoutes(app: Express): Promise {
 
       res.json(result);
     } catch (error) {
-      console.error("E-invoice publish proxy error:", error);
+      console.error("E-invoice publish proxy error details:");
+      console.error("- Error type:", error.constructor.name);
+      console.error("- Error message:", error.message);
+      console.error("- Error cause:", error.cause);
+      console.error("- Full error:", error);
+      
       res.status(500).json({
         error: "Failed to publish invoice",
         details: error.message,
+        errorType: error.constructor.name,
+        cause: error.cause ? error.cause.toString() : null
       });
     }
   });
