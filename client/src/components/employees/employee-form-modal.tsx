@@ -273,6 +273,7 @@ export function EmployeeFormModal({
                   <FormLabel>{t("employees.email")}</FormLabel>
                   <FormControl>
                     <Input
+                      type="email"
                       placeholder="hong@company.com"
                       {...field}
                     />
