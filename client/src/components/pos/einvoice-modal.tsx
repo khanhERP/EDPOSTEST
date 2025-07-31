@@ -14,6 +14,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
+// E-invoice software providers mapping
+const EINVOICE_PROVIDERS = [
+  { name: "EasyInvoice", value: "1" },
+  { name: "VnInvoice", value: "2" },
+  { name: "FptInvoice", value: "3" },
+  { name: "MifiInvoice", value: "4" },
+  { name: "EHoaDon", value: "5" },
+  { name: "BkavInvoice", value: "6" },
+  { name: "MInvoice", value: "7" },
+  { name: "SInvoice", value: "8" },
+  { name: "WinInvoice", value: "9" }
+];
+
 interface EInvoiceModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -109,9 +122,9 @@ export function EInvoiceModal({
                       <SelectValue placeholder="Chọn đơn vị HĐĐT" />
                     </SelectTrigger>
                     <SelectContent>
-                      {eInvoiceConnections.map((connection) => (
-                        <SelectItem key={connection.id} value={connection.softwareName}>
-                          {connection.softwareName}
+                      {EINVOICE_PROVIDERS.map((provider) => (
+                        <SelectItem key={provider.value} value={provider.name}>
+                          {provider.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
