@@ -20,9 +20,28 @@ import {
 } from "@shared/schema";
 import { initializeSampleData, db } from "./db";
 import { z } from "zod";
-import { eq, desc, asc, and, or, like, count, sum, gte, lt, lte } from "drizzle-orm";
+import {
+  eq,
+  desc,
+  asc,
+  and,
+  or,
+  like,
+  count,
+  sum,
+  gte,
+  lt,
+  lte,
+} from "drizzle-orm";
 import { sql } from "drizzle-orm";
-import { orders, orderItems, products, categories, transactions as transactionsTable, transactionItems as transactionItemsTable } from "@shared/schema";
+import {
+  orders,
+  orderItems,
+  products,
+  categories,
+  transactions as transactionsTable,
+  transactionItems as transactionItemsTable,
+} from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise {
   // Initialize sample data
@@ -43,7 +62,10 @@ export async function registerRoutes(app: Express): Promise {
       )
     `);
   } catch (error) {
-    console.log("Inventory transactions table already exists or creation failed:", error);
+    console.log(
+      "Inventory transactions table already exists or creation failed:",
+      error,
+    );
   }
 
   // Categories
@@ -67,7 +89,7 @@ export async function registerRoutes(app: Express): Promise {
 
       const categoryData = {
         name: name.trim(),
-        icon: icon || "fas fa-utensils"
+        icon: icon || "fas fa-utensils",
       };
 
       const category = await storage.createCategory(categoryData);
@@ -89,7 +111,7 @@ export async function registerRoutes(app: Express): Promise {
 
       const categoryData = {
         name: name.trim(),
-        icon: icon || "fas fa-utensils"
+        icon: icon || "fas fa-utensils",
       };
 
       const category = await storage.updateCategory(categoryId, categoryData);
@@ -107,8 +129,8 @@ export async function registerRoutes(app: Express): Promise {
       // Check if category has products
       const products = await storage.getProductsByCategory(categoryId);
       if (products.length > 0) {
-        return res.status(400).json({ 
-          error: `Không thể xóa danh mục vì còn ${products.length} sản phẩm. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.` 
+        return res.status(400).json({
+          error: `Không thể xóa danh mục vì còn ${products.length} sản phẩm. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.`,
         });
       }
 
@@ -118,9 +140,13 @@ export async function registerRoutes(app: Express): Promise {
       console.error("Error deleting category:", error);
 
       // Handle foreign key constraint errors
-      if (error instanceof Error && error.message.includes('foreign key constraint')) {
-        return res.status(400).json({ 
-          error: "Không thể xóa danh mục vì vẫn còn sản phẩm thuộc danh mục này. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước." 
+      if (
+        error instanceof Error &&
+        error.message.includes("foreign key constraint")
+      ) {
+        return res.status(400).json({
+          error:
+            "Không thể xóa danh mục vì vẫn còn sản phẩm thuộc danh mục này. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.",
         });
       }
 
@@ -134,14 +160,17 @@ export async function registerRoutes(app: Express): Promise {
       const { category, search, includeInactive } = req.query;
       let products;
 
-      const shouldIncludeInactive = includeInactive === 'true';
+      const shouldIncludeInactive = includeInactive === "true";
 
       if (search) {
-        products = await storage.searchProducts(search as string, shouldIncludeInactive);
+        products = await storage.searchProducts(
+          search as string,
+          shouldIncludeInactive,
+        );
       } else if (category && category !== "all") {
         products = await storage.getProductsByCategory(
           parseInt(category as string),
-          shouldIncludeInactive
+          shouldIncludeInactive,
         );
       } else {
         products = await storage.getAllProducts(shouldIncludeInactive);
@@ -183,9 +212,16 @@ export async function registerRoutes(app: Express): Promise {
       console.log("Product creation request body:", req.body);
 
       // Ensure required fields are present
-      if (!req.body.name || !req.body.sku || !req.body.price || !req.body.categoryId || req.body.taxRate === undefined) {
+      if (
+        !req.body.name ||
+        !req.body.sku ||
+        !req.body.price ||
+        !req.body.categoryId ||
+        req.body.taxRate === undefined
+      ) {
         return res.status(400).json({
-          message: "Missing required fields: name, sku, price, categoryId, and taxRate are required"
+          message:
+            "Missing required fields: name, sku, price, categoryId, and taxRate are required",
         });
       }
 
@@ -199,7 +235,7 @@ export async function registerRoutes(app: Express): Promise {
         productType: Number(req.body.productType) || 1,
         trackInventory: req.body.trackInventory !== false,
         imageUrl: req.body.imageUrl || null,
-        taxRate: req.body.taxRate.toString()
+        taxRate: req.body.taxRate.toString(),
       });
 
       console.log("Validated product data:", validatedData);
@@ -212,9 +248,9 @@ export async function registerRoutes(app: Express): Promise {
 
       if (existingProduct) {
         console.log("SKU already exists:", validatedData.sku);
-        return res.status(409).json({ 
+        return res.status(409).json({
           message: `SKU "${validatedData.sku}" đã tồn tại trong hệ thống`,
-          code: "DUPLICATE_SKU"
+          code: "DUPLICATE_SKU",
         });
       }
 
@@ -225,17 +261,15 @@ export async function registerRoutes(app: Express): Promise {
       console.error("Product creation error:", error);
       if (error instanceof z.ZodError) {
         console.error("Validation errors:", error.errors);
-        return res
-          .status(400)
-          .json({ 
-            message: "Invalid product data", 
-            errors: error.errors,
-            details: error.format()
-          });
+        return res.status(400).json({
+          message: "Invalid product data",
+          errors: error.errors,
+          details: error.format(),
+        });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to create product",
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   });
@@ -276,9 +310,9 @@ export async function registerRoutes(app: Express): Promise {
 
       if (error instanceof Error) {
         if (error.message.includes("Cannot delete product")) {
-          return res.status(400).json({ 
+          return res.status(400).json({
             message: error.message,
-            code: "PRODUCT_IN_USE"
+            code: "PRODUCT_IN_USE",
           });
         }
       }
@@ -291,9 +325,9 @@ export async function registerRoutes(app: Express): Promise {
   app.delete("/api/products/cleanup/inactive", async (req, res) => {
     try {
       const deletedCount = await storage.deleteInactiveProducts();
-      res.json({ 
+      res.json({
         message: `Successfully deleted ${deletedCount} inactive products`,
-        deletedCount
+        deletedCount,
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to cleanup inactive products" });
@@ -320,13 +354,19 @@ export async function registerRoutes(app: Express): Promise {
     try {
       const { transaction, items } = req.body;
 
-      console.log("Received transaction data:", JSON.stringify({ transaction, items }, null, 2));
+      console.log(
+        "Received transaction data:",
+        JSON.stringify({ transaction, items }, null, 2),
+      );
 
       // Validate with original string format, then transform
       const validatedTransaction = insertTransactionSchema.parse(transaction);
       const validatedItems = z.array(insertTransactionItemSchema).parse(items);
 
-      console.log("Validated data:", JSON.stringify({ validatedTransaction, validatedItems }, null, 2));
+      console.log(
+        "Validated data:",
+        JSON.stringify({ validatedTransaction, validatedItems }, null, 2),
+      );
 
       // Validate stock availability
       for (const item of validatedItems) {
@@ -351,17 +391,15 @@ export async function registerRoutes(app: Express): Promise {
     } catch (error) {
       console.error("Transaction creation error:", error);
       if (error instanceof z.ZodError) {
-        return res
-          .status(400)
-          .json({ 
-            message: "Invalid transaction data", 
-            errors: error.errors,
-            details: error.format()
-          });
+        return res.status(400).json({
+          message: "Invalid transaction data",
+          errors: error.errors,
+          details: error.format(),
+        });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to create transaction",
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
     }
   });
@@ -429,17 +467,19 @@ export async function registerRoutes(app: Express): Promise {
   app.post("/api/employees", async (req, res) => {
     try {
       const validatedData = insertEmployeeSchema.parse(req.body);
-      
+
       // Check if email already exists
-      const existingEmployee = await storage.getEmployeeByEmail(validatedData.email);
+      const existingEmployee = await storage.getEmployeeByEmail(
+        validatedData.email,
+      );
       if (existingEmployee) {
-        return res.status(409).json({ 
+        return res.status(400).json({
           message: "Email đã tồn tại trong hệ thống",
           code: "DUPLICATE_EMAIL",
-          field: "email"
+          field: "email",
         });
       }
-      
+
       const employee = await storage.createEmployee(validatedData);
       res.status(201).json(employee);
     } catch (error) {
@@ -457,19 +497,21 @@ export async function registerRoutes(app: Express): Promise {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertEmployeeSchema.partial().parse(req.body);
-      
+
       // Check if email already exists (excluding current employee)
       if (validatedData.email) {
-        const existingEmployee = await storage.getEmployeeByEmail(validatedData.email);
+        const existingEmployee = await storage.getEmployeeByEmail(
+          validatedData.email,
+        );
         if (existingEmployee && existingEmployee.id !== id) {
-          return res.status(409).json({ 
+          return res.status(409).json({
             message: "Email đã tồn tại trong hệ thống",
             code: "DUPLICATE_EMAIL",
-            field: "email"
+            field: "email",
           });
         }
       }
-      
+
       const employee = await storage.updateEmployee(id, validatedData);
 
       if (!employee) {
@@ -508,7 +550,7 @@ export async function registerRoutes(app: Express): Promise {
       const { date } = req.query;
 
       let whereCondition;
-      if (date && typeof date === 'string') {
+      if (date && typeof date === "string") {
         // Filter by specific date
         const startOfDay = new Date(date);
         startOfDay.setHours(0, 0, 0, 0);
@@ -518,18 +560,20 @@ export async function registerRoutes(app: Express): Promise {
 
         whereCondition = and(
           gte(attendanceRecords.clockIn, startOfDay),
-          lt(attendanceRecords.clockIn, endOfDay)
+          lt(attendanceRecords.clockIn, endOfDay),
         );
       }
 
-      const attendance = await db.select().from(attendanceRecords)
+      const attendance = await db
+        .select()
+        .from(attendanceRecords)
         .where(whereCondition)
         .orderBy(desc(attendanceRecords.clockIn));
 
       res.json(attendance);
     } catch (error) {
-      console.error('Error fetching attendance records:', error);
-      res.status(500).json({ error: 'Failed to fetch attendance records' });
+      console.error("Error fetching attendance records:", error);
+      res.status(500).json({ error: "Failed to fetch attendance records" });
     }
   });
 
@@ -792,7 +836,7 @@ export async function registerRoutes(app: Express): Promise {
       const { paymentMethod } = req.body;
 
       // Update order status to paid
-      const order = await storage.updateOrderStatus(id, 'paid');
+      const order = await storage.updateOrderStatus(id, "paid");
 
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
@@ -800,67 +844,69 @@ export async function registerRoutes(app: Express): Promise {
 
       // Also update table status to available if the order is linked to a table
       if (order.tableId) {
-        await storage.updateTableStatus(order.tableId, 'available');
+        await storage.updateTableStatus(order.tableId, "available");
       }
 
       res.json({ ...order, paymentMethod });
     } catch (error) {
-      console.error('Payment completion error:', error);
+      console.error("Payment completion error:", error);
       res.status(500).json({ message: "Failed to complete payment" });
     }
   });
 
   app.get("/api/order-items/:orderId", async (req, res) => {
     try {
-      console.log('=== GET ORDER ITEMS API CALLED ===');
+      console.log("=== GET ORDER ITEMS API CALLED ===");
       const orderId = parseInt(req.params.orderId);
-      console.log('Order ID requested:', orderId);
+      console.log("Order ID requested:", orderId);
 
       if (isNaN(orderId)) {
-        console.error('Invalid order ID provided:', req.params.orderId);
+        console.error("Invalid order ID provided:", req.params.orderId);
         return res.status(400).json({ message: "Invalid order ID" });
       }
 
-      console.log('Fetching order items from storage...');
+      console.log("Fetching order items from storage...");
       const items = await storage.getOrderItems(orderId);
       console.log(`Found ${items.length} order items:`, items);
 
       res.json(items);
     } catch (error) {
-      console.error('=== GET ORDER ITEMS ERROR ===');
-      console.error('Error type:', error.constructor.name);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-      console.error('Order ID:', req.params.orderId);
+      console.error("=== GET ORDER ITEMS ERROR ===");
+      console.error("Error type:", error.constructor.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      console.error("Order ID:", req.params.orderId);
 
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to fetch order items",
         details: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   });
 
   // Add order items to existing order
-  app.post('/api/orders/:orderId/items', async (req, res) => {
+  app.post("/api/orders/:orderId/items", async (req, res) => {
     try {
-      console.log('=== ADD ORDER ITEMS API CALLED ===');
+      console.log("=== ADD ORDER ITEMS API CALLED ===");
       const orderId = parseInt(req.params.orderId);
       const { items } = req.body;
 
-      console.log('Request params:', req.params);
-      console.log('Order ID:', orderId);
-      console.log('Request body:', JSON.stringify(req.body, null, 2));
-      console.log('Items to add:', JSON.stringify(items, null, 2));
+      console.log("Request params:", req.params);
+      console.log("Order ID:", orderId);
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
+      console.log("Items to add:", JSON.stringify(items, null, 2));
 
       if (!orderId || isNaN(orderId)) {
-        console.error('Invalid order ID:', req.params.orderId);
-        return res.status(400).json({ error: 'Invalid order ID' });
+        console.error("Invalid order ID:", req.params.orderId);
+        return res.status(400).json({ error: "Invalid order ID" });
       }
 
       if (!items || !Array.isArray(items) || items.length === 0) {
-        console.error('Invalid items data:', items);
-        return res.status(400).json({ error: 'Items array is required and cannot be empty' });
+        console.error("Invalid items data:", items);
+        return res
+          .status(400)
+          .json({ error: "Items array is required and cannot be empty" });
       }
 
       // Check if order exists
@@ -870,11 +916,11 @@ export async function registerRoutes(app: Express): Promise {
         .where(eq(orders.id, orderId));
 
       if (!existingOrder) {
-        console.error('Order not found:', orderId);
-        return res.status(404).json({ error: 'Order not found' });
+        console.error("Order not found:", orderId);
+        return res.status(404).json({ error: "Order not found" });
       }
 
-      console.log('Found existing order:', existingOrder);
+      console.log("Found existing order:", existingOrder);
 
       const createdItems = [];
       for (let i = 0; i < items.length; i++) {
@@ -882,8 +928,13 @@ export async function registerRoutes(app: Express): Promise {
         console.log(`Processing item ${i + 1}/${items.length}:`, item);
 
         // Validate item data
-        if (!item.productId || !item.quantity || !item.unitPrice || !item.total) {
-          console.error('Missing required item data:', item);
+        if (
+          !item.productId ||
+          !item.quantity ||
+          !item.unitPrice ||
+          !item.total
+        ) {
+          console.error("Missing required item data:", item);
           throw new Error(`Item ${i + 1} is missing required fields`);
         }
 
@@ -894,11 +945,11 @@ export async function registerRoutes(app: Express): Promise {
           .where(eq(products.id, item.productId));
 
         if (!product) {
-          console.error('Product not found:', item.productId);
+          console.error("Product not found:", item.productId);
           throw new Error(`Product with ID ${item.productId} not found`);
         }
 
-        console.log('Found product:', product);
+        console.log("Found product:", product);
 
         try {
           const [orderItem] = await db
@@ -913,10 +964,10 @@ export async function registerRoutes(app: Express): Promise {
             })
             .returning();
 
-          console.log('Created order item:', orderItem);
+          console.log("Created order item:", orderItem);
           createdItems.push(orderItem);
         } catch (insertError) {
-          console.error('Error inserting order item:', insertError);
+          console.error("Error inserting order item:", insertError);
           throw insertError;
         }
       }
@@ -932,16 +983,16 @@ export async function registerRoutes(app: Express): Promise {
           .from(orderItems)
           .where(eq(orderItems.orderId, orderId));
 
-        console.log('Order items sum result:', orderItemsSum);
+        console.log("Order items sum result:", orderItemsSum);
 
         const totalAmount = Number(orderItemsSum.total) || 0;
         const subtotalAmount = totalAmount / 1.1; // Remove 10% tax
         const taxAmount = totalAmount - subtotalAmount;
 
-        console.log('Calculated amounts:', {
+        console.log("Calculated amounts:", {
           total: totalAmount,
           subtotal: subtotalAmount,
-          tax: taxAmount
+          tax: taxAmount,
         });
 
         await db
@@ -953,28 +1004,28 @@ export async function registerRoutes(app: Express): Promise {
           })
           .where(eq(orders.id, orderId));
 
-        console.log('Updated order totals successfully');
+        console.log("Updated order totals successfully");
       } catch (updateError) {
-        console.error('Error updating order totals:', updateError);
+        console.error("Error updating order totals:", updateError);
         // Don't throw here, as items were already created successfully
       }
 
-      console.log('=== ADD ORDER ITEMS COMPLETED SUCCESSFULLY ===');
+      console.log("=== ADD ORDER ITEMS COMPLETED SUCCESSFULLY ===");
       res.json(createdItems);
     } catch (error) {
-      console.error('=== ADD ORDER ITEMS ERROR ===');
-      console.error('Error type:', error.constructor.name);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-      console.error('Request data:', {
+      console.error("=== ADD ORDER ITEMS ERROR ===");
+      console.error("Error type:", error.constructor.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      console.error("Request data:", {
         orderId: req.params.orderId,
-        body: req.body
+        body: req.body,
       });
 
-      res.status(500).json({ 
-        error: 'Failed to add items to order',
+      res.status(500).json({
+        error: "Failed to add items to order",
         details: error.message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   });
@@ -985,7 +1036,11 @@ export async function registerRoutes(app: Express): Promise {
       const { productId, quantity, type, notes, trackInventory } = req.body;
 
       // Get current product
-      const [product] = await db.select().from(products).where(eq(products.id, productId)).limit(1);
+      const [product] = await db
+        .select()
+        .from(products)
+        .where(eq(products.id, productId))
+        .limit(1);
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
       }
@@ -1009,7 +1064,8 @@ export async function registerRoutes(app: Express): Promise {
         updateData.trackInventory = trackInventory;
       }
 
-      await db.update(products)
+      await db
+        .update(products)
         .set(updateData)
         .where(eq(products.id, productId));
 
@@ -1092,7 +1148,7 @@ export async function registerRoutes(app: Express): Promise {
     }
   });
 
-  app.post("/api/api/suppliers", async (req, res) =>{
+  app.post("/api/api/suppliers", async (req, res) => {
     try {
       const validatedData = insertSupplierSchema.parse(req.body);
       const supplier = await storage.createSupplier(validatedData);
@@ -1316,7 +1372,9 @@ export async function registerRoutes(app: Express): Promise {
         description: z.string().min(1),
       });
 
-      const { customerId, points, type, description } = pointUpdateSchema.parse(req.body);
+      const { customerId, points, type, description } = pointUpdateSchema.parse(
+        req.body,
+      );
 
       const pointTransaction = await storage.updateCustomerPoints(
         customerId,
@@ -1336,7 +1394,10 @@ export async function registerRoutes(app: Express): Promise {
       if (error instanceof Error && error.message === "Customer not found") {
         return res.status(404).json({ message: "Customer not found" });
       }
-      if (error instanceof Error && error.message === "Insufficient points balance") {
+      if (
+        error instanceof Error &&
+        error.message === "Insufficient points balance"
+      ) {
         return res.status(400).json({ message: "Insufficient points balance" });
       }
       res.status(500).json({ message: "Failed to adjust customer points" });
@@ -1370,7 +1431,10 @@ export async function registerRoutes(app: Express): Promise {
       if (error instanceof Error && error.message === "Customer not found") {
         return res.status(404).json({ message: "Customer not found" });
       }
-      if (error instanceof Error && error.message === "Insufficient points balance") {
+      if (
+        error instanceof Error &&
+        error.message === "Insufficient points balance"
+      ) {
         return res.status(400).json({ message: "Insufficient points balance" });
       }
       res.status(500).json({ message: "Failed to redeem customer points" });
@@ -1395,7 +1459,9 @@ export async function registerRoutes(app: Express): Promise {
       const thresholds = await storage.getMembershipThresholds();
       res.json(thresholds);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch membership thresholds" });
+      res
+        .status(500)
+        .json({ message: "Failed to fetch membership thresholds" });
     }
   });
 
@@ -1403,11 +1469,12 @@ export async function registerRoutes(app: Express): Promise {
     try {
       const thresholdSchema = z.object({
         GOLD: z.number().min(0),
-        VIP: z.number().min(0)
+        VIP: z.number().min(0),
       });
 
       const validatedData = thresholdSchema.parse(req.body);
-      const thresholds = await storage.updateMembershipThresholds(validatedData);
+      const thresholds =
+        await storage.updateMembershipThresholds(validatedData);
 
       res.json(thresholds);
     } catch (error) {
@@ -1417,7 +1484,9 @@ export async function registerRoutes(app: Express): Promise {
           errors: error.errors,
         });
       }
-      res.status(500).json({ message: "Failed to update membership thresholds" });
+      res
+        .status(500)
+        .json({ message: "Failed to update membership thresholds" });
     }
   });
 
@@ -1436,24 +1505,26 @@ export async function registerRoutes(app: Express): Promise {
           newDebt: 300000,
           payment: 200000,
           finalDebt: 600000,
-          phone: "010-1234-5678"
+          phone: "010-1234-5678",
         },
         {
           id: 2,
-          supplierCode: "SUP002", 
+          supplierCode: "SUP002",
           supplierName: "Nhà cung cấp B",
           initialDebt: 800000,
           newDebt: 400000,
           payment: 300000,
           finalDebt: 900000,
-          phone: "010-2345-6789"
-        }
+          phone: "010-2345-6789",
+        },
       ];
 
       // Filter by supplier if specified
       let filteredDebts = supplierDebts;
       if (supplierId) {
-        filteredDebts = supplierDebts.filter(debt => debt.id === parseInt(supplierId as string));
+        filteredDebts = supplierDebts.filter(
+          (debt) => debt.id === parseInt(supplierId as string),
+        );
       }
 
       res.json(filteredDebts);
@@ -1471,11 +1542,11 @@ export async function registerRoutes(app: Express): Promise {
         {
           id: 1,
           supplierCode: "SUP001",
-          supplierName: "Nhà cung cấp A", 
+          supplierName: "Nhà cung cấp A",
           purchaseValue: 1500000,
           paymentValue: 1200000,
           netValue: 300000,
-          phone: "010-1234-5678"
+          phone: "010-1234-5678",
         },
         {
           id: 2,
@@ -1484,14 +1555,16 @@ export async function registerRoutes(app: Express): Promise {
           purchaseValue: 2000000,
           paymentValue: 1700000,
           netValue: 300000,
-          phone: "010-2345-6789"
-        }
+          phone: "010-2345-6789",
+        },
       ];
 
       // Filter by supplier if specified
       let filteredPurchases = supplierPurchases;
       if (supplierId) {
-        filteredPurchases = supplierPurchases.filter(purchase => purchase.id === parseInt(supplierId as string));
+        filteredPurchases = supplierPurchases.filter(
+          (purchase) => purchase.id === parseInt(supplierId as string),
+        );
       }
 
       res.json(filteredPurchases);
@@ -1560,7 +1633,9 @@ export async function registerRoutes(app: Express): Promise {
       const connections = await storage.getEInvoiceConnections();
       res.json(connections);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch e-invoice connections" });
+      res
+        .status(500)
+        .json({ message: "Failed to fetch e-invoice connections" });
     }
   });
 
@@ -1571,7 +1646,9 @@ export async function registerRoutes(app: Express): Promise {
       res.status(201).json(connection);
     } catch (error) {
       console.error("E-invoice connection creation error:", error);
-      res.status(500).json({ message: "Failed to create e-invoice connection" });
+      res
+        .status(500)
+        .json({ message: "Failed to create e-invoice connection" });
     }
   });
 
@@ -1579,16 +1656,23 @@ export async function registerRoutes(app: Express): Promise {
     try {
       const id = parseInt(req.params.id);
       const connectionData = req.body;
-      const connection = await storage.updateEInvoiceConnection(id, connectionData);
+      const connection = await storage.updateEInvoiceConnection(
+        id,
+        connectionData,
+      );
 
       if (!connection) {
-        return res.status(404).json({ message: "E-invoice connection not found" });
+        return res
+          .status(404)
+          .json({ message: "E-invoice connection not found" });
       }
 
       res.json(connection);
     } catch (error) {
       console.error("E-invoice connection update error:", error);
-      res.status(500).json({ message: "Failed to update e-invoice connection" });
+      res
+        .status(500)
+        .json({ message: "Failed to update e-invoice connection" });
     }
   });
 
@@ -1598,13 +1682,17 @@ export async function registerRoutes(app: Express): Promise {
       const deleted = await storage.deleteEInvoiceConnection(id);
 
       if (!deleted) {
-        return res.status(404).json({ message: "E-invoice connection not found" });
+        return res
+          .status(404)
+          .json({ message: "E-invoice connection not found" });
       }
 
       res.json({ message: "E-invoice connection deleted successfully" });
     } catch (error) {
       console.error("E-invoice connection deletion error:", error);
-      res.status(500).json({ message: "Failed to delete e-invoice connection" });
+      res
+        .status(500)
+        .json({ message: "Failed to delete e-invoice connection" });
     }
   });
 
@@ -1618,23 +1706,23 @@ export async function registerRoutes(app: Express): Promise {
 
       if (startDate && endDate) {
         conditions.push(
-          sql`${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate + ' 23:59:59'}`
+          sql`${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate + " 23:59:59"}`,
         );
       }
 
       if (search) {
+        conditions.push(sql`${products.name} ILIKE ${"%" + search + "%"}`);
+      }
+
+      if (categoryId && categoryId !== "all") {
         conditions.push(
-          sql`${products.name} ILIKE ${'%' + search + '%'}`
+          eq(products.categoryId, parseInt(categoryId as string)),
         );
       }
 
-      if (categoryId && categoryId !== 'all') {
-        conditions.push(eq(products.categoryId, parseInt(categoryId as string)));
+      if (productType && productType !== "all") {
+        conditions.push(eq(products.productType, productType as string));
       }
-
-      if (productType && productType !== 'all') {
-          conditions.push(eq(products.productType, productType as string));
-        }
 
       // Get order items with product and category info
       let orderItemsQuery = db
@@ -1652,7 +1740,7 @@ export async function registerRoutes(app: Express): Promise {
           category: {
             id: categories.id,
             name: categories.name,
-          }
+          },
         })
         .from(orderItems)
         .innerJoin(products, eq(orderItems.productId, products.id))
@@ -1661,8 +1749,10 @@ export async function registerRoutes(app: Express): Promise {
 
       // Only add where clause if there are conditions
       if (conditions.length > 0) {
-        const whereCondition = conditions.reduce((acc, condition, index) => 
-          index === 0 ? condition : sql`${acc} AND ${condition}`, sql``
+        const whereCondition = conditions.reduce(
+          (acc, condition, index) =>
+            index === 0 ? condition : sql`${acc} AND ${condition}`,
+          sql``,
         );
         orderItemsQuery = orderItemsQuery.where(whereCondition);
       }
@@ -1680,14 +1770,20 @@ export async function registerRoutes(app: Express): Promise {
       // Process data if we have results
       if (orderItemsResult && orderItemsResult.length > 0) {
         // Calculate totals
-        totalRevenue = orderItemsResult.reduce((sum, item) => sum + parseFloat(item.totalPrice || '0'), 0);
-        totalQuantity = orderItemsResult.reduce((sum, item) => sum + (item.quantity || 0), 0);
+        totalRevenue = orderItemsResult.reduce(
+          (sum, item) => sum + parseFloat(item.totalPrice || "0"),
+          0,
+        );
+        totalQuantity = orderItemsResult.reduce(
+          (sum, item) => sum + (item.quantity || 0),
+          0,
+        );
 
         // Group by category
         const categoryStatsMap = new Map();
         const productStatsMap = new Map();
 
-        orderItemsResult.forEach(item => {
+        orderItemsResult.forEach((item) => {
           if (!item.category || !item.product) return;
 
           const categoryKey = item.category.id;
@@ -1699,11 +1795,11 @@ export async function registerRoutes(app: Express): Promise {
               category: item.category,
               revenue: 0,
               quantity: 0,
-              productCount: new Set()
+              productCount: new Set(),
             });
           }
           const categoryStatsItem = categoryStatsMap.get(categoryKey);
-          categoryStatsItem.revenue += parseFloat(item.totalPrice || '0');
+          categoryStatsItem.revenue += parseFloat(item.totalPrice || "0");
           categoryStatsItem.quantity += item.quantity || 0;
           categoryStatsItem.productCount.add(item.product.id);
 
@@ -1712,25 +1808,29 @@ export async function registerRoutes(app: Express): Promise {
             productStatsMap.set(productKey, {
               product: item.product,
               revenue: 0,
-              quantity: 0
+              quantity: 0,
             });
           }
           const productStatsItem = productStatsMap.get(productKey);
-          productStatsItem.revenue += parseFloat(item.totalPrice || '0');
+          productStatsItem.revenue += parseFloat(item.totalPrice || "0");
           productStatsItem.quantity += item.quantity || 0;
         });
 
         // Convert to arrays and add productCount
-        categoryStats = Array.from(categoryStatsMap.values()).map(cat => ({
+        categoryStats = Array.from(categoryStatsMap.values()).map((cat) => ({
           ...cat,
-          productCount: cat.productCount.size
+          productCount: cat.productCount.size,
         }));
 
         productStats = Array.from(productStatsMap.values());
 
         // Sort products by quantity and revenue
-        topSellingProducts = [...productStats].sort((a, b) => b.quantity - a.quantity);
-        topRevenueProducts = [...productStats].sort((a, b) => b.revenue - a.revenue);
+        topSellingProducts = [...productStats].sort(
+          (a, b) => b.quantity - a.quantity,
+        );
+        topRevenueProducts = [...productStats].sort(
+          (a, b) => b.revenue - a.revenue,
+        );
       }
 
       res.json({
@@ -1739,19 +1839,18 @@ export async function registerRoutes(app: Express): Promise {
         categoryStats,
         productStats,
         topSellingProducts,
-        topRevenueProducts
+        topRevenueProducts,
       });
-
     } catch (error) {
       console.error("Error fetching menu analysis data:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to fetch menu analysis data",
         totalRevenue: 0,
         totalQuantity: 0,
         categoryStats: [],
         productStats: [],
         topSellingProducts: [],
-        topRevenueProducts: []
+        topRevenueProducts: [],
       });
     }
   });
@@ -1771,15 +1870,17 @@ export async function registerRoutes(app: Express): Promise {
           newDebt: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.1`, // 10% of total spent as debt
           payment: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.05`, // 5% as payment
           finalDebt: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.05`, // Final debt
-          phone: customers.phone
+          phone: customers.phone,
         })
         .from(customers)
-        .where(eq(customers.status, 'active'));
+        .where(eq(customers.status, "active"));
 
       // Filter by customer if specified
       let filteredDebts = customerDebts;
       if (customerId) {
-        filteredDebts = customerDebts.filter(debt => debt.id === parseInt(customerId as string));
+        filteredDebts = customerDebts.filter(
+          (debt) => debt.id === parseInt(customerId as string),
+        );
       }
 
       res.json(filteredDebts);
@@ -1801,15 +1902,17 @@ export async function registerRoutes(app: Express): Promise {
           totalSales: customers.totalSpent,
           visitCount: customers.visitCount,
           averageOrder: sql<number>`CASE WHEN ${customers.visitCount} > 0 THEN ${customers.totalSpent} / ${customers.visitCount} ELSE 0 END`,
-          phone: customers.phone
+          phone: customers.phone,
         })
         .from(customers)
-        .where(eq(customers.status, 'active'));
+        .where(eq(customers.status, "active"));
 
       // Filter by customer if specified
       let filteredSales = customerSales;
       if (customerId) {
-        filteredSales = customerSales.filter(sale => sale.id === parseInt(customerId as string));
+        filteredSales = customerSales.filter(
+          (sale) => sale.id === parseInt(customerId as string),
+        );
       }
 
       res.json(filteredSales);
@@ -1840,10 +1943,16 @@ export async function registerRoutes(app: Express): Promise {
           if (!productData.name) missingFields.push("name");
           if (!productData.sku) missingFields.push("sku");
           if (!productData.price) missingFields.push("price");
-          if (productData.categoryId === undefined || productData.categoryId === null) missingFields.push("categoryId");
+          if (
+            productData.categoryId === undefined ||
+            productData.categoryId === null
+          )
+            missingFields.push("categoryId");
 
           if (missingFields.length > 0) {
-            throw new Error(`Missing required fields: ${missingFields.join(", ")}`);
+            throw new Error(
+              `Missing required fields: ${missingFields.join(", ")}`,
+            );
           }
 
           // Validate data types
@@ -1855,29 +1964,37 @@ export async function registerRoutes(app: Express): Promise {
             throw new Error(`Invalid categoryId: ${productData.categoryId}`);
           }
 
-          const [product] = await db.insert(products).values({
-            name: productData.name,
-            sku: productData.sku,
-            price: productData.price.toString(),
-            stock: parseInt(productData.stock) || 0,
-            categoryId: parseInt(productData.categoryId),
-            imageUrl: productData.imageUrl || null,
-            taxRate: productData.taxRate ? productData.taxRate.toString() : "8.00",
-          }).returning();
+          const [product] = await db
+            .insert(products)
+            .values({
+              name: productData.name,
+              sku: productData.sku,
+              price: productData.price.toString(),
+              stock: parseInt(productData.stock) || 0,
+              categoryId: parseInt(productData.categoryId),
+              imageUrl: productData.imageUrl || null,
+              taxRate: productData.taxRate
+                ? productData.taxRate.toString()
+                : "8.00",
+            })
+            .returning();
 
           console.log(`Successfully created product: ${product.name}`);
           results.push({ success: true, product });
           successCount++;
         } catch (error) {
           const errorMessage = error.message || "Unknown error";
-          console.error(`Error creating product ${productData.name || 'Unknown'}:`, errorMessage);
+          console.error(
+            `Error creating product ${productData.name || "Unknown"}:`,
+            errorMessage,
+          );
           console.error("Product data:", JSON.stringify(productData, null, 2));
 
-          results.push({ 
-            success: false, 
-            error: errorMessage, 
+          results.push({
+            success: false,
+            error: errorMessage,
             data: productData,
-            productName: productData.name || 'Unknown'
+            productName: productData.name || "Unknown",
           });
           errorCount++;
         }
@@ -1887,7 +2004,7 @@ export async function registerRoutes(app: Express): Promise {
         success: successCount,
         errors: errorCount,
         results,
-        message: `${successCount} sản phẩm đã được tạo thành công${errorCount > 0 ? `, ${errorCount} sản phẩm lỗi` : ''}`
+        message: `${successCount} sản phẩm đã được tạo thành công${errorCount > 0 ? `, ${errorCount} sản phẩm lỗi` : ""}`,
       });
     } catch (error) {
       console.error("Bulk products creation error:", error);
@@ -1901,7 +2018,7 @@ export async function registerRoutes(app: Express): Promise {
       const employees = await storage.getEmployees();
       res.json(employees);
     } catch (error) {
-      console.error('Error fetching employees:', error);
+      console.error("Error fetching employees:", error);
       res.status(500).json({ message: "Failed to fetch employees" });
     }
   });
@@ -1915,115 +2032,146 @@ export async function registerRoutes(app: Express): Promise {
         .select({
           employeeName: transactionsTable.cashierName,
           total: transactionsTable.total,
-          createdAt: transactionsTable.createdAt
+          createdAt: transactionsTable.createdAt,
         })
         .from(transactionsTable);
 
-            if (startDate && endDate) {
+      if (startDate && endDate) {
         query = query.where(
           and(
             gte(transactionsTable.createdAt, startDate as string),
-            lte(transactionsTable.createdAt, endDate as string)
-          )
+            lte(transactionsTable.createdAt, endDate as string),
+          ),
         );
       }
 
-      if (employeeId && employeeId !== 'all') {
-        query = query.where(eq(transactionsTable.cashierName, employeeId as string));
+      if (employeeId && employeeId !== "all") {
+        query = query.where(
+          eq(transactionsTable.cashierName, employeeId as string),
+        );
       }
 
       const salesData = await query;
       res.json(salesData);
     } catch (error) {
-      console.error('Error fetching employee sales:', error);
+      console.error("Error fetching employee sales:", error);
       res.status(500).json({ message: "Failed to fetch employee sales data" });
     }
   });
 
   // Sales channel sales data
   // Sales Channel Sales API
-app.get('/api/sales-channel-sales/:startDate/:endDate/:seller/:channel', async (req, res) => {
-  try {
-    const { startDate, endDate, seller, channel } = req.params;
+  app.get(
+    "/api/sales-channel-sales/:startDate/:endDate/:seller/:channel",
+    async (req, res) => {
+      try {
+        const { startDate, endDate, seller, channel } = req.params;
 
-    // Use storage instead of direct db queries
-    const orders = await storage.getOrders();
-    const filteredOrders = orders.filter(order => {
-      const orderDate = new Date(order.orderedAt);
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+        // Use storage instead of direct db queries
+        const orders = await storage.getOrders();
+        const filteredOrders = orders.filter((order) => {
+          const orderDate = new Date(order.orderedAt);
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
 
-      const dateMatch = orderDate >= start && orderDate <= end;
-      const statusMatch = order.status === 'paid';
-      const sellerMatch = seller === 'all' || order.employeeId?.toString() === seller;
-      const channelMatch = channel === 'all' || order.salesChannel === channel;
+          const dateMatch = orderDate >= start && orderDate <= end;
+          const statusMatch = order.status === "paid";
+          const sellerMatch =
+            seller === "all" || order.employeeId?.toString() === seller;
+          const channelMatch =
+            channel === "all" || order.salesChannel === channel;
 
-      return dateMatch && statusMatch && sellerMatch && channelMatch;
-    });
+          return dateMatch && statusMatch && sellerMatch && channelMatch;
+        });
 
-    const salesData = [{
-      salesChannelName: 'Direct Sales',
-      revenue: filteredOrders.reduce((sum, order) => sum + Number(order.total), 0),
-      returnValue: 0,
-      netRevenue: filteredOrders.reduce((sum, order) => sum + Number(order.total), 0)
-    }];
+        const salesData = [
+          {
+            salesChannelName: "Direct Sales",
+            revenue: filteredOrders.reduce(
+              (sum, order) => sum + Number(order.total),
+              0,
+            ),
+            returnValue: 0,
+            netRevenue: filteredOrders.reduce(
+              (sum, order) => sum + Number(order.total),
+              0,
+            ),
+          },
+        ];
 
-    res.json(salesData);
-  } catch (error) {
-    console.error('Error fetching sales channel sales data:', error);
-    res.status(500).json({ error: 'Failed to fetch sales channel sales data' });
-  }
-});
+        res.json(salesData);
+      } catch (error) {
+        console.error("Error fetching sales channel sales data:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to fetch sales channel sales data" });
+      }
+    },
+  );
 
-// Sales Channel Profit API
-app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async (req, res) => {
-  try {
-    const { startDate, endDate, seller, channel } = req.params;
+  // Sales Channel Profit API
+  app.get(
+    "/api/sales-channel-profit/:startDate/:endDate/:seller/:channel",
+    async (req, res) => {
+      try {
+        const { startDate, endDate, seller, channel } = req.params;
 
-    // Use storage instead of direct db queries
-    const orders = await storage.getOrders();
-    const filteredOrders = orders.filter(order => {
-      const orderDate = new Date(order.orderedAt);
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+        // Use storage instead of direct db queries
+        const orders = await storage.getOrders();
+        const filteredOrders = orders.filter((order) => {
+          const orderDate = new Date(order.orderedAt);
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
 
-      const dateMatch = orderDate >= start && orderDate <= end;
-      const statusMatch = order.status === 'paid';
-      const sellerMatch = seller === 'all' || order.employeeId?.toString() === seller;
-      const channelMatch = channel === 'all' || order.salesChannel === channel;
+          const dateMatch = orderDate >= start && orderDate <= end;
+          const statusMatch = order.status === "paid";
+          const sellerMatch =
+            seller === "all" || order.employeeId?.toString() === seller;
+          const channelMatch =
+            channel === "all" || order.salesChannel === channel;
 
-      return dateMatch && statusMatch && sellerMatch && channelMatch;
-    });
+          return dateMatch && statusMatch && sellerMatch && channelMatch;
+        });
 
-    const totalAmount = filteredOrders.reduce((sum, order) => sum + Number(order.total), 0);
-    const profitData = [{
-      salesChannelName: 'Direct Sales',
-      totalAmount: totalAmount,
-      discount: 0,
-      revenue: totalAmount,
-      returnValue: 0,
-      netRevenue: totalAmount,
-      totalCost: totalAmount * 0.6,
-      grossProfit: totalAmount * 0.4,
-      platformFee: 0,
-      netProfit: totalAmount * 0.4
-    }];
+        const totalAmount = filteredOrders.reduce(
+          (sum, order) => sum + Number(order.total),
+          0,
+        );
+        const profitData = [
+          {
+            salesChannelName: "Direct Sales",
+            totalAmount: totalAmount,
+            discount: 0,
+            revenue: totalAmount,
+            returnValue: 0,
+            netRevenue: totalAmount,
+            totalCost: totalAmount * 0.6,
+            grossProfit: totalAmount * 0.4,
+            platformFee: 0,
+            netProfit: totalAmount * 0.4,
+          },
+        ];
 
-    res.json(profitData);
-  } catch (error) {
-    console.error('Error fetching sales channel profit data:', error);
-    res.status(500).json({ error: 'Failed to fetch sales channel profit data' });
-  }
-});
+        res.json(profitData);
+      } catch (error) {
+        console.error("Error fetching sales channel profit data:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to fetch sales channel profit data" });
+      }
+    },
+  );
 
   // Sales channel sales data
-  app.get("/api/sales-channel-sales/:startDate/:endDate/:sellerId/:salesChannel", async (req, res) => {
-    try {
-      const { startDate, endDate, sellerId, salesChannel } = req.params;
+  app.get(
+    "/api/sales-channel-sales/:startDate/:endDate/:sellerId/:salesChannel",
+    async (req, res) => {
+      try {
+        const { startDate, endDate, sellerId, salesChannel } = req.params;
 
-      let query = `
+        let query = `
         SELECT 
           COALESCE(t.salesChannel, 'Bán trực tiếp') as salesChannelName,
           e.name as sellerName,
@@ -2035,43 +2183,51 @@ app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async 
         WHERE DATE(t.createdAt) BETWEEN ? AND ?
       `;
 
-      const params = [startDate, endDate];
+        const params = [startDate, endDate];
 
-      if (sellerId !== 'all') {
-        query += ' AND t.employeeId = ?';
-        params.push(sellerId);
-      }
-
-      if (salesChannel !== 'all') {
-        if (salesChannel === 'direct') {
-          query += ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';
-        } else {
-          query += ' AND t.salesChannel IS NOT NULL AND t.salesChannel != "Bán trực tiếp"';
+        if (sellerId !== "all") {
+          query += " AND t.employeeId = ?";
+          params.push(sellerId);
         }
-      }
 
-      query += ' GROUP BY COALESCE(t.salesChannel, "Bán trực tiếp"), t.employeeId ORDER BY netRevenue DESC';
+        if (salesChannel !== "all") {
+          if (salesChannel === "direct") {
+            query +=
+              ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';
+          } else {
+            query +=
+              ' AND t.salesChannel IS NOT NULL AND t.salesChannel != "Bán trực tiếp"';
+          }
+        }
 
-      const salesData = await new Promise((resolve, reject) => {
-        db.all(query, params, (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
+        query +=
+          ' GROUP BY COALESCE(t.salesChannel, "Bán trực tiếp"), t.employeeId ORDER BY netRevenue DESC';
+
+        const salesData = await new Promise((resolve, reject) => {
+          db.all(query, params, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+          });
         });
-      });
 
-      res.json(salesData);
-    } catch (error) {
-      console.error("Error fetching sales channel sales data:", error);
-      res.status(500).json({ error: "Failed to fetch sales channel sales data" });
-    }
-  });
+        res.json(salesData);
+      } catch (error) {
+        console.error("Error fetching sales channel sales data:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to fetch sales channel sales data" });
+      }
+    },
+  );
 
   // Sales channel profit data
-  app.get("/api/sales-channel-profit/:startDate/:endDate/:sellerId/:salesChannel", async (req, res) => {
-    try {
-      const { startDate, endDate, sellerId, salesChannel } = req.params;
+  app.get(
+    "/api/sales-channel-profit/:startDate/:endDate/:sellerId/:salesChannel",
+    async (req, res) => {
+      try {
+        const { startDate, endDate, sellerId, salesChannel } = req.params;
 
-      let query = `
+        let query = `
         SELECT 
           COALESCE(t.salesChannel, 'Bán trực tiếp') as salesChannelName,
           e.name as sellerName,
@@ -2091,42 +2247,59 @@ app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async 
         WHERE DATE(t.createdAt) BETWEEN ? AND ?
       `;
 
-      const params = [startDate, endDate];
+        const params = [startDate, endDate];
 
-      if (sellerId !== 'all') {
-        query += ' AND t.employeeId = ?';
-        params.push(sellerId);
-      }
-
-      if (salesChannel !== 'all') {
-        if (salesChannel === 'direct') {
-          query += ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';        } else {
-          query += ' AND t.salesChannel IS NOT NULL AND t.salesChannel != "Bán trực tiếp"';
+        if (sellerId !== "all") {
+          query += " AND t.employeeId = ?";
+          params.push(sellerId);
         }
-      }
 
-      query += ' GROUP BY COALESCE(t.salesChannel, "Bán trực tiếp"), t.employeeId ORDER BY netProfit DESC';
+        if (salesChannel !== "all") {
+          if (salesChannel === "direct") {
+            query +=
+              ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';
+          } else {
+            query +=
+              ' AND t.salesChannel IS NOT NULL AND t.salesChannel != "Bán trực tiếp"';
+          }
+        }
 
-      const profitData = await new Promise((resolve, reject) => {
-        db.all(query, params, (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
+        query +=
+          ' GROUP BY COALESCE(t.salesChannel, "Bán trực tiếp"), t.employeeId ORDER BY netProfit DESC';
+
+        const profitData = await new Promise((resolve, reject) => {
+          db.all(query, params, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+          });
         });
-      });
 
-      res.json(profitData);
-    } catch (error) {
-      console.error("Error fetching sales channel profit data:", error);
-      res.status(500).json({ error: "Failed to fetch sales channel profit data" });
-    }
-  });
+        res.json(profitData);
+      } catch (error) {
+        console.error("Error fetching sales channel profit data:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to fetch sales channel profit data" });
+      }
+    },
+  );
 
   // Sales channel products data
-  app.get("/api/sales-channel-products/:startDate/:endDate/:sellerId/:salesChannel/:productSearch/:productType/:categoryId", async (req, res) => {
-    try {
-      const { startDate, endDate, sellerId, salesChannel, productSearch, productType, categoryId } = req.params;
+  app.get(
+    "/api/sales-channel-products/:startDate/:endDate/:sellerId/:salesChannel/:productSearch/:productType/:categoryId",
+    async (req, res) => {
+      try {
+        const {
+          startDate,
+          endDate,
+          sellerId,
+          salesChannel,
+          productSearch,
+          productType,
+          categoryId,
+        } = req.params;
 
-      let query = `
+        let query = `
         SELECT 
           COALESCE(t.salesChannel, 'Bán trực tiếp') as salesChannelName,
           e.name as sellerName,
@@ -2145,205 +2318,260 @@ app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async 
         WHERE DATE(t.createdAt) BETWEEN ? AND ? AND ti.isReturn != 1
       `;
 
-      const params = [startDate, endDate];
+        const params = [startDate, endDate];
 
-      if (sellerId !== 'all') {
-        query += ' AND t.employeeId = ?';
-        params.push(sellerId);
-      }
-
-      if (salesChannel !== 'all') {
-        if (salesChannel === 'direct') {
-          query += ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';
-        } else {
-          query += ' AND t.salesChannel IS NOT NULL AND t.salesChannel != "Bán trực tiếp"';
+        if (sellerId !== "all") {
+          query += " AND t.employeeId = ?";
+          params.push(sellerId);
         }
-      }
 
-      if (productSearch !== 'all' && productSearch) {
-        query += ' AND (p.name LIKE ? OR p.sku LIKE ?)';
-        params.push(`%${productSearch}%`, `%${productSearch}%`);
-      }
+        if (salesChannel !== "all") {
+          if (salesChannel === "direct") {
+            query +=
+              ' AND (t.salesChannel IS NULL OR t.salesChannel = "Bán trực tiếp")';
+          } else {
+            query +=
+              ' AND t.salesChannel IS NOT NULL AND t.salesChannel != "Bán trực tiếp"';
+          }
+        }
 
-      if (productType !== 'all') {
-        query += ' AND p.type = ?';
-        params.push(productType);
-      }
+        if (productSearch !== "all" && productSearch) {
+          query += " AND (p.name LIKE ? OR p.sku LIKE ?)";
+          params.push(`%${productSearch}%`, `%${productSearch}%`);
+        }
 
-      if (categoryId !== 'all') {
-        query += ' AND p.categoryId = ?';
-        params.push(categoryId);
-      }
+        if (productType !== "all") {
+          query += " AND p.type = ?";
+          params.push(productType);
+        }
 
-      query += ' GROUP BY COALESCE(t.salesChannel, "Bán trực tiếp"), t.employeeId, p.id ORDER BY netRevenue DESC';
+        if (categoryId !== "all") {
+          query += " AND p.categoryId = ?";
+          params.push(categoryId);
+        }
 
-      const productsData = await new Promise((resolve, reject) => {
-        db.all(query, params, (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
+        query +=
+          ' GROUP BY COALESCE(t.salesChannel, "Bán trực tiếp"), t.employeeId, p.id ORDER BY netRevenue DESC';
+
+        const productsData = await new Promise((resolve, reject) => {
+          db.all(query, params, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+          });
         });
-      });
 
-      res.json(productsData);
-    } catch (error) {
-      console.error("Error fetching sales channel products data:", error);
-      res.status(500).json({ error: "Failed to fetch sales channel products data" });
-    }
-  });
+        res.json(productsData);
+      } catch (error) {
+        console.error("Error fetching sales channel products data:", error);
+        res
+          .status(500)
+          .json({ error: "Failed to fetch sales channel products data" });
+      }
+    },
+  );
 
   // Financial report endpoints
-  app.get("/api/financial-summary/:period/:year/:month?/:quarter?", async (req, res) => {
-    try {
-      const { period, year, month, quarter } = req.params;
+  app.get(
+    "/api/financial-summary/:period/:year/:month?/:quarter?",
+    async (req, res) => {
+      try {
+        const { period, year, month, quarter } = req.params;
 
-      // Get transactions for financial calculations
-      const transactions = await storage.getTransactions();
+        // Get transactions for financial calculations
+        const transactions = await storage.getTransactions();
 
-      let filteredTransactions = transactions.filter(transaction => {
-        const date = new Date(transaction.createdAt);
-        const transactionYear = date.getFullYear();
+        let filteredTransactions = transactions.filter((transaction) => {
+          const date = new Date(transaction.createdAt);
+          const transactionYear = date.getFullYear();
 
-        if (period === 'yearly') {
-          return transactionYear === parseInt(year);
-        } else if (period === 'monthly') {
-          const transactionMonth = date.getMonth() + 1;
-          return transactionYear === parseInt(year) && transactionMonth === parseInt(month);
-        } else if (period === 'quarterly') {
-          const transactionQuarter = Math.floor(date.getMonth() / 3) + 1;
-          return transactionYear === parseInt(year) && transactionQuarter === parseInt(quarter);
-        }
-        return false;
-      });
+          if (period === "yearly") {
+            return transactionYear === parseInt(year);
+          } else if (period === "monthly") {
+            const transactionMonth = date.getMonth() + 1;
+            return (
+              transactionYear === parseInt(year) &&
+              transactionMonth === parseInt(month)
+            );
+          } else if (period === "quarterly") {
+            const transactionQuarter = Math.floor(date.getMonth() / 3) + 1;
+            return (
+              transactionYear === parseInt(year) &&
+              transactionQuarter === parseInt(quarter)
+            );
+          }
+          return false;
+        });
 
-      // Calculate financial metrics
-      const totalIncome = filteredTransactions.reduce((sum, t) => sum + Number(t.total), 0);
-      const totalExpenses = totalIncome * 0.6; // Mock expense calculation (60% of income)
-      const grossProfit = totalIncome - totalExpenses;
-      const operatingExpenses = totalIncome * 0.15; // Mock operating expenses (15% of income)
-      const netIncome = grossProfit - operatingExpenses;
-      const profitMargin = totalIncome > 0 ? (netIncome / totalIncome) * 100 : 0;
+        // Calculate financial metrics
+        const totalIncome = filteredTransactions.reduce(
+          (sum, t) => sum + Number(t.total),
+          0,
+        );
+        const totalExpenses = totalIncome * 0.6; // Mock expense calculation (60% of income)
+        const grossProfit = totalIncome - totalExpenses;
+        const operatingExpenses = totalIncome * 0.15; // Mock operating expenses (15% of income)
+        const netIncome = grossProfit - operatingExpenses;
+        const profitMargin =
+          totalIncome > 0 ? (netIncome / totalIncome) * 100 : 0;
 
-      const summary = {
-        totalIncome,
-        totalExpenses,
-        grossProfit,
-        operatingExpenses,
-        netIncome,
-        profitMargin,
-        transactionCount: filteredTransactions.length
-      };
+        const summary = {
+          totalIncome,
+          totalExpenses,
+          grossProfit,
+          operatingExpenses,
+          netIncome,
+          profitMargin,
+          transactionCount: filteredTransactions.length,
+        };
 
-      res.json(summary);
-    } catch (error) {
-      console.error("Error fetching financial summary:", error);
-      res.status(500).json({ error: "Failed to fetch financial summary" });
-    }
-  });
+        res.json(summary);
+      } catch (error) {
+        console.error("Error fetching financial summary:", error);
+        res.status(500).json({ error: "Failed to fetch financial summary" });
+      }
+    },
+  );
 
-  app.get("/api/income-breakdown/:period/:year/:month?/:quarter?", async (req, res) => {
-    try {
-      const { period, year, month, quarter } = req.params;
+  app.get(
+    "/api/income-breakdown/:period/:year/:month?/:quarter?",
+    async (req, res) => {
+      try {
+        const { period, year, month, quarter } = req.params;
 
-      const transactions = await storage.getTransactions();
+        const transactions = await storage.getTransactions();
 
-      let filteredTransactions = transactions.filter(transaction => {
-        const date = new Date(transaction.createdAt);
-        const transactionYear = date.getFullYear();
+        let filteredTransactions = transactions.filter((transaction) => {
+          const date = new Date(transaction.createdAt);
+          const transactionYear = date.getFullYear();
 
-        if (period === 'yearly') {
-          return transactionYear === parseInt(year);
-        } else if (period === 'monthly') {
-          const transactionMonth = date.getMonth() + 1;
-          return transactionYear === parseInt(year) && transactionMonth === parseInt(month);
-        } else if (period === 'quarterly') {
-          const transactionQuarter = Math.floor(date.getMonth() / 3) + 1;
-          return transactionYear === parseInt(year) && transactionQuarter === parseInt(quarter);
-        }
-        return false;
-      });
+          if (period === "yearly") {
+            return transactionYear === parseInt(year);
+          } else if (period === "monthly") {
+            const transactionMonth = date.getMonth() + 1;
+            return (
+              transactionYear === parseInt(year) &&
+              transactionMonth === parseInt(month)
+            );
+          } else if (period === "quarterly") {
+            const transactionQuarter = Math.floor(date.getMonth() / 3) + 1;
+            return (
+              transactionYear === parseInt(year) &&
+              transactionQuarter === parseInt(quarter)
+            );
+          }
+          return false;
+        });
 
-      // Group by payment method
-      const incomeByMethod = {};
-      filteredTransactions.forEach(transaction => {
-        const method = transaction.paymentMethod || 'cash';
-        incomeByMethod[method] = (incomeByMethod[method] || 0) + Number(transaction.total);
-      });
+        // Group by payment method
+        const incomeByMethod = {};
+        filteredTransactions.forEach((transaction) => {
+          const method = transaction.paymentMethod || "cash";
+          incomeByMethod[method] =
+            (incomeByMethod[method] || 0) + Number(transaction.total);
+        });
 
-      const breakdown = Object.entries(incomeByMethod).map(([method, amount]) => ({
-        category: method,
-        amount: amount,
-        percentage: filteredTransactions.length > 0 ? (amount / filteredTransactions.reduce((sum, t) => sum + Number(t.total), 0)) * 100 : 0
-      }));
+        const breakdown = Object.entries(incomeByMethod).map(
+          ([method, amount]) => ({
+            category: method,
+            amount: amount,
+            percentage:
+              filteredTransactions.length > 0
+                ? (amount /
+                    filteredTransactions.reduce(
+                      (sum, t) => sum + Number(t.total),
+                      0,
+                    )) *
+                  100
+                : 0,
+          }),
+        );
 
-      res.json(breakdown);
-    } catch (error) {
-      console.error("Error fetching income breakdown:", error);
-      res.status(500).json({ error: "Failed to fetch income breakdown" });
-    }
-  });
+        res.json(breakdown);
+      } catch (error) {
+        console.error("Error fetching income breakdown:", error);
+        res.status(500).json({ error: "Failed to fetch income breakdown" });
+      }
+    },
+  );
 
-  app.get("/api/expense-breakdown/:period/:year/:month?/:quarter?", async (req, res) => {
-    try {
-      // Mock expense data since we don't have a dedicated expenses table
-      const mockExpenses = [
-        { category: 'Cost of Goods Sold', amount: 2500000, percentage: 60 },
-        { category: 'Rent', amount: 500000, percentage: 12 },
-        { category: 'Utilities', amount: 200000, percentage: 5 },
-        { category: 'Staff Salaries', amount: 800000, percentage: 19 },
-        { category: 'Marketing', amount: 100000, percentage: 2 },
-        { category: 'Other', amount: 83333, percentage: 2 }
-      ];
+  app.get(
+    "/api/expense-breakdown/:period/:year/:month?/:quarter?",
+    async (req, res) => {
+      try {
+        // Mock expense data since we don't have a dedicated expenses table
+        const mockExpenses = [
+          { category: "Cost of Goods Sold", amount: 2500000, percentage: 60 },
+          { category: "Rent", amount: 500000, percentage: 12 },
+          { category: "Utilities", amount: 200000, percentage: 5 },
+          { category: "Staff Salaries", amount: 800000, percentage: 19 },
+          { category: "Marketing", amount: 100000, percentage: 2 },
+          { category: "Other", amount: 83333, percentage: 2 },
+        ];
 
-      res.json(mockExpenses);
-    } catch (error) {
-      console.error("Error fetching expense breakdown:", error);
-      res.status(500).json({ error: "Failed to fetch expense breakdown" });
-    }
-  });
+        res.json(mockExpenses);
+      } catch (error) {
+        console.error("Error fetching expense breakdown:", error);
+        res.status(500).json({ error: "Failed to fetch expense breakdown" });
+      }
+    },
+  );
 
-  app.get("/api/cash-flow/:period/:year/:month?/:quarter?", async (req, res) => {
-    try {
-      const { period, year, month, quarter } = req.params;
+  app.get(
+    "/api/cash-flow/:period/:year/:month?/:quarter?",
+    async (req, res) => {
+      try {
+        const { period, year, month, quarter } = req.params;
 
-      const transactions = await storage.getTransactions();
+        const transactions = await storage.getTransactions();
 
-      let filteredTransactions = transactions.filter(transaction => {
-        const date = new Date(transaction.createdAt);
-        const transactionYear = date.getFullYear();
+        let filteredTransactions = transactions.filter((transaction) => {
+          const date = new Date(transaction.createdAt);
+          const transactionYear = date.getFullYear();
 
-        if (period === 'yearly') {
-          return transactionYear === parseInt(year);
-        } else if (period === 'monthly') {
-          const transactionMonth = date.getMonth() + 1;
-          return transactionYear === parseInt(year) && transactionMonth === parseInt(month);
-        } else if (period === 'quarterly') {
-          const transactionQuarter = Math.floor(date.getMonth() / 3) + 1;
-          return transactionYear === parseInt(year) && transactionQuarter === parseInt(quarter);
-        }
-        return false;
-      });
+          if (period === "yearly") {
+            return transactionYear === parseInt(year);
+          } else if (period === "monthly") {
+            const transactionMonth = date.getMonth() + 1;
+            return (
+              transactionYear === parseInt(year) &&
+              transactionMonth === parseInt(month)
+            );
+          } else if (period === "quarterly") {
+            const transactionQuarter = Math.floor(date.getMonth() / 3) + 1;
+            return (
+              transactionYear === parseInt(year) &&
+              transactionQuarter === parseInt(quarter)
+            );
+          }
+          return false;
+        });
 
-      const totalIncome = filteredTransactions.reduce((sum, t) => sum + Number(t.total), 0);
+        const totalIncome = filteredTransactions.reduce(
+          (sum, t) => sum + Number(t.total),
+          0,
+        );
 
-      // Mock cash flow calculations
-      const operatingCashFlow = totalIncome * 0.25; // 25% of income
-      const investingCashFlow = -totalIncome * 0.05; // 5% negative (investments)
-      const financingCashFlow = totalIncome * 0.02; // 2% positive (financing)
-      const netCashFlow = operatingCashFlow + investingCashFlow + financingCashFlow;
+        // Mock cash flow calculations
+        const operatingCashFlow = totalIncome * 0.25; // 25% of income
+        const investingCashFlow = -totalIncome * 0.05; // 5% negative (investments)
+        const financingCashFlow = totalIncome * 0.02; // 2% positive (financing)
+        const netCashFlow =
+          operatingCashFlow + investingCashFlow + financingCashFlow;
 
-      const cashFlow = {
-        operatingCashFlow,
-        investingCashFlow,
-        financingCashFlow,
-        netCashFlow
-      };
+        const cashFlow = {
+          operatingCashFlow,
+          investingCashFlow,
+          financingCashFlow,
+          netCashFlow,
+        };
 
-      res.json(cashFlow);
-    } catch (error) {
-      console.error("Error fetching cash flow:", error);
-      res.status(500).json({ error: "Failed to fetch cash flow" });
-    }
-  });
+        res.json(cashFlow);
+      } catch (error) {
+        console.error("Error fetching cash flow:", error);
+        res.status(500).json({ error: "Failed to fetch cash flow" });
+      }
+    },
+  );
 
   // QR Payment API proxy endpoint
   app.post("/api/pos/create-qr", async (req, res) => {
@@ -2352,36 +2580,44 @@ app.get('/api/sales-channel-profit/:startDate/:endDate/:seller/:channel', async 
       const { bankCode, clientID } = req.query;
       const body = req.body;
 
-      console.log('CreateQRPos request:', { bankCode, clientID, body });
+      console.log("CreateQRPos request:", { bankCode, clientID, body });
 
       // Use external server URL
-      const apiBaseUrl = process.env.QR_API_BASE_URL || 'http://1.55.212.135:9335';
-      const response = await fetch(`${apiBaseUrl}/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
+      const apiBaseUrl =
+        process.env.QR_API_BASE_URL || "http://1.55.212.135:9335";
+      const response = await fetch(
+        `${apiBaseUrl}/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify(body),
         },
-        body: JSON.stringify(body)
-      });
+      );
 
       if (!response.ok) {
-        console.error('CreateQRPos API error:', response.status, response.statusText);
-        return res.status(response.status).json({ 
-          error: 'Failed to create QR payment',
-          details: `API returned ${response.status}: ${response.statusText}`
+        console.error(
+          "CreateQRPos API error:",
+          response.status,
+          response.statusText,
+        );
+        return res.status(response.status).json({
+          error: "Failed to create QR payment",
+          details: `API returned ${response.status}: ${response.statusText}`,
         });
       }
 
       const result = await response.json();
-      console.log('CreateQRPos response:', result);
+      console.log("CreateQRPos response:", result);
 
       res.json(result);
     } catch (error) {
-      console.error('CreateQRPos proxy error:', error);
-      res.status(500).json({ 
-        error: 'Failed to create QR payment',
-        details: error.message 
+      console.error("CreateQRPos proxy error:", error);
+      res.status(500).json({
+        error: "Failed to create QR payment",
+        details: error.message,
       });
     }
   });

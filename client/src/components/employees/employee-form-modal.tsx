@@ -134,19 +134,22 @@ export function EmployeeFormModal({
       });
     },
     onError: (error: any) => {
-      console.log("Error adding employee:", error);
+      console.log("Received error:", error);
       let errorMessage = t("employees.addEmployeeError");
-
-      if (error?.code === "DUPLICATE_EMAIL") {
-        errorMessage =
-          "Email này đã được sử dụng bởi nhân viên khác. Vui lòng sử dụng email khác.";
-        // Set error on the email field
-        form.setError("email", {
-          type: "manual",
-          message: "Email đã tồn tại trong hệ thống",
-        });
+      // Checking for the error in the expected format
+      if (error instanceof Error && error.message) {
+        const errorData = JSON.parse(
+          error.message.slice(error.message.indexOf("{")),
+        ); // Extract JSON part of the message
+        if (errorData.code === "DUPLICATE_EMAIL") {
+          errorMessage = "Email đã được sử dụng.";
+          // Set error on the email field
+          form.setError("email", {
+            type: "manual",
+            message: "Email đã tồn tại trong hệ thống",
+          });
+        }
       }
-
       toast({
         title: t("common.error"),
         description: errorMessage,
