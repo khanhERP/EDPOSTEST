@@ -457,10 +457,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const handleQRPaymentConfirm = () => {
     if (selectedOrder && selectedPaymentMethod) {
-      completePaymentMutation.mutate({ 
-        orderId: selectedOrder.id, 
-        paymentMethod: selectedPaymentMethod.key 
-      });
+      // Check if this is a mixed payment (from mixed payment modal)
+      if (mixedPaymentData && selectedPaymentMethod.key === 'transfer') {
+        mixedPaymentMutation.mutate({
+          customerId: mixedPaymentData.customerId,
+          points: mixedPaymentData.pointsToUse,
+          orderId: mixedPaymentData.orderId,
+          paymentMethod: 'transfer'
+        });
+      } else {
+        // Regular payment
+        completePaymentMutation.mutate({ 
+          orderId: selectedOrder.id, 
+          paymentMethod: selectedPaymentMethod.key 
+        });
+      }
       setShowQRPayment(false);
       setQrCodeUrl("");
       setSelectedPaymentMethod(null);
@@ -471,7 +482,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     setShowQRPayment(false);
     setQrCodeUrl("");
     setSelectedPaymentMethod(null);
-    setPaymentMethodsOpen(true);
+    
+    // Check if this came from mixed payment modal
+    if (mixedPaymentData) {
+      setMixedPaymentOpen(true);
+    } else {
+      setPaymentMethodsOpen(true);
+    }
   };
 
   const handleEditOrder = (order: Order, table: Table) => {
@@ -1275,7 +1292,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         
                         console.log('CreateQRPos API response for transfer:', qrResponse);
 
-                        // Generate QR code from the received QR data
+                        // Generate QR code from the received QR data and show QR modal
                         if (qrResponse.qrData) {
                           let qrContent = qrResponse.qrData;
                           try {
@@ -1295,17 +1312,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             }
                           });
                           
-                          // Show QR code in a temporary modal or alert
-                          const confirmed = window.confirm(`QR Code tạo thành công cho chuyển khoản ${mixedPaymentData.remainingAmount.toLocaleString()} ₫. Bấm OK để xác nhận thanh toán.`);
-                          
-                          if (confirmed) {
-                            mixedPaymentMutation.mutate({
-                              customerId: mixedPaymentData.customerId,
-                              points: mixedPaymentData.pointsToUse,
-                              orderId: mixedPaymentData.orderId,
-                              paymentMethod: 'transfer'
-                            });
-                          }
+                          // Set QR code data and show QR payment modal
+                          setQrCodeUrl(qrUrl);
+                          setSelectedPaymentMethod({ 
+                            key: 'transfer', 
+                            method: { name: 'Chuyển khoản', icon: '💳' } 
+                          });
+                          setShowQRPayment(true);
+                          setMixedPaymentOpen(false);
                         } else {
                           console.error('No QR data received from API for transfer');
                           // Fallback to direct payment
