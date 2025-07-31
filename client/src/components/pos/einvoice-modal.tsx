@@ -80,14 +80,118 @@ export function EInvoiceModal({
     }));
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     // Validate required fields
     if (!formData.invoiceProvider || !formData.taxCode || !formData.customerName) {
       alert("Vui lòng điền đầy đủ thông tin bắt buộc");
       return;
     }
 
-    onConfirm(formData);
+    try {
+      // Find the provider value from the EINVOICE_PROVIDERS mapping
+      const provider = EINVOICE_PROVIDERS.find(p => p.name === formData.invoiceProvider);
+      const providerId = provider ? parseInt(provider.value) : 1;
+
+      // Prepare the PublishInvoiceRequest
+      const publishRequest = {
+        Login: {
+          ProviderId: providerId,
+          url: "https://infoerpvn.com:9442", // You may want to make this configurable
+          ma_dvcs: formData.taxCode,
+          username: "admin", // You may want to get this from settings
+          password: "password", // You may want to get this from settings
+          TenantId: ""
+        },
+        transactionID_old: null,
+        transactionID: `TXN-${Date.now()}`,
+        numbtext: null,
+        invRef: `INV-${Date.now()}`,
+        poNo: null,
+        invSubTotal: total,
+        invVatRate: 10, // 10% VAT rate
+        invVatAmount: total * 0.1,
+        invDiscAmount: 0,
+        invTotalAmount: total * 1.1,
+        PaidTp: "TM", // Cash payment
+        Note: "",
+        Extra1: "",
+        HdNo: "",
+        CreatedDate: new Date().toISOString(),
+        clsfNo: formData.invoiceTemplate || "01GTKT0/001",
+        SpcfNo: "",
+        TemplateCode: "",
+        buyerNotGetInvoice: 0,
+        ExchCd: "VND",
+        ExchRt: 1,
+        BankAccount: "",
+        BankName: "",
+        dispatchID: null,
+        transName: null,
+        transType: null,
+        exportAdd: null,
+        importAdd: null,
+        contractNo: null,
+        shipper: null,
+        econContNo: null,
+        econContDt: null,
+        Ikey: null,
+        CertString: null,
+        Customer: {
+          CustCd: formData.taxCode,
+          CustNm: formData.customerName,
+          CustCompany: formData.customerName,
+          TaxCode: formData.taxCode,
+          CustCity: "",
+          CustDistrictName: "",
+          CustAddrs: formData.address || "",
+          CustPhone: formData.phoneNumber || "",
+          CustBankAccount: "",
+          CustBankName: "",
+          Email: formData.email || "",
+          EmailCC: ""
+        },
+        Products: [{
+          ItmCd: "PRODUCT001",
+          ItmName: "Bán hàng POS",
+          ItmKnd: 1,
+          UnitNm: "Cái",
+          Qty: 1,
+          Unprc: total,
+          Amt: total,
+          DiscRate: 0,
+          DiscAmt: 0,
+          VatRt: "10",
+          VatAmt: total * 0.1,
+          TotalAmt: total * 1.1
+        }]
+      };
+
+      console.log("Publishing invoice with data:", publishRequest);
+
+      // Call the API
+      const response = await fetch("https://infoerpvn.com:9442/api/invoice/publish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "token": "EnURbbnPhUm4GjNgE4Ogrw=="
+        },
+        body: JSON.stringify(publishRequest)
+      });
+
+      if (!response.ok) {
+        throw new Error(`API call failed: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log("Invoice published successfully:", result);
+
+      alert("Hóa đơn điện tử đã được phát hành thành công!");
+      onConfirm(formData);
+
+    } catch (error) {
+      console.error("Error publishing invoice:", error);
+      alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error.message}`);
+    }
   };
 
   const handleCancel = () => {
