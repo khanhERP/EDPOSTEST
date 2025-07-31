@@ -203,12 +203,26 @@ export function ProductManagerModal({
 
   // Helper functions for currency formatting
   const formatCurrency = (value: string | number): string => {
-    const num = typeof value === 'string' ? parseFloat(value.replace(/\./g, '')) : value;
-    if (isNaN(num)) return '';
-    return num.toLocaleString('vi-VN');
+    if (typeof value === 'string') {
+      // If it's already formatted, just return it
+      if (value.includes('.')) {
+        const num = parseFloat(value.replace(/\./g, ''));
+        if (isNaN(num)) return '';
+        return num.toLocaleString('vi-VN');
+      }
+      // If it's a plain number string
+      const num = parseFloat(value);
+      if (isNaN(num)) return '';
+      return num.toLocaleString('vi-VN');
+    }
+    
+    // If it's a number
+    if (isNaN(value)) return '';
+    return value.toLocaleString('vi-VN');
   };
 
   const parseCurrency = (value: string): number => {
+    // Remove all dots and parse as number
     const cleaned = value.replace(/\./g, '');
     return parseFloat(cleaned) || 0;
   };
@@ -671,18 +685,16 @@ export function ProductManagerModal({
                                 // Only allow numbers and dots
                                 const sanitized = value.replace(/[^0-9.]/g, '');
                                 
-                                // Parse and reformat
-                                const num = parseCurrency(sanitized);
-                                if (!isNaN(num) && num >= 0) {
-                                  field.onChange(formatCurrency(num));
-                                } else if (sanitized === '') {
-                                  field.onChange('');
-                                }
+                                // Just update with sanitized value, format on blur
+                                field.onChange(sanitized);
                               }}
                               onBlur={() => {
-                                const num = parseCurrency(field.value);
-                                if (!isNaN(num) && num > 0) {
-                                  field.onChange(formatCurrency(num));
+                                const value = field.value;
+                                if (value && value.trim() !== '') {
+                                  const num = parseCurrency(value);
+                                  if (!isNaN(num) && num >= 0) {
+                                    field.onChange(formatCurrency(num));
+                                  }
                                 }
                               }}
                             />
