@@ -201,6 +201,18 @@ export function ProductManagerModal({
     },
   });
 
+  // Helper functions for currency formatting
+  const formatCurrency = (value: string | number): string => {
+    const num = typeof value === 'string' ? parseFloat(value.replace(/\./g, '')) : value;
+    if (isNaN(num)) return '';
+    return num.toLocaleString('vi-VN');
+  };
+
+  const parseCurrency = (value: string): number => {
+    const cleaned = value.replace(/\./g, '');
+    return parseFloat(cleaned) || 0;
+  };
+
   const onSubmit = (data: z.infer<typeof productFormSchema>) => {
     console.log("Form submission data:", data);
 
@@ -218,7 +230,7 @@ export function ProductManagerModal({
     const transformedData = {
       name: data.name.trim(),
       sku: data.sku.trim().toUpperCase(),
-      price: data.price.toString(),
+      price: parseCurrency(data.price).toString(),
       stock: Number(data.stock) || 0,
       categoryId: Number(data.categoryId),
       productType: Number(data.productType) || 1,
@@ -241,7 +253,7 @@ export function ProductManagerModal({
     form.reset({
       name: product.name,
       sku: product.sku,
-      price: product.price,
+      price: formatCurrency(product.price),
       stock: product.stock,
       categoryId: product.categoryId,
       productType: product.productType || 1,
@@ -652,9 +664,27 @@ export function ProductManagerModal({
                           <FormControl>
                             <Input
                               {...field}
-                              type="number"
-                              step="0.01"
-                              placeholder={t("tables.pricePlaceholder")}
+                              type="text"
+                              placeholder="100.000"
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                // Only allow numbers and dots
+                                const sanitized = value.replace(/[^0-9.]/g, '');
+                                
+                                // Parse and reformat
+                                const num = parseCurrency(sanitized);
+                                if (!isNaN(num) && num >= 0) {
+                                  field.onChange(formatCurrency(num));
+                                } else if (sanitized === '') {
+                                  field.onChange('');
+                                }
+                              }}
+                              onBlur={() => {
+                                const num = parseCurrency(field.value);
+                                if (!isNaN(num) && num > 0) {
+                                  field.onChange(formatCurrency(num));
+                                }
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
