@@ -971,137 +971,143 @@ export function OrderManagement() {
 
       {/* Points Payment Dialog */}
       <Dialog open={pointsPaymentOpen} onOpenChange={setPointsPaymentOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CreditCard className="w-5 h-5 text-blue-600" />
-              Thanh toán bằng điểm
+            <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+              <QrCode className="w-5 h-5" />
+              Thanh toán Điểm tích lũy
             </DialogTitle>
-            <DialogDescription>
-              Chọn khách hàng và số điểm để thanh toán đơn hàng
+            <DialogDescription className="text-sm text-gray-600">
+              Sử dụng điểm tích lũy để hoàn tất thanh toán
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6">
+          <div className="space-y-4 p-4">
             {/* Order Summary */}
             {selectedOrder && (
-              <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="text-center space-y-2">
                 <p className="text-sm text-gray-600">Đơn hàng: {selectedOrder.orderNumber}</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                <p className="text-sm text-gray-600">Số tiền cần thanh toán:</p>
+                <p className="text-3xl font-bold text-green-600">
+                  {Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span className="text-lg">₫</span>
                 </p>
                 {selectedCustomer && (
-                  <div className="mt-2 pt-2 border-t border-blue-200">
-                    <p className="text-sm text-gray-600">
-                      Điểm có sẵn: {(selectedCustomer.points || 0).toLocaleString()}P 
-                      <span className="ml-2 text-green-600">
-                        (≈ {((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫)
+                  <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-600 font-medium">
+                      Đã sử dụng {Math.min(selectedCustomer.points || 0, Math.ceil(Number(selectedOrder.total) / 1000))}P 
+                      <span className="ml-1">
+                        (-{Math.min((selectedCustomer.points || 0) * 1000, Number(selectedOrder.total)).toLocaleString()} ₫)
                       </span>
                     </p>
-                    {((selectedCustomer.points || 0) * 1000) < Number(selectedOrder.total) && (
-                      <p className="text-sm text-orange-600 mt-1">
-                        Cần thanh toán thêm: {(Number(selectedOrder.total) - (selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
-                      </p>
-                    )}
                   </div>
                 )}
               </div>
             )}
 
-            {/* Customer Search */}
-            <div className="space-y-3">
-              <Label>Tìm kiếm khách hàng</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Tìm theo tên, mã KH hoặc số điện thoại..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-
-              {/* Customer List */}
-              <div className="max-h-64 overflow-y-auto border rounded-md">
-                {filteredCustomers.map((customer) => (
-                  <div
-                    key={customer.id}
-                    className={`p-3 cursor-pointer hover:bg-gray-50 border-b ${
-                      selectedCustomer?.id === customer.id ? 'bg-blue-50 border-blue-200' : ''
-                    }`}
-                    onClick={() => setSelectedCustomer(customer)}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">{customer.name}</p>
-                        <p className="text-sm text-gray-500">{customer.customerId}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium text-green-600">
-                          {(customer.points || 0).toLocaleString()}P
-                        </p>
-                        <p className="text-xs text-gray-500">Điểm có sẵn</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {filteredCustomers.length === 0 && (
-                  <div className="p-8 text-center text-gray-500">
-                    Không tìm thấy khách hàng
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Payment Explanation */}
-            {selectedCustomer && selectedOrder && (
+            {/* Customer Search Section */}
+            {!selectedCustomer && (
               <div className="space-y-3">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-medium mb-2">Chi tiết thanh toán</h4>
-                  {((selectedCustomer.points || 0) * 1000) >= Number(selectedOrder.total) ? (
-                    <div className="text-green-600">
-                      <p className="text-sm">✓ Đủ điểm để thanh toán toàn bộ đơn hàng</p>
-                      <p className="text-sm">
-                        Sử dụng: {Math.ceil(Number(selectedOrder.total) / 1000).toLocaleString()}P
-                      </p>
-                      <p className="text-sm">
-                        Còn lại: {((selectedCustomer.points || 0) - Math.ceil(Number(selectedOrder.total) / 1000)).toLocaleString()}P
-                      </p>
+                <Label className="text-sm font-medium">Chọn khách hàng</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Tìm theo tên, mã KH hoặc số điện thoại..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
+                {/* Customer List */}
+                <div className="max-h-48 overflow-y-auto border rounded-md">
+                  {filteredCustomers.map((customer) => (
+                    <div
+                      key={customer.id}
+                      className="p-3 cursor-pointer hover:bg-gray-50 border-b last:border-b-0"
+                      onClick={() => setSelectedCustomer(customer)}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="font-medium text-sm">{customer.name}</p>
+                          <p className="text-xs text-gray-500">{customer.customerId}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium text-green-600 text-sm">
+                            {(customer.points || 0).toLocaleString()}P
+                          </p>
+                          <p className="text-xs text-gray-500">Điểm có sẵn</p>
+                        </div>
+                      </div>
                     </div>
-                  ) : (
-                    <div className="text-orange-600">
-                      <p className="text-sm">⚠ Không đủ điểm, cần thanh toán hỗn hợp</p>
-                      <p className="text-sm">
-                        Sử dụng tất cả: {(selectedCustomer.points || 0).toLocaleString()}P 
-                        (≈ {((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫)
-                      </p>
-                      <p className="text-sm">
-                        Cần thanh toán thêm: {(Number(selectedOrder.total) - (selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
-                      </p>
+                  ))}
+                  {filteredCustomers.length === 0 && (
+                    <div className="p-6 text-center text-gray-500 text-sm">
+                      Không tìm thấy khách hàng
                     </div>
                   )}
                 </div>
               </div>
             )}
-          </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => setPointsPaymentOpen(false)}>
-              Hủy
-            </Button>
-            <Button 
-              onClick={handlePointsPayment}
-              disabled={
-                !selectedCustomer || 
-                pointsPaymentMutation.isPending ||
-                (selectedCustomer.points || 0) === 0
+            {/* Selected Customer Info */}
+            {selectedCustomer && (
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium text-sm">{selectedCustomer.name}</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setSelectedCustomer(null)}
+                    className="text-xs"
+                  >
+                    Đổi khách hàng
+                  </Button>
+                </div>
+                <div className="space-y-1 text-sm text-gray-600">
+                  <div className="flex justify-between">
+                    <span>Điểm có sẵn:</span>
+                    <span className="font-medium">{(selectedCustomer.points || 0).toLocaleString()}P</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Giá trị điểm:</span>
+                    <span className="font-medium">{((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫</span>
+                  </div>
+                  {selectedOrder && ((selectedCustomer.points || 0) * 1000) < Number(selectedOrder.total) && (
+                    <div className="flex justify-between text-red-600">
+                      <span>Thiếu:</span>
+                      <span className="font-medium">
+                        {(Number(selectedOrder.total) - (selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <p className="text-xs text-gray-500 text-center">
+              {selectedCustomer && selectedOrder && ((selectedCustomer.points || 0) * 1000) >= Number(selectedOrder.total) ? 
+                'Đủ điểm để thanh toán toàn bộ đơn hàng' :
+                'Không đủ điểm, sẽ chuyển sang thanh toán hỗn hợp'
               }
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {pointsPaymentMutation.isPending ? 'Đang xử lý...' : 
-               ((selectedCustomer?.points || 0) * 1000) >= Number(selectedOrder?.total || 0) ? 
-               'Thanh toán bằng điểm' : 'Thanh toán hỗn hợp'}
-            </Button>
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setPointsPaymentOpen(false)} 
+                className="flex-1"
+              >
+                Quay lại
+              </Button>
+              <Button 
+                onClick={handlePointsPayment}
+                disabled={!selectedCustomer || pointsPaymentMutation.isPending || (selectedCustomer?.points || 0) === 0}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+              >
+                {pointsPaymentMutation.isPending ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
