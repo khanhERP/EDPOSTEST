@@ -92,14 +92,24 @@ export function EInvoiceModal({
       const provider = EINVOICE_PROVIDERS.find(p => p.name === formData.invoiceProvider);
       const providerId = provider ? parseInt(provider.value) : 1;
 
-      // Prepare the PublishInvoiceRequest
+      // Get connection info from database based on selected provider
+      const connectionInfo = eInvoiceConnections.find(conn => 
+        conn.softwareName === formData.invoiceProvider && conn.isActive
+      );
+
+      if (!connectionInfo) {
+        alert(`Không tìm thấy thông tin kết nối cho ${formData.invoiceProvider}. Vui lòng kiểm tra cấu hình trong Settings.`);
+        return;
+      }
+
+      // Prepare the PublishInvoiceRequest with data from database
       const publishRequest = {
         Login: {
           ProviderId: providerId,
-          url: "https://infoerpvn.com:9442", // You may want to make this configurable
-          ma_dvcs: formData.taxCode,
-          username: "admin", // You may want to get this from settings
-          password: "password", // You may want to get this from settings
+          url: connectionInfo.loginUrl || "https://infoerpvn.com:9442",
+          ma_dvcs: connectionInfo.taxCode,
+          username: connectionInfo.loginId,
+          password: connectionInfo.password,
           TenantId: ""
         },
         transactionID_old: null,
