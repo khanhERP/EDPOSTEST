@@ -263,6 +263,7 @@ export default function Settings() {
     email: "contact@edpos.com",
     taxId: "123-45-67890",
     businessType: "restaurant",
+    pinCode: "",
     openTime: "09:00",
     closeTime: "22:00",
   });
@@ -278,6 +279,7 @@ export default function Settings() {
         email: storeData.email || "",
         taxId: storeData.taxId || "",
         businessType: storeData.businessType || "restaurant",
+        pinCode: storeData.pinCode || "",
         openTime: storeData.openTime || "09:00",
         closeTime: storeData.closeTime || "22:00",
       });
@@ -1447,6 +1449,21 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                               </SelectItem>
                             </SelectContent>
                           </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="pinCode">
+                            Mã PIN
+                          </Label>
+                          <Input
+                            id="pinCode"
+                            type="password"
+                            value={storeSettings.pinCode}
+                            onChange={(e) =>
+                              handleStoreSettingChange("pinCode", e.target.value)
+                            }
+                            placeholder="Nhập mã PIN cho cửa hàng"
+                            maxLength={6}
+                          />
                         </div>
                       </CardContent>
                     </Card>
