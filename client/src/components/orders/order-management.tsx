@@ -403,10 +403,22 @@ export function OrderManagement() {
 
   const handleQRPaymentConfirm = () => {
     if (selectedOrder && selectedPaymentMethod) {
-      completePaymentMutation.mutate({ 
-        orderId: selectedOrder.id, 
-        paymentMethod: selectedPaymentMethod.key 
-      });
+      // Check if this is a mixed payment (points + transfer/qr)
+      if (mixedPaymentData) {
+        // Use mixed payment mutation to handle both points deduction and payment
+        mixedPaymentMutation.mutate({
+          customerId: mixedPaymentData.customerId,
+          points: mixedPaymentData.pointsToUse,
+          orderId: mixedPaymentData.orderId,
+          paymentMethod: selectedPaymentMethod.key === 'transfer' ? 'transfer' : selectedPaymentMethod.key
+        });
+      } else {
+        // Regular payment without points
+        completePaymentMutation.mutate({ 
+          orderId: selectedOrder.id, 
+          paymentMethod: selectedPaymentMethod.key 
+        });
+      }
       setShowQRPayment(false);
       setQrCodeUrl("");
       setSelectedPaymentMethod(null);
