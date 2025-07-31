@@ -49,7 +49,14 @@ export function MenuReport() {
 
   // Use the new optimized API endpoint with filters
   const { data: menuData, isLoading } = useQuery({
-    queryKey: ["/api/menu-analysis", startDate, endDate, productSearch, selectedCategory, productType],
+    queryKey: [
+      "/api/menu-analysis",
+      startDate,
+      endDate,
+      productSearch,
+      selectedCategory,
+      productType,
+    ],
     queryFn: async () => {
       const params = new URLSearchParams({
         startDate,
@@ -60,7 +67,7 @@ export function MenuReport() {
       });
       const response = await fetch(`/api/menu-analysis?${params}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch menu analysis data');
+        throw new Error("Failed to fetch menu analysis data");
       }
       return response.json();
     },
@@ -111,7 +118,7 @@ export function MenuReport() {
     categoryStats: [],
     productStats: [],
     topSellingProducts: [],
-    topRevenueProducts: []
+    topRevenueProducts: [],
   };
 
   const displayData = menuData || defaultData;
@@ -132,10 +139,7 @@ export function MenuReport() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="w-4 h-4" />
-            {t("reports.filterOptions")}
-          </CardTitle>
+          <CardTitle className="flex items-center gap-2"></CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Date Range Filter */}
@@ -195,14 +199,20 @@ export function MenuReport() {
             {/* Category Filter */}
             <div>
               <Label>{t("common.category")}</Label>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <Select
+                value={selectedCategory}
+                onValueChange={setSelectedCategory}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("common.all")}</SelectItem>
                   {categories?.map((category: any) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
+                    <SelectItem
+                      key={category.id}
+                      value={category.id.toString()}
+                    >
                       {category.name}
                     </SelectItem>
                   ))}
@@ -220,8 +230,12 @@ export function MenuReport() {
                 <SelectContent>
                   <SelectItem value="all">{t("common.all")}</SelectItem>
                   <SelectItem value="combo">{t("reports.combo")}</SelectItem>
-                  <SelectItem value="product">{t("reports.product")}</SelectItem>
-                  <SelectItem value="service">{t("reports.service")}</SelectItem>
+                  <SelectItem value="product">
+                    {t("reports.product")}
+                  </SelectItem>
+                  <SelectItem value="service">
+                    {t("reports.service")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -235,7 +249,9 @@ export function MenuReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{t("reports.totalRevenue")}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.totalRevenue")}
+                </p>
                 <p className="text-2xl font-bold text-green-600">
                   {formatCurrency(displayData.totalRevenue)}
                 </p>
@@ -249,7 +265,9 @@ export function MenuReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{t("reports.totalOrders")}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.totalOrders")}
+                </p>
                 <p className="text-2xl font-bold text-blue-600">
                   {displayData.totalQuantity.toLocaleString()}
                 </p>
@@ -263,7 +281,9 @@ export function MenuReport() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{t("reports.uniqueProducts")}</p>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.uniqueProducts")}
+                </p>
                 <p className="text-2xl font-bold text-purple-600">
                   {displayData.productStats.length}
                 </p>

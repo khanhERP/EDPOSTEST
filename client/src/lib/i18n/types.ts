@@ -90,6 +90,7 @@ export interface ReportsTranslations {
   lastWeek: string;
   lastMonth: string;
   custom: string;
+  filterOptions: string;
 
   // Dashboard metrics
   totalRevenue: string;

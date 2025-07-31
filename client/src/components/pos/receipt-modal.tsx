@@ -75,10 +75,16 @@ export function ReceiptModal({
           style={{ paddingTop: "1px" }}
         >
           <div className="text-center mb-4 mt-2">
-            <p className="text-xs font-semibold mb-0.5">{storeSettings?.storeName || "Easy Digital Point Of Sale Service"}</p>
+            <p className="text-xs font-semibold mb-0.5">
+              {storeSettings?.storeName || "Easy Digital Point Of Sale Service"}
+            </p>
             <p className="text-xs">Main Store Location</p>
-            <p className="text-xs">{storeSettings?.address || "123 Commerce St, City, State 12345"}</p>
-            <p className="text-xs mb-1">Phone: {storeSettings?.phone || "(555) 123-4567"}</p>
+            <p className="text-xs">
+              {storeSettings?.address || "123 Commerce St, City, State 12345"}
+            </p>
+            <p className="text-xs mb-1">
+              Phone: {storeSettings?.phone || "(555) 123-4567"}
+            </p>
             <div className="flex items-center justify-center">
               <img src={logoPath} alt="EDPOS Logo" className="h-6" />
             </div>
@@ -169,7 +175,8 @@ export function ReceiptModal({
             <>
               <Button
                 onClick={handlePrint}
-                className="w-full bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+                className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+                style={{ width: "80mm" }}
               >
                 <Printer className="mr-2" size={16} />
                 Print Receipt
