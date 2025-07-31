@@ -2622,6 +2622,46 @@ export async function registerRoutes(app: Express): Promise {
     }
   });
 
+  // E-invoice publish API proxy endpoint
+  app.post("/api/einvoice/publish", async (req, res) => {
+    try {
+      const publishRequest = req.body;
+
+      console.log("Publishing invoice with data:", publishRequest);
+
+      // Call the external E-invoice API
+      const response = await fetch("https://infoerpvn.com:9442/api/invoice/publish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "token": "EnURbbnPhUm4GjNgE4Ogrw=="
+        },
+        body: JSON.stringify(publishRequest)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("E-invoice API error:", response.status, response.statusText, errorText);
+        return res.status(response.status).json({
+          error: "Failed to publish invoice",
+          details: `API returned ${response.status}: ${response.statusText}`,
+          message: errorText
+        });
+      }
+
+      const result = await response.json();
+      console.log("Invoice published successfully:", result);
+
+      res.json(result);
+    } catch (error) {
+      console.error("E-invoice publish proxy error:", error);
+      res.status(500).json({
+        error: "Failed to publish invoice",
+        details: error.message,
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

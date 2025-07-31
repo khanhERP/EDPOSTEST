@@ -178,18 +178,18 @@ export function EInvoiceModal({
 
       console.log("Publishing invoice with data:", publishRequest);
 
-      // Call the API
-      const response = await fetch("https://infoerpvn.com:9442/api/invoice/publish", {
+      // Call the proxy API endpoint
+      const response = await fetch("/api/einvoice/publish", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "token": "EnURbbnPhUm4GjNgE4Ogrw=="
+          "Content-Type": "application/json"
         },
         body: JSON.stringify(publishRequest)
       });
 
       if (!response.ok) {
-        throw new Error(`API call failed: ${response.status} ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(errorData.details || errorData.error || `API call failed: ${response.status} ${response.statusText}`);
       }
 
       const result = await response.json();
