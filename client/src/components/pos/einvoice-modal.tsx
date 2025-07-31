@@ -127,7 +127,7 @@ export function EInvoiceModal({
         Extra1: "",
         HdNo: "",
         CreatedDate: new Date().toISOString(),
-        clsfNo: formData.invoiceTemplate || "01GTKT0/001",
+        clsfNo: formData.invoiceTemplate,
         SpcfNo: "",
         TemplateCode: "",
         buyerNotGetInvoice: 0,
