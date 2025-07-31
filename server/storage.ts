@@ -207,6 +207,8 @@ export interface IStorage {
   createEInvoiceConnection(data: any): Promise<any>;
   updateEInvoiceConnection(id: number, data: any): Promise<any>;
   deleteEInvoiceConnection(id: number): Promise<boolean>;
+
+  getEmployeeByEmail(email: string): Promise<Employee | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -246,7 +248,7 @@ export class DatabaseStorage implements IStorage {
 
   async getProductsByCategory(categoryId: number, includeInactive: boolean = false): Promise<Product[]> {
     let whereCondition = eq(products.categoryId, categoryId);
-    
+
     if (!includeInactive) {
       whereCondition = and(whereCondition, eq(products.isActive, true));
     }
@@ -278,7 +280,7 @@ export class DatabaseStorage implements IStorage {
 
   async searchProducts(query: string, includeInactive: boolean = false): Promise<Product[]> {
     let whereCondition = ilike(products.name, `%${query}%`);
-    
+
     if (!includeInactive) {
       whereCondition = and(whereCondition, eq(products.isActive, true));
     }
@@ -1356,14 +1358,14 @@ export class DatabaseStorage implements IStorage {
   async createInvoiceTemplate(data: any): Promise<any> {
     try {
       const { invoiceTemplates } = await import("@shared/schema");
-      
+
       // If this template is set as default, unset all other defaults
       if (data.isDefault) {
         await db.update(invoiceTemplates)
           .set({ isDefault: false })
           .where(eq(invoiceTemplates.isDefault, true));
       }
-      
+
       const [result] = await db.insert(invoiceTemplates).values({
         ...data,
         createdAt: new Date(),
@@ -1379,14 +1381,14 @@ export class DatabaseStorage implements IStorage {
   async updateInvoiceTemplate(id: number, data: any): Promise<any> {
     try {
       const { invoiceTemplates } = await import("@shared/schema");
-      
+
       // If this template is set as default, unset all other defaults
       if (data.isDefault) {
         await db.update(invoiceTemplates)
           .set({ isDefault: false })
           .where(eq(invoiceTemplates.isDefault, true));
       }
-      
+
       const [result] = await db.update(invoiceTemplates)
         .set({
           ...data,
@@ -1441,11 +1443,11 @@ export class DatabaseStorage implements IStorage {
   async createEInvoiceConnection(data: any): Promise<any> {
     try {
       const { eInvoiceConnections } = await import("@shared/schema");
-      
+
       // Generate next symbol number
       const existingConnections = await this.getEInvoiceConnections();
       const nextSymbol = (existingConnections.length + 1).toString();
-      
+
       const [result] = await db.insert(eInvoiceConnections).values({
         ...data,
         symbol: nextSymbol,
@@ -1486,6 +1488,14 @@ export class DatabaseStorage implements IStorage {
       console.error("Error deleting e-invoice connection:", error);
       return false;
     }
+  }
+
+  async getEmployeeByEmail(email: string): Promise<Employee | undefined> {
+    const [employee] = await db
+      .select()
+      .from(employees)
+      .where(eq(employees.email, email));
+    return employee || undefined;
   }
 }
 

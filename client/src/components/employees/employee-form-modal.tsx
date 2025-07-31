@@ -108,6 +108,10 @@ export function EmployeeFormModal({
   const createMutation = useMutation({
     mutationFn: async (data: InsertEmployee) => {
       const response = await apiRequest("POST", "/api/employees", data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw errorData;
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -129,10 +133,21 @@ export function EmployeeFormModal({
         });
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      let errorMessage = t("employees.addEmployeeError");
+      
+      if (error?.code === "DUPLICATE_EMAIL") {
+        errorMessage = "Email này đã được sử dụng bởi nhân viên khác. Vui lòng sử dụng email khác.";
+        // Set error on the email field
+        form.setError("email", {
+          type: "manual",
+          message: "Email đã tồn tại trong hệ thống"
+        });
+      }
+      
       toast({
         title: t("common.error"),
-        description: t("employees.addEmployeeError"),
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -145,6 +160,10 @@ export function EmployeeFormModal({
         `/api/employees/${employee?.id}`,
         data,
       );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw errorData;
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -155,10 +174,21 @@ export function EmployeeFormModal({
       });
       onClose();
     },
-    onError: () => {
+    onError: (error: any) => {
+      let errorMessage = t("employees.updateEmployeeError");
+      
+      if (error?.code === "DUPLICATE_EMAIL") {
+        errorMessage = "Email này đã được sử dụng bởi nhân viên khác. Vui lòng sử dụng email khác.";
+        // Set error on the email field
+        form.setError("email", {
+          type: "manual",
+          message: "Email đã tồn tại trong hệ thống"
+        });
+      }
+      
       toast({
         title: t("common.error"),
-        description: t("employees.updateEmployeeError"),
+        description: errorMessage,
         variant: "destructive",
       });
     },

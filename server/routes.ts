@@ -429,6 +429,17 @@ export async function registerRoutes(app: Express): Promise {
   app.post("/api/employees", async (req, res) => {
     try {
       const validatedData = insertEmployeeSchema.parse(req.body);
+      
+      // Check if email already exists
+      const existingEmployee = await storage.getEmployeeByEmail(validatedData.email);
+      if (existingEmployee) {
+        return res.status(409).json({ 
+          message: "Email đã tồn tại trong hệ thống",
+          code: "DUPLICATE_EMAIL",
+          field: "email"
+        });
+      }
+      
       const employee = await storage.createEmployee(validatedData);
       res.status(201).json(employee);
     } catch (error) {
@@ -446,6 +457,19 @@ export async function registerRoutes(app: Express): Promise {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertEmployeeSchema.partial().parse(req.body);
+      
+      // Check if email already exists (excluding current employee)
+      if (validatedData.email) {
+        const existingEmployee = await storage.getEmployeeByEmail(validatedData.email);
+        if (existingEmployee && existingEmployee.id !== id) {
+          return res.status(409).json({ 
+            message: "Email đã tồn tại trong hệ thống",
+            code: "DUPLICATE_EMAIL",
+            field: "email"
+          });
+        }
+      }
+      
       const employee = await storage.updateEmployee(id, validatedData);
 
       if (!employee) {
