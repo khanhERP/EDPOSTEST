@@ -258,7 +258,6 @@ export function EmployeeFormModal({
                     <Input
                       placeholder={t("employees.namePlaceholder")}
                       {...field}
-                      required
                     />
                   </FormControl>
                   <FormMessage />
