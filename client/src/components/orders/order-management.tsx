@@ -911,12 +911,20 @@ export function OrderManagement() {
       {/* QR Payment Dialog */}
       <Dialog open={showQRPayment} onOpenChange={setShowQRPayment}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+          <DialogHeader className="relative">
+            <DialogTitle className="flex items-center gap-2 text-center justify-center">
               <QrCode className="w-5 h-5" />
               Thanh toán {selectedPaymentMethod?.method?.name}
             </DialogTitle>
-            <DialogDescription>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleQRPaymentClose}
+              className="absolute right-0 top-0 h-6 w-6 p-0"
+            >
+              ✕
+            </Button>
+            <DialogDescription className="text-center">
               Quét mã QR để hoàn tất thanh toán
             </DialogDescription>
           </DialogHeader>
@@ -924,11 +932,20 @@ export function OrderManagement() {
           <div className="space-y-4 p-4">
             {/* Order Summary */}
             {selectedOrder && (
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <div className="text-center space-y-2">
                 <p className="text-sm text-gray-600">Đơn hàng: {selectedOrder.orderNumber}</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                <p className="text-sm text-gray-600">Số tiền cần thanh toán:</p>
+                <p className="text-3xl font-bold text-green-600">
+                  {mixedPaymentData ? 
+                    `${mixedPaymentData.remainingAmount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫` :
+                    `${Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫`
+                  }
                 </p>
+                {mixedPaymentData && (
+                  <p className="text-sm text-blue-600">
+                    Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}P (-{(mixedPaymentData.pointsToUse * 1000).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫)
+                  </p>
+                )}
               </div>
             )}
 
