@@ -127,7 +127,7 @@ export function EInvoiceModal({
           TenantId: "",
         },
         transactionID_old: null,
-        transactionID: null,
+        transactionID: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         numbtext: null,
         invRef: `INV-${Date.now()}`,
         poNo: null,
