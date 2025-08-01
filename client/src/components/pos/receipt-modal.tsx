@@ -41,10 +41,13 @@ export function ReceiptModal({
   
   // Debug logging when modal opens
   console.log("=== RECEIPT MODAL RENDERED ===");
+  console.log("Receipt Modal isOpen:", isOpen);
   console.log("Receipt Modal cartItems:", cartItems);
   console.log("Receipt Modal cartItems length:", cartItems?.length || 0);
   console.log("Receipt Modal cartItems type:", typeof cartItems);
-  console.log("Receipt Modal isOpen:", isOpen);
+  console.log("Receipt Modal cartItems is array:", Array.isArray(cartItems));
+  console.log("Receipt Modal cartItems content:", JSON.stringify(cartItems, null, 2));
+  console.log("Receipt Modal receipt:", receipt);
   // Query store settings to get dynamic address
   const { data: storeSettings } = useQuery({
     queryKey: ["/api/store-settings"],
@@ -204,7 +207,15 @@ export function ReceiptModal({
                   console.log("=== OPENING E-INVOICE MODAL ===");
                   console.log("Cart items to pass to E-invoice modal:", cartItems);
                   console.log("Cart items length:", cartItems?.length || 0);
+                  console.log("Cart items is array:", Array.isArray(cartItems));
                   console.log("Receipt total:", receipt?.total || 0);
+                  
+                  if (!cartItems || cartItems.length === 0) {
+                    console.error("❌ No cart items available for E-invoice");
+                    alert("Không có sản phẩm nào để tạo hóa đơn điện tử");
+                    return;
+                  }
+                  
                   setShowEInvoiceModal(true);
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"

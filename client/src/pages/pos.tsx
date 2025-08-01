@@ -34,6 +34,7 @@ export default function POSPage() {
   const handleCheckout = async (paymentData: any) => {
     console.log("=== POS PAGE CHECKOUT DEBUG ===");
     console.log("Cart before checkout:", cart);
+    console.log("Cart length:", cart.length);
     console.log("Cart items structure:", cart.map(item => ({
       id: item.id,
       name: item.name,
@@ -43,23 +44,35 @@ export default function POSPage() {
       taxRate: item.taxRate
     })));
     
+    if (cart.length === 0) {
+      console.error("❌ Cart is empty, cannot proceed with checkout");
+      return;
+    }
+    
     // Save cart items before checkout (in case cart gets cleared)
     const cartItemsBeforeCheckout = cart.map(item => ({
       id: item.id,
       name: item.name,
       price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
       quantity: item.quantity,
-      sku: item.sku,
-      taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : item.taxRate
+      sku: item.sku || `ITEM${String(item.id).padStart(3, '0')}`,
+      taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10)
     }));
     
-    console.log("Cart items before checkout (processed):", cartItemsBeforeCheckout);
+    console.log("✅ Cart items before checkout (processed):", cartItemsBeforeCheckout);
+    console.log("✅ Setting lastCartItems to:", cartItemsBeforeCheckout);
     setLastCartItems(cartItemsBeforeCheckout);
+    
+    // Debug: Confirm lastCartItems is set
+    setTimeout(() => {
+      console.log("✅ lastCartItems state after setting:", lastCartItems);
+    }, 100);
     
     const receipt = await processCheckout(paymentData);
     if (receipt) {
-      console.log("Cart after checkout:", cart);
-      console.log("Last cart items set:", cartItemsBeforeCheckout);
+      console.log("✅ Receipt processed successfully");
+      console.log("✅ Cart after checkout:", cart);
+      console.log("✅ About to show receipt modal with cartItems:", cartItemsBeforeCheckout);
       setShowReceiptModal(true);
     }
   };
@@ -109,9 +122,12 @@ export default function POSPage() {
       {/* Modals */}
       <ReceiptModal
         isOpen={showReceiptModal}
-        onClose={() => setShowReceiptModal(false)}
+        onClose={() => {
+          console.log("🔴 Closing receipt modal");
+          setShowReceiptModal(false);
+        }}
         receipt={lastReceipt}
-        cartItems={lastCartItems}
+        cartItems={lastCartItems.length > 0 ? lastCartItems : cart}
       />
 
       <ProductManagerModal
