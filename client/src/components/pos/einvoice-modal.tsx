@@ -248,23 +248,11 @@ export function EInvoiceModal({
         },
         transactionID: generateGuid(),
         invRef: `K24TGT804`,
-        invSubTotal: total,
+        invSubTotal: 100000, // Tổng tiền chưa thuế cố định
         invVatRate: 10, // 10% VAT rate
-        invVatAmount: validItems.reduce((totalVat, item) => {
-          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
-          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
-          const itemTotal = itemPrice * itemQuantity;
-          const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10);
-          return totalVat + (itemTotal * taxRate) / 100;
-        }, 0),
-        invDiscAmount: 0,
-        invTotalAmount: total + validItems.reduce((totalVat, item) => {
-          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
-          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
-          const itemTotal = itemPrice * itemQuantity;
-          const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10);
-          return totalVat + (itemTotal * taxRate) / 100;
-        }, 0),
+        invVatAmount: 10000, // Tiền thuế cố định (10% của 100,000)
+        invDiscAmount: 0, // Chiết khấu
+        invTotalAmount: 110000, // Tổng tiền có thuế cố định
         paidTp: "TM", // Cash payment
         note: "",
         hdNo: "",
@@ -291,49 +279,22 @@ export function EInvoiceModal({
           email: formData.email || "",
           emailCC: "",
         },
-        products: validItems.map((item, index) => {
-          console.log(`🔄 Processing cart item ${index + 1}:`, {
-            id: item.id,
-            name: item.name,
-            originalPrice: item.price,
-            originalQuantity: item.quantity,
-            sku: item.sku,
-            taxRate: item.taxRate
-          });
-
-          // Xử lý giá và số lượng từ dữ liệu giỏ hàng
-          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
-          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
-          const itemTotal = itemPrice * itemQuantity;
-          const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10);
-          const vatAmount = (itemTotal * taxRate) / 100;
-          const totalWithVat = itemTotal + vatAmount;
-
-          // Tạo object sản phẩm cho API hóa đơn điện tử
-          const productItem = {
-            itmCd: item.sku || `ITEM${String(item.id || index + 1).padStart(3, '0')}`, // Mã sản phẩm
-            itmName: item.name || `Sản phẩm ${index + 1}`, // Tên sản phẩm từ giỏ hàng
+        products: [
+          {
+            itmCd: "SP001", // Mã sản phẩm cố định
+            itmName: "Sản phẩm mẫu", // Tên sản phẩm cố định
             itmKnd: 1, // Loại sản phẩm (1 = hàng hóa)
             unitNm: "Cái", // Đơn vị tính
-            qty: itemQuantity, // Số lượng từ giỏ hàng
-            unprc: itemPrice, // Đơn giá từ giỏ hàng
-            amt: Math.round(itemTotal), // Thành tiền chưa thuế
+            qty: 1, // Số lượng cố định
+            unprc: 100000, // Đơn giá cố định (100,000 VND)
+            amt: 100000, // Thành tiền chưa thuế
             discRate: 0, // Tỷ lệ chiết khấu
             discAmt: 0, // Tiền chiết khấu
-            vatRt: taxRate.toString(), // Thuế suất
-            vatAmt: Math.round(vatAmount), // Tiền thuế
-            totalAmt: Math.round(totalWithVat), // Tổng tiền có thuế
-          };
-
-          console.log(`✅ Mapped cart product ${index + 1} for e-invoice:`, {
-            productName: productItem.itmName,
-            quantity: productItem.qty,
-            unitPrice: productItem.unprc,
-            total: productItem.totalAmt
-          });
-          
-          return productItem;
-        }),
+            vatRt: "10", // Thuế suất 10%
+            vatAmt: 10000, // Tiền thuế (10% của 100,000)
+            totalAmt: 110000, // Tổng tiền có thuế
+          }
+        ],
       };
 
       console.log("=== FINAL PUBLISH REQUEST ===");
