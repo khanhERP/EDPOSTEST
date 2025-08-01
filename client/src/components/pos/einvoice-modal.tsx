@@ -71,7 +71,7 @@ export function EInvoiceModal({
     enabled: isOpen,
   });
 
-  // Reset form when modal opens
+  // Reset form only when modal opens, not when cartItems/total changes
   useEffect(() => {
     if (isOpen) {
       console.log("🔥 E-INVOICE MODAL OPENING");
@@ -91,7 +91,18 @@ export function EInvoiceModal({
         recipientName: "",
       });
     }
-  }, [isOpen, cartItems, total]);
+  }, [isOpen]); // Only reset when modal opens/closes
+
+  // Separate effect for debugging cartItems changes without resetting form
+  useEffect(() => {
+    if (isOpen) {
+      console.log("🔄 Cart items or total changed:", {
+        cartItems: cartItems?.length || 0,
+        total,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }, [cartItems, total, isOpen]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
