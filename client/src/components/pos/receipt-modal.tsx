@@ -224,34 +224,25 @@ export function ReceiptModal({
       </DialogContent>
 
       {/* E-Invoice Modal */}
-      <EInvoiceModal
-        isOpen={showEInvoiceModal}
-        onClose={() => setShowEInvoiceModal(false)}
-        onConfirm={(eInvoiceData) => {
-          console.log("E-invoice data:", eInvoiceData);
-          setShowEInvoiceModal(false);
-        }}
-        total={receipt?.total || 0}
-        cartItems={(() => {
-          // Use cartItems if available, otherwise fallback to receipt items
-          if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-            return cartItems;
-          }
-
-          if (receipt?.items && receipt.items.length > 0) {
-            return receipt.items.map((item: any) => ({
-              id: item.productId || item.id,
-              name: item.productName || item.name,
-              price: typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0),
-              quantity: item.quantity || 1,
-              sku: item.sku || `ITEM${String(item.productId || item.id).padStart(3, '0')}`,
-              taxRate: item.taxRate || 10
-            }));
-          }
-
-          return [];
-        })()}
-      />
+      {showEInvoiceModal && (
+        <EInvoiceModal
+          isOpen={showEInvoiceModal}
+          onClose={() => setShowEInvoiceModal(false)}
+          onConfirm={() => {
+            setShowEInvoiceModal(false);
+            // Handle e-invoice confirmation if needed
+          }}
+          total={receipt?.total || 0}
+          cartItems={cartItems?.length > 0 ? cartItems : receipt?.items?.map(item => ({
+            id: item.productId,
+            name: item.productName,
+            price: item.price,
+            quantity: item.quantity,
+            sku: item.sku,
+            taxRate: 10 // Default tax rate
+          })) || []}
+        />
+      )}
     </Dialog>
   );
 }

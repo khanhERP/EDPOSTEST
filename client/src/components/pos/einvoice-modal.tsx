@@ -54,6 +54,14 @@ export function EInvoiceModal({
   total,
   cartItems = [],
 }: EInvoiceModalProps) {
+  // Debug log to track cart items data flow
+  console.log("🔍 EInvoiceModal Props Analysis:");
+  console.log("- isOpen:", isOpen);
+  console.log("- total:", total);
+  console.log("- cartItems received:", cartItems);
+  console.log("- cartItems type:", typeof cartItems);
+  console.log("- cartItems is array:", Array.isArray(cartItems));
+  console.log("- cartItems length:", cartItems?.length || 0);
   const [formData, setFormData] = useState({
     invoiceProvider: "",
     invoiceTemplate: "",
@@ -154,22 +162,41 @@ export function EInvoiceModal({
         return;
       }
 
-      // Validate cart items
-      if (!cartItems || cartItems.length === 0) {
-        alert("Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử");
+      // Validate cart items with detailed logging
+      console.log("🔍 VALIDATING CART ITEMS FOR E-INVOICE");
+      console.log("Raw cartItems:", JSON.stringify(cartItems, null, 2));
+      
+      if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+        console.error("❌ No valid cart items found:", {
+          cartItems,
+          isArray: Array.isArray(cartItems),
+          length: cartItems?.length
+        });
+        alert("Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử.\nVui lòng kiểm tra lại giỏ hàng trước khi phát hành hóa đơn.");
         return;
       }
 
       // Validate each cart item has required data
-      const invalidItems = cartItems.filter(item => 
-        !item || !item.id || !item.name || !item.price || !item.quantity
-      );
+      const invalidItems = cartItems.filter(item => {
+        const isValid = item && 
+          (item.id || item.productId) && 
+          item.name && 
+          (item.price !== undefined && item.price !== null) && 
+          (item.quantity !== undefined && item.quantity !== null && item.quantity > 0);
+        
+        if (!isValid) {
+          console.log("❌ Invalid item found:", item);
+        }
+        return !isValid;
+      });
 
       if (invalidItems.length > 0) {
         console.error("❌ Invalid cart items found:", invalidItems);
-        alert("Có sản phẩm trong giỏ hàng thiếu thông tin. Vui lòng kiểm tra lại.");
+        alert(`Có ${invalidItems.length} sản phẩm trong giỏ hàng thiếu thông tin:\n${invalidItems.map(item => `- ${item?.name || 'Không có tên'}`).join('\n')}\n\nVui lòng kiểm tra lại giỏ hàng.`);
         return;
       }
+
+      console.log("✅ All cart items are valid for e-invoice generation");
 
       // Generate a new GUID for transactionID
       const generateGuid = () => {
@@ -189,10 +216,32 @@ export function EInvoiceModal({
 
       // Convert cart items to invoice products with real data
       const invoiceProducts = cartItems.map((item, index) => {
-        // Ensure proper data types
-        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
-        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
-        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
+        console.log(`📦 Processing item ${index + 1}:`, item);
+        
+        // Ensure proper data types with more robust parsing
+        const itemPrice = (() => {
+          if (typeof item.price === 'string') {
+            const parsed = parseFloat(item.price.replace(',', ''));
+            return isNaN(parsed) ? 0 : parsed;
+          }
+          return typeof item.price === 'number' ? item.price : 0;
+        })();
+        
+        const itemQuantity = (() => {
+          if (typeof item.quantity === 'string') {
+            const parsed = parseInt(item.quantity);
+            return isNaN(parsed) ? 1 : Math.max(1, parsed);
+          }
+          return typeof item.quantity === 'number' ? Math.max(1, item.quantity) : 1;
+        })();
+        
+        const itemTaxRate = (() => {
+          if (typeof item.taxRate === 'string') {
+            const parsed = parseFloat(item.taxRate);
+            return isNaN(parsed) ? 10 : parsed;
+          }
+          return typeof item.taxRate === 'number' ? item.taxRate : 10;
+        })();
         
         // Calculate amounts
         const itemSubtotal = itemPrice * itemQuantity;
@@ -202,18 +251,21 @@ export function EInvoiceModal({
         cartSubtotal += itemSubtotal;
         cartTaxAmount += itemTax;
 
-        console.log(`📦 Sản phẩm ${index + 1}:`, {
-          name: item.name,
-          price: itemPrice,
-          quantity: itemQuantity,
-          taxRate: itemTaxRate,
-          subtotal: itemSubtotal,
-          tax: itemTax,
-          total: itemTotal
+        console.log(`📦 Sản phẩm ${index + 1} đã xử lý:`, {
+          originalItem: item,
+          processedData: {
+            name: item.name,
+            price: itemPrice,
+            quantity: itemQuantity,
+            taxRate: itemTaxRate,
+            subtotal: itemSubtotal,
+            tax: itemTax,
+            total: itemTotal
+          }
         });
 
         return {
-          itmCd: item.sku || `SP${String(item.id).padStart(3, '0')}`,
+          itmCd: item.sku || item.code || `SP${String(item.id || item.productId || index + 1).padStart(3, '0')}`,
           itmName: item.name,
           itmKnd: 1, // Loại sản phẩm (1 = hàng hóa)
           unitNm: "Cái", // Đơn vị tính
