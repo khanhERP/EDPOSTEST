@@ -84,6 +84,14 @@ export default function POSPage() {
         isOpen={showReceiptModal}
         onClose={() => setShowReceiptModal(false)}
         receipt={lastReceipt}
+        cartItems={cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          sku: item.sku,
+          taxRate: item.taxRate
+        }))}
       />
 
       <ProductManagerModal

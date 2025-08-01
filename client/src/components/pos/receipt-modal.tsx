@@ -10,6 +10,8 @@ import type { Receipt } from "@shared/schema";
 import logoPath from "@assets/EDPOS_1753091767028.png";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { EInvoiceModal } from "./einvoice-modal";
+import { useState } from "react";
 
 interface ReceiptModalProps {
   isOpen: boolean;
@@ -17,6 +19,14 @@ interface ReceiptModalProps {
   receipt: Receipt | null;
   onConfirm?: () => void;
   isPreview?: boolean;
+  cartItems?: Array<{
+    id: number;
+    name: string;
+    price: number;
+    quantity: number;
+    sku?: string;
+    taxRate?: number;
+  }>;
 }
 
 export function ReceiptModal({
@@ -25,7 +35,9 @@ export function ReceiptModal({
   receipt,
   onConfirm,
   isPreview = false,
+  cartItems = [],
 }: ReceiptModalProps) {
+  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   // Query store settings to get dynamic address
   const { data: storeSettings } = useQuery({
     queryKey: ["/api/store-settings"],
@@ -172,19 +184,36 @@ export function ReceiptModal({
               </Button>
             </div>
           ) : (
-            <div className="flex justify-center">
+            <div className="flex justify-center space-x-3">
               <Button
                 onClick={handlePrint}
                 className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
-                style={{ width: "80mm" }}
               >
                 <Printer className="mr-2" size={16} />
                 Print Receipt
+              </Button>
+              <Button
+                onClick={() => setShowEInvoiceModal(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
+              >
+                📄 Xuất hóa đơn điện tử
               </Button>
             </div>
           )}
         </div>
       </DialogContent>
+
+      {/* E-Invoice Modal */}
+      <EInvoiceModal
+        isOpen={showEInvoiceModal}
+        onClose={() => setShowEInvoiceModal(false)}
+        onConfirm={(eInvoiceData) => {
+          console.log("E-invoice data:", eInvoiceData);
+          setShowEInvoiceModal(false);
+        }}
+        total={receipt?.total || 0}
+        cartItems={cartItems}
+      />
     </Dialog>
   );
 }
