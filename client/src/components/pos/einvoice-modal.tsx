@@ -112,59 +112,22 @@ export function EInvoiceModal({
   };
 
   const handleConfirm = async () => {
-    // Debug logging
-    console.log("=== E-INVOICE MODAL DEBUG ===");
-    console.log("📦 Cart items received from shopping cart:", cartItems);
-    console.log("📊 Number of cart items:", cartItems?.length || 0);
-    console.log("🛒 Shopping cart details:", JSON.stringify(cartItems, null, 2));
-    console.log("📝 Cart items type:", typeof cartItems);
-    console.log("✅ Is cartItems an array?", Array.isArray(cartItems));
-    
-    // Hiển thị thông tin chi tiết từng sản phẩm trong giỏ hàng
-    if (cartItems && cartItems.length > 0) {
-      console.log("🔍 THÔNG TIN CHI TIẾT GIỎ HÀNG:");
-      cartItems.forEach((item, index) => {
-        console.log(`   Sản phẩm ${index + 1}:`, {
-          tên: item.name,
-          mã: item.sku || item.id,
-          giá: item.price,
-          sốLượng: item.quantity,
-          thànhTiền: (parseFloat(item.price) * item.quantity).toLocaleString('vi-VN') + ' ₫'
-        });
-      });
-    }
-
-    // Additional debug for each cart item
-    if (cartItems && cartItems.length > 0) {
-      cartItems.forEach((item, index) => {
-        console.log(`Cart item ${index + 1}:`, {
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          priceType: typeof item.price,
-          quantity: item.quantity,
-          quantityType: typeof item.quantity,
-          sku: item.sku,
-          taxRate: item.taxRate,
-          isValid: (item.price && item.price > 0 && item.quantity && item.quantity > 0)
-        });
-      });
-    }
-
     // Validate required fields
     if (
       !formData.invoiceProvider ||
       !formData.taxCode ||
       !formData.customerName
     ) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc");
+      alert("Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT, Mã số thuế, và Tên đơn vị");
+      return;
+    }
+
+    if (!formData.invoiceTemplate.trim()) {
+      alert("Vui lòng nhập Mẫu số Hóa đơn GTGT");
       return;
     }
 
     try {
-      // Debug cartItems (but don't validate)
-      console.log("🔍 Raw cartItems:", JSON.stringify(cartItems, null, 2));
-
       // Find the provider value from the EINVOICE_PROVIDERS mapping
       const provider = EINVOICE_PROVIDERS.find(
         (p) => p.name === formData.invoiceProvider,
@@ -184,6 +147,12 @@ export function EInvoiceModal({
         return;
       }
 
+      // Validate cart items
+      if (!cartItems || cartItems.length === 0) {
+        alert("Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử");
+        return;
+      }
+
       // Generate a new GUID for transactionID
       const generateGuid = () => {
         return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
@@ -196,44 +165,42 @@ export function EInvoiceModal({
         );
       };
 
-      // Fixed totals to match hardcoded products
-      const cartSubtotal = 40000; // 30000 + 10000 (tổng tiền chưa thuế)
-      const cartTaxAmount = 4000; // 3000 + 1000 (tổng tiền thuế)
-      const cartTotal = 44000; // 33000 + 11000 (tổng tiền có thuế)
+      // Calculate totals from actual cart items
+      let cartSubtotal = 0;
+      let cartTaxAmount = 0;
 
-      // Convert cart items to invoice products with fixed values for API compatibility
-      const invoiceProducts = [
-        {
-          itmCd: "SP001", // Mã sản phẩm cố định
-          itmName: "Bánh mì", // Tên sản phẩm cố định
+      // Convert cart items to invoice products with real data
+      const invoiceProducts = cartItems.map((item, index) => {
+        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+        const itemQuantity = item.quantity;
+        const itemTaxRate = item.taxRate || 10;
+        
+        const itemSubtotal = itemPrice * itemQuantity;
+        const itemTax = (itemSubtotal * itemTaxRate) / 100;
+        const itemTotal = itemSubtotal + itemTax;
+
+        cartSubtotal += itemSubtotal;
+        cartTaxAmount += itemTax;
+
+        return {
+          itmCd: item.sku || `SP${String(item.id).padStart(3, '0')}`,
+          itmName: item.name,
           itmKnd: 1, // Loại sản phẩm (1 = hàng hóa)
           unitNm: "Cái", // Đơn vị tính
-          qty: 2, // Số lượng cố định
-          unprc: 15000, // Đơn giá cố định
-          amt: 30000, // Thành tiền chưa thuế cố định (2 x 15000)
+          qty: itemQuantity,
+          unprc: itemPrice,
+          amt: Math.round(itemSubtotal), // Thành tiền chưa thuế
           discRate: 0, // Tỷ lệ chiết khấu
           discAmt: 0, // Tiền chiết khấu
-          vatRt: "10", // Thuế suất 10%
-          vatAmt: 3000, // Tiền thuế cố định (30000 x 10%)
-          totalAmt: 33000, // Tổng tiền có thuế cố định
-        },
-        {
-          itmCd: "SP002", // Mã sản phẩm cố định thứ 2
-          itmName: "Nước ngọt", // Tên sản phẩm cố định thứ 2
-          itmKnd: 1, // Loại sản phẩm (1 = hàng hóa)
-          unitNm: "Chai", // Đơn vị tính
-          qty: 1, // Số lượng cố định
-          unprc: 10000, // Đơn giá cố định
-          amt: 10000, // Thành tiền chưa thuế cố định
-          discRate: 0, // Tỷ lệ chiết khấu
-          discAmt: 0, // Tiền chiết khấu
-          vatRt: "10", // Thuế suất 10%
-          vatAmt: 1000, // Tiền thuế cố định (10000 x 10%)
-          totalAmt: 11000, // Tổng tiền có thuế cố định
-        }
-      ];
+          vatRt: itemTaxRate.toString(),
+          vatAmt: Math.round(itemTax), // Tiền thuế
+          totalAmt: Math.round(itemTotal), // Tổng tiền có thuế
+        };
+      });
 
-      // Prepare the PublishInvoiceRequest with data from cart
+      const cartTotal = cartSubtotal + cartTaxAmount;
+
+      // Prepare the PublishInvoiceRequest with real cart data
       const publishRequest = {
         login: {
           providerId: providerId,
@@ -244,12 +211,12 @@ export function EInvoiceModal({
           tenantId: "",
         },
         transactionID: generateGuid(),
-        invRef: `K24TGT804`,
-        invSubTotal: Math.round(cartSubtotal), // Tổng tiền chưa thuế từ giỏ hàng
+        invRef: `INV-${Date.now()}`,
+        invSubTotal: Math.round(cartSubtotal),
         invVatRate: 10, // Default VAT rate
-        invVatAmount: Math.round(cartTaxAmount), // Tiền thuế từ giỏ hàng
+        invVatAmount: Math.round(cartTaxAmount),
         invDiscAmount: 0, // Chiết khấu
-        invTotalAmount: Math.round(cartTotal), // Tổng tiền có thuế từ giỏ hàng
+        invTotalAmount: Math.round(cartTotal),
         paidTp: "TM", // Cash payment
         note: "",
         hdNo: "",
@@ -276,15 +243,12 @@ export function EInvoiceModal({
           email: formData.email || "",
           emailCC: "",
         },
-        products: invoiceProducts, // Sử dụng sản phẩm từ giỏ hàng
+        products: invoiceProducts,
       };
 
-      console.log("=== FINAL PUBLISH REQUEST ===");
-      console.log("Products array length:", publishRequest.products.length);
-      console.log("Products array:", JSON.stringify(publishRequest.products, null, 2));
       console.log("Publishing invoice with data:", JSON.stringify(publishRequest, null, 2));
 
-      // Call the proxy API instead of direct external API
+      // Call the proxy API
       const response = await fetch("/api/einvoice/publish", {
         method: "POST",
         headers: {
@@ -294,16 +258,22 @@ export function EInvoiceModal({
       });
 
       if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          `API call failed: ${response.status} ${response.statusText}`,
+          errorData.message || `API call failed: ${response.status} ${response.statusText}`,
         );
       }
 
       const result = await response.json();
       console.log("Invoice published successfully:", result);
 
-      alert("Hóa đơn điện tử đã được phát hành thành công!");
-      onConfirm(formData);
+      if (result.success) {
+        alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || 'N/A'}`);
+        onConfirm(formData);
+        onClose();
+      } else {
+        throw new Error(result.message || "Có lỗi xảy ra khi phát hành hóa đơn");
+      }
     } catch (error) {
       console.error("Error publishing invoice:", error);
       alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error.message}`);
