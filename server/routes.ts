@@ -2628,22 +2628,61 @@ export async function registerRoutes(app: Express): Promise {
       const publishRequest = req.body;
       console.log("Publishing invoice with data:", JSON.stringify(publishRequest, null, 2));
 
-      // Mock successful response for testing
-      const mockResponse = {
-        success: true,
-        message: "Hóa đơn điện tử đã được phát hành thành công",
-        invoiceNumber: `INV-${Date.now()}`,
-        publishDate: new Date().toISOString(),
-        data: {
-          transactionID: publishRequest.transactionID,
-          invRef: publishRequest.invRef,
-          totalAmount: publishRequest.invTotalAmount,
-          customer: publishRequest.Customer
-        }
-      };
+      // Call the real e-invoice API
+      const response = await fetch("https://infoerpvn.com:9440/api/invoice/publish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(publishRequest)
+      });
 
-      console.log("Mock invoice published successfully:", mockResponse);
-      res.json(mockResponse);
+      if (!response.ok) {
+        console.error("E-invoice API error:", response.status, response.statusText);
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        
+        return res.status(response.status).json({
+          error: "Failed to publish invoice",
+          details: `API returned ${response.status}: ${response.statusText}`,
+          apiResponse: errorText
+        });
+      }
+
+      const result = await response.json();
+      console.log("E-invoice API response:", result);
+
+      // Check if the API returned success
+      if (result.status === true) {
+        console.log("Invoice published successfully:", result);
+        
+        // Return standardized response format
+        res.json({
+          success: true,
+          message: result.message || "Hóa đơn điện tử đã được phát hành thành công",
+          data: {
+            invoiceNo: result.data?.invoiceNo,
+            invDate: result.data?.invDate,
+            transactionID: result.data?.transactionID,
+            macqt: result.data?.macqt,
+            originalRequest: {
+              transactionID: publishRequest.transactionID,
+              invRef: publishRequest.invRef,
+              totalAmount: publishRequest.invTotalAmount,
+              customer: publishRequest.Customer
+            }
+          }
+        });
+      } else {
+        // API returned failure
+        console.error("E-invoice API returned failure:", result);
+        res.status(400).json({
+          error: "E-invoice publication failed",
+          message: result.message || "Unknown error from e-invoice service",
+          details: result
+        });
+      }
 
     } catch (error) {
       console.error("E-invoice publish proxy error details:");
