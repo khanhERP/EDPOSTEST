@@ -89,10 +89,10 @@ export function EInvoiceModal({
       console.log("🔥 total when modal opens:", total);
 
       setFormData({
-        invoiceProvider: "",
-        invoiceTemplate: "",
-        taxCode: "",
-        customerName: "",
+        invoiceProvider: "EasyInvoice", // Default provider
+        invoiceTemplate: "1C25TYY", // Default template
+        taxCode: "0123456789", // Default tax code
+        customerName: "Khách hàng lẻ", // Default customer name
         address: "",
         phoneNumber: "",
         email: "",
