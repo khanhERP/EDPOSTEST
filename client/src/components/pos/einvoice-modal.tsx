@@ -96,8 +96,12 @@ export function EInvoiceModal({
 
   const handleConfirm = async () => {
     // Debug logging
+    console.log("=== E-INVOICE MODAL DEBUG ===");
     console.log("Cart items received in E-invoice modal:", cartItems);
     console.log("Number of cart items:", cartItems?.length || 0);
+    console.log("Cart items details:", JSON.stringify(cartItems, null, 2));
+    console.log("Cart items type:", typeof cartItems);
+    console.log("Is cartItems an array?", Array.isArray(cartItems));
     
     // Validate required fields
     if (
@@ -111,6 +115,7 @@ export function EInvoiceModal({
 
     // Validate that we have products
     if (!cartItems || cartItems.length === 0) {
+      console.error("No cart items available for invoice creation");
       alert("Không có sản phẩm nào để tạo hóa đơn");
       return;
     }
@@ -199,12 +204,14 @@ export function EInvoiceModal({
           emailCC: "",
         },
         products: cartItems && cartItems.length > 0 ? cartItems.map((item, index) => {
+          console.log(`Processing item ${index + 1}:`, item);
+          
           const itemTotal = item.price * item.quantity;
           const taxRate = item.taxRate || 10; // Default to 10% if not specified
           const vatAmount = (itemTotal * taxRate) / 100;
           const totalWithVat = itemTotal + vatAmount;
           
-          return {
+          const productItem = {
             itmCd: item.sku || `ITEM${String(index + 1).padStart(3, '0')}`,
             itmName: item.name,
             itmKnd: 1,
@@ -218,10 +225,16 @@ export function EInvoiceModal({
             vatAmt: Math.round(vatAmount),
             totalAmt: Math.round(totalWithVat),
           };
+          
+          console.log(`Mapped product item ${index + 1}:`, productItem);
+          return productItem;
         }) : [],
       };
 
-      console.log("Publishing invoice with data:", publishRequest);
+      console.log("=== FINAL PUBLISH REQUEST ===");
+      console.log("Products array length:", publishRequest.products.length);
+      console.log("Products array:", JSON.stringify(publishRequest.products, null, 2));
+      console.log("Publishing invoice with data:", JSON.stringify(publishRequest, null, 2));
 
       // Call the proxy API instead of direct external API
       const response = await fetch("/api/einvoice/publish", {

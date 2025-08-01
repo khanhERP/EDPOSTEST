@@ -193,7 +193,13 @@ export function ReceiptModal({
                 Print Receipt
               </Button>
               <Button
-                onClick={() => setShowEInvoiceModal(true)}
+                onClick={() => {
+                  console.log("=== OPENING E-INVOICE MODAL ===");
+                  console.log("Cart items to pass to E-invoice modal:", cartItems);
+                  console.log("Cart items length:", cartItems?.length || 0);
+                  console.log("Receipt total:", receipt?.total || 0);
+                  setShowEInvoiceModal(true);
+                }}
                 className="bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
               >
                 📄 Xuất hóa đơn điện tử
