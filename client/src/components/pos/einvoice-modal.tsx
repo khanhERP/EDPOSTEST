@@ -161,49 +161,9 @@ export function EInvoiceModal({
       return;
     }
 
-    // Validate that we have products
-    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-      console.error("❌ No cart items available for invoice creation");
-      console.error("cartItems:", cartItems);
-      console.error("cartItems is array:", Array.isArray(cartItems));
-      console.error("cartItems length:", cartItems?.length);
-      alert("Không có sản phẩm nào để tạo hóa đơn. Vui lòng kiểm tra giỏ hàng.");
-      return;
-    }
-
     try {
-      // Debug cartItems before filtering
-      console.log("🔍 Raw cartItems before filtering:", JSON.stringify(cartItems, null, 2));
-      
-      // Filter out invalid cart items (e.g., missing price or quantity)
-      const validItems = cartItems.filter(item => {
-        if (!item) {
-          console.log("❌ Item is null/undefined:", item);
-          return false;
-        }
-        
-        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
-        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
-        
-        console.log(`🔍 Checking item: ${item.name}`, {
-          originalPrice: item.price,
-          processedPrice: itemPrice,
-          originalQuantity: item.quantity,
-          processedQuantity: itemQuantity,
-          isValid: itemPrice > 0 && itemQuantity > 0
-        });
-        
-        return itemPrice > 0 && itemQuantity > 0;
-      });
-
-      console.log("✅ Valid items after filtering:", validItems.length);
-      console.log("✅ Valid items details:", JSON.stringify(validItems, null, 2));
-
-      if (validItems.length === 0) {
-        console.error("❌ No valid cart items available for invoice creation");
-        alert("Không có sản phẩm hợp lệ để tạo hóa đơn");
-        return;
-      }
+      // Debug cartItems (but don't validate)
+      console.log("🔍 Raw cartItems:", JSON.stringify(cartItems, null, 2));
 
       // Find the provider value from the EINVOICE_PROVIDERS mapping
       const provider = EINVOICE_PROVIDERS.find(
