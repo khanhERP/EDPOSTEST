@@ -336,7 +336,7 @@ export default function Settings() {
       name: "Thẻ tín dụng",
       nameKey: "creditCard",
       type: "card",
-      enabled: true,
+      enabled: false,
       icon: "💳",
     },
     {
@@ -344,7 +344,7 @@ export default function Settings() {
       name: "Thẻ ghi nợ",
       nameKey: "debitCard",
       type: "debit",
-      enabled: true,
+      enabled: false,
       icon: "💳",
     },
     {
@@ -352,7 +352,7 @@ export default function Settings() {
       name: "MoMo",
       nameKey: "momo",
       type: "digital",
-      enabled: true,
+      enabled: false,
       icon: "📱",
     },
     {
@@ -360,7 +360,7 @@ export default function Settings() {
       name: "ZaloPay",
       nameKey: "zalopay",
       type: "digital",
-      enabled: true,
+      enabled: false,
       icon: "📱",
     },
     {
@@ -368,7 +368,7 @@ export default function Settings() {
       name: "VNPay",
       nameKey: "vnpay",
       type: "digital",
-      enabled: true,
+      enabled: false,
       icon: "💳",
     },
     {
