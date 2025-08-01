@@ -114,11 +114,25 @@ export function EInvoiceModal({
   const handleConfirm = async () => {
     // Debug logging
     console.log("=== E-INVOICE MODAL DEBUG ===");
-    console.log("Cart items received in E-invoice modal:", cartItems);
-    console.log("Number of cart items:", cartItems?.length || 0);
-    console.log("Cart items details:", JSON.stringify(cartItems, null, 2));
-    console.log("Cart items type:", typeof cartItems);
-    console.log("Is cartItems an array?", Array.isArray(cartItems));
+    console.log("📦 Cart items received from shopping cart:", cartItems);
+    console.log("📊 Number of cart items:", cartItems?.length || 0);
+    console.log("🛒 Shopping cart details:", JSON.stringify(cartItems, null, 2));
+    console.log("📝 Cart items type:", typeof cartItems);
+    console.log("✅ Is cartItems an array?", Array.isArray(cartItems));
+    
+    // Hiển thị thông tin chi tiết từng sản phẩm trong giỏ hàng
+    if (cartItems && cartItems.length > 0) {
+      console.log("🔍 THÔNG TIN CHI TIẾT GIỎ HÀNG:");
+      cartItems.forEach((item, index) => {
+        console.log(`   Sản phẩm ${index + 1}:`, {
+          tên: item.name,
+          mã: item.sku || item.id,
+          giá: item.price,
+          sốLượng: item.quantity,
+          thànhTiền: (parseFloat(item.price) * item.quantity).toLocaleString('vi-VN') + ' ₫'
+        });
+      });
+    }
 
     // Additional debug for each cart item
     if (cartItems && cartItems.length > 0) {
@@ -278,8 +292,16 @@ export function EInvoiceModal({
           emailCC: "",
         },
         products: validItems.map((item, index) => {
-          console.log(`🔄 Processing item ${index + 1}:`, item);
+          console.log(`🔄 Processing cart item ${index + 1}:`, {
+            id: item.id,
+            name: item.name,
+            originalPrice: item.price,
+            originalQuantity: item.quantity,
+            sku: item.sku,
+            taxRate: item.taxRate
+          });
 
+          // Xử lý giá và số lượng từ dữ liệu giỏ hàng
           const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
           const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
           const itemTotal = itemPrice * itemQuantity;
@@ -287,22 +309,29 @@ export function EInvoiceModal({
           const vatAmount = (itemTotal * taxRate) / 100;
           const totalWithVat = itemTotal + vatAmount;
 
+          // Tạo object sản phẩm cho API hóa đơn điện tử
           const productItem = {
-            itmCd: item.sku || `ITEM${String(item.id || index + 1).padStart(3, '0')}`,
-            itmName: item.name || `Product ${index + 1}`,
-            itmKnd: 1,
-            unitNm: "Cái",
-            qty: itemQuantity,
-            unprc: itemPrice,
-            amt: Math.round(itemTotal),
-            discRate: 0,
-            discAmt: 0,
-            vatRt: taxRate.toString(),
-            vatAmt: Math.round(vatAmount),
-            totalAmt: Math.round(totalWithVat),
+            itmCd: item.sku || `ITEM${String(item.id || index + 1).padStart(3, '0')}`, // Mã sản phẩm
+            itmName: item.name || `Sản phẩm ${index + 1}`, // Tên sản phẩm từ giỏ hàng
+            itmKnd: 1, // Loại sản phẩm (1 = hàng hóa)
+            unitNm: "Cái", // Đơn vị tính
+            qty: itemQuantity, // Số lượng từ giỏ hàng
+            unprc: itemPrice, // Đơn giá từ giỏ hàng
+            amt: Math.round(itemTotal), // Thành tiền chưa thuế
+            discRate: 0, // Tỷ lệ chiết khấu
+            discAmt: 0, // Tiền chiết khấu
+            vatRt: taxRate.toString(), // Thuế suất
+            vatAmt: Math.round(vatAmount), // Tiền thuế
+            totalAmt: Math.round(totalWithVat), // Tổng tiền có thuế
           };
 
-          console.log(`✅ Mapped product item ${index + 1}:`, productItem);
+          console.log(`✅ Mapped cart product ${index + 1} for e-invoice:`, {
+            productName: productItem.itmName,
+            quantity: productItem.qty,
+            unitPrice: productItem.unprc,
+            total: productItem.totalAmt
+          });
+          
           return productItem;
         }),
       };
