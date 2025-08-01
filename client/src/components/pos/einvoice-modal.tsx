@@ -79,7 +79,7 @@ export function EInvoiceModal({
       console.log("🔥 cartItems length when modal opens:", cartItems?.length || 0);
       console.log("🔥 cartItems is array when modal opens:", Array.isArray(cartItems));
       console.log("🔥 total when modal opens:", total);
-      
+
       setFormData({
         invoiceProvider: "",
         invoiceTemplate: "",
@@ -108,7 +108,7 @@ export function EInvoiceModal({
     console.log("Cart items details:", JSON.stringify(cartItems, null, 2));
     console.log("Cart items type:", typeof cartItems);
     console.log("Is cartItems an array?", Array.isArray(cartItems));
-    
+
     // Additional debug for each cart item
     if (cartItems && cartItems.length > 0) {
       cartItems.forEach((item, index) => {
@@ -365,6 +365,8 @@ export function EInvoiceModal({
                       handleInputChange("invoiceTemplate", e.target.value)
                     }
                     placeholder="1C25TYY"
+                    disabled={false}
+                    readOnly={false}
                   />
                   <Button variant="outline" size="sm">
                     <Search className="w-4 h-4" />
@@ -385,6 +387,8 @@ export function EInvoiceModal({
                   value={formData.taxCode}
                   onChange={(e) => handleInputChange("taxCode", e.target.value)}
                   placeholder="0102222333-001"
+                  disabled={false}
+                  readOnly={false}
                 />
               </div>
               <div>
@@ -396,6 +400,8 @@ export function EInvoiceModal({
                     handleInputChange("customerName", e.target.value)
                   }
                   placeholder="Công ty TNHH ABC"
+                  disabled={false}
+                  readOnly={false}
                 />
               </div>
               <div>
@@ -405,6 +411,8 @@ export function EInvoiceModal({
                   value={formData.address}
                   onChange={(e) => handleInputChange("address", e.target.value)}
                   placeholder="Cầu Giấy, Hà Nội"
+                  disabled={false}
+                  readOnly={false}
                 />
               </div>
               <div>
@@ -416,6 +424,8 @@ export function EInvoiceModal({
                     handleInputChange("phoneNumber", e.target.value)
                   }
                   placeholder="0123456789"
+                  disabled={false}
+                  readOnly={false}
                 />
               </div>
               <div>
@@ -427,6 +437,8 @@ export function EInvoiceModal({
                     handleInputChange("recipientName", e.target.value)
                   }
                   placeholder="Nguyễn Văn Ngọc"
+                  disabled={false}
+                  readOnly={false}
                 />
               </div>
               <div>
@@ -437,6 +449,8 @@ export function EInvoiceModal({
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
                   placeholder="ngocnv@gmail.com"
+                  disabled={false}
+                  readOnly={false}
                 />
               </div>
             </div>
