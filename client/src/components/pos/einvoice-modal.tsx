@@ -196,7 +196,39 @@ export function EInvoiceModal({
         );
       };
 
-      // Prepare the PublishInvoiceRequest with data from database
+      // Calculate totals from cart items
+      const cartSubtotal = cartItems.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+      const cartTaxAmount = cartItems.reduce((sum, item) => {
+        const itemTax = (parseFloat(item.price) * item.quantity) * (item.taxRate || 10) / 100;
+        return sum + itemTax;
+      }, 0);
+      const cartTotal = cartSubtotal + cartTaxAmount;
+
+      // Convert cart items to invoice products
+      const invoiceProducts = cartItems.map((item, index) => {
+        const itemPrice = parseFloat(item.price);
+        const itemTotal = itemPrice * item.quantity;
+        const taxRate = item.taxRate || 10;
+        const itemTax = itemTotal * taxRate / 100;
+        const itemTotalWithTax = itemTotal + itemTax;
+
+        return {
+          itmCd: item.sku || `SP${String(item.id).padStart(3, '0')}`, // Sử dụng SKU hoặc tạo mã
+          itmName: item.name, // Tên sản phẩm từ giỏ hàng
+          itmKnd: 1, // Loại sản phẩm (1 = hàng hóa)
+          unitNm: "Cái", // Đơn vị tính
+          qty: item.quantity, // Số lượng từ giỏ hàng
+          unprc: itemPrice, // Đơn giá từ giỏ hàng
+          amt: itemTotal, // Thành tiền chưa thuế
+          discRate: 0, // Tỷ lệ chiết khấu
+          discAmt: 0, // Tiền chiết khấu
+          vatRt: taxRate.toString(), // Thuế suất
+          vatAmt: Math.round(itemTax), // Tiền thuế
+          totalAmt: Math.round(itemTotalWithTax), // Tổng tiền có thuế
+        };
+      });
+
+      // Prepare the PublishInvoiceRequest with data from cart
       const publishRequest = {
         login: {
           providerId: providerId,
@@ -208,11 +240,11 @@ export function EInvoiceModal({
         },
         transactionID: generateGuid(),
         invRef: `K24TGT804`,
-        invSubTotal: 100000, // Tổng tiền chưa thuế cố định
-        invVatRate: 10, // 10% VAT rate
-        invVatAmount: 10000, // Tiền thuế cố định (10% của 100,000)
+        invSubTotal: Math.round(cartSubtotal), // Tổng tiền chưa thuế từ giỏ hàng
+        invVatRate: 10, // Default VAT rate
+        invVatAmount: Math.round(cartTaxAmount), // Tiền thuế từ giỏ hàng
         invDiscAmount: 0, // Chiết khấu
-        invTotalAmount: 110000, // Tổng tiền có thuế cố định
+        invTotalAmount: Math.round(cartTotal), // Tổng tiền có thuế từ giỏ hàng
         paidTp: "TM", // Cash payment
         note: "",
         hdNo: "",
@@ -239,22 +271,7 @@ export function EInvoiceModal({
           email: formData.email || "",
           emailCC: "",
         },
-        products: [
-          {
-            itmCd: "SP001", // Mã sản phẩm cố định
-            itmName: "Sản phẩm mẫu", // Tên sản phẩm cố định
-            itmKnd: 1, // Loại sản phẩm (1 = hàng hóa)
-            unitNm: "Cái", // Đơn vị tính
-            qty: 1, // Số lượng cố định
-            unprc: 100000, // Đơn giá cố định (100,000 VND)
-            amt: 100000, // Thành tiền chưa thuế
-            discRate: 0, // Tỷ lệ chiết khấu
-            discAmt: 0, // Tiền chiết khấu
-            vatRt: "10", // Thuế suất 10%
-            vatAmt: 10000, // Tiền thuế (10% của 100,000)
-            totalAmt: 110000, // Tổng tiền có thuế
-          }
-        ],
+        products: invoiceProducts, // Sử dụng sản phẩm từ giỏ hàng
       };
 
       console.log("=== FINAL PUBLISH REQUEST ===");
