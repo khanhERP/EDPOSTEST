@@ -116,6 +116,15 @@ export function EInvoiceModal({
         return;
       }
 
+      // Generate a new GUID for transactionID
+      const generateGuid = () => {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          const r = Math.random() * 16 | 0;
+          const v = c === 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+        });
+      };
+
       // Prepare the PublishInvoiceRequest with data from database
       const publishRequest = {
         Login: {
@@ -126,9 +135,7 @@ export function EInvoiceModal({
           password: connectionInfo.password,
           TenantId: "",
         },
-        transactionID: `${Date.now()}${Math.floor(Math.random() * 1000)
-          .toString()
-          .padStart(3, "0")}`,
+        transactionID: generateGuid(),
         invRef: `K24TGT804`,
         invSubTotal: total,
         invVatRate: 10, // 10% VAT rate
