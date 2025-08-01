@@ -38,6 +38,13 @@ export function ReceiptModal({
   cartItems = [],
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
+  
+  // Debug logging when modal opens
+  console.log("=== RECEIPT MODAL RENDERED ===");
+  console.log("Receipt Modal cartItems:", cartItems);
+  console.log("Receipt Modal cartItems length:", cartItems?.length || 0);
+  console.log("Receipt Modal cartItems type:", typeof cartItems);
+  console.log("Receipt Modal isOpen:", isOpen);
   // Query store settings to get dynamic address
   const { data: storeSettings } = useQuery({
     queryKey: ["/api/store-settings"],

@@ -32,21 +32,34 @@ export default function POSPage() {
   } = usePOS();
 
   const handleCheckout = async (paymentData: any) => {
+    console.log("=== POS PAGE CHECKOUT DEBUG ===");
     console.log("Cart before checkout:", cart);
+    console.log("Cart items structure:", cart.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: typeof item.price,
+      quantity: typeof item.quantity,
+      sku: item.sku,
+      taxRate: item.taxRate
+    })));
+    
     // Save cart items before checkout (in case cart gets cleared)
     const cartItemsBeforeCheckout = cart.map(item => ({
       id: item.id,
       name: item.name,
-      price: item.price,
+      price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
       quantity: item.quantity,
       sku: item.sku,
-      taxRate: item.taxRate
+      taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : item.taxRate
     }));
+    
+    console.log("Cart items before checkout (processed):", cartItemsBeforeCheckout);
     setLastCartItems(cartItemsBeforeCheckout);
     
     const receipt = await processCheckout(paymentData);
     if (receipt) {
       console.log("Cart after checkout:", cart);
+      console.log("Last cart items set:", cartItemsBeforeCheckout);
       setShowReceiptModal(true);
     }
   };

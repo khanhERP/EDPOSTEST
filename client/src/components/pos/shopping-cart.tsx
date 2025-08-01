@@ -66,6 +66,11 @@ export function ShoppingCart({
   const handleCheckout = () => {
     if (cart.length === 0) return;
     
+    console.log("=== SHOPPING CART CHECKOUT DEBUG ===");
+    console.log("Cart items before checkout:", cart);
+    console.log("Cart items count:", cart.length);
+    console.log("Cart items details:", JSON.stringify(cart, null, 2));
+    
     if (paymentMethod === "cash") {
       const receivedAmount = parseFloat(amountReceived || "0");
       if (receivedAmount < total) {
@@ -99,6 +104,10 @@ export function ShoppingCart({
         cashierName: "John Smith",
         createdAt: new Date().toISOString()
       };
+      
+      console.log("Receipt created with items:", receipt.items);
+      console.log("Setting preview receipt:", receipt);
+      
       setPreviewReceipt(receipt);
       setShowReceiptPreview(true);
     }
