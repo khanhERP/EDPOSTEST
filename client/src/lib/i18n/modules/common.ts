@@ -141,6 +141,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     refresh: "새로고침",
     reload: "다시 로드",
     update: "업데이트",
+    collapse: "접기",
     upgrade: "업그레이드",
     download: "다운로드",
     upload: "업로드",
