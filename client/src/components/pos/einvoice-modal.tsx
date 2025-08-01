@@ -95,6 +95,10 @@ export function EInvoiceModal({
   };
 
   const handleConfirm = async () => {
+    // Debug logging
+    console.log("Cart items received in E-invoice modal:", cartItems);
+    console.log("Number of cart items:", cartItems?.length || 0);
+    
     // Validate required fields
     if (
       !formData.invoiceProvider ||
@@ -102,6 +106,12 @@ export function EInvoiceModal({
       !formData.customerName
     ) {
       alert("Vui lòng điền đầy đủ thông tin bắt buộc");
+      return;
+    }
+
+    // Validate that we have products
+    if (!cartItems || cartItems.length === 0) {
+      alert("Không có sản phẩm nào để tạo hóa đơn");
       return;
     }
 
@@ -188,7 +198,7 @@ export function EInvoiceModal({
           email: formData.email || "",
           emailCC: "",
         },
-        products: cartItems.map((item, index) => {
+        products: cartItems && cartItems.length > 0 ? cartItems.map((item, index) => {
           const itemTotal = item.price * item.quantity;
           const taxRate = item.taxRate || 10; // Default to 10% if not specified
           const vatAmount = (itemTotal * taxRate) / 100;
@@ -205,10 +215,10 @@ export function EInvoiceModal({
             discRate: 0,
             discAmt: 0,
             vatRt: taxRate.toString(),
-            vatAmt: vatAmount,
-            totalAmt: totalWithVat,
+            vatAmt: Math.round(vatAmount),
+            totalAmt: Math.round(totalWithVat),
           };
-        }),
+        }) : [],
       };
 
       console.log("Publishing invoice with data:", publishRequest);

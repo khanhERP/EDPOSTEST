@@ -13,6 +13,7 @@ export default function POSPage() {
   const [showProductManagerModal, setShowProductManagerModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [lastCartItems, setLastCartItems] = useState<any[]>([]);
 
   const {
     cart,
@@ -31,8 +32,21 @@ export default function POSPage() {
   } = usePOS();
 
   const handleCheckout = async (paymentData: any) => {
+    console.log("Cart before checkout:", cart);
+    // Save cart items before checkout (in case cart gets cleared)
+    const cartItemsBeforeCheckout = cart.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      sku: item.sku,
+      taxRate: item.taxRate
+    }));
+    setLastCartItems(cartItemsBeforeCheckout);
+    
     const receipt = await processCheckout(paymentData);
     if (receipt) {
+      console.log("Cart after checkout:", cart);
       setShowReceiptModal(true);
     }
   };
@@ -84,14 +98,7 @@ export default function POSPage() {
         isOpen={showReceiptModal}
         onClose={() => setShowReceiptModal(false)}
         receipt={lastReceipt}
-        cartItems={cart.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          sku: item.sku,
-          taxRate: item.taxRate
-        }))}
+        cartItems={lastCartItems}
       />
 
       <ProductManagerModal
