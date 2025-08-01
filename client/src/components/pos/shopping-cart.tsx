@@ -108,15 +108,23 @@ export function ShoppingCart({
         createdAt: new Date().toISOString()
       };
 
-      // Create cartItems in the format expected by receipt modal
-      const cartItemsForReceipt = cart.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-        quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-        sku: item.sku || `ITEM${String(item.id).padStart(3, '0')}`,
-        taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
-      }));
+      // Create cartItems in the format expected by receipt modal with detailed logging
+      console.log("🛒 Processing cart items for receipt:", cart);
+      const cartItemsForReceipt = cart.map(item => {
+        const processedItem = {
+          id: item.id,
+          name: item.name,
+          price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+          quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+          sku: item.sku || `ITEM${String(item.id).padStart(3, '0')}`,
+          taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10),
+          total: parseFloat(item.total)
+        };
+        console.log(`📦 Processed item ${item.id}:`, processedItem);
+        return processedItem;
+      });
+      
+      console.log("✅ Final cartItemsForReceipt:", cartItemsForReceipt);
       
       console.log("Receipt created with items:", receipt.items);
       console.log("Cart items for receipt:", cartItemsForReceipt);

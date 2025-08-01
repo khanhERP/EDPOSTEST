@@ -165,7 +165,7 @@ export function EInvoiceModal({
       // Validate cart items with detailed logging
       console.log("🔍 VALIDATING CART ITEMS FOR E-INVOICE");
       console.log("Raw cartItems:", JSON.stringify(cartItems, null, 2));
-      
+
       if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
         console.error("❌ No valid cart items found:", {
           cartItems,
@@ -183,7 +183,7 @@ export function EInvoiceModal({
           item.name && 
           (item.price !== undefined && item.price !== null) && 
           (item.quantity !== undefined && item.quantity !== null && item.quantity > 0);
-        
+
         if (!isValid) {
           console.log("❌ Invalid item found:", item);
         }
@@ -210,15 +210,15 @@ export function EInvoiceModal({
         );
       };
 
-      // Calculate totals from actual cart items
+      // Calculate totals from real cart items
       let cartSubtotal = 0;
       let cartTaxAmount = 0;
 
-      // Convert cart items to invoice products with real data
+      // Convert cart items to invoice products with real data from shopping cart
       const invoiceProducts = cartItems.map((item, index) => {
-        console.log(`📦 Processing item ${index + 1}:`, item);
-        
-        // Ensure proper data types with more robust parsing
+        console.log(`📦 Processing cart item ${index + 1} for e-invoice:`, item);
+
+        // Ensure proper data types with robust parsing
         const itemPrice = (() => {
           if (typeof item.price === 'string') {
             const parsed = parseFloat(item.price.replace(',', ''));
@@ -226,7 +226,7 @@ export function EInvoiceModal({
           }
           return typeof item.price === 'number' ? item.price : 0;
         })();
-        
+
         const itemQuantity = (() => {
           if (typeof item.quantity === 'string') {
             const parsed = parseInt(item.quantity);
@@ -234,7 +234,7 @@ export function EInvoiceModal({
           }
           return typeof item.quantity === 'number' ? Math.max(1, item.quantity) : 1;
         })();
-        
+
         const itemTaxRate = (() => {
           if (typeof item.taxRate === 'string') {
             const parsed = parseFloat(item.taxRate);
@@ -242,7 +242,7 @@ export function EInvoiceModal({
           }
           return typeof item.taxRate === 'number' ? item.taxRate : 10;
         })();
-        
+
         // Calculate amounts
         const itemSubtotal = itemPrice * itemQuantity;
         const itemTax = (itemSubtotal * itemTaxRate) / 100;
@@ -251,45 +251,41 @@ export function EInvoiceModal({
         cartSubtotal += itemSubtotal;
         cartTaxAmount += itemTax;
 
-        console.log(`📦 Sản phẩm ${index + 1} đã xử lý:`, {
-          originalItem: item,
-          processedData: {
-            name: item.name,
-            price: itemPrice,
-            quantity: itemQuantity,
-            taxRate: itemTaxRate,
-            subtotal: itemSubtotal,
-            tax: itemTax,
-            total: itemTotal
-          }
+        console.log(`💰 Item ${index + 1} calculations:`, {
+          name: item.name,
+          price: itemPrice,
+          quantity: itemQuantity,
+          taxRate: itemTaxRate,
+          subtotal: itemSubtotal,
+          tax: itemTax,
+          total: itemTotal
         });
 
         return {
-          itmCd: item.sku || item.code || `SP${String(item.id || item.productId || index + 1).padStart(3, '0')}`,
-          itmName: item.name,
+          itmCd: item.sku || `SP${String(item.id || index + 1).padStart(3, '0')}`, // Sử dụng SKU thực tế từ cart
+          itmName: item.name, // Sử dụng tên sản phẩm thực tế từ cart
           itmKnd: 1, // Loại sản phẩm (1 = hàng hóa)
           unitNm: "Cái", // Đơn vị tính
-          qty: itemQuantity,
-          unprc: itemPrice,
+          qty: itemQuantity, // Số lượng thực tế từ cart
+          unprc: itemPrice, // Đơn giá thực tế từ cart
           amt: Math.round(itemSubtotal), // Thành tiền chưa thuế
           discRate: 0, // Tỷ lệ chiết khấu
           discAmt: 0, // Tiền chiết khấu
-          vatRt: itemTaxRate.toString(),
-          vatAmt: Math.round(itemTax), // Tiền thuế
-          totalAmt: Math.round(itemTotal), // Tổng tiền có thuế
+          vatRt: itemTaxRate.toString(), // Thuế suất thực tế từ cart
+          vatAmt: Math.round(itemTax), // Tiền thuế tính từ dữ liệu thực tế
+          totalAmt: Math.round(itemTotal), // Tổng tiền có thuế tính từ dữ liệu thực tế
         };
-      });
-
-      console.log("💰 Tổng kết toán:", {
-        cartSubtotal,
-        cartTaxAmount,
-        cartTotal: cartSubtotal + cartTaxAmount,
-        propsTotal: total
       });
 
       const cartTotal = cartSubtotal + cartTaxAmount;
 
-      // Prepare the PublishInvoiceRequest with real cart data
+      console.log("💰 E-Invoice totals calculated from real cart data:", {
+        subtotal: cartSubtotal,
+        tax: cartTaxAmount,
+        total: cartTotal,
+        itemsCount: invoiceProducts.length
+      });
+
       const publishRequest = {
         login: {
           providerId: providerId,
