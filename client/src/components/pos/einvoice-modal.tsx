@@ -102,7 +102,7 @@ export function EInvoiceModal({
     console.log("Cart items details:", JSON.stringify(cartItems, null, 2));
     console.log("Cart items type:", typeof cartItems);
     console.log("Is cartItems an array?", Array.isArray(cartItems));
-    
+
     // Validate required fields
     if (
       !formData.invoiceProvider ||
@@ -121,6 +121,19 @@ export function EInvoiceModal({
     }
 
     try {
+      // Filter out invalid cart items (e.g., missing price or quantity)
+      const validItems = cartItems.filter(item => {
+        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
+        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
+        return itemPrice > 0 && itemQuantity > 0;
+      });
+
+      if (validItems.length === 0) {
+        console.error("No valid cart items available for invoice creation");
+        alert("Không có sản phẩm hợp lệ để tạo hóa đơn");
+        return;
+      }
+
       // Find the provider value from the EINVOICE_PROVIDERS mapping
       const provider = EINVOICE_PROVIDERS.find(
         (p) => p.name === formData.invoiceProvider,
@@ -166,15 +179,19 @@ export function EInvoiceModal({
         invRef: `K24TGT804`,
         invSubTotal: total,
         invVatRate: 10, // 10% VAT rate
-        invVatAmount: cartItems.reduce((totalVat, item) => {
-          const itemTotal = item.price * item.quantity;
-          const taxRate = item.taxRate || 10;
+        invVatAmount: validItems.reduce((totalVat, item) => {
+          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
+          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
+          const itemTotal = itemPrice * itemQuantity;
+          const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10);
           return totalVat + (itemTotal * taxRate) / 100;
         }, 0),
         invDiscAmount: 0,
-        invTotalAmount: total + cartItems.reduce((totalVat, item) => {
-          const itemTotal = item.price * item.quantity;
-          const taxRate = item.taxRate || 10;
+        invTotalAmount: total + validItems.reduce((totalVat, item) => {
+          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
+          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
+          const itemTotal = itemPrice * itemQuantity;
+          const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10);
           return totalVat + (itemTotal * taxRate) / 100;
         }, 0),
         paidTp: "TM", // Cash payment
@@ -203,14 +220,16 @@ export function EInvoiceModal({
           email: formData.email || "",
           emailCC: "",
         },
-        products: cartItems && cartItems.length > 0 ? cartItems.map((item, index) => {
+        products: validItems && validItems.length > 0 ? validItems.map((item, index) => {
           console.log(`Processing item ${index + 1}:`, item);
-          
-          const itemTotal = item.price * item.quantity;
-          const taxRate = item.taxRate || 10; // Default to 10% if not specified
+
+          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
+          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
+          const itemTotal = itemPrice * itemQuantity;
+          const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10); // Default to 10% if not specified
           const vatAmount = (itemTotal * taxRate) / 100;
           const totalWithVat = itemTotal + vatAmount;
-          
+
           const productItem = {
             itmCd: item.sku || `ITEM${String(index + 1).padStart(3, '0')}`,
             itmName: item.name,
@@ -225,7 +244,7 @@ export function EInvoiceModal({
             vatAmt: Math.round(vatAmount),
             totalAmt: Math.round(totalWithVat),
           };
-          
+
           console.log(`Mapped product item ${index + 1}:`, productItem);
           return productItem;
         }) : [],
