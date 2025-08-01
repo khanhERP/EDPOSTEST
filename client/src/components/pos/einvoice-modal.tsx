@@ -84,8 +84,14 @@ export function EInvoiceModal({
     if (isOpen) {
       console.log("🔥 E-INVOICE MODAL OPENING");
       console.log("🔥 cartItems when modal opens:", cartItems);
-      console.log("🔥 cartItems length when modal opens:", cartItems?.length || 0);
-      console.log("🔥 cartItems is array when modal opens:", Array.isArray(cartItems));
+      console.log(
+        "🔥 cartItems length when modal opens:",
+        cartItems?.length || 0,
+      );
+      console.log(
+        "🔥 cartItems is array when modal opens:",
+        Array.isArray(cartItems),
+      );
       console.log("🔥 total when modal opens:", total);
 
       setFormData({
@@ -107,7 +113,7 @@ export function EInvoiceModal({
       console.log("🔄 Cart items or total changed:", {
         cartItems: cartItems?.length || 0,
         total,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     }
   }, [cartItems, total, isOpen]);
@@ -126,7 +132,9 @@ export function EInvoiceModal({
       !formData.taxCode ||
       !formData.customerName
     ) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT, Mã số thuế, và Tên đơn vị");
+      alert(
+        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT, Mã số thuế, và Tên đơn vị",
+      );
       return;
     }
 
@@ -174,19 +182,29 @@ export function EInvoiceModal({
           cartItems,
           isArray: Array.isArray(cartItems),
           length: cartItems?.length,
-          total: total
+          total: total,
         });
-        alert("Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử.\n\nDữ liệu nhận được:\n- Số sản phẩm: " + (cartItems?.length || 0) + "\n- Tổng tiền: " + total.toLocaleString('vi-VN') + " ₫\n\nVui lòng thử lại từ màn hình bán hàng.");
+        alert(
+          "Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử.\n\nDữ liệu nhận được:\n- Số sản phẩm: " +
+            (cartItems?.length || 0) +
+            "\n- Tổng tiền: " +
+            total.toLocaleString("vi-VN") +
+            " ₫\n\nVui lòng thử lại từ màn hình bán hàng.",
+        );
         return;
       }
 
       // Validate each cart item has required data
-      const invalidItems = cartItems.filter(item => {
-        const isValid = item && 
-          (item.id || item.productId) && 
-          item.name && 
-          (item.price !== undefined && item.price !== null) && 
-          (item.quantity !== undefined && item.quantity !== null && item.quantity > 0);
+      const invalidItems = cartItems.filter((item) => {
+        const isValid =
+          item &&
+          (item.id || item.productId) &&
+          item.name &&
+          item.price !== undefined &&
+          item.price !== null &&
+          item.quantity !== undefined &&
+          item.quantity !== null &&
+          item.quantity > 0;
 
         if (!isValid) {
           console.log("❌ Invalid item found:", item);
@@ -196,7 +214,9 @@ export function EInvoiceModal({
 
       if (invalidItems.length > 0) {
         console.error("❌ Invalid cart items found:", invalidItems);
-        alert(`Có ${invalidItems.length} sản phẩm trong giỏ hàng thiếu thông tin:\n${invalidItems.map(item => `- ${item?.name || 'Không có tên'}`).join('\n')}\n\nVui lòng kiểm tra lại giỏ hàng.`);
+        alert(
+          `Có ${invalidItems.length} sản phẩm trong giỏ hàng thiếu thông tin:\n${invalidItems.map((item) => `- ${item?.name || "Không có tên"}`).join("\n")}\n\nVui lòng kiểm tra lại giỏ hàng.`,
+        );
         return;
       }
 
@@ -220,31 +240,36 @@ export function EInvoiceModal({
 
       // Convert cart items to invoice products with real data from shopping cart
       const invoiceProducts = cartItems.map((item, index) => {
-        console.log(`📦 Processing cart item ${index + 1} for e-invoice:`, item);
+        console.log(
+          `📦 Processing cart item ${index + 1} for e-invoice:`,
+          item,
+        );
 
         // Ensure proper data types with robust parsing
         const itemPrice = (() => {
-          if (typeof item.price === 'string') {
-            const parsed = parseFloat(item.price.replace(',', ''));
+          if (typeof item.price === "string") {
+            const parsed = parseFloat(item.price.replace(",", ""));
             return isNaN(parsed) ? 0 : parsed;
           }
-          return typeof item.price === 'number' ? item.price : 0;
+          return typeof item.price === "number" ? item.price : 0;
         })();
 
         const itemQuantity = (() => {
-          if (typeof item.quantity === 'string') {
+          if (typeof item.quantity === "string") {
             const parsed = parseInt(item.quantity);
             return isNaN(parsed) ? 1 : Math.max(1, parsed);
           }
-          return typeof item.quantity === 'number' ? Math.max(1, item.quantity) : 1;
+          return typeof item.quantity === "number"
+            ? Math.max(1, item.quantity)
+            : 1;
         })();
 
         const itemTaxRate = (() => {
-          if (typeof item.taxRate === 'string') {
+          if (typeof item.taxRate === "string") {
             const parsed = parseFloat(item.taxRate);
             return isNaN(parsed) ? 10 : parsed;
           }
-          return typeof item.taxRate === 'number' ? item.taxRate : 10;
+          return typeof item.taxRate === "number" ? item.taxRate : 10;
         })();
 
         // Calculate amounts
@@ -262,11 +287,12 @@ export function EInvoiceModal({
           taxRate: itemTaxRate,
           subtotal: itemSubtotal,
           tax: itemTax,
-          total: itemTotal
+          total: itemTotal,
         });
 
         return {
-          itmCd: item.sku || `SP${String(item.id || index + 1).padStart(3, '0')}`, // Sử dụng SKU thực tế từ cart
+          itmCd:
+            item.sku || `SP${String(item.id || index + 1).padStart(3, "0")}`, // Sử dụng SKU thực tế từ cart
           itmName: item.name, // Sử dụng tên sản phẩm thực tế từ cart
           itmKnd: 1, // Loại sản phẩm (1 = hàng hóa)
           unitNm: "Cái", // Đơn vị tính
@@ -287,7 +313,7 @@ export function EInvoiceModal({
         subtotal: cartSubtotal,
         tax: cartTaxAmount,
         total: cartTotal,
-        itemsCount: invoiceProducts.length
+        itemsCount: invoiceProducts.length,
       });
 
       const publishRequest = {
@@ -309,7 +335,7 @@ export function EInvoiceModal({
         paidTp: "TM", // Cash payment
         note: "",
         hdNo: "",
-        createdDate: new Date().toISOString(),
+        createdDate: "2025-08-02", //new Date().toISOString(),
         clsfNo: "1",
         spcfNo: formData.invoiceTemplate,
         templateCode: "",
@@ -335,7 +361,10 @@ export function EInvoiceModal({
         products: invoiceProducts,
       };
 
-      console.log("Publishing invoice with data:", JSON.stringify(publishRequest, null, 2));
+      console.log(
+        "Publishing invoice with data:",
+        JSON.stringify(publishRequest, null, 2),
+      );
 
       // Call the proxy API
       const response = await fetch("/api/einvoice/publish", {
@@ -349,7 +378,8 @@ export function EInvoiceModal({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message || `API call failed: ${response.status} ${response.statusText}`,
+          errorData.message ||
+            `API call failed: ${response.status} ${response.statusText}`,
         );
       }
 
@@ -357,11 +387,15 @@ export function EInvoiceModal({
       console.log("Invoice published successfully:", result);
 
       if (result.success) {
-        alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || 'N/A'}`);
+        alert(
+          `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}`,
+        );
         onConfirm(formData);
         onClose();
       } else {
-        throw new Error(result.message || "Có lỗi xảy ra khi phát hành hóa đơn");
+        throw new Error(
+          result.message || "Có lỗi xảy ra khi phát hành hóa đơn",
+        );
       }
     } catch (error) {
       console.error("Error publishing invoice:", error);
