@@ -35,14 +35,6 @@ export default function POSPage() {
     console.log("=== POS PAGE CHECKOUT DEBUG ===");
     console.log("Cart before checkout:", cart);
     console.log("Cart length:", cart.length);
-    console.log("Cart items structure:", cart.map(item => ({
-      id: item.id,
-      name: item.name,
-      price: typeof item.price,
-      quantity: typeof item.quantity,
-      sku: item.sku,
-      taxRate: item.taxRate
-    })));
 
     if (cart.length === 0) {
       console.error("❌ Cart is empty, cannot proceed with checkout");
@@ -50,50 +42,75 @@ export default function POSPage() {
       return;
     }
 
-    // Save cart items before checkout (BEFORE cart gets cleared)
-    const cartItemsBeforeCheckout = cart.map(item => ({
-      id: item.id,
-      name: item.name,
-      price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-      quantity: item.quantity,
-      sku: item.sku || `ITEM${String(item.id).padStart(3, '0')}`,
-      taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10)
-    }));
+    // Prepare cart items with proper data types and validation
+    const cartItemsBeforeCheckout = cart.map(item => {
+      // Ensure price is a number
+      let itemPrice = item.price;
+      if (typeof itemPrice === 'string') {
+        itemPrice = parseFloat(itemPrice);
+      }
+      if (isNaN(itemPrice) || itemPrice <= 0) {
+        itemPrice = 0;
+      }
 
-    console.log("✅ Cart items saved before checkout:", cartItemsBeforeCheckout);
+      // Ensure quantity is a positive integer
+      let itemQuantity = item.quantity;
+      if (typeof itemQuantity === 'string') {
+        itemQuantity = parseInt(itemQuantity);
+      }
+      if (isNaN(itemQuantity) || itemQuantity <= 0) {
+        itemQuantity = 1;
+      }
+
+      // Ensure taxRate is a number
+      let itemTaxRate = item.taxRate;
+      if (typeof itemTaxRate === 'string') {
+        itemTaxRate = parseFloat(itemTaxRate);
+      }
+      if (isNaN(itemTaxRate)) {
+        itemTaxRate = 10; // Default 10%
+      }
+
+      return {
+        id: item.id,
+        name: item.name || `Product ${item.id}`,
+        price: itemPrice,
+        quantity: itemQuantity,
+        sku: item.sku || `ITEM${String(item.id).padStart(3, '0')}`,
+        taxRate: itemTaxRate
+      };
+    });
+
+    console.log("✅ Processed cart items:", cartItemsBeforeCheckout);
     
-    // Set cart items IMMEDIATELY before processing checkout
-    setLastCartItems(cartItemsBeforeCheckout);
-
-    // Double-check validation
-    if (!cartItemsBeforeCheckout || cartItemsBeforeCheckout.length === 0) {
-      console.error("❌ Failed to save cart items before checkout");
-      alert("Lỗi: Không thể lưu thông tin sản phẩm. Vui lòng thử lại.");
-      return;
-    }
-
-    // Additional validation for each item
+    // Validate processed items
     const invalidItems = cartItemsBeforeCheckout.filter(item => 
-      !item.id || !item.name || !item.price || item.price <= 0 || !item.quantity || item.quantity <= 0
+      !item.id || !item.name || item.price <= 0 || item.quantity <= 0
     );
 
     if (invalidItems.length > 0) {
-      console.error("❌ Invalid items found:", invalidItems);
+      console.error("❌ Invalid items found after processing:", invalidItems);
       alert("Có sản phẩm không hợp lệ trong giỏ hàng. Vui lòng kiểm tra lại.");
       return;
     }
 
-    console.log("✅ All cart items validated successfully");
+    // Set cart items before checkout to ensure they're available for receipt modal
+    setLastCartItems([...cartItemsBeforeCheckout]); // Use spread to ensure new array reference
 
-    const receipt = await processCheckout(paymentData);
-    if (receipt) {
-      console.log("✅ Receipt processed successfully");
-      console.log("✅ Final lastCartItems set to:", cartItemsBeforeCheckout);
-      console.log("✅ lastCartItems length:", cartItemsBeforeCheckout.length);
-      
-      setShowReceiptModal(true);
-    } else {
-      console.error("❌ Failed to process checkout");
+    console.log("✅ Cart items validation passed, processing checkout...");
+
+    try {
+      const receipt = await processCheckout(paymentData);
+      if (receipt) {
+        console.log("✅ Receipt processed successfully");
+        console.log("✅ Opening receipt modal with cartItems:", cartItemsBeforeCheckout.length, "items");
+        setShowReceiptModal(true);
+      } else {
+        console.error("❌ Failed to process checkout - no receipt returned");
+        alert("Lỗi thanh toán. Vui lòng thử lại.");
+      }
+    } catch (error) {
+      console.error("❌ Checkout process failed:", error);
       alert("Lỗi thanh toán. Vui lòng thử lại.");
     }
   };
