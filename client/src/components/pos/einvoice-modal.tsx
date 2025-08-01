@@ -128,6 +128,13 @@ export function EInvoiceModal({
     }
 
     try {
+      // Debug log current cart items
+      console.log("=== PHÁT HÀNH HÓA ĐƠN - KIỂM TRA DỮ LIỆU ===");
+      console.log("cartItems received:", cartItems);
+      console.log("cartItems length:", cartItems?.length || 0);
+      console.log("cartItems detailed:", JSON.stringify(cartItems, null, 2));
+      console.log("total amount:", total);
+
       // Find the provider value from the EINVOICE_PROVIDERS mapping
       const provider = EINVOICE_PROVIDERS.find(
         (p) => p.name === formData.invoiceProvider,
@@ -153,6 +160,17 @@ export function EInvoiceModal({
         return;
       }
 
+      // Validate each cart item has required data
+      const invalidItems = cartItems.filter(item => 
+        !item || !item.id || !item.name || !item.price || !item.quantity
+      );
+
+      if (invalidItems.length > 0) {
+        console.error("❌ Invalid cart items found:", invalidItems);
+        alert("Có sản phẩm trong giỏ hàng thiếu thông tin. Vui lòng kiểm tra lại.");
+        return;
+      }
+
       // Generate a new GUID for transactionID
       const generateGuid = () => {
         return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
@@ -171,16 +189,28 @@ export function EInvoiceModal({
 
       // Convert cart items to invoice products with real data
       const invoiceProducts = cartItems.map((item, index) => {
-        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-        const itemQuantity = item.quantity;
-        const itemTaxRate = item.taxRate || 10;
+        // Ensure proper data types
+        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
+        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
+        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
         
+        // Calculate amounts
         const itemSubtotal = itemPrice * itemQuantity;
         const itemTax = (itemSubtotal * itemTaxRate) / 100;
         const itemTotal = itemSubtotal + itemTax;
 
         cartSubtotal += itemSubtotal;
         cartTaxAmount += itemTax;
+
+        console.log(`📦 Sản phẩm ${index + 1}:`, {
+          name: item.name,
+          price: itemPrice,
+          quantity: itemQuantity,
+          taxRate: itemTaxRate,
+          subtotal: itemSubtotal,
+          tax: itemTax,
+          total: itemTotal
+        });
 
         return {
           itmCd: item.sku || `SP${String(item.id).padStart(3, '0')}`,
@@ -196,6 +226,13 @@ export function EInvoiceModal({
           vatAmt: Math.round(itemTax), // Tiền thuế
           totalAmt: Math.round(itemTotal), // Tổng tiền có thuế
         };
+      });
+
+      console.log("💰 Tổng kết toán:", {
+        cartSubtotal,
+        cartTaxAmount,
+        cartTotal: cartSubtotal + cartTaxAmount,
+        propsTotal: total
       });
 
       const cartTotal = cartSubtotal + cartTaxAmount;
