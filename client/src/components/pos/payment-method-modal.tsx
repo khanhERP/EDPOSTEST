@@ -17,6 +17,14 @@ interface PaymentMethodModalProps {
   onSelectMethod: (method: string) => void;
   total: number;
   onShowEInvoice?: () => void;
+  cartItems?: Array<{
+    id: number;
+    name: string;
+    price: number;
+    quantity: number;
+    sku?: string;
+    taxRate?: number;
+  }>;
 }
 
 export function PaymentMethodModal({ 
@@ -24,7 +32,8 @@ export function PaymentMethodModal({
   onClose, 
   onSelectMethod,
   total,
-  onShowEInvoice 
+  onShowEInvoice,
+  cartItems = []
 }: PaymentMethodModalProps) {
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
@@ -348,6 +357,7 @@ export function PaymentMethodModal({
         onClose={handleEInvoiceClose}
         onConfirm={handleEInvoiceConfirm}
         total={total}
+        cartItems={cartItems}
       />
     </Dialog>
   );

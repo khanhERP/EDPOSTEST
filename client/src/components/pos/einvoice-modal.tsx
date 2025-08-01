@@ -165,14 +165,18 @@ export function EInvoiceModal({
       // Validate cart items with detailed logging
       console.log("🔍 VALIDATING CART ITEMS FOR E-INVOICE");
       console.log("Raw cartItems:", JSON.stringify(cartItems, null, 2));
+      console.log("CartItems type:", typeof cartItems);
+      console.log("CartItems is array:", Array.isArray(cartItems));
+      console.log("CartItems length:", cartItems?.length);
 
       if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
         console.error("❌ No valid cart items found:", {
           cartItems,
           isArray: Array.isArray(cartItems),
-          length: cartItems?.length
+          length: cartItems?.length,
+          total: total
         });
-        alert("Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử.\nVui lòng kiểm tra lại giỏ hàng trước khi phát hành hóa đơn.");
+        alert("Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử.\n\nDữ liệu nhận được:\n- Số sản phẩm: " + (cartItems?.length || 0) + "\n- Tổng tiền: " + total.toLocaleString('vi-VN') + " ₫\n\nVui lòng thử lại từ màn hình bán hàng.");
         return;
       }
 

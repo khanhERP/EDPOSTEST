@@ -388,6 +388,14 @@ export function ShoppingCart({
         onClose={() => setShowPaymentMethodModal(false)}
         onSelectMethod={handleCardPaymentMethodSelect}
         total={total}
+        cartItems={cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+          taxRate: parseFloat(item.taxRate || "10")
+        }))}
       />
     </aside>
   );

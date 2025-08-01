@@ -46,6 +46,7 @@ export function ReceiptModal({
   console.log("Receipt Modal cartItems length:", cartItems?.length || 0);
   console.log("Receipt Modal cartItems type:", typeof cartItems);
   console.log("Receipt Modal cartItems is array:", Array.isArray(cartItems));
+  console.log("Receipt Modal total:", receipt?.total);
   console.log("Receipt Modal cartItems content:");
 
   if (Array.isArray(cartItems)) {
@@ -246,10 +247,20 @@ export function ReceiptModal({
             console.log("- cartItems length:", cartItems?.length || 0);
             console.log("- receipt items:", receipt?.items);
             
-            // Prefer cartItems prop if available, otherwise use receipt items
+            // Always prefer cartItems prop since it has the most accurate data
             if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-              console.log("✅ Using cartItems prop for e-invoice");
-              return cartItems;
+              console.log("✅ Using cartItems prop for e-invoice (most accurate data)");
+              // Ensure all cartItems have proper structure
+              const processedCartItems = cartItems.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+                quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+                sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
+              }));
+              console.log("🔧 Processed cartItems for e-invoice:", processedCartItems);
+              return processedCartItems;
             } else if (receipt?.items && Array.isArray(receipt.items) && receipt.items.length > 0) {
               console.log("⚠️ Fallback to receipt items for e-invoice");
               return receipt.items.map(item => ({
