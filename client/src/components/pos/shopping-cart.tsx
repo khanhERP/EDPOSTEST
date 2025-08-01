@@ -90,10 +90,13 @@ export function ShoppingCart({
         transactionId: `TXN-${Date.now()}`,
         items: cart.map(item => ({
           id: item.id,
+          productId: item.id,
           productName: item.name,
           price: parseFloat(item.price).toFixed(2),
           quantity: item.quantity,
-          total: parseFloat(item.total).toFixed(2)
+          total: parseFloat(item.total).toFixed(2),
+          sku: `ITEM${String(item.id).padStart(3, '0')}`,
+          taxRate: parseFloat(item.taxRate || "10")
         })),
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
@@ -104,8 +107,19 @@ export function ShoppingCart({
         cashierName: "John Smith",
         createdAt: new Date().toISOString()
       };
+
+      // Create cartItems in the format expected by receipt modal
+      const cartItemsForReceipt = cart.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: parseFloat(item.price),
+        quantity: item.quantity,
+        sku: `ITEM${String(item.id).padStart(3, '0')}`,
+        taxRate: parseFloat(item.taxRate || "10")
+      }));
       
       console.log("Receipt created with items:", receipt.items);
+      console.log("Cart items for receipt:", cartItemsForReceipt);
       console.log("Setting preview receipt:", receipt);
       
       setPreviewReceipt(receipt);
@@ -335,6 +349,14 @@ export function ShoppingCart({
         receipt={previewReceipt}
         onConfirm={handleReceiptConfirm}
         isPreview={true}
+        cartItems={cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: `ITEM${String(item.id).padStart(3, '0')}`,
+          taxRate: parseFloat(item.taxRate || "10")
+        }))}
       />
 
       {/* Payment Method Selection Modal */}

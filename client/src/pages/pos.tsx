@@ -36,12 +36,6 @@ export default function POSPage() {
     console.log("Cart before checkout:", cart);
     console.log("Cart length:", cart.length);
 
-    if (cart.length === 0) {
-      console.error("❌ Cart is empty, cannot proceed with checkout");
-      alert("Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.");
-      return;
-    }
-
     // Prepare cart items with proper data types and validation
     const cartItemsBeforeCheckout = cart.map(item => {
       // Ensure price is a number
@@ -82,7 +76,7 @@ export default function POSPage() {
     });
 
     console.log("✅ Processed cart items:", cartItemsBeforeCheckout);
-    
+
     // Validate processed items
     const invalidItems = cartItemsBeforeCheckout.filter(item => 
       !item.id || !item.name || item.price <= 0 || item.quantity <= 0
