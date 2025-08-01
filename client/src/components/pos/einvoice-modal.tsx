@@ -365,10 +365,6 @@ export function EInvoiceModal({
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={handleCancel} className="flex-1">
-              <span className="mr-2">📄</span>
-              Xem hóa đơn
-            </Button>
             <Button
               onClick={handleConfirm}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
