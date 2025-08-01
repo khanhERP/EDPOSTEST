@@ -2633,7 +2633,8 @@ export async function registerRoutes(app: Express): Promise {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json"
+          "Accept": "application/json",
+          "token": "EnURbbnPhUm4GjNgE4Ogrw=="
         },
         body: JSON.stringify(publishRequest)
       });
