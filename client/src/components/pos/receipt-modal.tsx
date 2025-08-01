@@ -38,7 +38,7 @@ export function ReceiptModal({
   cartItems = [],
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
-  
+
   // Debug logging when modal opens and when props change
   console.log("=== RECEIPT MODAL RENDERED ===");
   console.log("Receipt Modal isOpen:", isOpen);
@@ -47,7 +47,7 @@ export function ReceiptModal({
   console.log("Receipt Modal cartItems type:", typeof cartItems);
   console.log("Receipt Modal cartItems is array:", Array.isArray(cartItems));
   console.log("Receipt Modal cartItems content:");
-  
+
   if (Array.isArray(cartItems)) {
     cartItems.forEach((item, index) => {
       console.log(`  Item ${index + 1}:`, {
@@ -62,7 +62,7 @@ export function ReceiptModal({
       });
     });
   }
-  
+
   console.log("Receipt Modal receipt:", receipt);
   // Query store settings to get dynamic address
   const { data: storeSettings } = useQuery({
@@ -223,10 +223,10 @@ export function ReceiptModal({
                   console.log("=== OPENING E-INVOICE MODAL ===");
                   console.log("Cart items from props:", cartItems?.length || 0, "items");
                   console.log("Receipt items:", receipt?.items?.length || 0, "items");
-                  
+
                   // Determine which items to use for e-invoice
                   let finalItems = [];
-                  
+
                   // Priority 1: Use cartItems if available and valid
                   if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
                     console.log("✅ Using cartItems as primary source");
@@ -250,19 +250,19 @@ export function ReceiptModal({
                     alert("Không có sản phẩm nào để tạo hóa đơn điện tử. Vui lòng thử thanh toán lại.");
                     return;
                   }
-                  
+
                   // Final validation
                   const validItems = finalItems.filter(item => 
                     item && item.id && item.name && 
                     item.price > 0 && item.quantity > 0
                   );
-                  
+
                   if (validItems.length === 0) {
                     console.error("❌ No valid items after filtering");
                     alert("Không có sản phẩm hợp lệ để tạo hóa đơn điện tử");
                     return;
                   }
-                  
+
                   console.log("✅ Opening E-invoice modal with", validItems.length, "valid items");
                   setShowEInvoiceModal(true);
                 }}
@@ -289,7 +289,7 @@ export function ReceiptModal({
           if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
             return cartItems;
           }
-          
+
           if (receipt?.items && receipt.items.length > 0) {
             return receipt.items.map((item: any) => ({
               id: item.productId || item.id,
@@ -300,7 +300,7 @@ export function ReceiptModal({
               taxRate: item.taxRate || 10
             }));
           }
-          
+
           return [];
         })()}
       />

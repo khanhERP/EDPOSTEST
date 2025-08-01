@@ -112,10 +112,10 @@ export function ShoppingCart({
       const cartItemsForReceipt = cart.map(item => ({
         id: item.id,
         name: item.name,
-        price: parseFloat(item.price),
-        quantity: item.quantity,
-        sku: `ITEM${String(item.id).padStart(3, '0')}`,
-        taxRate: parseFloat(item.taxRate || "10")
+        price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+        quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+        sku: item.sku || `ITEM${String(item.id).padStart(3, '0')}`,
+        taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
       }));
       
       console.log("Receipt created with items:", receipt.items);
