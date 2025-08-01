@@ -126,11 +126,10 @@ export function EInvoiceModal({
           password: connectionInfo.password,
           TenantId: "",
         },
-        transactionID_old: null,
-        transactionID: `${Date.now()}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-        numbtext: null,
-        invRef: `INV-${Date.now()}`,
-        poNo: null,
+        transactionID: `${Date.now()}${Math.floor(Math.random() * 1000)
+          .toString()
+          .padStart(3, "0")}`,
+        invRef: `K24TGT804`,
         invSubTotal: total,
         invVatRate: 10, // 10% VAT rate
         invVatAmount: total * 0.1,
@@ -138,7 +137,6 @@ export function EInvoiceModal({
         invTotalAmount: total * 1.1,
         PaidTp: "TM", // Cash payment
         Note: "",
-        Extra1: "",
         HdNo: "",
         CreatedDate: new Date().toISOString(),
         clsfNo: formData.invoiceTemplate,
@@ -149,17 +147,6 @@ export function EInvoiceModal({
         ExchRt: 1,
         BankAccount: "",
         BankName: "",
-        dispatchID: null,
-        transName: null,
-        transType: null,
-        exportAdd: null,
-        importAdd: null,
-        contractNo: null,
-        shipper: null,
-        econContNo: null,
-        econContDt: null,
-        Ikey: null,
-        CertString: null,
         Customer: {
           CustCd: formData.taxCode,
           CustNm: formData.customerName,
