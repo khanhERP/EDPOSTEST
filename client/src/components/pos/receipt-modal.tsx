@@ -218,58 +218,6 @@ export function ReceiptModal({
                 <Printer className="mr-2" size={16} />
                 Print Receipt
               </Button>
-              <Button
-                onClick={() => {
-                  console.log("=== OPENING E-INVOICE MODAL ===");
-                  console.log("Cart items from props:", cartItems?.length || 0, "items");
-                  console.log("Receipt items:", receipt?.items?.length || 0, "items");
-
-                  // Determine which items to use for e-invoice
-                  let finalItems = [];
-
-                  // Priority 1: Use cartItems if available and valid
-                  if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-                    console.log("✅ Using cartItems as primary source");
-                    finalItems = cartItems;
-                  } 
-                  // Priority 2: Fallback to receipt items
-                  else if (receipt?.items && receipt.items.length > 0) {
-                    console.log("⚠️ cartItems not available, using receipt items as fallback");
-                    finalItems = receipt.items.map((item: any) => ({
-                      id: item.productId || item.id,
-                      name: item.productName || item.name,
-                      price: typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0),
-                      quantity: item.quantity || 1,
-                      sku: item.sku || `ITEM${String(item.productId || item.id).padStart(3, '0')}`,
-                      taxRate: item.taxRate || 10
-                    }));
-                  } 
-                  // No items available
-                  else {
-                    console.error("❌ No items available for e-invoice");
-                    alert("Không có sản phẩm nào để tạo hóa đơn điện tử. Vui lòng thử thanh toán lại.");
-                    return;
-                  }
-
-                  // Final validation
-                  const validItems = finalItems.filter(item => 
-                    item && item.id && item.name && 
-                    item.price > 0 && item.quantity > 0
-                  );
-
-                  if (validItems.length === 0) {
-                    console.error("❌ No valid items after filtering");
-                    alert("Không có sản phẩm hợp lệ để tạo hóa đơn điện tử");
-                    return;
-                  }
-
-                  console.log("✅ Opening E-invoice modal with", validItems.length, "valid items");
-                  setShowEInvoiceModal(true);
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
-              >
-                📄 Xuất hóa đơn điện tử
-              </Button>
             </div>
           )}
         </div>
