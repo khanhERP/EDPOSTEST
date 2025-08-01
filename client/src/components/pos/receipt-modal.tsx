@@ -39,14 +39,30 @@ export function ReceiptModal({
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   
-  // Debug logging when modal opens
+  // Debug logging when modal opens and when props change
   console.log("=== RECEIPT MODAL RENDERED ===");
   console.log("Receipt Modal isOpen:", isOpen);
-  console.log("Receipt Modal cartItems:", cartItems);
+  console.log("Receipt Modal cartItems received:", cartItems);
   console.log("Receipt Modal cartItems length:", cartItems?.length || 0);
   console.log("Receipt Modal cartItems type:", typeof cartItems);
   console.log("Receipt Modal cartItems is array:", Array.isArray(cartItems));
-  console.log("Receipt Modal cartItems content:", JSON.stringify(cartItems, null, 2));
+  console.log("Receipt Modal cartItems content:");
+  
+  if (Array.isArray(cartItems)) {
+    cartItems.forEach((item, index) => {
+      console.log(`  Item ${index + 1}:`, {
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        priceType: typeof item.price,
+        quantity: item.quantity,
+        quantityType: typeof item.quantity,
+        sku: item.sku,
+        taxRate: item.taxRate
+      });
+    });
+  }
+  
   console.log("Receipt Modal receipt:", receipt);
   // Query store settings to get dynamic address
   const { data: storeSettings } = useQuery({
@@ -210,12 +226,37 @@ export function ReceiptModal({
                   console.log("Cart items is array:", Array.isArray(cartItems));
                   console.log("Receipt total:", receipt?.total || 0);
                   
-                  if (!cartItems || cartItems.length === 0) {
-                    console.error("❌ No cart items available for E-invoice");
+                  // Detailed validation
+                  if (!cartItems) {
+                    console.error("❌ cartItems is null or undefined");
+                    alert("Không có thông tin sản phẩm để tạo hóa đơn điện tử");
+                    return;
+                  }
+                  
+                  if (!Array.isArray(cartItems)) {
+                    console.error("❌ cartItems is not an array:", typeof cartItems);
+                    alert("Dữ liệu sản phẩm không hợp lệ");
+                    return;
+                  }
+                  
+                  if (cartItems.length === 0) {
+                    console.error("❌ cartItems array is empty");
                     alert("Không có sản phẩm nào để tạo hóa đơn điện tử");
                     return;
                   }
                   
+                  // Validate each item
+                  const invalidItems = cartItems.filter(item => 
+                    !item || !item.id || !item.name || !item.price || !item.quantity
+                  );
+                  
+                  if (invalidItems.length > 0) {
+                    console.error("❌ Some cart items are invalid:", invalidItems);
+                    alert("Có sản phẩm không hợp lệ trong giỏ hàng");
+                    return;
+                  }
+                  
+                  console.log("✅ All validations passed, opening E-invoice modal");
                   setShowEInvoiceModal(true);
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"

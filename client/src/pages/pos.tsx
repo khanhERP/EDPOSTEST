@@ -43,12 +43,12 @@ export default function POSPage() {
       sku: item.sku,
       taxRate: item.taxRate
     })));
-    
+
     if (cart.length === 0) {
       console.error("❌ Cart is empty, cannot proceed with checkout");
       return;
     }
-    
+
     // Save cart items before checkout (in case cart gets cleared)
     const cartItemsBeforeCheckout = cart.map(item => ({
       id: item.id,
@@ -58,15 +58,15 @@ export default function POSPage() {
       sku: item.sku || `ITEM${String(item.id).padStart(3, '0')}`,
       taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10)
     }));
-    
+
     console.log("✅ Cart items before checkout (processed):", cartItemsBeforeCheckout);
-    
+
     const receipt = await processCheckout(paymentData);
     if (receipt) {
       console.log("✅ Receipt processed successfully");
       console.log("✅ Cart after checkout:", cart);
       console.log("✅ About to show receipt modal with cartItems:", cartItemsBeforeCheckout);
-      
+
       // Set both lastCartItems and show modal immediately with the saved cart items
       setLastCartItems(cartItemsBeforeCheckout);
       setShowReceiptModal(true);
