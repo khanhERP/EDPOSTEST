@@ -74,6 +74,12 @@ export function EInvoiceModal({
   // Reset form when modal opens
   useEffect(() => {
     if (isOpen) {
+      console.log("🔥 E-INVOICE MODAL OPENING");
+      console.log("🔥 cartItems when modal opens:", cartItems);
+      console.log("🔥 cartItems length when modal opens:", cartItems?.length || 0);
+      console.log("🔥 cartItems is array when modal opens:", Array.isArray(cartItems));
+      console.log("🔥 total when modal opens:", total);
+      
       setFormData({
         invoiceProvider: "",
         invoiceTemplate: "",
@@ -85,7 +91,7 @@ export function EInvoiceModal({
         recipientName: "",
       });
     }
-  }, [isOpen]);
+  }, [isOpen, cartItems, total]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -102,6 +108,23 @@ export function EInvoiceModal({
     console.log("Cart items details:", JSON.stringify(cartItems, null, 2));
     console.log("Cart items type:", typeof cartItems);
     console.log("Is cartItems an array?", Array.isArray(cartItems));
+    
+    // Additional debug for each cart item
+    if (cartItems && cartItems.length > 0) {
+      cartItems.forEach((item, index) => {
+        console.log(`Cart item ${index + 1}:`, {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          priceType: typeof item.price,
+          quantity: item.quantity,
+          quantityType: typeof item.quantity,
+          sku: item.sku,
+          taxRate: item.taxRate,
+          isValid: (item.price && item.price > 0 && item.quantity && item.quantity > 0)
+        });
+      });
+    }
 
     // Validate required fields
     if (
@@ -114,9 +137,12 @@ export function EInvoiceModal({
     }
 
     // Validate that we have products
-    if (!cartItems || cartItems.length === 0) {
-      console.error("No cart items available for invoice creation");
-      alert("Không có sản phẩm nào để tạo hóa đơn");
+    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+      console.error("❌ No cart items available for invoice creation");
+      console.error("cartItems:", cartItems);
+      console.error("cartItems is array:", Array.isArray(cartItems));
+      console.error("cartItems length:", cartItems?.length);
+      alert("Không có sản phẩm nào để tạo hóa đơn. Vui lòng kiểm tra giỏ hàng.");
       return;
     }
 

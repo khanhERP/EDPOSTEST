@@ -60,19 +60,15 @@ export default function POSPage() {
     }));
     
     console.log("✅ Cart items before checkout (processed):", cartItemsBeforeCheckout);
-    console.log("✅ Setting lastCartItems to:", cartItemsBeforeCheckout);
-    setLastCartItems(cartItemsBeforeCheckout);
-    
-    // Debug: Confirm lastCartItems is set
-    setTimeout(() => {
-      console.log("✅ lastCartItems state after setting:", lastCartItems);
-    }, 100);
     
     const receipt = await processCheckout(paymentData);
     if (receipt) {
       console.log("✅ Receipt processed successfully");
       console.log("✅ Cart after checkout:", cart);
       console.log("✅ About to show receipt modal with cartItems:", cartItemsBeforeCheckout);
+      
+      // Set both lastCartItems and show modal immediately with the saved cart items
+      setLastCartItems(cartItemsBeforeCheckout);
       setShowReceiptModal(true);
     }
   };
@@ -127,7 +123,7 @@ export default function POSPage() {
           setShowReceiptModal(false);
         }}
         receipt={lastReceipt}
-        cartItems={lastCartItems.length > 0 ? lastCartItems : cart}
+        cartItems={lastCartItems}
       />
 
       <ProductManagerModal
