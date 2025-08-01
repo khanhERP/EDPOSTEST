@@ -46,10 +46,11 @@ export default function POSPage() {
 
     if (cart.length === 0) {
       console.error("❌ Cart is empty, cannot proceed with checkout");
+      alert("Giỏ hàng trống. Vui lòng thêm sản phẩm trước khi thanh toán.");
       return;
     }
 
-    // Save cart items before checkout (in case cart gets cleared)
+    // Save cart items before checkout (BEFORE cart gets cleared)
     const cartItemsBeforeCheckout = cart.map(item => ({
       id: item.id,
       name: item.name,
@@ -59,37 +60,41 @@ export default function POSPage() {
       taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10)
     }));
 
-    console.log("✅ Cart items before checkout (processed):", cartItemsBeforeCheckout);
+    console.log("✅ Cart items saved before checkout:", cartItemsBeforeCheckout);
+    
+    // Set cart items IMMEDIATELY before processing checkout
+    setLastCartItems(cartItemsBeforeCheckout);
+
+    // Double-check validation
+    if (!cartItemsBeforeCheckout || cartItemsBeforeCheckout.length === 0) {
+      console.error("❌ Failed to save cart items before checkout");
+      alert("Lỗi: Không thể lưu thông tin sản phẩm. Vui lòng thử lại.");
+      return;
+    }
+
+    // Additional validation for each item
+    const invalidItems = cartItemsBeforeCheckout.filter(item => 
+      !item.id || !item.name || !item.price || item.price <= 0 || !item.quantity || item.quantity <= 0
+    );
+
+    if (invalidItems.length > 0) {
+      console.error("❌ Invalid items found:", invalidItems);
+      alert("Có sản phẩm không hợp lệ trong giỏ hàng. Vui lòng kiểm tra lại.");
+      return;
+    }
+
+    console.log("✅ All cart items validated successfully");
 
     const receipt = await processCheckout(paymentData);
     if (receipt) {
       console.log("✅ Receipt processed successfully");
-      console.log("✅ Cart after checkout:", cart);
-      console.log("✅ CartItems before checkout (final check):", JSON.stringify(cartItemsBeforeCheckout, null, 2));
-      
-      // Validate cartItemsBeforeCheckout
-      if (!cartItemsBeforeCheckout || cartItemsBeforeCheckout.length === 0) {
-        console.error("❌ cartItemsBeforeCheckout is empty!");
-        console.error("Original cart was:", cart);
-        console.error("Trying to use original cart instead...");
-        
-        // Fallback to original cart if cartItemsBeforeCheckout is empty
-        const fallbackItems = cart.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-          quantity: item.quantity,
-          sku: item.sku || `ITEM${String(item.id).padStart(3, '0')}`,
-          taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10)
-        }));
-        
-        console.log("✅ Using fallback items:", fallbackItems);
-        setLastCartItems(fallbackItems);
-      } else {
-        setLastCartItems(cartItemsBeforeCheckout);
-      }
+      console.log("✅ Final lastCartItems set to:", cartItemsBeforeCheckout);
+      console.log("✅ lastCartItems length:", cartItemsBeforeCheckout.length);
       
       setShowReceiptModal(true);
+    } else {
+      console.error("❌ Failed to process checkout");
+      alert("Lỗi thanh toán. Vui lòng thử lại.");
     }
   };
 

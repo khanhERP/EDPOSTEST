@@ -221,37 +221,48 @@ export function ReceiptModal({
               <Button
                 onClick={() => {
                   console.log("=== OPENING E-INVOICE MODAL ===");
-                  console.log("Cart items to pass to E-invoice modal:", cartItems);
+                  console.log("Cart items received from props:", cartItems);
                   console.log("Cart items length:", cartItems?.length || 0);
                   console.log("Cart items is array:", Array.isArray(cartItems));
                   console.log("Receipt total:", receipt?.total || 0);
+                  console.log("Receipt items:", receipt?.items || []);
                   
-                  // Detailed validation
-                  if (!cartItems) {
-                    console.error("❌ cartItems is null or undefined");
-                    alert("Không có thông tin sản phẩm để tạo hóa đơn điện tử");
+                  // Try to use receipt items as fallback if cartItems is empty
+                  let itemsToUse = cartItems;
+                  
+                  if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+                    console.log("⚠️ cartItems is empty, trying to use receipt items as fallback");
+                    
+                    if (receipt?.items && receipt.items.length > 0) {
+                      itemsToUse = receipt.items.map((item: any) => ({
+                        id: item.productId || item.id,
+                        name: item.productName || item.name,
+                        price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+                        quantity: item.quantity,
+                        sku: item.sku || `ITEM${String(item.productId || item.id).padStart(3, '0')}`,
+                        taxRate: item.taxRate || 10
+                      }));
+                      
+                      console.log("✅ Using receipt items as fallback:", itemsToUse);
+                    } else {
+                      console.error("❌ No cart items and no receipt items available");
+                      alert("Không có sản phẩm nào để tạo hóa đơn điện tử. Vui lòng thử thanh toán lại.");
+                      return;
+                    }
+                  }
+                  
+                  // Validate final items to use
+                  if (!itemsToUse || !Array.isArray(itemsToUse) || itemsToUse.length === 0) {
+                    console.error("❌ No valid items to create e-invoice");
+                    alert("Không có sản phẩm hợp lệ để tạo hóa đơn điện tử");
                     return;
                   }
                   
-                  if (!Array.isArray(cartItems)) {
-                    console.error("❌ cartItems is not an array:", typeof cartItems);
-                    alert("Dữ liệu sản phẩm không hợp lệ");
-                    return;
-                  }
-                  
-                  if (cartItems.length === 0) {
-                    console.error("❌ cartItems array is empty");
-                    alert("Không có sản phẩm nào để tạo hóa đơn điện tử");
-                    return;
-                  }
-                  
-                  // Validate each item with detailed logging
-                  const invalidItems = cartItems.filter(item => {
+                  // Validate each item
+                  const invalidItems = itemsToUse.filter(item => {
                     const isInvalid = !item || !item.id || !item.name || 
-                                     (typeof item.price !== 'number' && typeof item.price !== 'string') || 
-                                     (typeof item.quantity !== 'number' && typeof item.quantity !== 'string') ||
-                                     (typeof item.price === 'string' && isNaN(parseFloat(item.price))) ||
-                                     (typeof item.quantity === 'string' && isNaN(parseInt(item.quantity)));
+                                     (!item.price || (typeof item.price === 'string' && isNaN(parseFloat(item.price)))) ||
+                                     (!item.quantity || (typeof item.quantity === 'string' && isNaN(parseInt(item.quantity))));
                     
                     if (isInvalid) {
                       console.error("❌ Invalid item found:", item);
@@ -260,14 +271,14 @@ export function ReceiptModal({
                   });
                   
                   if (invalidItems.length > 0) {
-                    console.error("❌ Some cart items are invalid:", invalidItems);
-                    console.error("❌ Total invalid items:", invalidItems.length);
-                    console.error("❌ Total valid items:", cartItems.length - invalidItems.length);
-                    alert("Có sản phẩm không hợp lệ trong giỏ hàng");
+                    console.error("❌ Some items are invalid:", invalidItems);
+                    alert("Có sản phẩm không hợp lệ. Vui lòng kiểm tra lại thông tin sản phẩm.");
                     return;
                   }
                   
-                  console.log("✅ All validations passed, opening E-invoice modal");
+                  console.log("✅ All validations passed, opening E-invoice modal with items:", itemsToUse);
+                  
+                  // Store validated items temporarily for the modal
                   setShowEInvoiceModal(true);
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
@@ -288,7 +299,14 @@ export function ReceiptModal({
           setShowEInvoiceModal(false);
         }}
         total={receipt?.total || 0}
-        cartItems={cartItems}
+        cartItems={cartItems && cartItems.length > 0 ? cartItems : (receipt?.items?.map((item: any) => ({
+          id: item.productId || item.id,
+          name: item.productName || item.name,
+          price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+          quantity: item.quantity,
+          sku: item.sku || `ITEM${String(item.productId || item.id).padStart(3, '0')}`,
+          taxRate: item.taxRate || 10
+        })) || [])}
       />
     </Dialog>
   );
