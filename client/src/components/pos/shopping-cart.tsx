@@ -110,13 +110,27 @@ export function ShoppingCart({
 
       // Create cartItems in the format expected by receipt modal with detailed logging
       console.log("🛒 Processing cart items for receipt:", cart);
+      console.log("🛒 Cart items count:", cart.length);
+      
       const cartItemsForReceipt = cart.map(item => {
+        console.log(`🔍 Processing cart item ${item.id}:`, {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          priceType: typeof item.price,
+          quantity: item.quantity,
+          quantityType: typeof item.quantity,
+          taxRate: item.taxRate,
+          total: item.total,
+          sku: item.sku
+        });
+        
         const processedItem = {
           id: item.id,
           name: item.name,
           price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
           quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-          sku: item.sku || `ITEM${String(item.id).padStart(3, '0')}`,
+          sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`, // Use more descriptive SKU format
           taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10),
           total: parseFloat(item.total)
         };
@@ -125,6 +139,7 @@ export function ShoppingCart({
       });
       
       console.log("✅ Final cartItemsForReceipt:", cartItemsForReceipt);
+      console.log("✅ CartItemsForReceipt count:", cartItemsForReceipt.length);
       
       console.log("Receipt created with items:", receipt.items);
       console.log("Cart items for receipt:", cartItemsForReceipt);

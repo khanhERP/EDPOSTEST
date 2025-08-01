@@ -240,14 +240,31 @@ export function ReceiptModal({
             // Handle e-invoice confirmation if needed
           }}
           total={receipt?.total || 0}
-          cartItems={cartItems?.length > 0 ? cartItems : receipt?.items?.map(item => ({
-            id: item.productId,
-            name: item.productName,
-            price: item.price,
-            quantity: item.quantity,
-            sku: item.sku,
-            taxRate: 10 // Default tax rate
-          })) || []}
+          cartItems={(() => {
+            console.log("🔄 Receipt Modal - Preparing cartItems for EInvoice:");
+            console.log("- cartItems prop:", cartItems);
+            console.log("- cartItems length:", cartItems?.length || 0);
+            console.log("- receipt items:", receipt?.items);
+            
+            // Prefer cartItems prop if available, otherwise use receipt items
+            if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
+              console.log("✅ Using cartItems prop for e-invoice");
+              return cartItems;
+            } else if (receipt?.items && Array.isArray(receipt.items) && receipt.items.length > 0) {
+              console.log("⚠️ Fallback to receipt items for e-invoice");
+              return receipt.items.map(item => ({
+                id: item.productId || item.id,
+                name: item.productName || item.name,
+                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+                quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+                sku: item.sku || `FOOD${String(item.productId || item.id).padStart(5, '0')}`,
+                taxRate: item.taxRate || 10
+              }));
+            } else {
+              console.error("❌ No valid cart items found for e-invoice");
+              return [];
+            }
+          })()}
         />
       )}
     </Dialog>
