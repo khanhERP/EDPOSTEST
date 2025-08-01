@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { X, Search } from "lucide-react";
 import {
@@ -10,7 +9,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -24,7 +29,7 @@ const EINVOICE_PROVIDERS = [
   { name: "BkavInvoice", value: "6" },
   { name: "MInvoice", value: "7" },
   { name: "SInvoice", value: "8" },
-  { name: "WinInvoice", value: "9" }
+  { name: "WinInvoice", value: "9" },
 ];
 
 interface EInvoiceModalProps {
@@ -38,7 +43,7 @@ export function EInvoiceModal({
   isOpen,
   onClose,
   onConfirm,
-  total
+  total,
 }: EInvoiceModalProps) {
   const [formData, setFormData] = useState({
     invoiceProvider: "",
@@ -48,13 +53,13 @@ export function EInvoiceModal({
     address: "",
     phoneNumber: "",
     email: "",
-    recipientName: ""
+    recipientName: "",
   });
 
   // Fetch E-invoice connections
   const { data: eInvoiceConnections = [] } = useQuery<any[]>({
     queryKey: ["/api/einvoice-connections"],
-    enabled: isOpen
+    enabled: isOpen,
   });
 
   // Reset form when modal opens
@@ -68,37 +73,46 @@ export function EInvoiceModal({
         address: "",
         phoneNumber: "",
         email: "",
-        recipientName: ""
+        recipientName: "",
       });
     }
   }, [isOpen]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleConfirm = async () => {
     // Validate required fields
-    if (!formData.invoiceProvider || !formData.taxCode || !formData.customerName) {
+    if (
+      !formData.invoiceProvider ||
+      !formData.taxCode ||
+      !formData.customerName
+    ) {
       alert("Vui lòng điền đầy đủ thông tin bắt buộc");
       return;
     }
 
     try {
       // Find the provider value from the EINVOICE_PROVIDERS mapping
-      const provider = EINVOICE_PROVIDERS.find(p => p.name === formData.invoiceProvider);
+      const provider = EINVOICE_PROVIDERS.find(
+        (p) => p.name === formData.invoiceProvider,
+      );
       const providerId = provider ? parseInt(provider.value) : 1;
 
       // Get connection info from database based on selected provider
-      const connectionInfo = eInvoiceConnections.find(conn => 
-        conn.softwareName === formData.invoiceProvider && conn.isActive
+      const connectionInfo = eInvoiceConnections.find(
+        (conn) =>
+          conn.softwareName === formData.invoiceProvider && conn.isActive,
       );
 
       if (!connectionInfo) {
-        alert(`Không tìm thấy thông tin kết nối cho ${formData.invoiceProvider}. Vui lòng kiểm tra cấu hình trong Settings.`);
+        alert(
+          `Không tìm thấy thông tin kết nối cho ${formData.invoiceProvider}. Vui lòng kiểm tra cấu hình trong Settings.`,
+        );
         return;
       }
 
@@ -110,10 +124,10 @@ export function EInvoiceModal({
           ma_dvcs: connectionInfo.taxCode,
           username: connectionInfo.loginId,
           password: connectionInfo.password,
-          TenantId: ""
+          TenantId: "",
         },
         transactionID_old: null,
-        transactionID: `TXN-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        transactionID: null,
         numbtext: null,
         invRef: `INV-${Date.now()}`,
         poNo: null,
@@ -158,22 +172,24 @@ export function EInvoiceModal({
           CustBankAccount: "",
           CustBankName: "",
           Email: formData.email || "",
-          EmailCC: ""
+          EmailCC: "",
         },
-        Products: [{
-          ItmCd: "PRODUCT001",
-          ItmName: "Bán hàng POS",
-          ItmKnd: 1,
-          UnitNm: "Cái",
-          Qty: 1,
-          Unprc: total,
-          Amt: total,
-          DiscRate: 0,
-          DiscAmt: 0,
-          VatRt: "10",
-          VatAmt: total * 0.1,
-          TotalAmt: total * 1.1
-        }]
+        Products: [
+          {
+            ItmCd: "PRODUCT001",
+            ItmName: "Bán hàng POS",
+            ItmKnd: 1,
+            UnitNm: "Cái",
+            Qty: 1,
+            Unprc: total,
+            Amt: total,
+            DiscRate: 0,
+            DiscAmt: 0,
+            VatRt: "10",
+            VatAmt: total * 0.1,
+            TotalAmt: total * 1.1,
+          },
+        ],
       };
 
       console.log("Publishing invoice with data:", publishRequest);
@@ -182,13 +198,15 @@ export function EInvoiceModal({
       const response = await fetch("/api/einvoice/publish", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(publishRequest)
+        body: JSON.stringify(publishRequest),
       });
 
       if (!response.ok) {
-        throw new Error(`API call failed: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `API call failed: ${response.status} ${response.statusText}`,
+        );
       }
 
       const result = await response.json();
@@ -196,7 +214,6 @@ export function EInvoiceModal({
 
       alert("Hóa đơn điện tử đã được phát hành thành công!");
       onConfirm(formData);
-
     } catch (error) {
       console.error("Error publishing invoice:", error);
       alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error.message}`);
@@ -222,14 +239,18 @@ export function EInvoiceModal({
         <div className="p-6 space-y-6">
           {/* E-invoice Provider Information */}
           <div>
-            <h3 className="text-base font-medium mb-4">Thông tin nhà cung cấp hóa đơn điện tử</h3>
+            <h3 className="text-base font-medium mb-4">
+              Thông tin nhà cung cấp hóa đơn điện tử
+            </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="invoiceProvider">Đơn vị HĐĐT</Label>
                 <div className="flex gap-2">
                   <Select
                     value={formData.invoiceProvider}
-                    onValueChange={(value) => handleInputChange("invoiceProvider", value)}
+                    onValueChange={(value) =>
+                      handleInputChange("invoiceProvider", value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Chọn đơn vị HĐĐT" />
@@ -253,7 +274,9 @@ export function EInvoiceModal({
                   <Input
                     id="invoiceTemplate"
                     value={formData.invoiceTemplate}
-                    onChange={(e) => handleInputChange("invoiceTemplate", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("invoiceTemplate", e.target.value)
+                    }
                     placeholder="1C25TYY"
                   />
                   <Button variant="outline" size="sm">
@@ -282,7 +305,9 @@ export function EInvoiceModal({
                 <Input
                   id="customerName"
                   value={formData.customerName}
-                  onChange={(e) => handleInputChange("customerName", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("customerName", e.target.value)
+                  }
                   placeholder="Công ty TNHH ABC"
                 />
               </div>
@@ -300,7 +325,9 @@ export function EInvoiceModal({
                 <Input
                   id="phoneNumber"
                   value={formData.phoneNumber}
-                  onChange={(e) => handleInputChange("phoneNumber", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("phoneNumber", e.target.value)
+                  }
                   placeholder="0123456789"
                 />
               </div>
@@ -309,7 +336,9 @@ export function EInvoiceModal({
                 <Input
                   id="recipientName"
                   value={formData.recipientName}
-                  onChange={(e) => handleInputChange("recipientName", e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("recipientName", e.target.value)
+                  }
                   placeholder="Nguyễn Văn Ngọc"
                 />
               </div>
@@ -331,7 +360,11 @@ export function EInvoiceModal({
             <div className="flex justify-between items-center">
               <span className="font-medium">Tổng tiền hóa đơn:</span>
               <span className="text-lg font-bold text-blue-600">
-                {total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                {total.toLocaleString("vi-VN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}{" "}
+                ₫
               </span>
             </div>
           </div>
@@ -342,7 +375,7 @@ export function EInvoiceModal({
               <span className="mr-2">📄</span>
               Xem hóa đơn
             </Button>
-            <Button 
+            <Button
               onClick={handleConfirm}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
             >
