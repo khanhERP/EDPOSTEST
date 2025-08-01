@@ -118,22 +118,25 @@ export function EInvoiceModal({
 
       // Generate a new GUID for transactionID
       const generateGuid = () => {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-          const r = Math.random() * 16 | 0;
-          const v = c === 'x' ? r : (r & 0x3 | 0x8);
-          return v.toString(16);
-        });
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+          /[xy]/g,
+          function (c) {
+            const r = (Math.random() * 16) | 0;
+            const v = c === "x" ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+          },
+        );
       };
 
       // Prepare the PublishInvoiceRequest with data from database
       const publishRequest = {
-        Login: {
-          ProviderId: providerId,
+        login: {
+          providerId: providerId,
           url: connectionInfo.loginUrl || "https://infoerpvn.com:9440",
           ma_dvcs: connectionInfo.taxCode,
           username: connectionInfo.loginId,
           password: connectionInfo.password,
-          TenantId: "",
+          tenantId: "",
         },
         transactionID: generateGuid(),
         invRef: `K24TGT804`,
@@ -142,46 +145,46 @@ export function EInvoiceModal({
         invVatAmount: total * 0.1,
         invDiscAmount: 0,
         invTotalAmount: total * 1.1,
-        PaidTp: "TM", // Cash payment
-        Note: "",
-        HdNo: "",
-        CreatedDate: new Date().toISOString(),
-        clsfNo: formData.invoiceTemplate,
-        SpcfNo: "",
-        TemplateCode: "",
+        paidTp: "TM", // Cash payment
+        note: "",
+        hdNo: "",
+        createdDate: new Date().toISOString(),
+        clsfNo: "1",
+        spcfNo: formData.invoiceTemplate,
+        templateCode: "",
         buyerNotGetInvoice: 0,
-        ExchCd: "VND",
-        ExchRt: 1,
-        BankAccount: "",
-        BankName: "",
-        Customer: {
-          CustCd: formData.taxCode,
-          CustNm: formData.customerName,
-          CustCompany: formData.customerName,
-          TaxCode: formData.taxCode,
-          CustCity: "",
-          CustDistrictName: "",
-          CustAddrs: formData.address || "",
-          CustPhone: formData.phoneNumber || "",
-          CustBankAccount: "",
-          CustBankName: "",
-          Email: formData.email || "",
-          EmailCC: "",
+        exchCd: "VND",
+        exchRt: 1,
+        bankAccount: "",
+        bankName: "",
+        customer: {
+          custCd: formData.taxCode,
+          custNm: formData.customerName,
+          custCompany: formData.customerName,
+          taxCode: formData.taxCode,
+          custCity: "",
+          custDistrictName: "",
+          custAddrs: formData.address || "",
+          custPhone: formData.phoneNumber || "",
+          custBankAccount: "",
+          custBankName: "",
+          email: formData.email || "",
+          emailCC: "",
         },
-        Products: [
+        products: [
           {
-            ItmCd: "PRODUCT001",
-            ItmName: "Bán hàng POS",
-            ItmKnd: 1,
-            UnitNm: "Cái",
-            Qty: 1,
-            Unprc: total,
-            Amt: total,
-            DiscRate: 0,
-            DiscAmt: 0,
-            VatRt: "10",
-            VatAmt: total * 0.1,
-            TotalAmt: total * 1.1,
+            itmCd: "PRODUCT001",
+            itmName: "Bán hàng POS",
+            itmKnd: 1,
+            unitNm: "Cái",
+            qty: 1,
+            unprc: total,
+            amt: total,
+            discRate: 0,
+            discAmt: 0,
+            vatRt: "10",
+            vatAmt: total * 0.1,
+            totalAmt: total * 1.1,
           },
         ],
       };
