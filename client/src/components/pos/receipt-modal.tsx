@@ -89,6 +89,18 @@ export function ReceiptModal({
         printWindow.document.write("</body></html>");
         printWindow.document.close();
         printWindow.print();
+        
+        // Auto close print window after printing
+        printWindow.addEventListener('afterprint', () => {
+          printWindow.close();
+        });
+        
+        // Fallback: close after a short delay if afterprint doesn't work
+        setTimeout(() => {
+          if (!printWindow.closed) {
+            printWindow.close();
+          }
+        }, 1000);
       }
     }
   };
