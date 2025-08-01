@@ -1,4 +1,3 @@
-
 import type { SettingsTranslations } from '../types';
 
 export const settingsTranslations: { [key: string]: SettingsTranslations } = {
@@ -146,6 +145,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
       momo: 'MoMo',
       zalopay: 'ZaloPay',
       vnpay: 'VNPay',
+      qrCode: 'QR Code',
       banking: 'Online Banking',
       shopeepay: 'ShopeePay',
       grabpay: 'GrabPay',
