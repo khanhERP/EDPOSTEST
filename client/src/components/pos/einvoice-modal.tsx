@@ -37,6 +37,14 @@ interface EInvoiceModalProps {
   onClose: () => void;
   onConfirm: (eInvoiceData: any) => void;
   total: number;
+  cartItems?: Array<{
+    id: number;
+    name: string;
+    price: number;
+    quantity: number;
+    sku?: string;
+    taxRate?: number;
+  }>;
 }
 
 export function EInvoiceModal({
@@ -44,6 +52,7 @@ export function EInvoiceModal({
   onClose,
   onConfirm,
   total,
+  cartItems = [],
 }: EInvoiceModalProps) {
   const [formData, setFormData] = useState({
     invoiceProvider: "",
@@ -142,9 +151,17 @@ export function EInvoiceModal({
         invRef: `K24TGT804`,
         invSubTotal: total,
         invVatRate: 10, // 10% VAT rate
-        invVatAmount: total * 0.1,
+        invVatAmount: cartItems.reduce((totalVat, item) => {
+          const itemTotal = item.price * item.quantity;
+          const taxRate = item.taxRate || 10;
+          return totalVat + (itemTotal * taxRate) / 100;
+        }, 0),
         invDiscAmount: 0,
-        invTotalAmount: total * 1.1,
+        invTotalAmount: total + cartItems.reduce((totalVat, item) => {
+          const itemTotal = item.price * item.quantity;
+          const taxRate = item.taxRate || 10;
+          return totalVat + (itemTotal * taxRate) / 100;
+        }, 0),
         paidTp: "TM", // Cash payment
         note: "",
         hdNo: "",
@@ -171,22 +188,27 @@ export function EInvoiceModal({
           email: formData.email || "",
           emailCC: "",
         },
-        products: [
-          {
-            itmCd: "PRODUCT001",
-            itmName: "Bán hàng POS",
+        products: cartItems.map((item, index) => {
+          const itemTotal = item.price * item.quantity;
+          const taxRate = item.taxRate || 10; // Default to 10% if not specified
+          const vatAmount = (itemTotal * taxRate) / 100;
+          const totalWithVat = itemTotal + vatAmount;
+          
+          return {
+            itmCd: item.sku || `ITEM${String(index + 1).padStart(3, '0')}`,
+            itmName: item.name,
             itmKnd: 1,
             unitNm: "Cái",
-            qty: 1,
-            unprc: total,
-            amt: total,
+            qty: item.quantity,
+            unprc: item.price,
+            amt: itemTotal,
             discRate: 0,
             discAmt: 0,
-            vatRt: "10",
-            vatAmt: total * 0.1,
-            totalAmt: total * 1.1,
-          },
-        ],
+            vatRt: taxRate.toString(),
+            vatAmt: vatAmount,
+            totalAmt: totalWithVat,
+          };
+        }),
       };
 
       console.log("Publishing invoice with data:", publishRequest);
