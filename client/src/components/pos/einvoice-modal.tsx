@@ -158,15 +158,35 @@ export function EInvoiceModal({
     }
 
     try {
+      // Debug cartItems before filtering
+      console.log("🔍 Raw cartItems before filtering:", JSON.stringify(cartItems, null, 2));
+      
       // Filter out invalid cart items (e.g., missing price or quantity)
       const validItems = cartItems.filter(item => {
+        if (!item) {
+          console.log("❌ Item is null/undefined:", item);
+          return false;
+        }
+        
         const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
         const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
+        
+        console.log(`🔍 Checking item: ${item.name}`, {
+          originalPrice: item.price,
+          processedPrice: itemPrice,
+          originalQuantity: item.quantity,
+          processedQuantity: itemQuantity,
+          isValid: itemPrice > 0 && itemQuantity > 0
+        });
+        
         return itemPrice > 0 && itemQuantity > 0;
       });
 
+      console.log("✅ Valid items after filtering:", validItems.length);
+      console.log("✅ Valid items details:", JSON.stringify(validItems, null, 2));
+
       if (validItems.length === 0) {
-        console.error("No valid cart items available for invoice creation");
+        console.error("❌ No valid cart items available for invoice creation");
         alert("Không có sản phẩm hợp lệ để tạo hóa đơn");
         return;
       }
@@ -257,24 +277,24 @@ export function EInvoiceModal({
           email: formData.email || "",
           emailCC: "",
         },
-        products: validItems && validItems.length > 0 ? validItems.map((item, index) => {
-          console.log(`Processing item ${index + 1}:`, item);
+        products: validItems.map((item, index) => {
+          console.log(`🔄 Processing item ${index + 1}:`, item);
 
           const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
           const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
           const itemTotal = itemPrice * itemQuantity;
-          const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10); // Default to 10% if not specified
+          const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10);
           const vatAmount = (itemTotal * taxRate) / 100;
           const totalWithVat = itemTotal + vatAmount;
 
           const productItem = {
-            itmCd: item.sku || `ITEM${String(index + 1).padStart(3, '0')}`,
-            itmName: item.name,
+            itmCd: item.sku || `ITEM${String(item.id || index + 1).padStart(3, '0')}`,
+            itmName: item.name || `Product ${index + 1}`,
             itmKnd: 1,
             unitNm: "Cái",
-            qty: item.quantity,
-            unprc: item.price,
-            amt: itemTotal,
+            qty: itemQuantity,
+            unprc: itemPrice,
+            amt: Math.round(itemTotal),
             discRate: 0,
             discAmt: 0,
             vatRt: taxRate.toString(),
@@ -282,9 +302,9 @@ export function EInvoiceModal({
             totalAmt: Math.round(totalWithVat),
           };
 
-          console.log(`Mapped product item ${index + 1}:`, productItem);
+          console.log(`✅ Mapped product item ${index + 1}:`, productItem);
           return productItem;
-        }) : [],
+        }),
       };
 
       console.log("=== FINAL PUBLISH REQUEST ===");

@@ -245,13 +245,24 @@ export function ReceiptModal({
                     return;
                   }
                   
-                  // Validate each item
-                  const invalidItems = cartItems.filter(item => 
-                    !item || !item.id || !item.name || !item.price || !item.quantity
-                  );
+                  // Validate each item with detailed logging
+                  const invalidItems = cartItems.filter(item => {
+                    const isInvalid = !item || !item.id || !item.name || 
+                                     (typeof item.price !== 'number' && typeof item.price !== 'string') || 
+                                     (typeof item.quantity !== 'number' && typeof item.quantity !== 'string') ||
+                                     (typeof item.price === 'string' && isNaN(parseFloat(item.price))) ||
+                                     (typeof item.quantity === 'string' && isNaN(parseInt(item.quantity)));
+                    
+                    if (isInvalid) {
+                      console.error("❌ Invalid item found:", item);
+                    }
+                    return isInvalid;
+                  });
                   
                   if (invalidItems.length > 0) {
                     console.error("❌ Some cart items are invalid:", invalidItems);
+                    console.error("❌ Total invalid items:", invalidItems.length);
+                    console.error("❌ Total valid items:", cartItems.length - invalidItems.length);
                     alert("Có sản phẩm không hợp lệ trong giỏ hàng");
                     return;
                   }

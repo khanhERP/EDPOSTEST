@@ -65,10 +65,30 @@ export default function POSPage() {
     if (receipt) {
       console.log("✅ Receipt processed successfully");
       console.log("✅ Cart after checkout:", cart);
-      console.log("✅ About to show receipt modal with cartItems:", cartItemsBeforeCheckout);
-
-      // Set both lastCartItems and show modal immediately with the saved cart items
-      setLastCartItems(cartItemsBeforeCheckout);
+      console.log("✅ CartItems before checkout (final check):", JSON.stringify(cartItemsBeforeCheckout, null, 2));
+      
+      // Validate cartItemsBeforeCheckout
+      if (!cartItemsBeforeCheckout || cartItemsBeforeCheckout.length === 0) {
+        console.error("❌ cartItemsBeforeCheckout is empty!");
+        console.error("Original cart was:", cart);
+        console.error("Trying to use original cart instead...");
+        
+        // Fallback to original cart if cartItemsBeforeCheckout is empty
+        const fallbackItems = cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+          quantity: item.quantity,
+          sku: item.sku || `ITEM${String(item.id).padStart(3, '0')}`,
+          taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate) : (item.taxRate || 10)
+        }));
+        
+        console.log("✅ Using fallback items:", fallbackItems);
+        setLastCartItems(fallbackItems);
+      } else {
+        setLastCartItems(cartItemsBeforeCheckout);
+      }
+      
       setShowReceiptModal(true);
     }
   };
