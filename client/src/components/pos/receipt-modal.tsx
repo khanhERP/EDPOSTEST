@@ -219,13 +219,6 @@ export function ReceiptModal({
                 <Printer className="mr-2" size={16} />
                 Print Receipt
               </Button>
-              <Button
-                onClick={() => setShowEInvoiceModal(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
-              >
-                <Mail className="mr-2" size={16} />
-                Phát hành hóa đơn điện tử
-              </Button>
             </div>
           )}
         </div>
