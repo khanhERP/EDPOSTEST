@@ -335,7 +335,7 @@ export function EInvoiceModal({
         paidTp: "TM", // Cash payment
         note: "",
         hdNo: "",
-        createdDate: "2025-08-02", //new Date().toISOString(),
+        createdDate: new Date().toISOString(),
         clsfNo: "1",
         spcfNo: formData.invoiceTemplate,
         templateCode: "",
