@@ -89,17 +89,57 @@ export function ReceiptModal({
         printWindow.document.write(printContent.innerHTML);
         printWindow.document.write("</body></html>");
         printWindow.document.close();
+        
+        // Trigger print dialog
         printWindow.print();
         
-        // Close the print window after printing
+        // Multiple approaches to detect when printing is done and close modal
+        let modalClosed = false;
+        
+        // Method 1: Use onafterprint event
         printWindow.onafterprint = () => {
-          printWindow.close();
+          if (!modalClosed) {
+            modalClosed = true;
+            printWindow.close();
+            onClose();
+          }
         };
         
-        // Close the receipt modal after a short delay to allow printing to complete
+        // Method 2: Monitor window focus change (fallback)
+        const handleFocus = () => {
+          setTimeout(() => {
+            if (!modalClosed) {
+              modalClosed = true;
+              printWindow.close();
+              onClose();
+            }
+          }, 500);
+        };
+        
+        window.addEventListener('focus', handleFocus, { once: true });
+        
+        // Method 3: Timer-based fallback (last resort)
         setTimeout(() => {
-          onClose();
-        }, 1000);
+          if (!modalClosed) {
+            modalClosed = true;
+            printWindow.close();
+            onClose();
+          }
+        }, 3000);
+        
+        // Method 4: Check if print window is closed manually
+        const checkClosed = setInterval(() => {
+          if (printWindow.closed && !modalClosed) {
+            modalClosed = true;
+            clearInterval(checkClosed);
+            onClose();
+          }
+        }, 500);
+        
+        // Clear interval after 10 seconds to prevent memory leaks
+        setTimeout(() => {
+          clearInterval(checkClosed);
+        }, 10000);
       }
     }
   };
