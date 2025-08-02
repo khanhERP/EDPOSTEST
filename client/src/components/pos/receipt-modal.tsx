@@ -90,6 +90,16 @@ export function ReceiptModal({
         printWindow.document.write("</body></html>");
         printWindow.document.close();
         printWindow.print();
+        
+        // Close the print window after printing
+        printWindow.onafterprint = () => {
+          printWindow.close();
+        };
+        
+        // Close the receipt modal after a short delay to allow printing to complete
+        setTimeout(() => {
+          onClose();
+        }, 1000);
       }
     }
   };
