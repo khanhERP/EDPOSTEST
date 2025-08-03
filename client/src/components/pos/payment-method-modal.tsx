@@ -46,12 +46,12 @@ export function PaymentMethodModal({
     const savedPaymentMethods = localStorage.getItem('paymentMethods');
     
     const defaultPaymentMethods = [
-      { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
-      { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
-      { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
-      { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
-      { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
-      { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
+      { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: false, icon: "💵" },
+      { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: false, icon: "💳" },
+      { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: false, icon: "💳" },
+      { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: false, icon: "📱" },
+      { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: false, icon: "📱" },
+      { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: false, icon: "💳" },
       { id: 7, name: "QR Code", nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
       { id: 8, name: "ShopeePay", nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
       { id: 9, name: "GrabPay", nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
@@ -61,15 +61,20 @@ export function PaymentMethodModal({
       ? JSON.parse(savedPaymentMethods) 
       : defaultPaymentMethods;
 
+    console.log('All payment methods:', paymentMethods);
+    
     // Filter to only return enabled payment methods and map to modal format
-    return paymentMethods
-      .filter(method => method.enabled)
+    const enabledMethods = paymentMethods
+      .filter(method => method.enabled === true)
       .map(method => ({
         id: method.nameKey,
         name: method.name,
         icon: getIconComponent(method.type),
         description: getMethodDescription(method.nameKey)
       }));
+
+    console.log('Enabled payment methods:', enabledMethods);
+    return enabledMethods;
   };
 
   const getIconComponent = (type: string) => {
