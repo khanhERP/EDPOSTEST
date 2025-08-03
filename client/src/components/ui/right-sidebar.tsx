@@ -106,7 +106,7 @@ export function RightSidebar() {
       isExpanded ? "w-64" : "w-16"
     )}>
       {/* Toggle Button */}
-      <div className="p-4 border-b border-green-200 bg-green-50">
+      <div className="p-4 border-b border-green-200 bg-green-50 mt-2">
         <Button
           variant="ghost"
           size="sm"
