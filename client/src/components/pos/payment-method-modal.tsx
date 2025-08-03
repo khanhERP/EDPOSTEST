@@ -46,7 +46,7 @@ export function PaymentMethodModal({
     const savedPaymentMethods = localStorage.getItem('paymentMethods');
     
     const defaultPaymentMethods = [
-      { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: false, icon: "💵" },
+      { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
       { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: false, icon: "💳" },
       { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: false, icon: "💳" },
       { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: false, icon: "📱" },
