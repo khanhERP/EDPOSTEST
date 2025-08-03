@@ -180,7 +180,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
 
   return (
     <main className="flex-1 flex flex-col">
-      <div className="bg-white p-4 border-b pos-border flex items-center justify-between pt-[22px] pb-[22px]">
+      <div className="bg-white p-4 border-b pos-border flex items-center justify-between pt-[22px] pb-[22px] mt-2">
         <div>
           <h2 className="font-medium pos-text-primary text-[14px]">{getCategoryName()}</h2>
           <p className="text-sm pos-text-secondary">{products.length} {t('pos.productsAvailable')}</p>
