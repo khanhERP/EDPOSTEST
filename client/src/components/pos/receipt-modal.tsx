@@ -83,7 +83,7 @@ export function ReceiptModal({
       if (printWindow) {
         printWindow.document.write("<html><head><title>Receipt</title>");
         printWindow.document.write(
-          "<style>body { font-family: monospace; font-size: 12px; margin: 0; padding: 10px; } .text-center { text-align: center; } .text-right { text-align: right; } .border-t { border-top: 1px solid #000; } .border-b { border-bottom: 1px solid #000; } .py-2 { padding: 4px 0; } .mb-4 { margin-bottom: 8px; } .mb-2 { margin-bottom: 4px; } .mt-4 { margin-top: 8px; } .mt-2 { margin-top: 4px; } .space-y-1 > * + * { margin-top: 2px; } .flex { display: flex; } .justify-between { justify-content: space-between; } .text-sm { font-size: 11px; } .text-xs { font-size: 10px; } .font-bold { font-weight: bold; }</style>",
+          "<style>body { font-family: monospace; font-size: 12px; margin: 0; padding: 16px; } .text-center { text-align: center; } .text-right { text-align: right; } .border-t { border-top: 1px solid #000; } .border-b { border-bottom: 1px solid #000; } .py-2 { padding: 4px 0; } .mb-4 { margin-bottom: 8px; } .mb-2 { margin-bottom: 4px; } .mt-4 { margin-top: 8px; } .mt-2 { margin-top: 4px; } .space-y-1 > * + * { margin-top: 2px; } .flex { display: flex; } .justify-between { justify-content: space-between; } .text-sm { font-size: 11px; } .text-xs { font-size: 10px; } .font-bold { font-weight: bold; }</style>",
         );
         printWindow.document.write("</head><body>");
         printWindow.document.write(printContent.innerHTML);
@@ -160,18 +160,18 @@ export function ReceiptModal({
 
         <div
           id="receipt-content"
-          className="px-6 pb-6 receipt-print bg-white"
-          style={{ padding: "10px 0" }}
+          className="receipt-print bg-white"
+          style={{ padding: "16px" }}
         >
-          <div className="text-center mb-2">
-            <p className="text-xs font-semibold mb-0.5">
+          <div className="text-center mb-4">
+            <p className="text-xs font-semibold mb-1">
               {storeSettings?.storeName || "Easy Digital Point Of Sale Service"}
             </p>
-            <p className="text-xs">Main Store Location</p>
-            <p className="text-xs">
+            <p className="text-xs mb-0.5">Main Store Location</p>
+            <p className="text-xs mb-0.5">
               {storeSettings?.address || "123 Commerce St, City, State 12345"}
             </p>
-            <p className="text-xs mb-1">
+            <p className="text-xs mb-2">
               Phone: {storeSettings?.phone || "(555) 123-4567"}
             </p>
             <div className="flex items-center justify-center">
@@ -179,7 +179,7 @@ export function ReceiptModal({
             </div>
           </div>
 
-          <div className="border-t border-b border-gray-300 py-2 mb-2">
+          <div className="border-t border-b border-gray-300 py-3 mb-3">
             <div className="flex justify-between text-sm">
               <span>Transaction #:</span>
               <span>{receipt.transactionId}</span>
@@ -194,7 +194,7 @@ export function ReceiptModal({
             </div>
           </div>
 
-          <div className="space-y-1 mb-2">
+          <div className="space-y-2 mb-3">
             {receipt.items.map((item) => (
               <div key={item.id}>
                 <div className="flex justify-between text-sm">
@@ -210,7 +210,7 @@ export function ReceiptModal({
             ))}
           </div>
 
-          <div className="border-t border-gray-300 pt-2 space-y-1">
+          <div className="border-t border-gray-300 pt-3 space-y-1">
             <div className="flex justify-between text-sm">
               <span>Subtotal:</span>
               <span>{receipt.subtotal} ₫</span>
