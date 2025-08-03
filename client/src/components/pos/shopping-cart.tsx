@@ -308,7 +308,14 @@ export function ShoppingCart({
             </div>
           </div>
 
-          
+          <Button
+            onClick={handleCheckout}
+            disabled={!canCheckout || isProcessing}
+            className="w-full btn-success flex items-center justify-center"
+          >
+            <CartIcon className="mr-2" size={16} />
+            {isProcessing ? "Processing..." : t('tables.completeSale')}
+          </Button>
 
           {/* Cash Payment */}
           {paymentMethod === "cash" && (
@@ -327,15 +334,6 @@ export function ShoppingCart({
               </div>
             </div>
           )}
-
-          <Button
-            onClick={handleCheckout}
-            disabled={!canCheckout || isProcessing}
-            className="w-full btn-success flex items-center justify-center"
-          >
-            <CartIcon className="mr-2" size={16} />
-            {isProcessing ? "Processing..." : t('tables.completeSale')}
-          </Button>
         </div>
       )}
 
