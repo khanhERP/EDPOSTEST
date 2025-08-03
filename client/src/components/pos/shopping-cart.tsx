@@ -321,7 +321,7 @@ export function ShoppingCart({
             className="w-full btn-success flex items-center justify-center"
           >
             <CartIcon className="mr-2" size={16} />
-            {isProcessing ? "Processing..." : t('tables.completeSale')}
+            {isProcessing ? "Processing..." : "Thanh toán"}
           </Button>
         </div>
       )}
