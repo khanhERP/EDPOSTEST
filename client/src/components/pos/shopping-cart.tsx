@@ -65,12 +65,12 @@ export function ShoppingCart({
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
-    
+
     console.log("=== SHOPPING CART CHECKOUT DEBUG ===");
     console.log("Cart items before checkout:", cart);
     console.log("Cart items count:", cart.length);
     console.log("Cart items details:", JSON.stringify(cart, null, 2));
-    
+
     if (paymentMethod === "cash") {
       const receivedAmount = parseFloat(amountReceived || "0");
       if (receivedAmount < total) {
@@ -111,7 +111,7 @@ export function ShoppingCart({
       // Create cartItems in the format expected by receipt modal with detailed logging
       console.log("🛒 Processing cart items for receipt:", cart);
       console.log("🛒 Cart items count:", cart.length);
-      
+
       const cartItemsForReceipt = cart.map(item => {
         console.log(`🔍 Processing cart item ${item.id}:`, {
           id: item.id,
@@ -124,7 +124,7 @@ export function ShoppingCart({
           total: item.total,
           sku: item.sku
         });
-        
+
         const processedItem = {
           id: item.id,
           name: item.name,
@@ -137,14 +137,14 @@ export function ShoppingCart({
         console.log(`📦 Processed item ${item.id}:`, processedItem);
         return processedItem;
       });
-      
+
       console.log("✅ Final cartItemsForReceipt:", cartItemsForReceipt);
       console.log("✅ CartItemsForReceipt count:", cartItemsForReceipt.length);
-      
+
       console.log("Receipt created with items:", receipt.items);
       console.log("Cart items for receipt:", cartItemsForReceipt);
       console.log("Setting preview receipt:", receipt);
-      
+
       setPreviewReceipt(receipt);
       setShowReceiptPreview(true);
     }
@@ -307,35 +307,9 @@ export function ShoppingCart({
               </div>
             </div>
           </div>
+
           
-          {/* Payment Methods */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium pos-text-primary">{t('tables.paymentMethod')}</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {getPaymentMethods().slice(0, 4).map((method) => (
-                <Button
-                  key={method.id}
-                  variant={paymentMethod === method.nameKey ? "default" : "outline"}
-                  onClick={() => setPaymentMethod(method.nameKey)}
-                  className="text-sm flex items-center justify-center"
-                >
-                  <span className="mr-1">{method.icon}</span>
-                  {method.name}
-                </Button>
-              ))}
-            </div>
-            {getPaymentMethods().length > 4 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPaymentMethodModal(true)}
-                className="w-full mt-2"
-              >
-                Xem thêm phương thức thanh toán
-              </Button>
-            )}
-          </div>
-          
+
           {/* Cash Payment */}
           {paymentMethod === "cash" && (
             <div className="space-y-2">
@@ -353,7 +327,7 @@ export function ShoppingCart({
               </div>
             </div>
           )}
-          
+
           <Button
             onClick={handleCheckout}
             disabled={!canCheckout || isProcessing}
