@@ -35,7 +35,7 @@ export function ShoppingCart({
   onSwitchOrder,
   onRemoveOrder
 }: ShoppingCartProps) {
-  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+  const [paymentMethod, setPaymentMethod] = useState<string>("bankTransfer");
   const [amountReceived, setAmountReceived] = useState<string>("");
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
@@ -71,20 +71,8 @@ export function ShoppingCart({
     console.log("Cart items count:", cart.length);
     console.log("Cart items details:", JSON.stringify(cart, null, 2));
 
-    if (paymentMethod === "cash") {
-      const receivedAmount = parseFloat(amountReceived || "0");
-      if (receivedAmount < total) {
-        alert(`Số tiền nhận được không đủ. Cần: ${total.toLocaleString()} ₫`);
-        return;
-      }
-      // Proceed with cash payment
-      const paymentData = {
-        paymentMethod: "cash",
-        amountReceived: parseFloat(amountReceived || "0"),
-        change: change,
-      };
-      onCheckout(paymentData);
-    } else {
+    // Always use bank transfer payment
+    {
       // Show receipt preview first for non-cash payments
       const receipt = {
         transactionId: `TXN-${Date.now()}`,
@@ -101,7 +89,7 @@ export function ShoppingCart({
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
         total: total.toFixed(2),
-        paymentMethod: paymentMethod,
+        paymentMethod: "bankTransfer",
         amountReceived: total.toFixed(2),
         change: "0.00",
         cashierName: "John Smith",
@@ -166,8 +154,7 @@ export function ShoppingCart({
     onCheckout(paymentData);
   };
 
-  const canCheckout = cart.length > 0 && 
-    (paymentMethod !== "cash" || (paymentMethod === "cash" && parseFloat(amountReceived || "0") >= total));
+  const canCheckout = cart.length > 0;
 
   return (
     <aside className="w-96 bg-white shadow-material border-l pos-border flex flex-col">
@@ -308,22 +295,7 @@ export function ShoppingCart({
             </div>
           </div>
 
-          {/* Payment Methods */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium pos-text-primary">{t('tables.paymentMethod')}</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {getPaymentMethods().slice(0, 4).map((method) => (
-                <Button
-                  key={method.id}
-                  variant={paymentMethod === method.nameKey ? "default" : "outline"}
-                  className="text-sm flex items-center justify-center"
-                  onClick={() => setPaymentMethod(method.nameKey)}
-                >
-                  {method.icon} {method.name}
-                </Button>
-              ))}
-            </div>
-          </div>
+          
 
           {/* Cash Payment */}
           {paymentMethod === "cash" && (
