@@ -216,7 +216,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
             </div>
             <h3 className="text-lg font-medium pos-text-secondary mb-2">{t('pos.noProductsFound')}</h3>
             <p className="pos-text-tertiary">
-              {searchQuery ? t('pos.tryAdjustingSearch') : t('pos.noProductsInCategory')}
+              {searchQuery ? "Thử điều chỉnh từ khóa tìm kiếm" : "Không có sản phẩm trong danh mục này"}
             </p>
           </div>
         ) : (
