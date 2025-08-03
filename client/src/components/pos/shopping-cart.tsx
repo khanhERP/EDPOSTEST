@@ -308,7 +308,22 @@ export function ShoppingCart({
             </div>
           </div>
 
-          
+          {/* Payment Methods */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium pos-text-primary">{t('tables.paymentMethod')}</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {getPaymentMethods().slice(0, 4).map((method) => (
+                <Button
+                  key={method.id}
+                  variant={paymentMethod === method.nameKey ? "default" : "outline"}
+                  className="text-sm flex items-center justify-center"
+                  onClick={() => setPaymentMethod(method.nameKey)}
+                >
+                  {method.icon} {method.name}
+                </Button>
+              ))}
+            </div>
+          </div>
 
           {/* Cash Payment */}
           {paymentMethod === "cash" && (
