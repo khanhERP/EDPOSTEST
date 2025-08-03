@@ -158,7 +158,7 @@ export function ShoppingCart({
 
   return (
     <aside className="w-96 bg-white shadow-material border-l pos-border flex flex-col">
-      <div className="p-4 border-b pos-border">
+      <div className="p-4 border-b pos-border mt-2">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl pos-text-primary font-semibold">{t('pos.purchaseHistory')}</h2>
           {onCreateNewOrder && (
