@@ -71,9 +71,9 @@ export function ShoppingCart({
     console.log("Cart items count:", cart.length);
     console.log("Cart items details:", JSON.stringify(cart, null, 2));
     
-    // Always use cash payment with exact amount
+    // Always use bank transfer payment with exact amount
     const paymentData = {
-      paymentMethod: "cash",
+      paymentMethod: "transfer",
       amountReceived: total,
       change: 0,
     };
