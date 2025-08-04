@@ -530,12 +530,7 @@ export function EInvoiceModal({
                   <SelectContent>
                     {invoiceTemplates.map((template) => (
                       <SelectItem key={template.id} value={template.id.toString()}>
-                        <div className="flex flex-col">
-                          <span className="font-medium">{template.name}</span>
-                          <span className="text-sm text-gray-500">
-                            {template.templateNumber} - {template.templateCode || 'N/A'}
-                          </span>
-                        </div>
+                        {template.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
