@@ -136,9 +136,9 @@ export function usePOS() {
       newCart = [...currentCart, {
         id: product.id,
         name: product.name,
-        price: product.price.toString(),
+        price: (product.price || 0).toString(),
         quantity: 1,
-        total: product.price.toString(),
+        total: (product.price || 0).toString(),
         stock: product.stock,
         taxRate: product.taxRate || "0"
       }];
