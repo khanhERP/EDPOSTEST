@@ -180,11 +180,10 @@ export function EInvoiceModal({
     // Validate required fields
     if (
       !formData.invoiceProvider ||
-      !formData.taxCode ||
       !formData.customerName
     ) {
       alert(
-        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT, Mã số thuế, và Tên đơn vị",
+        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
       );
       return;
     }
