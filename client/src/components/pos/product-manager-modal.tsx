@@ -1,34 +1,77 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { X, Plus, Upload, Download, Edit, Trash2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
-import { insertProductSchema, type Product, type Category } from "@shared/schema";
+import {
+  insertProductSchema,
+  type Product,
+  type Category,
+} from "@shared/schema";
 import { z } from "zod";
+import { useTranslation } from "@/lib/i18n";
+import { BulkImportModal } from "./bulk-import-modal";
+import { Checkbox } from "@/components/ui/checkbox";
+import * as XLSX from "xlsx";
 
 interface ProductManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const productFormSchema = insertProductSchema.extend({
-  categoryId: z.number().min(1, "Category is required"),
-});
+export function ProductManagerModal({
+  isOpen,
+  onClose,
+}: ProductManagerModalProps) {
+  const { t } = useTranslation();
 
-export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProps) {
+  const productFormSchema = insertProductSchema.extend({
+    categoryId: z.number().min(1, t("tables.categoryRequired")),
+    price: z.string().min(1, "Price is required").refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, "Price must be a valid positive number"),
+    sku: z.string().min(1, t("tables.skuRequired")),
+    name: z.string().min(1, t("tables.productNameRequired")),
+    productType: z.number().min(1, t("tables.productTypeRequired")),
+    trackInventory: z.boolean().optional(),
+    stock: z.number().min(0, "Stock must be 0 or greater"),
+    taxRate: z.string().min(1, "Tax rate is required").refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0 && parseFloat(val) <= 100, "Tax rate must be between 0 and 100"),
+  });
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showBulkImport, setShowBulkImport] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
-  const { data: products = [], isLoading } = useQuery<Product[]>({
+  const {
+    data: products = [],
+    isLoading,
+    refetch,
+  } = useQuery<Product[]>({
     queryKey: ["/api/products"],
     enabled: isOpen,
   });
@@ -40,33 +83,58 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
 
   const createProductMutation = useMutation({
     mutationFn: async (data: z.infer<typeof productFormSchema>) => {
+      console.log("Sending product data:", data);
       const response = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!response.ok) throw new Error("Failed to create product");
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Product creation error:", errorData);
+        throw new Error(errorData.message || "Failed to create product");
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/active"] });
       setShowAddForm(false);
+      resetForm();
       toast({
         title: "Success",
         description: "Product created successfully",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error("Create product mutation error:", error);
+
+      let errorMessage = "Failed to create product";
+      if (error.message.includes("already exists")) {
+        errorMessage = "SKU already exists. Please use a different SKU.";
+      } else if (error.message.includes("Invalid product data")) {
+        errorMessage = "Invalid product data. Please check all fields.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
-        title: "Error",
-        description: "Failed to create product",
+        title: "Error", 
+        description: errorMessage,
         variant: "destructive",
       });
     },
   });
 
   const updateProductMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<z.infer<typeof productFormSchema>> }) => {
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: Partial<z.infer<typeof productFormSchema>>;
+    }) => {
       const response = await fetch(`/api/products/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -77,6 +145,7 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/active"] });
       setEditingProduct(null);
       toast({
         title: "Success",
@@ -102,6 +171,7 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products/active"] });
       toast({
         title: "Success",
         description: "Product deleted successfully",
@@ -124,15 +194,71 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
       price: "",
       stock: 0,
       categoryId: 0,
+      productType: 1,
       imageUrl: "",
+      trackInventory: true,
+      taxRate: "8.00",
     },
   });
 
+  // Helper functions for currency formatting
+  const formatCurrency = (value: string | number): string => {
+    if (typeof value === 'string') {
+      // If it's already formatted, just return it
+      if (value.includes('.')) {
+        const num = parseFloat(value.replace(/\./g, ''));
+        if (isNaN(num)) return '';
+        return num.toLocaleString('vi-VN');
+      }
+      // If it's a plain number string
+      const num = parseFloat(value);
+      if (isNaN(num)) return '';
+      return num.toLocaleString('vi-VN');
+    }
+    
+    // If it's a number
+    if (isNaN(value)) return '';
+    return value.toLocaleString('vi-VN');
+  };
+
+  const parseCurrency = (value: string): number => {
+    // Remove all dots and parse as number
+    const cleaned = value.replace(/\./g, '');
+    return parseFloat(cleaned) || 0;
+  };
+
   const onSubmit = (data: z.infer<typeof productFormSchema>) => {
+    console.log("Form submission data:", data);
+
+    // Validate required fields
+    if (!data.name || !data.sku || !data.price || !data.categoryId || !data.taxRate) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields: Name, SKU, Price, Category, and Tax Rate",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Transform data to ensure proper types
+    const transformedData = {
+      name: data.name.trim(),
+      sku: data.sku.trim().toUpperCase(),
+      price: parseCurrency(data.price).toString(),
+      stock: Number(data.stock) || 0,
+      categoryId: Number(data.categoryId),
+      productType: Number(data.productType) || 1,
+      trackInventory: data.trackInventory !== false,
+      imageUrl: data.imageUrl?.trim() || null,
+      taxRate: data.taxRate.toString()
+    };
+
+    console.log("Transformed data:", transformedData);
+
     if (editingProduct) {
-      updateProductMutation.mutate({ id: editingProduct.id, data });
+      updateProductMutation.mutate({ id: editingProduct.id, data: transformedData });
     } else {
-      createProductMutation.mutate(data);
+      createProductMutation.mutate(transformedData);
     }
   };
 
@@ -141,16 +267,19 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
     form.reset({
       name: product.name,
       sku: product.sku,
-      price: product.price,
+      price: formatCurrency(product.price),
       stock: product.stock,
       categoryId: product.categoryId,
+      productType: product.productType || 1,
       imageUrl: product.imageUrl || "",
+      trackInventory: product.trackInventory !== false,
+      taxRate: product.taxRate || "8.00",
     });
     setShowAddForm(true);
   };
 
   const handleDelete = (id: number) => {
-    if (confirm("Are you sure you want to delete this product?")) {
+    if (confirm(t("tables.confirmDeleteProduct"))) {
       deleteProductMutation.mutate(id);
     }
   };
@@ -158,85 +287,303 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
   const resetForm = () => {
     setShowAddForm(false);
     setEditingProduct(null);
-    form.reset();
+    form.reset({
+      name: "",
+      sku: "",
+      price: "",
+      stock: 0,
+      categoryId: categories.length > 0 ? categories[0].id : 0,
+      productType: 1,
+      imageUrl: "",
+      trackInventory: true,
+      taxRate: "8.00",
+    });
   };
 
   const getCategoryName = (categoryId: number) => {
-    return categories.find(c => c.id === categoryId)?.name || "Unknown";
+    return categories.find((c) => c.id === categoryId)?.name || "Unknown";
+  };
+
+  const getProductTypeName = (productType: number) => {
+    const types = {
+      1: t("tables.goodsType"),
+      2: t("tables.materialType"), 
+      3: t("tables.finishedProductType")
+    };
+    return types[productType as keyof typeof types] || "Unknown";
+  };
+
+  const filteredProducts = products.filter((product) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      product.name.toLowerCase().includes(searchLower) ||
+      product.sku.toLowerCase().includes(searchLower)
+    );
+  });
+
+  const exportProductsToExcel = () => {
+    const exportData = [
+      [
+        "STT",
+        "Tên sản phẩm",
+        "SKU",
+        "Danh mục",
+        "Giá bán",
+        "% Thuế",
+        "Tồn kho",
+        "Hình ảnh (URL)",
+      ],
+    ];
+
+    products.forEach((product, index) => {
+      exportData.push([
+        index + 1,
+        product.name,
+        product.sku,
+        getCategoryName(product.categoryId),
+        parseFloat(product.price),
+        product.taxRate || "8.00",
+        product.stock,
+        product.imageUrl || "",
+      ]);
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(exportData);
+
+    // Auto-fit column widths
+    const colWidths = [
+      { wch: 5 }, // STT
+      { wch: 25 }, // Tên sản phẩm
+      { wch: 15 }, // SKU
+      { wch: 15 }, // Danh mục
+      { wch: 12 }, // Giá bán
+      { wch: 10 }, // % Thuế
+      { wch: 10 }, // Tồn kho
+      { wch: 30 }, // Hình ảnh URL
+    ];
+    ws["!cols"] = colWidths;
+
+    // Style header row
+    const range = XLSX.utils.decode_range(ws["!ref"] || "A1");
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (!ws[cellAddress]) continue;
+      ws[cellAddress].s = {
+        font: { bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "059669" } }, // Green background
+        alignment: { horizontal: "center" },
+      };
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Danh sách sản phẩm");
+
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, "-");
+    XLSX.writeFile(wb, `danh_sach_san_pham_${timestamp}.xlsx`);
+
+    toast({
+      title: "Thành công",
+      description: `Đã xuất ${products.length} sản phẩm ra file Excel`,
+    });
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      refetch();
+      // Reset form completely when opening modal
+      if (!editingProduct) {
+        form.reset({
+          name: "",
+          sku: "",
+          price: "",
+          stock: 0,
+          categoryId: 0,
+          productType: 1,
+          imageUrl: "",
+          trackInventory: true,
+          taxRate: "8.00",
+        });
+      }
+    }
+  }, [isOpen, refetch, editingProduct]);
+
+  const handleModalClose = () => {
+    // Reset all form states when modal closes
+    setShowAddForm(false);
+    setEditingProduct(null);
+    form.reset({
+      name: "",
+      sku: "",
+      price: "",
+      stock: 0,
+      categoryId: 0,
+      productType: 1,
+      imageUrl: "",
+      trackInventory: true,
+      taxRate: "8.00",
+    });
+    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl w-full max-h-screen overflow-y-auto">
+    <Dialog open={isOpen}>
+      <DialogContent
+        className="max-w-4xl w-full max-h-screen overflow-y-auto [&>button]:hidden"
+        onInteractOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            Product Management
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            {t("tables.productManagement")}
+            <Button variant="ghost" size="sm" onClick={handleModalClose}>
               <X size={20} />
             </Button>
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="p-6">
           {!showAddForm ? (
             <>
-              <div className="flex space-x-4 mb-6">
-                <Button onClick={() => setShowAddForm(true)} className="btn-primary">
-                  <Plus className="mr-2" size={16} />
-                  Add New Product
-                </Button>
-                <Button variant="outline" className="border-orange-500 text-orange-700 hover:bg-orange-50">
-                  <Upload className="mr-2" size={16} />
-                  Bulk Import
-                </Button>
-                <Button variant="outline" className="border-green-500 text-green-700 hover:bg-green-50">
-                  <Download className="mr-2" size={16} />
-                  Export
-                </Button>
+              <div className="flex flex-col space-y-4 mb-6">
+                <div className="flex space-x-4">
+                  <Button
+                    onClick={() => setShowAddForm(true)}
+                    className="bg-green-600 hover:bg-green-700 text-white font-medium transition-colors duration-200"
+                  >
+                    <Plus className="mr-2" size={16} />
+                    {t("tables.addNewProduct")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-orange-500 text-orange-700 hover:bg-orange-100 hover:border-orange-600"
+                    onClick={() => setShowBulkImport(true)}
+                  >
+                    <Upload className="mr-2" size={16} />
+                    {t("tables.bulkImport")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-green-500 text-green-700 hover:bg-green-100 hover:border-green-600"
+                    onClick={exportProductsToExcel}
+                  >
+                    <Download className="mr-2" size={16} />
+                    {t("tables.export")}
+                  </Button>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Input
+                    placeholder="Tìm kiếm theo tên hoặc mã SKU..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="max-w-md"
+                  />
+                  {searchTerm && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSearchTerm("")}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <X size={16} />
+                    </Button>
+                  )}
+                </div>
               </div>
-              
+
               <div className="bg-gray-50 rounded-lg overflow-hidden">
                 {isLoading ? (
-                  <div className="p-8 text-center">Loading products...</div>
+                  <div className="p-8 text-center">{t("tables.loading")}</div>
+                ) : filteredProducts.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <p className="text-gray-500">
+                      {searchTerm 
+                        ? `Không tìm thấy sản phẩm nào với từ khóa "${searchTerm}"`
+                        : "Không có sản phẩm nào"
+                      }
+                    </p>
+                  </div>
                 ) : (
                   <table className="w-full">
                     <thead className="bg-gray-100">
                       <tr>
-                        <th className="text-left py-3 px-4 font-medium pos-text-primary">Product</th>
-                        <th className="text-left py-3 px-4 font-medium pos-text-primary">SKU</th>
-                        <th className="text-left py-3 px-4 font-medium pos-text-primary">Category</th>
-                        <th className="text-left py-3 px-4 font-medium pos-text-primary">Price</th>
-                        <th className="text-left py-3 px-4 font-medium pos-text-primary">Stock</th>
-                        <th className="text-left py-3 px-4 font-medium pos-text-primary">Actions</th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">
+                          {t("tables.product")}
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">
+                          {t("tables.sku")}
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">
+                          {t("tables.category")}
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">
+                          {t("tables.productType")}
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">
+                          {t("tables.price")}
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">
+                          % Thuế
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">
+                          {t("tables.stock")}
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">
+                          {t("tables.actions")}
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white">
-                      {products.map((product) => (
-                        <tr key={product.id} className="border-b border-gray-200">
+                      {filteredProducts.map((product) => (
+                        <tr
+                          key={product.id}
+                          className="border-b border-gray-200"
+                        >
                           <td className="py-3 px-4">
                             <div className="flex items-center space-x-3">
                               {product.imageUrl ? (
-                                <img 
-                                  src={product.imageUrl} 
+                                <img
+                                  src={product.imageUrl}
                                   alt={product.name}
                                   className="w-10 h-10 object-cover rounded"
                                 />
                               ) : (
                                 <div className="w-10 h-10 bg-gray-200 rounded"></div>
                               )}
-                              <span className="font-medium">{product.name}</span>
+                              <span className="font-medium">
+                                {product.name}
+                              </span>
                             </div>
                           </td>
-                          <td className="py-3 px-4 pos-text-secondary">{product.sku}</td>
-                          <td className="py-3 px-4 pos-text-secondary">{getCategoryName(product.categoryId)}</td>
-                          <td className="py-3 px-4 font-medium">${product.price}</td>
+                          <td className="py-3 px-4 pos-text-secondary">
+                            {product.sku}
+                          </td>
+                          <td className="py-3 px-4 pos-text-secondary">
+                            {getCategoryName(product.categoryId)}
+                          </td>
+                          <td className="py-3 px-4 pos-text-secondary">
+                            {getProductTypeName(product.productType || 1)}
+                          </td>
+                          <td className="py-3 px-4 font-medium">
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            }).format(parseFloat(product.price))}
+                          </td>
+                          <td className="py-3 px-4 pos-text-secondary">
+                            {product.taxRate || "8.00"}%
+                          </td>
                           <td className="py-3 px-4">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              product.stock > 10 ? "bg-green-600 text-white" :
-                              product.stock > 5 ? "bg-orange-500 text-white" :
-                              product.stock > 0 ? "bg-red-500 text-white" :
-                              "bg-gray-400 text-white"
-                            }`}>
+                            <span
+                              className={`px-2 py-1 text-xs rounded-full ${
+                                product.stock > 10
+                                  ? "bg-green-600 text-white"
+                                  : product.stock > 5
+                                    ? "bg-orange-500 text-white"
+                                    : product.stock > 0
+                                      ? "bg-red-500 text-white"
+                                      : "bg-gray-400 text-white"
+                              }`}
+                            >
                               {product.stock}
                             </span>
                           </td>
@@ -271,96 +618,159 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
             <div>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-medium">
-                  {editingProduct ? "Edit Product" : "Add New Product"}
+                  {editingProduct
+                    ? t("tables.editProduct")
+                    : t("tables.addNewProduct")}
                 </h3>
-                <Button variant="ghost" onClick={resetForm}>
+                {/* <Button variant="ghost" onClick={resetForm}>
                   <X size={16} />
-                </Button>
+                </Button> */}
               </div>
-              
+
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-4"
+                >
                   <div className="grid grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Product Name</FormLabel>
+                          <FormLabel>{t("tables.productName")}</FormLabel>
                           <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="sku"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>SKU</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="price"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Price</FormLabel>
-                          <FormControl>
-                            <Input {...field} type="number" step="0.01" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="stock"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Stock</FormLabel>
-                          <FormControl>
-                            <Input 
-                              {...field} 
-                              type="number" 
-                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            <Input
+                              {...field}
+                              placeholder={t("tables.productNamePlaceholder")}
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
+
+                    <FormField
+                      control={form.control}
+                      name="sku"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("tables.sku")}</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              placeholder={t("tables.skuPlaceholder")}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("tables.price")}</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="text"
+                              placeholder="100.000"
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                // Only allow numbers and dots
+                                const sanitized = value.replace(/[^0-9.]/g, '');
+                                
+                                // Just update with sanitized value, format on blur
+                                field.onChange(sanitized);
+                              }}
+                              onBlur={() => {
+                                const value = field.value;
+                                if (value && value.trim() !== '') {
+                                  const num = parseCurrency(value);
+                                  if (!isNaN(num) && num >= 0) {
+                                    field.onChange(formatCurrency(num));
+                                  }
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="taxRate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>% Thuế</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="100"
+                              placeholder="8.00"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="stock"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("tables.stock")}</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="number"
+                              placeholder={t("tables.stockPlaceholder")}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value) || 0)
+                              }
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
                     <FormField
                       control={form.control}
                       name="categoryId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Category</FormLabel>
-                          <Select 
-                            onValueChange={(value) => field.onChange(parseInt(value))}
+                          <FormLabel>{t("tables.category")}</FormLabel>
+                          <Select
+                            onValueChange={(value) =>
+                              field.onChange(parseInt(value))
+                            }
                             value={field.value.toString()}
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Select category" />
+                                <SelectValue
+                                  placeholder={t("tables.selectCategory")}
+                                />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
                               {categories.map((category) => (
-                                <SelectItem key={category.id} value={category.id.toString()}>
+                                <SelectItem
+                                  key={category.id}
+                                  value={category.id.toString()}
+                                >
                                   {category.name}
                                 </SelectItem>
                               ))}
@@ -370,32 +780,90 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
                         </FormItem>
                       )}
                     />
+
+                    <FormField
+                      control={form.control}
+                      name="productType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t("tables.productType")}</FormLabel>
+                          <Select
+                            onValueChange={(value) =>
+                              field.onChange(parseInt(value))
+                            }
+                            value={field.value.toString()}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue
+                                  placeholder={t("tables.selectProductType")}
+                                />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="1">{t("tables.goodsType")}</SelectItem>
+                              <SelectItem value="2">{t("tables.materialType")}</SelectItem>
+                              <SelectItem value="3">{t("tables.finishedProductType")}</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                  
+
                   <FormField
                     control={form.control}
                     name="imageUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Image URL (optional)</FormLabel>
+                        <FormLabel>{t("tables.imageUrlOptional")}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input
+                            {...field}
+                            placeholder={t("tables.imageUrl")}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
-                  <div className="flex space-x-3">
-                    <Button 
-                      type="submit" 
-                      disabled={createProductMutation.isPending || updateProductMutation.isPending}
-                      className="btn-primary"
-                    >
-                      {editingProduct ? "Update Product" : "Create Product"}
-                    </Button>
+
+                  <FormField
+                    control={form.control}
+                    name="trackInventory"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value !== false}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            {t("inventory.trackInventory")}
+                          </FormLabel>
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex justify-end space-x-3">
                     <Button type="button" variant="outline" onClick={resetForm}>
-                      Cancel
+                      {t("tables.cancel")}
+                    </Button>
+                    <Button
+                      type="submit"
+                      disabled={
+                        createProductMutation.isPending ||
+                        updateProductMutation.isPending
+                      }
+                      className="bg-green-600 hover:bg-green-700 text-white font-medium transition-colors duration-200"
+                    >
+                      {editingProduct
+                        ? t("tables.updateProduct")
+                        : t("tables.createProduct")}
                     </Button>
                   </div>
                 </form>
@@ -403,6 +871,11 @@ export function ProductManagerModal({ isOpen, onClose }: ProductManagerModalProp
             </div>
           )}
         </div>
+
+        <BulkImportModal
+          isOpen={showBulkImport}
+          onClose={() => setShowBulkImport(false)}
+        />
       </DialogContent>
     </Dialog>
   );

@@ -47,6 +47,8 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       served: "서빙완료",
       paid: "결제완료",
       cancelled: "취소됨",
+      delivering: "배송중",
+      completed: "완료됨",
     },
   },
   en: {
@@ -95,6 +97,8 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       served: "Served",
       paid: "Paid",
       cancelled: "Cancelled",
+      delivering: "Delivering",
+      completed: "Completed",
     },
   },
   vi: {
@@ -144,6 +148,8 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       served: "Đã phục vụ",
       paid: "Đã thanh toán",
       cancelled: "Đã hủy",
+      delivering: "Đang giao hàng",
+      completed: "Hoàn thành",
     },
   },
 };

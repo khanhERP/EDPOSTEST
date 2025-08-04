@@ -1,3 +1,4 @@
+import React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -52,27 +53,65 @@ export function EmployeeFormModal({
   const { t } = useTranslation();
 
   // Generate employee ID for new employees
-  const generateEmployeeId = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    return `EMP-${timestamp}`;
+  const generateEmployeeId = async () => {
+    try {
+      const response = await apiRequest("GET", "/api/employees/next-id");
+      const data = await response.json();
+      return data.nextId;
+    } catch (error) {
+      console.error("Error generating employee ID:", error);
+      // Fallback to EMP-001 if API fails
+      return "EMP-001";
+    }
   };
 
   const form = useForm<InsertEmployee>({
     resolver: zodResolver(insertEmployeeSchema),
     defaultValues: {
-      employeeId: employee?.employeeId || (mode === "create" ? generateEmployeeId() : ""),
-      name: employee?.name || "",
-      email: employee?.email || "",
-      phone: employee?.phone || null,
-      role: employee?.role || "cashier",
-      isActive: employee?.isActive ?? true,
-      hireDate: employee?.hireDate ? new Date(employee.hireDate) : new Date(),
+      employeeId: "",
+      name: "",
+      email: "",
+      phone: null,
+      role: "cashier",
+      isActive: true,
+      hireDate: new Date(),
     },
   });
+
+  // Set employee ID for new employees or populate form for edit
+  React.useEffect(() => {
+    if (mode === "create" && !employee?.employeeId) {
+      generateEmployeeId().then((nextId) => {
+        form.reset({
+          employeeId: nextId,
+          name: "",
+          email: "",
+          phone: null,
+          role: "cashier",
+          isActive: true,
+          hireDate: new Date(),
+        });
+      });
+    } else if (mode === "edit" && employee) {
+      form.reset({
+        employeeId: employee.employeeId,
+        name: employee.name,
+        email: employee.email || "",
+        phone: employee.phone || null,
+        role: employee.role,
+        isActive: employee.isActive ?? true,
+        hireDate: employee.hireDate ? new Date(employee.hireDate) : new Date(),
+      });
+    }
+  }, [mode, employee, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: InsertEmployee) => {
       const response = await apiRequest("POST", "/api/employees", data);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw errorData;
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -82,20 +121,37 @@ export function EmployeeFormModal({
         description: t("employees.addEmployeeSuccess"),
       });
       onClose();
-      form.reset({
-        employeeId: generateEmployeeId(),
-        name: "",
-        email: "",
-        phone: null,
-        role: "cashier",
-        isActive: true,
-        hireDate: new Date(),
+      generateEmployeeId().then((nextId) => {
+        form.reset({
+          employeeId: nextId,
+          name: "",
+          email: "",
+          phone: null,
+          role: "cashier",
+          isActive: true,
+          hireDate: new Date(),
+        });
       });
     },
-    onError: () => {
+    onError: (error: any) => {
+      let errorMessage = t("employees.addEmployeeError");
+      // Checking for the error in the expected format
+      if (error instanceof Error && error.message) {
+        const errorData = JSON.parse(
+          error.message.slice(error.message.indexOf("{")),
+        ); // Extract JSON part of the message
+        if (errorData.code === "DUPLICATE_EMAIL") {
+          errorMessage = "Email đã được sử dụng.";
+          // Set error on the email field
+          form.setError("email", {
+            type: "manual",
+            message: "Email đã tồn tại trong hệ thống",
+          });
+        }
+      }
       toast({
         title: t("common.error"),
-        description: t("employees.addEmployeeError"),
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -108,6 +164,10 @@ export function EmployeeFormModal({
         `/api/employees/${employee?.id}`,
         data,
       );
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw errorData;
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -118,10 +178,21 @@ export function EmployeeFormModal({
       });
       onClose();
     },
-    onError: () => {
+    onError: (error: any) => {
+      let errorMessage = t("employees.updateEmployeeError");
+
+      // Parse error similar to createMutation
+      if (error && typeof error === 'object' && error.code === "DUPLICATE_EMAIL") {
+        errorMessage = "Email đã được sử dụng.";
+        form.setError("email", {
+          type: "manual",
+          message: "Email đã tồn tại trong hệ thống",
+        });
+      }
+
       toast({
         title: t("common.error"),
-        description: t("employees.updateEmployeeError"),
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -162,11 +233,11 @@ export function EmployeeFormModal({
                 <FormItem>
                   <FormLabel>{t("employees.employeeId")}</FormLabel>
                   <FormControl>
-                    <Input 
-                      placeholder="EMP001" 
-                      {...field} 
-                      readOnly={mode === "create"}
-                      className={mode === "create" ? "bg-gray-100" : ""}
+                    <Input
+                      placeholder="EMP001"
+                      {...field}
+                      readOnly={true}
+                      className="bg-gray-100"
                     />
                   </FormControl>
                   <FormMessage />
@@ -179,9 +250,16 @@ export function EmployeeFormModal({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>{t("employees.name")}</FormLabel>
+                  <FormLabel>
+                    {t("employees.name")}{" "}
+                    <span className="text-red-500">*</span>
+                  </FormLabel>
                   <FormControl>
-                    <Input placeholder="홍길동" {...field} />
+                    <Input
+                      placeholder={t("employees.namePlaceholder")}
+                      {...field}
+                      required
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

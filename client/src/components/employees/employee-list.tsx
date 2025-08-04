@@ -18,9 +18,12 @@ export function EmployeeList() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
-  const { data: employees, isLoading } = useQuery<Employee[]>({
+  const { data: employeesData, isLoading } = useQuery<Employee[]>({
     queryKey: ['/api/employees'],
   });
+
+  // Sort employees by ID descending (newest first)
+  const employees = employeesData?.sort((a, b) => b.id - a.id);
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
@@ -102,19 +105,20 @@ export function EmployeeList() {
               <p className="text-sm text-gray-400 mt-2">{t('employees.addEmployeeHint')}</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('employees.employeeId')}</TableHead>
-                  <TableHead>{t('employees.name')}</TableHead>
-                  <TableHead>{t('employees.email')}</TableHead>
-                  <TableHead>{t('employees.phone')}</TableHead>
-                  <TableHead>{t('employees.role')}</TableHead>
-                  <TableHead>{t('employees.hireDate')}</TableHead>
-                  <TableHead>{t('employees.status')}</TableHead>
-                  <TableHead>{t('employees.employeeManagement')}</TableHead>
-                </TableRow>
-              </TableHeader>
+            <div className="overflow-x-auto">
+              <Table className="min-w-[1200px]">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-[120px]">{t('employees.employeeId')}</TableHead>
+                    <TableHead className="min-w-[150px]">{t('employees.name')}</TableHead>
+                    <TableHead className="min-w-[200px]">{t('employees.email')}</TableHead>
+                    <TableHead className="min-w-[150px]">{t('employees.phone')}</TableHead>
+                    <TableHead className="min-w-[160px]">{t('employees.role')}</TableHead>
+                    <TableHead className="min-w-[130px]">{t('employees.hireDate')}</TableHead>
+                    <TableHead className="min-w-[140px]">{t('employees.status')}</TableHead>
+                    <TableHead className="min-w-[150px]">{t('employees.employeeManagement')}</TableHead>
+                  </TableRow>
+                </TableHeader>
               <TableBody>
                 {employees.map((employee: Employee) => (
                   <TableRow key={employee.id}>
@@ -176,6 +180,7 @@ export function EmployeeList() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

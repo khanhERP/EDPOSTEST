@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,10 +9,11 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OrderDialog } from "@/components/orders/order-dialog";
-import { Users, Clock, CheckCircle2, Eye, CreditCard } from "lucide-react";
+import { Users, Clock, CheckCircle2, Eye, CreditCard, QrCode, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
+import QRCodeLib from "qrcode";
 import type { Table, Order } from "@shared/schema";
 
 interface TableGridProps {
@@ -29,6 +31,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [pointsAmount, setPointsAmount] = useState("");
+  const [showQRPayment, setShowQRPayment] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
+  const [editOrderOpen, setEditOrderOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [editingTable, setEditingTable] = useState<Table | null>(null);
+  const [mixedPaymentOpen, setMixedPaymentOpen] = useState(false);
+  const [mixedPaymentData, setMixedPaymentData] = useState<any>(null);
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
@@ -52,7 +62,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         console.log('No order ID available for fetching items');
         return [];
       }
-      
+
       console.log('=== FETCHING ORDER ITEMS ===');
       console.log('Fetching order items for order ID:', orderId);
       console.log('API URL will be:', `/api/order-items/${orderId}`);
@@ -61,14 +71,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         dialogOpen: orderDetailsOpen,
         bothTrue: !!selectedOrder?.id && orderDetailsOpen
       });
-      
+
       const response = await apiRequest('GET', `/api/order-items/${orderId}`);
       const data = await response.json();
-      
+
       console.log('Raw order items response for order', orderId, ':', data);
       console.log('Response type:', typeof data, 'Length:', data?.length);
       console.log('Is array?', Array.isArray(data));
-      
+
       // Log each item in detail
       if (Array.isArray(data) && data.length > 0) {
         console.log('Order items details:');
@@ -166,7 +176,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         customerId,
         points
       });
-      
+
       // Then mark order as paid
       await apiRequest('PUT', `/api/orders/${orderId}/status`, { 
         status: 'paid', 
@@ -197,6 +207,50 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     },
   });
 
+  const mixedPaymentMutation = useMutation({
+    mutationFn: async ({ customerId, points, orderId, paymentMethod }: { 
+      customerId: number; 
+      points: number; 
+      orderId: number; 
+      paymentMethod: string;
+    }) => {
+      // First redeem all available points
+      await apiRequest('POST', '/api/customers/redeem-points', {
+        customerId,
+        points
+      });
+
+      // Then mark order as paid with mixed payment
+      await apiRequest('PUT', `/api/orders/${orderId}/status`, { 
+        status: 'paid', 
+        paymentMethod: `points + ${paymentMethod}`,
+        customerId 
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+      setOrderDetailsOpen(false);
+      setMixedPaymentOpen(false);
+      setMixedPaymentData(null);
+      setSelectedCustomer(null);
+      setPointsAmount("");
+      setSearchTerm("");
+      toast({
+        title: 'Thanh toán thành công',
+        description: 'Đơn hàng đã được thanh toán bằng điểm + tiền mặt/chuyển khoản',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể hoàn tất thanh toán hỗn hợp',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const getTableStatus = (status: string) => {
     const statusConfig = {
       available: { label: t('tables.available'), variant: "default" as const, color: "bg-green-500" },
@@ -210,32 +264,32 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const getActiveOrder = (tableId: number) => {
     if (!orders || !Array.isArray(orders)) return null;
-    
+
     // Get all active orders for this table and sort by orderedAt descending to get the latest
     const activeOrders = orders.filter((order: Order) => 
       order.tableId === tableId && !["paid", "cancelled"].includes(order.status)
     );
-    
+
     console.log(`Active orders for table ${tableId}:`, activeOrders.map(o => ({
       id: o.id,
       orderNumber: o.orderNumber,
       orderedAt: o.orderedAt,
       status: o.status
     })));
-    
+
     if (activeOrders.length === 0) return null;
-    
+
     // Sort by orderedAt descending and return the most recent order
     const latestOrder = activeOrders.sort((a: Order, b: Order) => 
       new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
     )[0];
-    
+
     console.log(`Latest order for table ${tableId}:`, {
       id: latestOrder.id,
       orderNumber: latestOrder.orderNumber,
       orderedAt: latestOrder.orderedAt
     });
-    
+
     return latestOrder;
   };
 
@@ -258,20 +312,76 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     console.log('Order ID:', order.id, 'Table ID:', order.tableId, 'Ordered at:', order.orderedAt);
     console.log('Order status:', order.status, 'Order number:', order.orderNumber);
     console.log('=== END ORDER DETAILS ===');
-    
+
     // Set the selected order first
     setSelectedOrder(order);
-    
+
     // Then open the dialog - this ensures selectedOrder is set when the query runs
     setTimeout(() => {
       setOrderDetailsOpen(true);
     }, 0);
   };
 
-  const handlePayment = (paymentMethod: string) => {
-    if (selectedOrder) {
-      completePaymentMutation.mutate({ orderId: selectedOrder.id, paymentMethod });
+  const handlePayment = async (paymentMethodKey: string) => {
+    if (!selectedOrder) return;
+
+    const method = getPaymentMethods().find(m => m.nameKey === paymentMethodKey);
+    if (!method) return;
+
+    // If cash payment, proceed directly
+    if (paymentMethodKey === "cash") {
+      completePaymentMutation.mutate({ orderId: selectedOrder.id, paymentMethod: paymentMethodKey });
+      return;
     }
+
+    // For non-cash payments, show QR code
+    try {
+      const qrData = `${method.name} Payment\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
+      const qrUrl = await QRCodeLib.toDataURL(qrData, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        }
+      });
+      setQrCodeUrl(qrUrl);
+      setSelectedPaymentMethod({ key: paymentMethodKey, method });
+      setShowQRPayment(true);
+      setPaymentMethodsOpen(false);
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể tạo mã QR',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleQRPaymentConfirm = () => {
+    if (selectedOrder && selectedPaymentMethod) {
+      completePaymentMutation.mutate({ 
+        orderId: selectedOrder.id, 
+        paymentMethod: selectedPaymentMethod.key 
+      });
+      setShowQRPayment(false);
+      setQrCodeUrl("");
+      setSelectedPaymentMethod(null);
+    }
+  };
+
+  const handleQRPaymentClose = () => {
+    setShowQRPayment(false);
+    setQrCodeUrl("");
+    setSelectedPaymentMethod(null);
+    setPaymentMethodsOpen(true);
+  };
+
+  const handleEditOrder = (order: Order, table: Table) => {
+    setEditingOrder(order);
+    setEditingTable(table);
+    setEditOrderOpen(true);
   };
 
   const filteredCustomers = customers?.filter((customer: any) =>
@@ -281,32 +391,47 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   ) || [];
 
   const handlePointsPayment = () => {
-    if (!selectedCustomer || !pointsAmount || !selectedOrder) {
+    if (!selectedCustomer || !selectedOrder) {
       toast({
         title: 'Lỗi',
-        description: 'Vui lòng chọn khách hàng và nhập số điểm',
+        description: 'Vui lòng chọn khách hàng',
         variant: 'destructive',
       });
       return;
     }
 
-    const points = parseInt(pointsAmount);
     const currentPoints = selectedCustomer.points || 0;
+    const orderTotal = Number(selectedOrder.total);
+    const pointsValue = currentPoints * 1000; // 1 điểm = 1000đ
     
-    if (points > currentPoints) {
+    if (pointsValue >= orderTotal) {
+      // Đủ điểm để thanh toán toàn bộ
+      const pointsNeeded = Math.ceil(orderTotal / 1000);
+      pointsPaymentMutation.mutate({
+        customerId: selectedCustomer.id,
+        points: pointsNeeded,
+        orderId: selectedOrder.id
+      });
+    } else if (currentPoints > 0) {
+      // Không đủ điểm, thanh toán hỗn hợp
+      const remainingAmount = orderTotal - pointsValue;
+      
+      // Hiển thị dialog chọn phương thức thanh toán cho phần còn lại
+      setMixedPaymentData({
+        customerId: selectedCustomer.id,
+        pointsToUse: currentPoints,
+        remainingAmount: remainingAmount,
+        orderId: selectedOrder.id
+      });
+      setPointsPaymentOpen(false);
+      setMixedPaymentOpen(true);
+    } else {
       toast({
-        title: 'Số điểm không đủ',
-        description: 'Khách hàng không có đủ điểm để thanh toán',
+        title: 'Không có điểm',
+        description: 'Khách hàng không có điểm để thanh toán',
         variant: 'destructive',
       });
-      return;
     }
-
-    pointsPaymentMutation.mutate({
-      customerId: selectedCustomer.id,
-      points,
-      orderId: selectedOrder.id
-    });
   };
 
   const getProductName = (productId: number) => {
@@ -316,8 +441,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   };
 
   const getPaymentMethods = () => {
-    // Payment methods from settings - matches the structure in settings.tsx
-    const settingsPaymentMethods = [
+    // Get payment methods from localStorage (saved from settings)
+    const savedPaymentMethods = localStorage.getItem('paymentMethods');
+
+    // Default payment methods if none saved
+    const defaultPaymentMethods = [
       { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
       { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
       { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
@@ -329,8 +457,28 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       { id: 9, name: "GrabPay", nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
     ];
 
+    const paymentMethods = savedPaymentMethods 
+      ? JSON.parse(savedPaymentMethods) 
+      : defaultPaymentMethods;
+
     // Filter to only return enabled payment methods
-    return settingsPaymentMethods.filter(method => method.enabled);
+    return paymentMethods.filter(method => method.enabled);
+  };
+
+    const getOrderStatusBadge = (status: string) => {
+    const statusConfig = {
+      pending: { label: t('orders.status.pending'), variant: "secondary" as const },
+      confirmed: { label: t('orders.status.confirmed'), variant: "default" as const },
+      preparing: { label: t('orders.status.preparing'), variant: "secondary" as const },
+      ready: { label: t('orders.status.ready'), variant: "outline" as const },
+      served: { label: t('orders.status.served'), variant: "outline" as const },
+      delivering: { label: t('orders.status.delivering'), variant: "secondary" as const },
+      completed: { label: t('orders.status.completed'), variant: "default" as const },
+      paid: { label: t('orders.status.paid'), variant: "default" as const },
+      cancelled: { label: t('orders.status.cancelled'), variant: "destructive" as const },
+    };
+
+    return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
   };
 
   if (isLoading) {
@@ -385,8 +533,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         <span>{table.capacity} {t('orders.people')}</span>
                       )}
                     </div>
-                    <Badge variant={statusConfig.variant} className="text-xs">
-                      {statusConfig.label}
+                    <Badge variant={table.status === "occupied" && activeOrder ? getOrderStatusBadge(activeOrder.status).variant : statusConfig.variant} className="text-xs">
+                      {table.status === "occupied" && activeOrder ? getOrderStatusBadge(activeOrder.status).label : statusConfig.label}
                     </Badge>
                   </div>
 
@@ -406,7 +554,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         )}
                       </div>
                       <div className="font-medium">
-                        ₩{Number(activeOrder.total).toLocaleString()}
+                        {Number(activeOrder.total).toLocaleString()} ₫
                       </div>
                     </div>
                   )}
@@ -428,7 +576,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         <Eye className="w-3 h-3 mr-1" />
                         Xem chi tiết
                       </Button>
-                      
+
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="w-full text-xs bg-blue-600 hover:bg-blue-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (activeOrder) {
+                            handleEditOrder(activeOrder, table);
+                          }
+                        }}
+                      >
+                        <Plus className="w-3 h-3 mr-1" />
+                        Gọi thêm
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -506,7 +668,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         console.log('orderItemsLoading:', orderItemsLoading);
                         console.log('selectedOrder?.id:', selectedOrder?.id);
                         console.log('orderDetailsOpen:', orderDetailsOpen);
-                        
+
                         // Try JSON stringify to see raw structure
                         try {
                           console.log('orderItems JSON:', JSON.stringify(orderItems, null, 2));
@@ -521,10 +683,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           console.log('orderItems.items:', (orderItems as any).items);
                           console.log('orderItems[0]:', orderItems[0]);
                         }
-                        
+
                         // Force array conversion and check different possible structures
                         let itemsToRender = [];
-                        
+
                         if (Array.isArray(orderItems)) {
                           itemsToRender = orderItems;
                           console.log('✅ orderItems is already an array with length:', itemsToRender.length);
@@ -543,11 +705,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             console.log('❌ Failed to convert object to array:', e);
                           }
                         }
-                        
+
                         console.log('Final itemsToRender:', itemsToRender);
                         console.log('itemsToRender length:', itemsToRender.length);
                         console.log('=== END RENDER CHECK ULTRA DETAILED ===');
-                        
+
                         if (itemsToRender && itemsToRender.length > 0) {
                           console.log('🎉 SUCCESS! Rendering', itemsToRender.length, 'items');
                           return (
@@ -564,7 +726,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                   unitPrice: item.unitPrice,
                                   total: item.total
                                 });
-                                
+
                                 return (
                                   <div key={`item-${item.id || index}`} className="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm">
                                     <div className="flex-1">
@@ -574,9 +736,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                       <p className="text-sm text-gray-600">
                                         Số lượng: <span className="font-medium">{item.quantity}</span>
                                       </p>
-                                      <p className="text-xs text-gray-400">
-                                        ID: {item.id} | ProductID: {item.productId}
-                                      </p>
+                                      {(() => {
+                                        const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+                                        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
+                                        const taxAmount = taxRate > 0 ? (Number(item.unitPrice || 0) * taxRate / 100 * item.quantity) : 0;
+                                        
+                                        return taxAmount > 0 ? (
+                                          <p className="text-xs text-orange-600">
+                                            Thuế: {taxAmount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ ({taxRate}%)
+                                          </p>
+                                        ) : null;
+                                      })()}
                                       {item.notes && (
                                         <p className="text-xs text-blue-600 italic mt-1">
                                           Ghi chú: {item.notes}
@@ -585,10 +755,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                     </div>
                                     <div className="text-right ml-4">
                                       <p className="font-bold text-lg text-green-600">
-                                        ₩{Number(item.total || 0).toLocaleString()}
+                                        {Number(item.total || 0).toLocaleString()} ₫
                                       </p>
                                       <p className="text-sm text-gray-500">
-                                        ₩{Number(item.unitPrice || 0).toLocaleString()}/món
+                                        {Number(item.unitPrice || 0).toLocaleString()} ₫/món
                                       </p>
                                     </div>
                                   </div>
@@ -611,7 +781,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             queryEnabled: !!selectedOrder?.id && orderDetailsOpen
                           };
                           console.log('Complete debug:', completeDebug);
-                          
+
                           return (
                             <div className="text-center py-6 bg-red-50 rounded-lg border border-red-200">
                               <p className="text-red-600 font-medium mb-3">
@@ -641,11 +811,31 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
               <Separator />
 
-              {/* Total */}
+              {/* Tax and Total Summary */}
               <div className="space-y-2">
+                {(() => {
+                  // Calculate total tax from all items
+                  let totalTax = 0;
+                  if (Array.isArray(orderItems) && Array.isArray(products)) {
+                    orderItems.forEach((item: any) => {
+                      const product = products.find((p: any) => p.id === item.productId);
+                      const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
+                      if (taxRate > 0) {
+                        totalTax += (Number(item.unitPrice || 0) * taxRate / 100 * item.quantity);
+                      }
+                    });
+                  }
+
+                  return totalTax > 0 ? (
+                    <div className="flex justify-between text-sm text-orange-600">
+                      <span>Tổng thuế:</span>
+                      <span>{totalTax.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
+                    </div>
+                  ) : null;
+                })()}
                 <div className="flex justify-between text-lg font-bold">
                   <span>Tổng cần thanh toán:</span>
-                  <span className="text-green-600">₩{Number(selectedOrder.total).toLocaleString()}</span>
+                  <span className="text-green-600">{Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
                 </div>
               </div>
 
@@ -731,7 +921,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Tổng tiền:</span>
-                  <span className="font-medium">₩{Number(selectedOrder.total).toLocaleString()}</span>
+                  <span className="font-medium">{Number(selectedOrder.total).toLocaleString()} ₫</span>
                 </div>
               </div>
             )}
@@ -744,7 +934,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              
+
               <div className="max-h-64 overflow-y-auto border rounded-md">
                 {filteredCustomers.map((customer: any) => (
                   <div
@@ -780,10 +970,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             </div>
 
             {/* Selected Customer Info */}
-            {selectedCustomer && (
+            {selectedCustomer && selectedOrder && (
               <div className="p-4 bg-green-50 rounded-lg">
                 <h4 className="font-medium mb-2">Khách hàng đã chọn</h4>
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mb-3">
                   <div>
                     <p className="font-medium">{selectedCustomer.name}</p>
                     <p className="text-sm text-gray-600">{selectedCustomer.customerId}</p>
@@ -792,39 +982,32 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <p className="font-medium text-green-600">
                       {(selectedCustomer.points || 0).toLocaleString()}P
                     </p>
-                    <p className="text-xs text-gray-500">Điểm có sẵn</p>
+                    <p className="text-xs text-gray-500">
+                      ≈ {((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
+                    </p>
                   </div>
+                </div>
+                
+                {/* Payment calculation */}
+                <div className="pt-2 border-t border-green-200">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span>Tổng đơn hàng:</span>
+                    <span className="font-medium">{Number(selectedOrder.total).toLocaleString()} ₫</span>
+                  </div>
+                  {((selectedCustomer.points || 0) * 1000) >= Number(selectedOrder.total) ? (
+                    <div className="text-green-600 text-sm">
+                      ✓ Đủ điểm để thanh toán toàn bộ
+                    </div>
+                  ) : (
+                    <div className="text-orange-600 text-sm">
+                      ⚠ Cần thanh toán thêm: {(Number(selectedOrder.total) - (selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Points Amount Input */}
-            {selectedCustomer && (
-              <div className="space-y-3">
-                <Label>Số điểm sử dụng</Label>
-                <Input
-                  type="number"
-                  placeholder="Nhập số điểm muốn sử dụng..."
-                  value={pointsAmount}
-                  onChange={(e) => setPointsAmount(e.target.value)}
-                />
-                {pointsAmount && parseInt(pointsAmount) > (selectedCustomer.points || 0) && (
-                  <p className="text-sm text-red-600">
-                    Số điểm nhập vượt quá số điểm có sẵn
-                  </p>
-                )}
-                {pointsAmount && (
-                  <div className="p-3 bg-gray-50 rounded-lg">
-                    <div className="flex justify-between text-sm">
-                      <span>Điểm sau thanh toán:</span>
-                      <span className="font-medium">
-                        {Math.max(0, (selectedCustomer.points || 0) - parseInt(pointsAmount || '0')).toLocaleString()}P
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+            
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
@@ -835,17 +1018,177 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               onClick={handlePointsPayment}
               disabled={
                 !selectedCustomer || 
-                !pointsAmount || 
-                parseInt(pointsAmount || '0') > (selectedCustomer?.points || 0) || 
+                (selectedCustomer.points || 0) === 0 ||
                 pointsPaymentMutation.isPending
               }
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {pointsPaymentMutation.isPending ? 'Đang xử lý...' : 'Thanh toán bằng điểm'}
+              {pointsPaymentMutation.isPending ? 'Đang xử lý...' : 
+               selectedCustomer && selectedOrder && ((selectedCustomer.points || 0) * 1000) >= Number(selectedOrder.total) ? 
+               'Thanh toán bằng điểm' : 'Thanh toán hỗn hợp'}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* QR Payment Dialog */}
+      <Dialog open={showQRPayment} onOpenChange={setShowQRPayment}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode className="w-5 h-5" />
+              Thanh toán {selectedPaymentMethod?.method?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Quét mã QR để hoàn tất thanh toán
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 p-4">
+            {/* Order Summary */}
+            {selectedOrder && (
+              <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm text-gray-600">Đơn hàng: {selectedOrder.orderNumber}</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                </p>
+              </div>
+            )}
+
+            {/* QR Code */}
+            {qrCodeUrl && (
+              <div className="flex justify-center">
+                <div className="bg-white p-4 rounded-lg border-2 border-gray-200 shadow-lg">
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="QR Code for Payment" 
+                    className="w-64 h-64"
+                  />
+                </div>
+              </div>
+            )}
+
+            <p className="text-sm text-gray-600 text-center">
+              Sử dụng ứng dụng {selectedPaymentMethod?.method?.name} để quét mã QR và thực hiện thanh toán
+            </p>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button 
+                variant="outline" 
+                onClick={handleQRPaymentClose} 
+                className="flex-1"
+              >
+                Quay lại
+              </Button>
+              <Button 
+                onClick={handleQRPaymentConfirm}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+              >
+                Xác nhận thanh toán
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mixed Payment Dialog */}
+      <Dialog open={mixedPaymentOpen} onOpenChange={setMixedPaymentOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="w-5 h-5 text-orange-600" />
+              Thanh toán hỗn hợp
+            </DialogTitle>
+            <DialogDescription>
+              Không đủ điểm, cần thanh toán thêm bằng tiền mặt hoặc chuyển khoản
+            </DialogDescription>
+          </DialogHeader>
+
+          {mixedPaymentData && (
+            <div className="space-y-4">
+              {/* Payment Summary */}
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium mb-2">Tóm tắt thanh toán</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Tổng đơn hàng:</span>
+                    <span className="font-medium">{Number(selectedOrder?.total || 0).toLocaleString()} ₫</span>
+                  </div>
+                  <div className="flex justify-between text-blue-600">
+                    <span>Thanh toán bằng điểm:</span>
+                    <span className="font-medium">
+                      {mixedPaymentData.pointsToUse.toLocaleString()}P 
+                      <span className="ml-1">(-{(mixedPaymentData.pointsToUse * 1000).toLocaleString()} ₫)</span>
+                    </span>
+                  </div>
+                  <div className="border-t pt-2 flex justify-between font-medium text-orange-600">
+                    <span>Cần thanh toán thêm:</span>
+                    <span>{mixedPaymentData.remainingAmount.toLocaleString()} ₫</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Methods */}
+              <div className="space-y-3">
+                <h4 className="font-medium">Chọn phương thức thanh toán cho phần còn lại:</h4>
+                <div className="grid grid-cols-1 gap-2">
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto p-4"
+                    onClick={() => mixedPaymentMutation.mutate({
+                      customerId: mixedPaymentData.customerId,
+                      points: mixedPaymentData.pointsToUse,
+                      orderId: mixedPaymentData.orderId,
+                      paymentMethod: 'cash'
+                    })}
+                    disabled={mixedPaymentMutation.isPending}
+                  >
+                    <span className="text-2xl mr-3">💵</span>
+                    <div className="text-left">
+                      <p className="font-medium">Tiền mặt</p>
+                      <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
+                    </div>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="justify-start h-auto p-4"
+                    onClick={() => mixedPaymentMutation.mutate({
+                      customerId: mixedPaymentData.customerId,
+                      points: mixedPaymentData.pointsToUse,
+                      orderId: mixedPaymentData.orderId,
+                      paymentMethod: 'transfer'
+                    })}
+                    disabled={mixedPaymentMutation.isPending}
+                  >
+                    <span className="text-2xl mr-3">💳</span>
+                    <div className="text-left">
+                      <p className="font-medium">Chuyển khoản</p>
+                      <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
+                    </div>
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={() => setMixedPaymentOpen(false)}>
+                  Hủy
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Order Dialog */}
+      <OrderDialog 
+        open={editOrderOpen}
+        onOpenChange={setEditOrderOpen}
+        table={editingTable}
+        existingOrder={editingOrder}
+        mode="edit"
+      />
     </>
   );
 }

@@ -19,6 +19,9 @@ export const products = pgTable("products", {
   categoryId: integer("category_id").references(() => categories.id).notNull(),
   imageUrl: text("image_url"),
   isActive: boolean("is_active").notNull().default(true),
+  productType: integer("product_type").notNull().default(1),
+  trackInventory: boolean("track_inventory").notNull().default(true),
+  taxRate: decimal("tax_rate", { precision: 5, scale: 2 }).notNull().default("10.00"),
 });
 
 export const transactions = pgTable("transactions", {
@@ -75,6 +78,7 @@ export const storeSettings = pgTable("store_settings", {
   storeName: text("store_name").notNull().default("EDPOS 레스토랑"),
   storeCode: text("store_code"),
   taxId: text("tax_id"),
+  businessType: text("business_type").default("restaurant"),
   address: text("address"),
   phone: text("phone"),
   email: text("email"),
@@ -151,6 +155,10 @@ export const insertProductSchema = createInsertSchema(products).omit({
     message: "Price must be a positive number",
   }),
   stock: z.number().min(0, "Stock cannot be negative"),
+  productType: z.number().min(1).max(3, "Product type is required"),
+  taxRate: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 100, {
+    message: "Tax rate must be between 0 and 100",
+  }),
 });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
@@ -167,6 +175,7 @@ export const insertEmployeeSchema = createInsertSchema(employees).omit({
   id: true,
   createdAt: true,
 }).extend({
+  name: z.string().min(1, "Tên nhân viên là bắt buộc"),
   role: z.enum(["manager", "cashier", "admin"], {
     errorMap: () => ({ message: "Role must be manager, cashier, or admin" })
   }),
@@ -266,6 +275,47 @@ export const pointTransactions = pgTable('point_transactions', {
   createdAt: timestamp('created_at').defaultNow()
 });
 
+export const inventoryTransactions = pgTable('inventory_transactions', {
+  id: serial('id').primaryKey(),
+  productId: integer('product_id').references(() => products.id).notNull(),
+  type: varchar('type', { length: 20 }).notNull(), // 'add', 'subtract', 'set', 'sale', 'return'
+  quantity: integer('quantity').notNull(),
+  previousStock: integer('previous_stock').notNull(),
+  newStock: integer('new_stock').notNull(),
+  notes: text('notes'),
+  createdAt: varchar('created_at', { length: 50 }).notNull(),
+});
+
+export const eInvoiceConnections = pgTable('einvoice_connections', {
+  id: serial('id').primaryKey(),
+  symbol: varchar('symbol', { length: 10 }).notNull(),
+  taxCode: varchar('tax_code', { length: 20 }).notNull(),
+  loginId: varchar('login_id', { length: 50 }).notNull(),
+  password: text('password').notNull(),
+  softwareName: varchar('software_name', { length: 50 }).notNull(),
+  loginUrl: text('login_url'),
+  signMethod: varchar('sign_method', { length: 20 }).notNull().default('Ký server'),
+  cqtCode: varchar('cqt_code', { length: 20 }).notNull().default('Cấp nhật'),
+  notes: text('notes'),
+  isDefault: boolean('is_default').notNull().default(false),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const invoiceTemplates = pgTable('invoice_templates', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull(),
+  templateNumber: varchar('template_number', { length: 50 }).notNull(),
+  symbol: varchar('symbol', { length: 20 }).notNull(),
+  useCK: boolean('use_ck').notNull().default(true),
+  notes: text('notes'),
+  isDefault: boolean('is_default').notNull().default(false),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 export const insertCustomerSchema = createInsertSchema(customers).omit({
   id: true,
   createdAt: true,
@@ -307,6 +357,26 @@ export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 export type InsertPointTransaction = z.infer<typeof insertPointTransactionSchema>;
 
+export const insertEInvoiceConnectionSchema = createInsertSchema(eInvoiceConnections).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  signMethod: z.enum(["Ký server", "Ký USB Token", "Ký HSM"]).optional(),
+  cqtCode: z.enum(["Cấp nhật", "Cấp hai"]).optional(),
+});
+
+export const insertInvoiceTemplateSchema = createInsertSchema(invoiceTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type EInvoiceConnection = typeof eInvoiceConnections.$inferSelect;
+export type InsertEInvoiceConnection = z.infer<typeof insertEInvoiceConnectionSchema>;
+export type InvoiceTemplate = typeof invoiceTemplates.$inferSelect;
+export type InsertInvoiceTemplate = z.infer<typeof insertInvoiceTemplateSchema>;
+
 // Cart item type for frontend use
 export type CartItem = {
   id: number;
@@ -316,6 +386,7 @@ export type CartItem = {
   total: string;
   imageUrl?: string;
   stock: number;
+  taxRate?: string;
 };
 
 // Relations

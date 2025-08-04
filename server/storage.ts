@@ -40,25 +40,28 @@ import {
   type InsertPointTransaction,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, ilike, and, gte, lte, or, sql } from "drizzle-orm";
+import { eq, ilike, and, gte, lte, or, sql, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Categories
   getCategories(): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: number, updateData: Partial<InsertCategory>): Promise<Category>;
+  deleteCategory(id: number): Promise<void>;
 
   // Products
   getProducts(): Promise<Product[]>;
-  getProductsByCategory(categoryId: number): Promise<Product[]>;
+  getProductsByCategory(categoryId: number, includeInactive?: boolean): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
   getProductBySku(sku: string): Promise<Product | undefined>;
-  searchProducts(query: string): Promise<Product[]>;
+  searchProducts(query: string, includeInactive?: boolean): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(
     id: number,
     product: Partial<InsertProduct>,
   ): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<boolean>;
+  deleteInactiveProducts(): Promise<number>;
   updateProductStock(
     id: number,
     quantity: number,
@@ -93,6 +96,7 @@ export interface IStorage {
     employee: Partial<InsertEmployee>,
   ): Promise<Employee | undefined>;
   deleteEmployee(id: number): Promise<boolean>;
+  getNextEmployeeId(): Promise<string>;
 
   // Attendance
   getAttendanceRecords(
@@ -193,6 +197,18 @@ export interface IStorage {
   getMembershipThresholds(): Promise<{ GOLD: number; VIP: number }>;
   updateMembershipThresholds(thresholds: { GOLD: number; VIP: number }): Promise<{ GOLD: number; VIP: number }>;
   recalculateAllMembershipLevels(goldThreshold: number, vipThreshold: number): Promise<void>;
+
+  getAllProducts(includeInactive?: boolean): Promise<Product[]>;
+  getActiveProducts(): Promise<Product[]>;
+
+  // E-invoice connections
+  getEInvoiceConnections(): Promise<any[]>;
+  getEInvoiceConnection(id: number): Promise<any>;
+  createEInvoiceConnection(data: any): Promise<any>;
+  updateEInvoiceConnection(id: number, data: any): Promise<any>;
+  deleteEInvoiceConnection(id: number): Promise<boolean>;
+
+  getEmployeeByEmail(email: string): Promise<Employee | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -208,17 +224,42 @@ export class DatabaseStorage implements IStorage {
     return category;
   }
 
-  async getProducts(): Promise<Product[]> {
-    return await db.select().from(products).where(eq(products.isActive, true));
+  async updateCategory(id: number, updateData: Partial<InsertCategory>): Promise<Category> {
+    const [category] = await db
+      .update(categories)
+      .set(updateData)
+      .where(eq(categories.id, id))
+      .returning();
+    return category;
   }
 
-  async getProductsByCategory(categoryId: number): Promise<Product[]> {
-    return await db
+  async deleteCategory(id: number): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
+  }
+
+  async getProducts(): Promise<Product[]> {
+    const result = await db.select().from(products).where(eq(products.isActive, true));
+    // Ensure productType has a default value if missing
+    return result.map(product => ({
+      ...product,
+      productType: product.productType || 1
+    }));
+  }
+
+  async getProductsByCategory(categoryId: number, includeInactive: boolean = false): Promise<Product[]> {
+    let whereCondition = eq(products.categoryId, categoryId);
+
+    if (!includeInactive) {
+      whereCondition = and(whereCondition, eq(products.isActive, true));
+    }
+
+    const result = await db
       .select()
       .from(products)
-      .where(
-        and(eq(products.categoryId, categoryId), eq(products.isActive, true)),
-      );
+      .where(whereCondition)
+      .orderBy(products.name);
+
+    return result;
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
@@ -237,24 +278,48 @@ export class DatabaseStorage implements IStorage {
     return product || undefined;
   }
 
-  async searchProducts(query: string): Promise<Product[]> {
+  async searchProducts(query: string, includeInactive: boolean = false): Promise<Product[]> {
+    let whereCondition = ilike(products.name, `%${query}%`);
+
+    if (!includeInactive) {
+      whereCondition = and(whereCondition, eq(products.isActive, true));
+    }
+
     return await db
       .select()
       .from(products)
-      .where(
-        and(eq(products.isActive, true), ilike(products.name, `%${query}%`)),
-      );
+      .where(whereCondition);
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    const [product] = await db
-      .insert(products)
-      .values({
-        ...insertProduct,
+    try {
+      console.log("Storage: Creating product with data:", insertProduct);
+
+      const productData = {
+        name: insertProduct.name,
+        sku: insertProduct.sku,
+        price: insertProduct.price,
+        stock: insertProduct.stock,
+        categoryId: insertProduct.categoryId,
+        productType: insertProduct.productType || 1,
+        trackInventory: insertProduct.trackInventory !== false,
         imageUrl: insertProduct.imageUrl || null,
-      })
-      .returning();
-    return product;
+        isActive: true
+      };
+
+      console.log("Storage: Inserting product data:", productData);
+
+      const [product] = await db
+        .insert(products)
+        .values(productData)
+        .returning();
+
+      console.log("Storage: Product created successfully:", product);
+      return product;
+    } catch (error) {
+      console.error("Storage: Error creating product:", error);
+      throw error;
+    }
   }
 
   async updateProduct(
@@ -273,12 +338,48 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProduct(id: number): Promise<boolean> {
-    const [product] = await db
-      .update(products)
-      .set({ isActive: false })
-      .where(eq(products.id, id))
+    try {
+      // Check if product exists in transactions
+      const transactionItemsCheck = await db
+        .select()
+        .from(transactionItems)
+        .where(eq(transactionItems.productId, id))
+        .limit(1);
+
+      if (transactionItemsCheck.length > 0) {
+        throw new Error("Cannot delete product: it has been used in transactions");
+      }
+
+      // Check if product exists in order items
+      const orderItemsCheck = await db
+        .select()
+        .from(orderItems)
+        .where(eq(orderItems.productId, id))
+        .limit(1);
+
+      if (orderItemsCheck.length > 0) {
+        throw new Error("Cannot delete product: it has been used in orders");
+      }
+
+      // If no references found, delete the product
+      const result = await db
+        .delete(products)
+        .where(eq(products.id, id))
+        .returning();
+
+      return result.length > 0;
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      throw error;
+    }
+  }
+
+  async deleteInactiveProducts(): Promise<number> {
+    const result = await db
+      .delete(products)
+      .where(eq(products.isActive, false))
       .returning();
-    return !!product;
+    return result.length;
   }
 
   async updateProductStock(
@@ -369,6 +470,38 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(transactions).orderBy(transactions.createdAt);
   }
 
+  // Get next employee ID in sequence
+  async getNextEmployeeId(): Promise<string> {
+    try {
+      const lastEmployee = await db
+        .select()
+        .from(employees)
+        .orderBy(desc(employees.id))
+        .limit(1);
+
+      if (lastEmployee.length === 0) {
+        return "EMP-001";
+      }
+
+      // Extract number from last employee ID (EMP-001 -> 001)
+      const lastId = lastEmployee[0].employeeId;
+      const match = lastId.match(/EMP-(\d+)/);
+
+      if (match) {
+        const lastNumber = parseInt(match[1], 10);
+        const nextNumber = lastNumber + 1;
+        return `EMP-${nextNumber.toString().padStart(3, '0')}`;
+      }
+
+      // Fallback if format doesn't match
+      return "EMP-001";
+    } catch (error) {
+      console.error("Error generating next employee ID:", error);
+      return "EMP-001";
+    }
+  }
+
+  // Employee methods
   async getEmployees(): Promise<Employee[]> {
     return await db
       .select()
@@ -789,6 +922,7 @@ export class DatabaseStorage implements IStorage {
         .values({
           storeName: "EDPOS 레스토랑",
           storeCode: "STORE001",
+          businessType: "restaurant",
           openTime: "09:00",
           closeTime: "22:00",
         })
@@ -1161,6 +1295,207 @@ export class DatabaseStorage implements IStorage {
           .where(eq(customers.id, customer.id));
       }
     }
+  }
+
+  async getAllProducts(includeInactive: boolean = false): Promise<Product[]> {
+    if (includeInactive) {
+      return await db
+        .select()
+        .from(products)
+        .orderBy(products.name);
+    } else {
+      return await db
+        .select()
+        .from(products)
+        .where(eq(products.isActive, true))
+        .orderBy(products.name);
+    }
+  }
+
+  async getActiveProducts(): Promise<Product[]> {
+    const result = await db
+      .select()
+      .from(products)
+      .where(eq(products.isActive, true))
+      .orderBy(products.name);
+
+    return result;
+  }
+
+  async createProduct(productData: Omit<Product, "id">): Promise<Product> {
+    const [product] = await db.insert(products).values({
+      ...productData,
+      productType: productData.productType || 1
+    }).returning();
+    return product;
+  }
+
+  // Invoice templates methods
+  async getInvoiceTemplates(): Promise<any[]> {
+    try {
+      const { invoiceTemplates } = await import("@shared/schema");
+      return await db.select().from(invoiceTemplates).orderBy(invoiceTemplates.id);
+    } catch (error) {
+      console.error("Error fetching invoice templates:", error);
+      return [];
+    }
+  }
+
+  async getInvoiceTemplate(id: number): Promise<any> {
+    try {
+      const { invoiceTemplates } = await import("@shared/schema");
+      const [result] = await db
+        .select()
+        .from(invoiceTemplates)
+        .where(eq(invoiceTemplates.id, id));
+      return result;
+    } catch (error) {
+      console.error("Error fetching invoice template:", error);
+      return null;
+    }
+  }
+
+  async createInvoiceTemplate(data: any): Promise<any> {
+    try {
+      const { invoiceTemplates } = await import("@shared/schema");
+
+      // If this template is set as default, unset all other defaults
+      if (data.isDefault) {
+        await db.update(invoiceTemplates)
+          .set({ isDefault: false })
+          .where(eq(invoiceTemplates.isDefault, true));
+      }
+
+      const [result] = await db.insert(invoiceTemplates).values({
+        ...data,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }).returning();
+      return result;
+    } catch (error) {
+      console.error("Error creating invoice template:", error);
+      throw error;
+    }
+  }
+
+  async updateInvoiceTemplate(id: number, data: any): Promise<any> {
+    try {
+      const { invoiceTemplates } = await import("@shared/schema");
+
+      // If this template is set as default, unset all other defaults
+      if (data.isDefault) {
+        await db.update(invoiceTemplates)
+          .set({ isDefault: false })
+          .where(eq(invoiceTemplates.isDefault, true));
+      }
+
+      const [result] = await db.update(invoiceTemplates)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(eq(invoiceTemplates.id, id))
+        .returning();
+      return result;
+    } catch (error) {
+      console.error("Error updating invoice template:", error);
+      throw error;
+    }
+  }
+
+  async deleteInvoiceTemplate(id: number): Promise<boolean> {
+    try {
+      const { invoiceTemplates } = await import("@shared/schema");
+      const result = await db.delete(invoiceTemplates)
+        .where(eq(invoiceTemplates.id, id));
+      return result.rowCount > 0;
+    } catch (error) {
+      console.error("Error deleting invoice template:", error);
+      return false;
+    }
+  }
+
+  // E-invoice connections methods
+  async getEInvoiceConnections(): Promise<any[]> {
+    try {
+      const { eInvoiceConnections } = await import("@shared/schema");
+      return await db.select().from(eInvoiceConnections).orderBy(eInvoiceConnections.symbol);
+    } catch (error) {
+      console.error("Error fetching e-invoice connections:", error);
+      return [];
+    }
+  }
+
+  async getEInvoiceConnection(id: number): Promise<any> {
+    try {
+      const { eInvoiceConnections } = await import("@shared/schema");
+      const [result] = await db
+        .select()
+        .from(eInvoiceConnections)
+        .where(eq(eInvoiceConnections.id, id));
+      return result;
+    } catch (error) {
+      console.error("Error fetching e-invoice connection:", error);
+      return null;
+    }
+  }
+
+  async createEInvoiceConnection(data: any): Promise<any> {
+    try {
+      const { eInvoiceConnections } = await import("@shared/schema");
+
+      // Generate next symbol number
+      const existingConnections = await this.getEInvoiceConnections();
+      const nextSymbol = (existingConnections.length + 1).toString();
+
+      const [result] = await db.insert(eInvoiceConnections).values({
+        ...data,
+        symbol: nextSymbol,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }).returning();
+      return result;
+    } catch (error) {
+      console.error("Error creating e-invoice connection:", error);
+      throw error;
+    }
+  }
+
+  async updateEInvoiceConnection(id: number, data: any): Promise<any> {
+    try {
+      const { eInvoiceConnections } = await import("@shared/schema");
+      const [result] = await db
+        .update(eInvoiceConnections)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(eInvoiceConnections.id, id))
+        .returning();
+      return result;
+    } catch (error) {
+      console.error("Error updating e-invoice connection:", error);
+      throw error;
+    }
+  }
+
+  async deleteEInvoiceConnection(id: number): Promise<boolean> {
+    try {
+      const { eInvoiceConnections } = await import("@shared/schema");
+      const result = await db
+        .delete(eInvoiceConnections)
+        .where(eq(eInvoiceConnections.id, id))
+        .returning();
+      return result.length > 0;
+    } catch (error) {
+      console.error("Error deleting e-invoice connection:", error);
+      return false;
+    }
+  }
+
+  async getEmployeeByEmail(email: string): Promise<Employee | undefined> {
+    const [employee] = await db
+      .select()
+      .from(employees)
+      .where(eq(employees.email, email));
+    return employee || undefined;
   }
 }
 

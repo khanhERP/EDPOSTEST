@@ -13,13 +13,18 @@ export default function POSPage() {
   const [showProductManagerModal, setShowProductManagerModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   const {
     cart,
+    orders,
+    activeOrderId,
     addToCart,
     removeFromCart,
     updateQuantity,
     clearCart,
+    createNewOrder,
+    switchOrder,
+    removeOrder,
     lastReceipt,
     isProcessingCheckout,
     processCheckout
@@ -36,10 +41,10 @@ export default function POSPage() {
     <div className="min-h-screen bg-green-50 grocery-bg">
       {/* Header */}
       <POSHeader />
-      
+
       {/* Right Sidebar */}
       <RightSidebar />
-      
+
       <div className="main-content flex h-screen pt-16">
         {/* Category Sidebar */}
         <CategorySidebar
@@ -66,6 +71,11 @@ export default function POSPage() {
           onClearCart={clearCart}
           onCheckout={handleCheckout}
           isProcessing={isProcessingCheckout}
+          orders={orders}
+          activeOrderId={activeOrderId}
+          onCreateNewOrder={createNewOrder}
+          onSwitchOrder={switchOrder}
+          onRemoveOrder={removeOrder}
         />
       </div>
 
