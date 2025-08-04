@@ -1566,7 +1566,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEmployeeByEmail(email: string): Promise<Employee | undefined> {
-    if (email) {
+    if (email && email.trim() !== "") {
       const [employee] = await db
         .select()
         .from(employees)
