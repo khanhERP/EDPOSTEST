@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -39,6 +38,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [editingTable, setEditingTable] = useState<Table | null>(null);
   const [mixedPaymentOpen, setMixedPaymentOpen] = useState(false);
   const [mixedPaymentData, setMixedPaymentData] = useState<any>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
+  const [eInvoiceOrderData, setEInvoiceOrderData] = useState<any>(null);
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
@@ -403,7 +405,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     const currentPoints = selectedCustomer.points || 0;
     const orderTotal = Number(selectedOrder.total);
     const pointsValue = currentPoints * 1000; // 1 điểm = 1000đ
-    
+
     if (pointsValue >= orderTotal) {
       // Đủ điểm để thanh toán toàn bộ
       const pointsNeeded = Math.ceil(orderTotal / 1000);
@@ -415,7 +417,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     } else if (currentPoints > 0) {
       // Không đủ điểm, thanh toán hỗn hợp
       const remainingAmount = orderTotal - pointsValue;
-      
+
       // Hiển thị dialog chọn phương thức thanh toán cho phần còn lại
       setMixedPaymentData({
         customerId: selectedCustomer.id,
@@ -479,6 +481,18 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     };
 
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+  };
+
+    const handleEInvoiceConfirm = (eInvoiceData?: any) => {
+    if (eInvoiceOrderData && eInvoiceOrderData.order) {
+      // Complete the payment after E-Invoice confirmation
+      completePaymentMutation.mutate({ 
+        orderId: eInvoiceOrderData.order.id, 
+        paymentMethod: eInvoiceOrderData.paymentMethod 
+      });
+      setShowEInvoiceModal(false);
+      setEInvoiceOrderData(null);
+    }
   };
 
   if (isLoading) {
@@ -740,7 +754,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                         const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
                                         const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
                                         const taxAmount = taxRate > 0 ? (Number(item.unitPrice || 0) * taxRate / 100 * item.quantity) : 0;
-                                        
+
                                         return taxAmount > 0 ? (
                                           <p className="text-xs text-orange-600">
                                             Thuế: {taxAmount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ ({taxRate}%)
@@ -768,7 +782,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           );
                         } else {
                           console.log('💔 NO ITEMS TO RENDER - Complete debug info:');
-                          const completeDebug = {
+const completeDebug = {
                             orderItemsExists: !!orderItems,
                             orderItemsType: typeof orderItems,
                             isArray: Array.isArray(orderItems),
@@ -987,7 +1001,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     </p>
                   </div>
                 </div>
-                
+
                 {/* Payment calculation */}
                 <div className="pt-2 border-t border-green-200">
                   <div className="flex justify-between text-sm mb-1">
@@ -1007,7 +1021,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               </div>
             )}
 
-            
+
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
@@ -1150,7 +1164,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
                     </div>
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     className="justify-start h-auto p-4"

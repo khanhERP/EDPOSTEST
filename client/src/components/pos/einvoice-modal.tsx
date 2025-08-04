@@ -17,15 +17,17 @@ import { apiRequest } from "@/lib/queryClient";
 interface EInvoiceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (eInvoiceData: any) => void;
+  onConfirm: (eInvoiceData?: any) => void;
   total: number;
+  cartItems?: any[];
 }
 
 export function EInvoiceModal({
   isOpen,
   onClose,
   onConfirm,
-  total
+  total,
+  cartItems = []
 }: EInvoiceModalProps) {
   const [formData, setFormData] = useState({
     invoiceProvider: "",
@@ -75,6 +77,7 @@ export function EInvoiceModal({
     }
 
     onConfirm(formData);
+    onClose();
   };
 
   const handleCancel = () => {
@@ -85,11 +88,8 @@ export function EInvoiceModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-blue-700 bg-blue-100 p-3 rounded-t-lg flex items-center justify-between">
+          <DialogTitle className="text-blue-700 bg-blue-100 p-3 rounded-t-lg">
             Phát hành hóa đơn điện tử
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
           </DialogTitle>
         </DialogHeader>
 
