@@ -132,20 +132,19 @@ export function EInvoiceModal({
     }
 
     try {
-      const response = await fetch(
-        "https://infoerpvn.com:9440/api/CheckListTaxCode/v2",
-        {
-          method: "POST",
-          headers: {
-            token: "EnURbbnPhUm4GjNgE4Ogrw==",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify([formData.taxCode]),
+      const response = await fetch("/api/tax-code/lookup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          taxCodes: [formData.taxCode]
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.details || `HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();

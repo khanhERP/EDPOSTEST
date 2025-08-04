@@ -2624,6 +2624,53 @@ export async function registerRoutes(app: Express): Promise {
     }
   });
 
+  // Tax code lookup proxy endpoint
+  app.post("/api/tax-code/lookup", async (req, res) => {
+    try {
+      const { taxCodes } = req.body;
+      
+      if (!taxCodes || !Array.isArray(taxCodes)) {
+        return res.status(400).json({ error: "Tax codes array is required" });
+      }
+
+      console.log("Tax code lookup request:", taxCodes);
+
+      const response = await fetch("https://infoerpvn.com:9440/api/CheckListTaxCode/v2", {
+        method: "POST",
+        headers: {
+          "token": "EnURbbnPhUm4GjNgE4Ogrw==",
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify(taxCodes)
+      });
+
+      if (!response.ok) {
+        console.error("Tax code API error:", response.status, response.statusText);
+        const errorText = await response.text();
+        console.error("Error response:", errorText);
+        
+        return res.status(response.status).json({
+          error: "Failed to lookup tax code",
+          details: `API returned ${response.status}: ${response.statusText}`,
+          apiResponse: errorText
+        });
+      }
+
+      const result = await response.json();
+      console.log("Tax code API response:", result);
+
+      res.json(result);
+    } catch (error) {
+      console.error("Tax code lookup proxy error:", error);
+      res.status(500).json({
+        error: "Failed to lookup tax code",
+        details: error.message,
+        errorType: error.constructor.name
+      });
+    }
+  });
+
   // E-invoice publish endpoint
   app.post("/api/einvoice/publish", async (req, res) => {
     try {
