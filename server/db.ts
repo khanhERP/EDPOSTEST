@@ -91,6 +91,27 @@ export async function initializeSampleData() {
       console.log("PinCode migration already applied or error:", migrationError);
     }
 
+    // Run migration for email constraint in employees table
+    try {
+      await db.execute(sql`
+        ALTER TABLE employees DROP CONSTRAINT IF EXISTS employees_email_unique
+      `);
+      
+      await db.execute(sql`
+        CREATE UNIQUE INDEX IF NOT EXISTS employees_email_unique_idx 
+        ON employees (email) 
+        WHERE email IS NOT NULL AND email != ''
+      `);
+      
+      await db.execute(sql`
+        UPDATE employees SET email = NULL WHERE email = ''
+      `);
+
+      console.log("Migration for employees email constraint completed successfully.");
+    } catch (migrationError) {
+      console.log("Email constraint migration already applied or error:", migrationError);
+    }
+
     // Check if customers table has data
     const customerCount = await db.select({ count: sql<number>`count(*)` }).from(customers);
     if (customerCount[0]?.count === 0) {
