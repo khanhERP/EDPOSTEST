@@ -169,7 +169,7 @@ export function EInvoiceModal({
                 />
               </div>
               <div>
-                <Label htmlFor="phoneNumber">Số ĐTNNYCCCĐ</Label>
+                <Label htmlFor="phoneNumber">Số CMND/CCCD</Label>
                 <Input
                   id="phoneNumber"
                   value={formData.phoneNumber}
