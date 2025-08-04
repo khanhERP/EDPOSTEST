@@ -1070,6 +1070,7 @@ export default function Settings() {
   const [templateForm, setTemplateForm] = useState({
     name: "",
     templateNumber: "",
+    templateCode: "",
     symbol: "",
     useCK: true,
     notes: "",
@@ -1080,6 +1081,7 @@ export default function Settings() {
     setTemplateForm({
       name: "",
       templateNumber: "",
+      templateCode: "",
       symbol: "",
       useCK: true,
       notes: "",
@@ -1178,6 +1180,7 @@ export default function Settings() {
       ...templateForm,
       name: templateForm.name.trim(),
       templateNumber: templateForm.templateNumber.trim(),
+      templateCode: templateForm.templateCode.trim() || null,
       symbol: templateForm.symbol.trim(),
       notes: templateForm.notes.trim() || null,
     };
@@ -1201,6 +1204,7 @@ export default function Settings() {
       ...templateForm,
       name: templateForm.name.trim(),
       templateNumber: templateForm.templateNumber.trim(),
+      templateCode: templateForm.templateCode.trim() || null,
       symbol: templateForm.symbol.trim(),
       notes: templateForm.notes.trim() || null,
     };
@@ -1215,6 +1219,7 @@ export default function Settings() {
     setTemplateForm({
       name: template.name || "",
       templateNumber: template.templateNumber || "",
+      templateCode: template.templateCode || "",
       symbol: template.symbol || "",
       useCK: template.useCK !== undefined ? template.useCK : true,
       notes: template.notes || "",
@@ -3771,6 +3776,23 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                 }
                 className="col-span-3"
                 placeholder="Ví dụ: 01GTKT0/001"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="templateCode" className="text-right">
+                Mã mẫu
+              </Label>
+              <Input
+                id="templateCode"
+                value={templateForm.templateCode}
+                onChange={(e) =>
+                  setTemplateForm((prev) => ({
+                    ...prev,
+                    templateCode: e.target.value,
+                  }))
+                }
+                className="col-span-3"
+                placeholder="Ví dụ: 123451/88890345"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
