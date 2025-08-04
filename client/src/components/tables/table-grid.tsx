@@ -330,9 +330,25 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     const method = getPaymentMethods().find(m => m.nameKey === paymentMethodKey);
     if (!method) return;
 
-    // If cash payment, proceed directly
+    // If cash payment, show E-Invoice modal first
     if (paymentMethodKey === "cash") {
-      completePaymentMutation.mutate({ orderId: selectedOrder.id, paymentMethod: paymentMethodKey });
+      // Prepare cart items for E-Invoice modal
+      const cartItems = orderItems?.map((item: any) => ({
+        id: item.productId || item.id,
+        name: item.productName || getProductName(item.productId),
+        price: parseFloat(item.unitPrice || "0"),
+        quantity: item.quantity,
+        sku: item.sku || `FOOD${String(item.productId).padStart(5, '0')}`,
+        taxRate: parseFloat(item.taxRate || "10")
+      })) || [];
+
+      setEInvoiceOrderData({
+        order: selectedOrder,
+        cartItems: cartItems,
+        paymentMethod: paymentMethodKey
+      });
+      setShowEInvoiceModal(true);
+      setPaymentMethodsOpen(false);
       return;
     }
 
@@ -483,7 +499,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
   };
 
-    const handleEInvoiceConfirm = (eInvoiceData?: any) => {
+    const handleEInvoiceConfirm = () => {
     if (eInvoiceOrderData && eInvoiceOrderData.order) {
       // Complete the payment after E-Invoice confirmation
       completePaymentMutation.mutate({ 
