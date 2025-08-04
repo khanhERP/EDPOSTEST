@@ -63,6 +63,17 @@ export function PaymentMethodModal({
 
     console.log('All payment methods:', paymentMethods);
     
+    // Ensure cash payment is always available
+    const cashMethodExists = paymentMethods.find(method => method.nameKey === 'cash' && method.enabled);
+    if (!cashMethodExists) {
+      const cashMethod = paymentMethods.find(method => method.nameKey === 'cash');
+      if (cashMethod) {
+        cashMethod.enabled = true;
+      } else {
+        paymentMethods.unshift({ id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" });
+      }
+    }
+    
     // Filter to only return enabled payment methods and map to modal format
     const enabledMethods = paymentMethods
       .filter(method => method.enabled === true)
