@@ -270,5 +270,14 @@ export const attendanceTranslations: { [key: string]: AttendanceTranslations } =
     filterByEmployee: 'Lọc theo nhân viên',
     exportData: 'Xuất dữ liệu',
     printReport: 'In báo cáo',
+    status: {
+      present: 'Có mặt',
+      absent: 'Vắng mặt',
+      late: 'Trễ',
+      halfDay: 'Nửa ngày',
+      working: 'Đang làm việc',
+      onBreak: 'Đang nghỉ',
+      clockedOut: 'Đã tan ca',
+    },
   },
 };
