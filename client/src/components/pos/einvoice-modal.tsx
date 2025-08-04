@@ -478,14 +478,19 @@ export function EInvoiceModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="taxCode">Mã số thuế</Label>
-                <Input
-                  id="taxCode"
-                  value={formData.taxCode}
-                  onChange={(e) => handleInputChange("taxCode", e.target.value)}
-                  placeholder="0102222333-001"
-                  disabled={false}
-                  readOnly={false}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="taxCode"
+                    value={formData.taxCode}
+                    onChange={(e) => handleInputChange("taxCode", e.target.value)}
+                    placeholder="0102222333-001"
+                    disabled={false}
+                    readOnly={false}
+                  />
+                  <Button variant="outline" size="sm" type="button">
+                    Lấy thông tin
+                  </Button>
+                </div>
               </div>
               <div>
                 <Label htmlFor="customerName">Tên đơn vị</Label>
