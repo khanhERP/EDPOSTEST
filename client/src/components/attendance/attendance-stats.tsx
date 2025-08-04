@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BarChart3, Clock, Users, TrendingUp, Calendar } from "lucide-react";
 import type { AttendanceRecord, Employee } from "@shared/schema";
-import { useTranslation } from "@/lib/i18n";
+import { useTranslation } from "react-i18next";
 
 export function AttendanceStats() {
   const { t } = useTranslation();
@@ -23,7 +23,7 @@ export function AttendanceStats() {
   });
 
   const getMonthlyStats = () => {
-    if (!attendanceRecords || !employees || !Array.isArray(attendanceRecords) || !Array.isArray(employees)) return null;
+    if (!attendanceRecords || !employees) return null;
 
     const monthRecords = attendanceRecords.filter((record: AttendanceRecord) => {
       const recordDate = new Date(record.clockIn);
@@ -59,7 +59,7 @@ export function AttendanceStats() {
   };
 
   const getEmployeeStats = () => {
-    if (!attendanceRecords || !employees || !Array.isArray(attendanceRecords) || !Array.isArray(employees)) return [];
+    if (!attendanceRecords || !employees) return [];
 
     return employees.map((employee: Employee) => {
       const employeeRecords = attendanceRecords.filter((record: AttendanceRecord) => {
