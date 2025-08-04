@@ -132,14 +132,17 @@ export function EInvoiceModal({
     }
 
     try {
-      const response = await fetch("https://infoerpvn.com:9440/api/CheckListTaxCode/v2", {
-        method: "POST",
-        headers: {
-          "token": "EnURbbnPhUm4GjNgE4Ogrw==",
-          "Content-Type": "application/json",
+      const response = await fetch(
+        "https://infoerpvn.com:9440/api/CheckListTaxCode/v2",
+        {
+          method: "POST",
+          headers: {
+            token: "EnURbbnPhUm4GjNgE4Ogrw==",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify([formData.taxCode]),
         },
-        body: JSON.stringify([formData.taxCode]),
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -150,20 +153,24 @@ export function EInvoiceModal({
 
       if (result && result.length > 0) {
         const taxInfo = result[0];
-        
+
         // Kiểm tra trạng thái
         if (taxInfo.tthai === "00") {
           // Trạng thái hợp lệ - cập nhật thông tin
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             customerName: taxInfo.tenCty || prev.customerName,
             address: taxInfo.diaChi || prev.address,
           }));
-          
-          alert(`Đã lấy thông tin thành công!\nTên công ty: ${taxInfo.tenCty}\nĐịa chỉ: ${taxInfo.diaChi}`);
+
+          alert(
+            `Đã lấy thông tin thành công!\nTên công ty: ${taxInfo.tenCty}\nĐịa chỉ: ${taxInfo.diaChi}`,
+          );
         } else {
           // Trạng thái không hợp lệ - hiển thị thông tin trạng thái
-          alert(`Mã số thuế không hợp lệ!\nTrạng thái: ${taxInfo.trangThaiHoatDong || "Không xác định"}\nMã trạng thái: ${taxInfo.tthai}`);
+          alert(
+            `Mã số thuế không hợp lệ!\nTrạng thái: ${taxInfo.trangThaiHoatDong || "Không xác định"}\nMã trạng thái: ${taxInfo.tthai}`,
+          );
         }
       } else {
         alert("Không tìm thấy thông tin cho mã số thuế này");
@@ -531,12 +538,19 @@ export function EInvoiceModal({
                   <Input
                     id="taxCode"
                     value={formData.taxCode}
-                    onChange={(e) => handleInputChange("taxCode", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("taxCode", e.target.value)
+                    }
                     placeholder="0102222333-001"
                     disabled={false}
                     readOnly={false}
                   />
-                  <Button variant="outline" size="sm" type="button" onClick={handleGetTaxInfo}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    onClick={handleGetTaxInfo}
+                  >
                     Lấy thông tin
                   </Button>
                 </div>
