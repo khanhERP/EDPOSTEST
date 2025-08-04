@@ -150,10 +150,10 @@ export function EInvoiceModal({
       const result = await response.json();
       console.log("Tax code API response:", result);
 
-      if (result && result.length > 0) {
+      if (result && Array.isArray(result) && result.length > 0) {
         const taxInfo = result[0];
 
-        // Kiểm tra trạng thái
+        // Kiểm tra trạng thái - chỉ fill thông tin khi tthai = "00"
         if (taxInfo.tthai === "00") {
           // Trạng thái hợp lệ - cập nhật thông tin
           setFormData((prev) => ({
@@ -166,9 +166,9 @@ export function EInvoiceModal({
             `Đã lấy thông tin thành công!\nTên công ty: ${taxInfo.tenCty}\nĐịa chỉ: ${taxInfo.diaChi}`,
           );
         } else {
-          // Trạng thái không hợp lệ - hiển thị thông tin trạng thái
+          // Trạng thái không hợp lệ - hiển thị message từ trangThaiHoatDong
           alert(
-            `Mã số thuế không hợp lệ!\nTrạng thái: ${taxInfo.trangThaiHoatDong || "Không xác định"}\nMã trạng thái: ${taxInfo.tthai}`,
+            `Mã số thuế không hợp lệ!\n${taxInfo.trangThaiHoatDong || "Trạng thái không xác định"}`,
           );
         }
       } else {
