@@ -40,6 +40,8 @@ export function PaymentMethodModal({
   const [showEInvoice, setShowEInvoice] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
   const [qrLoading, setQrLoading] = useState(false);
+  const [amountReceived, setAmountReceived] = useState("");
+  const [showCashPayment, setShowCashPayment] = useState(false);
 
   // Load payment methods from settings
   const getPaymentMethods = () => {
@@ -119,7 +121,10 @@ export function PaymentMethodModal({
   const handleSelect = async (method: string) => {
     setSelectedPaymentMethod(method);
     
-    if (method === "qrCode") {
+    if (method === "cash") {
+      // Show cash payment input form
+      setShowCashPayment(true);
+    } else if (method === "qrCode") {
       // Call CreateQRPos API for QR payment
       try {
         setQrLoading(true);
@@ -238,6 +243,20 @@ export function PaymentMethodModal({
   const handleBack = () => {
     setShowQRCode(false);
     setQrCodeUrl("");
+    setShowCashPayment(false);
+    setAmountReceived("");
+  };
+
+  const handleCashPaymentComplete = () => {
+    const receivedAmount = parseFloat(amountReceived) || 0;
+    const changeAmount = receivedAmount - total;
+    
+    if (receivedAmount < total) {
+      return; // Don't proceed if insufficient amount
+    }
+    
+    setShowCashPayment(false);
+    setShowEInvoice(true);
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
@@ -265,6 +284,8 @@ export function PaymentMethodModal({
       setShowEInvoice(false);
       setSelectedPaymentMethod("");
       setQrLoading(false);
+      setShowCashPayment(false);
+      setAmountReceived("");
     }
   }, [isOpen]);
 
@@ -276,7 +297,7 @@ export function PaymentMethodModal({
         </DialogHeader>
         
         <div className="space-y-4 p-4">
-          {!showQRCode ? (
+          {!showQRCode && !showCashPayment ? (
             <>
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600">Tổng tiền</p>
@@ -359,6 +380,74 @@ export function PaymentMethodModal({
                 <Button 
                   onClick={handleQRComplete} 
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+                >
+                  Hoàn thành
+                </Button>
+              </div>
+            </>
+          ) : showCashPayment ? (
+            <>
+              <div className="text-center space-y-4">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <Banknote className="w-6 h-6" />
+                  <h3 className="text-lg font-semibold">Thanh toán tiền mặt</h3>
+                </div>
+                
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">Tổng tiền cần thanh toán</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Số tiền khách trả
+                    </label>
+                    <input
+                      type="number"
+                      step="1000"
+                      placeholder="Nhập số tiền khách trả"
+                      value={amountReceived}
+                      onChange={(e) => setAmountReceived(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg text-center"
+                      autoFocus
+                    />
+                  </div>
+
+                  {amountReceived && parseFloat(amountReceived) >= total && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-green-800">Tiền thừa:</span>
+                        <span className="text-lg font-bold text-green-600">
+                          {(parseFloat(amountReceived) - total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {amountReceived && parseFloat(amountReceived) < total && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-red-800">Thiếu:</span>
+                        <span className="text-lg font-bold text-red-600">
+                          {(total - parseFloat(amountReceived)).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={handleBack} className="flex-1">
+                  Quay lại
+                </Button>
+                <Button 
+                  onClick={handleCashPaymentComplete} 
+                  disabled={!amountReceived || parseFloat(amountReceived) < total}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 disabled:bg-gray-400"
                 >
                   Hoàn thành
                 </Button>
