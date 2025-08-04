@@ -24,13 +24,15 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
   });
 
   const getEmployeeName = (employeeId: number) => {
-    const employee = employees?.find((emp: Employee) => emp.id === employeeId);
+    if (!employees || !Array.isArray(employees)) return t('attendance.unknownEmployee');
+    const employee = employees.find((emp: Employee) => emp.id === employeeId);
     return employee?.name || t('attendance.unknownEmployee');
   };
 
-  const formatTime = (dateString: string | null) => {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleTimeString('ko-KR', {
+  const formatTime = (date: Date | string | null) => {
+    if (!date) return "-";
+    const dateObj = date instanceof Date ? date : new Date(date);
+    return dateObj.toLocaleTimeString('ko-KR', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -52,10 +54,10 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const calculateBreakTime = (breakStart: string | null, breakEnd: string | null) => {
+  const calculateBreakTime = (breakStart: Date | string | null, breakEnd: Date | string | null) => {
     if (!breakStart || !breakEnd) return "-";
-    const start = new Date(breakStart);
-    const end = new Date(breakEnd);
+    const start = breakStart instanceof Date ? breakStart : new Date(breakStart);
+    const end = breakEnd instanceof Date ? breakEnd : new Date(breakEnd);
     const minutes = (end.getTime() - start.getTime()) / (1000 * 60);
     const hours = Math.floor(minutes / 60);
     const mins = Math.floor(minutes % 60);
@@ -92,7 +94,7 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
           <div className="flex justify-center py-8">
             <div className="text-gray-500">{t('common.loading')}</div>
           </div>
-        ) : !attendanceRecords || attendanceRecords.length === 0 ? (
+        ) : !attendanceRecords || !Array.isArray(attendanceRecords) || attendanceRecords.length === 0 ? (
           <div className="text-center py-8">
             <Clock className="w-12 h-12 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500">{t('attendance.noRecords')}</p>
@@ -113,7 +115,7 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
               </TableRow>
             </TableHeader>
             <TableBody>
-              {attendanceRecords.map((record: AttendanceRecord) => (
+              {Array.isArray(attendanceRecords) && attendanceRecords.map((record: AttendanceRecord) => (
                 <TableRow key={record.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
