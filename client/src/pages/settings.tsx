@@ -1741,7 +1741,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                       <th className="w-[60px] px-3 py-3 text-center font-medium text-sm text-gray-600">
                                         STT
                                       </th>
-                                      <th className="w-[150px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                      <th className="w-[130px] px-3 py-3 text-left font-medium text-sm text-gray-600">
                                         Tên
                                       </th>
                                       <th className="w-[130px] px-3 py-3 text-left font-medium text-sm text-gray-600">
