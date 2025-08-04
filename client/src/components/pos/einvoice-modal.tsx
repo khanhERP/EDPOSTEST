@@ -65,6 +65,7 @@ export function EInvoiceModal({
   const [formData, setFormData] = useState({
     invoiceProvider: "",
     invoiceTemplate: "",
+    selectedTemplateId: "",
     taxCode: "",
     customerName: "",
     address: "",
@@ -76,6 +77,12 @@ export function EInvoiceModal({
   // Fetch E-invoice connections
   const { data: eInvoiceConnections = [] } = useQuery<any[]>({
     queryKey: ["/api/einvoice-connections"],
+    enabled: isOpen,
+  });
+
+  // Fetch invoice templates
+  const { data: invoiceTemplates = [] } = useQuery<any[]>({
+    queryKey: ["/api/invoice-templates"],
     enabled: isOpen,
   });
 
@@ -97,6 +104,7 @@ export function EInvoiceModal({
       setFormData({
         invoiceProvider: "EasyInvoice", // Default provider
         invoiceTemplate: "1C25TYY", // Default template
+        selectedTemplateId: "", // Will be set from dropdown
         taxCode: "0123456789", // Default tax code
         customerName: "Khách hàng lẻ", // Default customer name
         address: "",
@@ -188,8 +196,8 @@ export function EInvoiceModal({
       return;
     }
 
-    if (!formData.invoiceTemplate.trim()) {
-      alert("Vui lòng nhập Mẫu số Hóa đơn GTGT");
+    if (!formData.selectedTemplateId) {
+      alert("Vui lòng chọn Mẫu số Hóa đơn GTGT");
       return;
     }
 
@@ -366,6 +374,11 @@ export function EInvoiceModal({
         itemsCount: invoiceProducts.length,
       });
 
+      // Find selected template data
+      const selectedTemplate = invoiceTemplates.find(
+        (template) => template.id.toString() === formData.selectedTemplateId
+      );
+
       const publishRequest = {
         login: {
           providerId: providerId,
@@ -386,9 +399,9 @@ export function EInvoiceModal({
         note: "",
         hdNo: "",
         createdDate: new Date().toISOString(),
-        clsfNo: "1",
-        spcfNo: formData.invoiceTemplate,
-        templateCode: "",
+        clsfNo: selectedTemplate?.name || "1", // Tên từ bảng template
+        spcfNo: selectedTemplate?.templateNumber || formData.invoiceTemplate, // Mẫu số
+        templateCode: selectedTemplate?.templateCode || "", // Mã mẫu
         buyerNotGetInvoice: 0,
         exchCd: "VND",
         exchRt: 1,
@@ -498,16 +511,35 @@ export function EInvoiceModal({
               </div>
               <div>
                 <Label htmlFor="invoiceTemplate">Mẫu số Hóa đơn GTGT</Label>
-                <Input
-                  id="invoiceTemplate"
-                  value={formData.invoiceTemplate}
-                  onChange={(e) =>
-                    handleInputChange("invoiceTemplate", e.target.value)
-                  }
-                  placeholder="1C25TYY"
-                  disabled={false}
-                  readOnly={false}
-                />
+                <Select
+                  value={formData.selectedTemplateId}
+                  onValueChange={(value) => {
+                    handleInputChange("selectedTemplateId", value);
+                    // Also update the legacy invoiceTemplate field for backward compatibility
+                    const selectedTemplate = invoiceTemplates.find(
+                      (template) => template.id.toString() === value
+                    );
+                    if (selectedTemplate) {
+                      handleInputChange("invoiceTemplate", selectedTemplate.templateNumber);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn mẫu số HĐĐT" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {invoiceTemplates.map((template) => (
+                      <SelectItem key={template.id} value={template.id.toString()}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{template.name}</span>
+                          <span className="text-sm text-gray-500">
+                            {template.templateNumber} - {template.templateCode || 'N/A'}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
