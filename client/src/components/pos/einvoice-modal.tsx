@@ -472,7 +472,7 @@ export function EInvoiceModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-screen overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-screen overflow-y-auto [&>button]:hidden">
         <DialogHeader>
           <DialogTitle className="text-blue-700 bg-blue-100 p-3 rounded-t-lg">
             Phát hành hóa đơn điện tử
