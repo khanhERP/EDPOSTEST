@@ -3120,7 +3120,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productDescription" className="text-right">
-                설명
+                {t("common.description")}
               </Label>
               <Textarea
                 id="productDescription"
