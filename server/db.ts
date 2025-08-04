@@ -96,13 +96,13 @@ export async function initializeSampleData() {
       await db.execute(sql`
         ALTER TABLE employees DROP CONSTRAINT IF EXISTS employees_email_unique
       `);
-      
+
       await db.execute(sql`
         CREATE UNIQUE INDEX IF NOT EXISTS employees_email_unique_idx 
         ON employees (email) 
         WHERE email IS NOT NULL AND email != ''
       `);
-      
+
       await db.execute(sql`
         UPDATE employees SET email = NULL WHERE email = ''
       `);
@@ -209,7 +209,16 @@ export async function initializeSampleData() {
         CREATE INDEX IF NOT EXISTS idx_invoice_templates_symbol ON invoice_templates(symbol)
       `);
       await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_invoice_templates_default ON invoice_templates(is_default)
+        CREATE INDEX IF NOT EXISTS idx_invoice_templates_active ON invoice_templates(is_active)
+      `);
+
+      // Add template_code column if not exists
+      await db.execute(sql`
+        ALTER TABLE invoice_templates 
+        ADD COLUMN IF NOT EXISTS template_code VARCHAR(50)
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_invoice_templates_template_code ON invoice_templates(template_code)
       `);
 
       console.log("Invoice templates table initialized");
