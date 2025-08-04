@@ -304,7 +304,7 @@ export function EInvoiceModal({
         // Ensure proper data types with robust parsing
         const itemPrice = (() => {
           if (typeof item.price === "string") {
-            const parsed = parseFloat(item.price.replace(",", ""));
+            const parsed = parseFloat(item.price);
             return isNaN(parsed) ? 0 : parsed;
           }
           return typeof item.price === "number" ? item.price : 0;
