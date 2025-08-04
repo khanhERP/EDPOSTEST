@@ -14,6 +14,7 @@ import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import QRCodeLib from "qrcode";
 import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
+import { EInvoiceModal } from "@/components/pos/einvoice-modal";
 import type { Table, Order } from "@shared/schema";
 
 interface TableGridProps {
@@ -40,6 +41,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [mixedPaymentOpen, setMixedPaymentOpen] = useState(false);
   const [mixedPaymentData, setMixedPaymentData] = useState<any>(null);
   const [qrLoading, setQrLoading] = useState(false);
+  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
+  const [eInvoiceOrderData, setEInvoiceOrderData] = useState<any>(null);
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
@@ -329,9 +332,25 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     const method = getPaymentMethods().find(m => m.nameKey === paymentMethodKey);
     if (!method) return;
 
-    // If cash payment, proceed directly
+    // If cash payment, show E-Invoice modal first
     if (paymentMethodKey === "cash") {
-      completePaymentMutation.mutate({ orderId: selectedOrder.id, paymentMethod: paymentMethodKey });
+      // Prepare cart items for E-Invoice modal
+      const cartItems = orderItems?.map((item: any) => ({
+        id: item.productId || item.id,
+        name: item.productName || getProductName(item.productId),
+        price: parseFloat(item.unitPrice || "0"),
+        quantity: item.quantity,
+        sku: item.sku || `FOOD${String(item.productId).padStart(5, '0')}`,
+        taxRate: parseFloat(item.taxRate || "10")
+      })) || [];
+
+      setEInvoiceOrderData({
+        order: selectedOrder,
+        cartItems: cartItems,
+        paymentMethod: paymentMethodKey
+      });
+      setShowEInvoiceModal(true);
+      setPaymentMethodsOpen(false);
       return;
     }
 
@@ -493,6 +512,18 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       setMixedPaymentOpen(true);
     } else {
       setPaymentMethodsOpen(true);
+    }
+  };
+
+  const handleEInvoiceConfirm = () => {
+    if (eInvoiceOrderData && eInvoiceOrderData.order) {
+      // Complete the payment after E-Invoice confirmation
+      completePaymentMutation.mutate({ 
+        orderId: eInvoiceOrderData.order.id, 
+        paymentMethod: eInvoiceOrderData.paymentMethod 
+      });
+      setShowEInvoiceModal(false);
+      setEInvoiceOrderData(null);
     }
   };
 
@@ -1390,6 +1421,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         existingOrder={editingOrder}
         mode="edit"
       />
+
+      {/* E-Invoice Modal */}
+      {showEInvoiceModal && eInvoiceOrderData && (
+        <EInvoiceModal
+          isOpen={showEInvoiceModal}
+          onClose={() => {
+            setShowEInvoiceModal(false);
+            setEInvoiceOrderData(null);
+            setPaymentMethodsOpen(true);
+          }}
+          onConfirm={handleEInvoiceConfirm}
+          total={parseFloat(eInvoiceOrderData.order?.total || "0")}
+          cartItems={eInvoiceOrderData.cartItems || []}
+        />
+      )}
     </>
   );
 }
