@@ -146,13 +146,15 @@ export function EInvoiceModal({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          taxCodes: [formData.taxCode]
+          taxCodes: [formData.taxCode],
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.details || `HTTP error! status: ${response.status}`);
+        throw new Error(
+          errorData.details || `HTTP error! status: ${response.status}`,
+        );
       }
 
       const result = await response.json();
@@ -186,10 +188,7 @@ export function EInvoiceModal({
 
   const handleConfirm = async () => {
     // Validate required fields
-    if (
-      !formData.invoiceProvider ||
-      !formData.customerName
-    ) {
+    if (!formData.invoiceProvider || !formData.customerName) {
       alert(
         "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
       );
@@ -376,7 +375,7 @@ export function EInvoiceModal({
 
       // Find selected template data
       const selectedTemplate = invoiceTemplates.find(
-        (template) => template.id.toString() === formData.selectedTemplateId
+        (template) => template.id.toString() === formData.selectedTemplateId,
       );
 
       const publishRequest = {
@@ -399,8 +398,8 @@ export function EInvoiceModal({
         note: "",
         hdNo: "",
         createdDate: new Date().toISOString(),
-        clsfNo: selectedTemplate?.name || "1", // Tên từ bảng template
-        spcfNo: selectedTemplate?.templateNumber || formData.invoiceTemplate, // Mẫu số
+        clsfNo: selectedTemplate?.templateNumber || formData.invoiceTemplate, // Mẫu số
+        spcfNo: selectedTemplate?.name || "1", // Tên từ bảng template
         templateCode: selectedTemplate?.templateCode || "", // Mã mẫu
         buyerNotGetInvoice: 0,
         exchCd: "VND",
@@ -514,10 +513,13 @@ export function EInvoiceModal({
                     handleInputChange("selectedTemplateId", value);
                     // Also update the legacy invoiceTemplate field for backward compatibility
                     const selectedTemplate = invoiceTemplates.find(
-                      (template) => template.id.toString() === value
+                      (template) => template.id.toString() === value,
                     );
                     if (selectedTemplate) {
-                      handleInputChange("invoiceTemplate", selectedTemplate.templateNumber);
+                      handleInputChange(
+                        "invoiceTemplate",
+                        selectedTemplate.templateNumber,
+                      );
                     }
                   }}
                 >
@@ -526,7 +528,10 @@ export function EInvoiceModal({
                   </SelectTrigger>
                   <SelectContent>
                     {invoiceTemplates.map((template) => (
-                      <SelectItem key={template.id} value={template.id.toString()}>
+                      <SelectItem
+                        key={template.id}
+                        value={template.id.toString()}
+                      >
                         {template.name}
                       </SelectItem>
                     ))}
