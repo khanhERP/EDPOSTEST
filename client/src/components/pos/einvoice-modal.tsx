@@ -155,16 +155,12 @@ export function EInvoiceModal({
 
         // Kiểm tra trạng thái - chỉ fill thông tin khi tthai = "00"
         if (taxInfo.tthai === "00") {
-          // Trạng thái hợp lệ - cập nhật thông tin
+          // Trạng thái hợp lệ - cập nhật thông tin không hiển thị thông báo
           setFormData((prev) => ({
             ...prev,
             customerName: taxInfo.tenCty || prev.customerName,
             address: taxInfo.diaChi || prev.address,
           }));
-
-          alert(
-            `Đã lấy thông tin thành công!\nTên công ty: ${taxInfo.tenCty}\nĐịa chỉ: ${taxInfo.diaChi}`,
-          );
         } else {
           // Trạng thái không hợp lệ - hiển thị message từ trangThaiHoatDong
           alert(
