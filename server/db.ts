@@ -36,80 +36,17 @@ export async function initializeSampleData() {
         ALTER TABLE store_settings 
         ADD COLUMN IF NOT EXISTS vip_threshold TEXT DEFAULT '1000000'
       `);
-
+      
       // Update existing records
       await db.execute(sql`
         UPDATE store_settings 
         SET gold_threshold = COALESCE(gold_threshold, '300000'), 
             vip_threshold = COALESCE(vip_threshold, '1000000')
       `);
-
+      
       console.log("Migration for membership thresholds completed successfully.");
     } catch (migrationError) {
       console.log("Migration already applied or error:", migrationError);
-    }
-
-    // Run migration for product_type column
-    try {
-      await db.execute(sql`
-        ALTER TABLE products ADD COLUMN IF NOT EXISTS product_type INTEGER DEFAULT 1
-      `);
-      await db.execute(sql`
-        UPDATE products SET product_type = 1 WHERE product_type IS NULL
-      `);
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_products_product_type ON products(product_type)
-      `);
-
-      console.log("Migration for product_type column completed successfully.");
-    } catch (migrationError) {
-      console.log("Product type migration already applied or error:", migrationError);
-    }
-
-    // Run migration for tax_rate column
-    try {
-      await db.execute(sql`
-        ALTER TABLE products ADD COLUMN IF NOT EXISTS tax_rate DECIMAL(5,2) DEFAULT 10.00
-      `);
-      await db.execute(sql`
-        UPDATE products SET tax_rate = 10.00 WHERE tax_rate IS NULL
-      `);
-
-      console.log("Migration for tax_rate column completed successfully.");
-    } catch (migrationError) {
-      console.log("Tax rate migration already applied or error:", migrationError);
-    }
-
-    // Run migration for pinCode column in store_settings
-    try {
-      await db.execute(sql`
-        ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS pin_code TEXT
-      `);
-
-      console.log("Migration for pinCode column completed successfully.");
-    } catch (migrationError) {
-      console.log("PinCode migration already applied or error:", migrationError);
-    }
-
-    // Run migration for email constraint in employees table
-    try {
-      await db.execute(sql`
-        ALTER TABLE employees DROP CONSTRAINT IF EXISTS employees_email_unique
-      `);
-
-      await db.execute(sql`
-        CREATE UNIQUE INDEX IF NOT EXISTS employees_email_unique_idx 
-        ON employees (email) 
-        WHERE email IS NOT NULL AND email != ''
-      `);
-
-      await db.execute(sql`
-        UPDATE employees SET email = NULL WHERE email = ''
-      `);
-
-      console.log("Migration for employees email constraint completed successfully.");
-    } catch (migrationError) {
-      console.log("Email constraint migration already applied or error:", migrationError);
     }
 
     // Check if customers table has data
@@ -132,98 +69,6 @@ export async function initializeSampleData() {
       `);
 
       console.log("✅ Sample customers data inserted successfully");
-    }
-
-    // Initialize inventory_transactions table if it doesn't exist
-    try {
-      await db.execute(sql`
-        CREATE TABLE IF NOT EXISTS inventory_transactions (
-          id SERIAL PRIMARY KEY,
-          product_id INTEGER REFERENCES products(id) NOT NULL,
-          type VARCHAR(20) NOT NULL,
-          quantity INTEGER NOT NULL,
-          previous_stock INTEGER NOT NULL,
-          new_stock INTEGER NOT NULL,
-          notes TEXT,
-          created_at VARCHAR(50) NOT NULL
-        )
-      `);
-      console.log("Inventory transactions table initialized");
-    } catch (error) {
-      console.log("Inventory transactions table already exists or initialization failed:", error);
-    }
-
-    // Initialize einvoice_connections table if it doesn't exist
-    try {
-      await db.execute(sql`
-        CREATE TABLE IF NOT EXISTS einvoice_connections (
-          id SERIAL PRIMARY KEY,
-          symbol VARCHAR(10) NOT NULL,
-          tax_code VARCHAR(20) NOT NULL,
-          login_id VARCHAR(50) NOT NULL,
-          password TEXT NOT NULL,
-          software_name VARCHAR(50) NOT NULL,
-          login_url TEXT,
-          sign_method VARCHAR(20) NOT NULL DEFAULT 'Ký server',
-          cqt_code VARCHAR(20) NOT NULL DEFAULT 'Cấp nhật',
-          notes TEXT,
-          is_default BOOLEAN NOT NULL DEFAULT false,
-          is_active BOOLEAN NOT NULL DEFAULT true,
-          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-        )
-      `);
-
-      // Create indexes for better performance
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_einvoice_connections_symbol ON einvoice_connections(symbol)
-      `);
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_einvoice_connections_active ON einvoice_connections(is_active)
-      `);
-
-      console.log("E-invoice connections table initialized");
-    } catch (error) {
-      console.log("E-invoice connections table already exists or initialization failed:", error);
-    }
-
-    // Initialize invoice_templates table if it doesn't exist
-    try {
-      await db.execute(sql`
-        CREATE TABLE IF NOT EXISTS invoice_templates (
-          id SERIAL PRIMARY KEY,
-          name VARCHAR(100) NOT NULL,
-          template_number VARCHAR(50) NOT NULL,
-          symbol VARCHAR(20) NOT NULL,
-          use_ck BOOLEAN NOT NULL DEFAULT true,
-          notes TEXT,
-          is_default BOOLEAN NOT NULL DEFAULT false,
-          is_active BOOLEAN NOT NULL DEFAULT true,
-          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
-        )
-      `);
-
-      // Create indexes for better performance
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_invoice_templates_symbol ON invoice_templates(symbol)
-      `);
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_invoice_templates_active ON invoice_templates(is_active)
-      `);
-
-      // Add template_code column if not exists
-      await db.execute(sql`
-        ALTER TABLE invoice_templates 
-        ADD COLUMN IF NOT EXISTS template_code VARCHAR(50)
-      `);
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_invoice_templates_template_code ON invoice_templates(template_code)
-      `);
-
-      console.log("Invoice templates table initialized");
-    } catch (error) {
-      console.log("Invoice templates table already exists or initialization failed:", error);
     }
   } catch (error) {
     console.log("⚠️ Sample data initialization skipped:", error);

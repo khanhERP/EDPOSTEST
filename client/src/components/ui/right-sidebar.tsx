@@ -10,14 +10,11 @@ import {
   ChevronRight,
   ChevronLeft,
   Menu,
-  Package,
-  ShoppingCart
+  Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n";
-import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 
 interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;
@@ -29,30 +26,20 @@ interface MenuItem {
 // Menu items will be translated using the hook inside the component
 
 export function RightSidebar() {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isNavCollapsed, setIsNavCollapsed] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [location] = useLocation();
   const { t } = useTranslation();
 
-  // Query store settings to get business type
-  const { data: storeSettings } = useQuery({
-    queryKey: ["/api/store-settings"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/store-settings");
-      return response.json();
+  const menuItems: MenuItem[] = [
+    {
+      icon: Home,
+      label: t('nav.pos'),
+      href: "/pos",
     },
-  });
-
-  const baseMenuItems: MenuItem[] = [
     {
       icon: Utensils,
       label: t('nav.tables'),
       href: "/tables",
-    },
-    {
-      icon: ShoppingCart,
-      label: t('nav.pos'),
-      href: "/pos",
     },
     {
       icon: Package,
@@ -81,15 +68,6 @@ export function RightSidebar() {
     },
   ];
 
-  // Filter menu items based on business type
-  const menuItems = baseMenuItems.filter(item => {
-    // Hide tables (Bán theo bàn) for retail business type
-    if (item.href === "/tables" && storeSettings?.businessType === "retail") {
-      return false;
-    }
-    return true;
-  });
-
   // Update CSS custom property for responsive margin
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -98,7 +76,10 @@ export function RightSidebar() {
     );
   }, [isExpanded]);
 
-  
+  // Auto-collapse sidebar when route changes
+  useEffect(() => {
+    setIsExpanded(false);
+  }, [location]);
 
   return (
     <div className={cn(
@@ -106,20 +87,12 @@ export function RightSidebar() {
       isExpanded ? "w-64" : "w-16"
     )}>
       {/* Toggle Button */}
-      <div className="p-4 border-b border-green-200 bg-green-50 mt-2">
+      <div className="p-4 border-b border-green-200 bg-green-50">
         <Button
           variant="ghost"
           size="sm"
-          className="w-full flex items-center justify-center mt-1"
-          onClick={() => {
-            if (isExpanded) {
-              setIsNavCollapsed(true);
-              setIsExpanded(false);
-            } else {
-              setIsExpanded(true);
-              setIsNavCollapsed(false); // Auto show text when expanding
-            }
-          }}
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full flex items-center justify-center"
         >
           {isExpanded ? (
             <>
@@ -133,52 +106,35 @@ export function RightSidebar() {
       </div>
 
       {/* Menu Items */}
-      <nav className="py-4 group">
+      <nav className="py-4">
         {menuItems.map((item, index) => {
           const Icon = item.icon;
           const isActive = location === item.href;
-          const showText = isExpanded && !isNavCollapsed;
           
           return (
-            <div 
-              key={item.href}
-              className={cn(
-                "relative",
-                isNavCollapsed && "group-hover:w-64"
-              )}
-            >
+            <div key={item.href}>
               <Link href={item.href}>
                 <Button
                   variant={isActive ? "secondary" : "ghost"}
                   className={cn(
-                    "w-[calc(100%-16px)] justify-start mb-2 mx-2 h-12 rounded-lg font-semibold text-gray-700 transition-all duration-300 group relative border border-transparent",
-                    "bg-gradient-to-r from-gray-50 to-white hover:from-green-50 hover:to-green-100 hover:border-green-200 hover:text-green-700 hover:shadow-xl",
-                    "focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:outline-none",
-                    showText ? "px-4" : "px-3",
-                    isActive && "bg-gradient-to-r from-green-100 to-green-50 text-green-800 border-green-300 shadow-lg font-bold",
-                    isNavCollapsed && "hover:w-[calc(256px-16px)]"
+                    "w-full justify-start mb-1 mx-2",
+                    isExpanded ? "px-4" : "px-2",
+                    isActive && "bg-green-50 text-green-600 border-l-2 border-green-500"
                   )}
                 >
-                  <Icon className={cn("w-6 h-6 flex-shrink-0", showText && "mr-4", isActive && "text-green-700")} />
-                  {showText && (
-                    <span className="font-semibold text-base">
-                      {item.href === "/pos" ? "Bán hàng" : item.href === "/tables" ? "Bán theo bàn" : item.label}
-                    </span>
+                  <Icon className={cn("w-5 h-5", isExpanded && "mr-3")} />
+                  {isExpanded && (
+                    <span className="font-medium">{item.label}</span>
                   )}
-                  {isNavCollapsed && (
-                    <span className="opacity-0 group-hover:opacity-100 ml-4 font-semibold text-base transition-all duration-300 whitespace-nowrap text-green-800">
-                      {item.href === "/pos" ? "Bán hàng" : item.href === "/tables" ? "Bán theo bàn" : item.label}
-                    </span>
-                  )}
-                  {showText && item.badge && (
-                    <span className="ml-auto bg-red-600 text-white text-xs font-bold rounded-full px-3 py-1 shadow-md">
+                  {isExpanded && item.badge && (
+                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1">
                       {item.badge}
                     </span>
                   )}
                 </Button>
               </Link>
               {/* Add separator after first item (기본 POS) and before employee section */}
-              {(index === 0 || index === 3) && showText && (
+              {(index === 0 || index === 3) && isExpanded && (
                 <div className="border-t border-gray-200 my-3 mx-4"></div>
               )}
             </div>
@@ -187,7 +143,7 @@ export function RightSidebar() {
       </nav>
 
       {/* Bottom Section */}
-      {isExpanded && !isNavCollapsed && (
+      {isExpanded && (
         <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-green-200 bg-green-50">
           <div className="text-sm text-gray-500 text-center">
             <div className="font-medium">EDPOS System</div>

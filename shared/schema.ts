@@ -1,18 +1,8 @@
-import {
-  pgTable,
-  text,
-  serial,
-  decimal,
-  integer,
-  timestamp,
-  boolean,
-  varchar,
-  date,
-} from "drizzle-orm/pg-core";
+import { pgTable, text, serial, decimal, integer, timestamp, boolean, varchar, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
-import { InferSelectModel, InferInsertModel } from "drizzle-orm";
+import { InferSelectModel, InferInsertModel } from 'drizzle-orm';
 
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
@@ -26,16 +16,9 @@ export const products = pgTable("products", {
   sku: text("sku").notNull().unique(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   stock: integer("stock").notNull().default(0),
-  categoryId: integer("category_id")
-    .references(() => categories.id)
-    .notNull(),
+  categoryId: integer("category_id").references(() => categories.id).notNull(),
   imageUrl: text("image_url"),
   isActive: boolean("is_active").notNull().default(true),
-  productType: integer("product_type").notNull().default(1),
-  trackInventory: boolean("track_inventory").notNull().default(true),
-  taxRate: decimal("tax_rate", { precision: 5, scale: 2 })
-    .notNull()
-    .default("10.00"),
 });
 
 export const transactions = pgTable("transactions", {
@@ -53,12 +36,8 @@ export const transactions = pgTable("transactions", {
 
 export const transactionItems = pgTable("transaction_items", {
   id: serial("id").primaryKey(),
-  transactionId: integer("transaction_id")
-    .references(() => transactions.id)
-    .notNull(),
-  productId: integer("product_id")
-    .references(() => products.id)
-    .notNull(),
+  transactionId: integer("transaction_id").references(() => transactions.id).notNull(),
+  productId: integer("product_id").references(() => products.id).notNull(),
   productName: text("product_name").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   quantity: integer("quantity").notNull(),
@@ -69,7 +48,7 @@ export const employees = pgTable("employees", {
   id: serial("id").primaryKey(),
   employeeId: text("employee_id").notNull().unique(),
   name: text("name").notNull(),
-  email: text("email"),
+  email: text("email").notNull().unique(),
   phone: text("phone"),
   role: text("role").notNull(), // "manager", "cashier", "admin"
   isActive: boolean("is_active").notNull().default(true),
@@ -79,9 +58,7 @@ export const employees = pgTable("employees", {
 
 export const attendanceRecords = pgTable("attendance_records", {
   id: serial("id").primaryKey(),
-  employeeId: integer("employee_id")
-    .references(() => employees.id)
-    .notNull(),
+  employeeId: integer("employee_id").references(() => employees.id).notNull(),
   clockIn: timestamp("clock_in").notNull(),
   clockOut: timestamp("clock_out"),
   breakStart: timestamp("break_start"),
@@ -98,8 +75,6 @@ export const storeSettings = pgTable("store_settings", {
   storeName: text("store_name").notNull().default("EDPOS 레스토랑"),
   storeCode: text("store_code"),
   taxId: text("tax_id"),
-  businessType: text("business_type").default("restaurant"),
-  pinCode: text("pin_code"),
   address: text("address"),
   phone: text("phone"),
   email: text("email"),
@@ -139,9 +114,7 @@ export const tables = pgTable("tables", {
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
   orderNumber: text("order_number").notNull().unique(),
-  tableId: integer("table_id")
-    .references(() => tables.id)
-    .notNull(),
+  tableId: integer("table_id").references(() => tables.id).notNull(),
   employeeId: integer("employee_id").references(() => employees.id),
   status: text("status").notNull().default("pending"), // "pending", "confirmed", "preparing", "ready", "served", "paid", "cancelled"
   customerName: text("customer_name"),
@@ -159,12 +132,8 @@ export const orders = pgTable("orders", {
 
 export const orderItems = pgTable("order_items", {
   id: serial("id").primaryKey(),
-  orderId: integer("order_id")
-    .references(() => orders.id)
-    .notNull(),
-  productId: integer("product_id")
-    .references(() => products.id)
-    .notNull(),
+  orderId: integer("order_id").references(() => orders.id).notNull(),
+  productId: integer("product_id").references(() => products.id).notNull(),
   quantity: integer("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
@@ -175,131 +144,87 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   id: true,
 });
 
-export const insertProductSchema = createInsertSchema(products)
-  .omit({
-    id: true,
-  })
-  .extend({
-    price: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
-      message: "Price must be a positive number",
-    }),
-    stock: z.number().min(0, "Stock cannot be negative"),
-    productType: z.number().min(1).max(3, "Product type is required"),
-    taxRate: z
-      .string()
-      .refine(
-        (val) => !isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 100,
-        {
-          message: "Tax rate must be between 0 and 100",
-        },
-      ),
-  });
+export const insertProductSchema = createInsertSchema(products).omit({
+  id: true,
+}).extend({
+  price: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+    message: "Price must be a positive number",
+  }),
+  stock: z.number().min(0, "Stock cannot be negative"),
+});
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
   id: true,
   createdAt: true,
 });
 
-export const insertTransactionItemSchema = createInsertSchema(
-  transactionItems,
-).omit({
+export const insertTransactionItemSchema = createInsertSchema(transactionItems).omit({
   id: true,
   transactionId: true,
 });
 
-export const insertEmployeeSchema = createInsertSchema(employees)
-  .omit({
-    id: true,
-    createdAt: true,
-  })
-  .extend({
-    name: z.string().min(1, "Tên nhân viên là bắt buộc"),
-    role: z.enum(["manager", "cashier", "admin"], {
-      errorMap: () => ({ message: "Role must be manager, cashier, or admin" }),
-    }),
-    hireDate: z.coerce.date(),
-  });
+export const insertEmployeeSchema = createInsertSchema(employees).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  role: z.enum(["manager", "cashier", "admin"], {
+    errorMap: () => ({ message: "Role must be manager, cashier, or admin" })
+  }),
+  email: z.string().email("Invalid email format"),
+  hireDate: z.coerce.date(),
+});
 
-export const insertAttendanceSchema = createInsertSchema(attendanceRecords)
-  .omit({
-    id: true,
-    createdAt: true,
-  })
-  .extend({
-    status: z.enum(["present", "absent", "late", "half_day"], {
-      errorMap: () => ({
-        message: "Status must be present, absent, late, or half_day",
-      }),
-    }),
-  });
+export const insertAttendanceSchema = createInsertSchema(attendanceRecords).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  status: z.enum(["present", "absent", "late", "half_day"], {
+    errorMap: () => ({ message: "Status must be present, absent, late, or half_day" })
+  }),
+});
 
-export const insertTableSchema = createInsertSchema(tables)
-  .omit({
-    id: true,
-    createdAt: true,
-  })
-  .extend({
-    status: z.enum(["available", "occupied", "reserved", "maintenance"], {
-      errorMap: () => ({
-        message: "Status must be available, occupied, reserved, or maintenance",
-      }),
-    }),
-  });
+export const insertTableSchema = createInsertSchema(tables).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  status: z.enum(["available", "occupied", "reserved", "maintenance"], {
+    errorMap: () => ({ message: "Status must be available, occupied, reserved, or maintenance" })
+  }),
+});
 
-export const insertOrderSchema = createInsertSchema(orders)
-  .omit({
-    id: true,
-    orderedAt: true,
-  })
-  .extend({
-    status: z.enum(
-      [
-        "pending",
-        "confirmed",
-        "preparing",
-        "ready",
-        "served",
-        "paid",
-        "cancelled",
-      ],
-      {
-        errorMap: () => ({ message: "Invalid order status" }),
-      },
-    ),
-    paymentMethod: z.enum(["cash", "card", "mobile"]).optional(),
-    paymentStatus: z.enum(["pending", "paid", "refunded"], {
-      errorMap: () => ({ message: "Invalid payment status" }),
-    }),
-  });
+export const insertOrderSchema = createInsertSchema(orders).omit({
+  id: true,
+  orderedAt: true,
+}).extend({
+  status: z.enum(["pending", "confirmed", "preparing", "ready", "served", "paid", "cancelled"], {
+    errorMap: () => ({ message: "Invalid order status" })
+  }),
+  paymentMethod: z.enum(["cash", "card", "mobile"]).optional(),
+  paymentStatus: z.enum(["pending", "paid", "refunded"], {
+    errorMap: () => ({ message: "Invalid payment status" })
+  }),
+});
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({
   id: true,
   orderId: true,
 });
 
-export const insertStoreSettingsSchema = createInsertSchema(storeSettings).omit(
-  {
-    id: true,
-    updatedAt: true,
-  },
-);
+export const insertStoreSettingsSchema = createInsertSchema(storeSettings).omit({
+  id: true,
+  updatedAt: true,
+});
 
-export const insertSupplierSchema = createInsertSchema(suppliers)
-  .omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-  })
-  .extend({
-    status: z.enum(["active", "inactive"], {
-      errorMap: () => ({ message: "Status must be active or inactive" }),
-    }),
-    email: z
-      .string()
-      .email("Invalid email format")
-      .optional()
-      .or(z.literal("")),
-  });
+export const insertSupplierSchema = createInsertSchema(suppliers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  status: z.enum(["active", "inactive"], {
+    errorMap: () => ({ message: "Status must be active or inactive" })
+  }),
+  email: z.string().email("Invalid email format").optional().or(z.literal("")),
+});
 
 export type Category = typeof categories.$inferSelect;
 export type Product = typeof products.$inferSelect;
@@ -309,122 +234,56 @@ export type Employee = InferSelectModel<typeof employees>;
 export type InsertEmployee = InferInsertModel<typeof employees>;
 
 // Customers table
-export const customers = pgTable("customers", {
-  id: serial("id").primaryKey(),
-  customerId: varchar("customer_id", { length: 20 }).unique().notNull(),
-  name: varchar("name", { length: 100 }).notNull(),
-  phone: varchar("phone", { length: 20 }),
-  email: varchar("email", { length: 100 }),
-  address: text("address"),
-  dateOfBirth: date("date_of_birth"),
-  visitCount: integer("visit_count").default(0),
-  totalSpent: decimal("total_spent", { precision: 10, scale: 2 }).default(
-    "0.00",
-  ),
-  points: integer("points").default(0),
-  membershipLevel: varchar("membership_level", { length: 20 }).default(
-    "SILVER",
-  ),
-  notes: text("notes"),
-  status: varchar("status", { length: 20 }).default("active"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+export const customers = pgTable('customers', {
+  id: serial('id').primaryKey(),
+  customerId: varchar('customer_id', { length: 20 }).unique().notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  phone: varchar('phone', { length: 20 }),
+  email: varchar('email', { length: 100 }),
+  address: text('address'),
+  dateOfBirth: date('date_of_birth'),
+  visitCount: integer('visit_count').default(0),
+  totalSpent: decimal('total_spent', { precision: 10, scale: 2 }).default('0.00'),
+  points: integer('points').default(0),
+  membershipLevel: varchar('membership_level', { length: 20 }).default('SILVER'),
+  notes: text('notes'),
+  status: varchar('status', { length: 20 }).default('active'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow()
 });
 
 // Point transactions table for tracking point history
-export const pointTransactions = pgTable("point_transactions", {
-  id: serial("id").primaryKey(),
-  customerId: integer("customer_id")
-    .references(() => customers.id)
-    .notNull(),
-  type: varchar("type", { length: 20 }).notNull(), // 'earned', 'redeemed', 'adjusted', 'expired'
-  points: integer("points").notNull(), // positive for earned, negative for redeemed
-  description: text("description").notNull(),
-  orderId: integer("order_id").references(() => orders.id), // when points are earned/redeemed from order
-  employeeId: integer("employee_id").references(() => employees.id), // who processed the transaction
-  previousBalance: integer("previous_balance").notNull(),
-  newBalance: integer("new_balance").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+export const pointTransactions = pgTable('point_transactions', {
+  id: serial('id').primaryKey(),
+  customerId: integer('customer_id').references(() => customers.id).notNull(),
+  type: varchar('type', { length: 20 }).notNull(), // 'earned', 'redeemed', 'adjusted', 'expired'
+  points: integer('points').notNull(), // positive for earned, negative for redeemed
+  description: text('description').notNull(),
+  orderId: integer('order_id').references(() => orders.id), // when points are earned/redeemed from order
+  employeeId: integer('employee_id').references(() => employees.id), // who processed the transaction
+  previousBalance: integer('previous_balance').notNull(),
+  newBalance: integer('new_balance').notNull(),
+  createdAt: timestamp('created_at').defaultNow()
 });
 
-export const inventoryTransactions = pgTable("inventory_transactions", {
-  id: serial("id").primaryKey(),
-  productId: integer("product_id")
-    .references(() => products.id)
-    .notNull(),
-  type: varchar("type", { length: 20 }).notNull(), // 'add', 'subtract', 'set', 'sale', 'return'
-  quantity: integer("quantity").notNull(),
-  previousStock: integer("previous_stock").notNull(),
-  newStock: integer("new_stock").notNull(),
-  notes: text("notes"),
-  createdAt: varchar("created_at", { length: 50 }).notNull(),
+export const insertCustomerSchema = createInsertSchema(customers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  email: z.string().email("Invalid email format").optional().or(z.literal("")),
+  membershipLevel: z.enum(["BRONZE", "SILVER", "GOLD", "PLATINUM"]).optional(),
+  status: z.enum(["active", "inactive"]).optional(),
 });
 
-export const eInvoiceConnections = pgTable("einvoice_connections", {
-  id: serial("id").primaryKey(),
-  symbol: varchar("symbol", { length: 10 }).notNull(),
-  taxCode: varchar("tax_code", { length: 20 }).notNull(),
-  loginId: varchar("login_id", { length: 50 }).notNull(),
-  password: text("password").notNull(),
-  softwareName: varchar("software_name", { length: 50 }).notNull(),
-  loginUrl: text("login_url"),
-  signMethod: varchar("sign_method", { length: 20 })
-    .notNull()
-    .default("Ký server"),
-  cqtCode: varchar("cqt_code", { length: 20 }).notNull().default("Cấp nhật"),
-  notes: text("notes"),
-  isDefault: boolean("is_default").notNull().default(false),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+export const insertPointTransactionSchema = createInsertSchema(pointTransactions).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  type: z.enum(["earned", "redeemed", "adjusted", "expired"], {
+    errorMap: () => ({ message: "Type must be earned, redeemed, adjusted, or expired" })
+  }),
 });
-
-export const invoiceTemplates = pgTable("invoice_templates", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull(),
-  templateNumber: varchar("template_number", { length: 50 }).notNull(),
-  templateCode: varchar("template_code", { length: 50 }),
-  symbol: varchar("symbol", { length: 20 }).notNull(),
-  useCK: boolean("use_ck").notNull().default(true),
-  notes: text("notes"),
-  isDefault: boolean("is_default").notNull().default(false),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export const insertCustomerSchema = createInsertSchema(customers)
-  .omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-  })
-  .extend({
-    email: z
-      .string()
-      .email("Invalid email format")
-      .optional()
-      .or(z.literal("")),
-    membershipLevel: z
-      .enum(["BRONZE", "SILVER", "GOLD", "PLATINUM"])
-      .optional(),
-    status: z.enum(["active", "inactive"]).optional(),
-  });
-
-export const insertPointTransactionSchema = createInsertSchema(
-  pointTransactions,
-)
-  .omit({
-    id: true,
-    createdAt: true,
-  })
-  .extend({
-    type: z.enum(["earned", "redeemed", "adjusted", "expired"], {
-      errorMap: () => ({
-        message: "Type must be earned, redeemed, adjusted, or expired",
-      }),
-    }),
-  });
 
 export type Customer = InferSelectModel<typeof customers>;
 export type PointTransaction = typeof pointTransactions.$inferSelect;
@@ -446,37 +305,7 @@ export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;
 export type InsertStoreSettings = z.infer<typeof insertStoreSettingsSchema>;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
-export type InsertPointTransaction = z.infer<
-  typeof insertPointTransactionSchema
->;
-
-export const insertEInvoiceConnectionSchema = createInsertSchema(
-  eInvoiceConnections,
-)
-  .omit({
-    id: true,
-    createdAt: true,
-    updatedAt: true,
-  })
-  .extend({
-    signMethod: z.enum(["Ký server", "Ký USB Token", "Ký HSM"]).optional(),
-    cqtCode: z.enum(["Cấp nhật", "Cấp hai"]).optional(),
-  });
-
-export const insertInvoiceTemplateSchema = createInsertSchema(
-  invoiceTemplates,
-).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type EInvoiceConnection = typeof eInvoiceConnections.$inferSelect;
-export type InsertEInvoiceConnection = z.infer<
-  typeof insertEInvoiceConnectionSchema
->;
-export type InvoiceTemplate = typeof invoiceTemplates.$inferSelect;
-export type InsertInvoiceTemplate = z.infer<typeof insertInvoiceTemplateSchema>;
+export type InsertPointTransaction = z.infer<typeof insertPointTransactionSchema>;
 
 // Cart item type for frontend use
 export type CartItem = {
@@ -487,7 +316,6 @@ export type CartItem = {
   total: string;
   imageUrl?: string;
   stock: number;
-  taxRate?: string;
 };
 
 // Relations
@@ -507,33 +335,27 @@ export const transactionsRelations = relations(transactions, ({ many }) => ({
   items: many(transactionItems),
 }));
 
-export const transactionItemsRelations = relations(
-  transactionItems,
-  ({ one }) => ({
-    transaction: one(transactions, {
-      fields: [transactionItems.transactionId],
-      references: [transactions.id],
-    }),
-    product: one(products, {
-      fields: [transactionItems.productId],
-      references: [products.id],
-    }),
+export const transactionItemsRelations = relations(transactionItems, ({ one }) => ({
+  transaction: one(transactions, {
+    fields: [transactionItems.transactionId],
+    references: [transactions.id],
   }),
-);
+  product: one(products, {
+    fields: [transactionItems.productId],
+    references: [products.id],
+  }),
+}));
 
 export const employeesRelations = relations(employees, ({ many }) => ({
   attendanceRecords: many(attendanceRecords),
 }));
 
-export const attendanceRecordsRelations = relations(
-  attendanceRecords,
-  ({ one }) => ({
-    employee: one(employees, {
-      fields: [attendanceRecords.employeeId],
-      references: [employees.id],
-    }),
+export const attendanceRecordsRelations = relations(attendanceRecords, ({ one }) => ({
+  employee: one(employees, {
+    fields: [attendanceRecords.employeeId],
+    references: [employees.id],
   }),
-);
+}));
 
 export const tablesRelations = relations(tables, ({ many }) => ({
   orders: many(orders),
@@ -566,23 +388,20 @@ export const customersRelations = relations(customers, ({ many }) => ({
   pointTransactions: many(pointTransactions),
 }));
 
-export const pointTransactionsRelations = relations(
-  pointTransactions,
-  ({ one }) => ({
-    customer: one(customers, {
-      fields: [pointTransactions.customerId],
-      references: [customers.id],
-    }),
-    order: one(orders, {
-      fields: [pointTransactions.orderId],
-      references: [orders.id],
-    }),
-    employee: one(employees, {
-      fields: [pointTransactions.employeeId],
-      references: [employees.id],
-    }),
+export const pointTransactionsRelations = relations(pointTransactions, ({ one }) => ({
+  customer: one(customers, {
+    fields: [pointTransactions.customerId],
+    references: [customers.id],
   }),
-);
+  order: one(orders, {
+    fields: [pointTransactions.orderId],
+    references: [orders.id],
+  }),
+  employee: one(employees, {
+    fields: [pointTransactions.employeeId],
+    references: [employees.id],
+  }),
+}));
 
 // Receipt data type
 export type Receipt = Transaction & {

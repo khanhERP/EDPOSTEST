@@ -4,7 +4,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -25,8 +24,6 @@ interface OrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   table: Table | null;
-  existingOrder?: any;
-  mode?: "create" | "edit";
 }
 
 interface CartItem {
@@ -35,18 +32,11 @@ interface CartItem {
   notes?: string;
 }
 
-export function OrderDialog({
-  open,
-  onOpenChange,
-  table,
-  existingOrder,
-  mode = "create",
-}: OrderDialogProps) {
+export function OrderDialog({ open, onOpenChange, table }: OrderDialogProps) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerCount, setCustomerCount] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [existingItems, setExistingItems] = useState<any[]>([]);
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -59,113 +49,30 @@ export function OrderDialog({
     queryKey: ["/api/categories"],
   });
 
-  const { data: existingOrderItems, refetch: refetchExistingItems } = useQuery({
-    queryKey: ["/api/order-items", existingOrder?.id],
-    enabled: !!(existingOrder?.id && mode === "edit" && open),
-    staleTime: 0,
-    queryFn: async () => {
-      console.log("Fetching existing order items for order:", existingOrder.id);
-      const response = await apiRequest(
-        "GET",
-        `/api/order-items/${existingOrder.id}`,
-      );
-      const data = await response.json();
-      console.log("Existing order items response:", data);
-      return data;
-    },
-  });
-
-  // Refetch existing items when dialog opens in edit mode
-  useEffect(() => {
-    if (mode === "edit" && open && existingOrder?.id) {
-      console.log("Dialog opened in edit mode, refetching existing items");
-      refetchExistingItems();
-    }
-  }, [mode, open, existingOrder?.id, refetchExistingItems]);
-
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: { order: any; items: any[] }) => {
-      console.log('=== ORDER MUTATION STARTED ===');
-      console.log('Mode:', mode);
-      console.log('Existing order:', existingOrder);
-      console.log(
-        mode === "edit"
-          ? "Updating order with data:"
-          : "Creating order with data:",
-        JSON.stringify(orderData, null, 2),
-      );
-      
-      try {
-        if (mode === "edit" && existingOrder) {
-          console.log(`Adding ${orderData.items.length} items to existing order ${existingOrder.id}`);
-          const response = await apiRequest("POST", `/api/orders/${existingOrder.id}/items`, {
-            items: orderData.items,
-          });
-          console.log('Add items response:', response);
-          return response;
-        } else {
-          console.log('Creating new order...');
-          const response = await apiRequest("POST", "/api/orders", orderData);
-          console.log('Create order response:', response);
-          return response;
-        }
-      } catch (error) {
-        console.error('=== ORDER MUTATION ERROR ===');
-        console.error('Error details:', error);
-        throw error;
-      }
+      console.log("Creating order with data:", orderData);
+      return apiRequest("POST", "/api/orders", orderData);
     },
     onSuccess: (response) => {
-      console.log('=== ORDER MUTATION SUCCESS ===');
-      console.log(
-        mode === "edit"
-          ? "Order updated successfully:"
-          : "Order created successfully:",
-        response,
-      );
-      
-      // Invalidate queries to refresh data
+      console.log("Order created successfully:", response);
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
-      
-      // Reset form state
       setCart([]);
       setCustomerName("");
       setCustomerCount(1);
-      setExistingItems([]);
       onOpenChange(false);
-      
       toast({
-        title: mode === "edit" ? "Cập nhật đơn hàng" : t("orders.orderPlaced"),
-        description:
-          mode === "edit"
-            ? "Đã thêm món mới vào đơn hàng thành công"
-            : t("orders.orderPlacedSuccess"),
+        title: t("orders.orderPlaced"),
+        description: t("orders.orderPlacedSuccess"),
       });
     },
     onError: (error: any) => {
-      console.error('=== ORDER MUTATION ERROR ===');
-      console.error("Full error object:", error);
-      console.error("Error message:", error.message);
-      console.error("Error response:", error.response);
-      console.error("Error response data:", error.response?.data);
-      
-      let errorMessage = t("orders.orderFailed");
-      
-      if (error.response?.data?.details) {
-        errorMessage = error.response.data.details;
-      } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
+      console.error("Order creation error:", error);
       toast({
         title: t("common.error"),
-        description: `Lỗi ${mode === "edit" ? "cập nhật" : "tạo"} đơn hàng: ${errorMessage}`,
+        description: error.response?.data?.message || t("orders.orderFailed"),
         variant: "destructive",
       });
     },
@@ -179,28 +86,9 @@ export function OrderDialog({
     : [];
 
   const addToCart = (product: Product) => {
-    // Check if product is out of stock
-    if (product.stock <= 0) {
-      toast({
-        title: t("common.error"),
-        description: `${product.name} đã hết hàng`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     setCart((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
-        // Check if adding one more would exceed stock
-        if (existing.quantity >= product.stock) {
-          toast({
-            title: t("common.warning"),
-            description: `Chỉ còn ${product.stock} ${product.name} trong kho`,
-            variant: "destructive",
-          });
-          return prev;
-        }
         return prev.map((item) =>
           item.product.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
@@ -234,24 +122,10 @@ export function OrderDialog({
   };
 
   const calculateTotal = () => {
-    const cartTotal = cart.reduce(
+    return cart.reduce(
       (total, item) => total + Number(item.product.price) * item.quantity,
       0,
     );
-
-    // In edit mode, also add existing items total
-    const existingTotal =
-      mode === "edit" && existingItems.length > 0
-        ? existingItems.reduce((total, item) => {
-            // Handle different possible data structures
-            const itemTotal =
-              item.total ||
-              Number(item.unitPrice || 0) * Number(item.quantity || 0);
-            return total + Number(itemTotal);
-          }, 0)
-        : 0;
-
-    return cartTotal + existingTotal;
   };
 
   const calculateTax = () => {
@@ -265,53 +139,38 @@ export function OrderDialog({
   const handlePlaceOrder = () => {
     if (!table || cart.length === 0) return;
 
-    if (mode === "edit" && existingOrder) {
-      // For edit mode, only send the new items to be added
-      const items = cart.map((item) => ({
-        productId: item.product.id,
-        quantity: item.quantity,
-        unitPrice: item.product.price.toString(),
-        total: (item.product.price * item.quantity).toString(),
-        notes: item.notes || null,
-      }));
+    const orderNumber = `ORD-${Date.now()}`;
+    const subtotalAmount = cart.reduce(
+      (sum, item) => sum + item.product.price * item.quantity,
+      0,
+    );
+    const taxAmount = subtotalAmount * 0.1; // 10% tax
+    const totalAmount = subtotalAmount + taxAmount;
 
-      console.log("Adding items to existing order:", { items });
-      createOrderMutation.mutate({ order: existingOrder, items });
-    } else {
-      // Create mode - original logic
-      const orderNumber = `ORD-${Date.now()}`;
-      const subtotalAmount = cart.reduce(
-        (sum, item) => sum + item.product.price * item.quantity,
-        0,
-      );
-      const taxAmount = subtotalAmount * 0.1; // 10% tax
-      const totalAmount = subtotalAmount + taxAmount;
+    const order = {
+      orderNumber,
+      tableId: table.id,
+      employeeId: 1, // Default employee ID
+      customerName: customerName || null,
+      customerCount,
+      subtotal: subtotalAmount.toString(), // Add required subtotal field
+      tax: taxAmount.toString(), // Add tax field
+      total: totalAmount.toString(), // Convert to string as expected by schema
+      status: "pending",
+      paymentStatus: "pending", // Add required paymentStatus field
+      orderedAt: new Date().toISOString(),
+    };
 
-      const order = {
-        orderNumber,
-        tableId: table.id,
-        employeeId: 1, // Default employee ID
-        customerName: customerName || null,
-        customerCount,
-        subtotal: subtotalAmount.toString(),
-        tax: taxAmount.toString(),
-        total: totalAmount.toString(),
-        status: "served",
-        paymentStatus: "pending",
-        orderedAt: new Date().toISOString(),
-      };
+    const items = cart.map((item) => ({
+      productId: item.product.id,
+      quantity: item.quantity,
+      unitPrice: item.product.price.toString(), // Convert to string
+      total: (item.product.price * item.quantity).toString(), // Convert to string
+      notes: item.notes || null,
+    }));
 
-      const items = cart.map((item) => ({
-        productId: item.product.id,
-        quantity: item.quantity,
-        unitPrice: item.product.price.toString(),
-        total: (item.product.price * item.quantity).toString(),
-        notes: item.notes || null,
-      }));
-
-      console.log("Placing order:", { order, items });
-      createOrderMutation.mutate({ order, items });
-    }
+    console.log("Placing order:", { order, items });
+    createOrderMutation.mutate({ order, items });
   };
 
   const handleClose = () => {
@@ -319,37 +178,14 @@ export function OrderDialog({
     setCustomerName("");
     setCustomerCount(1);
     setSelectedCategory(null);
-    // Only clear existing items if we're not in edit mode
-    if (mode !== "edit") {
-      setExistingItems([]);
-    }
     onOpenChange(false);
   };
 
   useEffect(() => {
     if (table && open) {
-      if (mode === "edit" && existingOrder) {
-        setCustomerName(existingOrder.customerName || "");
-        setCustomerCount(existingOrder.customerCount || 1);
-      } else {
-        setCustomerCount(Math.min(table.capacity, 1));
-      }
+      setCustomerCount(Math.min(table.capacity, 1));
     }
-  }, [table, open, mode, existingOrder]);
-
-  useEffect(() => {
-    if (
-      mode === "edit" &&
-      existingOrderItems &&
-      Array.isArray(existingOrderItems)
-    ) {
-      console.log("Setting existing items:", existingOrderItems);
-      setExistingItems(existingOrderItems);
-    } else if (mode === "edit" && open && existingOrder?.id) {
-      // Clear existing items when dialog opens in edit mode but no data yet
-      setExistingItems([]);
-    }
-  }, [mode, existingOrderItems, open, existingOrder?.id]);
+  }, [table, open]);
 
   if (!table) return null;
 
@@ -359,14 +195,10 @@ export function OrderDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5" />
-            {mode === "edit"
-              ? `Chỉnh sửa đơn hàng - Bàn ${table.tableNumber}`
-              : `Bàn ${table.tableNumber}`}
+            {table.tableNumber}
           </DialogTitle>
           <DialogDescription>
-            {mode === "edit"
-              ? `Đơn hàng ${existingOrder?.orderNumber} | Thêm món hoặc chỉnh sửa số lượng`
-              : `${t("tables.tableCapacity")}: ${table.capacity}${t("orders.people")} | ${t("tables.selectMenuToOrder")}`}
+            {t("tables.tableCapacity")}: {table.capacity}{t("orders.people")} | {t("tables.selectMenuToOrder")}
           </DialogDescription>
         </DialogHeader>
 
@@ -437,17 +269,11 @@ export function OrderDialog({
               {filteredProducts.map((product: Product) => (
                 <Card
                   key={product.id}
-                  className={`transition-shadow ${
-                    Number(product.stock) > 0
-                      ? "cursor-pointer hover:shadow-md"
-                      : "cursor-not-allowed opacity-60"
-                  }`}
+                  className="cursor-pointer hover:shadow-md transition-shadow"
                 >
                   <CardContent
                     className="p-3"
-                    onClick={() =>
-                      Number(product.stock) > 0 && addToCart(product)
-                    }
+                    onClick={() => addToCart(product)}
                   >
                     <div className="space-y-2">
                       <h4 className="font-medium text-sm">{product.name}</h4>
@@ -455,14 +281,8 @@ export function OrderDialog({
                         {product.sku}
                       </p>
                       <div className="flex justify-between items-center">
-                        <span
-                          className={`font-bold ${
-                            Number(product.stock) > 0
-                              ? "text-blue-600"
-                              : "text-gray-400"
-                          }`}
-                        >
-                          {Number(product.price).toLocaleString()} ₫
+                        <span className="font-bold text-blue-600">
+                          ₩{Number(product.price).toLocaleString()}
                         </span>
                         <Badge
                           variant={
@@ -471,16 +291,9 @@ export function OrderDialog({
                               : "destructive"
                           }
                         >
-                          {Number(product.stock) > 0
-                            ? `${t("tables.stockCount")} ${product.stock}`
-                            : "Hết hàng"}
+                          {t("tables.stockCount")} {product.stock}
                         </Badge>
                       </div>
-                      {Number(product.stock) === 0 && (
-                        <div className="text-xs text-red-500 font-medium">
-                          Sản phẩm hiện đang hết hàng
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -489,225 +302,116 @@ export function OrderDialog({
           </div>
 
           {/* Cart */}
-          <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between mb-4">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold">
-                {mode === "edit"
-                  ? "Món đã gọi & Món mới"
-                  : t("tables.orderHistory")}
+                {t("tables.orderHistory")}
               </h3>
               <Badge variant="secondary">
-                {mode === "edit"
-                  ? `${existingItems.length + cart.length} món`
-                  : `${cart.length}${t("tables.itemsSelected")}`}
+                {cart.length}
+                {t("tables.itemsSelected")}
               </Badge>
             </div>
 
-            {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto space-y-4 pb-4">
-              {/* Existing Items (Edit Mode Only) */}
-              {mode === "edit" && existingItems.length > 0 && (
-                <>
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-600">
-                      Món đã gọi trước đó:
-                    </h4>
-                    <div className="max-h-32 overflow-y-auto space-y-2">
-                      {existingItems.map((item, index) => (
-                        <Card key={`existing-${index}`} className="bg-gray-50">
-                          <CardContent className="p-3">
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <h4 className="font-medium text-sm">
-                                  {item.productName}
-                                </h4>
-                                <p className="text-xs text-gray-500">Đã gọi</p>
-                              </div>
-                              <div className="text-right">
-                                <span className="text-sm font-bold">
-                                  {Number(item.total).toLocaleString()} ₫
-                                </span>
-                                <p className="text-xs text-gray-500">
-                                  x{item.quantity}
-                                </p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                  {cart.length > 0 && <Separator />}
-                  {cart.length > 0 && (
-                    <h4 className="text-sm font-medium text-gray-550">
-                      Món mới thêm:
-                    </h4>
-                  )}
-                </>
-              )}
-
-              {cart.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p>{t("tables.noItemsSelected")}</p>
-                </div>
-              ) : (
-                <div
-                  className={`${mode === "edit" ? "max-h-[300px]" : "max-h-[520px]"} overflow-y-auto space-y-3`}
-                >
-                  {cart.map((item) => (
-                    <Card key={item.product.id}>
-                      <CardContent className="p-3">
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-medium text-sm">
-                              {item.product.name}
-                            </h4>
-                            <span className="text-sm font-bold">
-                              {(
-                                Number(item.product.price) * item.quantity
-                              ).toLocaleString()}{" "}
-                              ₫
-                            </span>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => removeFromCart(item.product.id)}
-                                className="h-6 w-6 p-0"
-                              >
-                                <Minus className="w-3 h-3" />
-                              </Button>
-                              <span className="text-sm font-medium w-8 text-center">
-                                {item.quantity}
-                              </span>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => addToCart(item.product)}
-                                className="h-6 w-6 p-0"
-                                disabled={item.quantity >= item.product.stock}
-                              >
-                                <Plus className="w-3 h-3" />
-                              </Button>
-                            </div>
-                            <span className="text-xs text-gray-500">
-                              {t("tables.unitPrice")}: {Number(item.product.price).toLocaleString()} ₫
-                            </span>
-                          </div>
-
-                          <Textarea
-                            placeholder={t("tables.specialRequests")}
-                            value={item.notes || ""}
-                            onChange={(e) =>
-                              updateItemNotes(item.product.id, e.target.value)
-                            }
-                            className="text-xs h-16"
-                          />
+            {cart.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <ShoppingCart className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                <p>{t("tables.noItemsSelected")}</p>
+              </div>
+            ) : (
+              <div className="space-y-3 overflow-y-auto max-h-80">
+                {cart.map((item) => (
+                  <Card key={item.product.id}>
+                    <CardContent className="p-3">
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-start">
+                          <h4 className="font-medium text-sm">
+                            {item.product.name}
+                          </h4>
+                          <span className="text-sm font-bold">
+                            ₩
+                            {(
+                              Number(item.product.price) * item.quantity
+                            ).toLocaleString()}
+                          </span>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => removeFromCart(item.product.id)}
+                              className="h-6 w-6 p-0"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </Button>
+                            <span className="text-sm font-medium w-8 text-center">
+                              {item.quantity}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => addToCart(item.product)}
+                              className="h-6 w-6 p-0"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </Button>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            @₩{Number(item.product.price).toLocaleString()}
+                          </span>
+                        </div>
+
+                        <Textarea
+                          placeholder={t("tables.specialRequests")}
+                          value={item.notes || ""}
+                          onChange={(e) =>
+                            updateItemNotes(item.product.id, e.target.value)
+                          }
+                          className="text-xs h-16"
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+            {cart.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>{t("tables.subtotalLabel")}</span>
+                    <span>₩{calculateTotal().toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>{t("tables.taxLabel")}</span>
+                    <span>₩{Math.round(calculateTax()).toLocaleString()}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between font-bold">
+                    <span>{t("tables.totalLabel")}</span>
+                    <span>
+                      ₩{Math.round(calculateGrandTotal()).toLocaleString()}
+                    </span>
+                  </div>
                 </div>
-              )}
-            </div>
+
+                <Button
+                  onClick={handlePlaceOrder}
+                  className="w-full"
+                  disabled={createOrderMutation.isPending}
+                >
+                  {createOrderMutation.isPending
+                    ? t("tables.placing")
+                    : t("tables.placeOrder")}
+                </Button>
+              </>
+            )}
           </div>
         </div>
-
-        {/* DialogFooter with Summary and Order Button */}
-        {(cart.length > 0 || (mode === "edit" && existingItems.length > 0)) && (
-          <DialogFooter className="pt-6">
-            <div className="flex items-center justify-between w-full">
-              {/* Summary items in horizontal layout */}
-              <div className="flex items-center gap-4 text-sm">
-                {mode === "edit" && existingItems.length > 0 && (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-600">Món đã gọi</span>
-                      <span className="font-medium">
-                        {existingItems
-                          .reduce((total, item) => {
-                            const itemTotal =
-                              item.total ||
-                              Number(item.unitPrice || 0) *
-                                Number(item.quantity || 0);
-                            return total + Number(itemTotal);
-                          }, 0)
-                          .toLocaleString()}{" "}
-                        ₫
-                      </span>
-                    </div>
-                    {cart.length > 0 && (
-                      <div className="w-px h-4 bg-gray-300"></div>
-                    )}
-                  </>
-                )}
-                {cart.length > 0 && mode === "edit" && (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-600">Món mới thêm</span>
-                      <span className="font-medium">
-                        {cart
-                          .reduce(
-                            (total, item) =>
-                              total +
-                              Number(item.product.price) * item.quantity,
-                            0,
-                          )
-                          .toLocaleString()}{" "}
-                        ₫
-                      </span>
-                    </div>
-                    <div className="w-px h-4 bg-gray-300"></div>
-                  </>
-                )}
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600">
-                    {t("tables.subtotalLabel")}
-                  </span>
-                  <span className="font-medium">
-                    {calculateTotal().toLocaleString()} ₫
-                  </span>
-                </div>
-                <div className="w-px h-4 bg-gray-300"></div>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600">{t("tables.taxLabel")}</span>
-                  <span className="font-medium">
-                    {Math.round(calculateTax()).toLocaleString()} ₫
-                  </span>
-                </div>
-                <div className="w-px h-4 bg-gray-300"></div>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600 font-bold">
-                    {t("tables.totalLabel")}
-                  </span>
-                  <span className="font-bold text-lg text-blue-600">
-                    {Math.round(calculateGrandTotal()).toLocaleString()} ₫
-                  </span>
-                </div>
-              </div>
-
-              {/* Action button */}
-              <Button
-                onClick={handlePlaceOrder}
-                disabled={createOrderMutation.isPending}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
-                size="lg"
-              >
-                {createOrderMutation.isPending
-                  ? mode === "edit"
-                    ? "Đang cập nhật..."
-                    : t("tables.placing")
-                  : mode === "edit"
-                    ? "Cập nhật đơn hàng"
-                    : t("tables.placeOrder")}
-              </Button>
-            </div>
-          </DialogFooter>
-        )}
       </DialogContent>
     </Dialog>
   );

@@ -90,14 +90,14 @@ export function TableManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       toast({
         title: t("common.success"),
-        description: t("tables.tableCreateSuccess"),
+        description: "테이블이 성공적으로 추가되었습니다.",
       });
       handleCloseDialog();
     },
     onError: () => {
       toast({
         title: t("common.error"),
-        description: t("common.error"),
+        description: "테이블 추가에 실패했습니다.",
         variant: "destructive",
       });
     },
@@ -110,14 +110,14 @@ export function TableManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       toast({
         title: t("common.success"),
-        description: t("tables.tableUpdateSuccess"),
+        description: "테이블이 성공적으로 수정되었습니다.",
       });
       handleCloseDialog();
     },
     onError: () => {
       toast({
         title: t("common.error"),
-        description: t("common.tableDeleteConfirm"),
+        description: "테이블 수정에 실패했습니다.",
         variant: "destructive",
       });
     },
@@ -129,13 +129,13 @@ export function TableManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       toast({
         title: t("common.success"),
-        description: t("tables.tableDeleteSuccess"),
+        description: "테이블이 성공적으로 삭제되었습니다.",
       });
     },
     onError: () => {
       toast({
         title: t("common.error"),
-        description: t("common.tableDeleteError"),
+        description: "테이블 삭제에 실패했습니다.",
         variant: "destructive",
       });
     },

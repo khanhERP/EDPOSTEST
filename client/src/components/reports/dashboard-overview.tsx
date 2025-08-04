@@ -31,11 +31,18 @@ export function formatDateToYYYYMMDD(date: Date | string | number): string {
   return `${year}-${month}-${day}`;
 }
 
+export function subtractMonths(date: Date | string | number, months: number): Date {
+  const newDate = new Date(date);
+  newDate.setMonth(newDate.getMonth() - months);
+  return newDate;
+}
+
 export function DashboardOverview() {
   const { t } = useTranslation();
 
+  const startDateNow = subtractMonths(new Date(), 1);
   const [startDate, setStartDate] = useState<string>(
-    formatDateToYYYYMMDD(new Date()), // Set to a date that has sample data
+    formatDateToYYYYMMDD(startDateNow), // Set to a date that has sample data
   );
   const [endDate, setEndDate] = useState<string>(
     formatDateToYYYYMMDD(new Date()), // End date with sample data
@@ -52,8 +59,6 @@ export function DashboardOverview() {
 
   const handleRefresh = () => {
     // Refresh the queries to get the latest data for the selected date
-    setStartDate(formatDateToYYYYMMDD(new Date()));
-    setEndDate(formatDateToYYYYMMDD(new Date()));
     queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
     queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
     queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
@@ -89,6 +94,8 @@ export function DashboardOverview() {
       return transactionDate >= start && transactionDate <= end;
     });
 
+    console.log("Filtered Transactions:", filteredTransactions.length);
+
     // Period stats
     const periodRevenue = filteredTransactions.reduce(
       (total: number, transaction: any) => total + Number(transaction.total),
@@ -112,8 +119,24 @@ export function DashboardOverview() {
       (table: TableType) => table.status === "occupied",
     );
 
-    // Revenue for selected date range (displayed as "month revenue")
-    const monthRevenue = periodRevenue;
+    // This month stats
+    const thisMonth = new Date();
+    const monthStart = new Date(
+      thisMonth.getFullYear(),
+      thisMonth.getMonth(),
+      1,
+    );
+    const monthTransactions = transactions.filter((transaction: any) => {
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
+      return transactionDate >= monthStart;
+    });
+
+    const monthRevenue = monthTransactions.reduce(
+      (total: number, transaction: any) => total + Number(transaction.total),
+      0,
+    );
 
     // Average order value
     const averageOrderValue =
@@ -287,10 +310,7 @@ export function DashboardOverview() {
                   {formatCurrency(stats.monthRevenue)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  {startDate === endDate 
-                    ? formatDate(startDate)
-                    : `${formatDate(startDate)} - ${formatDate(endDate)}`
-                  }
+                  {t("reports.monthAccumulated")}
                 </p>
               </div>
               <TrendingUp className="w-8 h-8 text-blue-500" />

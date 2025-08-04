@@ -20,14 +20,7 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
   });
 
   const { data: attendanceRecords, isLoading } = useQuery({
-    queryKey: ['/api/attendance', selectedDate],
-    queryFn: async () => {
-      const response = await fetch(`/api/attendance?date=${selectedDate}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch attendance records');
-      }
-      return response.json();
-    }
+    queryKey: ['/api/attendance', { date: selectedDate }],
   });
 
   const getEmployeeName = (employeeId: number) => {
@@ -37,19 +30,14 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
 
   const formatTime = (dateString: string | null) => {
     if (!dateString) return "-";
-    return new Date(dateString).toLocaleTimeString('vi-VN', {
+    return new Date(dateString).toLocaleTimeString('ko-KR', {
       hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
+      minute: '2-digit'
     });
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+    return new Date(dateString).toLocaleDateString('ko-KR');
   };
 
   const getStatusBadge = (status: string) => {
@@ -59,7 +47,7 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
       late: { label: t('attendance.status.late'), variant: "secondary" as const },
       half_day: { label: t('attendance.status.halfDay'), variant: "outline" as const },
     };
-
+    
     const config = statusConfig[status as keyof typeof statusConfig] || { label: status, variant: "outline" as const };
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
@@ -104,7 +92,7 @@ export function AttendanceList({ selectedDate, onDateChange }: AttendanceListPro
           <div className="flex justify-center py-8">
             <div className="text-gray-500">{t('common.loading')}</div>
           </div>
-        ) : !attendanceRecords || !Array.isArray(attendanceRecords) || attendanceRecords.length === 0 ? (
+        ) : !attendanceRecords || attendanceRecords.length === 0 ? (
           <div className="text-center py-8">
             <Clock className="w-12 h-12 mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500">{t('attendance.noRecords')}</p>

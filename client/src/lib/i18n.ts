@@ -170,7 +170,6 @@ const translations = {
       orderHistory: "주문 내역",
       itemsSelected: "개 선택됨",
       noItemsSelected: "선택된 항목 없음",
-      tableNumberRequired: "테이블 번호는 필수입니다",
     },
     // Employees
     employees: {
@@ -602,7 +601,6 @@ const translations = {
       orderHistory: "Order History",
       itemsSelected: "items selected",
       noItemsSelected: "No items selected",
-      tableNumberRequired: "Table number is required",
     },
     // Employees
     employees: {
@@ -1017,23 +1015,6 @@ const translations = {
       orderHistory: "Lịch sử đơn hàng",
       itemsSelected: "mục đã chọn",
       noItemsSelected: "Không có mục nào được chọn",
-      tableNumberRequired: "Số bàn là bắt buộc",
-      tableCreateSuccess: "Tạo bàn thành công",
-      tableUpdateSuccess: "Cập nhật bàn thành công",
-      tableDeleteSuccess: "Xóa bàn thành công",
-      tableDeleteError: "Không thể xóa bàn đã được sử dụng",
-      tableNumberLabel: "Số bàn",
-      capacityLabel: "Sức chứa",
-      statusLabel: "Trạng thái",
-      qrCodeLabel: "Mã QR",
-      createdDate: "Ngày tạo",
-      addTable: "Thêm bàn",
-      editTable: "Sửa bàn",
-      addTableDesc: "Nhập thông tin bàn mới",
-      editTableDesc: "Chỉnh sửa thông tin bàn",
-      tableNumberPlaceholder: "Nhập số bàn",
-      capacityPlaceholder: "Nhập sức chứa",
-      
     },
     // Employees
     employees: {

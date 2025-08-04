@@ -115,10 +115,9 @@ export function ClockInOut() {
   const selectedEmployee = (employees as Employee[] | undefined)?.find((emp: Employee) => emp.id === selectedEmployeeId);
 
   const formatTime = (dateInput: Date | string) => {
-    return new Date(dateInput).toLocaleTimeString('vi-VN', {
+    return new Date(dateInput).toLocaleTimeString('ko-KR', {
       hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
+      minute: '2-digit'
     });
   };
 
@@ -303,7 +302,7 @@ export function ClockInOut() {
                             variant="outline"
                           >
                             <Play className="w-4 h-4 mr-2" />
-                            {t('attendance.breakEnd')}
+                            {t('attendance.endBreak')}
                           </Button>
                         ) : (
                           <Button
@@ -312,7 +311,7 @@ export function ClockInOut() {
                             variant="outline"
                           >
                             <Coffee className="w-4 h-4 mr-2" />
-                            {t('attendance.breakStart')}
+                            {t('attendance.startBreak')}
                           </Button>
                         )}
                         <Button

@@ -1,185 +1,58 @@
 import { X, Printer, Mail } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { Receipt } from "@shared/schema";
 import logoPath from "@assets/EDPOS_1753091767028.png";
-import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { EInvoiceModal } from "./einvoice-modal";
-import { useState } from "react";
 
 interface ReceiptModalProps {
   isOpen: boolean;
   onClose: () => void;
   receipt: Receipt | null;
-  onConfirm?: () => void;
-  isPreview?: boolean;
-  cartItems?: Array<{
-    id: number;
-    name: string;
-    price: number;
-    quantity: number;
-    sku?: string;
-    taxRate?: number;
-  }>;
 }
 
-export function ReceiptModal({
-  isOpen,
-  onClose,
-  receipt,
-  onConfirm,
-  isPreview = false,
-  cartItems = [],
-}: ReceiptModalProps) {
-  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
-
-  // Debug logging when modal opens and when props change
-  console.log("=== RECEIPT MODAL RENDERED ===");
-  console.log("Receipt Modal isOpen:", isOpen);
-  console.log("Receipt Modal cartItems received:", cartItems);
-  console.log("Receipt Modal cartItems length:", cartItems?.length || 0);
-  console.log("Receipt Modal cartItems type:", typeof cartItems);
-  console.log("Receipt Modal cartItems is array:", Array.isArray(cartItems));
-  console.log("Receipt Modal total:", receipt?.total);
-  console.log("Receipt Modal cartItems content:");
-
-  if (Array.isArray(cartItems)) {
-    cartItems.forEach((item, index) => {
-      console.log(`  Item ${index + 1}:`, {
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        priceType: typeof item.price,
-        quantity: item.quantity,
-        quantityType: typeof item.quantity,
-        sku: item.sku,
-        taxRate: item.taxRate
-      });
-    });
-  }
-
-  console.log("Receipt Modal receipt:", receipt);
-  // Query store settings to get dynamic address
-  const { data: storeSettings } = useQuery({
-    queryKey: ["/api/store-settings"],
-    queryFn: async () => {
-      const response = await apiRequest("GET", "/api/store-settings");
-      return response.json();
-    },
-  });
-
+export function ReceiptModal({ isOpen, onClose, receipt }: ReceiptModalProps) {
   if (!receipt) return null;
 
   const handlePrint = () => {
-    const printContent = document.getElementById("receipt-content");
+    const printContent = document.getElementById('receipt-content');
     if (printContent) {
-      const printWindow = window.open("", "", "height=600,width=400");
+      const printWindow = window.open('', '', 'height=600,width=400');
       if (printWindow) {
-        printWindow.document.write("<html><head><title>Receipt</title>");
-        printWindow.document.write(
-          "<style>body { font-family: monospace; font-size: 12px; margin: 0; padding: 16px; } .text-center { text-align: center; } .text-right { text-align: right; } .border-t { border-top: 1px solid #000; } .border-b { border-bottom: 1px solid #000; } .py-2 { padding: 4px 0; } .mb-4 { margin-bottom: 8px; } .mb-2 { margin-bottom: 4px; } .mt-4 { margin-top: 8px; } .mt-2 { margin-top: 4px; } .space-y-1 > * + * { margin-top: 2px; } .flex { display: flex; } .justify-between { justify-content: space-between; } .text-sm { font-size: 11px; } .text-xs { font-size: 10px; } .font-bold { font-weight: bold; }</style>",
-        );
-        printWindow.document.write("</head><body>");
+        printWindow.document.write('<html><head><title>Receipt</title>');
+        printWindow.document.write('<style>body { font-family: monospace; font-size: 12px; margin: 0; padding: 20px; } .text-center { text-align: center; } .text-right { text-align: right; } .border-t { border-top: 1px solid #000; } .border-b { border-bottom: 1px solid #000; } .py-2 { padding: 8px 0; } .mb-4 { margin-bottom: 16px; } .mt-4 { margin-top: 16px; } .space-y-1 > * + * { margin-top: 4px; } .flex { display: flex; } .justify-between { justify-content: space-between; } .text-sm { font-size: 11px; } .text-xs { font-size: 10px; } .font-bold { font-weight: bold; }</style>');
+        printWindow.document.write('</head><body>');
         printWindow.document.write(printContent.innerHTML);
-        printWindow.document.write("</body></html>");
+        printWindow.document.write('</body></html>');
         printWindow.document.close();
-        
-        // Trigger print dialog
         printWindow.print();
-        
-        // Multiple approaches to detect when printing is done and close modal
-        let modalClosed = false;
-        
-        // Method 1: Use onafterprint event
-        printWindow.onafterprint = () => {
-          if (!modalClosed) {
-            modalClosed = true;
-            printWindow.close();
-            onClose();
-          }
-        };
-        
-        // Method 2: Monitor window focus change (fallback)
-        const handleFocus = () => {
-          setTimeout(() => {
-            if (!modalClosed) {
-              modalClosed = true;
-              printWindow.close();
-              onClose();
-            }
-          }, 500);
-        };
-        
-        window.addEventListener('focus', handleFocus, { once: true });
-        
-        // Method 3: Timer-based fallback (last resort)
-        setTimeout(() => {
-          if (!modalClosed) {
-            modalClosed = true;
-            printWindow.close();
-            onClose();
-          }
-        }, 3000);
-        
-        // Method 4: Check if print window is closed manually
-        const checkClosed = setInterval(() => {
-          if (printWindow.closed && !modalClosed) {
-            modalClosed = true;
-            clearInterval(checkClosed);
-            onClose();
-          }
-        }, 500);
-        
-        // Clear interval after 10 seconds to prevent memory leaks
-        setTimeout(() => {
-          clearInterval(checkClosed);
-        }, 10000);
       }
     }
   };
 
   const handleEmail = () => {
     // Mock email functionality
-    alert("Email functionality would be implemented here");
+    alert('Email functionality would be implemented here');
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md w-full max-h-screen overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {isPreview ? "Xem trước hóa đơn" : "Receipt"}
-          </DialogTitle>
+          <DialogTitle>Receipt</DialogTitle>
         </DialogHeader>
-
-        <div
-          id="receipt-content"
-          className="receipt-print bg-white"
-          style={{ padding: "16px" }}
-        >
+        
+        <div id="receipt-content" className="p-6 receipt-print bg-white">
           <div className="text-center mb-4">
-            <p className="text-xs font-semibold mb-1">
-              {storeSettings?.storeName || "Easy Digital Point Of Sale Service"}
-            </p>
-            <p className="text-xs mb-0.5">Main Store Location</p>
-            <p className="text-xs mb-0.5">
-              {storeSettings?.address || "123 Commerce St, City, State 12345"}
-            </p>
-            <p className="text-xs mb-2">
-              Phone: {storeSettings?.phone || "(555) 123-4567"}
-            </p>
-            <div className="flex items-center justify-center">
-              <img src={logoPath} alt="EDPOS Logo" className="h-6" />
+            <div className="flex items-center justify-center mb-2">
+              <img src={logoPath} alt="EDPOS Logo" className="h-8" />
             </div>
+            <p className="text-sm">Easy Digital Point Of Sale Service</p>
+            <p className="text-sm">Main Store Location</p>
+            <p className="text-sm">123 Commerce St, City, State 12345</p>
+            <p className="text-sm">Phone: (555) 123-4567</p>
           </div>
-
-          <div className="border-t border-b border-gray-300 py-3 mb-3">
+          
+          <div className="border-t border-b border-gray-300 py-2 mb-4">
             <div className="flex justify-between text-sm">
               <span>Transaction #:</span>
               <span>{receipt.transactionId}</span>
@@ -193,8 +66,8 @@ export function ReceiptModal({
               <span>{receipt.cashierName}</span>
             </div>
           </div>
-
-          <div className="space-y-2 mb-3">
+          
+          <div className="space-y-1 mb-4">
             {receipt.items.map((item) => (
               <div key={item.id}>
                 <div className="flex justify-between text-sm">
@@ -209,8 +82,8 @@ export function ReceiptModal({
               </div>
             ))}
           </div>
-
-          <div className="border-t border-gray-300 pt-3 space-y-1">
+          
+          <div className="border-t border-gray-300 pt-2 space-y-1">
             <div className="flex justify-between text-sm">
               <span>Subtotal:</span>
               <span>{receipt.subtotal} ₫</span>
@@ -240,87 +113,24 @@ export function ReceiptModal({
               </div>
             )}
           </div>
-
+          
           <div className="text-center mt-4 text-xs text-gray-600">
             <p>Thank you for your business!</p>
             <p>Please keep this receipt for your records</p>
           </div>
         </div>
-
-        <div className="flex justify-center p-2 border-t">
-          {isPreview ? (
-            <div className="flex space-x-3 w-full">
-              <Button onClick={onClose} variant="outline" className="flex-1">
-                Hủy
-              </Button>
-              <Button
-                onClick={onConfirm}
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
-              >
-                Xác nhận & Chọn thanh toán
-              </Button>
-            </div>
-          ) : (
-            <div className="flex justify-center space-x-3">
-              <Button
-                onClick={handlePrint}
-                className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
-              >
-                <Printer className="mr-2" size={16} />
-                Print Receipt
-              </Button>
-            </div>
-          )}
+        
+        <div className="flex space-x-3 p-4 border-t">
+          <Button onClick={handlePrint} className="flex-1 btn-primary">
+            <Printer className="mr-2" size={16} />
+            Print Receipt
+          </Button>
+          <Button onClick={handleEmail} variant="secondary" className="flex-1">
+            <Mail className="mr-2" size={16} />
+            Email Receipt
+          </Button>
         </div>
       </DialogContent>
-
-      {/* E-Invoice Modal */}
-      {showEInvoiceModal && (
-        <EInvoiceModal
-          isOpen={showEInvoiceModal}
-          onClose={() => setShowEInvoiceModal(false)}
-          onConfirm={() => {
-            setShowEInvoiceModal(false);
-            // Handle e-invoice confirmation if needed
-          }}
-          total={receipt?.total || 0}
-          cartItems={(() => {
-            console.log("🔄 Receipt Modal - Preparing cartItems for EInvoice:");
-            console.log("- cartItems prop:", cartItems);
-            console.log("- cartItems length:", cartItems?.length || 0);
-            console.log("- receipt items:", receipt?.items);
-            
-            // Always prefer cartItems prop since it has the most accurate data
-            if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-              console.log("✅ Using cartItems prop for e-invoice (most accurate data)");
-              // Ensure all cartItems have proper structure
-              const processedCartItems = cartItems.map(item => ({
-                id: item.id,
-                name: item.name,
-                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-                quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-                sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
-                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
-              }));
-              console.log("🔧 Processed cartItems for e-invoice:", processedCartItems);
-              return processedCartItems;
-            } else if (receipt?.items && Array.isArray(receipt.items) && receipt.items.length > 0) {
-              console.log("⚠️ Fallback to receipt items for e-invoice");
-              return receipt.items.map(item => ({
-                id: item.productId || item.id,
-                name: item.productName || item.name,
-                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-                quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-                sku: item.sku || `FOOD${String(item.productId || item.id).padStart(5, '0')}`,
-                taxRate: item.taxRate || 10
-              }));
-            } else {
-              console.error("❌ No valid cart items found for e-invoice");
-              return [];
-            }
-          })()}
-        />
-      )}
     </Dialog>
   );
 }

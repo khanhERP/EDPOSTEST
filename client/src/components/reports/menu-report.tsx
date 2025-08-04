@@ -1,100 +1,157 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { PieChart, TrendingUp, Award, Search, Filter } from "lucide-react";
+import { PieChart, TrendingUp, Award } from "lucide-react";
+import type { Order, OrderItem, Product, Category } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 
 export function MenuReport() {
   const { t } = useTranslation();
   const [dateRange, setDateRange] = useState("week");
   const [startDate, setStartDate] = useState<string>(
-    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
+    new Date().toISOString().split('T')[0]
   );
-  const [productSearch, setProductSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [productType, setProductType] = useState("all");
 
-  // Categories query for filter
+  const { data: orders } = useQuery({
+    queryKey: ['/api/orders'],
+  });
+
+  const { data: products } = useQuery({
+    queryKey: ['/api/products'],
+  });
+
   const { data: categories } = useQuery({
-    queryKey: ["/api/categories"],
-    staleTime: 5 * 60 * 1000,
+    queryKey: ['/api/categories'],
   });
 
-  // Use the new optimized API endpoint with filters
-  const { data: menuData, isLoading } = useQuery({
-    queryKey: [
-      "/api/menu-analysis",
-      startDate,
-      endDate,
-      productSearch,
-      selectedCategory,
-      productType,
-    ],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        startDate,
-        endDate,
-        ...(productSearch && { search: productSearch }),
-        ...(selectedCategory !== "all" && { categoryId: selectedCategory }),
-        ...(productType !== "all" && { productType }),
-      });
-      const response = await fetch(`/api/menu-analysis?${params}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch menu analysis data");
+  const getMenuData = async () => {
+    if (!orders || !products || !categories || !Array.isArray(orders) || !Array.isArray(products) || !Array.isArray(categories)) return null;
+
+    const filteredOrders = orders.filter((order: Order) => {
+      const orderDate = new Date(order.orderedAt);
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      
+      return orderDate >= start && orderDate <= end && order.status === 'paid';
+    });
+
+    // Get all order items for the filtered orders
+    const allOrderItems: OrderItem[] = [];
+    
+    for (const order of filteredOrders) {
+      try {
+        const response = await fetch(`/api/orders/${order.id}`);
+        const orderData = await response.json();
+        if (orderData.items) {
+          allOrderItems.push(...orderData.items.map((item: OrderItem) => ({
+            ...item,
+            orderId: order.id
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching order items:', error);
       }
-      return response.json();
-    },
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-  });
+    }
+
+    // Product performance analysis
+    const productStats: { [productId: number]: {
+      product: Product;
+      quantity: number;
+      revenue: number;
+      orders: Set<number>;
+    } } = {};
+
+    allOrderItems.forEach((item: OrderItem) => {
+      const product = Array.isArray(products) ? products.find((p: Product) => p.id === item.productId) : undefined;
+      if (!product) return;
+
+      if (!productStats[item.productId]) {
+        productStats[item.productId] = {
+          product,
+          quantity: 0,
+          revenue: 0,
+          orders: new Set()
+        };
+      }
+
+      productStats[item.productId].quantity += item.quantity;
+      productStats[item.productId].revenue += Number(item.total);
+      productStats[item.productId].orders.add(item.orderId);
+    });
+
+    // Category performance
+    const categoryStats: { [categoryId: number]: {
+      category: Category;
+      quantity: number;
+      revenue: number;
+      productCount: number;
+    } } = {};
+
+    Object.values(productStats).forEach(({ product, quantity, revenue }) => {
+      if (!categoryStats[product.categoryId]) {
+        const category = Array.isArray(categories) ? categories.find((c: Category) => c.id === product.categoryId) : undefined;
+        if (category) {
+          categoryStats[product.categoryId] = {
+            category,
+            quantity: 0,
+            revenue: 0,
+            productCount: 0
+          };
+        }
+      }
+
+      if (categoryStats[product.categoryId]) {
+        categoryStats[product.categoryId].quantity += quantity;
+        categoryStats[product.categoryId].revenue += revenue;
+        categoryStats[product.categoryId].productCount += 1;
+      }
+    });
+
+    // Sort products by various metrics
+    const productList = Object.values(productStats);
+    const topSellingProducts = [...productList].sort((a, b) => b.quantity - a.quantity);
+    const topRevenueProducts = [...productList].sort((a, b) => b.revenue - a.revenue);
+
+    // Total stats
+    const totalQuantity = productList.reduce((sum, item) => sum + item.quantity, 0);
+    const totalRevenue = productList.reduce((sum, item) => sum + item.revenue, 0);
+
+    return {
+      productStats: productList,
+      categoryStats: Object.values(categoryStats),
+      topSellingProducts,
+      topRevenueProducts,
+      totalQuantity,
+      totalRevenue,
+    };
+  };
 
   const handleDateRangeChange = (range: string) => {
     setDateRange(range);
     const today = new Date();
-
+    
     switch (range) {
       case "today":
-        setStartDate(today.toISOString().split("T")[0]);
-        setEndDate(today.toISOString().split("T")[0]);
+        setStartDate(today.toISOString().split('T')[0]);
+        setEndDate(today.toISOString().split('T')[0]);
         break;
       case "week":
-        setStartDate(
-          new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-            .toISOString()
-            .split("T")[0],
-        );
-        setEndDate(today.toISOString().split("T")[0]);
+        setStartDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+        setEndDate(today.toISOString().split('T')[0]);
         break;
       case "month":
         const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-        setStartDate(monthStart.toISOString().split("T")[0]);
-        setEndDate(today.toISOString().split("T")[0]);
+        setStartDate(monthStart.toISOString().split('T')[0]);
+        setEndDate(today.toISOString().split('T')[0]);
         break;
     }
   };
@@ -103,7 +160,19 @@ export function MenuReport() {
     return `${amount.toLocaleString()} ₫`;
   };
 
-  if (isLoading) {
+  const [menuData, setMenuData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Fetch menu data when dates change
+  useEffect(() => {
+    setLoading(true);
+    getMenuData().then(data => {
+      setMenuData(data);
+      setLoading(false);
+    });
+  }, [orders, products, categories, startDate, endDate]);
+
+  if (loading || !menuData) {
     return (
       <div className="flex justify-center py-8">
         <div className="text-gray-500">{t("reports.loading")}</div>
@@ -111,188 +180,58 @@ export function MenuReport() {
     );
   }
 
-  // Initialize default empty data structure if no data or error
-  const defaultData = {
-    totalRevenue: 0,
-    totalQuantity: 0,
-    categoryStats: [],
-    productStats: [],
-    topSellingProducts: [],
-    topRevenueProducts: [],
-  };
-
-  const displayData = menuData || defaultData;
-
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <PieChart className="w-5 h-5" />
-            {t("reports.menuAnalysis")}
-          </CardTitle>
-          <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
-        </CardHeader>
-      </Card>
-
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"></CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Date Range Filter */}
-          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="flex justify-between items-center">
             <div>
-              <Label>{t("reports.dateRange")}</Label>
+              <CardTitle className="flex items-center gap-2">
+                <PieChart className="w-5 h-5" />
+{t("reports.menuAnalysis")}
+              </CardTitle>
+              <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+            </div>
+            <div className="flex items-center gap-4">
               <Select value={dateRange} onValueChange={handleDateRangeChange}>
-                <SelectTrigger>
+                <SelectTrigger className="w-32">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="today">{t("reports.toDay")}</SelectItem>
                   <SelectItem value="week">{t("reports.lastWeek")}</SelectItem>
-                  <SelectItem value="month">
-                    {t("reports.lastMonth")}
-                  </SelectItem>
+                  <SelectItem value="month">{t("reports.lastMonth")}</SelectItem>
                   <SelectItem value="custom">{t("reports.custom")}</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            {dateRange === "custom" && (
-              <>
-                <div>
-                  <Label>{t("reports.startDate")}</Label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label>{t("reports.endDate")}</Label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Product Search */}
-            <div>
-              <Label>{t("reports.productFilter")}</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder={t("reports.productFilterPlaceholder")}
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            {/* Category Filter */}
-            <div>
-              <Label>{t("common.category")}</Label>
-              <Select
-                value={selectedCategory}
-                onValueChange={setSelectedCategory}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("common.all")}</SelectItem>
-                  {categories?.map((category: any) => (
-                    <SelectItem
-                      key={category.id}
-                      value={category.id.toString()}
-                    >
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Product Type Filter */}
-            <div>
-              <Label>{t("reports.productType")}</Label>
-              <Select value={productType} onValueChange={setProductType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("common.all")}</SelectItem>
-                  <SelectItem value="combo">{t("reports.combo")}</SelectItem>
-                  <SelectItem value="product">
-                    {t("reports.product")}
-                  </SelectItem>
-                  <SelectItem value="service">
-                    {t("reports.service")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              
+              {dateRange === "custom" && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Label>{t("reports.startDate")}:</Label>
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-auto"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label>{t("reports.endDate")}:</Label>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-auto"
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
-        </CardContent>
+        </CardHeader>
       </Card>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalRevenue")}
-                </p>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(displayData.totalRevenue)}
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalOrders")}
-                </p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {displayData.totalQuantity.toLocaleString()}
-                </p>
-              </div>
-              <Award className="w-8 h-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("reports.uniqueProducts")}
-                </p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {displayData.productStats.length}
-                </p>
-              </div>
-              <PieChart className="w-8 h-8 text-purple-500" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
       {/* Category Performance */}
       <Card>
@@ -302,26 +241,23 @@ export function MenuReport() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {displayData.categoryStats.map((category: any) => {
-              const revenuePercentage =
-                displayData.totalRevenue > 0
-                  ? (category.revenue / displayData.totalRevenue) * 100
-                  : 0;
-              const quantityPercentage =
-                displayData.totalQuantity > 0
-                  ? (category.quantity / displayData.totalQuantity) * 100
-                  : 0;
-
+            {menuData.categoryStats.map((category: any) => {
+              const revenuePercentage = menuData.totalRevenue > 0 
+                ? (category.revenue / menuData.totalRevenue) * 100 
+                : 0;
+              const quantityPercentage = menuData.totalQuantity > 0
+                ? (category.quantity / menuData.totalQuantity) * 100
+                : 0;
+              
               return (
                 <div key={category.category.id} className="space-y-2">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">{category.category.name}</Badge>
+                      <Badge variant="outline">
+                        {category.category.name}
+                      </Badge>
                       <span className="text-sm text-gray-600">
-                        {t("reports.menuItems").replace(
-                          "{count}",
-                          category.productCount,
-                        )}
+                        {category.productCount}개 메뉴
                       </span>
                     </div>
                     <div className="text-right">
@@ -329,32 +265,29 @@ export function MenuReport() {
                         {formatCurrency(category.revenue)}
                       </div>
                       <div className="text-xs text-gray-500">
-                        {t("reports.itemsSold").replace(
-                          "{count}",
-                          category.quantity,
-                        )}
+                        {category.quantity}개 판매
                       </div>
                     </div>
                   </div>
-
+                  
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs text-gray-500">
-                      <span>{t("reports.revenueShare")}</span>
+                      <span>매출 비중</span>
                       <span>{revenuePercentage.toFixed(1)}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
+                      <div 
                         className="bg-green-500 h-2 rounded-full transition-all"
                         style={{ width: `${revenuePercentage}%` }}
                       ></div>
                     </div>
-
+                    
                     <div className="flex justify-between text-xs text-gray-500">
-                      <span>{t("reports.salesShare")}</span>
+                      <span>판매량 비중</span>
                       <span>{quantityPercentage.toFixed(1)}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
+                      <div 
                         className="bg-blue-500 h-2 rounded-full transition-all"
                         style={{ width: `${quantityPercentage}%` }}
                       ></div>
@@ -363,10 +296,10 @@ export function MenuReport() {
                 </div>
               );
             })}
-
-            {displayData.categoryStats.length === 0 && (
+            
+            {menuData.categoryStats.length === 0 && (
               <div className="text-center text-gray-500 py-4">
-                {t("reports.noCategoryData")}
+                카테고리 데이터가 없습니다.
               </div>
             )}
           </div>
@@ -379,48 +312,39 @@ export function MenuReport() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Award className="w-5 h-5" />
-              {t("reports.popularMenuByQuantity")}
+              인기 메뉴 (판매량 기준)
             </CardTitle>
-            <CardDescription>
-              {t("reports.popularMenuByQuantityDesc")}
-            </CardDescription>
+            <CardDescription>판매 수량이 많은 메뉴 순위입니다.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("reports.rank")}</TableHead>
-                  <TableHead>{t("reports.menuName")}</TableHead>
-                  <TableHead>{t("reports.salesCount")}</TableHead>
-                  <TableHead>{t("reports.revenue")}</TableHead>
+                  <TableHead>순위</TableHead>
+                  <TableHead>메뉴명</TableHead>
+                  <TableHead>판매량</TableHead>
+                  <TableHead>매출</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {displayData.topSellingProducts
-                  .slice(0, 10)
-                  .map((item: any, index: number) => (
-                    <TableRow key={item.product.id}>
-                      <TableCell>
-                        <Badge variant={index < 3 ? "default" : "outline"}>
-                          {index + 1}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {item.product.name}
-                      </TableCell>
-                      <TableCell>
-                        {item.quantity} {t("common.items")}
-                      </TableCell>
-                      <TableCell>{formatCurrency(item.revenue)}</TableCell>
-                    </TableRow>
-                  ))}
-                {displayData.topSellingProducts.length === 0 && (
+                {menuData.topSellingProducts.slice(0, 10).map((item: any, index: number) => (
+                  <TableRow key={item.product.id}>
+                    <TableCell>
+                      <Badge variant={index < 3 ? "default" : "outline"}>
+                        {index + 1}위
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {item.product.name}
+                    </TableCell>
+                    <TableCell>{item.quantity}개</TableCell>
+                    <TableCell>{formatCurrency(item.revenue)}</TableCell>
+                  </TableRow>
+                ))}
+                {menuData.topSellingProducts.length === 0 && (
                   <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="text-center text-gray-500"
-                    >
-                      {t("reports.noSalesData")}
+                    <TableCell colSpan={4} className="text-center text-gray-500">
+                      판매 데이터가 없습니다.
                     </TableCell>
                   </TableRow>
                 )}
@@ -434,50 +358,41 @@ export function MenuReport() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5" />
-              {t("reports.highRevenueMenu")}
+              고매출 메뉴 (매출 기준)
             </CardTitle>
-            <CardDescription>
-              {t("reports.highRevenueMenuDesc")}
-            </CardDescription>
+            <CardDescription>매출 기여도가 높은 메뉴 순위입니다.</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("reports.rank")}</TableHead>
-                  <TableHead>{t("reports.menuName")}</TableHead>
-                  <TableHead>{t("reports.revenue")}</TableHead>
-                  <TableHead>{t("reports.salesCount")}</TableHead>
+                  <TableHead>순위</TableHead>
+                  <TableHead>메뉴명</TableHead>
+                  <TableHead>매출</TableHead>
+                  <TableHead>판매량</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {displayData.topRevenueProducts
-                  .slice(0, 10)
-                  .map((item: any, index: number) => (
-                    <TableRow key={item.product.id}>
-                      <TableCell>
-                        <Badge variant={index < 3 ? "default" : "outline"}>
-                          {index + 1}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {item.product.name}
-                      </TableCell>
-                      <TableCell className="font-medium text-green-600">
-                        {formatCurrency(item.revenue)}
-                      </TableCell>
-                      <TableCell>
-                        {item.quantity} {t("common.items")}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                {displayData.topRevenueProducts.length === 0 && (
+                {menuData.topRevenueProducts.slice(0, 10).map((item: any, index: number) => (
+                  <TableRow key={item.product.id}>
+                    <TableCell>
+                      <Badge variant={index < 3 ? "default" : "outline"}>
+                        {index + 1}위
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {item.product.name}
+                    </TableCell>
+                    <TableCell className="font-medium text-green-600">
+                      {formatCurrency(item.revenue)}
+                    </TableCell>
+                    <TableCell>{item.quantity}개</TableCell>
+                  </TableRow>
+                ))}
+                {menuData.topRevenueProducts.length === 0 && (
                   <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="text-center text-gray-500"
-                    >
-                      {t("reports.noRevenueData")}
+                    <TableCell colSpan={4} className="text-center text-gray-500">
+                      매출 데이터가 없습니다.
                     </TableCell>
                   </TableRow>
                 )}

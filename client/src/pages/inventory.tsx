@@ -39,7 +39,6 @@ import {
   Trash2,
   RotateCcw,
 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { POSHeader } from "@/components/pos/header";
 import { RightSidebar } from "@/components/ui/right-sidebar";
 import { useTranslation } from "@/lib/i18n";
@@ -47,18 +46,16 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Product, Category } from "@shared/schema";
 
-const stockUpdateSchema = (t: any) => z.object({
+const stockUpdateSchema = z.object({
   productId: z.number(),
-  quantity: z.number().min(1, t("inventory.quantityMinError") || "Quantity must be at least 1"),
+  quantity: z.number().min(1, "Quantity must be at least 1"),
   type: z.enum(["add", "subtract", "set"]),
   notes: z.string().optional(),
-  trackInventory: z.boolean().optional(),
   // Fields for new product creation
-  name: z.string().min(1, "Tên sản phẩm là bắt buộc"),
-  sku: z.string().min(1, "SKU là bắt buộc"),
+  name: z.string().optional(),
+  sku: z.string().optional(),
   price: z.string().optional(),
   categoryId: z.number().optional(),
-  productType: z.number().optional(),
 });
 
 type StockUpdateForm = z.infer<typeof stockUpdateSchema>;
@@ -86,7 +83,7 @@ export default function InventoryPage() {
   });
 
   const stockUpdateForm = useForm<StockUpdateForm>({
-    resolver: zodResolver(stockUpdateSchema(t)),
+    resolver: zodResolver(stockUpdateSchema),
     defaultValues: {
       quantity: 1,
       type: "add",
@@ -95,7 +92,7 @@ export default function InventoryPage() {
 
   const updateStockMutation = useMutation({
     mutationFn: async (data: StockUpdateForm) => {
-      console.log("Updating stock:", data);
+      console.log('Updating stock:', data);
       const response = await fetch("/api/inventory/update-stock", {
         method: "POST",
         headers: {
@@ -104,7 +101,7 @@ export default function InventoryPage() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error("Failed to update stock");
+        throw new Error('Failed to update stock');
       }
       return response.json();
     },
@@ -114,48 +111,14 @@ export default function InventoryPage() {
       stockUpdateForm.reset();
       toast({
         title: t("inventory.updateSuccess") || "Cập nhật thành công",
-        description:
-          t("inventory.updateSuccessDescription") ||
-          "Thông tin sản phẩm đã được cập nhật",
+        description: t("inventory.updateSuccessDescription") || "Thông tin sản phẩm đã được cập nhật",
       });
     },
     onError: (error) => {
-      console.error("Update stock error:", error);
+      console.error('Update stock error:', error);
       toast({
         title: t("inventory.updateFailed") || "Cập nhật thất bại",
-        description:
-          t("inventory.updateFailedDescription") ||
-          "Không thể cập nhật sản phẩm. Vui lòng thử lại.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const updateProductTrackInventoryMutation = useMutation({
-    mutationFn: async ({ id, trackInventory }: { id: number; trackInventory: boolean }) => {
-      const response = await fetch(`/api/products/${id}/track-inventory`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ trackInventory }),
-      });
-      if (!response.ok) {
-        throw new Error("Failed to update track inventory");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      toast({
-        title: "Thành công",
-        description: "Trạng thái theo dõi tồn kho đã được cập nhật",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Lỗi",
-        description: "Không thể cập nhật trạng thái theo dõi tồn kho",
+        description: t("inventory.updateFailedDescription") || "Không thể cập nhật sản phẩm. Vui lòng thử lại.",
         variant: "destructive",
       });
     },
@@ -163,7 +126,7 @@ export default function InventoryPage() {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: any) => {
-      console.log("Sending product data:", data);
+      console.log('Sending product data:', data);
       const response = await fetch("/api/products", {
         method: "POST",
         headers: {
@@ -172,7 +135,7 @@ export default function InventoryPage() {
         body: JSON.stringify(data),
       });
       if (!response.ok) {
-        throw new Error("Failed to create product");
+        throw new Error('Failed to create product');
       }
       return response.json();
     },
@@ -182,32 +145,23 @@ export default function InventoryPage() {
       stockUpdateForm.reset();
       toast({
         title: t("inventory.createSuccess") || "Tạo mới thành công",
-        description:
-          t("inventory.createSuccessDescription") ||
-          "Sản phẩm mới đã được thêm vào kho hàng",
+        description: t("inventory.createSuccessDescription") || "Sản phẩm mới đã được thêm vào kho hàng",
       });
     },
     onError: (error: any) => {
-      console.error("Create product error:", error);
-
+      console.error('Create product error:', error);
+      
       // Check if it's a duplicate SKU error
-      if (
-        error?.response?.status === 409 &&
-        error?.response?.data?.code === "DUPLICATE_SKU"
-      ) {
+      if (error?.response?.status === 409 && error?.response?.data?.code === "DUPLICATE_SKU") {
         toast({
           title: t("inventory.duplicateSku") || "Đã tồn tại sản phẩm trong kho",
-          description:
-            t("inventory.duplicateSkuDescription") ||
-            "SKU này đã được sử dụng cho sản phẩm khác",
+          description: t("inventory.duplicateSkuDescription") || "SKU này đã được sử dụng cho sản phẩm khác",
           variant: "destructive",
         });
       } else {
         toast({
           title: t("inventory.createFailed") || "Tạo mới thất bại",
-          description:
-            t("inventory.createFailedDescription") ||
-            "Không thể tạo sản phẩm mới. Vui lòng thử lại.",
+          description: t("inventory.createFailedDescription") || "Không thể tạo sản phẩm mới. Vui lòng thử lại.",
           variant: "destructive",
         });
       }
@@ -220,67 +174,26 @@ export default function InventoryPage() {
         method: "DELETE",
       });
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to delete product");
+        throw new Error('Failed to delete product');
       }
       return response;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       toast({
-        title: "",
-        description: t("inventory.deleteSuccess") || "Xóa sản phẩm thành công",
+        title: t("inventory.deleteSuccess") || "Xóa thành công",
+        description: t("inventory.deleteSuccessDescription") || "Sản phẩm đã được xóa khỏi kho hàng",
       });
     },
     onError: (error) => {
-      console.error("Delete product error:", error);
-
-      let errorMessage = t("inventory.deleteFailedDescription") || "Không thể xóa sản phẩm. Vui lòng thử lại.";
-
-      if (error instanceof Error && error.message.includes("Cannot delete product")) {
-        if (error.message.includes("transactions")) {
-          errorMessage = "Không thể xóa sản phẩm vì đã được sử dụng trong các giao dịch bán hàng.";
-        } else if (error.message.includes("orders")) {
-          errorMessage = "Không thể xóa sản phẩm vì đã được sử dụng trong các đơn hàng.";
-        }
-      }
-
+      console.error('Delete product error:', error);
       toast({
         title: t("inventory.deleteFailed") || "Xóa thất bại",
-        description: errorMessage,
+        description: t("inventory.deleteFailedDescription") || "Không thể xóa sản phẩm. Vui lòng thử lại.",
         variant: "destructive",
       });
     },
   });
-
-  const cleanupMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch("/api/products/cleanup/inactive", {
-        method: "DELETE",
-      });
-      if (!response.ok) {
-        throw new Error("Failed to cleanup inactive products");
-      }
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      toast({
-        title: "Dọn dẹp thành công",
-        description: `Đã xóa ${data.deletedCount} sản phẩm vô hiệu khỏi cơ sở dữ liệu`,
-      });
-    },
-    onError: (error) => {
-      console.error("Cleanup error:", error);
-      toast({
-        title: "Dọn dẹp thất bại",
-        description: "Không thể xóa các sản phẩm vô hiệu. Vui lòng thử lại.",
-        variant: "destructive",
-      });
-    },
-  });
-
-
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
@@ -291,7 +204,7 @@ export default function InventoryPage() {
       product.categoryId.toString() === selectedCategory;
     const matchesStock =
       stockFilter === "all" ||
-      (stockFilter === "low" && product.stock <= 10 && product.stock > 0) ||
+      (stockFilter === "low" && product.stock <= 10) ||
       (stockFilter === "out" && product.stock === 0) ||
       (stockFilter === "in" && product.stock > 10);
 
@@ -319,8 +232,6 @@ export default function InventoryPage() {
         sku: "",
         price: "0",
         categoryId: categories[0]?.id || 1,
-        productType: 1,
-        trackInventory: true,
       });
     } else {
       // Load existing product data for editing
@@ -332,30 +243,14 @@ export default function InventoryPage() {
         sku: product.sku,
         price: product.price,
         categoryId: product.categoryId,
-        productType: product.productType || 1,
-        trackInventory: product.trackInventory !== false,
       });
     }
     setShowStockDialog(true);
   };
 
   const handleDeleteProduct = (product: Product) => {
-    if (
-      window.confirm(
-        `Bạn có chắc chắn muốn xóa vĩnh viễn sản phẩm "${product.name}" khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.`,
-      )
-    ) {
+    if (window.confirm(`${t("inventory.confirmDelete")} "${product.name}"?`)) {
       deleteProductMutation.mutate(product.id);
-    }
-  };
-
-  const handleCleanupInactiveProducts = () => {
-    if (
-      window.confirm(
-        "Bạn có chắc chắn muốn xóa vĩnh viễn tất cả sản phẩm vô hiệu khỏi cơ sở dữ liệu? Hành động này không thể hoàn tác.",
-      )
-    ) {
-      cleanupMutation.mutate();
     }
   };
 
@@ -368,24 +263,15 @@ export default function InventoryPage() {
         price: data.price || "0",
         stock: data.quantity || 0,
         categoryId: data.categoryId || 1,
-        productType: data.productType || 1,
         imageUrl: null,
         isActive: true,
-        trackInventory: data.trackInventory !== false,
       };
-      console.log("Creating product with data:", newProductData);
+      console.log('Creating product with data:', newProductData);
       createProductMutation.mutate(newProductData);
     } else {
-      // Updating existing product stock - include trackInventory
-      const updateData = {
-        productId: selectedProduct.id,
-        quantity: data.quantity,
-        type: data.type,
-        notes: data.notes,
-        trackInventory: data.trackInventory
-      };
-      console.log("Updating stock with data:", updateData);
-      updateStockMutation.mutate(updateData);
+      // Updating existing product stock
+      console.log('Updating stock with data:', data);
+      updateStockMutation.mutate(data);
     }
   };
 
@@ -534,30 +420,28 @@ export default function InventoryPage() {
               <CardTitle className="text-left">
                 {t("inventory.stockStatus")}
               </CardTitle>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    // Create a placeholder product for adding new items
-                    const newProduct: Product = {
-                      id: 0,
-                      name: "",
-                      sku: "",
-                      categoryId: 1,
-                      price: "0",
-                      stock: 0,
-                      imageUrl: null,
-                      isActive: true,
-                    };
-                    handleStockUpdate(newProduct);
-                  }}
-                  className="text-blue-600 border-blue-300 hover:bg-blue-50"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t("inventory.addNewItem")}
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  // Create a placeholder product for adding new items
+                  const newProduct: Product = {
+                    id: 0,
+                    name: "",
+                    sku: "",
+                    categoryId: 1,
+                    price: "0",
+                    stock: 0,
+                    imageUrl: null,
+                    isActive: true,
+                  };
+                  handleStockUpdate(newProduct);
+                }}
+                className="text-blue-600 border-blue-300 hover:bg-blue-50"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {t("inventory.addNewItem")}
+              </Button>
             </CardHeader>
             <CardContent>
               {productsLoading ? (
@@ -567,58 +451,32 @@ export default function InventoryPage() {
                 </div>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full table-auto">
+                  <table className="w-full">
                     <thead>
                       <tr className="border-b border-green-200">
-                        <th className="text-left py-3 px-2 font-medium text-gray-700 w-auto min-w-[120px]">
-                          <div className="leading-tight break-words">
-                            {t("inventory.productName")}
-                          </div>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">
+                          {t("inventory.productName")}
                         </th>
-                        <th className="text-left py-3 px-2 font-medium text-gray-700 w-auto min-w-[80px]">
-                          <div className="leading-tight break-words">
-                            SKU
-                          </div>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">
+                          SKU
                         </th>
-                        <th className="text-left py-3 px-2 font-medium text-gray-700 w-auto min-w-[100px]">
-                          <div className="leading-tight break-words">
-                            {t("tables.productType")}
-                          </div>
+                        <th className="text-left py-3 px-4 font-medium text-gray-700">
+                          {t("common.category")}
                         </th>
-                        <th className="text-left py-3 px-2 font-medium text-gray-700 w-auto min-w-[90px]">
-                          <div className="leading-tight break-words">
-                            {t("common.category")}
-                          </div>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">
+                          {t("inventory.currentStock")}
                         </th>
-                        <th className="text-center py-3 px-2 font-medium text-gray-700 w-auto min-w-[80px]">
-                          <div className="leading-tight break-words">
-                            {t("inventory.currentStock")}
-                          </div>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">
+                          {t("common.status")}
                         </th>
-                        <th className="text-center py-3 px-2 font-medium text-gray-700 w-auto min-w-[80px]">
-                          <div className="leading-tight break-words">
-                            {t("common.status")}
-                          </div>
+                        <th className="text-right py-3 px-4 font-medium text-gray-700">
+                          {t("inventory.unitPrice")}
                         </th>
-                        <th className="text-center py-3 px-2 font-medium text-gray-700 w-auto min-w-[100px]">
-                          <div className="leading-tight break-words">
-                            {t("inventory.trackInventory")}
-                          </div>
+                        <th className="text-right py-3 px-4 font-medium text-gray-700">
+                          {t("inventory.stockValue")}
                         </th>
-                        <th className="text-right py-3 px-2 font-medium text-gray-700 w-auto min-w-[80px]">
-                          <div className="leading-tight break-words">
-                            {t("inventory.unitPrice")}
-                          </div>
-                        </th>
-                        <th className="text-right py-3 px-2 font-medium text-gray-700 w-auto min-w-[100px]">
-                          <div className="leading-tight break-words">
-                            {t("inventory.stockValue")}
-                          </div>
-                        </th>
-                        <th className="text-center py-3 px-2 font-medium text-gray-700 w-auto min-w-[100px]">
-                          <div className="leading-tight break-words">
-                            {t("inventory.management")}
-                          </div>
+                        <th className="text-center py-3 px-4 font-medium text-gray-700">
+                          {t("inventory.management")}
                         </th>
                       </tr>
                     </thead>
@@ -636,62 +494,39 @@ export default function InventoryPage() {
                             key={product.id}
                             className="border-b border-gray-100 hover:bg-green-50/50"
                           >
-                            <td className="py-4 px-2">
-                              <div className="font-medium text-gray-900 break-words">
+                            <td className="py-4 px-4">
+                              <div className="font-medium text-gray-900">
                                 {product.name}
                               </div>
                             </td>
-                            <td className="py-4 px-2 text-gray-600">
-                              <div className="break-words">
-                                {product.sku}
-                              </div>
+                            <td className="py-4 px-4 text-gray-600">
+                              {product.sku}
                             </td>
-                            <td className="py-4 px-2">
+                            <td className="py-4 px-4">
                               <Badge
                                 variant="outline"
-                                className="text-blue-700 border-blue-300 text-xs"
-                              >
-                                {product.productType === 1 ? t("tables.goodsType") : 
-                                 product.productType === 2 ? t("tables.materialType") : 
-                                 product.productType === 3 ? t("tables.finishedProductType") : 
-                                 t("tables.goodsType")}
-                              </Badge>
-                            </td>
-                            <td className="py-4 px-2">
-                              <Badge
-                                variant="outline"
-                                className="text-green-700 border-green-300 text-xs"
+                                className="text-green-700 border-green-300"
                               >
                                 {category?.name || t("inventory.uncategorized")}
                               </Badge>
                             </td>
-                            <td className="py-4 px-2 text-center">
+                            <td className="py-4 px-4 text-center">
                               <span className="text-lg font-semibold">
                                 {product.stock}
                               </span>
                             </td>
-                            <td className="py-4 px-2 text-center">
-                              <Badge className={`${status.color} text-white text-xs`}>
+                            <td className="py-4 px-4 text-center">
+                              <Badge className={`${status.color} text-white`}>
                                 {status.label}
                               </Badge>
                             </td>
-                            <td className="py-4 px-2 text-center">
-                              <Checkbox
-                                checked={product.trackInventory !== false}
-                                disabled={true}
-                              />
+                            <td className="py-4 px-4 text-right text-gray-900">
+                              {parseFloat(product.price).toLocaleString()} ₫
                             </td>
-                            <td className="py-4 px-2 text-right text-gray-900">
-                              <div className="break-words">
-                                {parseFloat(product.price).toLocaleString()} ₫
-                              </div>
+                            <td className="py-4 px-4 text-right font-medium text-gray-900">
+                              {stockValue.toLocaleString()} ₫
                             </td>
-                            <td className="py-4 px-2 text-right font-medium text-gray-900">
-                              <div className="break-words">
-                                {stockValue.toLocaleString()} ₫
-                              </div>
-                            </td>
-                            <td className="py-4 px-2 text-center">
+                            <td className="py-4 px-4 text-center">
                               <div className="flex gap-2 justify-center">
                                 <Button
                                   variant="outline"
@@ -757,8 +592,7 @@ export default function InventoryPage() {
                       {selectedProduct.name}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {t("inventory.currentStockLabel")}:{" "}
-                      {selectedProduct.stock}
+                      {t("inventory.currentStockLabel")}: {selectedProduct.stock}
                       {t("common.items")}
                     </p>
                   </div>
@@ -799,36 +633,6 @@ export default function InventoryPage() {
                               {...field}
                             />
                           </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={stockUpdateForm.control}
-                      name="productType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{t("tables.productType")}</FormLabel>
-                          <Select
-                            onValueChange={(value) =>
-                              field.onChange(parseInt(value))
-                            }
-                            value={field.value?.toString() || "1"}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue
-                                  placeholder={t("tables.selectProductType")}
-                                />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="1">{t("tables.goodsType")}</SelectItem>
-                              <SelectItem value="2">{t("tables.materialType")}</SelectItem>
-                              <SelectItem value="3">{t("tables.finishedProductType")}</SelectItem>
-                            </SelectContent>
-                          </Select>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -925,26 +729,6 @@ export default function InventoryPage() {
                     )}
                   />
                 )}
-
-                <FormField
-                  control={stockUpdateForm.control}
-                  name="trackInventory"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value !== false}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          {t("inventory.trackInventory")}
-                        </FormLabel>
-                      </div>
-                    </FormItem>
-                  )}
-                />
 
                 <FormField
                   control={stockUpdateForm.control}

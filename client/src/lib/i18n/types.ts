@@ -63,11 +63,6 @@ export interface NavigationTranslations {
   reports: string;
   employees: string;
   attendance: string;
-  suppliers: string;
-  salesReports: string;
-  inventoryReports: string;
-  expensesReports: string;
-  profitReports: string;
 }
 
 // Reports translations interface
@@ -90,7 +85,6 @@ export interface ReportsTranslations {
   lastWeek: string;
   lastMonth: string;
   custom: string;
-  filterOptions: string;
 
   // Dashboard metrics
   totalRevenue: string;
@@ -101,8 +95,6 @@ export interface ReportsTranslations {
   activeOrders: string;
   occupiedTables: string;
   monthlyRevenue: string;
-  uniqueProducts: string;
-  credit_card: string;
 
   // Sales analysis
   analyzeRevenue: string;
@@ -118,266 +110,11 @@ export interface ReportsTranslations {
   // Menu analysis
   productPerformance: string;
   categoryPerformance: string;
-  topSellingProducts: string;
-  topRevenueProducts: string;
-  menuItems: string;
-  itemsSold: string;
-  revenueShare: string;
-  salesShare: string;
-  rank: string;
-  menuName: string;
-  salesCount: string;
-  popularMenuByQuantity: string;
-  popularMenuByQuantityDesc: string;
-  highRevenueMenu: string;
-  highRevenueMenuDesc: string;
-  noSalesData: string;
-  noRevenueData: string;
-  noCategoryData: string;
-
-  // Table analysis specific
-  customerCount: string;
-  turnoverRate: string;
-  topRevenueTables: string;
-  topTurnoverTables: string;
-  topUtilizationTables: string;
-  timesPerDay: string;
-  hourUnit: string;
-  timesUnit: string;
-  hour: string;
-  times: string;
-
-  // Additional keys
-  endOfDayReport: string;
-  endOfDayReportTab: string;
-  revenueExpense: string;
-  mainConcern: string;
-  sales: string;
-  inventory: string;
-  summary: string;
-  dateType: string;
-  singleDate: string;
-  dateRange: string;
-  date: string;
-  paymentMethodFilter: string;
-  transactionTypeFilter: string;
-  creator: string;
-  employee: string;
-  customerPayment: string;
-  customerRefund: string;
-  otherExpense: string;
-  supplierRefund: string;
-  supplierPayment: string;
-  printReport: string;
-  reportGenerated: string;
-  dataFrom: string;
-  to: string;
-  printOptions: string;
-  totalTransactions: string;
-  income: string;
-  expenses: string;
-  netProfit: string;
-  paymentMethodBreakdown: string;
-  transactionDetails: string;
-  transactionId: string;
-  time: string;
-  method: string;
-  amount: string;
-  notes: string;
-  cashPayment: string;
-  cardPayment: string;
-  transfer: string;
-  wallet: string;
-
-  // Table detail headers
-  salesDetailsHeader: string;
-  revenueExpenseDetailsHeader: string;
-  inventoryDetailsHeader: string;
-
-  // Sales chart report
-  salesChart: string;
-  salesChartDescription: string;
-
-  // Inventory report
-  inventoryReport: string;
-  inventoryReportDescription: string;
-  productType: string;
-  combo: string;
-  product: string;
-  service: string;
-  inventoryValue: string;
-  inOutInventory: string;
-  detailedInOutInventory: string;
-  disposal: string;
-  employeeBySales: string;
-  customerBySales: string;
-  supplierByPurchase: string;
-  profit: string;
-  salesReportByProduct: string;
-  profitReportByProduct: string;
-  inventoryValueReport: string;
-  inOutInventoryReport: string;
-  detailedInOutInventoryReport: string;
-  disposalReport: string;
-  employeeSalesReport: string;
-  customerSalesReport: string;
-  supplierReportByProduct: string;
-  quantitySold: string;
-  returnQuantity: string;
-  returnValue: string;
-  netRevenue: string;
-  totalCost: string;
-  grossProfit: string;
-  profitMargin: string;
-  salePrice: string;
-  saleValue: string;
-  costPrice: string;
-  inventoryValue: string;
-  openingStock: string;
-  openingValue: string;
-  openingPrice: string;
-  inQuantity: string;
-  outQuantity: string;
-  outValue: string;
-  closingStock: string;
-  closingValue: string;
-  inSupplier: string;
-  inCheck: string;
-  inReturn: string;
-  inTransfer: string;
-  inProduction: string;
-  outSale: string;
-  outDisposal: string;
-  outSupplier: string;
-  outCheck: string;
-  outTransfer: string;
-  outProduction: string;
-  totalDisposed: string;
-  totalValue: string;
-  employeeCount: string;
-  customerCount: string;
-  quantityPurchased: string;
-  supplierCount: string;
-  inValue: string;
-  value: string;
-  quantity: string;
-
-  // Comprehensive sales report
-  comprehensiveSalesReport: string;
-  concernType: string;
-  timeReport: string;
-  profitReport: string;
-  discountReport: string;
-  returnReport: string;
-  employeeReport: string;
-  salesMethod: string;
-  noDelivery: string;
-  delivery: string;
-  salesChannel: string;
-  direct: string;
-  other: string;
-  timeSalesReport: string;
-  profitByInvoiceReport: string;
-  invoiceDiscountReport: string;
-  returnByInvoiceReport: string;
-  employeeSalesReport: string;
-  returnValue: string;
-  netRevenue: string;
-  totalAmount: string;
-  discount: string;
-  totalCost: string;
-  grossProfit: string;
-  totalInvoices: string;
-  invoiceValue: string;
-  invoiceDiscount: string;
-  returnTicketCount: string;
-  seller: string;
-  saleDate: string;
-  paymentDate: string;
-  fromDate: string;
-  toDate: string;
-  barChart: string;
-  pieChart: string;
-  lineChart: string;
-  dailyRevenue: string;
-  paymentMethodDistribution: string;
-  hourlyRevenue: string;
-  barChartDesc: string;
-  pieChartDesc: string;
-  lineChartDesc: string;
-  paymentMethodDetails: string;
-
-  // Table headers for reports
-  transactionCode: string;
-  quantity: string;
-  otherRevenue: string;
-  vat: string;
-  actualRevenue: string;
-  receiptCode: string;
-  payerReceiver: string;
-  revenueExpenseType: string;
-  productCode: string;
-  productName: string;
-  soldQuantity: string;
-  returnQuantity: string;
-  returnValue: string;
-  netRevenue: string;
-
-  // Report specific content
-  salesDetails: string;
-  revenueExpenseDetails: string;
-  inventoryDetails: string;
-  noReportData: string;
-  centralBranch: string;
-
-  // Table headers for reports
-  transactionCode: string;
-  time: string;
-  quantity: string;
-  otherRevenue: string;
-  vat: string;
-  actualRevenue: string;
-  receiptCode: string;
-  payerReceiver: string;
-  revenueExpenseType: string;
-  productCode: string;
-  productName: string;
-  soldQuantity: string;
-  returnQuantity: string;
-  returnValue: string;
-  netRevenue: string;
-
-  // Report titles
-  salesReportTitle: string;
-  revenueReportTitle: string;
-  inventoryReportTitle: string;
-  summaryReportTitle: string;
-
-  // Report specific content
-  salesDetails: string;
-  revenueExpenseDetails: string;
-  inventoryDetails: string;
-  noReportData: string;
-  reportGenerated: string;
-  centralBranch: string;
-
-  // Date labels
-  date: string;
-  saleDate: string;
-  paymentDate: string;
-  fromDate: string;
-  toDate: string;
-
-  // Report titles
-  salesReportTitle: string;
-  revenueReportTitle: string;
-  inventoryReportTitle: string;
-  summaryReportTitle: string;
-
-  // Table detail headers
-  salesDetailsHeader: string;
-  revenueExpenseDetailsHeader: string;
-  inventoryDetailsHeader: string;
+  topProducts: string;
+  popularItems: string;
+  totalSold: string;
+  orderCount: string;
+  performance: string;
 
   // Table analysis
   tablePerformance: string;
@@ -476,37 +213,6 @@ export interface SettingsTranslations {
   addProduct: string;
   editProduct: string;
   allCategories: string;
-  totalCategories: string;
-  totalProducts: string;
-  lowStock: string;
-  outOfStock: string;
-  totalValue: string;
-  totalStockQuantity: string;
-  categoryTitle: string;
-  categoryName: string;
-  categoryNamePlaceholder: string;
-  categoryIcon: string;
-  productName: string;
-  productNamePlaceholder: string;
-  productSku: string;
-  productSkuPlaceholder: string;
-  productCategory: string;
-  productPrice: string;
-  productPricePlaceholder: string;
-  productStock: string;
-  productStockPlaceholder: string;
-  selectCategory: string;
-  noCategories: string;
-  noProducts: string;
-  deleteConfirm: string;
-  categoryDeleteConfirm: string;
-  categoryCreateSuccess: string;
-  categoryUpdateSuccess: string;
-  categoryDeleteSuccess: string;
-  productCreateSuccess: string;
-  productUpdateSuccess: string;
-  total: string;
-  productsShowing: string;
   productNamePlaceholder: string;
   skuLabel: string;
   skuPlaceholder: string;
@@ -739,52 +445,11 @@ export interface AttendanceTranslations {
   recordsDescription: string;
   selectedDate: string;
   unknownEmployee: string;
-  noRecords: string;
-  selectOtherDate: string;
-  clockInTime: string;
-  clockOutTime: string;
-  breakTime: string;
-  totalHours: string;
-  overtime: string;
-  employeeSelect: string;
-  currentStatus: string;
-  refresh: string;
-  qrAttendance: string;
-  qrCodeTitle: string;
-  qrCodeDescription: string;
-  qrCodeInstructions: string;
-  urlCopy: string;
-  copySuccess: string;
-  copySuccessDesc: string;
-  breakEndSuccess: string;
-  breakEndSuccessDesc: string;
-  breakEndError: string;
-  loading: string;
-  noAttendanceData: string;
-  selectEmployeeFirst: string;
-  invalidEmployee: string;
-  alreadyClockedIn: string;
-  notClockedIn: string;
-  alreadyOnBreak: string;
-  notOnBreak: string;
-  confirmClockOut: string;
-  confirmBreakStart: string;
-  confirmBreakEnd: string;
-  processing: string;
-  attendanceHistory: string;
-  weeklyView: string;
-  monthlyView: string;
-  filterByEmployee: string;
-  exportData: string;
-  printReport: string;
   status: {
     present: string;
     absent: string;
     late: string;
     halfDay: string;
-    working: string;
-    onBreak: string;
-    clockedOut: string;
   };
   clockInSuccess: string;
   clockInSuccessDesc: string;
@@ -795,33 +460,10 @@ export interface AttendanceTranslations {
   breakStartSuccess: string;
   breakStartSuccessDesc: string;
   breakStartError: string;
-  breakEndSuccess: string;
-  breakEndSuccessDesc: string;
-  breakEndError: string;
   hours: string;
   minutes: string;
   notesPlaceholder: string;
   workingTime: string;
-  monthlyStats: string;
-  monthlyStatsDesc: string;
-  selectMonth: string;
-  monthPickerPlaceholder: string;
-  totalWorkDays: string;
-  totalAttendance: string;
-  totalWorkHours: string;
-  totalOvertime: string;
-  averageWorkHours: string;
-  dailyAverageWorkHours: string;
-  attendanceRate: string;
-  overallAttendanceRate: string;
-  employeeStats: string;
-  employeeStatsDesc: string;
-  workDays: string;
-  days: string;
-  overtimeHours: string;
-  lateCount: string;
-  absentCount: string;
-  times: string;
   monthlyStats: string;
   monthlyStatsDesc: string;
   selectMonth: string;
@@ -877,8 +519,6 @@ export interface OrdersTranslations {
   noTableInfo: string;
   noInput: string;
   payment: string;
-  tableOrder: string;
-  tableCapacity: string;
   status: {
     pending: string;
     confirmed: string;
@@ -887,8 +527,6 @@ export interface OrdersTranslations {
     served: string;
     paid: string;
     cancelled: string;
-    delivering: string;
-    completed: string;
   };
 }
 
@@ -958,8 +596,6 @@ export interface InventoryTranslations {
   updateSuccessDescription: string;
   duplicateSku: string;
   duplicateSkuDescription: string;
-  quantityMinError: string;
-  trackInventory: string;
 }
 
 // Tables translations interface
@@ -989,7 +625,6 @@ export interface TablesTranslations {
   capacityPlaceholder: string;
   qrCodePlaceholder: string;
   selectStatus: string;
-  unitPrice: string;
 }
 
 export interface Translations {
@@ -1010,15 +645,15 @@ export interface Translations {
 export type TranslationKey =
   | `common.${keyof CommonTranslations}`
   | `nav.${keyof NavigationTranslations}`
-  | `tables.${keyof TablesTranslations}`
-  | `inventory.${keyof InventoryTranslations}`
+  | `reports.${keyof ReportsTranslations}`
+  | `settings.${keyof SettingsTranslations}`
+  | `notFound.${keyof NotFoundTranslations}`
   | `orders.${keyof OrdersTranslations}`
+  | `customers.${keyof CustomersTranslations}`
   | `employees.${keyof EmployeesTranslations}`
   | `attendance.${keyof AttendanceTranslations}`
-  | `settings.${keyof SettingsTranslations}`
-  | `customers.${keyof CustomersTranslations}`
-  | `reports.${keyof ReportsTranslations}`
-  | `notFound.${keyof NotFoundTranslations}`;
+  | `inventory.${keyof InventoryTranslations}`
+  | `tables.${keyof TablesTranslations}`;
 
 // Language-specific translations type
 export interface LanguageTranslations {

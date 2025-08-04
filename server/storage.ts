@@ -40,34 +40,25 @@ import {
   type InsertPointTransaction,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, ilike, and, gte, lte, or, sql, desc } from "drizzle-orm";
+import { eq, ilike, and, gte, lte, or, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Categories
   getCategories(): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
-  updateCategory(
-    id: number,
-    updateData: Partial<InsertCategory>,
-  ): Promise<Category>;
-  deleteCategory(id: number): Promise<void>;
 
   // Products
   getProducts(): Promise<Product[]>;
-  getProductsByCategory(
-    categoryId: number,
-    includeInactive?: boolean,
-  ): Promise<Product[]>;
+  getProductsByCategory(categoryId: number): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
   getProductBySku(sku: string): Promise<Product | undefined>;
-  searchProducts(query: string, includeInactive?: boolean): Promise<Product[]>;
+  searchProducts(query: string): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
   updateProduct(
     id: number,
     product: Partial<InsertProduct>,
   ): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<boolean>;
-  deleteInactiveProducts(): Promise<number>;
   updateProductStock(
     id: number,
     quantity: number,
@@ -102,7 +93,6 @@ export interface IStorage {
     employee: Partial<InsertEmployee>,
   ): Promise<Employee | undefined>;
   deleteEmployee(id: number): Promise<boolean>;
-  getNextEmployeeId(): Promise<string>;
 
   // Attendance
   getAttendanceRecords(
@@ -201,26 +191,8 @@ export interface IStorage {
   getAllPointTransactions(limit?: number): Promise<PointTransaction[]>;
 
   getMembershipThresholds(): Promise<{ GOLD: number; VIP: number }>;
-  updateMembershipThresholds(thresholds: {
-    GOLD: number;
-    VIP: number;
-  }): Promise<{ GOLD: number; VIP: number }>;
-  recalculateAllMembershipLevels(
-    goldThreshold: number,
-    vipThreshold: number,
-  ): Promise<void>;
-
-  getAllProducts(includeInactive?: boolean): Promise<Product[]>;
-  getActiveProducts(): Promise<Product[]>;
-
-  // E-invoice connections
-  getEInvoiceConnections(): Promise<any[]>;
-  getEInvoiceConnection(id: number): Promise<any>;
-  createEInvoiceConnection(data: any): Promise<any>;
-  updateEInvoiceConnection(id: number, data: any): Promise<any>;
-  deleteEInvoiceConnection(id: number): Promise<boolean>;
-
-  getEmployeeByEmail(email: string): Promise<Employee | undefined>;
+  updateMembershipThresholds(thresholds: { GOLD: number; VIP: number }): Promise<{ GOLD: number; VIP: number }>;
+  recalculateAllMembershipLevels(goldThreshold: number, vipThreshold: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -236,51 +208,17 @@ export class DatabaseStorage implements IStorage {
     return category;
   }
 
-  async updateCategory(
-    id: number,
-    updateData: Partial<InsertCategory>,
-  ): Promise<Category> {
-    const [category] = await db
-      .update(categories)
-      .set(updateData)
-      .where(eq(categories.id, id))
-      .returning();
-    return category;
-  }
-
-  async deleteCategory(id: number): Promise<void> {
-    await db.delete(categories).where(eq(categories.id, id));
-  }
-
   async getProducts(): Promise<Product[]> {
-    const result = await db
-      .select()
-      .from(products)
-      .where(eq(products.isActive, true));
-    // Ensure productType has a default value if missing
-    return result.map((product) => ({
-      ...product,
-      productType: product.productType || 1,
-    }));
+    return await db.select().from(products).where(eq(products.isActive, true));
   }
 
-  async getProductsByCategory(
-    categoryId: number,
-    includeInactive: boolean = false,
-  ): Promise<Product[]> {
-    let whereCondition = eq(products.categoryId, categoryId);
-
-    if (!includeInactive) {
-      whereCondition = and(whereCondition, eq(products.isActive, true));
-    }
-
-    const result = await db
+  async getProductsByCategory(categoryId: number): Promise<Product[]> {
+    return await db
       .select()
       .from(products)
-      .where(whereCondition)
-      .orderBy(products.name);
-
-    return result;
+      .where(
+        and(eq(products.categoryId, categoryId), eq(products.isActive, true)),
+      );
   }
 
   async getProduct(id: number): Promise<Product | undefined> {
@@ -299,48 +237,24 @@ export class DatabaseStorage implements IStorage {
     return product || undefined;
   }
 
-  async searchProducts(
-    query: string,
-    includeInactive: boolean = false,
-  ): Promise<Product[]> {
-    let whereCondition = ilike(products.name, `%${query}%`);
-
-    if (!includeInactive) {
-      whereCondition = and(whereCondition, eq(products.isActive, true));
-    }
-
-    return await db.select().from(products).where(whereCondition);
+  async searchProducts(query: string): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .where(
+        and(eq(products.isActive, true), ilike(products.name, `%${query}%`)),
+      );
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
-    try {
-      console.log("Storage: Creating product with data:", insertProduct);
-
-      const productData = {
-        name: insertProduct.name,
-        sku: insertProduct.sku,
-        price: insertProduct.price,
-        stock: insertProduct.stock,
-        categoryId: insertProduct.categoryId,
-        productType: insertProduct.productType || 1,
-        trackInventory: insertProduct.trackInventory !== false,
+    const [product] = await db
+      .insert(products)
+      .values({
+        ...insertProduct,
         imageUrl: insertProduct.imageUrl || null,
-        isActive: true,
-      };
-
-      console.log("Storage: Inserting product data:", productData);
-
-      const [product] = await db
-        .insert(products)
-        .values(productData)
-        .returning();
-
-      console.log("Storage: Product created successfully:", product);
-      return product;
-    } catch (error) {
-      console.error("Storage: Error creating product:", error);
-      throw error;
-    }
+      })
+      .returning();
+    return product;
   }
 
   async updateProduct(
@@ -359,50 +273,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProduct(id: number): Promise<boolean> {
-    try {
-      // Check if product exists in transactions
-      const transactionItemsCheck = await db
-        .select()
-        .from(transactionItems)
-        .where(eq(transactionItems.productId, id))
-        .limit(1);
-
-      if (transactionItemsCheck.length > 0) {
-        throw new Error(
-          "Cannot delete product: it has been used in transactions",
-        );
-      }
-
-      // Check if product exists in order items
-      const orderItemsCheck = await db
-        .select()
-        .from(orderItems)
-        .where(eq(orderItems.productId, id))
-        .limit(1);
-
-      if (orderItemsCheck.length > 0) {
-        throw new Error("Cannot delete product: it has been used in orders");
-      }
-
-      // If no references found, delete the product
-      const result = await db
-        .delete(products)
-        .where(eq(products.id, id))
-        .returning();
-
-      return result.length > 0;
-    } catch (error) {
-      console.error("Error deleting product:", error);
-      throw error;
-    }
-  }
-
-  async deleteInactiveProducts(): Promise<number> {
-    const result = await db
-      .delete(products)
-      .where(eq(products.isActive, false))
+    const [product] = await db
+      .update(products)
+      .set({ isActive: false })
+      .where(eq(products.id, id))
       .returning();
-    return result.length;
+    return !!product;
   }
 
   async updateProductStock(
@@ -493,38 +369,6 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(transactions).orderBy(transactions.createdAt);
   }
 
-  // Get next employee ID in sequence
-  async getNextEmployeeId(): Promise<string> {
-    try {
-      const lastEmployee = await db
-        .select()
-        .from(employees)
-        .orderBy(desc(employees.id))
-        .limit(1);
-
-      if (lastEmployee.length === 0) {
-        return "EMP-001";
-      }
-
-      // Extract number from last employee ID (EMP-001 -> 001)
-      const lastId = lastEmployee[0].employeeId;
-      const match = lastId.match(/EMP-(\d+)/);
-
-      if (match) {
-        const lastNumber = parseInt(match[1], 10);
-        const nextNumber = lastNumber + 1;
-        return `EMP-${nextNumber.toString().padStart(3, "0")}`;
-      }
-
-      // Fallback if format doesn't match
-      return "EMP-001";
-    } catch (error) {
-      console.error("Error generating next employee ID:", error);
-      return "EMP-001";
-    }
-  }
-
-  // Employee methods
   async getEmployees(): Promise<Employee[]> {
     return await db
       .select()
@@ -945,7 +789,6 @@ export class DatabaseStorage implements IStorage {
         .values({
           storeName: "EDPOS 레스토랑",
           storeCode: "STORE001",
-          businessType: "restaurant",
           openTime: "09:00",
           closeTime: "22:00",
         })
@@ -1037,28 +880,21 @@ export class DatabaseStorage implements IStorage {
     const thresholds = await this.getMembershipThresholds();
 
     // Get all customers
-    const allCustomers = await db
-      .select()
-      .from(customers)
-      .orderBy(customers.name);
+    const allCustomers = await db.select().from(customers).orderBy(customers.name);
 
     // Update membership levels based on spending
     const updatedCustomers = [];
     for (const customer of allCustomers) {
-      const totalSpent = parseFloat(customer.totalSpent || "0");
-      const calculatedLevel = this.calculateMembershipLevel(
-        totalSpent,
-        thresholds.GOLD,
-        thresholds.VIP,
-      );
+      const totalSpent = parseFloat(customer.totalSpent || '0');
+      const calculatedLevel = this.calculateMembershipLevel(totalSpent, thresholds.GOLD, thresholds.VIP);
 
       // Update if membership level has changed
       if (customer.membershipLevel !== calculatedLevel) {
         const [updatedCustomer] = await db
           .update(customers)
-          .set({
+          .set({ 
             membershipLevel: calculatedLevel,
-            updatedAt: new Date(),
+            updatedAt: new Date()
           })
           .where(eq(customers.id, customer.id))
           .returning();
@@ -1141,11 +977,7 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async updateCustomerVisit(
-    customerId: number,
-    amount: number,
-    points: number,
-  ) {
+  async updateCustomerVisit(customerId: number, amount: number, points: number) {
     const [customer] = await db
       .select()
       .from(customers)
@@ -1155,17 +987,13 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Customer not found");
     }
 
-    const newTotalSpent = parseFloat(customer.totalSpent || "0") + amount;
+    const newTotalSpent = parseFloat(customer.totalSpent || '0') + amount;
     const newVisitCount = (customer.visitCount || 0) + 1;
     const newPoints = (customer.points || 0) + points;
 
     // Get membership thresholds and calculate new level
     const thresholds = await this.getMembershipThresholds();
-    const newMembershipLevel = this.calculateMembershipLevel(
-      newTotalSpent,
-      thresholds.GOLD,
-      thresholds.VIP,
-    );
+    const newMembershipLevel = this.calculateMembershipLevel(newTotalSpent, thresholds.GOLD, thresholds.VIP);
 
     const [updated] = await db
       .update(customers)
@@ -1256,9 +1084,7 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  async getAllPointTransactions(
-    limit: number = 100,
-  ): Promise<PointTransaction[]> {
+  async getAllPointTransactions(limit: number = 100): Promise<PointTransaction[]> {
     return await db
       .select()
       .from(pointTransactions)
@@ -1277,38 +1103,29 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Parse thresholds from settings or return defaults
-      const goldThreshold =
-        parseInt(settings.goldThreshold as string) || 300000;
+      const goldThreshold = parseInt(settings.goldThreshold as string) || 300000;
       const vipThreshold = parseInt(settings.vipThreshold as string) || 1000000;
 
       return { GOLD: goldThreshold, VIP: vipThreshold };
     } catch (error) {
-      console.error("Error fetching membership thresholds:", error);
+      console.error('Error fetching membership thresholds:', error);
       return { GOLD: 300000, VIP: 1000000 };
     }
   }
 
   // Calculate membership level based on total spent
-  private calculateMembershipLevel(
-    totalSpent: number,
-    goldThreshold: number,
-    vipThreshold: number,
-  ): string {
-    if (totalSpent >= vipThreshold) return "VIP";
-    if (totalSpent >= goldThreshold) return "GOLD";
-    return "SILVER";
+  private calculateMembershipLevel(totalSpent: number, goldThreshold: number, vipThreshold: number): string {
+    if (totalSpent >= vipThreshold) return 'VIP';
+    if (totalSpent >= goldThreshold) return 'GOLD';
+    return 'SILVER';
   }
 
-  async updateMembershipThresholds(thresholds: {
-    GOLD: number;
-    VIP: number;
-  }): Promise<{ GOLD: number; VIP: number }> {
+  async updateMembershipThresholds(thresholds: { GOLD: number; VIP: number }): Promise<{ GOLD: number; VIP: number }> {
     try {
       // Update or insert store settings with thresholds
       const currentSettings = await this.getStoreSettings();
 
-      await db
-        .update(storeSettings)
+      await db.update(storeSettings)
         .set({
           goldThreshold: thresholds.GOLD.toString(),
           vipThreshold: thresholds.VIP.toString(),
@@ -1317,264 +1134,33 @@ export class DatabaseStorage implements IStorage {
         .where(eq(storeSettings.id, currentSettings.id));
 
       // Recalculate all customer membership levels with new thresholds
-      await this.recalculateAllMembershipLevels(
-        thresholds.GOLD,
-        thresholds.VIP,
-      );
+      await this.recalculateAllMembershipLevels(thresholds.GOLD, thresholds.VIP);
 
       return thresholds;
     } catch (error) {
-      console.error("Error updating membership thresholds:", error);
+      console.error('Error updating membership thresholds:', error);
       throw error;
     }
   }
 
   // Recalculate membership levels for all customers
-  async recalculateAllMembershipLevels(
-    goldThreshold: number,
-    vipThreshold: number,
-  ) {
+  async recalculateAllMembershipLevels(goldThreshold: number, vipThreshold: number) {
     const allCustomers = await db.select().from(customers);
 
     for (const customer of allCustomers) {
-      const totalSpent = parseFloat(customer.totalSpent || "0");
-      const calculatedLevel = this.calculateMembershipLevel(
-        totalSpent,
-        goldThreshold,
-        vipThreshold,
-      );
+      const totalSpent = parseFloat(customer.totalSpent || '0');
+      const calculatedLevel = this.calculateMembershipLevel(totalSpent, goldThreshold, vipThreshold);
 
       if (customer.membershipLevel !== calculatedLevel) {
         await db
           .update(customers)
-          .set({
+          .set({ 
             membershipLevel: calculatedLevel,
-            updatedAt: new Date(),
+            updatedAt: new Date()
           })
           .where(eq(customers.id, customer.id));
       }
     }
-  }
-
-  async getAllProducts(includeInactive: boolean = false): Promise<Product[]> {
-    if (includeInactive) {
-      return await db.select().from(products).orderBy(products.name);
-    } else {
-      return await db
-        .select()
-        .from(products)
-        .where(eq(products.isActive, true))
-        .orderBy(products.name);
-    }
-  }
-
-  async getActiveProducts(): Promise<Product[]> {
-    const result = await db
-      .select()
-      .from(products)
-      .where(eq(products.isActive, true))
-      .orderBy(products.name);
-
-    return result;
-  }
-
-  async createProduct(productData: Omit<Product, "id">): Promise<Product> {
-    const [product] = await db
-      .insert(products)
-      .values({
-        ...productData,
-        productType: productData.productType || 1,
-      })
-      .returning();
-    return product;
-  }
-
-  // Invoice templates methods
-  async getInvoiceTemplates(): Promise<any[]> {
-    try {
-      const { invoiceTemplates } = await import("@shared/schema");
-      return await db
-        .select()
-        .from(invoiceTemplates)
-        .orderBy(invoiceTemplates.id);
-    } catch (error) {
-      console.error("Error fetching invoice templates:", error);
-      return [];
-    }
-  }
-
-  async getInvoiceTemplate(id: number): Promise<any> {
-    try {
-      const { invoiceTemplates } = await import("@shared/schema");
-      const [result] = await db
-        .select()
-        .from(invoiceTemplates)
-        .where(eq(invoiceTemplates.id, id));
-      return result;
-    } catch (error) {
-      console.error("Error fetching invoice template:", error);
-      return null;
-    }
-  }
-
-  async createInvoiceTemplate(data: any): Promise<any> {
-    try {
-      const { invoiceTemplates } = await import("@shared/schema");
-
-      // If this template is set as default, unset all other defaults
-      if (data.isDefault) {
-        await db
-          .update(invoiceTemplates)
-          .set({ isDefault: false })
-          .where(eq(invoiceTemplates.isDefault, true));
-      }
-
-      const [result] = await db
-        .insert(invoiceTemplates)
-        .values({
-          ...data,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .returning();
-      return result;
-    } catch (error) {
-      console.error("Error creating invoice template:", error);
-      throw error;
-    }
-  }
-
-  async updateInvoiceTemplate(id: number, data: any): Promise<any> {
-    try {
-      const { invoiceTemplates } = await import("@shared/schema");
-
-      // If this template is set as default, unset all other defaults
-      if (data.isDefault) {
-        await db
-          .update(invoiceTemplates)
-          .set({ isDefault: false })
-          .where(eq(invoiceTemplates.isDefault, true));
-      }
-
-      const [result] = await db
-        .update(invoiceTemplates)
-        .set({
-          ...data,
-          updatedAt: new Date(),
-        })
-        .where(eq(invoiceTemplates.id, id))
-        .returning();
-      return result;
-    } catch (error) {
-      console.error("Error updating invoice template:", error);
-      throw error;
-    }
-  }
-
-  async deleteInvoiceTemplate(id: number): Promise<boolean> {
-    try {
-      const { invoiceTemplates } = await import("@shared/schema");
-      const result = await db
-        .delete(invoiceTemplates)
-        .where(eq(invoiceTemplates.id, id));
-      return result.rowCount > 0;
-    } catch (error) {
-      console.error("Error deleting invoice template:", error);
-      return false;
-    }
-  }
-
-  // E-invoice connections methods
-  async getEInvoiceConnections(): Promise<any[]> {
-    try {
-      const { eInvoiceConnections } = await import("@shared/schema");
-      return await db
-        .select()
-        .from(eInvoiceConnections)
-        .orderBy(eInvoiceConnections.symbol);
-    } catch (error) {
-      console.error("Error fetching e-invoice connections:", error);
-      return [];
-    }
-  }
-
-  async getEInvoiceConnection(id: number): Promise<any> {
-    try {
-      const { eInvoiceConnections } = await import("@shared/schema");
-      const [result] = await db
-        .select()
-        .from(eInvoiceConnections)
-        .where(eq(eInvoiceConnections.id, id));
-      return result;
-    } catch (error) {
-      console.error("Error fetching e-invoice connection:", error);
-      return null;
-    }
-  }
-
-  async createEInvoiceConnection(data: any): Promise<any> {
-    try {
-      const { eInvoiceConnections } = await import("@shared/schema");
-
-      // Generate next symbol number
-      const existingConnections = await this.getEInvoiceConnections();
-      const nextSymbol = (existingConnections.length + 1).toString();
-
-      const [result] = await db
-        .insert(eInvoiceConnections)
-        .values({
-          ...data,
-          symbol: nextSymbol,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .returning();
-      return result;
-    } catch (error) {
-      console.error("Error creating e-invoice connection:", error);
-      throw error;
-    }
-  }
-
-  async updateEInvoiceConnection(id: number, data: any): Promise<any> {
-    try {
-      const { eInvoiceConnections } = await import("@shared/schema");
-      const [result] = await db
-        .update(eInvoiceConnections)
-        .set({ ...data, updatedAt: new Date() })
-        .where(eq(eInvoiceConnections.id, id))
-        .returning();
-      return result;
-    } catch (error) {
-      console.error("Error updating e-invoice connection:", error);
-      throw error;
-    }
-  }
-
-  async deleteEInvoiceConnection(id: number): Promise<boolean> {
-    try {
-      const { eInvoiceConnections } = await import("@shared/schema");
-      const result = await db
-        .delete(eInvoiceConnections)
-        .where(eq(eInvoiceConnections.id, id))
-        .returning();
-      return result.length > 0;
-    } catch (error) {
-      console.error("Error deleting e-invoice connection:", error);
-      return false;
-    }
-  }
-
-  async getEmployeeByEmail(email: string): Promise<Employee | undefined> {
-    if (email && email.trim() !== "") {
-      const [employee] = await db
-        .select()
-        .from(employees)
-        .where(eq(employees.email, email));
-
-      return employee || undefined;
-    }
-    return undefined;
   }
 }
 

@@ -33,18 +33,15 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
       if (searchQuery) {
         params.append("search", searchQuery);
       }
-
+      
       const response = await fetch(`/api/products?${params}`);
       if (!response.ok) throw new Error('Failed to fetch products');
-      const allProducts = await response.json();
-      
-      // Filter out raw materials (productType = 2)
-      return allProducts.filter((product: any) => product.productType !== 2);
+      return response.json();
     },
   });
 
   const handleAddToCart = (product: Product) => {
-    if (product.trackInventory !== false && product.stock <= 0) {
+    if (product.stock <= 0) {
       toast({
         title: t('pos.outOfStock'),
         description: `${product.name} ${t('pos.currentlyOutOfStock')}`,
@@ -53,13 +50,17 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
       return;
     }
 
-    onAddToCart(product);
+    onAddToCart(product.id);
+    toast({
+      title: t('pos.addedToCart'),
+      description: `${product.name} ${t('pos.addedToCart')}`,
+    });
   };
 
   const getPlaceholderImage = (categoryId: number, productName: string) => {
     // Determine the best placeholder based on category and product name
     const name = productName.toLowerCase();
-
+    
     if (categoryId === 1 || name.includes('coffee') || name.includes('tea') || name.includes('juice') || name.includes('drink') || name.includes('beverage')) {
       return placeholderBeverage;
     } else if (categoryId === 2 || name.includes('chip') || name.includes('snack') || name.includes('cookie')) {
@@ -71,7 +72,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
 
   const getPlaceholderIcon = (categoryId: number, productName: string) => {
     const name = productName.toLowerCase();
-
+    
     if (categoryId === 1 || name.includes('coffee') || name.includes('tea') || name.includes('juice') || name.includes('drink') || name.includes('beverage')) {
       return Coffee;
     } else if (categoryId === 2 || name.includes('chip') || name.includes('snack') || name.includes('cookie')) {
@@ -180,7 +181,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
 
   return (
     <main className="flex-1 flex flex-col">
-      <div className="bg-white p-4 border-b pos-border flex items-center justify-between pt-[22px] pb-[22px] mt-2">
+      <div className="bg-white p-4 border-b pos-border flex items-center justify-between pt-[22px] pb-[22px]">
         <div>
           <h2 className="font-medium pos-text-primary text-[14px]">{getCategoryName()}</h2>
           <p className="text-sm pos-text-secondary">{products.length} {t('pos.productsAvailable')}</p>
@@ -216,7 +217,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
             </div>
             <h3 className="text-lg font-medium pos-text-secondary mb-2">{t('pos.noProductsFound')}</h3>
             <p className="pos-text-tertiary">
-              {searchQuery ? "Thử điều chỉnh từ khóa tìm kiếm" : "Không có sản phẩm trong danh mục này"}
+              {searchQuery ? t('pos.tryAdjustingSearch') : t('pos.noProductsInCategory')}
             </p>
           </div>
         ) : (
@@ -228,7 +229,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
               const stockStatus = getStockStatus(product.stock);
               const isPopular = getPopularBadge(product.name);
               const isLowStock = getLowStockBadge(product.stock);
-
+              
               return (
                 <div
                   key={product.id}
@@ -270,17 +271,15 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                           />
                         </div>
                       )}
-
+                      
                       <div className="p-3">
                         <h3 className="font-medium pos-text-primary mb-1 line-clamp-2">{product.name}</h3>
                         <p className="text-sm pos-text-secondary mb-2">SKU: {product.sku}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-bold text-green-600">{parseFloat(product.price).toLocaleString()} ₫</span>
-                          {product.trackInventory !== false && (
-                            <span className={`text-xs font-medium ${stockStatus.color}`}>
-                              {stockStatus.text}
-                            </span>
-                          )}
+                          <span className={`text-xs font-medium ${stockStatus.color}`}>
+                            {stockStatus.text}
+                          </span>
                         </div>
                       </div>
                     </>
@@ -308,23 +307,21 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                         <p className="text-sm pos-text-secondary mb-1">SKU: {product.sku}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-bold text-green-600">{parseFloat(product.price).toLocaleString()} ₫</span>
-                          {product.trackInventory !== false && (
-                            <span className={`text-xs font-medium ${stockStatus.color}`}>
-                              {stockStatus.text}
-                            </span>
-                          )}
+                          <span className={`text-xs font-medium ${stockStatus.color}`}>
+                            {stockStatus.text}
+                          </span>
                         </div>
                       </div>
                     </>
                   )}
-
+                  
                   {/* Badges */}
                   {isPopular && (
                     <div className="absolute top-2 right-2 bg-green-600 text-white text-xs px-2 py-1 rounded-full">
                       {t('pos.popular')}
                     </div>
                   )}
-                  {isLowStock && product.trackInventory !== false && (
+                  {isLowStock && (
                     <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                       {t('pos.lowStock')}
                     </div>

@@ -39,7 +39,7 @@ export function CategorySidebar({
   });
 
   const { data: products = [] } = useQuery<Product[]>({
-    queryKey: ["/api/products/active"],
+    queryKey: ["/api/products"],
   });
 
   const getProductCountForCategory = (categoryId: number | "all") => {
@@ -74,7 +74,7 @@ export function CategorySidebar({
 
   return (
     <aside className="w-64 bg-white shadow-material border-r pos-border flex flex-col">
-      <div className="p-4 border-b pos-border mt-2">
+      <div className="p-4 border-b pos-border">
         <div className="relative mb-3">
           <Input
             type="text"
