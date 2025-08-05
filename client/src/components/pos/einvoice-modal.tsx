@@ -99,8 +99,8 @@ export function EInvoiceModal({
         description: 'Hóa đơn điện tử đã được phát hành và đơn hàng đã được thanh toán',
       });
 
-      // Đóng modal sau khi hoàn tất
-      onClose();
+      // Modal đã được đóng trước khi gọi mutation, không cần đóng lại
+      console.log('✅ Payment completed, modal already closed');
     },
     onError: (error) => {
       console.error('❌ Error completing payment from e-invoice modal:', error);
@@ -109,6 +109,9 @@ export function EInvoiceModal({
         description: 'Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán',
         variant: 'destructive',
       });
+      
+      // Đảm bảo modal đã được đóng ngay cả khi có lỗi
+      console.log('❌ Payment failed, ensuring modal is closed');
     },
   });
 
@@ -541,12 +544,16 @@ export function EInvoiceModal({
           onClose();
         } else if (source === 'table' && orderId) {
           // Logic cho Table: Tự hoàn tất thanh toán luôn
-          console.log('🍽️ Table E-Invoice: Completing payment directly');
+          console.log('🍽️ Table E-Invoice: Completing payment directly for order:', orderId);
+          
+          // Đóng modal ngay lập tức để tránh hiển thị lỗi
+          onClose();
+          
+          // Sau đó hoàn tất thanh toán
           completePaymentMutation.mutate({
             orderId: orderId,
             paymentMethod: 'einvoice'
           });
-          // Modal sẽ được đóng trong onSuccess của completePaymentMutation
         } else {
           // Fallback: trả về data cho parent component xử lý
           console.log('🔄 Fallback: Returning data to parent');

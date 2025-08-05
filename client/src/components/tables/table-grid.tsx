@@ -1197,8 +1197,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         }}
         onConfirm={(eInvoiceData) => {
           console.log('🍽️ Table E-invoice confirmation received:', eInvoiceData);
-          // E-invoice modal sẽ tự xử lý việc cập nhật trạng thái, chỉ cần clear orderForPayment
+          // E-invoice modal đã tự xử lý việc cập nhật trạng thái và đóng modal
+          // Chỉ cần clear orderForPayment để cleanup state
           setOrderForPayment(null);
+          console.log('✅ Table E-invoice process completed, orderForPayment cleared');
         }}
         total={(() => {
           if (!orderForPayment || !orderItems || !Array.isArray(orderItems)) return 0;
