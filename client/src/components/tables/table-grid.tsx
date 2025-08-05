@@ -14,6 +14,8 @@ import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import QRCodeLib from "qrcode";
 import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
+import { PaymentMethodModal } from "@/components/pos/payment-method-modal";
+import { EInvoiceModal } from "@/components/pos/einvoice-modal";
 import type { Table, Order } from "@shared/schema";
 
 interface TableGridProps {
@@ -40,6 +42,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [mixedPaymentOpen, setMixedPaymentOpen] = useState(false);
   const [mixedPaymentData, setMixedPaymentData] = useState<any>(null);
   const [qrLoading, setQrLoading] = useState(false);
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
+  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
+  const [orderForPayment, setOrderForPayment] = useState<Order | null>(null);
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
@@ -961,7 +966,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               {selectedOrder.status !== 'paid' && (
                 <div className="pt-4 space-y-3">
                   <Button
-                    onClick={() => setPaymentMethodsOpen(true)}
+                    onClick={() => {
+                      setOrderForPayment(selectedOrder);
+                      setShowPaymentMethodModal(true);
+                    }}
                     className="w-full bg-green-600 hover:bg-green-700"
                     size="lg"
                   >
@@ -977,46 +985,76 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     Thanh toán bằng điểm
                   </Button>
                 </div>
-              )}
+              )}</div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Method Modal */}
+      <PaymentMethodModal
+        isOpen={showPaymentMethodModal}
+        onClose={() => {
+          setShowPaymentMethodModal(false);
+          setOrderForPayment(null);
+        }}
+        onSelectMethod={(method) => {
+          console.log('Payment method selected:', method);
+          setShowPaymentMethodModal(false);
+          // Show E-invoice modal after payment
+          setShowEInvoiceModal(true);
+        }}
+        total={orderForPayment?.total || 0}
+        onShowEInvoice={() => setShowEInvoiceModal(true)}
+        cartItems={orderItems?.map((item: any) => ({
+          id: item.id,
+          name: item.productName || getProductName(item.productId),
+          price: parseFloat(item.unitPrice || '0'),
+          quantity: item.quantity,
+          sku: item.productSku || `SP${item.productId}`,
+          taxRate: (() => {
+            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+            return product?.taxRate ? parseFloat(product.taxRate) : 10;
+          })()
+        })) || []}
+      />
+
+      {/* E-Invoice Modal */}
+      <EInvoiceModal
+        isOpen={showEInvoiceModal}
+        onClose={() => {
+          setShowEInvoiceModal(false);
+          setOrderForPayment(null);
+        }}
+        onConfirm={(eInvoiceData) => {
+          console.log('E-invoice data:', eInvoiceData);
+          // Complete the payment
+          if (orderForPayment) {
+            completePaymentMutation.mutate({ 
+              orderId: orderForPayment.id, 
+              paymentMethod: 'einvoice' 
+            });
+          }
+          setShowEInvoiceModal(false);
+          setOrderForPayment(null);
+        }}
+        total={orderForPayment?.total || 0}
+        cartItems={orderItems?.map((item: any) => ({
+          id: item.id,
+          name: item.productName || getProductName(item.productId),
+          price: parseFloat(item.unitPrice || '0'),
+          quantity: item.quantity,
+          sku: item.productSku || `SP${item.productId}`,
+          taxRate: (() => {
+            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+            return product?.taxRate ? parseFloat(product.taxRate) : 10;
+          })()
+        })) || []}
+      />
             </div>
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Payment Methods Dialog */}
-      <Dialog open={paymentMethodsOpen} onOpenChange={setPaymentMethodsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Chọn phương thức thanh toán</DialogTitle>
-            <DialogDescription>
-              Chọn phương thức thanh toán cho đơn hàng
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid grid-cols-1 gap-3">
-            {getPaymentMethods().map((method) => (
-              <Button
-                key={method.id}
-                variant="outline"
-                className="justify-start h-auto p-4"
-                onClick={() => handlePayment(method.nameKey)}
-                disabled={completePaymentMutation.isPending}
-              >
-                <span className="text-2xl mr-3">{method.icon}</span>
-                <div className="text-left">
-                  <p className="font-medium">{method.name}</p>
-                </div>
-              </Button>
-            ))}
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => setPaymentMethodsOpen(false)}>
-              Hủy
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      
 
       {/* Points Payment Dialog */}
       <Dialog open={pointsPaymentOpen} onOpenChange={setPointsPaymentOpen}>
