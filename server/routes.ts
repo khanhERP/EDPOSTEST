@@ -2638,7 +2638,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Use external server URL
       const apiBaseUrl =
-        process.env.QR_API_BASE_URL || "http://1.55.212.135:9440"; // Changed port to match example.
+        process.env.QR_API_BASE_URL || "http://1.55.212.135:9335";
       const response = await fetch(
         `${apiBaseUrl}/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`,
         {
