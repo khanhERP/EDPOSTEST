@@ -46,12 +46,18 @@ export interface IStorage {
   // Categories
   getCategories(): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
-  updateCategory(id: number, updateData: Partial<InsertCategory>): Promise<Category>;
+  updateCategory(
+    id: number,
+    updateData: Partial<InsertCategory>,
+  ): Promise<Category>;
   deleteCategory(id: number): Promise<void>;
 
   // Products
   getProducts(): Promise<Product[]>;
-  getProductsByCategory(categoryId: number, includeInactive?: boolean): Promise<Product[]>;
+  getProductsByCategory(
+    categoryId: number,
+    includeInactive?: boolean,
+  ): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
   getProductBySku(sku: string): Promise<Product | undefined>;
   searchProducts(query: string, includeInactive?: boolean): Promise<Product[]>;
@@ -195,8 +201,14 @@ export interface IStorage {
   getAllPointTransactions(limit?: number): Promise<PointTransaction[]>;
 
   getMembershipThresholds(): Promise<{ GOLD: number; VIP: number }>;
-  updateMembershipThresholds(thresholds: { GOLD: number; VIP: number }): Promise<{ GOLD: number; VIP: number }>;
-  recalculateAllMembershipLevels(goldThreshold: number, vipThreshold: number): Promise<void>;
+  updateMembershipThresholds(thresholds: {
+    GOLD: number;
+    VIP: number;
+  }): Promise<{ GOLD: number; VIP: number }>;
+  recalculateAllMembershipLevels(
+    goldThreshold: number,
+    vipThreshold: number,
+  ): Promise<void>;
 
   getAllProducts(includeInactive?: boolean): Promise<Product[]>;
   getActiveProducts(): Promise<Product[]>;
@@ -224,7 +236,10 @@ export class DatabaseStorage implements IStorage {
     return category;
   }
 
-  async updateCategory(id: number, updateData: Partial<InsertCategory>): Promise<Category> {
+  async updateCategory(
+    id: number,
+    updateData: Partial<InsertCategory>,
+  ): Promise<Category> {
     const [category] = await db
       .update(categories)
       .set(updateData)
@@ -238,15 +253,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProducts(): Promise<Product[]> {
-    const result = await db.select().from(products).where(eq(products.isActive, true));
+    const result = await db
+      .select()
+      .from(products)
+      .where(eq(products.isActive, true));
     // Ensure productType has a default value if missing
-    return result.map(product => ({
+    return result.map((product) => ({
       ...product,
-      productType: product.productType || 1
+      productType: product.productType || 1,
     }));
   }
 
-  async getProductsByCategory(categoryId: number, includeInactive: boolean = false): Promise<Product[]> {
+  async getProductsByCategory(
+    categoryId: number,
+    includeInactive: boolean = false,
+  ): Promise<Product[]> {
     let whereCondition = eq(products.categoryId, categoryId);
 
     if (!includeInactive) {
@@ -278,17 +299,17 @@ export class DatabaseStorage implements IStorage {
     return product || undefined;
   }
 
-  async searchProducts(query: string, includeInactive: boolean = false): Promise<Product[]> {
+  async searchProducts(
+    query: string,
+    includeInactive: boolean = false,
+  ): Promise<Product[]> {
     let whereCondition = ilike(products.name, `%${query}%`);
 
     if (!includeInactive) {
       whereCondition = and(whereCondition, eq(products.isActive, true));
     }
 
-    return await db
-      .select()
-      .from(products)
-      .where(whereCondition);
+    return await db.select().from(products).where(whereCondition);
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {
@@ -304,7 +325,7 @@ export class DatabaseStorage implements IStorage {
         productType: insertProduct.productType || 1,
         trackInventory: insertProduct.trackInventory !== false,
         imageUrl: insertProduct.imageUrl || null,
-        isActive: true
+        isActive: true,
       };
 
       console.log("Storage: Inserting product data:", productData);
@@ -347,7 +368,9 @@ export class DatabaseStorage implements IStorage {
         .limit(1);
 
       if (transactionItemsCheck.length > 0) {
-        throw new Error("Cannot delete product: it has been used in transactions");
+        throw new Error(
+          "Cannot delete product: it has been used in transactions",
+        );
       }
 
       // Check if product exists in order items
@@ -490,7 +513,7 @@ export class DatabaseStorage implements IStorage {
       if (match) {
         const lastNumber = parseInt(match[1], 10);
         const nextNumber = lastNumber + 1;
-        return `EMP-${nextNumber.toString().padStart(3, '0')}`;
+        return `EMP-${nextNumber.toString().padStart(3, "0")}`;
       }
 
       // Fallback if format doesn't match
@@ -1014,21 +1037,28 @@ export class DatabaseStorage implements IStorage {
     const thresholds = await this.getMembershipThresholds();
 
     // Get all customers
-    const allCustomers = await db.select().from(customers).orderBy(customers.name);
+    const allCustomers = await db
+      .select()
+      .from(customers)
+      .orderBy(customers.name);
 
     // Update membership levels based on spending
     const updatedCustomers = [];
     for (const customer of allCustomers) {
-      const totalSpent = parseFloat(customer.totalSpent || '0');
-      const calculatedLevel = this.calculateMembershipLevel(totalSpent, thresholds.GOLD, thresholds.VIP);
+      const totalSpent = parseFloat(customer.totalSpent || "0");
+      const calculatedLevel = this.calculateMembershipLevel(
+        totalSpent,
+        thresholds.GOLD,
+        thresholds.VIP,
+      );
 
       // Update if membership level has changed
       if (customer.membershipLevel !== calculatedLevel) {
         const [updatedCustomer] = await db
           .update(customers)
-          .set({ 
+          .set({
             membershipLevel: calculatedLevel,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .where(eq(customers.id, customer.id))
           .returning();
@@ -1111,7 +1141,11 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async updateCustomerVisit(customerId: number, amount: number, points: number) {
+  async updateCustomerVisit(
+    customerId: number,
+    amount: number,
+    points: number,
+  ) {
     const [customer] = await db
       .select()
       .from(customers)
@@ -1121,13 +1155,17 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Customer not found");
     }
 
-    const newTotalSpent = parseFloat(customer.totalSpent || '0') + amount;
+    const newTotalSpent = parseFloat(customer.totalSpent || "0") + amount;
     const newVisitCount = (customer.visitCount || 0) + 1;
     const newPoints = (customer.points || 0) + points;
 
     // Get membership thresholds and calculate new level
     const thresholds = await this.getMembershipThresholds();
-    const newMembershipLevel = this.calculateMembershipLevel(newTotalSpent, thresholds.GOLD, thresholds.VIP);
+    const newMembershipLevel = this.calculateMembershipLevel(
+      newTotalSpent,
+      thresholds.GOLD,
+      thresholds.VIP,
+    );
 
     const [updated] = await db
       .update(customers)
@@ -1218,7 +1256,9 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  async getAllPointTransactions(limit: number = 100): Promise<PointTransaction[]> {
+  async getAllPointTransactions(
+    limit: number = 100,
+  ): Promise<PointTransaction[]> {
     return await db
       .select()
       .from(pointTransactions)
@@ -1237,29 +1277,38 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Parse thresholds from settings or return defaults
-      const goldThreshold = parseInt(settings.goldThreshold as string) || 300000;
+      const goldThreshold =
+        parseInt(settings.goldThreshold as string) || 300000;
       const vipThreshold = parseInt(settings.vipThreshold as string) || 1000000;
 
       return { GOLD: goldThreshold, VIP: vipThreshold };
     } catch (error) {
-      console.error('Error fetching membership thresholds:', error);
+      console.error("Error fetching membership thresholds:", error);
       return { GOLD: 300000, VIP: 1000000 };
     }
   }
 
   // Calculate membership level based on total spent
-  private calculateMembershipLevel(totalSpent: number, goldThreshold: number, vipThreshold: number): string {
-    if (totalSpent >= vipThreshold) return 'VIP';
-    if (totalSpent >= goldThreshold) return 'GOLD';
-    return 'SILVER';
+  private calculateMembershipLevel(
+    totalSpent: number,
+    goldThreshold: number,
+    vipThreshold: number,
+  ): string {
+    if (totalSpent >= vipThreshold) return "VIP";
+    if (totalSpent >= goldThreshold) return "GOLD";
+    return "SILVER";
   }
 
-  async updateMembershipThresholds(thresholds: { GOLD: number; VIP: number }): Promise<{ GOLD: number; VIP: number }> {
+  async updateMembershipThresholds(thresholds: {
+    GOLD: number;
+    VIP: number;
+  }): Promise<{ GOLD: number; VIP: number }> {
     try {
       // Update or insert store settings with thresholds
       const currentSettings = await this.getStoreSettings();
 
-      await db.update(storeSettings)
+      await db
+        .update(storeSettings)
         .set({
           goldThreshold: thresholds.GOLD.toString(),
           vipThreshold: thresholds.VIP.toString(),
@@ -1268,29 +1317,39 @@ export class DatabaseStorage implements IStorage {
         .where(eq(storeSettings.id, currentSettings.id));
 
       // Recalculate all customer membership levels with new thresholds
-      await this.recalculateAllMembershipLevels(thresholds.GOLD, thresholds.VIP);
+      await this.recalculateAllMembershipLevels(
+        thresholds.GOLD,
+        thresholds.VIP,
+      );
 
       return thresholds;
     } catch (error) {
-      console.error('Error updating membership thresholds:', error);
+      console.error("Error updating membership thresholds:", error);
       throw error;
     }
   }
 
   // Recalculate membership levels for all customers
-  async recalculateAllMembershipLevels(goldThreshold: number, vipThreshold: number) {
+  async recalculateAllMembershipLevels(
+    goldThreshold: number,
+    vipThreshold: number,
+  ) {
     const allCustomers = await db.select().from(customers);
 
     for (const customer of allCustomers) {
-      const totalSpent = parseFloat(customer.totalSpent || '0');
-      const calculatedLevel = this.calculateMembershipLevel(totalSpent, goldThreshold, vipThreshold);
+      const totalSpent = parseFloat(customer.totalSpent || "0");
+      const calculatedLevel = this.calculateMembershipLevel(
+        totalSpent,
+        goldThreshold,
+        vipThreshold,
+      );
 
       if (customer.membershipLevel !== calculatedLevel) {
         await db
           .update(customers)
-          .set({ 
+          .set({
             membershipLevel: calculatedLevel,
-            updatedAt: new Date()
+            updatedAt: new Date(),
           })
           .where(eq(customers.id, customer.id));
       }
@@ -1299,10 +1358,7 @@ export class DatabaseStorage implements IStorage {
 
   async getAllProducts(includeInactive: boolean = false): Promise<Product[]> {
     if (includeInactive) {
-      return await db
-        .select()
-        .from(products)
-        .orderBy(products.name);
+      return await db.select().from(products).orderBy(products.name);
     } else {
       return await db
         .select()
@@ -1323,10 +1379,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(productData: Omit<Product, "id">): Promise<Product> {
-    const [product] = await db.insert(products).values({
-      ...productData,
-      productType: productData.productType || 1
-    }).returning();
+    const [product] = await db
+      .insert(products)
+      .values({
+        ...productData,
+        productType: productData.productType || 1,
+      })
+      .returning();
     return product;
   }
 
@@ -1334,7 +1393,10 @@ export class DatabaseStorage implements IStorage {
   async getInvoiceTemplates(): Promise<any[]> {
     try {
       const { invoiceTemplates } = await import("@shared/schema");
-      return await db.select().from(invoiceTemplates).orderBy(invoiceTemplates.id);
+      return await db
+        .select()
+        .from(invoiceTemplates)
+        .orderBy(invoiceTemplates.id);
     } catch (error) {
       console.error("Error fetching invoice templates:", error);
       return [];
@@ -1361,16 +1423,20 @@ export class DatabaseStorage implements IStorage {
 
       // If this template is set as default, unset all other defaults
       if (data.isDefault) {
-        await db.update(invoiceTemplates)
+        await db
+          .update(invoiceTemplates)
           .set({ isDefault: false })
           .where(eq(invoiceTemplates.isDefault, true));
       }
 
-      const [result] = await db.insert(invoiceTemplates).values({
-        ...data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }).returning();
+      const [result] = await db
+        .insert(invoiceTemplates)
+        .values({
+          ...data,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
       return result;
     } catch (error) {
       console.error("Error creating invoice template:", error);
@@ -1384,12 +1450,14 @@ export class DatabaseStorage implements IStorage {
 
       // If this template is set as default, unset all other defaults
       if (data.isDefault) {
-        await db.update(invoiceTemplates)
+        await db
+          .update(invoiceTemplates)
           .set({ isDefault: false })
           .where(eq(invoiceTemplates.isDefault, true));
       }
 
-      const [result] = await db.update(invoiceTemplates)
+      const [result] = await db
+        .update(invoiceTemplates)
         .set({
           ...data,
           updatedAt: new Date(),
@@ -1406,7 +1474,8 @@ export class DatabaseStorage implements IStorage {
   async deleteInvoiceTemplate(id: number): Promise<boolean> {
     try {
       const { invoiceTemplates } = await import("@shared/schema");
-      const result = await db.delete(invoiceTemplates)
+      const result = await db
+        .delete(invoiceTemplates)
         .where(eq(invoiceTemplates.id, id));
       return result.rowCount > 0;
     } catch (error) {
@@ -1419,7 +1488,10 @@ export class DatabaseStorage implements IStorage {
   async getEInvoiceConnections(): Promise<any[]> {
     try {
       const { eInvoiceConnections } = await import("@shared/schema");
-      return await db.select().from(eInvoiceConnections).orderBy(eInvoiceConnections.symbol);
+      return await db
+        .select()
+        .from(eInvoiceConnections)
+        .orderBy(eInvoiceConnections.symbol);
     } catch (error) {
       console.error("Error fetching e-invoice connections:", error);
       return [];
@@ -1448,12 +1520,15 @@ export class DatabaseStorage implements IStorage {
       const existingConnections = await this.getEInvoiceConnections();
       const nextSymbol = (existingConnections.length + 1).toString();
 
-      const [result] = await db.insert(eInvoiceConnections).values({
-        ...data,
-        symbol: nextSymbol,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }).returning();
+      const [result] = await db
+        .insert(eInvoiceConnections)
+        .values({
+          ...data,
+          symbol: nextSymbol,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
       return result;
     } catch (error) {
       console.error("Error creating e-invoice connection:", error);
@@ -1491,11 +1566,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEmployeeByEmail(email: string): Promise<Employee | undefined> {
-    const [employee] = await db
-      .select()
-      .from(employees)
-      .where(eq(employees.email, email));
-    return employee || undefined;
+    if (email) {
+      const [employee] = await db
+        .select()
+        .from(employees)
+        .where(eq(employees.email, email));
+      return employee || undefined;
+    } else {
+      return undefined;
+    }
   }
 
   async getNextEmployeeId(): Promise<string> {
@@ -1505,17 +1584,17 @@ export class DatabaseStorage implements IStorage {
       .from(employees)
       .orderBy(sql`CAST(SUBSTRING(${employees.employeeId}, 5) AS INTEGER) DESC`)
       .limit(1);
-    
+
     if (!lastEmployee) {
       return "EMP-001";
     }
-    
+
     // Extract number from EMP-XXX format
-    const lastNumber = parseInt(lastEmployee.employeeId.split('-')[1]);
+    const lastNumber = parseInt(lastEmployee.employeeId.split("-")[1]);
     const nextNumber = lastNumber + 1;
-    
+
     // Format with leading zeros
-    return `EMP-${nextNumber.toString().padStart(3, '0')}`;
+    return `EMP-${nextNumber.toString().padStart(3, "0")}`;
   }
 }
 
