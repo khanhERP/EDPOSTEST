@@ -84,10 +84,13 @@ export function EInvoiceModal({
   });
 
   // Fetch active invoice templates for dropdown
-  const { data: invoiceTemplates = [] } = useQuery<any[]>({
+  const { data: allInvoiceTemplates = [] } = useQuery<any[]>({
     queryKey: ["/api/invoice-templates/active"],
     enabled: isOpen,
   });
+
+  // Filter templates to only show ones that are in use (useCK: true)
+  const invoiceTemplates = allInvoiceTemplates.filter(template => template.useCK === true);
 
   // Reset form only when modal opens, not when cartItems/total changes
   useEffect(() => {
