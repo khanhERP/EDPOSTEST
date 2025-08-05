@@ -91,27 +91,23 @@ export function EInvoiceModal({
       console.log('🔄 E-invoice modal: Starting payment completion mutation for order:', orderId);
       return apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod });
     },
-    onSuccess: (data, variables) => {
-      console.log('🎯 E-invoice modal completed payment successfully for order:', variables.orderId);
+    onSuccess: () => {
+      console.log('✅ Table payment completed from e-invoice modal');
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-      
+
       toast({
-        title: 'Thanh toán thành công',
+        title: 'Thành công',
         description: 'Hóa đơn điện tử đã được phát hành và đơn hàng đã được thanh toán',
       });
-
-      console.log('✅ E-invoice modal: Payment completed, queries invalidated');
     },
-    onError: (error, variables) => {
-      console.error('❌ Error completing payment from e-invoice modal for order:', variables.orderId, error);
+    onError: (error) => {
+      console.error('❌ Error completing payment from e-invoice modal:', error);
       toast({
         title: 'Lỗi',
         description: 'Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán',
         variant: 'destructive',
       });
-      
-      console.log('❌ E-invoice modal: Payment failed for order:', variables.orderId);
     },
   });
 
@@ -528,47 +524,37 @@ export function EInvoiceModal({
         alert(
           `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}\nNgày phát hành: ${result.data?.invDate ? new Date(result.data.invDate).toLocaleString('vi-VN') : "N/A"}`,
         );
-        
+
         // Xử lý logic khác nhau theo nguồn gọi
         if (source === 'pos') {
-          // Logic cho POS: chỉ xác nhận thanh toán và đóng modal
-          console.log('🏪 POS E-Invoice: Processing payment completion');
+          // Logic cho POS: Chỉ trả về data cho parent xử lý
+          console.log('🛒 POS E-Invoice: Returning data to shopping cart');
           onConfirm({
-            ...formData,
+            source: 'pos',
             invoiceData: result.data,
-            cartItems: cartItems,
-            total: total,
-            paymentMethod: 'einvoice',
-            source: 'pos'
+            paymentMethod: 'einvoice'
           });
           onClose();
         } else if (source === 'table' && orderId) {
-          // Logic cho Table: Tự hoàn tất thanh toán luôn
-          console.log('🍽️ Table E-Invoice: Completing payment directly for order:', orderId);
-          console.log('🍽️ Invoice data received:', result.data);
-          
-          // Gọi onConfirm trước để parent component biết về việc phát hành thành công
-          onConfirm({
-            ...formData,
-            invoiceData: result.data,
-            cartItems: cartItems,
-            total: total,
-            paymentMethod: 'einvoice',
-            source: 'table',
-            orderId: orderId
+          // Logic cho Table: Hoàn tất thanh toán và đóng modal
+          console.log('🍽️ Table E-Invoice SUCCESS: Completing payment for order:', orderId);
+
+          // Hoàn tất thanh toán trước
+          completePaymentMutation.mutate({
+            orderId: orderId,
+            paymentMethod: 'einvoice'
           });
-          
-          // Đóng modal ngay lập tức
+
+          // Trả về thông tin cho parent để cleanup
+          onConfirm({
+            source: 'table',
+            orderId: orderId,
+            invoiceData: result.data,
+            paymentMethod: 'einvoice'
+          });
+
+          // Đóng modal sau khi hoàn tất
           onClose();
-          
-          // Delay một chút để đảm bảo modal đã đóng rồi mới gọi mutation
-          setTimeout(() => {
-            console.log('🍽️ Executing payment completion for order:', orderId);
-            completePaymentMutation.mutate({
-              orderId: orderId,
-              paymentMethod: 'einvoice'
-            });
-          }, 100);
         } else {
           // Fallback: trả về data cho parent component xử lý
           console.log('🔄 Fallback: Returning data to parent');

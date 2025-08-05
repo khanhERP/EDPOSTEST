@@ -1197,22 +1197,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         }}
         onConfirm={(eInvoiceData) => {
           console.log('🍽️ Table E-invoice confirmation received:', eInvoiceData);
-          console.log('🍽️ E-invoice data details:', {
-            orderId: eInvoiceData?.orderId,
-            source: eInvoiceData?.source,
-            paymentMethod: eInvoiceData?.paymentMethod,
-            invoiceNo: eInvoiceData?.invoiceData?.invoiceNo
-          });
-          
-          // Clear orderForPayment để cleanup state
+          // E-invoice modal đã tự xử lý việc cập nhật trạng thái và đóng modal
+          // Chỉ cần cleanup state
           setOrderForPayment(null);
-          
-          // Close all dialogs immediately
-          setOrderDetailsOpen(false);
-          setShowPaymentMethodModal(false);
-          setShowEInvoiceModal(false);
-          
-          console.log('✅ Table E-invoice process completed, dialogs closed, state cleared');
+          console.log('✅ Table E-invoice process completed, state cleared');
         }}
         total={(() => {
           if (!orderForPayment || !orderItems || !Array.isArray(orderItems)) return 0;
