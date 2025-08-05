@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
 import QRCodeLib from "qrcode";
+import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
 import type { Table, Order } from "@shared/schema";
 
 interface TableGridProps {
@@ -39,8 +40,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [mixedPaymentOpen, setMixedPaymentOpen] = useState(false);
   const [mixedPaymentData, setMixedPaymentData] = useState<any>(null);
   const [qrLoading, setQrLoading] = useState(false);
-  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
-  const [eInvoiceOrderData, setEInvoiceOrderData] = useState<any>(null);
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
@@ -330,29 +329,113 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     const method = getPaymentMethods().find(m => m.nameKey === paymentMethodKey);
     if (!method) return;
 
-    // If cash payment, show E-Invoice modal first
+    // If cash payment, proceed directly
     if (paymentMethodKey === "cash") {
-      // Prepare cart items for E-Invoice modal
-      const cartItems = orderItems?.map((item: any) => ({
-        id: item.productId || item.id,
-        name: item.productName || getProductName(item.productId),
-        price: parseFloat(item.unitPrice || "0"),
-        quantity: item.quantity,
-        sku: item.sku || `FOOD${String(item.productId).padStart(5, '0')}`,
-        taxRate: parseFloat(item.taxRate || "10")
-      })) || [];
-
-      setEInvoiceOrderData({
-        order: selectedOrder,
-        cartItems: cartItems,
-        paymentMethod: paymentMethodKey
-      });
-      setShowEInvoiceModal(true);
-      setPaymentMethodsOpen(false);
+      completePaymentMutation.mutate({ orderId: selectedOrder.id, paymentMethod: paymentMethodKey });
       return;
     }
 
-    // For non-cash payments, show QR code
+    // For QR Code payment, use CreateQRPos API
+    if (paymentMethodKey === "qrCode") {
+      try {
+        setQrLoading(true);
+        const { createQRPosAsync, CreateQRPosRequest } = await import("@/lib/api");
+
+        const transactionUuid = `TXN-${Date.now()}`;
+        const depositAmt = Number(selectedOrder.total);
+
+        const qrRequest: CreateQRPosRequest = {
+          transactionUuid,
+          depositAmt: depositAmt,
+          posUniqueId: "ER002",
+          accntNo: "0900993023",
+          posfranchiseeName: "DOOKI-HANOI",
+          posCompanyName: "HYOJUNG",
+          posBillNo: `BILL-${Date.now()}`
+        };
+
+        const bankCode = "79616001";
+        const clientID = "91a3a3668724e631e1baf4f8526524f3";
+
+        console.log('Calling CreateQRPos API with:', { qrRequest, bankCode, clientID });
+
+        const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
+
+        console.log('CreateQRPos API response:', qrResponse);
+
+        // Generate QR code from the received QR data
+        if (qrResponse.qrData) {
+          // Use qrData directly for QR code generation
+          let qrContent = qrResponse.qrData;
+          try {
+            // Try to decode if it's base64 encoded
+            qrContent = atob(qrResponse.qrData);
+          } catch (e) {
+            // If decode fails, use the raw qrData
+            console.log('Using raw qrData as it is not base64 encoded');
+          }
+
+          const qrUrl = await QRCodeLib.toDataURL(qrContent, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          setQrCodeUrl(qrUrl);
+          setSelectedPaymentMethod({ key: paymentMethodKey, method });
+          setShowQRPayment(true);
+          setPaymentMethodsOpen(false);
+        } else {
+          console.error('No QR data received from API');
+          // Fallback to mock QR code
+          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
+          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          setQrCodeUrl(qrUrl);
+          setSelectedPaymentMethod({ key: paymentMethodKey, method });
+          setShowQRPayment(true);
+          setPaymentMethodsOpen(false);
+        }
+      } catch (error) {
+        console.error('Error calling CreateQRPos API:', error);
+        // Fallback to mock QR code on error
+        try {
+          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
+          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          setQrCodeUrl(qrUrl);
+          setSelectedPaymentMethod({ key: paymentMethodKey, method });
+          setShowQRPayment(true);
+          setPaymentMethodsOpen(false);
+        } catch (fallbackError) {
+          console.error('Error generating fallback QR code:', fallbackError);
+          toast({
+            title: 'Lỗi',
+            description: 'Không thể tạo mã QR',
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        setQrLoading(false);
+      }
+      return;
+    }
+
+    // For other non-cash payments, show mock QR code
     try {
       const qrData = `${method.name} Payment\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
       const qrUrl = await QRCodeLib.toDataURL(qrData, {
@@ -379,10 +462,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   const handleQRPaymentConfirm = () => {
     if (selectedOrder && selectedPaymentMethod) {
-      completePaymentMutation.mutate({ 
-        orderId: selectedOrder.id, 
-        paymentMethod: selectedPaymentMethod.key 
-      });
+      // Check if this is a mixed payment (from mixed payment modal)
+      if (mixedPaymentData && selectedPaymentMethod.key === 'transfer') {
+        mixedPaymentMutation.mutate({
+          customerId: mixedPaymentData.customerId,
+          points: mixedPaymentData.pointsToUse,
+          orderId: mixedPaymentData.orderId,
+          paymentMethod: 'transfer'
+        });
+      } else {
+        // Regular payment
+        completePaymentMutation.mutate({ 
+          orderId: selectedOrder.id, 
+          paymentMethod: selectedPaymentMethod.key 
+        });
+      }
       setShowQRPayment(false);
       setQrCodeUrl("");
       setSelectedPaymentMethod(null);
@@ -393,7 +487,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     setShowQRPayment(false);
     setQrCodeUrl("");
     setSelectedPaymentMethod(null);
-    setPaymentMethodsOpen(true);
+
+    // Check if this came from mixed payment modal
+    if (mixedPaymentData) {
+      setMixedPaymentOpen(true);
+    } else {
+      setPaymentMethodsOpen(true);
+    }
   };
 
   const handleEditOrder = (order: Order, table: Table) => {
@@ -497,18 +597,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     };
 
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
-  };
-
-    const handleEInvoiceConfirm = () => {
-    if (eInvoiceOrderData && eInvoiceOrderData.order) {
-      // Complete the payment after E-Invoice confirmation
-      completePaymentMutation.mutate({ 
-        orderId: eInvoiceOrderData.order.id, 
-        paymentMethod: eInvoiceOrderData.paymentMethod 
-      });
-      setShowEInvoiceModal(false);
-      setEInvoiceOrderData(null);
-    }
   };
 
   if (isLoading) {
@@ -798,7 +886,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           );
                         } else {
                           console.log('💔 NO ITEMS TO RENDER - Complete debug info:');
-const completeDebug = {
+                          const completeDebug = {
                             orderItemsExists: !!orderItems,
                             orderItemsType: typeof orderItems,
                             isArray: Array.isArray(orderItems),
@@ -1075,13 +1163,25 @@ const completeDebug = {
           </DialogHeader>
 
           <div className="space-y-4 p-4">
-            {/* Order Summary */}
+            {/* Payment Amount Summary */}
             {selectedOrder && (
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600">Đơn hàng: {selectedOrder.orderNumber}</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                <p className="text-sm text-gray-500 mb-2">Số tiền cần thanh toán:</p>
+                <p className="text-3xl font-bold text-green-600">
+                  {mixedPaymentData ? 
+                    mixedPaymentData.remainingAmount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) :
+                    Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  } ₫
                 </p>
+                {mixedPaymentData && (
+                  <div className="mt-2 pt-2 border-t border-gray-300">
+                    <p className="text-xs text-blue-600">
+                      Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}P 
+                      (-{(mixedPaymentData.pointsToUse * 1000).toLocaleString()} ₫)
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1184,13 +1284,84 @@ const completeDebug = {
                   <Button
                     variant="outline"
                     className="justify-start h-auto p-4"
-                    onClick={() => mixedPaymentMutation.mutate({
-                      customerId: mixedPaymentData.customerId,
-                      points: mixedPaymentData.pointsToUse,
-                      orderId: mixedPaymentData.orderId,
-                      paymentMethod: 'transfer'
-                    })}
-                    disabled={mixedPaymentMutation.isPending}
+                    onClick={async () => {
+                      // Use CreateQRPos API for transfer payment like QR Code
+                      try {
+                        setQrLoading(true);
+                        const transactionUuid = `TXN-TRANSFER-${Date.now()}`;
+                        const depositAmt = Number(mixedPaymentData.remainingAmount);
+
+                        const qrRequest: CreateQRPosRequest = {
+                          transactionUuid,
+                          depositAmt: depositAmt,
+                          posUniqueId: "ER002",
+                          accntNo: "0900993023",
+                          posfranchiseeName: "DOOKI-HANOI",
+                          posCompanyName: "HYOJUNG",
+                          posBillNo: `TRANSFER-${Date.now()}`
+                        };
+
+                        const bankCode = "79616001";
+                        const clientID = "91a3a3668724e631e1baf4f8526524f3";
+
+                        console.log('Calling CreateQRPos API for transfer payment:', { qrRequest, bankCode, clientID });
+
+                        const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
+
+                        console.log('CreateQRPos API response for transfer:', qrResponse);
+
+                        // Generate QR code from the received QR data and show QR modal
+                        if (qrResponse.qrData) {
+                          let qrContent = qrResponse.qrData;
+                          try {
+                            // Try to decode if it's base64 encoded
+                            qrContent = atob(qrResponse.qrData);
+                          } catch (e) {
+                            // If decode fails, use the raw qrData
+                            console.log('Using raw qrData for transfer as it is not base64 encoded');
+                          }
+
+                          const qrUrl = await QRCodeLib.toDataURL(qrContent, {
+                            width: 256,
+                            margin: 2,
+                            color: {
+                              dark: '#000000',
+                              light: '#FFFFFF'
+                            }
+                          });
+
+                          // Set QR code data and show QR payment modal
+                          setQrCodeUrl(qrUrl);
+                          setSelectedPaymentMethod({ 
+                            key: 'transfer', 
+                            method: { name: 'Chuyển khoản', icon: '💳' } 
+                          });
+                          setShowQRPayment(true);
+                          setMixedPaymentOpen(false);
+                        } else {
+                          console.error('No QR data received from API for transfer');
+                          // Fallback to direct payment
+                          mixedPaymentMutation.mutate({
+                            customerId: mixedPaymentData.customerId,
+                            points: mixedPaymentData.pointsToUse,
+                            orderId: mixedPaymentData.orderId,
+                            paymentMethod: 'transfer'
+                          });
+                        }
+                      } catch (error) {
+                        console.error('Error calling CreateQRPos API for transfer:', error);
+                        // Fallback to direct payment on error
+                        mixedPaymentMutation.mutate({
+                          customerId: mixedPaymentData.customerId,
+                          points: mixedPaymentData.pointsToUse,
+                          orderId: mixedPaymentData.orderId,
+                          paymentMethod: 'transfer'
+                        });
+                      } finally {
+                        setQrLoading(false);
+                      }
+                    }}
+                    disabled={mixedPaymentMutation.isPending || qrLoading}
                   >
                     <span className="text-2xl mr-3">💳</span>
                     <div className="text-left">

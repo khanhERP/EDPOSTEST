@@ -1565,61 +1565,16 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getEmployeeByEmail(email: string | null): Promise<Employee | undefined> {
+  async getEmployeeByEmail(email: string): Promise<Employee | undefined> {
     if (email && email.trim() !== "") {
       const [employee] = await db
         .select()
         .from(employees)
-        .where(eq(employees.email, email.trim()));
+        .where(eq(employees.email, email));
+
       return employee || undefined;
-    } else {
-      return undefined;
     }
-  }
-
-  async getNextEmployeeId(): Promise<string> {
-    try {
-      // Get all employees ordered by ID to find the latest
-      const allEmployees = await db
-        .select({ employeeId: employees.employeeId })
-        .from(employees)
-        .orderBy(employees.employeeId);
-
-      if (allEmployees.length === 0) {
-        return "EMP-001";
-      }
-
-      console.log("All employee IDs:", allEmployees.map(e => e.employeeId));
-
-      // Extract numbers from employee IDs with format EMP-XXX (3 digits max)
-      const validNumbers = allEmployees
-        .map(emp => {
-          // Only match EMP- followed by 1-3 digits
-          const match = emp.employeeId.match(/^EMP-(\d{1,3})$/);
-          return match ? parseInt(match[1], 10) : null;
-        })
-        .filter(num => num !== null && num > 0 && num <= 999);
-
-      console.log("Valid sequential numbers:", validNumbers);
-
-      if (validNumbers.length === 0) {
-        return "EMP-001";
-      }
-
-      const maxNumber = Math.max(...validNumbers);
-      const nextNumber = maxNumber + 1;
-
-      console.log("Max valid number:", maxNumber, "Next number:", nextNumber);
-
-      // Format with 3 digits
-      const nextId = `EMP-${nextNumber.toString().padStart(3, "0")}`;
-      
-      console.log("Generated next ID:", nextId);
-      return nextId;
-    } catch (error) {
-      console.error("Error generating next employee ID:", error);
-      return "EMP-001";
-    }
+    return undefined;
   }
 }
 

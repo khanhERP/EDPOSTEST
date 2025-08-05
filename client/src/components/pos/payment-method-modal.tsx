@@ -17,6 +17,14 @@ interface PaymentMethodModalProps {
   onSelectMethod: (method: string) => void;
   total: number;
   onShowEInvoice?: () => void;
+  cartItems?: Array<{
+    id: number;
+    name: string;
+    price: number;
+    quantity: number;
+    sku?: string;
+    taxRate?: number;
+  }>;
 }
 
 export function PaymentMethodModal({ 
@@ -24,12 +32,16 @@ export function PaymentMethodModal({
   onClose, 
   onSelectMethod,
   total,
-  onShowEInvoice 
+  onShowEInvoice,
+  cartItems = []
 }: PaymentMethodModalProps) {
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [showEInvoice, setShowEInvoice] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+  const [qrLoading, setQrLoading] = useState(false);
+  const [amountReceived, setAmountReceived] = useState("");
+  const [showCashPayment, setShowCashPayment] = useState(false);
 
   // Load payment methods from settings
   const getPaymentMethods = () => {
@@ -37,11 +49,11 @@ export function PaymentMethodModal({
     
     const defaultPaymentMethods = [
       { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
-      { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
-      { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
-      { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
-      { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
-      { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
+      { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: false, icon: "💳" },
+      { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: false, icon: "💳" },
+      { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: false, icon: "📱" },
+      { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: false, icon: "📱" },
+      { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: false, icon: "💳" },
       { id: 7, name: "QR Code", nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
       { id: 8, name: "ShopeePay", nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
       { id: 9, name: "GrabPay", nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
@@ -51,15 +63,31 @@ export function PaymentMethodModal({
       ? JSON.parse(savedPaymentMethods) 
       : defaultPaymentMethods;
 
+    console.log('All payment methods:', paymentMethods);
+    
+    // Ensure cash payment is always available
+    const cashMethodExists = paymentMethods.find(method => method.nameKey === 'cash' && method.enabled);
+    if (!cashMethodExists) {
+      const cashMethod = paymentMethods.find(method => method.nameKey === 'cash');
+      if (cashMethod) {
+        cashMethod.enabled = true;
+      } else {
+        paymentMethods.unshift({ id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" });
+      }
+    }
+    
     // Filter to only return enabled payment methods and map to modal format
-    return paymentMethods
-      .filter(method => method.enabled)
+    const enabledMethods = paymentMethods
+      .filter(method => method.enabled === true)
       .map(method => ({
         id: method.nameKey,
         name: method.name,
         icon: getIconComponent(method.type),
         description: getMethodDescription(method.nameKey)
       }));
+
+    console.log('Enabled payment methods:', enabledMethods);
+    return enabledMethods;
   };
 
   const getIconComponent = (type: string) => {
@@ -93,17 +121,21 @@ export function PaymentMethodModal({
   const handleSelect = async (method: string) => {
     setSelectedPaymentMethod(method);
     
-    if (method === "qrCode") {
+    if (method === "cash") {
+      // Show cash payment input form
+      setShowCashPayment(true);
+    } else if (method === "qrCode") {
       // Call CreateQRPos API for QR payment
       try {
+        setQrLoading(true);
         const transactionUuid = `TXN-${Date.now()}`;
         const depositAmt = total;
         
         const qrRequest: CreateQRPosRequest = {
           transactionUuid,
-          depositAmt: depositAmt.toString(),
-          posUniqueId: "POS003",
-          accntNo: "700033348984",
+          depositAmt: depositAmt,
+          posUniqueId: "ER002",
+          accntNo: "0900993023",
           posfranchiseeName: "DOOKI-HANOI",
           posCompanyName: "HYOJUNG",
           posBillNo: `BILL-${Date.now()}`
@@ -119,8 +151,18 @@ export function PaymentMethodModal({
         console.log('CreateQRPos API response:', qrResponse);
 
         // Generate QR code from the received QR data
-        if (qrResponse.qrDataDecode) {
-          const qrUrl = await QRCodeLib.toDataURL(qrResponse.qrDataDecode, {
+        if (qrResponse.qrData) {
+          // Decode base64 qrData to get the actual QR content
+          let qrContent = qrResponse.qrData;
+          try {
+            // Try to decode if it's base64 encoded
+            qrContent = atob(qrResponse.qrData);
+          } catch (e) {
+            // If decode fails, use the raw qrData
+            console.log('Using raw qrData as it is not base64 encoded');
+          }
+          
+          const qrUrl = await QRCodeLib.toDataURL(qrContent, {
             width: 256,
             margin: 2,
             color: {
@@ -163,10 +205,13 @@ export function PaymentMethodModal({
         } catch (fallbackError) {
           console.error('Error generating fallback QR code:', fallbackError);
         }
+      } finally {
+        setQrLoading(false);
       }
     } else if (method === "vnpay") {
       // Generate QR code for VNPay
       try {
+        setQrLoading(true);
         const qrData = `Payment via ${method}\nAmount: ${total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nTime: ${new Date().toLocaleString('vi-VN')}`;
         const qrUrl = await QRCodeLib.toDataURL(qrData, {
           width: 256,
@@ -180,6 +225,8 @@ export function PaymentMethodModal({
         setShowQRCode(true);
       } catch (error) {
         console.error('Error generating QR code:', error);
+      } finally {
+        setQrLoading(false);
       }
     } else {
       // Show E-invoice modal for other payment methods
@@ -196,6 +243,20 @@ export function PaymentMethodModal({
   const handleBack = () => {
     setShowQRCode(false);
     setQrCodeUrl("");
+    setShowCashPayment(false);
+    setAmountReceived("");
+  };
+
+  const handleCashPaymentComplete = () => {
+    const receivedAmount = parseFloat(amountReceived) || 0;
+    const changeAmount = receivedAmount - total;
+    
+    if (receivedAmount < total) {
+      return; // Don't proceed if insufficient amount
+    }
+    
+    setShowCashPayment(false);
+    setShowEInvoice(true);
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
@@ -222,6 +283,9 @@ export function PaymentMethodModal({
       setQrCodeUrl("");
       setShowEInvoice(false);
       setSelectedPaymentMethod("");
+      setQrLoading(false);
+      setShowCashPayment(false);
+      setAmountReceived("");
     }
   }, [isOpen]);
 
@@ -233,7 +297,7 @@ export function PaymentMethodModal({
         </DialogHeader>
         
         <div className="space-y-4 p-4">
-          {!showQRCode ? (
+          {!showQRCode && !showCashPayment ? (
             <>
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600">Tổng tiền</p>
@@ -245,18 +309,29 @@ export function PaymentMethodModal({
               <div className="grid gap-3">
                 {paymentMethods.map((method) => {
                   const IconComponent = method.icon;
+                  const isQRMethod = method.id === 'qrCode' || method.id === 'vnpay';
+                  const isLoading = qrLoading && isQRMethod;
+                  
                   return (
                     <Button
                       key={method.id}
                       variant="outline"
                       className="flex items-center justify-start p-4 h-auto"
                       onClick={() => handleSelect(method.id)}
+                      disabled={isLoading}
                     >
                       <IconComponent className="mr-3" size={24} />
-                      <div className="text-left">
-                        <div className="font-medium">{method.name}</div>
+                      <div className="text-left flex-1">
+                        <div className="font-medium">
+                          {isLoading ? 'Đang tạo QR...' : method.name}
+                        </div>
                         <div className="text-sm text-gray-500">{method.description}</div>
                       </div>
+                      {isLoading && (
+                        <div className="ml-auto">
+                          <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                        </div>
+                      )}
                     </Button>
                   );
                 })}
@@ -310,6 +385,74 @@ export function PaymentMethodModal({
                 </Button>
               </div>
             </>
+          ) : showCashPayment ? (
+            <>
+              <div className="text-center space-y-4">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <Banknote className="w-6 h-6" />
+                  <h3 className="text-lg font-semibold">Thanh toán tiền mặt</h3>
+                </div>
+                
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600">Tổng tiền cần thanh toán</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Số tiền khách trả
+                    </label>
+                    <input
+                      type="number"
+                      step="1000"
+                      placeholder="Nhập số tiền khách trả"
+                      value={amountReceived}
+                      onChange={(e) => setAmountReceived(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg text-center"
+                      autoFocus
+                    />
+                  </div>
+
+                  {amountReceived && parseFloat(amountReceived) >= total && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-green-800">Tiền thừa:</span>
+                        <span className="text-lg font-bold text-green-600">
+                          {(parseFloat(amountReceived) - total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {amountReceived && parseFloat(amountReceived) < total && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-red-800">Thiếu:</span>
+                        <span className="text-lg font-bold text-red-600">
+                          {(total - parseFloat(amountReceived)).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={handleBack} className="flex-1">
+                  Quay lại
+                </Button>
+                <Button 
+                  onClick={handleCashPaymentComplete} 
+                  disabled={!amountReceived || parseFloat(amountReceived) < total}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 disabled:bg-gray-400"
+                >
+                  Hoàn thành
+                </Button>
+              </div>
+            </>
           )}
         </div>
       </DialogContent>
@@ -319,6 +462,7 @@ export function PaymentMethodModal({
         onClose={handleEInvoiceClose}
         onConfirm={handleEInvoiceConfirm}
         total={total}
+        cartItems={cartItems}
       />
     </Dialog>
   );

@@ -44,7 +44,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
   });
 
   const handleAddToCart = (product: Product) => {
-    if (product.stock <= 0) {
+    if (product.trackInventory !== false && product.stock <= 0) {
       toast({
         title: t('pos.outOfStock'),
         description: `${product.name} ${t('pos.currentlyOutOfStock')}`,
@@ -53,11 +53,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
       return;
     }
 
-    onAddToCart(product.id);
-    toast({
-      title: t('pos.addedToCart'),
-      description: `${product.name} ${t('pos.addedToCart')}`,
-    });
+    onAddToCart(product);
   };
 
   const getPlaceholderImage = (categoryId: number, productName: string) => {
@@ -184,7 +180,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
 
   return (
     <main className="flex-1 flex flex-col">
-      <div className="bg-white p-4 border-b pos-border flex items-center justify-between pt-[22px] pb-[22px]">
+      <div className="bg-white p-4 border-b pos-border flex items-center justify-between pt-[22px] pb-[22px] mt-2">
         <div>
           <h2 className="font-medium pos-text-primary text-[14px]">{getCategoryName()}</h2>
           <p className="text-sm pos-text-secondary">{products.length} {t('pos.productsAvailable')}</p>
@@ -220,7 +216,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
             </div>
             <h3 className="text-lg font-medium pos-text-secondary mb-2">{t('pos.noProductsFound')}</h3>
             <p className="pos-text-tertiary">
-              {searchQuery ? t('pos.tryAdjustingSearch') : t('pos.noProductsInCategory')}
+              {searchQuery ? "Thử điều chỉnh từ khóa tìm kiếm" : "Không có sản phẩm trong danh mục này"}
             </p>
           </div>
         ) : (

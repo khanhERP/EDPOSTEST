@@ -75,6 +75,19 @@ import { PointsManagementModal } from "@/components/customers/points-management-
 import { EmployeeFormModal } from "@/components/employees/employee-form-modal";
 import { Checkbox } from "@/components/ui/checkbox";
 
+// E-invoice software providers mapping
+const EINVOICE_PROVIDERS = [
+  { name: "EasyInvoice", value: "1" },
+  { name: "VnInvoice", value: "2" },
+  { name: "FptInvoice", value: "3" },
+  { name: "MifiInvoice", value: "4" },
+  { name: "EHoaDon", value: "5" },
+  { name: "BkavInvoice", value: "6" },
+  { name: "MInvoice", value: "7" },
+  { name: "SInvoice", value: "8" },
+  { name: "WinInvoice", value: "9" }
+];
+
 export default function Settings() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -250,6 +263,7 @@ export default function Settings() {
     email: "contact@edpos.com",
     taxId: "123-45-67890",
     businessType: "restaurant",
+    pinCode: "",
     openTime: "09:00",
     closeTime: "22:00",
   });
@@ -265,6 +279,7 @@ export default function Settings() {
         email: storeData.email || "",
         taxId: storeData.taxId || "",
         businessType: storeData.businessType || "restaurant",
+        pinCode: storeData.pinCode || "",
         openTime: storeData.openTime || "09:00",
         closeTime: storeData.closeTime || "22:00",
       });
@@ -321,7 +336,7 @@ export default function Settings() {
       name: "Thẻ tín dụng",
       nameKey: "creditCard",
       type: "card",
-      enabled: true,
+      enabled: false,
       icon: "💳",
     },
     {
@@ -329,7 +344,7 @@ export default function Settings() {
       name: "Thẻ ghi nợ",
       nameKey: "debitCard",
       type: "debit",
-      enabled: true,
+      enabled: false,
       icon: "💳",
     },
     {
@@ -337,7 +352,7 @@ export default function Settings() {
       name: "MoMo",
       nameKey: "momo",
       type: "digital",
-      enabled: true,
+      enabled: false,
       icon: "📱",
     },
     {
@@ -345,7 +360,7 @@ export default function Settings() {
       name: "ZaloPay",
       nameKey: "zalopay",
       type: "digital",
-      enabled: true,
+      enabled: false,
       icon: "📱",
     },
     {
@@ -353,7 +368,7 @@ export default function Settings() {
       name: "VNPay",
       nameKey: "vnpay",
       type: "digital",
-      enabled: true,
+      enabled: false,
       icon: "💳",
     },
     {
@@ -1434,6 +1449,28 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                               </SelectItem>
                             </SelectContent>
                           </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="pinCode">
+                            Mã PIN
+                          </Label>
+                          <Input
+                            id="pinCode"
+                            type="password"
+                            value={storeSettings.pinCode}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/\D/g, ''); // Chỉ cho phép số
+                              handleStoreSettingChange("pinCode", value);
+                            }}
+                            placeholder="Nhập mã PIN 4-6 chữ số"
+                            maxLength={6}
+                            pattern="[0-9]*"
+                          />
+                          {storeSettings.pinCode && storeSettings.pinCode.length < 4 && (
+                            <p className="text-sm text-orange-500">
+                              Mã PIN nên có ít nhất 4 chữ số
+                            </p>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -3083,7 +3120,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productDescription" className="text-right">
-                설명
+                {t("common.description")}
               </Label>
               <Textarea
                 id="productDescription"
@@ -3548,15 +3585,11 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                     <SelectValue placeholder="Chọn phần mềm HĐĐT" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="MINVOICE">MINVOICE</SelectItem>
-                    <SelectItem value="SINVOICE">SINVOICE</SelectItem>
-                    <SelectItem value="VNPT-INVOICE">VNPT-INVOICE</SelectItem>
-                    <SelectItem value="VIETTEL-SINVOICE">
-                      VIETTEL-SINVOICE
-                    </SelectItem>
-                    <SelectItem value="MISA-MEinvoice">
-                      MISA-MEinvoice
-                    </SelectItem>
+                    {EINVOICE_PROVIDERS.map((provider) => (
+                      <SelectItem key={provider.value} value={provider.name}>
+                        {provider.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {eInvoiceFormErrors.softwareName && (

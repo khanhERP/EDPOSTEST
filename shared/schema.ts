@@ -99,6 +99,7 @@ export const storeSettings = pgTable("store_settings", {
   storeCode: text("store_code"),
   taxId: text("tax_id"),
   businessType: text("business_type").default("restaurant"),
+  pinCode: text("pin_code"),
   address: text("address"),
   phone: text("phone"),
   email: text("email"),
@@ -213,26 +214,9 @@ export const insertEmployeeSchema = createInsertSchema(employees)
   })
   .extend({
     name: z.string().min(1, "Tên nhân viên là bắt buộc"),
-    email: z
-      .string()
-      .email("Invalid email format")
-      .nullable()
-      .optional()
-      .transform((val) => {
-        if (!val || val.trim() === "") return null;
-        return val;
-      })
-      .refine((val) => val === null || z.string().email().safeParse(val).success, {
-        message: "Invalid email format",
-      }),
     role: z.enum(["manager", "cashier", "admin"], {
       errorMap: () => ({ message: "Role must be manager, cashier, or admin" }),
     }),
-    phone: z
-      .string()
-      .nullable()
-      .optional()
-      .transform((val) => (val === "" ? null : val)),
     hireDate: z.coerce.date(),
   });
 

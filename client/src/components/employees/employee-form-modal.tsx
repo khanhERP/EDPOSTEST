@@ -56,22 +56,12 @@ export function EmployeeFormModal({
   const generateEmployeeId = async () => {
     try {
       const response = await apiRequest("GET", "/api/employees/next-id");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
       const data = await response.json();
-      console.log("Generated employee ID:", data.nextId);
       return data.nextId;
     } catch (error) {
       console.error("Error generating employee ID:", error);
-      toast({
-        title: "Lỗi",
-        description: "Không thể tạo mã nhân viên tự động",
-        variant: "destructive",
-      });
-      // Fallback to timestamp-based ID
-      const timestamp = Date.now().toString().slice(-6);
-      return `EMP-${timestamp}`;
+      // Fallback to EMP-001 if API fails
+      return "EMP-001";
     }
   };
 
@@ -95,7 +85,7 @@ export function EmployeeFormModal({
         form.reset({
           employeeId: nextId,
           name: "",
-          email: null,
+          email: "",
           phone: null,
           role: "cashier",
           isActive: true,
@@ -135,7 +125,7 @@ export function EmployeeFormModal({
         form.reset({
           employeeId: nextId,
           name: "",
-          email: null,
+          email: "",
           phone: null,
           role: "cashier",
           isActive: true,
@@ -156,13 +146,6 @@ export function EmployeeFormModal({
           form.setError("email", {
             type: "manual",
             message: "Email đã tồn tại trong hệ thống",
-          });
-        } else if (errorData.code === "DUPLICATE_EMPLOYEE_ID") {
-          // Handle duplicate employee ID error specifically
-          errorMessage = "Mã nhân viên đã tồn tại.";
-          form.setError("employeeId", {
-            type: "manual",
-            message: "Mã nhân viên đã tồn tại trong hệ thống",
           });
         }
       }
@@ -204,12 +187,6 @@ export function EmployeeFormModal({
         form.setError("email", {
           type: "manual",
           message: "Email đã tồn tại trong hệ thống",
-        });
-      } else if (error && typeof error === 'object' && error.code === "DUPLICATE_EMPLOYEE_ID") {
-        errorMessage = "Mã nhân viên đã được sử dụng.";
-        form.setError("employeeId", {
-          type: "manual",
-          message: "Mã nhân viên đã tồn tại trong hệ thống",
         });
       }
 
@@ -281,7 +258,6 @@ export function EmployeeFormModal({
                     <Input
                       placeholder={t("employees.namePlaceholder")}
                       {...field}
-                      required
                     />
                   </FormControl>
                   <FormMessage />
@@ -299,15 +275,7 @@ export function EmployeeFormModal({
                     <Input
                       type="email"
                       placeholder="hong@company.com"
-                      value={field.value ?? ""}
-                      onChange={(e) => {
-                        // If empty, set to null instead of empty string
-                        const value = e.target.value.trim();
-                        field.onChange(value === "" ? null : value);
-                      }}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                      ref={field.ref}
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -324,12 +292,8 @@ export function EmployeeFormModal({
                   <FormControl>
                     <Input
                       placeholder="010-1234-5678"
-                      value={field.value ?? ""}
-                      onChange={(e) => {
-                        // If empty, set to null instead of empty string
-                        const value = e.target.value.trim();
-                        field.onChange(value === "" ? null : value);
-                      }}
+                      value={field.value || ""}
+                      onChange={field.onChange}
                       onBlur={field.onBlur}
                       name={field.name}
                       ref={field.ref}

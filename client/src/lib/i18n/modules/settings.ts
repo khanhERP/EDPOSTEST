@@ -1,4 +1,3 @@
-
 import type { SettingsTranslations } from '../types';
 
 export const settingsTranslations: { [key: string]: SettingsTranslations } = {
@@ -103,6 +102,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     productDeleteSuccess: '상품이 삭제되었습니다',
     total: '총',
     productsShowing: '상품이 표시됩니다',
+    productDescriptionPlaceholder: '상품 설명을 입력하세요 (선택사항)',
   },
   en: {
     title: 'Settings',
@@ -146,6 +146,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
       momo: 'MoMo',
       zalopay: 'ZaloPay',
       vnpay: 'VNPay',
+      qrCode: 'QR Code',
       banking: 'Online Banking',
       shopeepay: 'ShopeePay',
       grabpay: 'GrabPay',
@@ -204,6 +205,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     productDeleteSuccess: 'Product deleted successfully',
     total: 'Total',
     productsShowing: 'products showing',
+    productDescriptionPlaceholder: 'Enter product description (optional)',
   },
   vi: {
     title: 'Cài đặt',
@@ -306,5 +308,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     productDeleteSuccess: 'Xóa sản phẩm thành công',
     total: 'Tổng cộng',
     productsShowing: 'sản phẩm đang hiển thị',
+    productDescriptionPlaceholder: 'Nhập mô tả sản phẩm (tùy chọn)',
   },
 };

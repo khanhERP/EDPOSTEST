@@ -35,7 +35,7 @@ export function ShoppingCart({
   onSwitchOrder,
   onRemoveOrder
 }: ShoppingCartProps) {
-  const [paymentMethod, setPaymentMethod] = useState<string>("cash");
+  const [paymentMethod, setPaymentMethod] = useState<string>("bankTransfer");
   const [amountReceived, setAmountReceived] = useState<string>("");
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
@@ -43,17 +43,10 @@ export function ShoppingCart({
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const { t } = useTranslation();
 
-  const subtotal = cart.reduce((sum, item) => {
-    const itemTotal = parseFloat(item.total) || 0;
-    return sum + itemTotal;
-  }, 0);
-  
+  const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
-    const taxRate = parseFloat(item.taxRate) || 0;
-    if (taxRate > 0) {
-      const itemPrice = parseFloat(item.price) || 0;
-      const itemTax = (itemPrice * taxRate / 100) * item.quantity;
-      return sum + itemTax;
+    if (item.taxRate && parseFloat(item.taxRate) > 0) {
+      return sum + (parseFloat(item.price) * parseFloat(item.taxRate) / 100 * item.quantity);
     }
     return sum;
   }, 0);
@@ -72,40 +65,74 @@ export function ShoppingCart({
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
-    
-    if (paymentMethod === "cash") {
-      const receivedAmount = parseFloat(amountReceived || "0");
-      if (receivedAmount < total) {
-        alert(`Số tiền nhận được không đủ. Cần: ${total.toLocaleString()} ₫`);
-        return;
-      }
-      // Proceed with cash payment
-      const paymentData = {
-        paymentMethod: "cash",
-        amountReceived: parseFloat(amountReceived || "0"),
-        change: change,
-      };
-      onCheckout(paymentData);
-    } else {
+
+    console.log("=== SHOPPING CART CHECKOUT DEBUG ===");
+    console.log("Cart items before checkout:", cart);
+    console.log("Cart items count:", cart.length);
+    console.log("Cart items details:", JSON.stringify(cart, null, 2));
+
+    // Always use bank transfer payment
+    {
       // Show receipt preview first for non-cash payments
       const receipt = {
         transactionId: `TXN-${Date.now()}`,
         items: cart.map(item => ({
           id: item.id,
+          productId: item.id,
           productName: item.name,
           price: parseFloat(item.price).toFixed(2),
           quantity: item.quantity,
-          total: parseFloat(item.total).toFixed(2)
+          total: parseFloat(item.total).toFixed(2),
+          sku: `ITEM${String(item.id).padStart(3, '0')}`,
+          taxRate: parseFloat(item.taxRate || "10")
         })),
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
         total: total.toFixed(2),
-        paymentMethod: paymentMethod,
+        paymentMethod: "bankTransfer",
         amountReceived: total.toFixed(2),
         change: "0.00",
         cashierName: "John Smith",
         createdAt: new Date().toISOString()
       };
+
+      // Create cartItems in the format expected by receipt modal with detailed logging
+      console.log("🛒 Processing cart items for receipt:", cart);
+      console.log("🛒 Cart items count:", cart.length);
+
+      const cartItemsForReceipt = cart.map(item => {
+        console.log(`🔍 Processing cart item ${item.id}:`, {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          priceType: typeof item.price,
+          quantity: item.quantity,
+          quantityType: typeof item.quantity,
+          taxRate: item.taxRate,
+          total: item.total,
+          sku: item.sku
+        });
+
+        const processedItem = {
+          id: item.id,
+          name: item.name,
+          price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+          quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+          sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`, // Use more descriptive SKU format
+          taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10),
+          total: parseFloat(item.total)
+        };
+        console.log(`📦 Processed item ${item.id}:`, processedItem);
+        return processedItem;
+      });
+
+      console.log("✅ Final cartItemsForReceipt:", cartItemsForReceipt);
+      console.log("✅ CartItemsForReceipt count:", cartItemsForReceipt.length);
+
+      console.log("Receipt created with items:", receipt.items);
+      console.log("Cart items for receipt:", cartItemsForReceipt);
+      console.log("Setting preview receipt:", receipt);
+
       setPreviewReceipt(receipt);
       setShowReceiptPreview(true);
     }
@@ -127,12 +154,11 @@ export function ShoppingCart({
     onCheckout(paymentData);
   };
 
-  const canCheckout = cart.length > 0 && 
-    (paymentMethod !== "cash" || (paymentMethod === "cash" && parseFloat(amountReceived || "0") >= total));
+  const canCheckout = cart.length > 0;
 
   return (
     <aside className="w-96 bg-white shadow-material border-l pos-border flex flex-col">
-      <div className="p-4 border-b pos-border">
+      <div className="p-4 border-b pos-border mt-2">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl pos-text-primary font-semibold">{t('pos.purchaseHistory')}</h2>
           {onCreateNewOrder && (
@@ -268,35 +294,9 @@ export function ShoppingCart({
               </div>
             </div>
           </div>
+
           
-          {/* Payment Methods */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium pos-text-primary">{t('tables.paymentMethod')}</Label>
-            <div className="grid grid-cols-2 gap-2">
-              {getPaymentMethods().slice(0, 4).map((method) => (
-                <Button
-                  key={method.id}
-                  variant={paymentMethod === method.nameKey ? "default" : "outline"}
-                  onClick={() => setPaymentMethod(method.nameKey)}
-                  className="text-sm flex items-center justify-center"
-                >
-                  <span className="mr-1">{method.icon}</span>
-                  {method.name}
-                </Button>
-              ))}
-            </div>
-            {getPaymentMethods().length > 4 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPaymentMethodModal(true)}
-                className="w-full mt-2"
-              >
-                Xem thêm phương thức thanh toán
-              </Button>
-            )}
-          </div>
-          
+
           {/* Cash Payment */}
           {paymentMethod === "cash" && (
             <div className="space-y-2">
@@ -314,14 +314,14 @@ export function ShoppingCart({
               </div>
             </div>
           )}
-          
+
           <Button
             onClick={handleCheckout}
             disabled={!canCheckout || isProcessing}
             className="w-full btn-success flex items-center justify-center"
           >
             <CartIcon className="mr-2" size={16} />
-            {isProcessing ? "Processing..." : t('tables.completeSale')}
+            {isProcessing ? "Processing..." : "Thanh toán"}
           </Button>
         </div>
       )}
@@ -333,6 +333,14 @@ export function ShoppingCart({
         receipt={previewReceipt}
         onConfirm={handleReceiptConfirm}
         isPreview={true}
+        cartItems={cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: `ITEM${String(item.id).padStart(3, '0')}`,
+          taxRate: parseFloat(item.taxRate || "10")
+        }))}
       />
 
       {/* Payment Method Selection Modal */}
@@ -341,6 +349,14 @@ export function ShoppingCart({
         onClose={() => setShowPaymentMethodModal(false)}
         onSelectMethod={handleCardPaymentMethodSelect}
         total={total}
+        cartItems={cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+          taxRate: parseFloat(item.taxRate || "10")
+        }))}
       />
     </aside>
   );

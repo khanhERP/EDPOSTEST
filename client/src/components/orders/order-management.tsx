@@ -31,6 +31,7 @@ export function OrderManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [mixedPaymentOpen, setMixedPaymentOpen] = useState(false);
   const [mixedPaymentData, setMixedPaymentData] = useState<any>(null);
+  const [qrLoading, setQrLoading] = useState(false);
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -204,7 +205,7 @@ export function OrderManagement() {
       paid: { label: t('orders.status.paid'), variant: "outline" as const, color: "bg-gray-500" },
       cancelled: { label: t('orders.status.cancelled'), variant: "destructive" as const, color: "bg-red-500" },
     };
-    
+
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
   };
 
@@ -225,13 +226,13 @@ export function OrderManagement() {
   const formatTime = (dateString: string | Date) => {
     const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
     const currentLanguage = localStorage.getItem('language') || 'ko';
-    
+
     const localeMap = {
       ko: 'ko-KR',
       en: 'en-US',
       vi: 'vi-VN'
     };
-    
+
     return date.toLocaleTimeString(localeMap[currentLanguage as keyof typeof localeMap] || 'ko-KR', {
       hour: '2-digit',
       minute: '2-digit',
@@ -265,7 +266,7 @@ export function OrderManagement() {
   const getPaymentMethods = () => {
     // Get payment methods from localStorage (saved from settings)
     const savedPaymentMethods = localStorage.getItem('paymentMethods');
-    
+
     // Default payment methods if none saved
     const defaultPaymentMethods = [
       { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
@@ -299,37 +300,125 @@ export function OrderManagement() {
       return;
     }
 
-    // For non-cash payments, show QR code
-    try {
-      const qrData = `${method.name} Payment\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
-      const qrUrl = await QRCodeLib.toDataURL(qrData, {
-        width: 256,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
+    // For QR Code payment, use CreateQRPos API
+    if (paymentMethodKey === "qrCode") {
+      try {
+        setQrLoading(true);
+        const { createQRPosAsync, CreateQRPosRequest } = await import("@/lib/api");
+
+        const transactionUuid = `TXN-${Date.now()}`;
+        const depositAmt = Number(selectedOrder.total);
+
+        const qrRequest: CreateQRPosRequest = {
+          transactionUuid,
+          depositAmt: depositAmt,
+          posUniqueId: "ER002",
+          accntNo: "0900993023",
+          posfranchiseeName: "DOOKI-HANOI",
+          posCompanyName: "HYOJUNG",
+          posBillNo: `BILL-${Date.now()}`
+        };
+
+        const bankCode = "79616001";
+        const clientID = "91a3a3668724e631e1baf4f8526524f3";
+
+        console.log('Calling CreateQRPos API with:', { qrRequest, bankCode, clientID });
+
+        const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
+
+        console.log('CreateQRPos API response:', qrResponse);
+
+        // Generate QR code from the received QR data
+        if (qrResponse.qrData) {
+          // Use qrData directly for QR code generation
+          let qrContent = qrResponse.qrData;
+          try {
+            // Try to decode if it's base64 encoded
+            qrContent = atob(qrResponse.qrData);
+          } catch (e) {
+            // If decode fails, use the raw qrData
+            console.log('Using raw qrData as it is not base64 encoded');
+          }
+
+          const qrUrl = await QRCodeLib.toDataURL(qrContent, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          setQrCodeUrl(qrUrl);
+          setSelectedPaymentMethod({ key: paymentMethodKey, method });
+          setShowQRPayment(true);
+          setPaymentMethodsOpen(false);
+        } else {
+          console.error('No QR data received from API');
+          // Fallback to mock QR code
+          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
+          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          setQrCodeUrl(qrUrl);
+          setSelectedPaymentMethod({ key: paymentMethodKey, method });
+          setShowQRPayment(true);
+          setPaymentMethodsOpen(false);
         }
-      });
-      setQrCodeUrl(qrUrl);
-      setSelectedPaymentMethod({ key: paymentMethodKey, method });
-      setShowQRPayment(true);
-      setPaymentMethodsOpen(false);
-    } catch (error) {
-      console.error('Error generating QR code:', error);
-      toast({
-        title: 'Lỗi',
-        description: 'Không thể tạo mã QR',
-        variant: 'destructive',
-      });
+      } catch (error) {
+        console.error('Error calling CreateQRPos API:', error);
+        // Fallback to mock QR code on error
+        try {
+          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
+          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          setQrCodeUrl(qrUrl);
+          setSelectedPaymentMethod({ key: paymentMethodKey, method });
+          setShowQRPayment(true);
+          setPaymentMethodsOpen(false);
+        } catch (fallbackError) {
+          console.error('Error generating fallback QR code:', fallbackError);
+          toast({
+            title: 'Lỗi',
+            description: 'Không thể tạo mã QR',
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        setQrLoading(false);
+      }
+      return;
     }
   };
 
   const handleQRPaymentConfirm = () => {
     if (selectedOrder && selectedPaymentMethod) {
-      completePaymentMutation.mutate({ 
-        orderId: selectedOrder.id, 
-        paymentMethod: selectedPaymentMethod.key 
-      });
+      // Check if this is a mixed payment (points + transfer/qr)
+      if (mixedPaymentData) {
+        // Use mixed payment mutation to handle both points deduction and payment
+        mixedPaymentMutation.mutate({
+          customerId: mixedPaymentData.customerId,
+          points: mixedPaymentData.pointsToUse,
+          orderId: mixedPaymentData.orderId,
+          paymentMethod: selectedPaymentMethod.key === 'transfer' ? 'transfer' : selectedPaymentMethod.key
+        });
+      } else {
+        // Regular payment without points
+        completePaymentMutation.mutate({ 
+          orderId: selectedOrder.id, 
+          paymentMethod: selectedPaymentMethod.key 
+        });
+      }
       setShowQRPayment(false);
       setQrCodeUrl("");
       setSelectedPaymentMethod(null);
@@ -356,7 +445,7 @@ export function OrderManagement() {
     const currentPoints = selectedCustomer.points || 0;
     const orderTotal = Number(selectedOrder.total);
     const pointsValue = currentPoints * 1000; // 1 điểm = 1000đ
-    
+
     if (pointsValue >= orderTotal) {
       // Đủ điểm để thanh toán toàn bộ
       const pointsNeeded = Math.ceil(orderTotal / 1000);
@@ -562,7 +651,7 @@ export function OrderManagement() {
               {selectedOrder && `${t('orders.orderNumber')}: ${selectedOrder.orderNumber}`}
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedOrder && (
             <ScrollArea className="max-h-[60vh]">
               <div className="space-y-4">
@@ -677,14 +766,14 @@ export function OrderManagement() {
                       // Calculate total tax from all items
                       let totalItemTax = 0;
                       let totalItemSubtotal = 0;
-                      
+
                       if (Array.isArray(orderItems) && Array.isArray(products)) {
                         orderItems.forEach((item: any) => {
                           const product = products.find((p: any) => p.id === item.productId);
                           const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
                           const itemSubtotal = Number(item.unitPrice || 0) * item.quantity;
                           const itemTax = (itemSubtotal * taxRate) / 100;
-                          
+
                           totalItemSubtotal += itemSubtotal;
                           totalItemTax += itemTax;
                         });
@@ -806,12 +895,19 @@ export function OrderManagement() {
                 variant="outline"
                 className="justify-start h-auto p-4"
                 onClick={() => handlePayment(method.nameKey)}
-                disabled={completePaymentMutation.isPending}
+                disabled={completePaymentMutation.isPending || (qrLoading && method.nameKey === 'qrCode')}
               >
                 <span className="text-2xl mr-3">{method.icon}</span>
                 <div className="text-left">
-                  <p className="font-medium">{method.name}</p>
+                  <p className="font-medium">
+                    {qrLoading && method.nameKey === 'qrCode' ? 'Đang tạo QR...' : method.name}
+                  </p>
                 </div>
+                {qrLoading && method.nameKey === 'qrCode' && (
+                  <div className="ml-auto">
+                    <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                  </div>
+                )}
               </Button>
             ))}
           </div>
@@ -827,12 +923,20 @@ export function OrderManagement() {
       {/* QR Payment Dialog */}
       <Dialog open={showQRPayment} onOpenChange={setShowQRPayment}>
         <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+          <DialogHeader className="relative">
+            <DialogTitle className="flex items-center gap-2 text-center justify-center">
               <QrCode className="w-5 h-5" />
               Thanh toán {selectedPaymentMethod?.method?.name}
             </DialogTitle>
-            <DialogDescription>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleQRPaymentClose}
+              className="absolute right-0 top-0 h-6 w-6 p-0"
+            >
+              ✕
+            </Button>
+            <DialogDescription className="text-center">
               Quét mã QR để hoàn tất thanh toán
             </DialogDescription>
           </DialogHeader>
@@ -840,11 +944,20 @@ export function OrderManagement() {
           <div className="space-y-4 p-4">
             {/* Order Summary */}
             {selectedOrder && (
-              <div className="text-center p-4 bg-gray-50 rounded-lg">
+              <div className="text-center space-y-2">
                 <p className="text-sm text-gray-600">Đơn hàng: {selectedOrder.orderNumber}</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                <p className="text-sm text-gray-600">Số tiền cần thanh toán:</p>
+                <p className="text-3xl font-bold text-green-600">
+                  {mixedPaymentData ? 
+                    `${mixedPaymentData.remainingAmount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫` :
+                    `${Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫`
+                  }
                 </p>
+                {mixedPaymentData && (
+                  <p className="text-sm text-blue-600">
+                    Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}P (-{(mixedPaymentData.pointsToUse * 1000).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫)
+                  </p>
+                )}
               </div>
             )}
 
@@ -936,7 +1049,7 @@ export function OrderManagement() {
                   className="pl-9"
                 />
               </div>
-              
+
               {/* Customer List */}
               <div className="max-h-64 overflow-y-auto border rounded-md">
                 {filteredCustomers.map((customer) => (
@@ -1080,23 +1193,104 @@ export function OrderManagement() {
                       <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
                     </div>
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     className="justify-start h-auto p-4"
-                    onClick={() => mixedPaymentMutation.mutate({
-                      customerId: mixedPaymentData.customerId,
-                      points: mixedPaymentData.pointsToUse,
-                      orderId: mixedPaymentData.orderId,
-                      paymentMethod: 'transfer'
-                    })}
-                    disabled={mixedPaymentMutation.isPending}
+                    onClick={async () => {
+                      // Use CreateQRPos API for transfer payment like QR Code
+                      try {
+                        setQrLoading(true);
+                        const { createQRPosAsync } = await import("@/lib/api");
+                        const { CreateQRPosRequest } = await import("@/lib/api");
+
+                        const transactionUuid = `TXN-TRANSFER-${Date.now()}`;
+                        const depositAmt = Number(mixedPaymentData.remainingAmount);
+
+                        const qrRequest: CreateQRPosRequest = {
+                          transactionUuid,
+                          depositAmt: depositAmt,
+                          posUniqueId: "ER002",
+                          accntNo: "0900993023",
+                          posfranchiseeName: "DOOKI-HANOI",
+                          posCompanyName: "HYOJUNG",
+                          posBillNo: `TRANSFER-${Date.now()}`
+                        };
+
+                        const bankCode = "79616001";
+                        const clientID = "91a3a3668724e631e1baf4f8526524f3";
+
+                        console.log('Calling CreateQRPos API for transfer payment:', { qrRequest, bankCode, clientID });
+
+                        const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
+
+                        console.log('CreateQRPos API response for transfer:', qrResponse);
+
+                        // Generate QR code from the received QR data and show QR modal
+                        if (qrResponse.qrData) {
+                          let qrContent = qrResponse.qrData;
+                          try {
+                            // Try to decode if it's base64 encoded
+                            qrContent = atob(qrResponse.qrData);
+                          } catch (e) {
+                            // If decode fails, use the raw qrData
+                            console.log('Using raw qrData for transfer as it is not base64 encoded');
+                          }
+
+                          const qrUrl = await QRCodeLib.toDataURL(qrContent, {
+                            width: 256,
+                            margin: 2,
+                            color: {
+                              dark: '#000000',
+                              light: '#FFFFFF'
+                            }
+                          });
+
+                          // Set QR code data and show QR payment modal
+                          setQrCodeUrl(qrUrl);
+                          setSelectedPaymentMethod({ 
+                            key: 'transfer', 
+                            method: { name: 'Chuyển khoản', icon: '💳' } 
+                          });
+                          setShowQRPayment(true);
+                          setMixedPaymentOpen(false);
+                        } else {
+                          console.error('No QR data received from API for transfer');
+                          // Fallback to direct payment
+                          mixedPaymentMutation.mutate({
+                            customerId: mixedPaymentData.customerId,
+                            points: mixedPaymentData.pointsToUse,
+                            orderId: mixedPaymentData.orderId,
+                            paymentMethod: 'transfer'
+                          });
+                        }
+                      } catch (error) {
+                        console.error('Error calling CreateQRPos API for transfer:', error);
+                        // Fallback to direct payment on error
+                        mixedPaymentMutation.mutate({
+                          customerId: mixedPaymentData.customerId,
+                          points: mixedPaymentData.pointsToUse,
+                          orderId: mixedPaymentData.orderId,
+                          paymentMethod: 'transfer'
+                        });
+                      } finally {
+                        setQrLoading(false);
+                      }
+                    }}
+                    disabled={mixedPaymentMutation.isPending || qrLoading}
                   >
                     <span className="text-2xl mr-3">💳</span>
                     <div className="text-left">
-                      <p className="font-medium">Chuyển khoản</p>
+                      <p className="font-medium">
+                        {qrLoading ? 'Đang tạo QR...' : 'Chuyển khoản'}
+                      </p>
                       <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
                     </div>
+                    {qrLoading && (
+                      <div className="ml-auto">
+                        <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full" />
+                      </div>
+                    )}
                   </Button>
                 </div>
               </div>

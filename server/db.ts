@@ -80,26 +80,37 @@ export async function initializeSampleData() {
       console.log("Tax rate migration already applied or error:", migrationError);
     }
 
-    // Ensure phone field is nullable in employees table
+    // Run migration for pinCode column in store_settings
     try {
       await db.execute(sql`
-        ALTER TABLE employees ALTER COLUMN phone DROP NOT NULL
+        ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS pin_code TEXT
       `);
-      console.log("Migration for phone field nullability completed successfully.");
-    } catch (error) {
-      console.log("Phone field nullability migration skipped or failed:", error);
+
+      console.log("Migration for pinCode column completed successfully.");
+    } catch (migrationError) {
+      console.log("PinCode migration already applied or error:", migrationError);
     }
 
-    // Ensure email field is nullable in employees table
+    // Run migration for email constraint in employees table
     try {
       await db.execute(sql`
-        ALTER TABLE employees ALTER COLUMN email DROP NOT NULL
+        ALTER TABLE employees DROP CONSTRAINT IF EXISTS employees_email_unique
       `);
-      console.log("Migration for email field nullability completed successfully.");
-    } catch (error) {
-      console.log("Email field nullability migration skipped or failed:", error);
-    }
+      
+      await db.execute(sql`
+        CREATE UNIQUE INDEX IF NOT EXISTS employees_email_unique_idx 
+        ON employees (email) 
+        WHERE email IS NOT NULL AND email != ''
+      `);
+      
+      await db.execute(sql`
+        UPDATE employees SET email = NULL WHERE email = ''
+      `);
 
+      console.log("Migration for employees email constraint completed successfully.");
+    } catch (migrationError) {
+      console.log("Email constraint migration already applied or error:", migrationError);
+    }
 
     // Check if customers table has data
     const customerCount = await db.select({ count: sql<number>`count(*)` }).from(customers);
