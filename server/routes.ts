@@ -1720,7 +1720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (startDate && endDate) {
         conditions.push(
-          sql`${orders.createdAt} >= ${startDate} AND ${orders.createdAt} <= ${endDate + " 23:59:59"}`,
+          sql`${orders.orderedAt} >= ${startDate} AND ${orders.orderedAt} <= ${endDate + " 23:59:59"}`,
         );
       }
 
@@ -1735,7 +1735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (productType && productType !== "all") {
-        conditions.push(eq(products.productType, productType as string));
+        conditions.push(eq(products.productType, parseInt(productType as string)));
       }
 
       // Get order items with product and category info
@@ -1743,7 +1743,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .select({
           productId: orderItems.productId,
           quantity: orderItems.quantity,
-          totalPrice: orderItems.totalPrice,
+          totalPrice: orderItems.total, // Use 'total' instead of 'totalPrice'
           product: {
             id: products.id,
             name: products.name,
@@ -1759,16 +1759,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(orderItems)
         .innerJoin(products, eq(orderItems.productId, products.id))
         .innerJoin(categories, eq(products.categoryId, categories.id))
-        .innerJoin(orders, eq(orderItems.orderId, orders.id));
+        .innerJoin(orders, eq(orderItems.orderId, orders.id))
+        .where(eq(orders.status, "paid")); // Only include paid orders
 
-      // Only add where clause if there are conditions
+      // Only add additional where conditions if there are any
       if (conditions.length > 0) {
         const whereCondition = conditions.reduce(
           (acc, condition, index) =>
             index === 0 ? condition : sql`${acc} AND ${condition}`,
           sql``,
         );
-        orderItemsQuery = orderItemsQuery.where(whereCondition);
+        orderItemsQuery = orderItemsQuery.where(
+          and(eq(orders.status, "paid"), whereCondition)
+        );
       }
 
       const orderItemsResult = await orderItemsQuery;
