@@ -43,10 +43,17 @@ export function ShoppingCart({
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const { t } = useTranslation();
 
-  const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
+  const subtotal = cart.reduce((sum, item) => {
+    const itemTotal = parseFloat(item.total) || 0;
+    return sum + itemTotal;
+  }, 0);
+  
   const tax = cart.reduce((sum, item) => {
-    if (item.taxRate && parseFloat(item.taxRate) > 0) {
-      return sum + (parseFloat(item.price) * parseFloat(item.taxRate) / 100 * item.quantity);
+    const taxRate = parseFloat(item.taxRate) || 0;
+    if (taxRate > 0) {
+      const itemPrice = parseFloat(item.price) || 0;
+      const itemTax = (itemPrice * taxRate / 100) * item.quantity;
+      return sum + itemTax;
     }
     return sum;
   }, 0);

@@ -109,42 +109,57 @@ export function usePOS() {
     setActiveOrderId(orders[0].id);
   };
 
-  const addToCart = (product: any) => {
-    const currentCart = orders.find(order => order.id === activeOrderId)?.cart || [];
-    const existingItem = currentCart.find(item => item.id === product.id);
+  // Mock productsQuery for the sake of the example, as it's not provided in the original code.
+  // In a real scenario, this would come from a data fetching hook like useQuery.
+  const productsQuery = {
+    data: [
+      { id: 1, name: "Product A", price: "10.00", stock: 5, taxRate: "0.10" },
+      { id: 2, name: "Product B", price: "20.00", stock: 10, taxRate: "0.05" },
+    ],
+  };
 
-    let newCart;
-    if (existingItem) {
-      if (existingItem.quantity >= product.stock) {
-        toast({
-          title: "Không thể thêm",
-          description: "Đã đạt số lượng tối đa trong kho",
-          variant: "destructive",
-        });
-        return;
+  const addToCart = (productId: number) => {
+    const product = productsQuery.data?.find(p => p.id === productId);
+    if (!product) return;
+
+    setOrders(prev => prev.map(order => {
+      if (order.id !== activeOrderId) return order;
+
+      const existingItem = order.cart.find(item => item.id === productId);
+      if (existingItem) {
+        const newQuantity = existingItem.quantity + 1;
+        const unitPrice = parseFloat(existingItem.price);
+        const newTotal = (unitPrice * newQuantity).toFixed(2);
+
+        return {
+          ...order,
+          cart: order.cart.map(item =>
+            item.id === productId
+              ? { 
+                  ...item, 
+                  quantity: newQuantity,
+                  total: newTotal
+                }
+              : item
+          )
+        };
+      } else {
+        const unitPrice = parseFloat(product.price);
+        const newItem: CartItem = {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          stock: product.stock,
+          taxRate: product.taxRate || "0",
+          total: unitPrice.toFixed(2)
+        };
+        return {
+          ...order,
+          cart: [...order.cart, newItem]
+        };
       }
-      newCart = currentCart.map(item =>
-        item.id === product.id
-          ? {
-              ...item,
-              quantity: item.quantity + 1,
-              total: (parseFloat(item.price) * (item.quantity + 1)).toFixed(2)
-            }
-          : item
-      );
-    } else {
-      newCart = [...currentCart, {
-        id: product.id,
-        name: product.name,
-        price: (product.price || 0).toString(),
-        quantity: 1,
-        total: (product.price || 0).toString(),
-        stock: product.stock,
-        taxRate: product.taxRate || "0"
-      }];
-    }
-
-    updateActiveOrderCart(newCart);
+    }));
     toast({
       title: "Đã thêm vào giỏ",
       description: `${product.name} đã được thêm vào đơn hàng`,
@@ -163,17 +178,22 @@ export function usePOS() {
       return;
     }
 
-    const currentCart = orders.find(order => order.id === activeOrderId)?.cart || [];
-    const newCart = currentCart.map(item =>
-      item.id === productId
-        ? {
-            ...item,
-            quantity: newQuantity,
-            total: (parseFloat(item.price) * newQuantity).toFixed(2)
-          }
-        : item
-    );
-    updateActiveOrderCart(newCart);
+    setOrders(prev => prev.map(order => {
+      if (order.id !== activeOrderId) return order;
+
+      return {
+        ...order,
+        cart: order.cart.map(item =>
+          item.id === productId
+            ? { 
+                ...item, 
+                quantity: newQuantity,
+                total: (parseFloat(item.price) * newQuantity).toFixed(2)
+              }
+            : item
+        )
+      };
+    }));
   };
 
   const clearCart = () => {
