@@ -149,8 +149,8 @@ export function EInvoiceModal({
       console.log("Tax code API response:", result);
 
       if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
-        // Tìm tax code khớp với mã số thuế đã nhập
-        const taxInfo = result.data.find(item => item.maSoThue === formData.taxCode || item.masothueId === formData.taxCode);
+        // Lấy phần tử đầu tiên từ mảng kết quả vì chỉ truyền 1 mã số thuế
+        const taxInfo = result.data[0];
         
         if (taxInfo) {
           // Kiểm tra trạng thái
