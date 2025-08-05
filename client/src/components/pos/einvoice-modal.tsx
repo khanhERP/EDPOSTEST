@@ -539,13 +539,7 @@ export function EInvoiceModal({
           // Logic cho Table: Hoàn tất thanh toán và đóng modal
           console.log('🍽️ Table E-Invoice SUCCESS: Completing payment for order:', orderId);
 
-          // Hoàn tất thanh toán trước
-          completePaymentMutation.mutate({
-            orderId: orderId,
-            paymentMethod: 'einvoice'
-          });
-
-          // Trả về thông tin cho parent để cleanup
+          // Trả về thông tin cho parent trước
           onConfirm({
             source: 'table',
             orderId: orderId,
@@ -553,8 +547,14 @@ export function EInvoiceModal({
             paymentMethod: 'einvoice'
           });
 
-          // Đóng modal sau khi hoàn tất
+          // Đóng modal
           onClose();
+
+          // Hoàn tất thanh toán
+          completePaymentMutation.mutate({
+            orderId: orderId,
+            paymentMethod: 'einvoice'
+          });
         } else {
           // Fallback: trả về data cho parent component xử lý
           console.log('🔄 Fallback: Returning data to parent');
