@@ -16,8 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 // E-invoice software providers mapping
 const EINVOICE_PROVIDERS = [
@@ -46,6 +47,7 @@ interface EInvoiceModalProps {
     taxRate?: number;
   }>;
   source?: 'pos' | 'table'; // Thêm prop để phân biệt nguồn gọi
+  orderId?: number; // Thêm orderId để tự xử lý cập nhật trạng thái
 }
 
 export function EInvoiceModal({
@@ -55,6 +57,7 @@ export function EInvoiceModal({
   total,
   cartItems = [],
   source = 'pos', // Default là 'pos' để tương thích ngược
+  orderId, // Thêm orderId prop
 }: EInvoiceModalProps) {
   // Debug log to track cart items data flow
   console.log("🔍 EInvoiceModal Props Analysis:");
@@ -78,6 +81,36 @@ export function EInvoiceModal({
 
   const [isTaxCodeLoading, setIsTaxCodeLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Mutation để hoàn tất thanh toán và cập nhật trạng thái
+  const completePaymentMutation = useMutation({
+    mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) =>
+      apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod }),
+    onSuccess: () => {
+      console.log('🎯 E-invoice modal completed payment successfully');
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      
+      toast({
+        title: 'Thanh toán thành công',
+        description: 'Hóa đơn điện tử đã được phát hành và đơn hàng đã được thanh toán',
+      });
+
+      // Đóng modal sau khi hoàn tất
+      onClose();
+    },
+    onError: (error) => {
+      console.error('❌ Error completing payment from e-invoice modal:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán',
+        variant: 'destructive',
+      });
+    },
+  });
 
   // Fetch E-invoice connections
   const { data: eInvoiceConnections = [] } = useQuery<any[]>({
@@ -505,23 +538,28 @@ export function EInvoiceModal({
             paymentMethod: 'einvoice',
             source: 'pos'
           });
-        } else if (source === 'table') {
-          // Logic cho Table: Trả về dữ liệu để table-grid tự xử lý completePaymentMutation
-          console.log('🍽️ Table E-Invoice: Returning payment data for table processing');
+          onClose();
+        } else if (source === 'table' && orderId) {
+          // Logic cho Table: Tự hoàn tất thanh toán luôn
+          console.log('🍽️ Table E-Invoice: Completing payment directly');
+          completePaymentMutation.mutate({
+            orderId: orderId,
+            paymentMethod: 'einvoice'
+          });
+          // Modal sẽ được đóng trong onSuccess của completePaymentMutation
+        } else {
+          // Fallback: trả về data cho parent component xử lý
+          console.log('🔄 Fallback: Returning data to parent');
           onConfirm({
             ...formData,
             invoiceData: result.data,
             cartItems: cartItems,
             total: total,
             paymentMethod: 'einvoice',
-            source: 'table',
-            shouldCompletePayment: true, // Flag để table-grid gọi completePaymentMutation
-            eInvoiceSuccess: true // Flag để xác nhận hóa đơn điện tử thành công
+            source: source || 'pos'
           });
+          onClose();
         }
-        
-        // Close e-invoice modal
-        onClose();
       } else {
         throw new Error(
           result.message || "Có lỗi xảy ra khi phát hành hóa đơn",

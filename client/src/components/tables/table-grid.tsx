@@ -161,11 +161,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod }),
     onSuccess: async (data, variables) => {
       console.log('🎯 completePaymentMutation.onSuccess called');
-      
+
       // Invalidate queries first
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-      
+
       // Close all payment-related dialogs immediately
       console.log('🚪 Closing all payment dialogs');
       setOrderDetailsOpen(false);
@@ -173,7 +173,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       setShowPaymentMethodModal(false);
       setShowEInvoiceModal(false);
       setOrderForPayment(null);
-      
+
       toast({
         title: 'Thanh toán thành công',
         description: 'Đơn hàng đã được thanh toán',
@@ -206,16 +206,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           // Calculate totals including tax for receipt
           let subtotal = 0;
           let totalTax = 0;
-          
+
           const processedItems = Array.isArray(orderItemsData) ? orderItemsData.map((item: any) => {
             const itemSubtotal = Number(item.total || 0);
             const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
             const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
             const itemTax = (itemSubtotal * taxRate) / 100;
-            
+
             subtotal += itemSubtotal;
             totalTax += itemTax;
-            
+
             return {
               id: item.id,
               productId: item.productId,
@@ -246,7 +246,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           };
 
           console.log('📄 Table receipt data prepared:', receiptData);
-          
+
           // Show receipt modal
           setSelectedReceipt(receiptData);
           setShowReceiptModal(true);
@@ -1197,26 +1197,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         }}
         onConfirm={(eInvoiceData) => {
           console.log('🍽️ Table E-invoice confirmation received:', eInvoiceData);
-
-          // Always close e-invoice modal first to prevent display issues
-          setShowEInvoiceModal(false);
-
-          // Complete the payment after successful e-invoice publication
-          if (orderForPayment && eInvoiceData.source === 'table' && eInvoiceData.shouldCompletePayment) {
-            console.log('✅ E-invoice published successfully, completing payment...');
-            
-            // Use setTimeout to ensure modal is closed before payment mutation
-            setTimeout(() => {
-              completePaymentMutation.mutate({ 
-                orderId: orderForPayment.id, 
-                paymentMethod: eInvoiceData.paymentMethod || 'einvoice'
-              });
-            }, 100);
-          } else {
-            // Clear order for payment if not completing payment
-            console.log('⚠️ E-invoice published but not completing payment');
-            setOrderForPayment(null);
-          }
+          // E-invoice modal sẽ tự xử lý việc cập nhật trạng thái, chỉ cần clear orderForPayment
+          setOrderForPayment(null);
         }}
         total={(() => {
           if (!orderForPayment || !orderItems || !Array.isArray(orderItems)) return 0;
@@ -1249,6 +1231,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           })()
         })) || []}
         source="table"
+        orderId={orderForPayment?.id} // Truyền orderId để e-invoice modal tự xử lý
       />
 
       {/* Receipt Modal */}
