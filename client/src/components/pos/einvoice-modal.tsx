@@ -87,10 +87,12 @@ export function EInvoiceModal({
 
   // Mutation để hoàn tất thanh toán và cập nhật trạng thái
   const completePaymentMutation = useMutation({
-    mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) =>
-      apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod }),
-    onSuccess: () => {
-      console.log('🎯 E-invoice modal completed payment successfully');
+    mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) => {
+      console.log('🔄 E-invoice modal: Starting payment completion mutation for order:', orderId);
+      return apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod });
+    },
+    onSuccess: (data, variables) => {
+      console.log('🎯 E-invoice modal completed payment successfully for order:', variables.orderId);
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
       
@@ -99,19 +101,17 @@ export function EInvoiceModal({
         description: 'Hóa đơn điện tử đã được phát hành và đơn hàng đã được thanh toán',
       });
 
-      // Modal đã được đóng trước khi gọi mutation, không cần đóng lại
-      console.log('✅ Payment completed, modal already closed');
+      console.log('✅ E-invoice modal: Payment completed, queries invalidated');
     },
-    onError: (error) => {
-      console.error('❌ Error completing payment from e-invoice modal:', error);
+    onError: (error, variables) => {
+      console.error('❌ Error completing payment from e-invoice modal for order:', variables.orderId, error);
       toast({
         title: 'Lỗi',
         description: 'Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán',
         variant: 'destructive',
       });
       
-      // Đảm bảo modal đã được đóng ngay cả khi có lỗi
-      console.log('❌ Payment failed, ensuring modal is closed');
+      console.log('❌ E-invoice modal: Payment failed for order:', variables.orderId);
     },
   });
 
@@ -545,15 +545,30 @@ export function EInvoiceModal({
         } else if (source === 'table' && orderId) {
           // Logic cho Table: Tự hoàn tất thanh toán luôn
           console.log('🍽️ Table E-Invoice: Completing payment directly for order:', orderId);
+          console.log('🍽️ Invoice data received:', result.data);
           
-          // Đóng modal ngay lập tức để tránh hiển thị lỗi
+          // Gọi onConfirm trước để parent component biết về việc phát hành thành công
+          onConfirm({
+            ...formData,
+            invoiceData: result.data,
+            cartItems: cartItems,
+            total: total,
+            paymentMethod: 'einvoice',
+            source: 'table',
+            orderId: orderId
+          });
+          
+          // Đóng modal ngay lập tức
           onClose();
           
-          // Sau đó hoàn tất thanh toán
-          completePaymentMutation.mutate({
-            orderId: orderId,
-            paymentMethod: 'einvoice'
-          });
+          // Delay một chút để đảm bảo modal đã đóng rồi mới gọi mutation
+          setTimeout(() => {
+            console.log('🍽️ Executing payment completion for order:', orderId);
+            completePaymentMutation.mutate({
+              orderId: orderId,
+              paymentMethod: 'einvoice'
+            });
+          }, 100);
         } else {
           // Fallback: trả về data cho parent component xử lý
           console.log('🔄 Fallback: Returning data to parent');
