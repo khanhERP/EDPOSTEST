@@ -241,10 +241,7 @@ export function ReceiptModal({
             )}
           </div>
 
-          <div className="text-center mt-4 text-xs text-gray-600">
-            <p>Thank you for your business!</p>
-            <p>Please keep this receipt for your records</p>
-          </div>
+          
         </div>
 
         <div className="flex justify-center p-2 border-t">
