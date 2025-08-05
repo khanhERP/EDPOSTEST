@@ -162,12 +162,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      
+      // Close all payment-related dialogs
       setOrderDetailsOpen(false);
       setPaymentMethodsOpen(false);
       setShowPaymentMethodModal(false);
       setShowEInvoiceModal(false);
-      setOrderForPayment(null);
-
+      
       toast({
         title: 'Thanh toán thành công',
         description: 'Đơn hàng đã được thanh toán',
@@ -191,22 +192,55 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         })
       ]).then(([completedOrder, orderItemsData]) => {
         if (completedOrder && orderItemsData) {
+          console.log('✅ Table payment completed - preparing receipt data');
           console.log('Completed order for receipt:', completedOrder);
           console.log('Order items for receipt:', orderItemsData);
 
-          // Create receipt object with all necessary data
-          const receiptData = {
-            ...completedOrder,
-            items: Array.isArray(orderItemsData) ? orderItemsData.map((item: any) => ({
+          // Calculate totals including tax for receipt
+          let subtotal = 0;
+          let totalTax = 0;
+          
+          const processedItems = Array.isArray(orderItemsData) ? orderItemsData.map((item: any) => {
+            const itemSubtotal = Number(item.total || 0);
+            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+            const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
+            const itemTax = (itemSubtotal * taxRate) / 100;
+            
+            subtotal += itemSubtotal;
+            totalTax += itemTax;
+            
+            return {
               id: item.id,
               productId: item.productId,
               productName: item.productName || getProductName(item.productId),
               quantity: item.quantity,
               price: item.unitPrice,
-              total: item.total
-            })) : []
+              total: item.total,
+              sku: item.productSku || `SP${item.productId}`,
+              taxRate: taxRate
+            };
+          }) : [];
+
+          const finalTotal = subtotal + totalTax;
+
+          // Create comprehensive receipt object
+          const receiptData = {
+            ...completedOrder,
+            transactionId: `TXN-${Date.now()}`,
+            items: processedItems,
+            subtotal: subtotal.toFixed(2),
+            tax: totalTax.toFixed(2),
+            total: finalTotal.toFixed(2),
+            paymentMethod: variables.paymentMethod || 'einvoice',
+            amountReceived: finalTotal.toFixed(2),
+            change: '0.00',
+            cashierName: 'Table Service',
+            createdAt: new Date().toISOString()
           };
 
+          console.log('📄 Table receipt data prepared:', receiptData);
+          
+          // Show receipt modal
           setSelectedReceipt(receiptData);
           setShowReceiptModal(true);
         }
@@ -217,6 +251,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           description: 'Thanh toán thành công nhưng không thể hiển thị hóa đơn',
           variant: 'destructive',
         });
+      }).finally(() => {
+        // Always clear orderForPayment at the end
+        setOrderForPayment(null);
       });
     },
     onError: () => {
@@ -225,6 +262,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         description: 'Không thể hoàn tất thanh toán',
         variant: "destructive",
       });
+      // Clear orderForPayment on error as well
+      setOrderForPayment(null);
     },
   });
 
@@ -1157,15 +1196,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           // Complete the payment after successful e-invoice publication
           if (orderForPayment && eInvoiceData.source === 'table' && eInvoiceData.shouldCompletePayment) {
             console.log('🍽️ Completing payment after successful e-invoice publication');
+            
+            // Close e-invoice modal first
+            setShowEInvoiceModal(false);
+            
+            // Complete payment mutation will handle the rest
             completePaymentMutation.mutate({ 
               orderId: orderForPayment.id, 
               paymentMethod: eInvoiceData.paymentMethod || 'einvoice'
             });
+          } else {
+            // Close modals if not completing payment
+            setShowEInvoiceModal(false);
+            setOrderForPayment(null);
           }
-
-          // Close modals
-          setShowEInvoiceModal(false);
-          setOrderForPayment(null);
         }}
         total={(() => {
           if (!orderForPayment || !orderItems || !Array.isArray(orderItems)) return 0;
