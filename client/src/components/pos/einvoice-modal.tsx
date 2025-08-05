@@ -735,19 +735,7 @@ export function EInvoiceModal({
                   readOnly={false}
                 />
               </div>
-              <div>
-                <Label htmlFor="recipientName">Người nhận HĐ</Label>
-                <Input
-                  id="recipientName"
-                  value={formData.recipientName}
-                  onChange={(e) =>
-                    handleInputChange("recipientName", e.target.value)
-                  }
-                  placeholder="Nguyễn Văn Ngọc"
-                  disabled={false}
-                  readOnly={false}
-                />
-              </div>
+              
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
