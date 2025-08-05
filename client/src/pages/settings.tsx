@@ -1734,86 +1734,129 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                 </div>
 
                               {/* Invoice templates table */}
-                              <div className="rounded-md border bg-white">
-                                <div className="grid grid-cols-9 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                                  <div className="text-center">STT</div>
-                                  <div>Tên</div>
-                                  <div>Mẫu số</div>
-                                  <div>Mã mẫu</div>
-                                  <div>Ký hiệu</div>
-                                  <div>C/K sử dụng</div>
-                                  <div>Ghi chú</div>
-                                  <div className="text-center">Mặc định</div>
-                                  <div className="text-center">Hành động</div>
-                                </div>
-
-                                <div className="divide-y">
-                                  {templatesLoading ? (
-                                    <div className="grid grid-cols-9 gap-4 p-8 items-center text-sm text-gray-500">
-                                      <div className="col-span-9 text-center">
-                                        Đang tải dữ liệu...
-                                      </div>
-                                    </div>
-                                  ) : invoiceTemplates.length === 0 ? (
-                                    <div className="grid grid-cols-9 gap-4 p-8 items-center text-sm text-gray-500">
-                                      <div className="col-span-9 text-center">
-                                        <div className="flex flex-col items-center gap-2">
-                                          <SettingsIcon className="w-8 h-8 text-gray-400" />
-                                          <p>Chưa có mẫu số HĐĐT nào</p>
-                                          <p className="text-xs">
-                                            Nhấn "Thêm mẫu số" để bắt đầu
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    invoiceTemplates.map((template, index) => (
-                                      <div key={template.id} className="grid grid-cols-9 gap-4 p-3 items-center text-sm">
-                                        <div className="text-center">{index + 1}</div>
-                                        <div>{template.name}</div>
-                                        <div>{template.templateNumber}</div>
-                                        <div>{template.templateCode}</div> {/* Display templateCode */}
-                                        <div>{template.symbol}</div>
-                                        <div>
-                                          <Badge
-                                            variant="default"
-                                            className={template.useCK ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}
-                                          >
-                                            {template.useCK ? "Sử dụng" : "Không sử dụng"}
-                                          </Badge>
-                                        </div>
-                                        <div>{template.notes || "-"}</div>
-                                        <div className="text-center">
-                                          <input
-                                            type="checkbox"
-                                            className="rounded"
-                                            checked={template.isDefault}
-                                            readOnly
-                                          />
-                                        </div>
-                                        <div className="text-center">
-                                          <div className="flex items-center justify-center gap-1">
-                                            <Button 
-                                              variant="ghost" 
-                                              size="sm"
-                                              onClick={() => handleEditTemplate(template)}
-                                            >
-                                              <Edit className="w-3 h-3" />
-                                            </Button>
-                                            <Button 
-                                              variant="ghost" 
-                                              size="sm" 
-                                              className="text-red-500 hover:text-red-700"
-                                              onClick={() => handleDeleteTemplate(template.id, template.name)}
-                                            >
-                                              <Trash2 className="w-3 h-3" />
-                                            </Button>
+                              <div className="w-full overflow-x-auto border rounded-md bg-white">
+                                <table className="w-full min-w-[1000px] table-fixed">
+                                  <thead>
+                                    <tr className="bg-gray-50 border-b">
+                                      <th className="w-[60px] px-3 py-3 text-center font-medium text-sm text-gray-600">
+                                        <div className="leading-tight">STT</div>
+                                      </th>
+                                      <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                        <div className="leading-tight">Tên</div>
+                                      </th>
+                                      <th className="w-[130px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                        <div className="leading-tight">Mẫu số</div>
+                                      </th>
+                                      <th className="w-[160px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                        <div className="leading-tight">Mã mẫu</div>
+                                      </th>
+                                      <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                        <div className="leading-tight">Ký hiệu</div>
+                                      </th>
+                                      <th className="w-[120px] px-3 py-3 text-center font-medium text-sm text-gray-600">
+                                        <div className="leading-tight">C/K sử dụng</div>
+                                      </th>
+                                      <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                        <div className="leading-tight">Ghi chú</div>
+                                      </th>
+                                      <th className="w-[80px] px-3 py-3 text-center font-medium text-sm text-gray-600">
+                                        <div className="leading-tight">Mặc định</div>
+                                      </th>
+                                      <th className="w-[110px] px-3 py-3 text-center font-medium text-sm text-gray-600">
+                                        <div className="leading-tight">Hành động</div>
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y">
+                                    {templatesLoading ? (
+                                      <tr>
+                                        <td colSpan={9} className="p-8 text-center text-sm text-gray-500">
+                                          Đang tải dữ liệu...
+                                        </td>
+                                      </tr>
+                                    ) : invoiceTemplates.length === 0 ? (
+                                      <tr>
+                                        <td colSpan={9} className="p-8 text-center text-sm text-gray-500">
+                                          <div className="flex flex-col items-center gap-2">
+                                            <SettingsIcon className="w-8 h-8 text-gray-400" />
+                                            <p>Chưa có mẫu số HĐĐT nào</p>
+                                            <p className="text-xs">
+                                              Nhấn "Thêm mẫu số" để bắt đầu
+                                            </p>
                                           </div>
-                                        </div>
-                                      </div>
-                                    ))
-                                  )}
-                                </div>
+                                        </td>
+                                      </tr>
+                                    ) : (
+                                      invoiceTemplates.map((template, index) => (
+                                        <tr key={template.id} className="hover:bg-gray-50">
+                                          <td className="px-3 py-3 text-center">
+                                            <div className="text-sm">{index + 1}</div>
+                                          </td>
+                                          <td className="px-3 py-3">
+                                            <div className="text-sm font-medium truncate" title={template.name}>
+                                              {template.name}
+                                            </div>
+                                          </td>
+                                          <td className="px-3 py-3">
+                                            <div className="text-sm truncate" title={template.templateNumber}>
+                                              {template.templateNumber}
+                                            </div>
+                                          </td>
+                                          <td className="px-3 py-3">
+                                            <div className="text-sm truncate" title={template.templateCode}>
+                                              {template.templateCode || "-"}
+                                            </div>
+                                          </td>
+                                          <td className="px-3 py-3">
+                                            <div className="text-sm truncate" title={template.symbol}>
+                                              {template.symbol}
+                                            </div>
+                                          </td>
+                                          <td className="px-3 py-3 text-center">
+                                            <Badge
+                                              variant="default"
+                                              className={`text-xs ${template.useCK ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}`}
+                                            >
+                                              {template.useCK ? "Sử dụng" : "Không sử dụng"}
+                                            </Badge>
+                                          </td>
+                                          <td className="px-3 py-3">
+                                            <div className="text-sm truncate" title={template.notes || "-"}>
+                                              {template.notes || "-"}
+                                            </div>
+                                          </td>
+                                          <td className="px-3 py-3 text-center">
+                                            <input
+                                              type="checkbox"
+                                              className="rounded"
+                                              checked={template.isDefault}
+                                              readOnly
+                                            />
+                                          </td>
+                                          <td className="px-3 py-3">
+                                            <div className="flex items-center justify-center gap-1">
+                                              <Button 
+                                                variant="ghost" 
+                                                size="sm"
+                                                onClick={() => handleEditTemplate(template)}
+                                              >
+                                                <Edit className="w-3 h-3" />
+                                              </Button>
+                                              <Button 
+                                                variant="ghost" 
+                                                size="sm" 
+                                                className="text-red-500 hover:text-red-700"
+                                                onClick={() => handleDeleteTemplate(template.id, template.name)}
+                                              >
+                                                <Trash2 className="w-3 h-3" />
+                                              </Button>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      ))
+                                    )}
+                                  </tbody>
+                                </table>
                               </div>
                             </div>
                           </TabsContent>
