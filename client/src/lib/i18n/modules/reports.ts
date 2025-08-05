@@ -18,6 +18,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     refresh: "새로고침",
     toDay: "오늘",
     lastWeek: "지난 주",
+    thisMonth: "이번 달",
     lastMonth: "지난 달",
     custom: "사용자 지정",
 
@@ -441,7 +442,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     endDate: "End Date",
     refresh: "Refresh",
     toDay: "Today",
-    lastWeek: "Last Week",
+    lastWeek: "Last Week", 
+    thisMonth: "This Month",
     lastMonth: "Last Month",
     custom: "Custom",
 

@@ -92,9 +92,17 @@ export function MenuReport() {
         setEndDate(today.toISOString().split("T")[0]);
         break;
       case "month":
+        // Tháng hiện tại
         const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
         setStartDate(monthStart.toISOString().split("T")[0]);
         setEndDate(today.toISOString().split("T")[0]);
+        break;
+      case "lastmonth":
+        // Tháng trước
+        const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+        setStartDate(lastMonthStart.toISOString().split("T")[0]);
+        setEndDate(lastMonthEnd.toISOString().split("T")[0]);
         break;
     }
   };
@@ -154,6 +162,9 @@ export function MenuReport() {
                   <SelectItem value="today">{t("reports.toDay")}</SelectItem>
                   <SelectItem value="week">{t("reports.lastWeek")}</SelectItem>
                   <SelectItem value="month">
+                    {t("reports.thisMonth")}
+                  </SelectItem>
+                  <SelectItem value="lastmonth">
                     {t("reports.lastMonth")}
                   </SelectItem>
                   <SelectItem value="custom">{t("reports.custom")}</SelectItem>
