@@ -1565,12 +1565,12 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getEmployeeByEmail(email: string): Promise<Employee | undefined> {
-    if (email) {
+  async getEmployeeByEmail(email: string | null): Promise<Employee | undefined> {
+    if (email && email.trim() !== "") {
       const [employee] = await db
         .select()
         .from(employees)
-        .where(eq(employees.email, email));
+        .where(eq(employees.email, email.trim()));
       return employee || undefined;
     } else {
       return undefined;

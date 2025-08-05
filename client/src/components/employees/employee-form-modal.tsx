@@ -276,7 +276,15 @@ export function EmployeeFormModal({
                     <Input
                       type="email"
                       placeholder="hong@company.com"
-                      {...field}
+                      value={field.value || ""}
+                      onChange={(e) => {
+                        // If empty, set to null instead of empty string
+                        const value = e.target.value.trim();
+                        field.onChange(value === "" ? null : value);
+                      }}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />

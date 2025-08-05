@@ -468,16 +468,18 @@ export async function registerRoutes(app: Express): Promise {
     try {
       const validatedData = insertEmployeeSchema.parse(req.body);
 
-      // Check if email already exists
-      const existingEmployee = await storage.getEmployeeByEmail(
-        validatedData.email,
-      );
-      if (existingEmployee) {
-        return res.status(400).json({
-          message: "Email đã tồn tại trong hệ thống",
-          code: "DUPLICATE_EMAIL",
-          field: "email",
-        });
+      // Check if email already exists (only if email is provided and not empty)
+      if (validatedData.email && validatedData.email.trim() !== "") {
+        const existingEmployee = await storage.getEmployeeByEmail(
+          validatedData.email,
+        );
+        if (existingEmployee) {
+          return res.status(400).json({
+            message: "Email đã tồn tại trong hệ thống",
+            code: "DUPLICATE_EMAIL",
+            field: "email",
+          });
+        }
       }
 
       const employee = await storage.createEmployee(validatedData);
@@ -498,8 +500,8 @@ export async function registerRoutes(app: Express): Promise {
       const id = parseInt(req.params.id);
       const validatedData = insertEmployeeSchema.partial().parse(req.body);
 
-      // Check if email already exists (excluding current employee)
-      if (validatedData.email) {
+      // Check if email already exists (excluding current employee) - only if email is provided and not empty
+      if (validatedData.email && validatedData.email.trim() !== "") {
         const existingEmployee = await storage.getEmployeeByEmail(
           validatedData.email,
         );
