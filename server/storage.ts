@@ -1591,28 +1591,28 @@ export class DatabaseStorage implements IStorage {
 
       console.log("All employee IDs:", allEmployees.map(e => e.employeeId));
 
-      // Extract numbers from all employee IDs and find the maximum
-      const numbers = allEmployees
+      // Extract numbers from employee IDs with format EMP-XXX (3 digits max)
+      const validNumbers = allEmployees
         .map(emp => {
-          const match = emp.employeeId.match(/EMP-(\d+)/);
-          return match ? parseInt(match[1], 10) : 0;
+          // Only match EMP- followed by 1-3 digits
+          const match = emp.employeeId.match(/^EMP-(\d{1,3})$/);
+          return match ? parseInt(match[1], 10) : null;
         })
-        .filter(num => !isNaN(num) && num > 0);
+        .filter(num => num !== null && num > 0 && num <= 999);
 
-      console.log("Extracted numbers:", numbers);
+      console.log("Valid sequential numbers:", validNumbers);
 
-      if (numbers.length === 0) {
+      if (validNumbers.length === 0) {
         return "EMP-001";
       }
 
-      const maxNumber = Math.max(...numbers);
+      const maxNumber = Math.max(...validNumbers);
       const nextNumber = maxNumber + 1;
 
-      console.log("Max number:", maxNumber, "Next number:", nextNumber);
+      console.log("Max valid number:", maxNumber, "Next number:", nextNumber);
 
-      // Ensure at least 3 digits, but allow more if needed
-      const digits = Math.max(3, maxNumber.toString().length);
-      const nextId = `EMP-${nextNumber.toString().padStart(digits, "0")}`;
+      // Format with 3 digits
+      const nextId = `EMP-${nextNumber.toString().padStart(3, "0")}`;
       
       console.log("Generated next ID:", nextId);
       return nextId;
