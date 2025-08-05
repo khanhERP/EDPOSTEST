@@ -341,7 +341,7 @@ export function PaymentMethodModal({
                 Hủy
               </Button>
             </>
-          ) : (
+          ) : showQRCode ? (
             <>
               <div className="text-center space-y-4">
                 <div className="flex items-center justify-center gap-2 mb-4">
@@ -453,7 +453,7 @@ export function PaymentMethodModal({
                 </Button>
               </div>
             </>
-          )}
+          ) : null}
         </div>
       </DialogContent>
       
