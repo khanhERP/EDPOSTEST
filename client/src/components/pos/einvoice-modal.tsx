@@ -65,6 +65,7 @@ export function EInvoiceModal({
   const [formData, setFormData] = useState({
     invoiceProvider: "",
     invoiceTemplate: "",
+    selectedTemplateId: "",
     taxCode: "",
     customerName: "",
     address: "",
@@ -78,6 +79,12 @@ export function EInvoiceModal({
   // Fetch E-invoice connections
   const { data: eInvoiceConnections = [] } = useQuery<any[]>({
     queryKey: ["/api/einvoice-connections"],
+    enabled: isOpen,
+  });
+
+  // Fetch invoice templates for dropdown
+  const { data: invoiceTemplates = [] } = useQuery<any[]>({
+    queryKey: ["/api/invoice-templates"],
     enabled: isOpen,
   });
 
@@ -99,6 +106,7 @@ export function EInvoiceModal({
       setFormData({
         invoiceProvider: "EasyInvoice", // Default provider
         invoiceTemplate: "1C25TYY", // Default template
+        selectedTemplateId: "",
         taxCode: "0123456789", // Default tax code
         customerName: "Khách hàng lẻ", // Default customer name
         address: "",
@@ -214,8 +222,8 @@ export function EInvoiceModal({
       return;
     }
 
-    if (!formData.invoiceTemplate.trim()) {
-      alert("Vui lòng nhập Mẫu số Hóa đơn GTGT");
+    if (!formData.selectedTemplateId) {
+      alert("Vui lòng chọn mẫu số hóa đơn");
       return;
     }
 
@@ -392,6 +400,16 @@ export function EInvoiceModal({
         itemsCount: invoiceProducts.length,
       });
 
+      // Get selected template data for API mapping
+      const selectedTemplate = invoiceTemplates.find(
+        (template) => template.id.toString() === formData.selectedTemplateId
+      );
+
+      if (!selectedTemplate) {
+        alert("Không tìm thấy thông tin mẫu số hóa đơn được chọn");
+        return;
+      }
+
       const publishRequest = {
         login: {
           providerId: providerId,
@@ -412,9 +430,9 @@ export function EInvoiceModal({
         note: "",
         hdNo: "",
         createdDate: new Date().toISOString(),
-        clsfNo: "1",
-        spcfNo: formData.invoiceTemplate,
-        templateCode: "",
+        clsfNo: selectedTemplate.templateNumber, // Mẫu số
+        spcfNo: selectedTemplate.name, // Tên
+        templateCode: selectedTemplate.templateCode || "", // Mã mẫu
         buyerNotGetInvoice: 0,
         exchCd: "VND",
         exchRt: 1,
@@ -524,16 +542,23 @@ export function EInvoiceModal({
               </div>
               <div>
                 <Label htmlFor="invoiceTemplate">Mẫu số Hóa đơn GTGT</Label>
-                <Input
-                  id="invoiceTemplate"
-                  value={formData.invoiceTemplate}
-                  onChange={(e) =>
-                    handleInputChange("invoiceTemplate", e.target.value)
+                <Select
+                  value={formData.selectedTemplateId}
+                  onValueChange={(value) =>
+                    handleInputChange("selectedTemplateId", value)
                   }
-                  placeholder="1C25TYY"
-                  disabled={false}
-                  readOnly={false}
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn mẫu số hóa đơn" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {invoiceTemplates.map((template) => (
+                      <SelectItem key={template.id} value={template.id.toString()}>
+                        {template.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
