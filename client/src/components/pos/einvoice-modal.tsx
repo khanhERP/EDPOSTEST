@@ -75,6 +75,7 @@ export function EInvoiceModal({
   });
 
   const [isTaxCodeLoading, setIsTaxCodeLoading] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   // Fetch E-invoice connections
   const { data: eInvoiceConnections = [] } = useQuery<any[]>({
@@ -227,6 +228,7 @@ export function EInvoiceModal({
       return;
     }
 
+    setIsPublishing(true);
     try {
       // Debug log current cart items
       console.log("=== PHÁT HÀNH HÓA ĐƠN - KIỂM TRA DỮ LIỆU ===");
@@ -494,6 +496,8 @@ export function EInvoiceModal({
     } catch (error) {
       console.error("Error publishing invoice:", error);
       alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error}`);
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -682,9 +686,19 @@ export function EInvoiceModal({
             <Button
               onClick={handleConfirm}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={isPublishing}
             >
-              <span className="mr-2">✅</span>
-              Phát hành
+              {isPublishing ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  Đang phát hành...
+                </>
+              ) : (
+                <>
+                  <span className="mr-2">✅</span>
+                  Phát hành
+                </>
+              )}
             </Button>
             <Button variant="outline" onClick={handleCancel} className="flex-1">
               <span className="mr-2">❌</span>
