@@ -180,6 +180,7 @@ export const insertEmployeeSchema = createInsertSchema(employees).omit({
     errorMap: () => ({ message: "Role must be manager, cashier, or admin" })
   }),
   email: z.string().email("Invalid email format"),
+  phone: z.string().nullable().optional().transform((val) => val === "" ? null : val),
   hireDate: z.coerce.date(),
 });
 

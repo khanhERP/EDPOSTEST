@@ -294,7 +294,11 @@ export function EmployeeFormModal({
                     <Input
                       placeholder="010-1234-5678"
                       value={field.value || ""}
-                      onChange={field.onChange}
+                      onChange={(e) => {
+                        // If empty, set to null instead of empty string
+                        const value = e.target.value.trim();
+                        field.onChange(value === "" ? null : value);
+                      }}
                       onBlur={field.onBlur}
                       name={field.name}
                       ref={field.ref}

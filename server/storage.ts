@@ -1497,6 +1497,26 @@ export class DatabaseStorage implements IStorage {
       .where(eq(employees.email, email));
     return employee || undefined;
   }
+
+  async getNextEmployeeId(): Promise<string> {
+    // Get the highest employee ID number
+    const [lastEmployee] = await db
+      .select({ employeeId: employees.employeeId })
+      .from(employees)
+      .orderBy(sql`CAST(SUBSTRING(${employees.employeeId}, 5) AS INTEGER) DESC`)
+      .limit(1);
+    
+    if (!lastEmployee) {
+      return "EMP-001";
+    }
+    
+    // Extract number from EMP-XXX format
+    const lastNumber = parseInt(lastEmployee.employeeId.split('-')[1]);
+    const nextNumber = lastNumber + 1;
+    
+    // Format with leading zeros
+    return `EMP-${nextNumber.toString().padStart(3, '0')}`;
+  }
 }
 
 export const storage = new DatabaseStorage();

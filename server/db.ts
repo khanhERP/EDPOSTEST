@@ -80,6 +80,17 @@ export async function initializeSampleData() {
       console.log("Tax rate migration already applied or error:", migrationError);
     }
 
+    // Ensure phone field is nullable in employees table
+    try {
+      await db.execute(sql`
+        ALTER TABLE employees ALTER COLUMN phone DROP NOT NULL
+      `);
+      console.log("Migration for phone field nullability completed successfully.");
+    } catch (error) {
+      console.log("Phone field nullability migration skipped or failed:", error);
+    }
+
+
     // Check if customers table has data
     const customerCount = await db.select({ count: sql<number>`count(*)` }).from(customers);
     if (customerCount[0]?.count === 0) {
