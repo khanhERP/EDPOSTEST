@@ -16,6 +16,7 @@ import QRCodeLib from "qrcode";
 import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
 import { PaymentMethodModal } from "@/components/pos/payment-method-modal";
 import { EInvoiceModal } from "@/components/pos/einvoice-modal";
+import { ReceiptModal } from "@/components/pos/receipt-modal";
 import type { Table, Order } from "@shared/schema";
 
 interface TableGridProps {
@@ -44,7 +45,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [qrLoading, setQrLoading] = useState(false);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
-  const [orderForPayment, setOrderForPayment] = useState<Order | null>(null);
+  const [orderForPayment, setOrderForPayment] = useState<any>(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
@@ -156,7 +159,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const completePaymentMutation = useMutation({
     mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) =>
       apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod }),
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
       setOrderDetailsOpen(false);
@@ -164,6 +167,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       toast({
         title: 'Thanh toán thành công',
         description: 'Đơn hàng đã được thanh toán',
+      });
+
+      // Fetch the completed order to get its details for receipt
+      queryClient.fetchQuery({
+        queryKey: ['/api/orders', variables.orderId],
+        queryFn: async () => {
+          const response = await apiRequest('GET', `/api/orders/${variables.orderId}`);
+          return response.json();
+        }
+      }).then((completedOrder) => {
+        if (completedOrder) {
+          console.log('Completed order for receipt:', completedOrder);
+          setSelectedReceipt(completedOrder); // Set the order for the receipt modal
+          setShowReceiptModal(true); // Show the receipt modal
+        }
       });
     },
     onError: () => {
@@ -190,7 +208,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         customerId 
       });
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
       queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
@@ -202,6 +220,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       toast({
         title: 'Thanh toán thành công',
         description: 'Đơn hàng đã được thanh toán bằng điểm',
+      });
+
+      // Fetch the completed order to get its details for receipt
+      queryClient.fetchQuery({
+        queryKey: ['/api/orders', variables.orderId],
+        queryFn: async () => {
+          const response = await apiRequest('GET', `/api/orders/${variables.orderId}`);
+          return response.json();
+        }
+      }).then((completedOrder) => {
+        if (completedOrder) {
+          console.log('Completed order for receipt:', completedOrder);
+          setSelectedReceipt(completedOrder); // Set the order for the receipt modal
+          setShowReceiptModal(true); // Show the receipt modal
+        }
       });
     },
     onError: () => {
@@ -233,7 +266,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         customerId 
       });
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
       queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
@@ -246,6 +279,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       toast({
         title: 'Thanh toán thành công',
         description: 'Đơn hàng đã được thanh toán bằng điểm + tiền mặt/chuyển khoản',
+      });
+
+      // Fetch the completed order to get its details for receipt
+      queryClient.fetchQuery({
+        queryKey: ['/api/orders', variables.orderId],
+        queryFn: async () => {
+          const response = await apiRequest('GET', `/api/orders/${variables.orderId}`);
+          return response.json();
+        }
+      }).then((completedOrder) => {
+        if (completedOrder) {
+          console.log('Completed order for receipt:', completedOrder);
+          setSelectedReceipt(completedOrder); // Set the order for the receipt modal
+          setShowReceiptModal(true); // Show the receipt modal
+        }
       });
     },
     onError: () => {
@@ -1051,7 +1099,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         })) || []}
       />
 
-      
+      {/* Receipt Modal */}
+      <ReceiptModal
+        isOpen={showReceiptModal}
+        onClose={() => {
+          setShowReceiptModal(false);
+          setSelectedReceipt(null);
+        }}
+        order={selectedReceipt}
+        storeSettings={storeSettings}
+      />
+
 
       {/* Points Payment Dialog */}
       <Dialog open={pointsPaymentOpen} onOpenChange={setPointsPaymentOpen}>

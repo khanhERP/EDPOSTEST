@@ -486,10 +486,20 @@ export function EInvoiceModal({
       console.log("Invoice published successfully:", result);
 
       if (result.success) {
+        // Show success message with invoice details
         alert(
-          `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}`,
+          `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}\nNgày phát hành: ${result.data?.invDate ? new Date(result.data.invDate).toLocaleString('vi-VN') : "N/A"}`,
         );
-        onConfirm(formData);
+        
+        // Confirm payment completion
+        onConfirm({
+          ...formData,
+          invoiceData: result.data,
+          cartItems: cartItems,
+          total: total
+        });
+        
+        // Close e-invoice modal - this should trigger the receipt modal in parent component
         onClose();
       } else {
         throw new Error(
