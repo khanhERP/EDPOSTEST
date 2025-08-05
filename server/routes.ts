@@ -2583,6 +2583,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
+  // POS Login API endpoint
+  app.post("/api/pos/login", async (req, res) => {
+    try {
+      const { clientID, clientSecret, masterId, bankCode } = req.body;
+
+      console.log("POS Login request:", { clientID, clientSecret, masterId, bankCode });
+
+      // Use external server URL for login
+      const apiBaseUrl = process.env.QR_API_BASE_URL || "http://1.55.212.135:9440";
+      const response = await fetch(`${apiBaseUrl}/api/pos/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          clientID,
+          clientSecret,
+          masterId,
+          bankCode,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("POS Login API error:", response.status, response.statusText);
+        return res.status(response.status).json({
+          error: "Failed to login for QR payment",
+          details: `API returned ${response.status}: ${response.statusText}`,
+        });
+      }
+
+      const result = await response.json();
+      console.log("POS Login response:", result);
+
+      res.json(result);
+    } catch (error) {
+      console.error("POS Login proxy error:", error);
+      res.status(500).json({
+        error: "Failed to login for QR payment",
+        details: error.message,
+      });
+    }
+  });
+
   // QR Payment API proxy endpoint
   app.post("/api/pos/create-qr", async (req, res) => {
     // Stock update error
