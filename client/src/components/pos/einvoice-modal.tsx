@@ -145,7 +145,7 @@ export function EInvoiceModal({
         invoiceProvider: "EasyInvoice", // Default provider
         invoiceTemplate: "1C25TYY", // Default template
         selectedTemplateId: "",
-        taxCode: "0123456789", // Default tax code
+        taxCode: "", // Optional tax code
         customerName: "Khách hàng lẻ", // Default customer name
         address: "",
         phoneNumber: "",
@@ -251,11 +251,10 @@ export function EInvoiceModal({
     // Validate required fields
     if (
       !formData.invoiceProvider ||
-      !formData.taxCode ||
       !formData.customerName
     ) {
       alert(
-        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT, Mã số thuế, và Tên đơn vị",
+        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
       );
       return;
     }
@@ -478,10 +477,10 @@ export function EInvoiceModal({
         bankAccount: "",
         bankName: "",
         customer: {
-          custCd: formData.taxCode,
+          custCd: formData.taxCode || "GUEST",
           custNm: formData.customerName,
           custCompany: formData.customerName,
-          taxCode: formData.taxCode,
+          taxCode: formData.taxCode || "",
           custCity: "",
           custDistrictName: "",
           custAddrs: formData.address || "",
@@ -676,7 +675,7 @@ export function EInvoiceModal({
                     onChange={(e) =>
                       handleInputChange("taxCode", e.target.value)
                     }
-                    placeholder="0102222333-001"
+                    placeholder="0102222333-001 (tùy chọn)"
                     disabled={false}
                     readOnly={false}
                   />
@@ -685,7 +684,7 @@ export function EInvoiceModal({
                     size="sm"
                     type="button"
                     onClick={handleGetTaxInfo}
-                    disabled={isTaxCodeLoading}
+                    disabled={isTaxCodeLoading || !formData.taxCode.trim()}
                   >
                     {isTaxCodeLoading ? (
                       <>
