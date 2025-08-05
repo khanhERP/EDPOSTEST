@@ -573,12 +573,40 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteEmployee(id: number): Promise<boolean> {
-    const [employee] = await db
-      .update(employees)
-      .set({ isActive: false })
-      .where(eq(employees.id, id))
-      .returning();
-    return !!employee;
+    try {
+      // Check if employee has attendance records
+      const attendanceCheck = await db
+        .select()
+        .from(attendanceRecords)
+        .where(eq(attendanceRecords.employeeId, id))
+        .limit(1);
+
+      if (attendanceCheck.length > 0) {
+        throw new Error("Cannot delete employee: employee has attendance records");
+      }
+
+      // Check if employee has orders
+      const orderCheck = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.employeeId, id))
+        .limit(1);
+
+      if (orderCheck.length > 0) {
+        throw new Error("Cannot delete employee: employee has orders");
+      }
+
+      // If no references found, delete the employee
+      const result = await db
+        .delete(employees)
+        .where(eq(employees.id, id))
+        .returning();
+
+      return result.length > 0;
+    } catch (error) {
+      console.error("Error deleting employee:", error);
+      throw error;
+    }
   }
 
   async getAttendanceRecords(
