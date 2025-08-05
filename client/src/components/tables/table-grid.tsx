@@ -159,15 +159,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const completePaymentMutation = useMutation({
     mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) =>
       apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod }),
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
+      console.log('🎯 completePaymentMutation.onSuccess called');
+      
+      // Invalidate queries first
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
       
-      // Close all payment-related dialogs
+      // Close all payment-related dialogs immediately
+      console.log('🚪 Closing all payment dialogs');
       setOrderDetailsOpen(false);
       setPaymentMethodsOpen(false);
       setShowPaymentMethodModal(false);
       setShowEInvoiceModal(false);
+      setOrderForPayment(null);
       
       toast({
         title: 'Thanh toán thành công',
@@ -175,22 +180,24 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       });
 
       // Fetch the completed order and its items for receipt
-      Promise.all([
-        queryClient.fetchQuery({
-          queryKey: ['/api/orders', variables.orderId],
-          queryFn: async () => {
-            const response = await apiRequest('GET', `/api/orders/${variables.orderId}`);
-            return response.json();
-          }
-        }),
-        queryClient.fetchQuery({
-          queryKey: ['/api/order-items', variables.orderId],
-          queryFn: async () => {
-            const response = await apiRequest('GET', `/api/order-items/${variables.orderId}`);
-            return response.json();
-          }
-        })
-      ]).then(([completedOrder, orderItemsData]) => {
+      try {
+        const [completedOrder, orderItemsData] = await Promise.all([
+          queryClient.fetchQuery({
+            queryKey: ['/api/orders', variables.orderId],
+            queryFn: async () => {
+              const response = await apiRequest('GET', `/api/orders/${variables.orderId}`);
+              return response.json();
+            }
+          }),
+          queryClient.fetchQuery({
+            queryKey: ['/api/order-items', variables.orderId],
+            queryFn: async () => {
+              const response = await apiRequest('GET', `/api/order-items/${variables.orderId}`);
+              return response.json();
+            }
+          })
+        ]);
+
         if (completedOrder && orderItemsData) {
           console.log('✅ Table payment completed - preparing receipt data');
           console.log('Completed order for receipt:', completedOrder);
@@ -244,19 +251,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setSelectedReceipt(receiptData);
           setShowReceiptModal(true);
         }
-      }).catch((error) => {
+      } catch (error) {
         console.error('Error fetching order details for receipt:', error);
         toast({
           title: 'Cảnh báo',
           description: 'Thanh toán thành công nhưng không thể hiển thị hóa đơn',
           variant: 'destructive',
         });
-      }).finally(() => {
-        // Always clear orderForPayment at the end
-        setOrderForPayment(null);
-      });
+      }
     },
     onError: () => {
+      console.log('❌ completePaymentMutation.onError called');
       toast({
         title: 'Lỗi',
         description: 'Không thể hoàn tất thanh toán',
@@ -1191,23 +1196,25 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setOrderForPayment(null);
         }}
         onConfirm={(eInvoiceData) => {
-          console.log('Table E-invoice data:', eInvoiceData);
+          console.log('🍽️ Table E-invoice confirmation received:', eInvoiceData);
+
+          // Always close e-invoice modal first to prevent display issues
+          setShowEInvoiceModal(false);
 
           // Complete the payment after successful e-invoice publication
           if (orderForPayment && eInvoiceData.source === 'table' && eInvoiceData.shouldCompletePayment) {
-            console.log('🍽️ Completing payment after successful e-invoice publication');
+            console.log('✅ E-invoice published successfully, completing payment...');
             
-            // Close e-invoice modal first
-            setShowEInvoiceModal(false);
-            
-            // Complete payment mutation will handle the rest
-            completePaymentMutation.mutate({ 
-              orderId: orderForPayment.id, 
-              paymentMethod: eInvoiceData.paymentMethod || 'einvoice'
-            });
+            // Use setTimeout to ensure modal is closed before payment mutation
+            setTimeout(() => {
+              completePaymentMutation.mutate({ 
+                orderId: orderForPayment.id, 
+                paymentMethod: eInvoiceData.paymentMethod || 'einvoice'
+              });
+            }, 100);
           } else {
-            // Close modals if not completing payment
-            setShowEInvoiceModal(false);
+            // Clear order for payment if not completing payment
+            console.log('⚠️ E-invoice published but not completing payment');
             setOrderForPayment(null);
           }
         }}
