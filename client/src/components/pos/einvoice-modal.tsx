@@ -132,13 +132,13 @@ export function EInvoiceModal({
     }
 
     try {
-      const response = await fetch("https://infoerpvn.com:9440/api/CheckListTaxCode/v2", {
+      // Use a proxy endpoint through our server to avoid CORS issues
+      const response = await fetch("/api/tax-code-lookup", {
         method: "POST",
         headers: {
-          "token": "EnURbbnPhUm4GjNgE4Ogrw==",
           "Content-Type": "application/json",
         },
-        body: JSON.stringify([formData.taxCode]),
+        body: JSON.stringify({ taxCode: formData.taxCode }),
       });
 
       if (!response.ok) {
@@ -148,9 +148,9 @@ export function EInvoiceModal({
       const result = await response.json();
       console.log("Tax code API response:", result);
 
-      if (result && Array.isArray(result) && result.length > 0) {
+      if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
         // Tìm tax code khớp với mã số thuế đã nhập
-        const taxInfo = result.find(item => item.maSoThue === formData.taxCode || item.masothueId === formData.taxCode);
+        const taxInfo = result.data.find(item => item.maSoThue === formData.taxCode || item.masothueId === formData.taxCode);
         
         if (taxInfo) {
           // Kiểm tra trạng thái
@@ -171,11 +171,15 @@ export function EInvoiceModal({
           alert("Không tìm thấy thông tin cho mã số thuế này trong kết quả trả về");
         }
       } else {
-        alert("Không tìm thấy thông tin cho mã số thuế này");
+        alert(result.message || "Không tìm thấy thông tin cho mã số thuế này");
       }
     } catch (error) {
       console.error("Error fetching tax code info:", error);
-      alert(`Có lỗi xảy ra khi lấy thông tin mã số thuế: ${error}`);
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        alert("Không thể kết nối đến dịch vụ tra cứu mã số thuế. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.");
+      } else {
+        alert(`Có lỗi xảy ra khi lấy thông tin mã số thuế: ${error.message || error}`);
+      }
     }
   };
 

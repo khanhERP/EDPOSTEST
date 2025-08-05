@@ -43,7 +43,7 @@ import {
   transactionItems as transactionItemsTable,
 } from "@shared/schema";
 
-export async function registerRoutes(app: Express): Promise {
+export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize sample data
   await initializeSampleData();
 
@@ -2586,7 +2586,7 @@ export async function registerRoutes(app: Express): Promise {
 
       // Use external server URL
       const apiBaseUrl =
-        process.env.QR_API_BASE_URL || "http://1.55.212.135:9335";
+        process.env.QR_API_BASE_URL || "http://1.55.212.135:9440"; // Changed port to match example.
       const response = await fetch(
         `${apiBaseUrl}/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`,
         {
@@ -2624,7 +2624,51 @@ export async function registerRoutes(app: Express): Promise {
     }
   });
 
-  // E-invoice publish endpoint
+  // Tax code lookup proxy endpoint
+  app.post("/api/tax-code-lookup", async (req, res) => {
+    try {
+      const { taxCode } = req.body;
+
+      if (!taxCode) {
+        return res.status(400).json({
+          success: false,
+          message: "Mã số thuế không được để trống"
+        });
+      }
+
+      // Call the external tax code API
+      const response = await fetch("https://infoerpvn.com:9440/api/CheckListTaxCode/v2", {
+        method: "POST",
+        headers: {
+          "token": "EnURbbnPhUm4GjNgE4Ogrw==",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify([taxCode]),
+      });
+
+      if (!response.ok) {
+        throw new Error(`External API error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      res.json({
+        success: true,
+        data: result,
+        message: "Tra cứu thành công"
+      });
+
+    } catch (error) {
+      console.error("Tax code lookup error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Có lỗi xảy ra khi tra cứu mã số thuế",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // E-invoice publish proxy endpoint
   app.post("/api/einvoice/publish", async (req, res) => {
     try {
       const publishRequest = req.body;
@@ -2645,7 +2689,7 @@ export async function registerRoutes(app: Express): Promise {
         console.error("E-invoice API error:", response.status, response.statusText);
         const errorText = await response.text();
         console.error("Error response:", errorText);
-        
+
         return res.status(response.status).json({
           error: "Failed to publish invoice",
           details: `API returned ${response.status}: ${response.statusText}`,
@@ -2659,7 +2703,7 @@ export async function registerRoutes(app: Express): Promise {
       // Check if the API returned success
       if (result.status === true) {
         console.log("Invoice published successfully:", result);
-        
+
         // Return standardized response format
         res.json({
           success: true,
