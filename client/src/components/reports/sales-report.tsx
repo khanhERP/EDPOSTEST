@@ -156,6 +156,7 @@ export function SalesReport() {
         setEndDate(today.toISOString().split("T")[0]);
         break;
       case "month":
+        // Tháng trước
         const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
         setStartDate(lastMonth.toISOString().split("T")[0]);
