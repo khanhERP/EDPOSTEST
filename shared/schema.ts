@@ -215,7 +215,6 @@ export const insertEmployeeSchema = createInsertSchema(employees)
     name: z.string().min(1, "Tên nhân viên là bắt buộc"),
     email: z
       .string()
-      .email("Invalid email format")
       .nullable()
       .optional()
       .transform((val) => (val === "" ? null : val)),
