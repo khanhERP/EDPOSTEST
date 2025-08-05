@@ -1579,15 +1579,17 @@ export class DatabaseStorage implements IStorage {
 
   async getNextEmployeeId(): Promise<string> {
     try {
-      // Get all employees ordered by their creation date to find the latest
+      // Get all employees ordered by ID to find the latest
       const allEmployees = await db
         .select({ employeeId: employees.employeeId })
         .from(employees)
-        .orderBy(desc(employees.id));
+        .orderBy(employees.employeeId);
 
       if (allEmployees.length === 0) {
         return "EMP-001";
       }
+
+      console.log("All employee IDs:", allEmployees.map(e => e.employeeId));
 
       // Extract numbers from all employee IDs and find the maximum
       const numbers = allEmployees
@@ -1597,6 +1599,8 @@ export class DatabaseStorage implements IStorage {
         })
         .filter(num => !isNaN(num) && num > 0);
 
+      console.log("Extracted numbers:", numbers);
+
       if (numbers.length === 0) {
         return "EMP-001";
       }
@@ -1604,12 +1608,17 @@ export class DatabaseStorage implements IStorage {
       const maxNumber = Math.max(...numbers);
       const nextNumber = maxNumber + 1;
 
+      console.log("Max number:", maxNumber, "Next number:", nextNumber);
+
       // Ensure at least 3 digits, but allow more if needed
       const digits = Math.max(3, maxNumber.toString().length);
-      return `EMP-${nextNumber.toString().padStart(digits, "0")}`;
+      const nextId = `EMP-${nextNumber.toString().padStart(digits, "0")}`;
+      
+      console.log("Generated next ID:", nextId);
+      return nextId;
     } catch (error) {
       console.error("Error generating next employee ID:", error);
-      throw new Error("Unable to generate employee ID");
+      return "EMP-001";
     }
   }
 }

@@ -56,12 +56,22 @@ export function EmployeeFormModal({
   const generateEmployeeId = async () => {
     try {
       const response = await apiRequest("GET", "/api/employees/next-id");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
+      console.log("Generated employee ID:", data.nextId);
       return data.nextId;
     } catch (error) {
       console.error("Error generating employee ID:", error);
-      // Fallback to EMP-001 if API fails
-      return "EMP-001";
+      toast({
+        title: "Lỗi",
+        description: "Không thể tạo mã nhân viên tự động",
+        variant: "destructive",
+      });
+      // Fallback to timestamp-based ID
+      const timestamp = Date.now().toString().slice(-6);
+      return `EMP-${timestamp}`;
     }
   };
 
