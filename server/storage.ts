@@ -1579,11 +1579,11 @@ export class DatabaseStorage implements IStorage {
 
   async getNextEmployeeId(): Promise<string> {
     try {
-      // Get all employee IDs and find the highest number
+      // Get all employees ordered by their creation date to find the latest
       const allEmployees = await db
         .select({ employeeId: employees.employeeId })
         .from(employees)
-        .orderBy(employees.employeeId);
+        .orderBy(desc(employees.id));
 
       if (allEmployees.length === 0) {
         return "EMP-001";
@@ -1595,17 +1595,21 @@ export class DatabaseStorage implements IStorage {
           const match = emp.employeeId.match(/EMP-(\d+)/);
           return match ? parseInt(match[1], 10) : 0;
         })
-        .filter(num => !isNaN(num));
+        .filter(num => !isNaN(num) && num > 0);
 
-      const maxNumber = Math.max(...numbers, 0);
+      if (numbers.length === 0) {
+        return "EMP-001";
+      }
+
+      const maxNumber = Math.max(...numbers);
       const nextNumber = maxNumber + 1;
 
-      return `EMP-${nextNumber.toString().padStart(3, "0")}`;
+      // Ensure at least 3 digits, but allow more if needed
+      const digits = Math.max(3, maxNumber.toString().length);
+      return `EMP-${nextNumber.toString().padStart(digits, "0")}`;
     } catch (error) {
       console.error("Error generating next employee ID:", error);
-      // Fallback: generate random ID to avoid conflicts
-      const randomNumber = Math.floor(Math.random() * 9000) + 1000;
-      return `EMP-${randomNumber}`;
+      throw new Error("Unable to generate employee ID");
     }
   }
 }
