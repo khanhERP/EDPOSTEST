@@ -1611,98 +1611,147 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                             </div>
 
                             {/* E-invoice connections table */}
-                            <div className="rounded-md border bg-white">
-                              <div className="grid grid-cols-11 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
-                                <div className="text-center">Ký hiệu</div>
-                                <div>Mã số thuế</div>
-                                <div>ID đăng nhập</div>
-                                <div>Mật khẩu</div>
-                                <div>Phần mềm HĐ</div>
-                                <div>Đường dẫn đăng nhập</div>
-                                <div>Phương thức ký</div>
-                                <div>Loại mã CQT</div>
-                                <div>Ghi chú</div>
-                                <div className="text-center">Mặc định</div>
-                                <div className="text-center">Hành động</div>
-                              </div>
-
-                              <div className="divide-y">
-                                {eInvoiceConnections.map((connection) => (
-                                  <div
-                                    key={connection.id}
-                                    className="grid grid-cols-11 gap-4 p-3 items-center text-sm"
-                                  >
-                                    <div className="text-center">
-                                      {connection.symbol}
-                                    </div>
-                                    <div className="font-mono">
-                                      {connection.taxCode}
-                                    </div>
-                                    <div>{connection.loginId}</div>
-                                    <div>
-                                      {"*".repeat(connection.password.length)}
-                                    </div>
-                                    <div>
-                                      <Badge variant="outline">
-                                        {connection.softwareName}
-                                      </Badge>
-                                    </div>
-                                    <div className="text-blue-600 hover:underline cursor-pointer truncate">
-                                      {connection.loginUrl}
-                                    </div>
-                                    <div>{connection.signMethod}</div>
-                                    <div>{connection.cqtCode}</div>
-                                    <div>{connection.notes}</div>
-                                    <div className="text-center">
-                                      <Checkbox
-                                        checked={connection.isDefault}
-                                        readOnly
-                                      />
-                                    </div>
-                                    <div className="text-center">
-                                      <div className="flex items-center justify-center gap-1">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          onClick={() => {
-                                            console.log("Edit button clicked for connection:", connection);
-                                            handleEditEInvoice(connection);
-                                          }}
-                                        >
-                                          <Edit className="w-3 h-3" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="text-red-500 hover:text-red-700"
-                                          onClick={() =>
-                                            handleDeleteEInvoice(
-                                              connection.id,
-                                              connection.softwareName,
-                                            )
-                                          }
-                                        >
-                                          <Trash2 className="w-3 h-3" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-
-                                {eInvoiceConnections.length === 0 && (
-                                  <div className="grid grid-cols-11 gap-4 p-8 items-center text-sm text-gray-500">
-                                    <div className="col-span-11 text-center">
-                                      <div className="flex flex-col items-center gap-2">
-                                        <SettingsIcon className="w-8 h-8 text-gray-400" />
-                                        <p>Chưa có kết nối HĐĐT nào</p>
-                                        <p className="text-xs">
-                                          Nhấn "Thêm kết nối" để bắt đầu
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
+                            <div className="w-full overflow-x-auto border rounded-md bg-white">
+                              <table className="w-full min-w-[1200px] table-fixed">
+                                <thead>
+                                  <tr className="bg-gray-50 border-b">
+                                    <th className="w-[60px] px-3 py-3 text-center font-medium text-sm text-gray-600">
+                                      <div className="leading-tight">Ký hiệu</div>
+                                    </th>
+                                    <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                      <div className="leading-tight">Mã số thuế</div>
+                                    </th>
+                                    <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                      <div className="leading-tight">ID đăng nhập</div>
+                                    </th>
+                                    <th className="w-[80px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                      <div className="leading-tight">Mật khẩu</div>
+                                    </th>
+                                    <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                      <div className="leading-tight">Phần mềm HĐ</div>
+                                    </th>
+                                    <th className="w-[180px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                      <div className="leading-tight">Đường dẫn đăng nhập</div>
+                                    </th>
+                                    <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                      <div className="leading-tight">Phương thức ký</div>
+                                    </th>
+                                    <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                      <div className="leading-tight">Loại mã CQT</div>
+                                    </th>
+                                    <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                                      <div className="leading-tight">Ghi chú</div>
+                                    </th>
+                                    <th className="w-[80px] px-3 py-3 text-center font-medium text-sm text-gray-600">
+                                      <div className="leading-tight">Mặc định</div>
+                                    </th>
+                                    <th className="w-[100px] px-3 py-3 text-center font-medium text-sm text-gray-600">
+                                      <div className="leading-tight">Hành động</div>
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                  {eInvoiceConnections.length === 0 ? (
+                                    <tr>
+                                      <td colSpan={11} className="p-8 text-center text-sm text-gray-500">
+                                        <div className="flex flex-col items-center gap-2">
+                                          <SettingsIcon className="w-8 h-8 text-gray-400" />
+                                          <p>Chưa có kết nối HĐĐT nào</p>
+                                          <p className="text-xs">
+                                            Nhấn "Thêm kết nối" để bắt đầu
+                                          </p>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  ) : (
+                                    eInvoiceConnections.map((connection) => (
+                                      <tr key={connection.id} className="hover:bg-gray-50">
+                                        <td className="px-3 py-3 text-center">
+                                          <div className="text-sm">{connection.symbol}</div>
+                                        </td>
+                                        <td className="px-3 py-3">
+                                          <div className="text-sm font-mono truncate" title={connection.taxCode}>
+                                            {connection.taxCode}
+                                          </div>
+                                        </td>
+                                        <td className="px-3 py-3">
+                                          <div className="text-sm truncate" title={connection.loginId}>
+                                            {connection.loginId}
+                                          </div>
+                                        </td>
+                                        <td className="px-3 py-3">
+                                          <div className="text-sm font-mono">
+                                            *********
+                                          </div>
+                                        </td>
+                                        <td className="px-3 py-3">
+                                          <Badge variant="outline" className="text-xs">
+                                            {connection.softwareName}
+                                          </Badge>
+                                        </td>
+                                        <td className="px-3 py-3">
+                                          <div 
+                                            className="text-sm text-blue-600 hover:underline cursor-pointer truncate" 
+                                            title={connection.loginUrl}
+                                          >
+                                            {connection.loginUrl}
+                                          </div>
+                                        </td>
+                                        <td className="px-3 py-3">
+                                          <div className="text-sm truncate" title={connection.signMethod}>
+                                            {connection.signMethod}
+                                          </div>
+                                        </td>
+                                        <td className="px-3 py-3">
+                                          <div className="text-sm truncate" title={connection.cqtCode}>
+                                            {connection.cqtCode}
+                                          </div>
+                                        </td>
+                                        <td className="px-3 py-3">
+                                          <div className="text-sm truncate" title={connection.notes || "-"}>
+                                            {connection.notes || "-"}
+                                          </div>
+                                        </td>
+                                        <td className="px-3 py-3 text-center">
+                                          <input
+                                            type="checkbox"
+                                            className="rounded"
+                                            checked={connection.isDefault}
+                                            readOnly
+                                          />
+                                        </td>
+                                        <td className="px-3 py-3">
+                                          <div className="flex items-center justify-center gap-1">
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              onClick={() => {
+                                                console.log("Edit button clicked for connection:", connection);
+                                                handleEditEInvoice(connection);
+                                              }}
+                                            >
+                                              <Edit className="w-3 h-3" />
+                                            </Button>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="text-red-500 hover:text-red-700"
+                                              onClick={() =>
+                                                handleDeleteEInvoice(
+                                                  connection.id,
+                                                  connection.softwareName,
+                                                )
+                                              }
+                                            >
+                                              <Trash2 className="w-3 h-3" />
+                                            </Button>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ))
+                                  )}
+                                </tbody>
+                              </table>
                             </div>
                           </TabsContent>
 
