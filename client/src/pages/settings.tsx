@@ -1566,15 +1566,11 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                         {/* Sub tabs for E-invoice */}
                         <Tabs defaultValue="connections" className="w-full">
                           <TabsList
-                            className="flex overflow-x-auto justify-start md:justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-2 scrollbar-hide"
-                            style={{
-                              scrollbarWidth: "none",
-                              msOverflowStyle: "none",
-                            }}
+                            className="grid grid-cols-2 h-10 items-center justify-center gap-1 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-1"
                           >
                             <TabsTrigger
                               value="connections"
-                              className="text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
+                              className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-md font-medium"
                             >
                               <span className="hidden md:inline">
                                 Kênh kết nối HĐĐT
@@ -1583,7 +1579,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                             </TabsTrigger>
                             <TabsTrigger
                               value="settings"
-                              className="text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
+                              className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-md font-medium"
                             >
                               <span className="hidden md:inline">
                                 Mẫu số HĐĐT
