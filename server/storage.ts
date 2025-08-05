@@ -40,7 +40,7 @@ import {
   type InsertPointTransaction,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, ilike, and, gte, lte, or, sql, desc } from "drizzle-orm";
+import { eq, ilike, and, gte, lte, or, sql, desc, not } from "drizzle-orm";
 
 export interface IStorage {
   // Categories
@@ -880,17 +880,52 @@ export class DatabaseStorage implements IStorage {
     id: number,
     status: string,
   ): Promise<Order | undefined> {
+    console.log(`=== UPDATING ORDER STATUS ===`);
+    console.log(`Order ID: ${id}, New Status: ${status}`);
+    
     const [order] = await db
       .update(orders)
       .set({ status })
       .where(eq(orders.id, id))
       .returning();
 
-    // If order is paid, update table status to available
+    console.log(`Updated order:`, order);
+
+    // If order is paid, check if there are other unpaid orders on the same table
     if (order && status === "paid") {
-      await this.updateTableStatus(order.tableId, "available");
+      console.log(`Order paid - checking other orders on table ${order.tableId}`);
+      
+      // Check for other active orders on the same table
+      const otherActiveOrders = await db
+        .select()
+        .from(orders)
+        .where(
+          and(
+            eq(orders.tableId, order.tableId),
+            not(eq(orders.id, id)),
+            or(
+              eq(orders.status, "pending"),
+              eq(orders.status, "confirmed"),
+              eq(orders.status, "preparing"),
+              eq(orders.status, "ready"),
+              eq(orders.status, "served")
+            )
+          )
+        );
+
+      console.log(`Other active orders on table ${order.tableId}:`, otherActiveOrders);
+
+      // Only update table status to available if no other active orders exist
+      if (otherActiveOrders.length === 0) {
+        console.log(`No other active orders - updating table ${order.tableId} to available`);
+        const updatedTable = await this.updateTableStatus(order.tableId, "available");
+        console.log(`Table update result:`, updatedTable);
+      } else {
+        console.log(`Found ${otherActiveOrders.length} other active orders - keeping table occupied`);
+      }
     }
 
+    console.log(`=== END UPDATING ORDER STATUS ===`);
     return order || undefined;
   }
 
