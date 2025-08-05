@@ -170,7 +170,7 @@ export function EInvoiceModal({
       }
     } catch (error) {
       console.error("Error fetching tax code info:", error);
-      alert(`Có lỗi xảy ra khi lấy thông tin mã số thuế: ${error.message}`);
+      alert(`Có lỗi xảy ra khi lấy thông tin mã số thuế: ${error}`);
     }
   };
 
@@ -247,7 +247,7 @@ export function EInvoiceModal({
       const invalidItems = cartItems.filter((item) => {
         const isValid =
           item &&
-          (item.id || item.productId) &&
+          (item.id || item.sku) &&
           item.name &&
           item.price !== undefined &&
           item.price !== null &&
@@ -297,7 +297,7 @@ export function EInvoiceModal({
         // Ensure proper data types with robust parsing
         const itemPrice = (() => {
           if (typeof item.price === "string") {
-            const parsed = parseFloat(item.price.replace(",", ""));
+            const parsed = parseFloat(item.price);
             return isNaN(parsed) ? 0 : parsed;
           }
           return typeof item.price === "number" ? item.price : 0;
@@ -448,7 +448,7 @@ export function EInvoiceModal({
       }
     } catch (error) {
       console.error("Error publishing invoice:", error);
-      alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error.message}`);
+      alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error}`);
     }
   };
 
