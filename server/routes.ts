@@ -33,8 +33,8 @@ import {
   gte,
   lt,
   lte,
+  ilike,
 } from "drizzle-orm";
-import { sql } from "drizzle-orm";
 import {
   orders,
   orderItems,
@@ -1715,83 +1715,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { startDate, endDate, search, categoryId, productType } = req.query;
 
-      // Build query conditions
-      const conditions = [];
+      // Base query for transaction items with product and category joins
+      let query = db
+        .select({
+          product: products,
+          category: categories,
+          quantity: sql<number>`sum(${transactionItemsTable.quantity})`.as('quantity'),
+          revenue: sql<number>`sum(${transactionItemsTable.total})`.as('revenue'),
+        })
+        .from(transactionItemsTable)
+        .leftJoin(products, eq(transactionItemsTable.productId, products.id))
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .leftJoin(transactionsTable, eq(transactionItemsTable.transactionId, transactionsTable.id))
+        .groupBy(products.id, categories.id)
+        .orderBy(desc(sql`sum(${transactionItemsTable.total})`));
 
+      // Apply filters
+      const conditions: any[] = [eq(products.isActive, true)];
+
+      // Date range filter - IMPORTANT: Apply to transactions table
       if (startDate && endDate) {
+        const start = new Date(startDate as string);
+        const end = new Date(endDate as string);
+        end.setHours(23, 59, 59, 999); // Include entire end date
+
         conditions.push(
-          sql`${orders.orderedAt} >= ${startDate} AND ${orders.orderedAt} <= ${endDate + " 23:59:59"}`,
+          and(
+            gte(transactionsTable.createdAt, start),
+            lte(transactionsTable.createdAt, end)
+          )
         );
       }
 
       if (search) {
-        conditions.push(sql`${products.name} ILIKE ${"%" + search + "%"}`);
+        conditions.push(ilike(products.name, `%${search}%`));
       }
 
-      if (categoryId && categoryId !== "all") {
-        conditions.push(
-          eq(products.categoryId, parseInt(categoryId as string)),
-        );
+      if (categoryId && categoryId !== 'all') {
+        conditions.push(eq(products.categoryId, parseInt(categoryId as string)));
       }
 
-      if (productType && productType !== "all") {
-        conditions.push(eq(products.productType, parseInt(productType as string)));
+      if (productType && productType !== 'all') {
+        const typeMap = { combo: 3, product: 1, service: 2 };
+        const typeValue = typeMap[productType as keyof typeof typeMap];
+        if (typeValue) {
+          conditions.push(eq(products.productType, typeValue));
+        }
       }
 
-      // Get order items with product and category info
-      let orderItemsQuery = db
-        .select({
-          productId: orderItems.productId,
-          quantity: orderItems.quantity,
-          totalPrice: orderItems.total, // Use 'total' instead of 'totalPrice'
-          product: {
-            id: products.id,
-            name: products.name,
-            price: products.price,
-            categoryId: products.categoryId,
-            productType: products.productType,
-          },
-          category: {
-            id: categories.id,
-            name: categories.name,
-          },
-        })
-        .from(orderItems)
-        .innerJoin(products, eq(orderItems.productId, products.id))
-        .innerJoin(categories, eq(products.categoryId, categories.id))
-        .innerJoin(orders, eq(orderItems.orderId, orders.id))
-        .where(eq(orders.status, "paid")); // Only include paid orders
+      // Apply all conditions
+      query = query.where(and(...conditions));
 
-      // Only add additional where conditions if there are any
-      if (conditions.length > 0) {
-        const whereCondition = conditions.reduce(
-          (acc, condition, index) =>
-            index === 0 ? condition : sql`${acc} AND ${condition}`,
-          sql``,
-        );
-        orderItemsQuery = orderItemsQuery.where(
-          and(eq(orders.status, "paid"), whereCondition)
-        );
-      }
+      const productStats = await query;
 
-      const orderItemsResult = await orderItemsQuery;
 
       // Initialize default values
       let totalRevenue = 0;
       let totalQuantity = 0;
       let categoryStats = [];
-      let productStats = [];
+      let productStatsGrouped = []; // Renamed from productStats to avoid conflict
       let topSellingProducts = [];
       let topRevenueProducts = [];
 
       // Process data if we have results
-      if (orderItemsResult && orderItemsResult.length > 0) {
+      if (productStats && productStats.length > 0) {
         // Calculate totals
-        totalRevenue = orderItemsResult.reduce(
-          (sum, item) => sum + parseFloat(item.totalPrice || "0"),
+        totalRevenue = productStats.reduce(
+          (sum, item) => sum + parseFloat(item.revenue || "0"),
           0,
         );
-        totalQuantity = orderItemsResult.reduce(
+        totalQuantity = productStats.reduce(
           (sum, item) => sum + (item.quantity || 0),
           0,
         );
@@ -1800,7 +1793,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const categoryStatsMap = new Map();
         const productStatsMap = new Map();
 
-        orderItemsResult.forEach((item) => {
+        productStats.forEach((item) => {
           if (!item.category || !item.product) return;
 
           const categoryKey = item.category.id;
@@ -1816,7 +1809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
           const categoryStatsItem = categoryStatsMap.get(categoryKey);
-          categoryStatsItem.revenue += parseFloat(item.totalPrice || "0");
+          categoryStatsItem.revenue += parseFloat(item.revenue || "0");
           categoryStatsItem.quantity += item.quantity || 0;
           categoryStatsItem.productCount.add(item.product.id);
 
@@ -1829,7 +1822,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
           const productStatsItem = productStatsMap.get(productKey);
-          productStatsItem.revenue += parseFloat(item.totalPrice || "0");
+          productStatsItem.revenue += parseFloat(item.revenue || "0");
           productStatsItem.quantity += item.quantity || 0;
         });
 
@@ -1839,13 +1832,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           productCount: cat.productCount.size,
         }));
 
-        productStats = Array.from(productStatsMap.values());
+        productStatsGrouped = Array.from(productStatsMap.values());
 
         // Sort products by quantity and revenue
-        topSellingProducts = [...productStats].sort(
+        topSellingProducts = [...productStatsGrouped].sort(
           (a, b) => b.quantity - a.quantity,
         );
-        topRevenueProducts = [...productStats].sort(
+        topRevenueProducts = [...productStatsGrouped].sort(
           (a, b) => b.revenue - a.revenue,
         );
       }
@@ -1854,7 +1847,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalRevenue,
         totalQuantity,
         categoryStats,
-        productStats,
+        productStats: productStatsGrouped, // Use the renamed variable
         topSellingProducts,
         topRevenueProducts,
       });
