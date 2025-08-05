@@ -17,6 +17,7 @@ import {
   attendanceRecords,
   products,
   inventoryTransactions,
+  invoiceTemplates, // Make sure invoiceTemplates is imported
 } from "@shared/schema";
 import { initializeSampleData, db } from "./db";
 import { z } from "zod";
@@ -1578,10 +1579,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Invoice templates management
   app.get("/api/invoice-templates", async (req, res) => {
     try {
-      const templates = await storage.getInvoiceTemplates();
+      const templates = await db.select().from(invoiceTemplates);
       res.json(templates);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch invoice templates" });
+      console.error("Error fetching invoice templates:", error);
+      res.status(500).json({ error: "Failed to fetch invoice templates" });
+    }
+  });
+
+  app.get("/api/invoice-templates/active", async (req, res) => {
+    try {
+      const activeTemplates = await db.select().from(invoiceTemplates).where(eq(invoiceTemplates.isActive, true));
+      res.json(activeTemplates);
+    } catch (error) {
+      console.error("Error fetching active invoice templates:", error);
+      res.status(500).json({ error: "Failed to fetch active invoice templates" });
     }
   });
 

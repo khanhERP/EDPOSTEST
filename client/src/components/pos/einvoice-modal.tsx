@@ -83,9 +83,9 @@ export function EInvoiceModal({
     enabled: isOpen,
   });
 
-  // Fetch invoice templates for dropdown
+  // Fetch active invoice templates for dropdown
   const { data: invoiceTemplates = [] } = useQuery<any[]>({
-    queryKey: ["/api/invoice-templates"],
+    queryKey: ["/api/invoice-templates/active"],
     enabled: isOpen,
   });
 
