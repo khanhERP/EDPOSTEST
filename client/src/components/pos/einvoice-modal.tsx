@@ -148,22 +148,27 @@ export function EInvoiceModal({
       const result = await response.json();
       console.log("Tax code API response:", result);
 
-      if (result && result.length > 0) {
-        const taxInfo = result[0];
+      if (result && Array.isArray(result) && result.length > 0) {
+        // Tìm tax code khớp với mã số thuế đã nhập
+        const taxInfo = result.find(item => item.maSoThue === formData.taxCode || item.masothueId === formData.taxCode);
         
-        // Kiểm tra trạng thái
-        if (taxInfo.tthai === "00") {
-          // Trạng thái hợp lệ - cập nhật thông tin
-          setFormData(prev => ({
-            ...prev,
-            customerName: taxInfo.tenCty || prev.customerName,
-            address: taxInfo.diaChi || prev.address,
-          }));
-          
-          alert(`Đã lấy thông tin thành công!\nTên công ty: ${taxInfo.tenCty}\nĐịa chỉ: ${taxInfo.diaChi}`);
+        if (taxInfo) {
+          // Kiểm tra trạng thái
+          if (taxInfo.tthai === "00") {
+            // Trạng thái hợp lệ - cập nhật thông tin
+            setFormData(prev => ({
+              ...prev,
+              customerName: taxInfo.tenCty || prev.customerName,
+              address: taxInfo.diaChi || prev.address,
+            }));
+            
+            alert(`Đã lấy thông tin thành công!\nTên công ty: ${taxInfo.tenCty}\nĐịa chỉ: ${taxInfo.diaChi}`);
+          } else {
+            // Trạng thái không hợp lệ - hiển thị thông tin trạng thái
+            alert(`Mã số thuế không hợp lệ!\nTrạng thái: ${taxInfo.trangThaiHoatDong || "Không xác định"}\nMã trạng thái: ${taxInfo.tthai}`);
+          }
         } else {
-          // Trạng thái không hợp lệ - hiển thị thông tin trạng thái
-          alert(`Mã số thuế không hợp lệ!\nTrạng thái: ${taxInfo.trangThaiHoatDong || "Không xác định"}\nMã trạng thái: ${taxInfo.tthai}`);
+          alert("Không tìm thấy thông tin cho mã số thuế này trong kết quả trả về");
         }
       } else {
         alert("Không tìm thấy thông tin cho mã số thuế này");
