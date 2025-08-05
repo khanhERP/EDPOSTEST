@@ -2591,7 +2591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("POS Login request:", { clientID, clientSecret, masterId, bankCode });
 
       // Use external server URL for login
-      const apiBaseUrl = process.env.QR_API_BASE_URL || "http://1.55.212.135:9440";
+      const apiBaseUrl = process.env.QR_API_BASE_URL || "http://1.55.212.135:9335";
       const response = await fetch(`${apiBaseUrl}/api/pos/login`, {
         method: "POST",
         headers: {
