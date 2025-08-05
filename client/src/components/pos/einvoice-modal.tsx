@@ -477,46 +477,36 @@ export function EInvoiceModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="invoiceProvider">Đơn vị HĐĐT</Label>
-                <div className="flex gap-2">
-                  <Select
-                    value={formData.invoiceProvider}
-                    onValueChange={(value) =>
-                      handleInputChange("invoiceProvider", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn đơn vị HĐĐT" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EINVOICE_PROVIDERS.map((provider) => (
-                        <SelectItem key={provider.value} value={provider.name}>
-                          {provider.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button variant="outline" size="sm">
-                    <Search className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Select
+                  value={formData.invoiceProvider}
+                  onValueChange={(value) =>
+                    handleInputChange("invoiceProvider", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn đơn vị HĐĐT" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EINVOICE_PROVIDERS.map((provider) => (
+                      <SelectItem key={provider.value} value={provider.name}>
+                        {provider.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="invoiceTemplate">Mẫu số Hóa đơn GTGT</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="invoiceTemplate"
-                    value={formData.invoiceTemplate}
-                    onChange={(e) =>
-                      handleInputChange("invoiceTemplate", e.target.value)
-                    }
-                    placeholder="1C25TYY"
-                    disabled={false}
-                    readOnly={false}
-                  />
-                  <Button variant="outline" size="sm">
-                    <Search className="w-4 h-4" />
-                  </Button>
-                </div>
+                <Input
+                  id="invoiceTemplate"
+                  value={formData.invoiceTemplate}
+                  onChange={(e) =>
+                    handleInputChange("invoiceTemplate", e.target.value)
+                  }
+                  placeholder="1C25TYY"
+                  disabled={false}
+                  readOnly={false}
+                />
               </div>
             </div>
           </div>
