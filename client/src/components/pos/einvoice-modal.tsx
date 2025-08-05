@@ -535,7 +535,26 @@ export function EInvoiceModal({
             paymentMethod: 'einvoice'
           });
           onClose();
-        } else if (source === 'table' && orderId) {
+        } else if (source === 'table') {
+          // Debug logging để kiểm tra giá trị
+          console.log('🔍 Table E-Invoice DEBUG:');
+          console.log('- source:', source);
+          console.log('- orderId:', orderId);
+          console.log('- orderId type:', typeof orderId);
+          console.log('- orderId truthy:', !!orderId);
+
+          // Kiểm tra xem có orderId không
+          if (!orderId) {
+            console.error('❌ Table E-Invoice: Missing orderId for table payment');
+            toast({
+              title: 'Lỗi',
+              description: 'Không tìm thấy thông tin đơn hàng để hoàn tất thanh toán',
+              variant: 'destructive',
+            });
+            onClose();
+            return;
+          }
+
           // Logic cho Table: Hoàn tất thanh toán và đóng modal
           console.log('🍽️ Table E-Invoice SUCCESS: Completing payment for order:', orderId);
 
