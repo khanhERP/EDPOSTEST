@@ -1075,11 +1075,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         }}
         onConfirm={(eInvoiceData) => {
           console.log('E-invoice data:', eInvoiceData);
-          // Complete the payment
+          // Complete the payment after successful e-invoice publication
           if (orderForPayment) {
             completePaymentMutation.mutate({ 
               orderId: orderForPayment.id, 
-              paymentMethod: 'einvoice' 
+              paymentMethod: eInvoiceData.paymentMethod || 'einvoice'
             });
           }
           setShowEInvoiceModal(false);

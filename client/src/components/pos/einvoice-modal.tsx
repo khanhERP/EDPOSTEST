@@ -491,15 +491,16 @@ export function EInvoiceModal({
           `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}\nNgày phát hành: ${result.data?.invDate ? new Date(result.data.invDate).toLocaleString('vi-VN') : "N/A"}`,
         );
         
-        // Confirm payment completion
+        // Confirm payment completion - this will complete the payment in the parent component
         onConfirm({
           ...formData,
           invoiceData: result.data,
           cartItems: cartItems,
-          total: total
+          total: total,
+          paymentMethod: 'einvoice'
         });
         
-        // Close e-invoice modal - this should trigger the receipt modal in parent component
+        // Close e-invoice modal
         onClose();
       } else {
         throw new Error(
