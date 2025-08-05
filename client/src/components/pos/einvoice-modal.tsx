@@ -506,8 +506,8 @@ export function EInvoiceModal({
             source: 'pos'
           });
         } else if (source === 'table') {
-          // Logic cho Table: xác nhận thanh toán, cập nhật trạng thái bàn, hiển thị receipt
-          console.log('🍽️ Table E-Invoice: Processing payment completion with table update');
+          // Logic cho Table: Trả về dữ liệu để table-grid tự xử lý completePaymentMutation
+          console.log('🍽️ Table E-Invoice: Returning payment data for table processing');
           onConfirm({
             ...formData,
             invoiceData: result.data,
@@ -515,8 +515,8 @@ export function EInvoiceModal({
             total: total,
             paymentMethod: 'einvoice',
             source: 'table',
-            shouldShowReceipt: true, // Flag để hiển thị receipt modal
-            shouldUpdateTableStatus: true // Flag để cập nhật trạng thái bàn
+            shouldCompletePayment: true, // Flag để table-grid gọi completePaymentMutation
+            eInvoiceSuccess: true // Flag để xác nhận hóa đơn điện tử thành công
           });
         }
         
