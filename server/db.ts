@@ -91,18 +91,29 @@ export async function initializeSampleData() {
       console.log("PinCode migration already applied or error:", migrationError);
     }
 
+    // Add templateCode column to invoice_templates table
+    try {
+      await db.execute(sql`
+        ALTER TABLE invoice_templates 
+        ADD COLUMN IF NOT EXISTS template_code VARCHAR(50)
+      `);
+      console.log("Migration for templateCode column completed successfully.");
+    } catch (error) {
+      console.log("TemplateCode migration failed or column already exists:", error);
+    }
+
     // Run migration for email constraint in employees table
     try {
       await db.execute(sql`
         ALTER TABLE employees DROP CONSTRAINT IF EXISTS employees_email_unique
       `);
-      
+
       await db.execute(sql`
         CREATE UNIQUE INDEX IF NOT EXISTS employees_email_unique_idx 
         ON employees (email) 
         WHERE email IS NOT NULL AND email != ''
       `);
-      
+
       await db.execute(sql`
         UPDATE employees SET email = NULL WHERE email = ''
       `);

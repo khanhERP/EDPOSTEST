@@ -383,6 +383,7 @@ export const invoiceTemplates = pgTable("invoice_templates", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   templateNumber: varchar("template_number", { length: 50 }).notNull(),
+  templateCode: varchar("template_code", { length: 50 }),
   symbol: varchar("symbol", { length: 20 }).notNull(),
   useCK: boolean("use_ck").notNull().default(true),
   notes: text("notes"),
