@@ -986,6 +986,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   </Button>
                 </div>
               )}</div>
+          )}
         </DialogContent>
       </Dialog>
 
