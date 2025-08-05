@@ -215,9 +215,16 @@ export const insertEmployeeSchema = createInsertSchema(employees)
     name: z.string().min(1, "Tên nhân viên là bắt buộc"),
     email: z
       .string()
+      .email("Invalid email format")
       .nullable()
       .optional()
-      .transform((val) => (val === "" ? null : val)),
+      .transform((val) => {
+        if (!val || val.trim() === "") return null;
+        return val;
+      })
+      .refine((val) => val === null || z.string().email().safeParse(val).success, {
+        message: "Invalid email format",
+      }),
     role: z.enum(["manager", "cashier", "admin"], {
       errorMap: () => ({ message: "Role must be manager, cashier, or admin" }),
     }),

@@ -85,7 +85,7 @@ export function EmployeeFormModal({
         form.reset({
           employeeId: nextId,
           name: "",
-          email: "",
+          email: null,
           phone: null,
           role: "cashier",
           isActive: true,
@@ -125,7 +125,7 @@ export function EmployeeFormModal({
         form.reset({
           employeeId: nextId,
           name: "",
-          email: "",
+          email: null,
           phone: null,
           role: "cashier",
           isActive: true,
@@ -146,6 +146,13 @@ export function EmployeeFormModal({
           form.setError("email", {
             type: "manual",
             message: "Email đã tồn tại trong hệ thống",
+          });
+        } else if (errorData.code === "DUPLICATE_EMPLOYEE_ID") {
+          // Handle duplicate employee ID error specifically
+          errorMessage = "Mã nhân viên đã tồn tại.";
+          form.setError("employeeId", {
+            type: "manual",
+            message: "Mã nhân viên đã tồn tại trong hệ thống",
           });
         }
       }
@@ -187,6 +194,12 @@ export function EmployeeFormModal({
         form.setError("email", {
           type: "manual",
           message: "Email đã tồn tại trong hệ thống",
+        });
+      } else if (error && typeof error === 'object' && error.code === "DUPLICATE_EMPLOYEE_ID") {
+        errorMessage = "Mã nhân viên đã được sử dụng.";
+        form.setError("employeeId", {
+          type: "manual",
+          message: "Mã nhân viên đã tồn tại trong hệ thống",
         });
       }
 
@@ -276,7 +289,7 @@ export function EmployeeFormModal({
                     <Input
                       type="email"
                       placeholder="hong@company.com"
-                      value={field.value || ""}
+                      value={field.value ?? ""}
                       onChange={(e) => {
                         // If empty, set to null instead of empty string
                         const value = e.target.value.trim();
@@ -301,7 +314,7 @@ export function EmployeeFormModal({
                   <FormControl>
                     <Input
                       placeholder="010-1234-5678"
-                      value={field.value || ""}
+                      value={field.value ?? ""}
                       onChange={(e) => {
                         // If empty, set to null instead of empty string
                         const value = e.target.value.trim();

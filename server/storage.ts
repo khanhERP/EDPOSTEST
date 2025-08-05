@@ -1578,23 +1578,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNextEmployeeId(): Promise<string> {
-    // Get the highest employee ID number
-    const [lastEmployee] = await db
-      .select({ employeeId: employees.employeeId })
-      .from(employees)
-      .orderBy(sql`CAST(SUBSTRING(${employees.employeeId}, 5) AS INTEGER) DESC`)
-      .limit(1);
+    try {
+      // Get all employee IDs and find the highest number
+      const allEmployees = await db
+        .select({ employeeId: employees.employeeId })
+        .from(employees)
+        .orderBy(employees.employeeId);
 
-    if (!lastEmployee) {
-      return "EMP-001";
+      if (allEmployees.length === 0) {
+        return "EMP-001";
+      }
+
+      // Extract numbers from all employee IDs and find the maximum
+      const numbers = allEmployees
+        .map(emp => {
+          const match = emp.employeeId.match(/EMP-(\d+)/);
+          return match ? parseInt(match[1], 10) : 0;
+        })
+        .filter(num => !isNaN(num));
+
+      const maxNumber = Math.max(...numbers, 0);
+      const nextNumber = maxNumber + 1;
+
+      return `EMP-${nextNumber.toString().padStart(3, "0")}`;
+    } catch (error) {
+      console.error("Error generating next employee ID:", error);
+      // Fallback: generate random ID to avoid conflicts
+      const randomNumber = Math.floor(Math.random() * 9000) + 1000;
+      return `EMP-${randomNumber}`;
     }
-
-    // Extract number from EMP-XXX format
-    const lastNumber = parseInt(lastEmployee.employeeId.split("-")[1]);
-    const nextNumber = lastNumber + 1;
-
-    // Format with leading zeros
-    return `EMP-${nextNumber.toString().padStart(3, "0")}`;
   }
 }
 
