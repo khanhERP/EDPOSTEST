@@ -151,37 +151,50 @@ export function EInvoiceModal({
       const result = await response.json();
       console.log("Tax code API response:", result);
 
-      if (result.success && result.data && Array.isArray(result.data) && result.data.length > 0) {
+      if (
+        result.success &&
+        result.data &&
+        Array.isArray(result.data) &&
+        result.data.length > 0
+      ) {
         // Lấy phần tử đầu tiên từ mảng kết quả vì chỉ truyền 1 mã số thuế
         const taxInfo = result.data[0];
-        
+
         if (taxInfo) {
           // Kiểm tra trạng thái
           if (taxInfo.tthai === "00") {
             // Trạng thái hợp lệ - cập nhật thông tin
-            setFormData(prev => ({
+            setFormData((prev) => ({
               ...prev,
               customerName: taxInfo.tenCty || prev.customerName,
               address: taxInfo.diaChi || prev.address,
             }));
-            
-            alert(`Đã lấy thông tin thành công!\nTên công ty: ${taxInfo.tenCty}\nĐịa chỉ: ${taxInfo.diaChi}`);
+
+            alert(
+              `Đã lấy thông tin thành công!\nTên công ty: ${taxInfo.tenCty}\nĐịa chỉ: ${taxInfo.diaChi}`,
+            );
           } else {
             // Trạng thái không hợp lệ - hiển thị thông tin trạng thái
-            alert(`Mã số thuế không hợp lệ!\nTrạng thái: ${taxInfo.trangThaiHoatDong || "Không xác định"}\nMã trạng thái: ${taxInfo.tthai}`);
+            alert(
+              `Mã số thuế không hợp lệ!\nTrạng thái: ${taxInfo.trangThaiHoatDong || "Không xác định"}\nMã trạng thái: ${taxInfo.tthai}`,
+            );
           }
         } else {
-          alert("Không tìm thấy thông tin cho mã số thuế này trong kết quả trả về");
+          alert(
+            "Không tìm thấy thông tin cho mã số thuế này trong kết quả trả về",
+          );
         }
       } else {
         alert(result.message || "Không tìm thấy thông tin cho mã số thuế này");
       }
     } catch (error) {
       console.error("Error fetching tax code info:", error);
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        alert("Không thể kết nối đến dịch vụ tra cứu mã số thuế. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.");
+      if (error === "TypeError" && error.includes("fetch")) {
+        alert(
+          "Không thể kết nối đến dịch vụ tra cứu mã số thuế. Vui lòng kiểm tra kết nối mạng hoặc thử lại sau.",
+        );
       } else {
-        alert(`Có lỗi xảy ra khi lấy thông tin mã số thuế: ${error.message || error}`);
+        alert(`Có lỗi xảy ra khi lấy thông tin mã số thuế: ${error}`);
       }
     } finally {
       setIsTaxCodeLoading(false);
@@ -535,15 +548,17 @@ export function EInvoiceModal({
                   <Input
                     id="taxCode"
                     value={formData.taxCode}
-                    onChange={(e) => handleInputChange("taxCode", e.target.value)}
+                    onChange={(e) =>
+                      handleInputChange("taxCode", e.target.value)
+                    }
                     placeholder="0102222333-001"
                     disabled={false}
                     readOnly={false}
                   />
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    type="button" 
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
                     onClick={handleGetTaxInfo}
                     disabled={isTaxCodeLoading}
                   >
