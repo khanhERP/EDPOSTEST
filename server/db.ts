@@ -90,6 +90,16 @@ export async function initializeSampleData() {
       console.log("Phone field nullability migration skipped or failed:", error);
     }
 
+    // Ensure email field is nullable in employees table
+    try {
+      await db.execute(sql`
+        ALTER TABLE employees ALTER COLUMN email DROP NOT NULL
+      `);
+      console.log("Migration for email field nullability completed successfully.");
+    } catch (error) {
+      console.log("Email field nullability migration skipped or failed:", error);
+    }
+
 
     // Check if customers table has data
     const customerCount = await db.select({ count: sql<number>`count(*)` }).from(customers);
