@@ -1730,10 +1730,11 @@ gray-200 rounded-xl p-4 min-h-[70px]"
 
                               {/* Invoice templates table */}
                               <div className="rounded-md border bg-white">
-                                <div className="grid grid-cols-8 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
+                                <div className="grid grid-cols-9 gap-4 p-3 font-medium text-sm text-gray-600 bg-gray-50 border-b">
                                   <div className="text-center">STT</div>
                                   <div>Tên</div>
                                   <div>Mẫu số</div>
+                                  <div>Mã mẫu</div>
                                   <div>Ký hiệu</div>
                                   <div>C/K sử dụng</div>
                                   <div>Ghi chú</div>
@@ -1743,14 +1744,14 @@ gray-200 rounded-xl p-4 min-h-[70px]"
 
                                 <div className="divide-y">
                                   {templatesLoading ? (
-                                    <div className="grid grid-cols-8 gap-4 p-8 items-center text-sm text-gray-500">
-                                      <div className="col-span-8 text-center">
+                                    <div className="grid grid-cols-9 gap-4 p-8 items-center text-sm text-gray-500">
+                                      <div className="col-span-9 text-center">
                                         Đang tải dữ liệu...
                                       </div>
                                     </div>
                                   ) : invoiceTemplates.length === 0 ? (
-                                    <div className="grid grid-cols-8 gap-4 p-8 items-center text-sm text-gray-500">
-                                      <div className="col-span-8 text-center">
+                                    <div className="grid grid-cols-9 gap-4 p-8 items-center text-sm text-gray-500">
+                                      <div className="col-span-9 text-center">
                                         <div className="flex flex-col items-center gap-2">
                                           <SettingsIcon className="w-8 h-8 text-gray-400" />
                                           <p>Chưa có mẫu số HĐĐT nào</p>
@@ -1762,9 +1763,10 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                     </div>
                                   ) : (
                                     invoiceTemplates.map((template, index) => (
-                                      <div key={template.id} className="grid grid-cols-8 gap-4 p-3 items-center text-sm">
+                                      <div key={template.id} className="grid grid-cols-9 gap-4 p-3 items-center text-sm">
                                         <div className="text-center">{index + 1}</div>
                                         <div>{template.name}</div>
+                                        <div>{template.templateNumber}</div>
                                         <div>{template.templateNumber}</div>
                                         <div>{template.symbol}</div>
                                         <div>
