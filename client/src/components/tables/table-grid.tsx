@@ -1050,8 +1050,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           })()
         })) || []}
       />
-        </DialogContent>
-      </Dialog>
 
       
 
