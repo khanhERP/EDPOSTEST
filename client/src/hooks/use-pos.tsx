@@ -119,51 +119,64 @@ export function usePOS() {
   };
 
   const addToCart = (productId: number) => {
-    const product = productsQuery.data?.find(p => p.id === productId);
-    if (!product) return;
-
-    setOrders(prev => prev.map(order => {
-      if (order.id !== activeOrderId) return order;
-
-      const existingItem = order.cart.find(item => item.id === productId);
-      if (existingItem) {
-        const newQuantity = existingItem.quantity + 1;
-        const unitPrice = parseFloat(existingItem.price);
-        const newTotal = (unitPrice * newQuantity).toFixed(2);
-
-        return {
-          ...order,
-          cart: order.cart.map(item =>
-            item.id === productId
-              ? { 
-                  ...item, 
-                  quantity: newQuantity,
-                  total: newTotal
-                }
-              : item
-          )
-        };
-      } else {
-        const unitPrice = parseFloat(product.price);
-        const newItem: CartItem = {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          quantity: 1,
-          stock: product.stock,
-          taxRate: product.taxRate || "0",
-          total: unitPrice.toFixed(2)
-        };
-        return {
-          ...order,
-          cart: [...order.cart, newItem]
-        };
+    try {
+      const product = productsQuery.data?.find(p => p.id === productId);
+      if (!product) {
+        console.warn("Product not found:", productId);
+        return;
       }
-    }));
-    toast({
-      title: "Đã thêm vào giỏ",
-      description: `${product.name} đã được thêm vào đơn hàng`,
-    });
+
+      setOrders(prev => prev.map(order => {
+        if (order.id !== activeOrderId) return order;
+
+        const existingItem = order.cart.find(item => item.id === productId);
+        if (existingItem) {
+          const newQuantity = existingItem.quantity + 1;
+          const unitPrice = parseFloat(existingItem.price) || 0;
+          const newTotal = (unitPrice * newQuantity).toFixed(2);
+
+          return {
+            ...order,
+            cart: order.cart.map(item =>
+              item.id === productId
+                ? { 
+                    ...item, 
+                    quantity: newQuantity,
+                    total: newTotal
+                  }
+                : item
+            )
+          };
+        } else {
+          const unitPrice = parseFloat(product.price) || 0;
+          const newItem: CartItem = {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: 1,
+            stock: product.stock || 0,
+            taxRate: product.taxRate || "0",
+            total: unitPrice.toFixed(2)
+          };
+          return {
+            ...order,
+            cart: [...order.cart, newItem]
+          };
+        }
+      }));
+      
+      toast({
+        title: "Đã thêm vào giỏ",
+        description: `${product.name} đã được thêm vào đơn hàng`,
+      });
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể thêm sản phẩm vào giỏ hàng",
+        variant: "destructive",
+      });
+    }
   };
 
   const removeFromCart = (productId: number) => {
@@ -173,27 +186,36 @@ export function usePOS() {
   };
 
   const updateQuantity = (productId: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(productId);
-      return;
+    try {
+      if (newQuantity <= 0) {
+        removeFromCart(productId);
+        return;
+      }
+
+      setOrders(prev => prev.map(order => {
+        if (order.id !== activeOrderId) return order;
+
+        return {
+          ...order,
+          cart: order.cart.map(item =>
+            item.id === productId
+              ? { 
+                  ...item, 
+                  quantity: newQuantity,
+                  total: ((parseFloat(item.price) || 0) * newQuantity).toFixed(2)
+                }
+              : item
+          )
+        };
+      }));
+    } catch (error) {
+      console.error("Error updating quantity:", error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể cập nhật số lượng",
+        variant: "destructive",
+      });
     }
-
-    setOrders(prev => prev.map(order => {
-      if (order.id !== activeOrderId) return order;
-
-      return {
-        ...order,
-        cart: order.cart.map(item =>
-          item.id === productId
-            ? { 
-                ...item, 
-                quantity: newQuantity,
-                total: (parseFloat(item.price) * newQuantity).toFixed(2)
-              }
-            : item
-        )
-      };
-    }));
   };
 
   const clearCart = () => {
