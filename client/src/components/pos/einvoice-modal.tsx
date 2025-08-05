@@ -73,6 +73,8 @@ export function EInvoiceModal({
     recipientName: "",
   });
 
+  const [isTaxCodeLoading, setIsTaxCodeLoading] = useState(false);
+
   // Fetch E-invoice connections
   const { data: eInvoiceConnections = [] } = useQuery<any[]>({
     queryKey: ["/api/einvoice-connections"],
@@ -131,6 +133,7 @@ export function EInvoiceModal({
       return;
     }
 
+    setIsTaxCodeLoading(true);
     try {
       // Use a proxy endpoint through our server to avoid CORS issues
       const response = await fetch("/api/tax-code-lookup", {
@@ -180,6 +183,8 @@ export function EInvoiceModal({
       } else {
         alert(`Có lỗi xảy ra khi lấy thông tin mã số thuế: ${error.message || error}`);
       }
+    } finally {
+      setIsTaxCodeLoading(false);
     }
   };
 
@@ -535,8 +540,21 @@ export function EInvoiceModal({
                     disabled={false}
                     readOnly={false}
                   />
-                  <Button variant="outline" size="sm" type="button" onClick={handleGetTaxInfo}>
-                    Lấy thông tin
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    type="button" 
+                    onClick={handleGetTaxInfo}
+                    disabled={isTaxCodeLoading}
+                  >
+                    {isTaxCodeLoading ? (
+                      <>
+                        <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full mr-2" />
+                        Đang tải...
+                      </>
+                    ) : (
+                      "Lấy thông tin"
+                    )}
                   </Button>
                 </div>
               </div>
