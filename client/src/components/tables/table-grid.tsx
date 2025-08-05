@@ -164,24 +164,59 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
       setOrderDetailsOpen(false);
       setPaymentMethodsOpen(false);
+      setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(false);
+      setOrderForPayment(null);
+      
       toast({
         title: 'Thanh toán thành công',
         description: 'Đơn hàng đã được thanh toán',
       });
 
-      // Fetch the completed order to get its details for receipt
-      queryClient.fetchQuery({
-        queryKey: ['/api/orders', variables.orderId],
-        queryFn: async () => {
-          const response = await apiRequest('GET', `/api/orders/${variables.orderId}`);
-          return response.json();
-        }
-      }).then((completedOrder) => {
-        if (completedOrder) {
+      // Fetch the completed order and its items for receipt
+      Promise.all([
+        queryClient.fetchQuery({
+          queryKey: ['/api/orders', variables.orderId],
+          queryFn: async () => {
+            const response = await apiRequest('GET', `/api/orders/${variables.orderId}`);
+            return response.json();
+          }
+        }),
+        queryClient.fetchQuery({
+          queryKey: ['/api/order-items', variables.orderId],
+          queryFn: async () => {
+            const response = await apiRequest('GET', `/api/order-items/${variables.orderId}`);
+            return response.json();
+          }
+        })
+      ]).then(([completedOrder, orderItemsData]) => {
+        if (completedOrder && orderItemsData) {
           console.log('Completed order for receipt:', completedOrder);
-          setSelectedReceipt(completedOrder); // Set the order for the receipt modal
-          setShowReceiptModal(true); // Show the receipt modal
+          console.log('Order items for receipt:', orderItemsData);
+          
+          // Create receipt object with all necessary data
+          const receiptData = {
+            ...completedOrder,
+            items: Array.isArray(orderItemsData) ? orderItemsData.map((item: any) => ({
+              id: item.id,
+              productId: item.productId,
+              productName: item.productName || getProductName(item.productId),
+              quantity: item.quantity,
+              price: item.unitPrice,
+              total: item.total
+            })) : []
+          };
+          
+          setSelectedReceipt(receiptData);
+          setShowReceiptModal(true);
         }
+      }).catch((error) => {
+        console.error('Error fetching order details for receipt:', error);
+        toast({
+          title: 'Cảnh báo',
+          description: 'Thanh toán thành công nhưng không thể hiển thị hóa đơn',
+          variant: 'destructive',
+        });
       });
     },
     onError: () => {
@@ -1106,8 +1141,18 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setShowReceiptModal(false);
           setSelectedReceipt(null);
         }}
-        order={selectedReceipt}
-        storeSettings={storeSettings}
+        receipt={selectedReceipt}
+        cartItems={selectedReceipt?.items?.map((item: any) => ({
+          id: item.productId || item.id,
+          name: item.productName || item.name,
+          price: parseFloat(item.price || item.unitPrice || '0'),
+          quantity: item.quantity,
+          sku: item.productSku || `SP${item.productId}`,
+          taxRate: (() => {
+            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+            return product?.taxRate ? parseFloat(product.taxRate) : 10;
+          })()
+        })) || []}
       />
 
 
