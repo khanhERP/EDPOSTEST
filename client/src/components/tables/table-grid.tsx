@@ -1109,13 +1109,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setOrderForPayment(null);
         }}
         onConfirm={(eInvoiceData) => {
-          console.log('E-invoice data:', eInvoiceData);
+          console.log('Table E-invoice data:', eInvoiceData);
+          
           // Complete the payment after successful e-invoice publication
-          if (orderForPayment) {
+          if (orderForPayment && eInvoiceData.source === 'table') {
             completePaymentMutation.mutate({ 
               orderId: orderForPayment.id, 
               paymentMethod: eInvoiceData.paymentMethod || 'einvoice'
             });
+            
+            // Logic bổ sung cho table được xử lý trong completePaymentMutation.onSuccess
+            // vì đã có shouldShowReceipt và shouldUpdateTableStatus flags
           }
           setShowEInvoiceModal(false);
           setOrderForPayment(null);
@@ -1132,6 +1136,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             return product?.taxRate ? parseFloat(product.taxRate) : 10;
           })()
         })) || []}
+        source="table"
       />
 
       {/* Receipt Modal */}

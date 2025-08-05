@@ -45,6 +45,7 @@ interface EInvoiceModalProps {
     sku?: string;
     taxRate?: number;
   }>;
+  source?: 'pos' | 'table'; // Thêm prop để phân biệt nguồn gọi
 }
 
 export function EInvoiceModal({
@@ -53,6 +54,7 @@ export function EInvoiceModal({
   onConfirm,
   total,
   cartItems = [],
+  source = 'pos', // Default là 'pos' để tương thích ngược
 }: EInvoiceModalProps) {
   // Debug log to track cart items data flow
   console.log("🔍 EInvoiceModal Props Analysis:");
@@ -491,14 +493,32 @@ export function EInvoiceModal({
           `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}\nNgày phát hành: ${result.data?.invDate ? new Date(result.data.invDate).toLocaleString('vi-VN') : "N/A"}`,
         );
         
-        // Confirm payment completion - this will complete the payment in the parent component
-        onConfirm({
-          ...formData,
-          invoiceData: result.data,
-          cartItems: cartItems,
-          total: total,
-          paymentMethod: 'einvoice'
-        });
+        // Xử lý logic khác nhau theo nguồn gọi
+        if (source === 'pos') {
+          // Logic cho POS: chỉ xác nhận thanh toán và đóng modal
+          console.log('🏪 POS E-Invoice: Processing payment completion');
+          onConfirm({
+            ...formData,
+            invoiceData: result.data,
+            cartItems: cartItems,
+            total: total,
+            paymentMethod: 'einvoice',
+            source: 'pos'
+          });
+        } else if (source === 'table') {
+          // Logic cho Table: xác nhận thanh toán, cập nhật trạng thái bàn, hiển thị receipt
+          console.log('🍽️ Table E-Invoice: Processing payment completion with table update');
+          onConfirm({
+            ...formData,
+            invoiceData: result.data,
+            cartItems: cartItems,
+            total: total,
+            paymentMethod: 'einvoice',
+            source: 'table',
+            shouldShowReceipt: true, // Flag để hiển thị receipt modal
+            shouldUpdateTableStatus: true // Flag để cập nhật trạng thái bàn
+          });
+        }
         
         // Close e-invoice modal
         onClose();

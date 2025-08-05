@@ -46,7 +46,7 @@ export function PaymentMethodModal({
   // Load payment methods from settings
   const getPaymentMethods = () => {
     const savedPaymentMethods = localStorage.getItem('paymentMethods');
-    
+
     const defaultPaymentMethods = [
       { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
       { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: false, icon: "💳" },
@@ -64,7 +64,7 @@ export function PaymentMethodModal({
       : defaultPaymentMethods;
 
     console.log('All payment methods:', paymentMethods);
-    
+
     // Ensure cash payment is always available
     const cashMethodExists = paymentMethods.find(method => method.nameKey === 'cash' && method.enabled);
     if (!cashMethodExists) {
@@ -75,7 +75,7 @@ export function PaymentMethodModal({
         paymentMethods.unshift({ id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" });
       }
     }
-    
+
     // Filter to only return enabled payment methods and map to modal format
     const enabledMethods = paymentMethods
       .filter(method => method.enabled === true)
@@ -120,7 +120,7 @@ export function PaymentMethodModal({
 
   const handleSelect = async (method: string) => {
     setSelectedPaymentMethod(method);
-    
+
     if (method === "cash") {
       // Show cash payment input form
       setShowCashPayment(true);
@@ -130,7 +130,7 @@ export function PaymentMethodModal({
         setQrLoading(true);
         const transactionUuid = `TXN-${Date.now()}`;
         const depositAmt = total;
-        
+
         const qrRequest: CreateQRPosRequest = {
           transactionUuid,
           depositAmt: depositAmt,
@@ -147,7 +147,7 @@ export function PaymentMethodModal({
         console.log('Calling CreateQRPos API with:', { qrRequest, bankCode, clientID });
 
         const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
-        
+
         console.log('CreateQRPos API response:', qrResponse);
 
         // Generate QR code from the received QR data
@@ -161,7 +161,7 @@ export function PaymentMethodModal({
             // If decode fails, use the raw qrData
             console.log('Using raw qrData as it is not base64 encoded');
           }
-          
+
           const qrUrl = await QRCodeLib.toDataURL(qrContent, {
             width: 256,
             margin: 2,
@@ -250,11 +250,11 @@ export function PaymentMethodModal({
   const handleCashPaymentComplete = () => {
     const receivedAmount = parseFloat(amountReceived) || 0;
     const changeAmount = receivedAmount - total;
-    
+
     if (receivedAmount < total) {
       return; // Don't proceed if insufficient amount
     }
-    
+
     setShowCashPayment(false);
     setShowEInvoice(true);
   };
@@ -295,7 +295,7 @@ export function PaymentMethodModal({
         <DialogHeader>
           <DialogTitle>Chọn phương thức thanh toán</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4 p-4">
           {!showQRCode && !showCashPayment ? (
             <>
@@ -311,7 +311,7 @@ export function PaymentMethodModal({
                   const IconComponent = method.icon;
                   const isQRMethod = method.id === 'qrCode' || method.id === 'vnpay';
                   const isLoading = qrLoading && isQRMethod;
-                  
+
                   return (
                     <Button
                       key={method.id}
@@ -348,7 +348,7 @@ export function PaymentMethodModal({
                   <QrCode className="w-6 h-6" />
                   <h3 className="text-lg font-semibold">Quét mã QR để thanh toán</h3>
                 </div>
-                
+
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600">Số tiền cần thanh toán</p>
                   <p className="text-2xl font-bold text-blue-600">
@@ -367,7 +367,7 @@ export function PaymentMethodModal({
                     </div>
                   </div>
                 )}
-                
+
                 <p className="text-sm text-gray-600">
                   Sử dụng ứng dụng ngân hàng để quét mã QR và thực hiện thanh toán
                 </p>
@@ -392,7 +392,7 @@ export function PaymentMethodModal({
                   <Banknote className="w-6 h-6" />
                   <h3 className="text-lg font-semibold">Thanh toán tiền mặt</h3>
                 </div>
-                
+
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600">Tổng tiền cần thanh toán</p>
                   <p className="text-2xl font-bold text-blue-600">
@@ -456,13 +456,14 @@ export function PaymentMethodModal({
           ) : null}
         </div>
       </DialogContent>
-      
+
       <EInvoiceModal
         isOpen={showEInvoice}
         onClose={handleEInvoiceClose}
         onConfirm={handleEInvoiceConfirm}
         total={total}
         cartItems={cartItems}
+        source="pos"
       />
     </Dialog>
   );
