@@ -10,7 +10,7 @@ export function initializeWebSocketServer(server: Server) {
     return;
   }
 
-  wss = new WebSocketServer({ server });
+  wss = new WebSocketServer({ server, path: '/ws' });
 
   wss.on('connection', (ws: WebSocket) => {
     console.log('Client connected');
