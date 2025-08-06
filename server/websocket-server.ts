@@ -19,13 +19,25 @@ class PopupSignalServer {
   private clients: Map<string, Client> = new Map();
   private server: any;
 
-  constructor(port: number = 3001) {
-    this.server = createServer();
+  constructor(port?: number) {
+    if (port) {
+      this.server = createServer();
+      this.wss = new WebSocketServer({ server: this.server });
+      this.setupWebSocket();
+      this.createHttpEndpoint();
+      this.server.listen(port, '0.0.0.0', () => {
+        console.log(`WebSocket server running on port ${port}`);
+      });
+    }
+  }
+
+  // Method to attach to existing server
+  public attachToServer(existingServer: any) {
+    this.server = existingServer;
     this.wss = new WebSocketServer({ server: this.server });
     this.setupWebSocket();
-    this.server.listen(port, '0.0.0.0', () => {
-      console.log(`WebSocket server running on port ${port}`);
-    });
+    this.createHttpEndpoint();
+    console.log('WebSocket server attached to existing HTTP server');
   }
 
   private setupWebSocket() {
