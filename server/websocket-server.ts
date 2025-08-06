@@ -186,4 +186,4 @@ export const popupSignalServer = new PopupSignalServer(3001);
 // Setup HTTP endpoint for external triggers
 popupSignalServer.createHttpEndpoint();
 
-export default PopupSignalServer;
+export default popupSignalServer;lServer;
