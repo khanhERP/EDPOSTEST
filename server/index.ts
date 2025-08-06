@@ -79,9 +79,8 @@ app.use((req, res, next) => {
 
   // Start WebSocket server for popup signals
   try {
-    const wsModule = await import('./websocket-server');
+    await import('./websocket-server');
     log('WebSocket server started on port 3001');
-    log('WebSocket server instance created successfully');
   } catch (error) {
     log('Failed to start WebSocket server:', error);
   }
