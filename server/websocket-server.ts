@@ -24,7 +24,6 @@ class PopupSignalServer {
       this.server = createServer();
       this.wss = new WebSocketServer({ server: this.server });
       this.setupWebSocket();
-      this.createHttpEndpoint();
       this.server.listen(port, '0.0.0.0', () => {
         console.log(`WebSocket server running on port ${port}`);
       });
@@ -37,7 +36,6 @@ class PopupSignalServer {
     this.wss = new WebSocketServer({ server: this.server });
     this.setupWebSocket();
     this.createHttpEndpoint();
-    console.log('WebSocket server attached to existing HTTP server');
   }
 
   private setupWebSocket() {

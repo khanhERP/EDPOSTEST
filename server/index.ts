@@ -77,12 +77,12 @@ app.use((req, res, next) => {
     log(`serving on port ${port}`);
   });
 
-  // Attach WebSocket server to main HTTP server
+  // Start WebSocket server for popup signals on the same server
   try {
     const PopupSignalServer = (await import('./websocket-server')).default;
     const popupServer = new PopupSignalServer();
     popupServer.attachToServer(server);
-    log('WebSocket server attached to main HTTP server on port', port);
+    log('WebSocket server attached to main server on port', port);
   } catch (error) {
     log('Failed to start WebSocket server:', error);
   }

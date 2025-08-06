@@ -35,12 +35,22 @@ export function usePopupSignal({
 
   const connect = useCallback(() => {
     try {
-      // Use the same host and port as the main application
+      // Use the current domain with the WebSocket port
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}`;
+      let wsUrl;
+      
+      if (window.location.hostname.includes('replit.dev')) {
+        // For Replit environment - use the same host as main app
+        wsUrl = `${protocol}//${window.location.host}`;
+      } else if (window.location.hostname === 'localhost') {
+        // For local development - use same port as main server
+        wsUrl = `ws://${window.location.host}`;
+      } else {
+        // For other environments - use same host and port
+        wsUrl = `${protocol}//${window.location.host}`;
+      }
       
       console.log(`🔄 Đang kết nối WebSocket: ${wsUrl}`);
-      console.log(`🌐 Current location: ${window.location.href}`);
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
