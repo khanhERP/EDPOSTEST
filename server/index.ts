@@ -86,6 +86,15 @@ app.use((req, res, next) => {
     }
   });
 
+  // Start WebSocket server for popup signals
+  try {
+    await import('./websocket-server');
+    log('WebSocket server module loaded and started on port 3001');
+  } catch (error) {
+    log('Failed to start WebSocket server:', error);
+    console.error('WebSocket error details:', error);
+  }
+
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
