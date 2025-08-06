@@ -174,6 +174,9 @@ export function ReceiptModal({
             <p className="text-xs mb-2">
               Phone: {storeSettings?.phone || "(555) 123-4567"}
             </p>
+            <div className="flex items-center justify-center">
+              <img src={logoPath} alt="EDPOS Logo" className="h-6" />
+            </div>
           </div>
 
           <div className="border-t border-b border-gray-300 py-3 mb-3">
@@ -238,7 +241,10 @@ export function ReceiptModal({
             )}
           </div>
 
-          
+          <div className="text-center mt-4 text-xs text-gray-600">
+            <p>Thank you for your business!</p>
+            <p>Please keep this receipt for your records</p>
+          </div>
         </div>
 
         <div className="flex justify-center p-2 border-t">

@@ -91,23 +91,27 @@ export function EInvoiceModal({
       console.log('🔄 E-invoice modal: Starting payment completion mutation for order:', orderId);
       return apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod });
     },
-    onSuccess: () => {
-      console.log('✅ Table payment completed from e-invoice modal');
+    onSuccess: (data, variables) => {
+      console.log('🎯 E-invoice modal completed payment successfully for order:', variables.orderId);
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-
+      
       toast({
-        title: 'Thành công',
+        title: 'Thanh toán thành công',
         description: 'Hóa đơn điện tử đã được phát hành và đơn hàng đã được thanh toán',
       });
+
+      console.log('✅ E-invoice modal: Payment completed, queries invalidated');
     },
-    onError: (error) => {
-      console.error('❌ Error completing payment from e-invoice modal:', error);
+    onError: (error, variables) => {
+      console.error('❌ Error completing payment from e-invoice modal for order:', variables.orderId, error);
       toast({
         title: 'Lỗi',
         description: 'Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán',
         variant: 'destructive',
       });
+      
+      console.log('❌ E-invoice modal: Payment failed for order:', variables.orderId);
     },
   });
 
@@ -145,7 +149,7 @@ export function EInvoiceModal({
         invoiceProvider: "EasyInvoice", // Default provider
         invoiceTemplate: "1C25TYY", // Default template
         selectedTemplateId: "",
-        taxCode: "", // Optional tax code
+        taxCode: "0123456789", // Default tax code
         customerName: "Khách hàng lẻ", // Default customer name
         address: "",
         phoneNumber: "",
@@ -251,10 +255,11 @@ export function EInvoiceModal({
     // Validate required fields
     if (
       !formData.invoiceProvider ||
+      !formData.taxCode ||
       !formData.customerName
     ) {
       alert(
-        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
+        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT, Mã số thuế, và Tên đơn vị",
       );
       return;
     }
@@ -477,10 +482,10 @@ export function EInvoiceModal({
         bankAccount: "",
         bankName: "",
         customer: {
-          custCd: formData.taxCode || "GUEST",
+          custCd: formData.taxCode,
           custNm: formData.customerName,
           custCompany: formData.customerName,
-          taxCode: formData.taxCode || "",
+          taxCode: formData.taxCode,
           custCity: "",
           custDistrictName: "",
           custAddrs: formData.address || "",
@@ -523,56 +528,47 @@ export function EInvoiceModal({
         alert(
           `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}\nNgày phát hành: ${result.data?.invDate ? new Date(result.data.invDate).toLocaleString('vi-VN') : "N/A"}`,
         );
-
+        
         // Xử lý logic khác nhau theo nguồn gọi
         if (source === 'pos') {
-          // Logic cho POS: Chỉ trả về data cho parent xử lý
-          console.log('🛒 POS E-Invoice: Returning data to shopping cart');
+          // Logic cho POS: chỉ xác nhận thanh toán và đóng modal
+          console.log('🏪 POS E-Invoice: Processing payment completion');
           onConfirm({
-            source: 'pos',
+            ...formData,
             invoiceData: result.data,
-            paymentMethod: 'einvoice'
+            cartItems: cartItems,
+            total: total,
+            paymentMethod: 'einvoice',
+            source: 'pos'
           });
           onClose();
-        } else if (source === 'table') {
-          // Debug logging để kiểm tra giá trị
-          console.log('🔍 Table E-Invoice DEBUG:');
-          console.log('- source:', source);
-          console.log('- orderId:', orderId);
-          console.log('- orderId type:', typeof orderId);
-          console.log('- orderId truthy:', !!orderId);
-
-          // Kiểm tra xem có orderId không
-          if (!orderId) {
-            console.error('❌ Table E-Invoice: Missing orderId for table payment');
-            toast({
-              title: 'Lỗi',
-              description: 'Không tìm thấy thông tin đơn hàng để hoàn tất thanh toán',
-              variant: 'destructive',
-            });
-            onClose();
-            return;
-          }
-
-          // Logic cho Table: Hoàn tất thanh toán và đóng modal
-          console.log('🍽️ Table E-Invoice SUCCESS: Completing payment for order:', orderId);
-
-          // Trả về thông tin cho parent trước
+        } else if (source === 'table' && orderId) {
+          // Logic cho Table: Tự hoàn tất thanh toán luôn
+          console.log('🍽️ Table E-Invoice: Completing payment directly for order:', orderId);
+          console.log('🍽️ Invoice data received:', result.data);
+          
+          // Gọi onConfirm trước để parent component biết về việc phát hành thành công
           onConfirm({
+            ...formData,
+            invoiceData: result.data,
+            cartItems: cartItems,
+            total: total,
+            paymentMethod: 'einvoice',
             source: 'table',
-            orderId: orderId,
-            invoiceData: result.data,
-            paymentMethod: 'einvoice'
+            orderId: orderId
           });
-
-          // Đóng modal
+          
+          // Đóng modal ngay lập tức
           onClose();
-
-          // Hoàn tất thanh toán
-          completePaymentMutation.mutate({
-            orderId: orderId,
-            paymentMethod: 'einvoice'
-          });
+          
+          // Delay một chút để đảm bảo modal đã đóng rồi mới gọi mutation
+          setTimeout(() => {
+            console.log('🍽️ Executing payment completion for order:', orderId);
+            completePaymentMutation.mutate({
+              orderId: orderId,
+              paymentMethod: 'einvoice'
+            });
+          }, 100);
         } else {
           // Fallback: trả về data cho parent component xử lý
           console.log('🔄 Fallback: Returning data to parent');
@@ -675,7 +671,7 @@ export function EInvoiceModal({
                     onChange={(e) =>
                       handleInputChange("taxCode", e.target.value)
                     }
-                    placeholder="0102222333-001 (tùy chọn)"
+                    placeholder="0102222333-001"
                     disabled={false}
                     readOnly={false}
                   />
@@ -684,7 +680,7 @@ export function EInvoiceModal({
                     size="sm"
                     type="button"
                     onClick={handleGetTaxInfo}
-                    disabled={isTaxCodeLoading || !formData.taxCode.trim()}
+                    disabled={isTaxCodeLoading}
                   >
                     {isTaxCodeLoading ? (
                       <>
@@ -734,7 +730,19 @@ export function EInvoiceModal({
                   readOnly={false}
                 />
               </div>
-              
+              <div>
+                <Label htmlFor="recipientName">Người nhận HĐ</Label>
+                <Input
+                  id="recipientName"
+                  value={formData.recipientName}
+                  onChange={(e) =>
+                    handleInputChange("recipientName", e.target.value)
+                  }
+                  placeholder="Nguyễn Văn Ngọc"
+                  disabled={false}
+                  readOnly={false}
+                />
+              </div>
               <div>
                 <Label htmlFor="email">Email</Label>
                 <Input
