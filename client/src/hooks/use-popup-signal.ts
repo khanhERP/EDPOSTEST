@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState, useCallback } from 'react';
 
 interface PopupSignal {
@@ -37,11 +36,11 @@ export function usePopupSignal({
     try {
       // Use the current domain with the WebSocket port
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host.includes('replit.dev') 
+      const host = window.location.host.includes('replit.dev')
         ? window.location.host.replace('-5000', '-3001')
         : `${window.location.hostname}:3001`;
       const wsUrl = `${protocol}//${host}`;
-      
+
       console.log(`Connecting to WebSocket: ${wsUrl}`);
       const ws = new WebSocket(wsUrl);
 
@@ -49,7 +48,7 @@ export function usePopupSignal({
         console.log('✅ WebSocket kết nối thành công!');
         console.log(`🔗 Địa chỉ: ${wsUrl}`);
         setIsConnected(true);
-        
+
         // Register machine if provided
         if (machineId) {
           ws.send(JSON.stringify({
@@ -101,7 +100,7 @@ export function usePopupSignal({
         console.log('WebSocket disconnected');
         setIsConnected(false);
         setClientId(null);
-        
+
         // Attempt to reconnect after 3 seconds
         reconnectTimeoutRef.current = setTimeout(() => {
           console.log('Attempting to reconnect...');
@@ -166,7 +165,7 @@ export function generateMachineId(): string {
     ctx.font = '14px Arial';
     ctx.fillText('Machine fingerprint', 2, 2);
   }
-  
+
   const fingerprint = [
     navigator.userAgent,
     navigator.language,
@@ -185,9 +184,9 @@ export function generateMachineId(): string {
   }
 
   const machineId = `machine_${Math.abs(hash).toString(36)}`;
-  
+
   // Store for persistence
   localStorage.setItem('machineId', machineId);
-  
+
   return machineId;
 }
