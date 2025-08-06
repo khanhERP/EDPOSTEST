@@ -35,6 +35,7 @@ import {
   lte,
   ilike,
 } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   orders,
   orderItems,
@@ -1448,7 +1449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = parseInt(req.query.limit as string) || 100;
       // For now, get all point transactions across all customers
-      // In a real app, you might want pagination and filtering
+      // In a real app, you might want to add pagination and filtering
       const allTransactions = await storage.getAllPointTransactions(limit);
       res.json(allTransactions);
     } catch (error) {
