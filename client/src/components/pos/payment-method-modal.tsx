@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import QRCodeLib from "qrcode";
 import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
 import { EInvoiceModal } from "./einvoice-modal";
+import { usePopupSignal, generateMachineId } from "@/hooks/use-popup-signal";
 
 interface PaymentMethodModalProps {
   isOpen: boolean;
@@ -42,6 +43,28 @@ export function PaymentMethodModal({
   const [qrLoading, setQrLoading] = useState(false);
   const [amountReceived, setAmountReceived] = useState("");
   const [showCashPayment, setShowCashPayment] = useState(false);
+  const [currentTransactionUuid, setCurrentTransactionUuid] = useState<string>("");
+  
+  // Generate unique popup ID and machine ID
+  const popupId = `payment_modal_${Date.now()}`;
+  const machineId = generateMachineId();
+
+  // WebSocket connection for popup signals
+  const { isConnected: wsConnected, clientId } = usePopupSignal({
+    popupId,
+    transactionUuid: currentTransactionUuid,
+    machineId,
+    onCloseSignal: () => {
+      console.log("Received WebSocket signal to close QR popup");
+      // Close QR code popup and show success message
+      setShowQRCode(false);
+      setQrCodeUrl("");
+      // Show success notification
+      alert("Thanh toán thành công! QR Code đã được đóng tự động.");
+      // Proceed to E-invoice
+      setShowEInvoice(true);
+    }
+  });
 
   // Load payment methods from settings
   const getPaymentMethods = () => {
@@ -210,6 +233,7 @@ export function PaymentMethodModal({
       try {
         setQrLoading(true);
         const transactionUuid = `TXN-${Date.now()}`;
+        setCurrentTransactionUuid(transactionUuid); // Store for WebSocket
         const depositAmt = total;
 
         const qrRequest: CreateQRPosRequest = {
@@ -221,6 +245,8 @@ export function PaymentMethodModal({
           posCompanyName: "HYOJUNG",
           posBillNo: `BILL-${Date.now()}`,
         };
+
+        console.log(`QR Payment initiated - Transaction: ${transactionUuid}, Popup: ${popupId}, Machine: ${machineId}`);
 
         const bankCode = "79616001";
         const clientID = "91a3a3668724e631e1baf4f8526524f3";
@@ -445,6 +471,12 @@ export function PaymentMethodModal({
                   <h3 className="text-lg font-semibold">
                     Quét mã QR để thanh toán
                   </h3>
+                  {wsConnected && (
+                    <div className="flex items-center gap-1 ml-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-green-600">Live</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
