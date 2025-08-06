@@ -37,20 +37,12 @@ export function usePopupSignal({
     try {
       // Use the current domain with the WebSocket port
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      let wsUrl;
+      const host = window.location.host.includes('replit.dev') 
+        ? window.location.host.replace('-5000', '-3001')
+        : `${window.location.hostname}:3001`;
+      const wsUrl = `${protocol}//${host}`;
       
-      if (window.location.hostname.includes('replit.dev')) {
-        // For Replit environment - use the same host as main app
-        wsUrl = `${protocol}//${window.location.host}`;
-      } else if (window.location.hostname === 'localhost') {
-        // For local development - use same port as main server
-        wsUrl = `ws://${window.location.host}`;
-      } else {
-        // For other environments - use same host and port
-        wsUrl = `${protocol}//${window.location.host}`;
-      }
-      
-      console.log(`🔄 Đang kết nối WebSocket: ${wsUrl}`);
+      console.log(`Connecting to WebSocket: ${wsUrl}`);
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
@@ -105,27 +97,20 @@ export function usePopupSignal({
         }
       };
 
-      ws.onclose = (event) => {
-        console.log(`❌ WebSocket đã ngắt kết nối (code: ${event.code}, reason: ${event.reason})`);
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
         setIsConnected(false);
         setClientId(null);
         
-        // Exponential backoff retry: 3s, 6s, 12s, then back to 3s
-        const retryDelay = Math.min(3000 * Math.pow(2, Math.floor(Date.now() / 60000) % 3), 12000);
-        
+        // Attempt to reconnect after 3 seconds
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log(`🔄 Thử kết nối lại sau ${retryDelay/1000}s...`);
+          console.log('Attempting to reconnect...');
           connect();
-        }, retryDelay);
+        }, 3000);
       };
 
       ws.onerror = (error) => {
-        console.error('❌ WebSocket lỗi:', error);
-        console.error('❌ Chi tiết lỗi:', {
-          url: wsUrl,
-          readyState: ws.readyState,
-          protocol: ws.protocol || 'unknown'
-        });
+        console.error('WebSocket error:', error);
         setIsConnected(false);
       };
 
