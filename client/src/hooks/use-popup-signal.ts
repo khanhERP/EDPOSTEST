@@ -37,12 +37,22 @@ export function usePopupSignal({
     try {
       // Use the current domain with the WebSocket port
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host.includes('replit.dev') 
-        ? window.location.host.replace('-5000', '-3001')
-        : `${window.location.hostname}:3001`;
+      let host;
+      
+      if (window.location.host.includes('replit.dev')) {
+        // For Replit environment
+        host = window.location.host.replace('-5000', '-3001');
+      } else if (window.location.hostname === 'localhost') {
+        // For local development
+        host = 'localhost:3001';
+      } else {
+        // For other environments
+        host = `${window.location.hostname}:3001`;
+      }
+      
       const wsUrl = `${protocol}//${host}`;
       
-      console.log(`Connecting to WebSocket: ${wsUrl}`);
+      console.log(`🔄 Đang kết nối WebSocket: ${wsUrl}`);
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
@@ -97,20 +107,27 @@ export function usePopupSignal({
         }
       };
 
-      ws.onclose = () => {
-        console.log('WebSocket disconnected');
+      ws.onclose = (event) => {
+        console.log(`❌ WebSocket đã ngắt kết nối (code: ${event.code}, reason: ${event.reason})`);
         setIsConnected(false);
         setClientId(null);
         
-        // Attempt to reconnect after 3 seconds
+        // Exponential backoff retry: 3s, 6s, 12s, then back to 3s
+        const retryDelay = Math.min(3000 * Math.pow(2, Math.floor(Date.now() / 60000) % 3), 12000);
+        
         reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('Attempting to reconnect...');
+          console.log(`🔄 Thử kết nối lại sau ${retryDelay/1000}s...`);
           connect();
-        }, 3000);
+        }, retryDelay);
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error('❌ WebSocket lỗi:', error);
+        console.error('❌ Chi tiết lỗi:', {
+          url: wsUrl,
+          readyState: ws.readyState,
+          protocol: ws.protocol || 'unknown'
+        });
         setIsConnected(false);
       };
 
