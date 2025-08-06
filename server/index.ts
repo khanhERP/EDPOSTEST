@@ -76,4 +76,12 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
   });
+
+  // Start WebSocket server for popup signals
+  try {
+    require('./websocket-server');
+    log('WebSocket server started on port 3001');
+  } catch (error) {
+    log('Failed to start WebSocket server:', error);
+  }
 })();
