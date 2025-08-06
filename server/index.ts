@@ -77,36 +77,10 @@ app.use((req, res, next) => {
     log(`serving on port ${port}`);
   });
 
-  // Add WebSocket popup close endpoint
-  app.post('/api/popup/close', (req, res) => {
-    try {
-      const { transactionUuid, popupId, machineId } = req.body;
-      
-      if (!transactionUuid || !popupId) {
-        return res.status(400).json({ error: 'transactionUuid and popupId are required' });
-      }
-
-      // Import and use popup server
-      import('./websocket-server').then(({ popupSignalServer }) => {
-        popupSignalServer.signalPopupClose(transactionUuid, popupId, machineId);
-        res.json({ 
-          success: true, 
-          message: 'Popup close signal sent',
-          transactionUuid,
-          popupId,
-          targetMachineId: machineId || 'all'
-        });
-      });
-    } catch (error) {
-      res.status(400).json({ error: 'Invalid request' });
-    }
-  });
-
-  // Attach WebSocket server to main HTTP server
+  // Start WebSocket server for popup signals
   try {
-    const { popupSignalServer } = await import('./websocket-server');
-    popupSignalServer.attachToServer(server);
-    log('WebSocket server attached to main HTTP server on port', port);
+    require('./websocket-server');
+    log('WebSocket server started on port 3001');
   } catch (error) {
     log('Failed to start WebSocket server:', error);
   }

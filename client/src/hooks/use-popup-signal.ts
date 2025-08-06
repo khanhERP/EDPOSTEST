@@ -35,15 +35,14 @@ export function usePopupSignal({
 
   const connect = useCallback(() => {
     try {
-      // Use the same host and port as the main application
+      // Use the current domain with the WebSocket port
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.hostname;
-      const port = window.location.port || (window.location.protocol === 'https:' ? '443' : '80');
-      const wsUrl = `${protocol}//${host}:${port}`;
+      const host = window.location.host.includes('replit.dev') 
+        ? window.location.host.replace('-5000', '-3001')
+        : `${window.location.hostname}:3001`;
+      const wsUrl = `${protocol}//${host}`;
       
-      console.log(`🔄 Đang kết nối WebSocket: ${wsUrl}`);
-      console.log(`🌐 Current location: ${window.location.href}`);
-      console.log(`🔌 Port: ${port}, Protocol: ${protocol}`);
+      console.log(`Connecting to WebSocket: ${wsUrl}`);
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {

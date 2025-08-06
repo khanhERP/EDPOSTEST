@@ -19,25 +19,13 @@ class PopupSignalServer {
   private clients: Map<string, Client> = new Map();
   private server: any;
 
-  constructor(port?: number) {
-    if (port) {
-      this.server = createServer();
-      this.wss = new WebSocketServer({ server: this.server });
-      this.setupWebSocket();
-      this.createHttpEndpoint();
-      this.server.listen(port, '0.0.0.0', () => {
-        console.log(`WebSocket server running on port ${port}`);
-      });
-    }
-  }
-
-  // Method to attach to existing server
-  public attachToServer(existingServer: any) {
-    this.server = existingServer;
+  constructor(port: number = 3001) {
+    this.server = createServer();
     this.wss = new WebSocketServer({ server: this.server });
     this.setupWebSocket();
-    this.createHttpEndpoint();
-    console.log('WebSocket server attached to existing HTTP server');
+    this.server.listen(port, '0.0.0.0', () => {
+      console.log(`WebSocket server running on port ${port}`);
+    });
   }
 
   private setupWebSocket() {
@@ -123,8 +111,44 @@ class PopupSignalServer {
 
   // HTTP endpoint to trigger popup close (for external webhooks)
   public createHttpEndpoint() {
-    // Don't create duplicate request handlers - let Express handle HTTP routes
-    console.log('HTTP endpoint for popup close will be handled by Express routes');
+    this.server.on('request', (req, res) => {
+      if (req.method === 'POST' && req.url === '/api/popup/close') {
+        let body = '';
+        req.on('data', chunk => {
+          body += chunk.toString();
+        });
+        
+        req.on('end', () => {
+          try {
+            const data = JSON.parse(body);
+            const { transactionUuid, popupId, machineId } = data;
+            
+            if (!transactionUuid || !popupId) {
+              res.writeHead(400, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'transactionUuid and popupId are required' }));
+              return;
+            }
+
+            this.signalPopupClose(transactionUuid, popupId, machineId);
+            
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ 
+              success: true, 
+              message: 'Popup close signal sent',
+              transactionUuid,
+              popupId,
+              targetMachineId: machineId || 'all'
+            }));
+          } catch (error) {
+            res.writeHead(400, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: 'Invalid JSON' }));
+          }
+        });
+      } else {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Not found' }));
+      }
+    });
   }
 
   private generateClientId(): string {
@@ -156,7 +180,10 @@ class PopupSignalServer {
   }
 }
 
-// Create and export singleton instance without standalone port
-export const popupSignalServer = new PopupSignalServer();
+// Create and export singleton instance
+export const popupSignalServer = new PopupSignalServer(3001);
+
+// Setup HTTP endpoint for external triggers
+popupSignalServer.createHttpEndpoint();
 
 export default PopupSignalServer;
