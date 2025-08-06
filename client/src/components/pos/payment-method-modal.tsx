@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import QRCodeLib from "qrcode";
 import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
 import { EInvoiceModal } from "./einvoice-modal";
-import { usePopupSignal } from "@/hooks/use-popup-signal";
 
 interface PaymentMethodModalProps {
   isOpen: boolean;
@@ -43,20 +42,6 @@ export function PaymentMethodModal({
   const [qrLoading, setQrLoading] = useState(false);
   const [amountReceived, setAmountReceived] = useState("");
   const [showCashPayment, setShowCashPayment] = useState(false);
-  const [transactionUuid, setTransactionUuid] = useState("");
-
-  // Generate unique popup ID for this payment modal
-  const popupId = `payment_modal_${transactionUuid || 'default'}`;
-  
-  // Use popup signal hook
-  const { clientId, connectionStatus, sendCloseSignal, isConnected } = usePopupSignal({
-    popupId,
-    isOpen: isOpen && showQRCode, // Only listen when QR code is showing
-    onClose: () => {
-      console.log(`Popup ${popupId} closed by external signal`);
-      handleQRComplete();
-    }
-  });
 
   // Load payment methods from settings
   const getPaymentMethods = () => {
@@ -224,12 +209,11 @@ export function PaymentMethodModal({
       // Call CreateQRPos API for QR payment
       try {
         setQrLoading(true);
-        const newTransactionUuid = `TXN-${Date.now()}`;
-        setTransactionUuid(newTransactionUuid);
+        const transactionUuid = `TXN-${Date.now()}`;
         const depositAmt = total;
 
         const qrRequest: CreateQRPosRequest = {
-          transactionUuid: newTransactionUuid,
+          transactionUuid,
           depositAmt: depositAmt,
           posUniqueId: "HAN01",
           accntNo: "0900993023",
