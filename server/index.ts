@@ -42,7 +42,7 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     let message = err.message || "Internal Server Error";
-    
+
     // Handle database lock errors
     if (message.includes('INDEX_LOCKED') || message.includes('database is locked')) {
       message = "Database temporarily unavailable. Please try again.";
@@ -84,4 +84,63 @@ app.use((req, res, next) => {
   } catch (error) {
     log('Failed to start WebSocket server:', error);
   }
+
+  // Add WebSocket popup close endpoint
+  app.post('/api/popup/close', (req, res) => {
+    try {
+      const { transactionUuid, popupId, machineId } = req.body;
+
+      if (!transactionUuid || !popupId) {
+        return res.status(400).json({ error: 'transactionUuid and popupId are required' });
+      }
+
+      // Import and use popup server
+      import('./websocket-server').then(({ popupSignalServer }) => {
+        popupSignalServer.signalPopupClose(transactionUuid, popupId, machineId);
+        res.json({ 
+          success: true, 
+          message: 'Popup close signal sent',
+          transactionUuid,
+          popupId,
+          targetMachineId: machineId || 'all'
+        });
+      });
+    } catch (error) {
+      res.status(400).json({ error: 'Invalid request' });
+    }
+  });
+
+  // Add notification endpoint for external payment system (compatible with your API)
+  app.post('/api/NotifyPos/ReceiveNotify', (req, res) => {
+    try {
+      const { TransactionUuid } = req.body;
+
+      console.log('📢 Received notification from external payment system! Payload:', JSON.stringify(req.body));
+
+      if (!TransactionUuid) {
+        return res.status(400).json({ error: 'TransactionUuid is required' });
+      }
+
+      // Import and use popup server to signal payment success
+      import('./websocket-server').then(({ popupSignalServer }) => {
+        // Generate popup ID based on transaction UUID
+        const popupId = `payment_modal_${TransactionUuid}`;
+
+        console.log(`💳 Payment successful for transaction: ${TransactionUuid}, closing popup: ${popupId}`);
+
+        // Signal all connected clients to close popup for this transaction
+        popupSignalServer.signalPopupClose(TransactionUuid, popupId, undefined);
+
+        res.json({ 
+          message: 'Notification received successfully.',
+          success: true,
+          transactionUuid: TransactionUuid,
+          popupId: popupId
+        });
+      });
+    } catch (error) {
+      console.error('Error handling payment notification:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  });
 })();
