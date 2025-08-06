@@ -2,6 +2,9 @@ import WebSocket from 'ws';
 
 let wss: WebSocket.Server | null = null;
 
+// Initialize WebSocket server immediately
+initializeWebSocketServer(3001);
+
 export function initializeWebSocketServer(port: number) {
   wss = new WebSocket.Server({ port });
 

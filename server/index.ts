@@ -68,11 +68,11 @@ app.use((req, res, next) => {
   });
 
   // Add endpoint to receive payment notification from external API
-  app.post('/api/notify-pos/receive-notify', (req, res) => {
+  app.post('/api/NotifyPos/ReceiveNotify', (req, res) => {
     try {
       const { TransactionUuid } = req.body;
 
-      console.log('📢 Received payment notification! TransactionUuid:', TransactionUuid);
+      console.log('📢 Received payment notification from API! TransactionUuid:', TransactionUuid);
 
       // Broadcast payment success via WebSocket
       import('./websocket-server').then((wsModule) => {
