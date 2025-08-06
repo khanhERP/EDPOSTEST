@@ -42,7 +42,7 @@ app.use((req, res, next) => {
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     let message = err.message || "Internal Server Error";
-    
+
     // Handle database lock errors
     if (message.includes('INDEX_LOCKED') || message.includes('database is locked')) {
       message = "Database temporarily unavailable. Please try again.";
@@ -52,6 +52,37 @@ app.use((req, res, next) => {
     res.status(status).json({ message });
     if (status >= 500) {
       console.error('Server error:', err);
+    }
+  });
+
+  // Add WebSocket popup close endpoint
+  app.post('/api/popup/close', (req, res) => {
+    const { success } = req.body;
+
+    // Import and use WebSocket server
+    import('./websocket-server').then((wsModule) => {
+      wsModule.broadcastPopupClose(success);
+    });
+
+    res.json({ success: true, message: 'Popup close signal sent' });
+  });
+
+  // Add endpoint to receive payment notification from external API
+  app.post('/api/notify-pos/receive-notify', (req, res) => {
+    try {
+      const { TransactionUuid } = req.body;
+
+      console.log('📢 Received payment notification! TransactionUuid:', TransactionUuid);
+
+      // Broadcast payment success via WebSocket
+      import('./websocket-server').then((wsModule) => {
+        wsModule.broadcastPaymentSuccess(TransactionUuid);
+      });
+
+      res.json({ message: 'Notification received successfully.' });
+    } catch (error) {
+      console.error('Error processing payment notification:', error);
+      res.status(500).json({ error: 'Failed to process notification' });
     }
   });
 

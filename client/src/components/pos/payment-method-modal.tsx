@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import QRCodeLib from "qrcode";
 import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
 import { EInvoiceModal } from "./einvoice-modal";
+import { usePopupSignal } from "@/hooks/use-popup-signal";
 
 interface PaymentMethodModalProps {
   isOpen: boolean;
@@ -42,6 +43,9 @@ export function PaymentMethodModal({
   const [qrLoading, setQrLoading] = useState(false);
   const [amountReceived, setAmountReceived] = useState("");
   const [showCashPayment, setShowCashPayment] = useState(false);
+  const [currentTransactionUuid, setCurrentTransactionUuid] = useState<string | null>(null);
+  
+  const { listenForPaymentSuccess, removePaymentListener } = usePopupSignal();
 
   // Load payment methods from settings
   const getPaymentMethods = () => {
@@ -239,6 +243,18 @@ export function PaymentMethodModal({
 
         console.log("CreateQRPos API response:", qrResponse);
 
+        // Store transaction UUID for payment tracking
+        setCurrentTransactionUuid(transactionUuid);
+
+        // Listen for payment success notification
+        listenForPaymentSuccess(transactionUuid, (success) => {
+          if (success) {
+            console.log('Payment confirmed via WebSocket for transaction:', transactionUuid);
+            // Auto-complete the payment when notification is received
+            handleQRComplete();
+          }
+        });
+
         // Generate QR code from the received QR data
         if (qrResponse.qrData) {
           // Decode base64 qrData to get the actual QR content
@@ -375,8 +391,14 @@ export function PaymentMethodModal({
       setQrLoading(false);
       setShowCashPayment(false);
       setAmountReceived("");
+      
+      // Remove payment listener if exists
+      if (currentTransactionUuid) {
+        removePaymentListener(currentTransactionUuid);
+        setCurrentTransactionUuid(null);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, currentTransactionUuid, removePaymentListener]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
