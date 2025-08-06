@@ -28,8 +28,8 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     profitReports: 'Profit Reports',
   },
   vi: {
-    pos: 'POS',
-    tables: 'Bàn',
+    pos: 'Bán hàng',
+    tables: 'Bán theo bàn',
     inventory: 'Kho hàng',
     reports: 'Báo cáo',
     employees: 'Nhân viên',
