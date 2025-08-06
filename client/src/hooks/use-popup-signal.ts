@@ -37,7 +37,7 @@ export function usePopupSignal({
     try {
       // Use the same host and port as the main application
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}`;
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
       
       console.log(`🔄 Đang kết nối WebSocket: ${wsUrl}`);
       console.log(`🌐 Current location: ${window.location.href}`);

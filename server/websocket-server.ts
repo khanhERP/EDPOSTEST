@@ -192,10 +192,7 @@ class PopupSignalServer {
   }
 }
 
-// Create and export singleton instance
-export const popupSignalServer = new PopupSignalServer(3001);
-
-// Setup HTTP endpoint for external triggers
-popupSignalServer.createHttpEndpoint();
+// Create and export singleton instance without standalone port
+export const popupSignalServer = new PopupSignalServer();
 
 export default PopupSignalServer;
