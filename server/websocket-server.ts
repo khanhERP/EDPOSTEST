@@ -123,44 +123,8 @@ class PopupSignalServer {
 
   // HTTP endpoint to trigger popup close (for external webhooks)
   public createHttpEndpoint() {
-    this.server.on('request', (req, res) => {
-      if (req.method === 'POST' && req.url === '/api/popup/close') {
-        let body = '';
-        req.on('data', chunk => {
-          body += chunk.toString();
-        });
-        
-        req.on('end', () => {
-          try {
-            const data = JSON.parse(body);
-            const { transactionUuid, popupId, machineId } = data;
-            
-            if (!transactionUuid || !popupId) {
-              res.writeHead(400, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ error: 'transactionUuid and popupId are required' }));
-              return;
-            }
-
-            this.signalPopupClose(transactionUuid, popupId, machineId);
-            
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ 
-              success: true, 
-              message: 'Popup close signal sent',
-              transactionUuid,
-              popupId,
-              targetMachineId: machineId || 'all'
-            }));
-          } catch (error) {
-            res.writeHead(400, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ error: 'Invalid JSON' }));
-          }
-        });
-      } else {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Not found' }));
-      }
-    });
+    // Don't create duplicate request handlers - let Express handle HTTP routes
+    console.log('HTTP endpoint for popup close will be handled by Express routes');
   }
 
   private generateClientId(): string {
