@@ -21,10 +21,18 @@ class PopupSignalServer {
 
   constructor(port: number = 3001) {
     this.server = createServer();
-    this.wss = new WebSocketServer({ server: this.server });
+    this.wss = new WebSocketServer({ 
+      server: this.server,
+      verifyClient: (info) => {
+        // Allow all origins in development
+        return true;
+      }
+    });
     this.setupWebSocket();
     this.server.listen(port, '0.0.0.0', () => {
-      console.log(`WebSocket server running on port ${port}`);
+      console.log(`✅ WebSocket server running on 0.0.0.0:${port}`);
+      console.log(`🔗 WebSocket URL: ws://localhost:${port} (development)`);
+      console.log(`🔒 WSS URL: wss://<repl-url>:${port} (production)`);
     });
   }
 

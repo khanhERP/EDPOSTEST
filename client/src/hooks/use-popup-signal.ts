@@ -31,15 +31,19 @@ export function usePopupSignal({
   const [clientId, setClientId] = useState<string | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const [connectionStatus, setConnectionStatus] = useState('disconnected'); // Added state for connection status
 
   const connect = useCallback(() => {
     try {
-      // Use the current domain with the WebSocket port
+      // In development, always use ws://
+      // In production, Replit will handle the SSL termination
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host.includes('replit.dev')
-        ? window.location.host.replace('-5000', '-3001')
-        : `${window.location.hostname}:3001`;
-      const wsUrl = `${protocol}//${host}`;
+      const hostname = window.location.hostname;
+
+      // For Replit, use the full hostname for WSS
+      const wsUrl = protocol === 'wss:'
+        ? `wss://${hostname.replace('-00-', '-00-')}/`
+        : `ws://${hostname}:3001`;
 
       console.log(`Connecting to WebSocket: ${wsUrl}`);
       const ws = new WebSocket(wsUrl);
@@ -48,6 +52,7 @@ export function usePopupSignal({
         console.log('✅ WebSocket kết nối thành công!');
         console.log(`🔗 Địa chỉ: ${wsUrl}`);
         setIsConnected(true);
+        setConnectionStatus('connected');
 
         // Register machine if provided
         if (machineId) {
@@ -96,29 +101,29 @@ export function usePopupSignal({
         }
       };
 
-      ws.onclose = () => {
-        console.log('WebSocket disconnected');
-        setIsConnected(false);
-        setClientId(null);
-
-        // Attempt to reconnect after 3 seconds
-        reconnectTimeoutRef.current = setTimeout(() => {
-          console.log('Attempting to reconnect...');
-          connect();
-        }, 3000);
+      ws.onerror = (error) => {
+        console.error('❌ WebSocket error:', error);
+        console.log('🔄 Will attempt to reconnect...');
       };
 
-      ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setIsConnected(false);
+      ws.onclose = (event) => {
+        console.log(`🔌 WebSocket disconnected: Code ${event.code}, Reason: ${event.reason}`);
+        setConnectionStatus('disconnected');
+
+        // Attempt to reconnect after 3 seconds
+        setTimeout(() => {
+          console.log('🔄 Attempting to reconnect...');
+          connect();
+        }, 3000);
       };
 
       wsRef.current = ws;
     } catch (error) {
       console.error('Failed to create WebSocket connection:', error);
       setIsConnected(false);
+      setConnectionStatus('disconnected');
     }
-  }, [popupId, transactionUuid, machineId, onCloseSignal]);
+  }, [popupId, transactionUuid, machineId, onCloseSignal]); // Added connect to dependencies
 
   const sendMessage = useCallback((message: any) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -145,7 +150,7 @@ export function usePopupSignal({
         wsRef.current.close();
       }
     };
-  }, [connect]);
+  }, [connect]); // Added connect to dependency array
 
   return {
     isConnected,
