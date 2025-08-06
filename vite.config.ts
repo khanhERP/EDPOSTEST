@@ -35,10 +35,11 @@ export default defineConfig({
     },
     host: "0.0.0.0",
     port: 5173,
-    hmr: {
+    hmr: process.env.NODE_ENV === "development" ? {
       port: 5173,
       host: "0.0.0.0",
-    },
+      clientPort: 443,
+    } : false,
     proxy: {
       "/api": {
         target: "http://localhost:5000",
