@@ -5,12 +5,10 @@ export function usePopupSignal() {
   const paymentListenersRef = useRef<Map<string, (success: boolean) => void>>(new Map());
 
   useEffect(() => {
-    // Get the current URL and replace http/https with ws/wss, and use port 3001 for WebSocket
-    const currentUrl = window.location.href;
-    const baseUrl = currentUrl.replace(/^https?:\/\//, '').split('/')[0].split(':')[0];
+    // Connect WebSocket to same port as main application
     const isSecure = window.location.protocol === 'https:';
     const wsProtocol = isSecure ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${baseUrl}:3001`;
+    const wsUrl = `${wsProtocol}//${window.location.host}`;
 
     console.log('Connecting to WebSocket:', wsUrl);
 

@@ -1,15 +1,16 @@
 
 import WebSocket, { WebSocketServer } from 'ws';
+import { Server } from 'http';
 
 let wss: WebSocketServer | null = null;
 
-export function initializeWebSocketServer(port: number) {
+export function initializeWebSocketServer(server: Server) {
   if (wss) {
     console.log('WebSocket server already running');
     return;
   }
 
-  wss = new WebSocketServer({ port });
+  wss = new WebSocketServer({ server });
 
   wss.on('connection', (ws: WebSocket) => {
     console.log('Client connected');
@@ -28,11 +29,8 @@ export function initializeWebSocketServer(port: number) {
     });
   });
 
-  console.log(`WebSocket server started on port ${port}`);
+  console.log('WebSocket server started on the same port as HTTP server');
 }
-
-// Initialize WebSocket server immediately
-initializeWebSocketServer(3001);
 
 export function broadcastPopupClose(success: boolean) {
   if (wss) {
