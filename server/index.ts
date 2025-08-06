@@ -1,4 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { createServer } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
@@ -37,6 +39,46 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Create HTTP server
+  const httpServer = createServer(app);
+  
+  // Setup WebSocket server for popup signals
+  const wss = new WebSocketServer({ 
+    server: httpServer,
+    path: '/ws/popup-signals'
+  });
+
+  // Store connected clients
+  const popupSignalClients = new Map<string, WebSocket>();
+
+  wss.on('connection', (ws) => {
+    console.log('New popup signal WebSocket connection');
+    
+    ws.on('message', (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        
+        if (message.type === 'register' && message.clientId) {
+          popupSignalClients.set(message.clientId, ws);
+          console.log(`Client ${message.clientId} registered for popup signals`);
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    });
+
+    ws.on('close', () => {
+      // Remove client from map when disconnected
+      for (const [clientId, client] of popupSignalClients.entries()) {
+        if (client === ws) {
+          popupSignalClients.delete(clientId);
+          console.log(`Client ${clientId} disconnected from popup signals`);
+          break;
+        }
+      }
+    });
+  });
+
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -69,11 +111,7 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
+  httpServer.listen(port, "0.0.0.0", () => {
+    log(`serving on port ${port} with WebSocket support`);
   });
 })();
