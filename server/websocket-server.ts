@@ -1,12 +1,15 @@
-import WebSocket from 'ws';
 
-let wss: WebSocket.Server | null = null;
+import WebSocket, { WebSocketServer } from 'ws';
 
-// Initialize WebSocket server immediately
-initializeWebSocketServer(3001);
+let wss: WebSocketServer | null = null;
 
 export function initializeWebSocketServer(port: number) {
-  wss = new WebSocket.Server({ port });
+  if (wss) {
+    console.log('WebSocket server already running');
+    return;
+  }
+
+  wss = new WebSocketServer({ port });
 
   wss.on('connection', (ws: WebSocket) => {
     console.log('Client connected');
@@ -28,6 +31,9 @@ export function initializeWebSocketServer(port: number) {
   console.log(`WebSocket server started on port ${port}`);
 }
 
+// Initialize WebSocket server immediately
+initializeWebSocketServer(3001);
+
 export function broadcastPopupClose(success: boolean) {
   if (wss) {
     const message = JSON.stringify({
@@ -35,8 +41,8 @@ export function broadcastPopupClose(success: boolean) {
       success
     });
 
-    wss.clients.forEach((client: any) => {
-      if (client.readyState === 1) { // WebSocket.OPEN
+    wss.clients.forEach((client: WebSocket) => {
+      if (client.readyState === WebSocket.OPEN) {
         client.send(message);
       }
     });
@@ -52,8 +58,8 @@ export function broadcastPaymentSuccess(transactionUuid: string) {
       transactionUuid
     });
 
-    wss.clients.forEach((client: any) => {
-      if (client.readyState === 1) { // WebSocket.OPEN
+    wss.clients.forEach((client: WebSocket) => {
+      if (client.readyState === WebSocket.OPEN) {
         client.send(message);
       }
     });

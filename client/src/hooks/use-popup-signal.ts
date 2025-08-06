@@ -8,7 +8,9 @@ export function usePopupSignal() {
     // Get the current URL and replace http/https with ws/wss, and use port 3001 for WebSocket
     const currentUrl = window.location.href;
     const baseUrl = currentUrl.replace(/^https?:\/\//, '').split('/')[0].split(':')[0];
-    const wsUrl = `ws://${baseUrl}:3001`;
+    const isSecure = window.location.protocol === 'https:';
+    const wsProtocol = isSecure ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${baseUrl}:3001`;
 
     console.log('Connecting to WebSocket:', wsUrl);
 
