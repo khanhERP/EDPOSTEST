@@ -31,7 +31,7 @@ class PopupSignalServer {
   private setupWebSocket() {
     this.wss.on('connection', (ws, req) => {
       const clientId = this.generateClientId();
-      console.log(`Client connected: ${clientId}`);
+      console.log(`✅ Client kết nối thành công: ${clientId}`);
 
       // Store client
       this.clients.set(clientId, { ws });

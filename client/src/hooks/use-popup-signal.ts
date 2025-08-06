@@ -46,7 +46,8 @@ export function usePopupSignal({
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('✅ WebSocket kết nối thành công!');
+        console.log(`🔗 Địa chỉ: ${wsUrl}`);
         setIsConnected(true);
         
         // Register machine if provided
@@ -74,7 +75,8 @@ export function usePopupSignal({
           switch (data.type) {
             case 'CONNECTION_ESTABLISHED':
               setClientId(data.clientId);
-              console.log(`Client ID assigned: ${data.clientId}`);
+              console.log(`🆔 Client ID được gán: ${data.clientId}`);
+              console.log('🎯 WebSocket sẵn sàng nhận tín hiệu popup!');
               break;
 
             case 'CLOSE_POPUP':
