@@ -1577,7 +1577,7 @@ export default function Settings() {
                               className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-md font-medium"
                             >
                               <span className="hidden md:inline">
-                                Kênh kết nối HĐĐT
+                                {t("settings.connectionManagement")}
                               </span>
                               <span className="md:hidden">Kết nối</span>
                             </TabsTrigger>
@@ -1586,7 +1586,7 @@ export default function Settings() {
                               className="text-xs sm:text-sm px-2 sm:px-3 py-1.5 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-md font-medium"
                             >
                               <span className="hidden md:inline">
-                                Mẫu số HĐĐT
+                                {t("settings.templateManagement")}
                               </span>
                               <span className="md:hidden">Mẫu số</span>
                             </TabsTrigger>
@@ -1596,10 +1596,10 @@ export default function Settings() {
                             <div className="flex justify-between items-center mb-6">
                               <div>
                                 <h3 className="text-lg font-medium">
-                                  Danh sách kết nối
+                                  {t("settings.connectionsList")}
                                 </h3>
                                 <p className="text-sm text-gray-600">
-                                  Quản lý các kết nối với nhà cung cấp HĐĐT
+                                  {t("settings.connectionsDesc")}
                                 </p>
                               </div>
                               <Button
@@ -1610,7 +1610,7 @@ export default function Settings() {
                                 className="bg-blue-600 hover:bg-blue-700"
                               >
                                 <Plus className="w-4 h-4 mr-2" />
-                                Thêm kết nối
+                                {t("settings.addConnection")}
                               </Button>
                             </div>
 
