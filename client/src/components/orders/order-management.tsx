@@ -945,7 +945,7 @@ export function OrderManagement() {
             {/* Order Summary */}
             {selectedOrder && (
               <div className="text-center space-y-2">
-                <p className="text-sm text-gray-600">Đơn hàng: {selectedOrder.orderNumber}</p>
+                <p className="text-sm text-gray-600">{t('orders.orderNumber')}: {selectedOrder.orderNumber}</p>
                 <p className="text-sm text-gray-600">Số tiền cần thanh toán:</p>
                 <p className="text-3xl font-bold text-green-600">
                   {mixedPaymentData ? 
