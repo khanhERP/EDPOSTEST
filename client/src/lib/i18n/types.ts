@@ -881,6 +881,8 @@ export interface OrdersTranslations {
   payment: string;
   tableOrder: string;
   tableCapacity: string;
+  orderPlaced: string;
+  orderPlacedSuccess: string;
   status: {
     pending: string;
     confirmed: string;

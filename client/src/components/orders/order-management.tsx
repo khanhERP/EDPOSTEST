@@ -498,7 +498,7 @@ export function OrderManagement() {
           <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
         </div>
         <Badge variant="secondary" className="text-lg px-4 py-2">
-          {allOrders.length} đơn hàng
+          {allOrders.length} {t('orders.ordersInProgress')}
         </Badge>
       </div>
 
@@ -507,8 +507,8 @@ export function OrderManagement() {
         <Card>
           <CardContent className="py-12 text-center">
             <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Chưa có đơn hàng nào</h3>
-            <p className="text-gray-600">Các đơn hàng sẽ hiển thị ở đây khi có khách đặt hàng</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('orders.noActiveOrders')}</h3>
+            <p className="text-gray-600">{t('orders.newOrdersWillAppearHere')}</p>
           </CardContent>
         </Card>
       ) : (
@@ -624,13 +624,13 @@ export function OrderManagement() {
                           className="flex-1 bg-green-600 hover:bg-green-700"
                         >
                           <CreditCard className="w-3 h-3 mr-1" />
-                          Thanh toán
+                          {t('orders.payment')}
                         </Button>
                       )}
 
                       {(order.status === 'paid' || order.status === 'cancelled') && (
                         <Badge variant="outline" className="flex-1 justify-center">
-                          {order.status === 'paid' ? 'Đã hoàn thành' : 'Đã hủy'}
+                          {order.status === 'paid' ? t('orders.status.completed') : t('orders.status.cancelled')}
                         </Badge>
                       )}
                     </div>
@@ -710,7 +710,7 @@ export function OrderManagement() {
                   <div className="space-y-2">
                     {orderItemsLoading ? (
                       <div className="text-center py-4 text-gray-500">
-                        Đang tải danh sách món...
+                        {t('common.loading')}...
                       </div>
                     ) : orderItems && orderItems.length > 0 ? (
                       orderItems.map((item: any, index: number) => {
@@ -750,7 +750,7 @@ export function OrderManagement() {
                       })
                     ) : (
                       <div className="text-center py-4 text-gray-500">
-                        Không có món nào trong đơn hàng này
+                        {t('orders.noActiveOrders')}
                       </div>
                     )}
                   </div>
@@ -847,7 +847,7 @@ export function OrderManagement() {
                           className="flex-1 bg-green-600 hover:bg-green-700"
                         >
                           <CreditCard className="w-4 h-4 mr-2" />
-                          Thanh toán
+                          {t('orders.payment')}
                         </Button>
                         <Button
                           onClick={() => setPointsPaymentOpen(true)}
@@ -855,7 +855,7 @@ export function OrderManagement() {
                           className="flex-1 bg-blue-600 hover:bg-blue-700"
                         >
                           <CreditCard className="w-4 h-4 mr-2" />
-                          Thanh toán bằng điểm
+                          {t('customers.pointManagement')}
                         </Button>
                       </>
                     )}
