@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { CreditCard, Banknote, Smartphone, Wallet, QrCode } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ export function PaymentMethodModal({
   onShowEInvoice,
   cartItems = [],
 }: PaymentMethodModalProps) {
+  const { t } = useTranslation();
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [showEInvoice, setShowEInvoice] = useState(false);
@@ -404,14 +406,14 @@ export function PaymentMethodModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Chọn phương thức thanh toán</DialogTitle>
+          <DialogTitle>{t("common.selectPaymentMethod")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 p-4">
           {!showQRCode && !showCashPayment ? (
             <>
               <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">Tổng tiền</p>
+                <p className="text-sm text-gray-600">{t("common.totalAmount")}</p>
                 <p className="text-2xl font-bold text-blue-600">
                   {total.toLocaleString("vi-VN", {
                     minimumFractionDigits: 2,
@@ -439,7 +441,7 @@ export function PaymentMethodModal({
                       <IconComponent className="mr-3" size={24} />
                       <div className="text-left flex-1">
                         <div className="font-medium">
-                          {isLoading ? "Đang tạo QR..." : method.name}
+                          {isLoading ? t("common.generatingQr") : method.name}
                         </div>
                         <div className="text-sm text-gray-500">
                           {method.description}
@@ -456,7 +458,7 @@ export function PaymentMethodModal({
               </div>
 
               <Button variant="outline" onClick={onClose} className="w-full">
-                Hủy
+                {t("common.cancel")}
               </Button>
             </>
           ) : showQRCode ? (
@@ -465,13 +467,13 @@ export function PaymentMethodModal({
                 <div className="flex items-center justify-center gap-2 mb-4">
                   <QrCode className="w-6 h-6" />
                   <h3 className="text-lg font-semibold">
-                    Quét mã QR để thanh toán
+                    {t("common.scanQrPayment")}
                   </h3>
                 </div>
 
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600">
-                    Số tiền cần thanh toán
+                    {t("common.amountToPay")}
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
                     {total.toLocaleString("vi-VN", {
@@ -495,8 +497,7 @@ export function PaymentMethodModal({
                 )}
 
                 <p className="text-sm text-gray-600">
-                  Sử dụng ứng dụng ngân hàng để quét mã QR và thực hiện thanh
-                  toán
+                  {t("common.useBankingApp")}
                 </p>
               </div>
 
@@ -506,13 +507,13 @@ export function PaymentMethodModal({
                   onClick={handleBack}
                   className="flex-1"
                 >
-                  Quay lại
+                  {t("common.goBack")}
                 </Button>
                 <Button
                   onClick={handleQRComplete}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
                 >
-                  Hoàn thành
+                  {t("common.complete")}
                 </Button>
               </div>
             </>
@@ -521,12 +522,12 @@ export function PaymentMethodModal({
               <div className="text-center space-y-4">
                 <div className="flex items-center justify-center gap-2 mb-4">
                   <Banknote className="w-6 h-6" />
-                  <h3 className="text-lg font-semibold">Thanh toán tiền mặt</h3>
+                  <h3 className="text-lg font-semibold">{t("common.cashPayment")}</h3>
                 </div>
 
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm text-gray-600">
-                    Tổng tiền cần thanh toán
+                    {t("common.amountToPay")}
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
                     {total.toLocaleString("vi-VN", {
@@ -540,12 +541,12 @@ export function PaymentMethodModal({
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Số tiền khách trả
+                      {t("common.customerAmount")}
                     </label>
                     <input
                       type="number"
                       step="1000"
-                      placeholder="Nhập số tiền khách trả"
+                      placeholder={t("common.enterCustomerAmount")}
                       value={amountReceived}
                       onChange={(e) => setAmountReceived(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg text-center"
@@ -557,7 +558,7 @@ export function PaymentMethodModal({
                     <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-green-800">
-                          Tiền thừa:
+                          {t("common.change")}:
                         </span>
                         <span className="text-lg font-bold text-green-600">
                           {(parseFloat(amountReceived) - total).toLocaleString(
@@ -577,7 +578,7 @@ export function PaymentMethodModal({
                     <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-red-800">
-                          Thiếu:
+                          {t("common.insufficient")}:
                         </span>
                         <span className="text-lg font-bold text-red-600">
                           {(total - parseFloat(amountReceived)).toLocaleString(
@@ -601,7 +602,7 @@ export function PaymentMethodModal({
                   onClick={handleBack}
                   className="flex-1"
                 >
-                  Quay lại
+                  {t("common.goBack")}
                 </Button>
                 <Button
                   onClick={handleCashPaymentComplete}
@@ -610,7 +611,7 @@ export function PaymentMethodModal({
                   }
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 disabled:bg-gray-400"
                 >
-                  Hoàn thành
+                  {t("common.complete")}
                 </Button>
               </div>
             </>

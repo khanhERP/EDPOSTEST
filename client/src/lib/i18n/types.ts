@@ -60,6 +60,23 @@ export interface CommonTranslations {
   showing: string;
   for: string;
   noData: string;
+  
+  // Payment method modal
+  selectPaymentMethod: string;
+  totalAmount: string;
+  cashPayment: string;
+  qrBanking: string;
+  close: string;
+  scanQrPayment: string;
+  amountToPay: string;
+  useBankingApp: string;
+  goBack: string;
+  complete: string;
+  customerAmount: string;
+  enterCustomerAmount: string;
+  change: string;
+  insufficient: string;
+  generatingQr: string;
 }
 
 // Navigation translations interface
