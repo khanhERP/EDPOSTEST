@@ -56,7 +56,7 @@ export function PaymentMethodModal({
     const defaultPaymentMethods = [
       {
         id: 1,
-        name: "Tiền mặt",
+        name: t("common.cash"),
         nameKey: "cash",
         type: "cash",
         enabled: true,
@@ -64,7 +64,7 @@ export function PaymentMethodModal({
       },
       {
         id: 2,
-        name: "Thẻ tín dụng",
+        name: t("common.creditCard"),
         nameKey: "creditCard",
         type: "card",
         enabled: false,
@@ -72,7 +72,7 @@ export function PaymentMethodModal({
       },
       {
         id: 3,
-        name: "Thẻ ghi nợ",
+        name: t("common.debitCard"),
         nameKey: "debitCard",
         type: "debit",
         enabled: false,
@@ -80,7 +80,7 @@ export function PaymentMethodModal({
       },
       {
         id: 4,
-        name: "MoMo",
+        name: t("common.momo"),
         nameKey: "momo",
         type: "digital",
         enabled: false,
@@ -88,7 +88,7 @@ export function PaymentMethodModal({
       },
       {
         id: 5,
-        name: "ZaloPay",
+        name: t("common.zalopay"),
         nameKey: "zalopay",
         type: "digital",
         enabled: false,
@@ -96,7 +96,7 @@ export function PaymentMethodModal({
       },
       {
         id: 6,
-        name: "VNPay",
+        name: t("common.vnpay"),
         nameKey: "vnpay",
         type: "digital",
         enabled: false,
@@ -104,7 +104,7 @@ export function PaymentMethodModal({
       },
       {
         id: 7,
-        name: "QR Code",
+        name: t("common.qrCode"),
         nameKey: "qrCode",
         type: "qr",
         enabled: true,
@@ -112,7 +112,7 @@ export function PaymentMethodModal({
       },
       {
         id: 8,
-        name: "ShopeePay",
+        name: t("common.shopeepay"),
         nameKey: "shopeepay",
         type: "digital",
         enabled: false,
@@ -120,7 +120,7 @@ export function PaymentMethodModal({
       },
       {
         id: 9,
-        name: "GrabPay",
+        name: t("common.grabpay"),
         nameKey: "grabpay",
         type: "digital",
         enabled: false,
@@ -147,7 +147,7 @@ export function PaymentMethodModal({
       } else {
         paymentMethods.unshift({
           id: 1,
-          name: "Tiền mặt",
+          name: t("common.cash"),
           nameKey: "cash",
           type: "cash",
           enabled: true,
@@ -187,19 +187,19 @@ export function PaymentMethodModal({
 
   const getMethodDescription = (nameKey: string) => {
     const descriptions = {
-      cash: "Tiền mặt",
-      creditCard: "Visa, Mastercard",
-      debitCard: "ATM Card",
-      momo: "Ví điện tử MoMo",
-      zalopay: "Ví điện tử ZaloPay",
-      vnpay: "Ví điện tử VNPay",
-      qrCode: "QR Banking",
-      shopeepay: "Ví điện tử ShopeePay",
-      grabpay: "Ví điện tử GrabPay",
+      cash: t("common.cash"),
+      creditCard: t("common.visaMastercard"),
+      debitCard: t("common.atmCard"),
+      momo: t("common.momoWallet"),
+      zalopay: t("common.zalopayWallet"),
+      vnpay: t("common.vnpayWallet"),
+      qrCode: t("common.qrBanking"),
+      shopeepay: t("common.shopeepayWallet"),
+      grabpay: t("common.grabpayWallet"),
     };
     return (
       descriptions[nameKey as keyof typeof descriptions] ||
-      "Phương thức thanh toán"
+      t("common.paymentMethodGeneric")
     );
   };
 

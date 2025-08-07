@@ -60,7 +60,7 @@ export interface CommonTranslations {
   showing: string;
   for: string;
   noData: string;
-  
+
   // Payment method modal
   selectPaymentMethod: string;
   totalAmount: string;
@@ -77,6 +77,28 @@ export interface CommonTranslations {
   change: string;
   insufficient: string;
   generatingQr: string;
+
+  // Payment method names
+  cash: string;
+  creditCard: string;
+  debitCard: string;
+  momo: string;
+  zalopay: string;
+  vnpay: string;
+  qrCode: string;
+  shopeepay: string;
+  grabpay: string;
+
+  // Payment method descriptions
+  visaMastercard: string;
+  atmCard: string;
+  momoWallet: string;
+  zalopayWallet: string;
+  vnpayWallet: string;
+  qrBanking: string;
+  shopeepayWallet: string;
+  grabpayWallet: string;
+  paymentMethodGeneric: string;
 }
 
 // Navigation translations interface
