@@ -896,6 +896,18 @@ export interface OrdersTranslations {
   mixedPaymentDesc: string;
   viewDetails: string;
   addMore: string;
+  editOrder: string;
+  editOrderTitle: string;
+  editOrderDesc: string;
+  addNewItems: string;
+  previouslyOrdered: string;
+  alreadyOrdered: string;
+  newItemsToAdd: string;
+  itemsAndNewItems: string;
+  previousItems: string;
+  newItems: string;
+  updateOrder: string;
+  updating: string;
   noInput: string;
   paymentMethods: {
     cash: string;

@@ -360,12 +360,12 @@ export function OrderDialog({
           <DialogTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5" />
             {mode === "edit"
-              ? `Chỉnh sửa đơn hàng - Bàn ${table.tableNumber}`
-              : `Bàn ${table.tableNumber}`}
+              ? `${t("orders.editOrderTitle")} ${table.tableNumber}`
+              : `${t("tables.table")} ${table.tableNumber}`}
           </DialogTitle>
           <DialogDescription>
             {mode === "edit"
-              ? `Đơn hàng ${existingOrder?.orderNumber} | Thêm món hoặc chỉnh sửa số lượng`
+              ? t("orders.editOrderDesc").replace("{orderNumber}", existingOrder?.orderNumber || "")
               : `${t("tables.tableCapacity")}: ${table.capacity}${t("orders.people")} | ${t("tables.selectMenuToOrder")}`}
           </DialogDescription>
         </DialogHeader>
@@ -493,12 +493,12 @@ export function OrderDialog({
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">
                 {mode === "edit"
-                  ? "Món đã gọi & Món mới"
+                  ? t("orders.itemsAndNewItems")
                   : t("tables.orderHistory")}
               </h3>
               <Badge variant="secondary">
                 {mode === "edit"
-                  ? `${existingItems.length + cart.length} món`
+                  ? `${existingItems.length + cart.length} ${t("common.items")}`
                   : `${cart.length}${t("tables.itemsSelected")}`}
               </Badge>
             </div>
@@ -510,7 +510,7 @@ export function OrderDialog({
                 <>
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-gray-600">
-                      Món đã gọi trước đó:
+                      {t("orders.previouslyOrdered")}
                     </h4>
                     <div className="max-h-32 overflow-y-auto space-y-2">
                       {existingItems.map((item, index) => (
@@ -521,7 +521,7 @@ export function OrderDialog({
                                 <h4 className="font-medium text-sm">
                                   {item.productName}
                                 </h4>
-                                <p className="text-xs text-gray-500">Đã gọi</p>
+                                <p className="text-xs text-gray-500">{t("orders.alreadyOrdered")}</p>
                               </div>
                               <div className="text-right">
                                 <span className="text-sm font-bold">
@@ -540,7 +540,7 @@ export function OrderDialog({
                   {cart.length > 0 && <Separator />}
                   {cart.length > 0 && (
                     <h4 className="text-sm font-medium text-gray-550">
-                      Món mới thêm:
+                      {t("orders.newItemsToAdd")}
                     </h4>
                   )}
                 </>
@@ -626,7 +626,7 @@ export function OrderDialog({
                 {mode === "edit" && existingItems.length > 0 && (
                   <>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600">Món đã gọi</span>
+                      <span className="text-gray-600">{t("orders.previousItems")}</span>
                       <span className="font-medium">
                         {existingItems
                           .reduce((total, item) => {
@@ -648,7 +648,7 @@ export function OrderDialog({
                 {cart.length > 0 && mode === "edit" && (
                   <>
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600">Món mới thêm</span>
+                      <span className="text-gray-600">{t("orders.newItems")}</span>
                       <span className="font-medium">
                         {cart
                           .reduce(
@@ -699,10 +699,10 @@ export function OrderDialog({
               >
                 {createOrderMutation.isPending
                   ? mode === "edit"
-                    ? "Đang cập nhật..."
+                    ? t("orders.updating")
                     : t("tables.placing")
                   : mode === "edit"
-                    ? "Cập nhật đơn hàng"
+                    ? t("orders.updateOrder")
                     : t("tables.placeOrder")}
               </Button>
             </div>
