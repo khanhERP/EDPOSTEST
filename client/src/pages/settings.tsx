@@ -1801,7 +1801,7 @@ export default function Settings() {
                                         <div className="leading-tight">Mã mẫu</div>
                                       </th>
                                       <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">Ký hiệu</div>
+                                        <div className="leading-tight">{t("settings.templateSymbol")}</div>
                                       </th>
                                       <th className="w-[120px] px-3 py-3 text-center font-medium text-sm text-gray-600">
                                         <div className="leading-tight">C/K sử dụng</div>

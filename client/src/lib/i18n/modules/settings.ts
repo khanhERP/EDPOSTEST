@@ -72,6 +72,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     templatesDesc: "전자세금계산서 양식을 관리합니다",
     addConnection: "연결 추가",
     addTemplate: "양식 추가",
+    templateSymbol: "기호",
     operations: "운영",
     // Product Management
     totalCategories: '총 카테고리',
@@ -186,6 +187,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     templatesDesc: "Manage electronic invoice templates",
     addConnection: "Add Connection",
     addTemplate: "Add Template",
+    templateSymbol: "Symbol",
     operations: "Operations",
     // Product Management
     totalCategories: 'Total Categories',
@@ -300,6 +302,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     templatesDesc: "Quản lý các mẫu số hóa đơn điện tử",
     addConnection: "Thêm kết nối",
     addTemplate: "Thêm mẫu số",
+    templateSymbol: "Ký hiệu",
     operations: "Hoạt động",
     // Product Management
     totalCategories: 'Tổng số danh mục',
