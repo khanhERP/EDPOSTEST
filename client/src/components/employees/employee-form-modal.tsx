@@ -34,6 +34,7 @@ import {
   type InsertEmployee,
 } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
+import { z } from "zod";
 
 interface EmployeeFormModalProps {
   isOpen: boolean;
@@ -52,6 +53,17 @@ export function EmployeeFormModal({
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
+  // Create translated validation schema
+  const translatedEmployeeSchema = z.object({
+    employeeId: z.string().min(1, t("employees.employeeIdRequired")),
+    name: z.string().min(1, t("employees.nameRequired")),
+    email: z.string().email(t("employees.emailInvalid")).optional().or(z.literal("")),
+    phone: z.string().nullable(),
+    role: z.enum(["admin", "manager", "cashier", "kitchen", "server"]),
+    isActive: z.boolean(),
+    hireDate: z.date(),
+  });
+
   // Generate employee ID for new employees
   const generateEmployeeId = async () => {
     try {
@@ -66,7 +78,7 @@ export function EmployeeFormModal({
   };
 
   const form = useForm<InsertEmployee>({
-    resolver: zodResolver(insertEmployeeSchema),
+    resolver: zodResolver(translatedEmployeeSchema),
     defaultValues: {
       employeeId: "",
       name: "",

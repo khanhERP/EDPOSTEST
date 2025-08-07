@@ -772,6 +772,9 @@ export interface EmployeesTranslations {
   emailAlreadyExists: string;
   emailAlreadyInSystem: string;
   selectRole: string;
+  employeeIdRequired: string;
+  nameRequired: string;
+  emailInvalid: string;
 }
 
 // Attendance translations interface

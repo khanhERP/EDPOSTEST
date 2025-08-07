@@ -53,7 +53,10 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     deleteError: "직원 삭제 중 오류가 발생했습니다",
     emailAlreadyExists: "이메일이 이미 사용되고 있습니다",
     emailAlreadyInSystem: "이메일이 이미 시스템에 존재합니다",
-    selectRole: "역할을 선택하세요"
+    selectRole: "역할을 선택하세요",
+    employeeIdRequired: "직원 ID는 필수입니다",
+    nameRequired: "이름은 필수입니다",
+    emailInvalid: "유효한 이메일 주소를 입력하세요"
   },
   en: {
     title: "Employee Management",
@@ -107,7 +110,10 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     deleteError: "Error deleting employee",
     emailAlreadyExists: "Email is already in use",
     emailAlreadyInSystem: "Email already exists in the system",
-    selectRole: "Select a role"
+    selectRole: "Select a role",
+    employeeIdRequired: "Employee ID is required",
+    nameRequired: "Name is required",
+    emailInvalid: "Please enter a valid email address"
   },
   vi: {
     title: "Quản lý nhân viên",
@@ -161,6 +167,9 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     deleteError: "Lỗi khi xóa nhân viên",
     emailAlreadyExists: "Email đã được sử dụng",
     emailAlreadyInSystem: "Email đã tồn tại trong hệ thống",
-    selectRole: "Chọn vai trò"
+    selectRole: "Chọn vai trò",
+    employeeIdRequired: "ID nhân viên là bắt buộc",
+    nameRequired: "Tên nhân viên là bắt buộc",
+    emailInvalid: "Vui lòng nhập địa chỉ email hợp lệ"
   },
 };
