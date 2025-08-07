@@ -182,6 +182,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     notes: '메모',
     addedToCartShort: '장바구니에 추가됨',
     hasBeenAddedToOrder: '이(가) 주문에 추가되었습니다',
+    checkout: '결제',
   },
   en: {
     title: 'POS System',
@@ -273,6 +274,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     notes: 'Notes',
     addedToCartShort: 'Added to cart',
     hasBeenAddedToOrder: ' has been added to order',
+    checkout: 'Checkout',
   },
   vi: {
     title: 'Hệ thống POS',
