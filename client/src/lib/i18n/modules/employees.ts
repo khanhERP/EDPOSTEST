@@ -50,7 +50,10 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     saving: "저장 중...",
     confirmDelete: "정말로 {{name}}을(를) 삭제하시겠습니까?",
     deleteSuccess: "직원이 성공적으로 삭제되었습니다",
-    deleteError: "직원 삭제 중 오류가 발생했습니다"
+    deleteError: "직원 삭제 중 오류가 발생했습니다",
+    emailAlreadyExists: "이메일이 이미 사용되고 있습니다",
+    emailAlreadyInSystem: "이메일이 이미 시스템에 존재합니다",
+    selectRole: "역할을 선택하세요"
   },
   en: {
     title: "Employee Management",
@@ -101,7 +104,10 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     saving: "Saving...",
     confirmDelete: "Are you sure you want to delete {{name}}?",
     deleteSuccess: "Employee deleted successfully",
-    deleteError: "Error deleting employee"
+    deleteError: "Error deleting employee",
+    emailAlreadyExists: "Email is already in use",
+    emailAlreadyInSystem: "Email already exists in the system",
+    selectRole: "Select a role"
   },
   vi: {
     title: "Quản lý nhân viên",
@@ -153,5 +159,8 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     confirmDelete: "Bạn có chắc chắn muốn xóa {{name}}?",
     deleteSuccess: "Đã xóa nhân viên thành công",
     deleteError: "Lỗi khi xóa nhân viên",
+    emailAlreadyExists: "Email đã được sử dụng",
+    emailAlreadyInSystem: "Email đã tồn tại trong hệ thống",
+    selectRole: "Chọn vai trò"
   },
 };

@@ -769,6 +769,9 @@ export interface EmployeesTranslations {
   inactive: string;
   deleteSuccess: string;
   deleteError: string;
+  emailAlreadyExists: string;
+  emailAlreadyInSystem: string;
+  selectRole: string;
 }
 
 // Attendance translations interface

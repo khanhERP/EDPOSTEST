@@ -141,11 +141,11 @@ export function EmployeeFormModal({
           error.message.slice(error.message.indexOf("{")),
         ); // Extract JSON part of the message
         if (errorData.code === "DUPLICATE_EMAIL") {
-          errorMessage = "Email đã được sử dụng.";
+          errorMessage = t("employees.emailAlreadyExists");
           // Set error on the email field
           form.setError("email", {
             type: "manual",
-            message: "Email đã tồn tại trong hệ thống",
+            message: t("employees.emailAlreadyInSystem"),
           });
         }
       }
@@ -183,10 +183,10 @@ export function EmployeeFormModal({
 
       // Parse error similar to createMutation
       if (error && typeof error === 'object' && error.code === "DUPLICATE_EMAIL") {
-        errorMessage = "Email đã được sử dụng.";
+        errorMessage = t("employees.emailAlreadyExists");
         form.setError("email", {
           type: "manual",
-          message: "Email đã tồn tại trong hệ thống",
+          message: t("employees.emailAlreadyInSystem"),
         });
       }
 
