@@ -1004,10 +1004,10 @@ export function OrderManagement() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-blue-600" />
-              Thanh toán bằng điểm
+              {t('orders.pointsPaymentTitle')}
             </DialogTitle>
             <DialogDescription>
-              Chọn khách hàng và số điểm để thanh toán đơn hàng
+              {t('orders.pointsPaymentDesc')}
             </DialogDescription>
           </DialogHeader>
 
@@ -1039,11 +1039,11 @@ export function OrderManagement() {
 
             {/* Customer Search */}
             <div className="space-y-3">
-              <Label>Tìm kiếm khách hàng</Label>
+              <Label>{t('orders.searchCustomers')}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder="Tìm theo tên, mã KH hoặc số điện thoại..."
+                  placeholder={t('customers.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
@@ -1069,7 +1069,7 @@ export function OrderManagement() {
                         <p className="font-medium text-green-600">
                           {(customer.points || 0).toLocaleString()}P
                         </p>
-                        <p className="text-xs text-gray-500">Điểm có sẵn</p>
+                        <p className="text-xs text-gray-500">{t('orders.availablePoints')}</p>
                       </div>
                     </div>
                   </div>
@@ -1141,7 +1141,7 @@ export function OrderManagement() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-orange-600" />
-              Thanh toán hỗn hợp
+              {t('orders.mixedPaymentTitle')}
             </DialogTitle>
             <DialogDescription>
               Không đủ điểm, cần thanh toán thêm bằng tiền mặt hoặc chuyển khoản

@@ -880,6 +880,12 @@ export interface OrdersTranslations {
   selectPaymentMethod: string;
   selectPaymentMethodDesc: string;
   cancel: string;
+  pointsPaymentTitle: string;
+  pointsPaymentDesc: string;
+  searchCustomers: string;
+  availablePoints: string;
+  mixedPaymentTitle: string;
+  noInput: string;
   paymentMethods: {
     cash: string;
     creditCard: string;
