@@ -933,6 +933,11 @@ export interface OrdersTranslations {
   mixedPaymentTitle: string;
   mixedPaymentCancel: string;
   mixedPaymentDesc: string;
+  mixedPaymentSummary: string;
+  totalOrder: string;
+  pointsPayment: string;
+  remainingAmount: string;
+  selectPaymentMethod: string;
   viewDetails: string;
   addMore: string;
   editOrder: string;
