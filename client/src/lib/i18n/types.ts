@@ -887,6 +887,8 @@ export interface OrdersTranslations {
   mixedPaymentTitle: string;
   mixedPaymentCancel: string;
   mixedPaymentDesc: string;
+  viewDetails: string;
+  addMore: string;
   noInput: string;
   paymentMethods: {
     cash: string;

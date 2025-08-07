@@ -824,7 +824,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         }}
                       >
                         <Eye className="w-3 h-3 mr-1" />
-                        Xem chi tiết
+                        {t('orders.viewDetails')}
                       </Button>
 
                       <Button
@@ -839,7 +839,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         }}
                       >
                         <Plus className="w-3 h-3 mr-1" />
-                        Gọi thêm
+                        {t('orders.addMore')}
                       </Button>
                     </div>
                   )}
