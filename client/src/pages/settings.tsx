@@ -3569,7 +3569,7 @@ export default function Settings() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="taxCode" className="text-right mt-2">
-                Mã số thuế <span className="text-red-500">*</span>
+                {t("settings.taxIdLabel")} <span className="text-red-500">*</span>
               </Label>
               <div className="col-span-3 space-y-1">
                 <Input

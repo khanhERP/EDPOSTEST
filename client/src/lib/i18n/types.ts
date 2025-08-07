@@ -516,6 +516,7 @@ export interface SettingsTranslations {
   storeNamePlaceholder: string;
   storeCodePlaceholder: string;
   taxId: string;
+  taxIdLabel: string;
   taxIdPlaceholder: string;
   addressPlaceholder: string;
   phonePlaceholder: string;
