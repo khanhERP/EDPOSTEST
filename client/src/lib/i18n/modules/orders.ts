@@ -41,6 +41,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     searchCustomers: "고객 검색",
     availablePoints: "사용 가능한 포인트",
     mixedPaymentTitle: "혼합 결제",
+    mixedPaymentCancel: "취소",
     paymentMethods: {
       cash: "현금",
       creditCard: "신용카드",
@@ -114,6 +115,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     searchCustomers: "Search customers",
     availablePoints: "Available points",
     mixedPaymentTitle: "Mixed Payment",
+    mixedPaymentCancel: "Cancel",
     paymentMethods: {
       cash: "Cash",
       creditCard: "Credit Card",
@@ -188,6 +190,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     searchCustomers: "Tìm kiếm khách hàng",
     availablePoints: "Điểm có sẵn",
     mixedPaymentTitle: "Thanh toán hỗn hợp",
+    mixedPaymentCancel: "Hủy",
     paymentMethods: {
       cash: "Tiền mặt",
       creditCard: "Thẻ tín dụng",
