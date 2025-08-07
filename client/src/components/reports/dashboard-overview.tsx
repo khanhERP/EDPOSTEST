@@ -32,7 +32,7 @@ export function formatDateToYYYYMMDD(date: Date | string | number): string {
 }
 
 export function DashboardOverview() {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
 
   const [startDate, setStartDate] = useState<string>(
     formatDateToYYYYMMDD(new Date()), // Set to a date that has sample data
@@ -157,7 +157,16 @@ export function DashboardOverview() {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("ko-KR", {
+    // Map translation language codes to locale codes
+    const localeMap = {
+      ko: "ko-KR",
+      en: "en-US", 
+      vi: "vi-VN"
+    };
+    
+    const locale = localeMap[currentLanguage] || "ko-KR";
+    
+    return new Date(dateStr).toLocaleDateString(locale, {
       year: "numeric",
       month: "long",
       day: "numeric",
