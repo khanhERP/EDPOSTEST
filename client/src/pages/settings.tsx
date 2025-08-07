@@ -1559,11 +1559,10 @@ export default function Settings() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <SettingsIcon className="w-5 h-5 text-green-600" />
-                        Thiết lập HĐĐT
+                        {t("settings.einvoiceSetup")}
                       </CardTitle>
                       <CardDescription>
-                        Quản lý kết nối với các nhà cung cấp dịch vụ hóa đơn
-                        điện tử
+                        {t("settings.einvoiceDesc")}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
