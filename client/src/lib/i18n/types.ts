@@ -114,6 +114,8 @@ export interface NavigationTranslations {
   inventoryReports: string;
   expensesReports: string;
   profitReports: string;
+  tablesSales: string;
+  directSales: string;
 }
 
 // Reports translations interface

@@ -11,8 +11,10 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     suppliers: '공급업체',
     salesReports: '매출 보고서',
     inventoryReports: '재고 보고서',
-    expensesReports: '비용 보고서',
+    expensesReports: '지출 보고서',
     profitReports: '수익 보고서',
+    tablesSales: '테이블별 판매',
+    directSales: '직접 판매',
   },
   en: {
     pos: 'POS',
@@ -36,8 +38,10 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     attendance: 'Chấm công',
     suppliers: 'Nhà cung cấp',
     salesReports: 'Báo cáo bán hàng',
-    inventoryReports: 'Báo cáo kho hàng',
+    inventoryReports: 'Báo cáo tồn kho',
     expensesReports: 'Báo cáo chi phí',
     profitReports: 'Báo cáo lợi nhuận',
+    tablesSales: 'Bán theo bàn',
+    directSales: 'Bán hàng',
   },
 };
