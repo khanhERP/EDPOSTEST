@@ -1018,6 +1018,11 @@ export interface TablesTranslations {
   qrCodePlaceholder: string;
   selectStatus: string;
   unitPrice: string;
+  imageUrlOptional: string;
+  confirmDeleteProduct: string;
+  productNameRequired: string;
+  skuRequired: string;
+  unitPrice: string;
 }
 
 export interface Translations {

@@ -71,6 +71,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     change: "거스름돈",
     completeSale: "결제 완료",
     confirmDelete: "정말로 이 테이블을 삭제하시겠습니까?",
+    unitPrice: "단가",
   },
   en: {
     title: "Table Management",
