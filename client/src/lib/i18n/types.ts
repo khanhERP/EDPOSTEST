@@ -535,6 +535,10 @@ export interface SettingsTranslations {
   connectionsDesc: string;
   templatesDesc: string;
   addConnection: string;
+  addConnectionTitle: string;
+  addConnectionDesc: string;
+  editConnectionTitle: string;
+  editConnectionDesc: string;
   addTemplate: string;
   templateSymbol: string;
   templateIndex: string;

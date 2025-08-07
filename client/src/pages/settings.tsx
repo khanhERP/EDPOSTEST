@@ -3558,12 +3558,12 @@ export default function Settings() {
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
-              {editingEInvoice ? "Sửa kết nối HĐĐT" : "Thêm kết nối HĐĐT"}
+              {editingEInvoice ? t("settings.editConnectionTitle") : t("settings.addConnectionTitle")}
             </DialogTitle>
             <DialogDescription>
               {editingEInvoice
-                ? "Cập nhật thông tin kết nối với nhà cung cấp HĐĐT"
-                : "Nhập thông tin kết nối mới với nhà cung cấp HĐĐT"}
+                ? t("settings.editConnectionDesc")
+                : t("settings.addConnectionDesc")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
