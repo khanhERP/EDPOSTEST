@@ -27,6 +27,7 @@ export const translations: LanguageTranslations = {
     reports: reportsTranslations.ko,
     settings: settingsTranslations.ko,
     tables: tablesTranslations.ko,
+    einvoice: einvoiceTranslations.ko,
   },
   en: {
     common: commonTranslations.en,
@@ -41,6 +42,7 @@ export const translations: LanguageTranslations = {
     reports: reportsTranslations.en,
     settings: settingsTranslations.en,
     tables: tablesTranslations.en,
+    einvoice: einvoiceTranslations.en,
   },
   vi: {
     common: commonTranslations.vi,
