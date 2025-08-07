@@ -59,6 +59,17 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     updating: "업데이트 중...",
     orderUpdateSuccess: "주문 업데이트",
     orderUpdateSuccessDesc: "주문에 새 메뉴가 성공적으로 추가되었습니다",
+    pointsPaymentDialog: {
+      title: "포인트 결제",
+      description: "고객을 선택하고 포인트로 주문을 결제하세요",
+      orderInfo: "주문 정보",
+      orderCode: "주문 코드:",
+      totalAmount: "총액:",
+      searchCustomer: "고객 검색",
+      searchPlaceholder: "이름, 전화번호 또는 고객 코드로 검색...",
+      accumulatedPoints: "적립 포인트",
+      mixedPayment: "혼합 결제"
+    },
     paymentMethods: {
       cash: "현금",
       creditCard: "신용카드",
@@ -150,6 +161,17 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     updating: "Updating...",
     orderUpdateSuccess: "Order Updated",
     orderUpdateSuccessDesc: "New items have been successfully added to the order",
+    pointsPaymentDialog: {
+      title: "Points Payment",
+      description: "Select customer and use points to pay for the order",
+      orderInfo: "Order Information",
+      orderCode: "Order Code:",
+      totalAmount: "Total Amount:",
+      searchCustomer: "Search Customer",
+      searchPlaceholder: "Search by name, phone, or customer code...",
+      accumulatedPoints: "Accumulated Points",
+      mixedPayment: "Mixed Payment"
+    },
     paymentMethods: {
       cash: "Cash",
       creditCard: "Credit Card",
@@ -242,6 +264,17 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     updating: "Đang cập nhật...",
     orderUpdateSuccess: "Cập nhật đơn hàng",
     orderUpdateSuccessDesc: "Đã thêm món mới vào đơn hàng thành công",
+    pointsPaymentDialog: {
+      title: "Thanh toán bằng điểm",
+      description: "Chọn khách hàng và số điểm để thanh toán đơn hàng",
+      orderInfo: "Thông tin đơn hàng",
+      orderCode: "Mã đơn:",
+      totalAmount: "Tổng tiền:",
+      searchCustomer: "Tìm kiếm khách hàng",
+      searchPlaceholder: "Tìm theo tên, số điện thoại hoặc mã khách hàng...",
+      accumulatedPoints: "Điểm tích lũy",
+      mixedPayment: "Thanh toán hỗn hợp"
+    },
     paymentMethods: {
       cash: "Tiền mặt",
       creditCard: "Thẻ tín dụng",

@@ -928,6 +928,17 @@ export interface OrdersTranslations {
   orderUpdateSuccess: string;
   orderUpdateSuccessDesc: string;
   noInput: string;
+  pointsPaymentDialog: {
+    title: string;
+    description: string;
+    orderInfo: string;
+    orderCode: string;
+    totalAmount: string;
+    searchCustomer: string;
+    searchPlaceholder: string;
+    accumulatedPoints: string;
+    mixedPayment: string;
+  };
   paymentMethods: {
     cash: string;
     creditCard: string;

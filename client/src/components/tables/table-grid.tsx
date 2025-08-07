@@ -1274,9 +1274,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       <Dialog open={pointsPaymentOpen} onOpenChange={setPointsPaymentOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Thanh toán bằng điểm</DialogTitle>
+            <DialogTitle>{t('orders.pointsPaymentDialog.title')}</DialogTitle>
             <DialogDescription>
-              Chọn khách hàng và số điểm để thanh toán đơn hàng
+              {t('orders.pointsPaymentDialog.description')}
             </DialogDescription>
           </DialogHeader>
 
@@ -1284,13 +1284,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             {/* Order Summary */}
             {selectedOrder && (
               <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium mb-2">Thông tin đơn hàng</h4>
+                <h4 className="font-medium mb-2">{t('orders.pointsPaymentDialog.orderInfo')}</h4>
                 <div className="flex justify-between text-sm">
-                  <span>Mã đơn:</span>
+                  <span>{t('orders.pointsPaymentDialog.orderCode')}</span>
                   <span className="font-medium">{selectedOrder.orderNumber}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Tổng tiền:</span>
+                  <span>{t('orders.pointsPaymentDialog.totalAmount')}</span>
                   <span className="font-medium">{Number(selectedOrder.total).toLocaleString()} ₫</span>
                 </div>
               </div>
@@ -1298,9 +1298,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
             {/* Customer Selection */}
             <div className="space-y-3">
-              <Label>Tìm kiếm khách hàng</Label>
+              <Label>{t('orders.pointsPaymentDialog.searchCustomer')}</Label>
               <Input
-                placeholder="Tìm theo tên, số điện thoại hoặc mã khách hàng..."
+                placeholder={t('orders.pointsPaymentDialog.searchPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -1326,14 +1326,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         <p className="font-medium text-green-600">
                           {(customer.points || 0).toLocaleString()}P
                         </p>
-                        <p className="text-xs text-gray-500">Điểm tích lũy</p>
+                        <p className="text-xs text-gray-500">{t('orders.pointsPaymentDialog.accumulatedPoints')}</p>
                       </div>
                     </div>
                   </div>
                 ))}
                 {filteredCustomers.length === 0 && searchTerm && (
                   <div className="p-4 text-center text-gray-500">
-                    Không tìm thấy khách hàng
+                    {t('common.noData')}
                   </div>
                 )}
               </div>
