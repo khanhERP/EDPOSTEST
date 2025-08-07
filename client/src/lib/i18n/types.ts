@@ -869,6 +869,8 @@ export interface OrdersTranslations {
   unknownProduct: string;
   memo: string;
   totalAmount: string;
+  subtotal: string;
+  tax: string;
   statusAndTime: string;
   realTimeOrderStatus: string;
   ordersInProgress: string;

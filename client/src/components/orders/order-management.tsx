@@ -782,11 +782,11 @@ export function OrderManagement() {
                       return (
                         <>
                           <div className="flex justify-between">
-                            <span>Subtotal:</span>
+                            <span>{t('orders.subtotal')}:</span>
                             <span>{totalItemSubtotal.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>Tax:</span>
+                            <span>{t('orders.tax')}:</span>
                             <span>{totalItemTax.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
                           </div>
                           <Separator />
