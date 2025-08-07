@@ -880,7 +880,18 @@ export interface OrdersTranslations {
   selectPaymentMethod: string;
   selectPaymentMethodDesc: string;
   cancel: string;
-  noInput: string;
+  paymentMethods: {
+    cash: string;
+    creditCard: string;
+    debitCard: string;
+    momo: string;
+    zalopay: string;
+    vnpay: string;
+    qrCode: string;
+    shopeepay: string;
+    grabpay: string;
+  };
+  noTableInfo: string;
   payment: string;
   tableOrder: string;
   tableCapacity: string;

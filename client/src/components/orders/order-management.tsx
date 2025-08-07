@@ -269,15 +269,15 @@ export function OrderManagement() {
 
     // Default payment methods if none saved
     const defaultPaymentMethods = [
-      { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
-      { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
-      { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
-      { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
-      { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
-      { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
-      { id: 7, name: "QR Code", nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
-      { id: 8, name: "ShopeePay", nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
-      { id: 9, name: "GrabPay", nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
+      { id: 1, name: t('orders.paymentMethods.cash'), nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
+      { id: 2, name: t('orders.paymentMethods.creditCard'), nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
+      { id: 3, name: t('orders.paymentMethods.debitCard'), nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
+      { id: 4, name: t('orders.paymentMethods.momo'), nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
+      { id: 5, name: t('orders.paymentMethods.zalopay'), nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
+      { id: 6, name: t('orders.paymentMethods.vnpay'), nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
+      { id: 7, name: t('orders.paymentMethods.qrCode'), nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
+      { id: 8, name: t('orders.paymentMethods.shopeepay'), nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
+      { id: 9, name: t('orders.paymentMethods.grabpay'), nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
     ];
 
     const paymentMethods = savedPaymentMethods 
@@ -1189,7 +1189,7 @@ export function OrderManagement() {
                   >
                     <span className="text-2xl mr-3">💵</span>
                     <div className="text-left">
-                      <p className="font-medium">Tiền mặt</p>
+                      <p className="font-medium">{t('orders.paymentMethods.cash')}</p>
                       <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
                     </div>
                   </Button>
@@ -1282,7 +1282,7 @@ export function OrderManagement() {
                     <span className="text-2xl mr-3">💳</span>
                     <div className="text-left">
                       <p className="font-medium">
-                        {qrLoading ? 'Đang tạo QR...' : 'Chuyển khoản'}
+                        {qrLoading ? 'Đang tạo QR...' : t('orders.paymentMethods.vnpay')}
                       </p>
                       <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
                     </div>
