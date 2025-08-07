@@ -882,9 +882,9 @@ export function OrderManagement() {
       <Dialog open={paymentMethodsOpen} onOpenChange={setPaymentMethodsOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Chọn phương thức thanh toán</DialogTitle>
+            <DialogTitle>{t('orders.selectPaymentMethod')}</DialogTitle>
             <DialogDescription>
-              Chọn phương thức thanh toán cho đơn hàng
+              {t('orders.selectPaymentMethodDesc')}
             </DialogDescription>
           </DialogHeader>
 
@@ -914,7 +914,7 @@ export function OrderManagement() {
 
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="outline" onClick={() => setPaymentMethodsOpen(false)}>
-              Hủy
+              {t('orders.cancel')}
             </Button>
           </div>
         </DialogContent>

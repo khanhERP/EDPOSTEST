@@ -877,6 +877,9 @@ export interface OrdersTranslations {
   noActiveOrders: string;
   newOrdersWillAppearHere: string;
   noTableInfo: string;
+  selectPaymentMethod: string;
+  selectPaymentMethodDesc: string;
+  cancel: string;
   noInput: string;
   payment: string;
   tableOrder: string;
