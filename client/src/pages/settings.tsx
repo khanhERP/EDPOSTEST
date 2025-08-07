@@ -1761,27 +1761,26 @@ export default function Settings() {
 
                           <TabsContent value="settings" className="mt-6">
                             <div className="space-y-6">
-                                { /* This section has been updated for translation keys */}
-                                <div className="flex justify-between items-center">
-                                  <div>
-                                    <h3 className="text-lg font-medium">
-                                      {t("settings.templateManagement")}
-                                    </h3>
-                                    <p className="text-sm text-gray-600">
-                                      {t("settings.templatesDesc")}
-                                    </p>
-                                  </div>
-                                  <Button 
-                                    className="bg-blue-600 hover:bg-blue-700"
-                                    onClick={() => {
-                                      resetTemplateForm();
-                                      setShowTemplateForm(true);
-                                    }}
-                                  >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    {t("settings.addTemplate")}
-                                  </Button>
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <h3 className="text-lg font-medium">
+                                    {t("settings.templateManagement")}
+                                  </h3>
+                                  <p className="text-sm text-gray-600">
+                                    {t("settings.templatesDesc")}
+                                  </p>
                                 </div>
+                                <Button 
+                                  className="bg-blue-600 hover:bg-blue-700"
+                                  onClick={() => {
+                                    resetTemplateForm();
+                                    setShowTemplateForm(true);
+                                  }}
+                                >
+                                  <Plus className="w-4 h-4 mr-2" />
+                                  {t("settings.addTemplate")}
+                                </Button>
+                              </div>
 
                               {/* Invoice templates table */}
                               <div className="w-full overflow-x-auto border rounded-md bg-white">

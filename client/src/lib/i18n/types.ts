@@ -542,7 +542,6 @@ export interface SettingsTranslations {
   templateNumber: string;
   templateCode: string;
   templateUsage: string;
-  templateDefault: string;
   templateUsageStatus: string;
   templateNotes: string;
   templateSetDefault: string;
@@ -554,6 +553,7 @@ export interface SettingsTranslations {
   templateNumberLabel: string;
   templateCodeLabel: string;
   templateSymbolLabel: string;
+  templateDefault: string;
   operations: string;
   totalCategories: string;
   totalProducts: string;
