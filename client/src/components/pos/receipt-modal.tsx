@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { EInvoiceModal } from "./einvoice-modal";
 import { useState } from "react";
+import { useTranslation } from "@/lib/i18n";
 
 interface ReceiptModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ export function ReceiptModal({
   cartItems = [],
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
+  const { t } = useTranslation();
 
   // Debug logging when modal opens and when props change
   console.log("=== RECEIPT MODAL RENDERED ===");
@@ -154,7 +156,7 @@ export function ReceiptModal({
       <DialogContent className="max-w-md w-full max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isPreview ? "Xem trước hóa đơn" : "Receipt"}
+            {isPreview ? t('pos.receiptPreview') : t('pos.receipt')}
           </DialogTitle>
         </DialogHeader>
 
@@ -242,8 +244,8 @@ export function ReceiptModal({
           </div>
 
           <div className="text-center mt-4 text-xs text-gray-600">
-            <p>Thank you for your business!</p>
-            <p>Please keep this receipt for your records</p>
+            <p>{t('pos.thankYouBusiness')}</p>
+            <p>{t('pos.keepReceiptRecords')}</p>
           </div>
         </div>
 
@@ -251,13 +253,13 @@ export function ReceiptModal({
           {isPreview ? (
             <div className="flex space-x-3 w-full">
               <Button onClick={onClose} variant="outline" className="flex-1">
-                Hủy
+                {t('pos.cancel')}
               </Button>
               <Button
                 onClick={onConfirm}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
               >
-                Xác nhận & Chọn thanh toán
+                {t('pos.confirmAndSelectPayment')}
               </Button>
             </div>
           ) : (
@@ -267,7 +269,7 @@ export function ReceiptModal({
                 className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
               >
                 <Printer className="mr-2" size={16} />
-                Print Receipt
+                {t('pos.printReceipt')}
               </Button>
             </div>
           )}
