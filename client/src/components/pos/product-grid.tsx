@@ -37,7 +37,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
       const response = await fetch(`/api/products?${params}`);
       if (!response.ok) throw new Error('Failed to fetch products');
       const allProducts = await response.json();
-      
+
       // Filter out raw materials (productType = 2)
       return allProducts.filter((product: any) => product.productType !== 2);
     },
@@ -54,6 +54,11 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
     }
 
     onAddToCart(product);
+    // Trigger toast notification for successful add to cart
+    toast({
+      title: t('pos.addedToCartShort'),
+      description: `${product.name}${t('pos.hasBeenAddedToOrder')}`,
+    });
   };
 
   const getPlaceholderImage = (categoryId: number, productName: string) => {

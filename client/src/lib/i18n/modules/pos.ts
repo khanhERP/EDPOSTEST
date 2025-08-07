@@ -87,6 +87,8 @@ export interface POSTranslations {
   reorderPoint: string;
   notes: string;
   newOrder: string;
+  addedToCartShort: string;
+  hasBeenAddedToOrder: string;
 }
 
 export const posTranslations: { [key: string]: POSTranslations } = {
@@ -178,6 +180,8 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     maxStock: '최대 재고',
     reorderPoint: '재주문 시점',
     notes: '메모',
+    addedToCartShort: '장바구니에 추가됨',
+    hasBeenAddedToOrder: '이(가) 주문에 추가되었습니다',
   },
   en: {
     title: 'POS System',
@@ -267,6 +271,8 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     maxStock: 'Max Stock',
     reorderPoint: 'Reorder Point',
     notes: 'Notes',
+    addedToCartShort: 'Added to cart',
+    hasBeenAddedToOrder: ' has been added to order',
   },
   vi: {
     title: 'Hệ thống POS',
@@ -357,5 +363,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     reorderPoint: 'Điểm đặt hàng lại',
     notes: 'Ghi chú',
     newOrder: '+ Đơn mới',
+    addedToCartShort: 'Đã thêm vào giỏ',
+    hasBeenAddedToOrder: ' đã được thêm vào đơn hàng',
   },
 };
