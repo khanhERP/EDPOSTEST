@@ -1284,8 +1284,7 @@ export default function Settings() {
           >
             <div className="w-full overflow-hidden">
               <TabsList
-                className="w-full flex flex-wrap items-center justify-center gap-2 bg-white/80 backdrop-blur-sm border border```text
-gray-200 rounded-xl p-4 min-h-[70px]"
+                className="w-full flex flex-wrap items-center justify-center gap-2 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-4 min-h-[70px]"
               >
                 <TabsTrigger
                   value="store"
@@ -1757,13 +1756,14 @@ gray-200 rounded-xl p-4 min-h-[70px]"
 
                           <TabsContent value="settings" className="mt-6">
                             <div className="space-y-6">
+                                { /* This section has been updated for translation keys */}
                                 <div className="flex justify-between items-center">
                                   <div>
                                     <h3 className="text-lg font-medium">
-                                      Mẫu số HĐĐT
+                                      {t("settings.templateManagement")}
                                     </h3>
                                     <p className="text-sm text-gray-600">
-                                      Quản lý các mẫu số hóa đơn điện tử
+                                      {t("settings.templatesDesc")}
                                     </p>
                                   </div>
                                   <Button 
@@ -1774,7 +1774,7 @@ gray-200 rounded-xl p-4 min-h-[70px]"
                                     }}
                                   >
                                     <Plus className="w-4 h-4 mr-2" />
-                                    Thêm mẫu số
+                                    {t("settings.addTemplate")}
                                   </Button>
                                 </div>
 

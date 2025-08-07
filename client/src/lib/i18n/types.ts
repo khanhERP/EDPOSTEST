@@ -524,6 +524,17 @@ export interface SettingsTranslations {
   addProduct: string;
   editProduct: string;
   allCategories: string;
+  // E-invoice management
+  einvoiceSetup: string;
+  einvoiceDesc: string;
+  connectionManagement: string;
+  templateManagement: string;
+  connectionsList: string;
+  connectionsDesc: string;
+  templatesDesc: string;
+  addConnection: string;
+  addTemplate: string;
+  operations: string;
   totalCategories: string;
   totalProducts: string;
   lowStock: string;
