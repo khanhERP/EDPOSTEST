@@ -1,4 +1,3 @@
-
 export interface POSTranslations {
   title: string;
   cashierName: string;
@@ -87,6 +86,7 @@ export interface POSTranslations {
   maxStock: string;
   reorderPoint: string;
   notes: string;
+  newOrder: string;
 }
 
 export const posTranslations: { [key: string]: POSTranslations } = {
@@ -356,5 +356,6 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     maxStock: 'Tồn kho tối đa',
     reorderPoint: 'Điểm đặt hàng lại',
     notes: 'Ghi chú',
+    newOrder: '+ Đơn mới',
   },
 };

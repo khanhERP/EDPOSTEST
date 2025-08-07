@@ -168,7 +168,7 @@ export function ShoppingCart({
               variant="outline"
               className="text-xs px-2 py-1"
             >
-              + Đơn mới
+              + {t('pos.newOrder')}
             </Button>
           )}
         </div>
