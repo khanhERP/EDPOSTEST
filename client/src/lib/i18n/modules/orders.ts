@@ -57,6 +57,8 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     newItems: "새 메뉴 추가",
     updateOrder: "주문 업데이트",
     updating: "업데이트 중...",
+    orderUpdateSuccess: "주문 업데이트",
+    orderUpdateSuccessDesc: "주문에 새 메뉴가 성공적으로 추가되었습니다",
     paymentMethods: {
       cash: "현금",
       creditCard: "신용카드",
@@ -146,6 +148,8 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     newItems: "New Items",
     updateOrder: "Update Order",
     updating: "Updating...",
+    orderUpdateSuccess: "Order Updated",
+    orderUpdateSuccessDesc: "New items have been successfully added to the order",
     paymentMethods: {
       cash: "Cash",
       creditCard: "Credit Card",
@@ -236,6 +240,8 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     newItems: "Món mới thêm",
     updateOrder: "Cập nhật đơn hàng",
     updating: "Đang cập nhật...",
+    orderUpdateSuccess: "Cập nhật đơn hàng",
+    orderUpdateSuccessDesc: "Đã thêm món mới vào đơn hàng thành công",
     paymentMethods: {
       cash: "Tiền mặt",
       creditCard: "Thẻ tín dụng",

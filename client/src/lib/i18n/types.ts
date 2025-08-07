@@ -908,6 +908,8 @@ export interface OrdersTranslations {
   newItems: string;
   updateOrder: string;
   updating: string;
+  orderUpdateSuccess: string;
+  orderUpdateSuccessDesc: string;
   noInput: string;
   paymentMethods: {
     cash: string;
