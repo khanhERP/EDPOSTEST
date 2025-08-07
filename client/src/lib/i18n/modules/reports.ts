@@ -80,7 +80,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Common report elements
     period: "기간",
-    thisMonth: "이번 달",
     noData: "데이터가 없습니다",
     noDataDescription:
       "선택한 기간에 대한 데이터가 없습니다. 다른 기간을 선택해보세요.",
@@ -442,7 +441,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     endDate: "End Date",
     refresh: "Refresh",
     toDay: "Today",
-    lastWeek: "Last Week", 
+    lastWeek: "Last Week",
     thisMonth: "This Month",
     lastMonth: "Last Month",
     custom: "Custom",
@@ -506,7 +505,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Common report elements
     period: "Period",
-    thisMonth: "This Month",
     noData: "No data available",
     noDataDescription:
       "No data available for the selected period. Please try a different date range.",

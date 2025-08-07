@@ -86,13 +86,11 @@ export interface POSTranslations {
   maxStock: string;
   reorderPoint: string;
   notes: string;
-  newOrder: string;
   addedToCartShort: string;
   hasBeenAddedToOrder: string;
   receiptPreview: string;
   cancel: string;
   confirmAndSelectPayment: string;
-  printReceipt: string;
   thankYouBusiness: string;
   keepReceiptRecords: string;
 }
@@ -188,13 +186,10 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     notes: '메모',
     addedToCartShort: '장바구니에 추가됨',
     hasBeenAddedToOrder: '이(가) 주문에 추가되었습니다',
-    checkout: '결제',
     receiptPreview: '영수증 미리보기',
     cancel: '취소',
     confirmAndSelectPayment: '확인 및 결제 선택',
-    printReceipt: '영수증 인쇄',
     thankYouBusiness: '이용해 주셔서 감사합니다!',
-    keepReceiptRecords: '영수증을 보관해 주세요',
   },
   en: {
     title: 'POS System',
@@ -286,11 +281,9 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     notes: 'Notes',
     addedToCartShort: 'Added to cart',
     hasBeenAddedToOrder: ' has been added to order',
-    checkout: 'Checkout',
     receiptPreview: 'Receipt Preview',
     cancel: 'Cancel',
     confirmAndSelectPayment: 'Confirm & Select Payment',
-    printReceipt: 'Print Receipt',
     thankYouBusiness: 'Thank you for your business!',
     keepReceiptRecords: 'Please keep this receipt for your records',
   },
@@ -349,7 +342,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     paymentMethod: 'Phương thức thanh toán',
     orderComplete: 'Đơn hàng hoàn tất',
     printReceipt: 'In hóa đơn',
-    newOrder: 'Đơn hàng mới',
+    newOrder: '+ Đơn mới',
     newTransaction: 'Giao dịch mới',
     transactionComplete: 'Giao dịch hoàn tất',
     transactionFailed: 'Giao dịch thất bại',
@@ -382,13 +375,11 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     maxStock: 'Tồn kho tối đa',
     reorderPoint: 'Điểm đặt hàng lại',
     notes: 'Ghi chú',
-    newOrder: '+ Đơn mới',
     addedToCartShort: 'Đã thêm vào giỏ',
     hasBeenAddedToOrder: ' đã được thêm vào đơn hàng',
     receiptPreview: 'Xem trước hóa đơn',
     cancel: 'Hủy',
     confirmAndSelectPayment: 'Xác nhận & Chọn thanh toán',
-    printReceipt: 'In hóa đơn',
     thankYouBusiness: 'Cảm ơn bạn đã mua hàng!',
     keepReceiptRecords: 'Vui lòng giữ hóa đơn để làm bằng chứng',
   },
