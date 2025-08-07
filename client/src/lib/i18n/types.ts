@@ -1221,6 +1221,9 @@ export interface EInvoiceTranslations {
   deleteSuccess: string;
   deleteError: string;
   printPreviewError: string;
+  cancel: string;
+  publishing: string;
+  checkout: string;
 }
 
 

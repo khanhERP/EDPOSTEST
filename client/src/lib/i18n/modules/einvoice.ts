@@ -1,4 +1,3 @@
-
 import { EInvoiceTranslations } from '../types';
 
 export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
@@ -21,6 +20,9 @@ export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
     publish: '발행',
     cancel: '취소',
     publishing: '발행 중...',
+    notes: 'Ghi chú',
+    newOrder: '+ Đơn mới',
+    checkout: 'Thanh toán',
   },
   en: {
     title: 'Issue Electronic Invoice',
@@ -41,6 +43,9 @@ export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
     publish: 'Publish',
     cancel: 'Cancel',
     publishing: 'Publishing...',
+    notes: 'Ghi chú',
+    newOrder: '+ Đơn mới',
+    checkout: 'Thanh toán',
   },
   vi: {
     title: 'Phát hành hóa đơn điện tử',
@@ -61,5 +66,8 @@ export const einvoiceTranslations: { [key: string]: EInvoiceTranslations } = {
     publish: 'Phát hành',
     cancel: 'Hủy bỏ',
     publishing: 'Đang phát hành...',
+    notes: 'Ghi chú',
+    newOrder: '+ Đơn mới',
+    checkout: 'Thanh toán',
   },
 };
