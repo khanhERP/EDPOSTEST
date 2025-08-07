@@ -1144,7 +1144,7 @@ export function OrderManagement() {
               {t('orders.mixedPaymentTitle')}
             </DialogTitle>
             <DialogDescription>
-              Không đủ điểm, cần thanh toán thêm bằng tiền mặt hoặc chuyển khoản
+              {t('orders.mixedPaymentDesc')}
             </DialogDescription>
           </DialogHeader>
 
@@ -1298,6 +1298,12 @@ export function OrderManagement() {
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline" onClick={() => setMixedPaymentOpen(false)}>
                   {t('orders.mixedPaymentCancel')}
+                </Button>
+                <Button 
+                  onClick={() => setMixedPaymentOpen(true)}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  {t('orders.mixedPaymentTitle')}
                 </Button>
               </div>
             </div>

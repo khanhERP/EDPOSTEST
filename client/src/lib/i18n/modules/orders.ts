@@ -42,6 +42,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     availablePoints: "사용 가능한 포인트",
     mixedPaymentTitle: "혼합 결제",
     mixedPaymentCancel: "취소",
+    mixedPaymentDesc: "포인트가 부족하여 현금 또는 이체로 추가 결제가 필요합니다",
     paymentMethods: {
       cash: "현금",
       creditCard: "신용카드",
@@ -116,6 +117,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     availablePoints: "Available points",
     mixedPaymentTitle: "Mixed Payment",
     mixedPaymentCancel: "Cancel",
+    mixedPaymentDesc: "Insufficient points, need additional payment by cash or transfer",
     paymentMethods: {
       cash: "Cash",
       creditCard: "Credit Card",
@@ -191,6 +193,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     availablePoints: "Điểm có sẵn",
     mixedPaymentTitle: "Thanh toán hỗn hợp",
     mixedPaymentCancel: "Hủy",
+    mixedPaymentDesc: "Không đủ điểm, cần thanh toán thêm bằng tiền mặt hoặc chuyển khoản",
     paymentMethods: {
       cash: "Tiền mặt",
       creditCard: "Thẻ tín dụng",
