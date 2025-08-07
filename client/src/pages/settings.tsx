@@ -1789,31 +1789,31 @@ export default function Settings() {
                                   <thead>
                                     <tr className="bg-gray-50 border-b">
                                       <th className="w-[60px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">STT</div>
+                                        <div className="leading-tight">{t("settings.templateIndex")}</div>
                                       </th>
                                       <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">Tên</div>
+                                        <div className="leading-tight">{t("settings.templateName")}</div>
                                       </th>
                                       <th className="w-[130px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">Mẫu số</div>
+                                        <div className="leading-tight">{t("settings.templateNumber")}</div>
                                       </th>
                                       <th className="w-[160px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">Mã mẫu</div>
+                                        <div className="leading-tight">{t("settings.templateCode")}</div>
                                       </th>
                                       <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
                                         <div className="leading-tight">{t("settings.templateSymbol")}</div>
                                       </th>
                                       <th className="w-[120px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">C/K sử dụng</div>
+                                        <div className="leading-tight">{t("settings.templateUsage")}</div>
                                       </th>
                                       <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">Ghi chú</div>
+                                        <div className="leading-tight">{t("common.notes")}</div>
                                       </th>
                                       <th className="w-[80px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">Mặc định</div>
+                                        <div className="leading-tight">{t("settings.templateDefault")}</div>
                                       </th>
                                       <th className="w-[110px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                        <div className="leading-tight">Hành động</div>
+                                        <div className="leading-tight">{t("common.actions")}</div>
                                       </th>
                                     </tr>
                                   </thead>

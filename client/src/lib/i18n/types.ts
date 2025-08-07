@@ -535,6 +535,12 @@ export interface SettingsTranslations {
   addConnection: string;
   addTemplate: string;
   templateSymbol: string;
+  templateIndex: string;
+  templateName: string;
+  templateNumber: string;
+  templateCode: string;
+  templateUsage: string;
+  templateDefault: string;
   operations: string;
   totalCategories: string;
   totalProducts: string;
