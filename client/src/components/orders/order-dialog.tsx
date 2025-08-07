@@ -94,7 +94,7 @@ export function OrderDialog({
           : "Creating order with data:",
         JSON.stringify(orderData, null, 2),
       );
-      
+
       try {
         if (mode === "edit" && existingOrder) {
           console.log(`Adding ${orderData.items.length} items to existing order ${existingOrder.id}`);
@@ -123,25 +123,22 @@ export function OrderDialog({
           : "Order created successfully:",
         response,
       );
-      
+
       // Invalidate queries to refresh data
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
-      
+
       // Reset form state
       setCart([]);
       setCustomerName("");
       setCustomerCount(1);
       setExistingItems([]);
       onOpenChange(false);
-      
+
       toast({
-        title: mode === "edit" ? "Cập nhật đơn hàng" : t("orders.orderPlaced"),
-        description:
-          mode === "edit"
-            ? "Đã thêm món mới vào đơn hàng thành công"
-            : t("orders.orderPlacedSuccess"),
+        title: t('orders.orderUpdateSuccess'),
+        description: t('orders.orderUpdateSuccessDesc'),
       });
     },
     onError: (error: any) => {
@@ -150,9 +147,9 @@ export function OrderDialog({
       console.error("Error message:", error.message);
       console.error("Error response:", error.response);
       console.error("Error response data:", error.response?.data);
-      
+
       let errorMessage = t("orders.orderFailed");
-      
+
       if (error.response?.data?.details) {
         errorMessage = error.response.data.details;
       } else if (error.response?.data?.error) {
@@ -162,7 +159,7 @@ export function OrderDialog({
       } else if (error.message) {
         errorMessage = error.message;
       }
-      
+
       toast({
         title: t("common.error"),
         description: `Lỗi ${mode === "edit" ? "cập nhật" : "tạo"} đơn hàng: ${errorMessage}`,
