@@ -1350,7 +1350,9 @@ export default function Settings() {
                     className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
                   >
                     <Store className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                    <span className="hidden md:inline">Thông tin cơ bản</span>
+                    <span className="hidden md:inline">
+                      {t("settings.basicInfo")}
+                    </span>
                     <span className="md:hidden">Cơ bản</span>
                   </TabsTrigger>
                   <TabsTrigger
@@ -1358,7 +1360,9 @@ export default function Settings() {
                     className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
                   >
                     <SettingsIcon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                    <span className="hidden md:inline">Thiết lập HĐĐT</span>
+                    <span className="hidden md:inline">
+                      {t("settings.einvoiceSetup")}
+                    </span>
                     <span className="md:hidden">HĐĐT</span>
                   </TabsTrigger>
                   <TabsTrigger
@@ -1366,7 +1370,9 @@ export default function Settings() {
                     className="flex items-center gap-1.5 text-xs sm:text-sm px-3 sm:px-4 py-2 data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-all duration-200 rounded-lg font-medium whitespace-nowrap flex-shrink-0"
                   >
                     <Clock className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                    <span className="hidden md:inline">Hoạt động</span>
+                    <span className="hidden md:inline">
+                      {t("settings.operations")}
+                    </span>
                     <span className="md:hidden">HĐ</span>
                   </TabsTrigger>
                 </TabsList>
