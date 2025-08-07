@@ -1462,7 +1462,7 @@ export default function Settings() {
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="pinCode">
-                            Mã PIN
+                            {t("settings.pinCodeLabel")}
                           </Label>
                           <Input
                             id="pinCode"
