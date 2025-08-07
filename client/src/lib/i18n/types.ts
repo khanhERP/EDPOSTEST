@@ -51,7 +51,9 @@ export interface CommonTranslations {
   clear: string;
   refresh: string;
   update: string;
+  updating: string;
   create: string;
+  creating: string;
   reset: string;
   export: string;
   import: string;
@@ -541,6 +543,17 @@ export interface SettingsTranslations {
   templateCode: string;
   templateUsage: string;
   templateDefault: string;
+  templateUsageStatus: string;
+  templateNotes: string;
+  templateSetDefault: string;
+  addTemplateTitle: string;
+  addTemplateDesc: string;
+  editTemplateTitle: string;
+  editTemplateDesc: string;
+  templateNameLabel: string;
+  templateNumberLabel: string;
+  templateCodeLabel: string;
+  templateSymbolLabel: string;
   operations: string;
   totalCategories: string;
   totalProducts: string;

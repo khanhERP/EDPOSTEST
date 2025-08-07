@@ -3830,19 +3830,19 @@ export default function Settings() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>
-              {editingTemplate ? "Sửa mẫu số HĐĐT" : "Thêm mẫu số HĐĐT"}
+              {editingTemplate ? t("settings.editTemplateTitle") : t("settings.addTemplateTitle")}
             </DialogTitle>
             <DialogDescription>
               {editingTemplate 
-                ? "Cập nhật thông tin chi tiết của mẫu số HĐĐT" 
-                : "Nhập thông tin chi tiết của mẫu số HĐĐT"
+                ? t("settings.editTemplateDesc")
+                : t("settings.addTemplateDesc")
               }
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="templateName" className="text-right">
-                Tên mẫu số
+                {t("settings.templateNameLabel")}
               </Label>
               <Input
                 id="templateName"
@@ -3856,7 +3856,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="templateNumber" className="text-right">
-                Mẫu số
+                {t("settings.templateNumberLabel")}
               </Label>
               <Input
                 id="templateNumber"
@@ -3871,10 +3871,9 @@ export default function Settings() {
                 placeholder="Ví dụ: 01GTKT0/001"
               />
             </div>
-            {/* Added Mã mẫu field */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="templateCode" className="text-right">
-                Mã mẫu
+                {t("settings.templateCodeLabel")}
               </Label>
               <Input
                 id="templateCode"
@@ -3891,7 +3890,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="symbol" className="text-right">
-                Ký hiệu
+                {t("settings.templateSymbolLabel")}
               </Label>
               <Input
                 id="symbol"
@@ -3905,7 +3904,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="useCK" className="text-right">
-                C/K sử dụng
+                {t("settings.templateUsage")}
               </Label>
               <Switch
                 id="useCK"
@@ -3917,7 +3916,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="notes" className="text-right">
-                Ghi chú
+                {t("common.notes")}
               </Label>
               <Textarea
                 id="notes"
@@ -3932,7 +3931,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="isDefault" className="text-right">
-                Mặc định
+                {t("settings.templateDefault")}
               </Label>
               <div className="col-span-3 flex items-center space-x-2">
                 <Switch
@@ -3943,7 +3942,7 @@ export default function Settings() {
                   }
                 />
                 <Label htmlFor="isDefault" className="text-sm">
-                  Đặt làm mẫu số mặc định
+                  {t("settings.templateSetDefault")}
                 </Label>
               </div>
             </div>
@@ -3956,7 +3955,7 @@ export default function Settings() {
                 resetTemplateForm();
               }}
             >
-              Hủy bỏ
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={editingTemplate ? handleUpdateTemplate : handleCreateTemplate}
@@ -3964,8 +3963,8 @@ export default function Settings() {
               className="bg-green-600 hover:bg-green-700"
             >
               {(createTemplateMutation.isPending || updateTemplateMutation.isPending) 
-                ? (editingTemplate ? "Đang cập nhật..." : "Đang tạo...") 
-                : (editingTemplate ? "Cập nhật mẫu số" : "Thêm mẫu số")
+                ? (editingTemplate ? t("common.updating") : t("common.creating"))
+                : (editingTemplate ? t("common.update") : t("settings.addTemplate"))
               }
             </Button>
           </DialogFooter>
