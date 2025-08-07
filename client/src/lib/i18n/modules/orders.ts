@@ -93,7 +93,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     orderPlacedSuccess: "주문이 성공적으로 접수되었습니다",
     orderFailed: "주문 접수에 실패했습니다",
     tableOrder: "테이블 주문",
-    tableCapacity: "테이블 주문",
+    tableCapacity: "테이블 정원",
     orderPlaced: "주문 접수",
     orderPlacedSuccess: "주문이 성공적으로 접수되었습니다",
     status: {

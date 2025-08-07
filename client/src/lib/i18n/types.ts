@@ -1098,6 +1098,13 @@ export interface TablesTranslations {
   confirmDeleteProduct: string;
   productNameRequired: string;
   skuRequired: string;
+  tableNumberRequired: string;
+  capacityMinimum: string;
+  tableUpdateError: string;
+  tableDeleteError: string;
+  tableNumberLabel: string;
+  statusPlaceholder: string;
+  tableList: string;
   unitPrice: string;
 }
 

@@ -177,7 +177,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     change: "거스름돈",
     insufficient: "부족",
     generatingQr: "QR 생성 중...",
-    
+
     // Payment method names
     cash: "현금",
     creditCard: "신용카드",
@@ -188,7 +188,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     qrCode: "QR 코드",
     shopeepay: "ShopeePay",
     grabpay: "GrabPay",
-    
+
     // Payment method descriptions
     visaMastercard: "Visa, Mastercard",
     atmCard: "ATM 카드",
@@ -310,7 +310,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     change: "Change",
     insufficient: "Insufficient",
     generatingQr: "Generating QR...",
-    
+
     // Payment method names
     cash: "Cash",
     creditCard: "Credit Card",
@@ -321,7 +321,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     qrCode: "QR Code",
     shopeepay: "ShopeePay",
     grabpay: "GrabPay",
-    
+
     // Payment method descriptions
     visaMastercard: "Visa, Mastercard",
     atmCard: "ATM Card",
@@ -427,7 +427,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     showing: "Hiển thị",
     for: "cho",
     noData: "Không có dữ liệu",
-    
+
     // Payment method modal translations (already exist above)
     selectPaymentMethod: "Chọn phương thức thanh toán",
     totalAmount: "Tổng tiền",
@@ -443,7 +443,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     change: "Tiền thối",
     insufficient: "Không đủ",
     generatingQr: "Đang tạo mã QR...",
-    
+
     // Payment method names
     cash: "Tiền mặt",
     creditCard: "Thẻ tín dụng",
@@ -454,14 +454,13 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     qrCode: "Mã QR",
     shopeepay: "ShopeePay",
     grabpay: "GrabPay",
-    
+
     // Payment method descriptions
     visaMastercard: "Visa, Mastercard",
     atmCard: "Thẻ ATM",
     momoWallet: "Ví điện tử MoMo",
     zalopayWallet: "Ví điện tử ZaloPay",
     vnpayWallet: "Ví điện tử VNPay",
-    qrBanking: "QR Banking",
     shopeepayWallet: "Ví điện tử ShopeePay",
     grabpayWallet: "Ví điện tử GrabPay",
     paymentMethodGeneric: "Phương thức thanh toán",
