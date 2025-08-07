@@ -861,9 +861,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       <Dialog open={orderDetailsOpen} onOpenChange={setOrderDetailsOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chi tiết đơn hàng</DialogTitle>
+            <DialogTitle>{t('orders.orderDetails')}</DialogTitle>
             <DialogDescription>
-              {selectedOrder && `Mã đơn: ${selectedOrder.orderNumber}`}
+              {selectedOrder && `${t('orders.orderNumber')}: ${selectedOrder.orderNumber}`}
             </DialogDescription>
           </DialogHeader>
 
@@ -872,15 +872,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               {/* Order Info */}
               <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
                 <div>
-                  <p className="text-sm text-gray-600">Bàn số:</p>
+                  <p className="text-sm text-gray-600">{t('orders.table')} {t('orders.orderNumber').toLowerCase()}:</p>
                   <p className="font-medium">T{selectedOrder.tableId}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Số khách:</p>
-                  <p className="font-medium">{selectedOrder.customerCount} người</p>
+                  <p className="text-sm text-gray-600">{t('orders.customerCount')}:</p>
+                  <p className="font-medium">{selectedOrder.customerCount} {t('orders.people')}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Thời gian:</p>
+                  <p className="text-sm text-gray-600">{t('orders.orderTime')}:</p>
                   <p className="font-medium">
                     {new Date(selectedOrder.orderedAt).toLocaleTimeString(
                       currentLanguage === 'ko' ? 'ko-KR' :
@@ -894,19 +894,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Trạng thái:</p>
+                  <p className="text-sm text-gray-600">{t('orders.orderStatus')}:</p>
                   <Badge variant={selectedOrder.status === 'paid' ? 'default' : 'secondary'}>
-                    {selectedOrder.status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                    {selectedOrder.status === 'paid' ? t('orders.status.paid') : t('orders.status.pending')}
                   </Badge>
                 </div>
               </div>
 
               {/* Order Items */}
               <div>
-                <h4 className="font-medium mb-3">Món đã gọi:</h4>
+                <h4 className="font-medium mb-3">{t('orders.orderItems')}:</h4>
                 <div className="space-y-2">
                   {orderItemsLoading ? (
-                    <p className="text-gray-500 text-center py-4">Đang tải dữ liệu...</p>
+                    <p className="text-gray-500 text-center py-4">{t('common.loading')}</p>
                   ) : (
                     <>
                       {(() => {
@@ -965,7 +965,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           return (
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-green-600 mb-3">
-                                ✅ Hiển thị {itemsToRender.length} món ăn cho đơn hàng {selectedOrder?.orderNumber}
+                                ✅ {t('common.showing')} {itemsToRender.length} {t('orders.orderItems').toLowerCase()} {t('common.for')} {t('orders.orderNumber').toLowerCase()} {selectedOrder?.orderNumber}
                               </p>
                               {itemsToRender.map((item: any, index: number) => {
                                 console.log(`🍽️ Rendering item ${index + 1}:`, {
@@ -984,7 +984,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                         {item.productName || getProductName(item.productId) || `Sản phẩm #${item.productId}`}
                                       </p>
                                       <p className="text-sm text-gray-600">
-                                        Số lượng: <span className="font-medium">{item.quantity}</span>
+                                        {t('pos.quantity')}: <span className="font-medium">{item.quantity}</span>
                                       </p>
                                       {(() => {
                                         const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
@@ -993,13 +993,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                                         return taxAmount > 0 ? (
                                           <p className="text-xs text-orange-600">
-                                            Thuế: {taxAmount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ ({taxRate}%)
+                                            {t('orders.tax')}: {taxAmount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ ({taxRate}%)
                                           </p>
                                         ) : null;
                                       })()}
                                       {item.notes && (
                                         <p className="text-xs text-blue-600 italic mt-1">
-                                          Ghi chú: {item.notes}
+                                          {t('orders.memo')}: {item.notes}
                                         </p>
                                       )}
                                     </div>
@@ -1008,7 +1008,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                         {Number(item.total || 0).toLocaleString()} ₫
                                       </p>
                                       <p className="text-sm text-gray-500">
-                                        {Number(item.unitPrice || 0).toLocaleString()} ₫/món
+                                        {Number(item.unitPrice || 0).toLocaleString()} ₫/{t('pos.product').toLowerCase()}
                                       </p>
                                     </div>
                                   </div>
@@ -1035,7 +1035,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           return (
                             <div className="text-center py-6 bg-red-50 rounded-lg border border-red-200">
                               <p className="text-red-600 font-medium mb-3">
-                                ❌ Không có món ăn nào cho đơn hàng {selectedOrder?.orderNumber}
+                                ❌ {t('common.noData')} {t('orders.orderItems').toLowerCase()} {t('common.for')} {t('orders.orderNumber').toLowerCase()} {selectedOrder?.orderNumber}
                               </p>
                               <div className="text-xs text-gray-500 space-y-1 bg-white p-3 rounded border max-h-40 overflow-y-auto">
                                 <p><strong>Complete Debug Info:</strong></p>
@@ -1078,13 +1078,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                   return totalTax > 0 ? (
                     <div className="flex justify-between text-sm text-orange-600">
-                      <span>Tổng thuế:</span>
+                      <span>{t('orders.tax')} {t('orders.totalAmount').toLowerCase()}:</span>
                       <span>{totalTax.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
                     </div>
                   ) : null;
                 })()}
                 <div className="flex justify-between text-lg font-bold">
-                  <span>Tổng cần thanh toán:</span>
+                  <span>{t('orders.totalAmount')}:</span>
                   <span className="text-green-600">{(() => {
                     // Calculate total from order items instead of using order.total
                     let itemsTotal = 0;
@@ -1126,7 +1126,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     size="lg"
                   >
                     <CreditCard className="w-4 h-4 mr-2" />
-                    Thanh toán
+                    {t('orders.payment')}
                   </Button>
                   <Button
                     onClick={() => setPointsPaymentOpen(true)}
@@ -1134,7 +1134,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     size="lg"
                   >
                     <Users className="w-4 h-4 mr-2" />
-                    Thanh toán bằng điểm
+                    {t('orders.pointsPaymentTitle')}
                   </Button>
                 </div>
               )}</div>

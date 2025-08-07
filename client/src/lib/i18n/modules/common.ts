@@ -158,6 +158,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     items: "개",
     count: "개수",
     people: "명",
+    showing: "표시",
+    for: "~에 대한",
+    noData: "데이터 없음",
   },
   en: {
     loading: "Loading...",
@@ -250,6 +253,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     restaurant: "Restaurant",
     tableDeleteConfirm: "Are you sure you want to delete this table?",
     tableDeleteError: "Cannot delete a table that has been used.",
+    showing: "Showing",
+    for: "for",
+    noData: "No data",
   },
   vi: {
     loading: "Đang tải...",
@@ -342,5 +348,8 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     restaurant: "Nhà hàng",
     tableDeleteConfirm: "Bạn có chắc chắn muốn xóa bàn này?",
     tableDeleteError: "Không thể xóa bàn đã được sử dụng.",
+    showing: "Hiển thị",
+    for: "cho",
+    noData: "Không có dữ liệu",
   },
 };

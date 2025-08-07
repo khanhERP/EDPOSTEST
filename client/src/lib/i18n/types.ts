@@ -53,6 +53,13 @@ export interface CommonTranslations {
   update: string;
   create: string;
   reset: string;
+  export: string;
+  import: string;
+  select: string;
+  selectAll: string;
+  showing: string;
+  for: string;
+  noData: string;
 }
 
 // Navigation translations interface
