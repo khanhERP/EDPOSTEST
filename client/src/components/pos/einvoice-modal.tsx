@@ -19,6 +19,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/lib/i18n";
 
 // E-invoice software providers mapping
 const EINVOICE_PROVIDERS = [
@@ -84,6 +85,7 @@ export function EInvoiceModal({
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   // Mutation để hoàn tất thanh toán và cập nhật trạng thái
   const completePaymentMutation = useMutation({
@@ -604,7 +606,7 @@ export function EInvoiceModal({
       <DialogContent className="max-w-2xl max-h-screen overflow-y-auto [&>button]:hidden">
         <DialogHeader>
           <DialogTitle className="text-blue-700 bg-blue-100 p-3 rounded-t-lg">
-            Phát hành hóa đơn điện tử
+            {t('einvoice.title')}
           </DialogTitle>
         </DialogHeader>
 
@@ -612,11 +614,11 @@ export function EInvoiceModal({
           {/* E-invoice Provider Information */}
           <div>
             <h3 className="text-base font-medium mb-4">
-              Thông tin nhà cung cấp hóa đơn điện tử
+              {t('einvoice.providerInfo')}
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="invoiceProvider">Đơn vị HĐĐT</Label>
+                <Label htmlFor="invoiceProvider">{t('einvoice.providerUnit')}</Label>
                 <Select
                   value={formData.invoiceProvider}
                   onValueChange={(value) =>
@@ -624,7 +626,7 @@ export function EInvoiceModal({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn đơn vị HĐĐT" />
+                    <SelectValue placeholder={t('einvoice.selectProvider')} />
                   </SelectTrigger>
                   <SelectContent>
                     {EINVOICE_PROVIDERS.map((provider) => (
@@ -636,7 +638,7 @@ export function EInvoiceModal({
                 </Select>
               </div>
               <div>
-                <Label htmlFor="invoiceTemplate">Mẫu số Hóa đơn GTGT</Label>
+                <Label htmlFor="invoiceTemplate">{t('einvoice.invoiceTemplate')}</Label>
                 <Select
                   value={formData.selectedTemplateId}
                   onValueChange={(value) =>
@@ -644,7 +646,7 @@ export function EInvoiceModal({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Chọn mẫu số hóa đơn" />
+                    <SelectValue placeholder={t('einvoice.selectTemplate')} />
                   </SelectTrigger>
                   <SelectContent>
                     {invoiceTemplates.map((template) => (
@@ -660,10 +662,10 @@ export function EInvoiceModal({
 
           {/* Customer Information */}
           <div>
-            <h3 className="text-base font-medium mb-4">Thông tin khách hàng</h3>
+            <h3 className="text-base font-medium mb-4">{t('einvoice.customerInfo')}</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="taxCode">Mã số thuế</Label>
+                <Label htmlFor="taxCode">{t('einvoice.taxCode')}</Label>
                 <div className="flex gap-2">
                   <Input
                     id="taxCode"
@@ -688,13 +690,13 @@ export function EInvoiceModal({
                         Đang tải...
                       </>
                     ) : (
-                      "Lấy thông tin"
+                      t('einvoice.getInfo')
                     )}
                   </Button>
                 </div>
               </div>
               <div>
-                <Label htmlFor="customerName">Tên đơn vị</Label>
+                <Label htmlFor="customerName">{t('einvoice.companyName')}</Label>
                 <Input
                   id="customerName"
                   value={formData.customerName}
@@ -707,7 +709,7 @@ export function EInvoiceModal({
                 />
               </div>
               <div>
-                <Label htmlFor="address">Địa chỉ</Label>
+                <Label htmlFor="address">{t('einvoice.address')}</Label>
                 <Input
                   id="address"
                   value={formData.address}
@@ -718,7 +720,7 @@ export function EInvoiceModal({
                 />
               </div>
               <div>
-                <Label htmlFor="phoneNumber">Số CMND/CCCD</Label>
+                <Label htmlFor="phoneNumber">{t('einvoice.idNumber')}</Label>
                 <Input
                   id="phoneNumber"
                   value={formData.phoneNumber}
@@ -731,7 +733,7 @@ export function EInvoiceModal({
                 />
               </div>
               <div>
-                <Label htmlFor="recipientName">Người nhận HĐ</Label>
+                <Label htmlFor="recipientName">{t('einvoice.recipient')}</Label>
                 <Input
                   id="recipientName"
                   value={formData.recipientName}
@@ -744,7 +746,7 @@ export function EInvoiceModal({
                 />
               </div>
               <div>
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('einvoice.email')}</Label>
                 <Input
                   id="email"
                   type="email"
@@ -761,7 +763,7 @@ export function EInvoiceModal({
           {/* Total Amount Display */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex justify-between items-center">
-              <span className="font-medium">Tổng tiền hóa đơn:</span>
+              <span className="font-medium">{t('einvoice.totalAmount')}</span>
               <span className="text-lg font-bold text-blue-600">
                 {total.toLocaleString("vi-VN", {
                   minimumFractionDigits: 2,
@@ -782,18 +784,18 @@ export function EInvoiceModal({
               {isPublishing ? (
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                  Đang phát hành...
+                  {t('einvoice.publishing')}
                 </>
               ) : (
                 <>
                   <span className="mr-2">✅</span>
-                  Phát hành
+                  {t('einvoice.publish')}
                 </>
               )}
             </Button>
             <Button variant="outline" onClick={handleCancel} className="flex-1">
               <span className="mr-2">❌</span>
-              Hủy bỏ
+              {t('einvoice.cancel')}
             </Button>
           </div>
         </div>

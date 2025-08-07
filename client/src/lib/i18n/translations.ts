@@ -10,6 +10,7 @@ import { posTranslations } from './modules/pos';
 import { reportsTranslations } from './modules/reports';
 import { settingsTranslations } from './modules/settings';
 import { tablesTranslations } from './modules/tables';
+import { einvoiceTranslations } from './modules/einvoice';
 import type { LanguageTranslations } from './types';
 
 export const translations: LanguageTranslations = {
@@ -54,5 +55,6 @@ export const translations: LanguageTranslations = {
     reports: reportsTranslations.vi,
     settings: settingsTranslations.vi,
     tables: tablesTranslations.vi,
+    einvoice: einvoiceTranslations.vi,
   },
 };
