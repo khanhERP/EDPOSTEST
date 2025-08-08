@@ -81,16 +81,32 @@ export function ReceiptModal({
   const handlePrint = () => {
     const printContent = document.getElementById("receipt-content");
     if (printContent) {
-      const printWindow = window.open("", "", "height=600,width=400");
+      // Calculate content height dynamically
+      const contentHeight = printContent.scrollHeight;
+      const windowWidth = 400;
+      // Add some padding for print margins and controls
+      const windowHeight = Math.min(Math.max(contentHeight + 120, 300), 800);
+      
+      console.log("Receipt content height:", contentHeight, "Window height:", windowHeight);
+      
+      const printWindow = window.open("", "", `height=${windowHeight},width=${windowWidth}`);
       if (printWindow) {
         printWindow.document.write("<html><head><title>Receipt</title>");
         printWindow.document.write(
-          "<style>body { font-family: monospace; font-size: 12px; margin: 0; padding: 16px; } .text-center { text-align: center; } .text-right { text-align: right; } .border-t { border-top: 1px solid #000; } .border-b { border-bottom: 1px solid #000; } .py-2 { padding: 4px 0; } .mb-4 { margin-bottom: 8px; } .mb-2 { margin-bottom: 4px; } .mt-4 { margin-top: 8px; } .mt-2 { margin-top: 4px; } .space-y-1 > * + * { margin-top: 2px; } .flex { display: flex; } .justify-between { justify-content: space-between; } .text-sm { font-size: 11px; } .text-xs { font-size: 10px; } .font-bold { font-weight: bold; }</style>",
+          "<style>body { font-family: monospace; font-size: 12px; margin: 0; padding: 16px; min-height: auto; } .text-center { text-align: center; } .text-right { text-align: right; } .border-t { border-top: 1px solid #000; } .border-b { border-bottom: 1px solid #000; } .py-2 { padding: 4px 0; } .mb-4 { margin-bottom: 8px; } .mb-2 { margin-bottom: 4px; } .mt-4 { margin-top: 8px; } .mt-2 { margin-top: 4px; } .space-y-1 > * + * { margin-top: 2px; } .flex { display: flex; } .justify-between { justify-content: space-between; } .text-sm { font-size: 11px; } .text-xs { font-size: 10px; } .font-bold { font-weight: bold; } @media print { body { min-height: auto !important; height: auto !important; } } @page { margin: 10mm; size: auto; }</style>",
         );
         printWindow.document.write("</head><body>");
         printWindow.document.write(printContent.innerHTML);
         printWindow.document.write("</body></html>");
         printWindow.document.close();
+        
+        // Wait for content to load then adjust window size
+        printWindow.onload = () => {
+          const actualContentHeight = printWindow.document.body.scrollHeight;
+          const newHeight = Math.min(Math.max(actualContentHeight + 100, 300), 800);
+          console.log("Actual content height:", actualContentHeight, "Resizing to:", newHeight);
+          printWindow.resizeTo(windowWidth, newHeight);
+        };
         
         // Trigger print dialog
         printWindow.print();
