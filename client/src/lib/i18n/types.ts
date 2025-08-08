@@ -567,6 +567,7 @@ export interface SettingsTranslations {
   templateNumberLabel: string;
   templateCodeLabel: string;
   templateSymbolLabel: string;
+  symbolLabel: string;
   templateDefault: string;
   defaultConnection: string;
   setAsDefaultConnection: string;
@@ -702,7 +703,7 @@ export interface CustomersTranslations {
   processing: string;
   pointsPaymentTitle: string;
   pointsPaymentDesc: string;
-  paymentCustomerSelection: string;
+  customerSelection: string;
   availablePoints: string;
   pointsToUse: string;
   pointsToUsePlaceholder: string;

@@ -199,6 +199,7 @@ export default function Settings() {
     categoryId: "",
     description: "",
     isActive: "true",
+    trackInventory: true,
   });
 
   // Fetch store settings
@@ -522,6 +523,7 @@ export default function Settings() {
       categoryId: "",
       description: "",
       isActive: "true",
+      trackInventory: true,
     });
     setEditingProduct(null);
   };
@@ -710,6 +712,7 @@ export default function Settings() {
         stock: parseInt(productForm.stock) || 0,
         categoryId: parseInt(productForm.categoryId),
         isActive: productForm.isActive === "true",
+        trackInventory: productForm.trackInventory,
       };
 
       const response = await apiRequest("POST", "/api/products", productData);
@@ -745,6 +748,7 @@ export default function Settings() {
         stock: parseInt(productForm.stock) || 0,
         categoryId: parseInt(productForm.categoryId),
         isActive: productForm.isActive === "true",
+        trackInventory: productForm.trackInventory,
       };
 
       const response = await apiRequest(
@@ -819,6 +823,7 @@ export default function Settings() {
       categoryId: product.categoryId.toString(),
       description: product.description || "",
       isActive: product.isActive ? "true" : "false",
+      trackInventory: product.trackInventory !== undefined ? product.trackInventory : true,
     });
     setEditingProduct(product);
     setShowProductForm(true);
@@ -1620,37 +1625,37 @@ export default function Settings() {
                                 <thead>
                                   <tr className="bg-gray-50 border-b">
                                     <th className="w-[60px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">Ký hiệu</div>
+                                      <div className="leading-tight">{t("settings.symbolLabel")}</div>
                                     </th>
                                     <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">Mã số thuế</div>
+                                      <div className="leading-tight">{t("settings.taxIdLabel")}</div>
                                     </th>
                                     <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">ID đăng nhập</div>
+                                      <div className="leading-tight">{t("settings.loginIdLabel")}</div>
                                     </th>
                                     <th className="w-[80px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">Mật khẩu</div>
+                                      <div className="leading-tight">{t("settings.passwordLabel")}</div>
                                     </th>
                                     <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">Phần mềm HĐ</div>
+                                      <div className="leading-tight">{t("settings.softwareLabel")}</div>
                                     </th>
                                     <th className="w-[180px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">Đường dẫn đăng nhập</div>
+                                      <div className="leading-tight">{t("settings.loginUrlLabel")}</div>
                                     </th>
                                     <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">Phương thức ký</div>
+                                      <div className="leading-tight">{t("settings.signMethodLabel")}</div>
                                     </th>
                                     <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">Loại mã CQT</div>
+                                      <div className="leading-tight">{t("settings.cqtCodeLabel")}</div>
                                     </th>
                                     <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">Ghi chú</div>
+                                      <div className="leading-tight">{t("common.notes")}</div>
                                     </th>
                                     <th className="w-[80px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">Mặc định</div>
+                                      <div className="leading-tight">{t("settings.defaultConnection")}</div>
                                     </th>
                                     <th className="w-[100px] px-3 py-3 text-center font-medium text-sm text-gray-600">
-                                      <div className="leading-tight">Hành động</div>
+                                      <div className="leading-tight">{t("common.actions")}</div>
                                     </th>
                                   </tr>
                                 </thead>
