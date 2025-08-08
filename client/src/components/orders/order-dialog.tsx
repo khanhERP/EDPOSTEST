@@ -358,7 +358,7 @@ export function OrderDialog({
             <ShoppingCart className="w-5 h-5" />
             {mode === "edit"
               ? `${t("orders.editOrderTitle")} ${table.tableNumber}`
-              : `${t("tables.table")} ${table.tableNumber}`}
+              : `Bàn ${table.tableNumber}`}
           </DialogTitle>
           <DialogDescription>
             {mode === "edit"
