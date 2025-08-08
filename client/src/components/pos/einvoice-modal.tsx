@@ -254,43 +254,6 @@ export function EInvoiceModal({
   };
 
   const handlePublishLater = async () => {
-    // Validate required fields - same validation as handleConfirm
-    if (
-      !formData.invoiceProvider ||
-      !formData.customerName
-    ) {
-      alert(
-        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
-      );
-      return;
-    }
-
-    if (!formData.selectedTemplateId) {
-      alert("Vui lòng chọn mẫu số hóa đơn");
-      return;
-    }
-
-    // Validate cart items with detailed logging
-    console.log("🔍 VALIDATING CART ITEMS FOR E-INVOICE (PUBLISH LATER)");
-    console.log("Raw cartItems:", JSON.stringify(cartItems, null, 2));
-
-    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-      console.error("❌ No valid cart items found:", {
-        cartItems,
-        isArray: Array.isArray(cartItems),
-        length: cartItems?.length,
-        total: total,
-      });
-      alert(
-        "Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử.\n\nDữ liệu nhận được:\n- Số sản phẩm: " +
-          (cartItems?.length || 0) +
-          "\n- Tổng tiền: " +
-          total.toLocaleString("vi-VN") +
-          " ₫\n\nVui lòng thử lại từ màn hình bán hàng.",
-      );
-      return;
-    }
-
     try {
       console.log("🟡 PHÁT HÀNH SAU - Lưu thông tin hóa đơn không phát hành");
 
