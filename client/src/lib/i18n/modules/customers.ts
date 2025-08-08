@@ -133,6 +133,7 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     noPointHistory: "포인트 내역이 없습니다",
     pointsUpdateFailed: "포인트 업데이트 실패",
     pointsUpdateError: "포인트 업데이트 중 오류가 발생했습니다",
+    noRegisteredCustomers: "등록된 고객이 없습니다",
   },
   en: {
     title: "Customer Management",
@@ -266,6 +267,7 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     noPointHistory: "No point history",
     pointsUpdateFailed: "Points Update Failed",
     pointsUpdateError: "An error occurred while updating points",
+    noRegisteredCustomers: "No registered customers",
   },
   vi: {
     title: "Quản lý khách hàng",
