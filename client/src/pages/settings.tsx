@@ -3113,7 +3113,7 @@ export default function Settings() {
             <DialogDescription>
               {editingProduct
                 ? t("settings.updateProductInfo")
-                : "Nhập thông tin sản phẩm mới"}
+                : t("settings.enterProductInfo")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
