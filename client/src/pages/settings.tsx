@@ -3162,7 +3162,7 @@ export default function Settings() {
                   }
                 />
                 <Label htmlFor="trackInventory" className="text-sm">
-                  Kích hoạt theo dõi tồn kho cho sản phẩm này
+                  {t("settings.enableInventoryTracking")}
                 </Label>
               </div>
             </div>
