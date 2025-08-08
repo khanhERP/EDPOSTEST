@@ -2549,7 +2549,7 @@ export default function Settings() {
                               </th>
                               <th className="w-[140px] px-4 py-3 text-center font-medium text-sm text-gray-600">
                                 <div className="leading-tight break-words">
-                                  Trạng thái sử dụng
+                                  {t("settings.usageStatus")}
                                 </div>
                               </th>
                               <th className="w-[120px] px-4 py-3 text-center font-medium text-sm text-gray-600">

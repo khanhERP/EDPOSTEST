@@ -160,6 +160,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     productDescriptionPlaceholder: '상품 설명을 입력하세요 (선택사항)',
     productManagementDesc: '상품 정보와 가격을 관리합니다',
     stockStatus: '재고 상태',
+    usageStatus: '사용 상태',
   },
   en: {
     title: 'Settings',
@@ -320,6 +321,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     productDescriptionPlaceholder: 'Enter product description (optional)',
     productManagementDesc: 'Manage product information and pricing',
     stockStatus: 'Stock Status',
+    usageStatus: 'Usage Status',
   },
   vi: {
     title: 'Cài đặt',
@@ -480,5 +482,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     productDescriptionPlaceholder: 'Nhập mô tả sản phẩm (tùy chọn)',
     productManagementDesc: 'Quản lý thông tin sản phẩm và giá cả',
     stockStatus: 'Trạng thái kho',
+    usageStatus: 'Trạng thái sử dụng',
   },
 };
