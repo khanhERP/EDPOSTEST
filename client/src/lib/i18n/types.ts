@@ -529,7 +529,10 @@ export interface SettingsTranslations {
   notesLabel: string;
   selectSoftwarePlaceholder: string;
   signMethodServer: string;
+  signMethodUsbToken: string;
+  signMethodHsm: string;
   cqtCodeLevel1: string;
+  cqtCodeLevel2: string;
   addressPlaceholder: string;
   phonePlaceholder: string;
   emailPlaceholder: string;

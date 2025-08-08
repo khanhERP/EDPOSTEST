@@ -3748,8 +3748,8 @@ export default function Settings() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Ký server">{t("settings.signMethodServer")}</SelectItem>
-                  <SelectItem value="Ký USB Token">Ký USB Token</SelectItem>
-                  <SelectItem value="Ký HSM">Ký HSM</SelectItem>
+                  <SelectItem value="Ký USB Token">{t("settings.signMethodUsbToken")}</SelectItem>
+                  <SelectItem value="Ký HSM">{t("settings.signMethodHsm")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -3768,7 +3768,7 @@ export default function Settings() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Cấp nhật">{t("settings.cqtCodeLevel1")}</SelectItem>
-                  <SelectItem value="Cấp hai">Cấp hai</SelectItem>
+                  <SelectItem value="Cấp hai">{t("settings.cqtCodeLevel2")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
