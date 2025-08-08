@@ -2449,7 +2449,7 @@ export default function Settings() {
                       {t("settings.productTitle")}
                     </CardTitle>
                     <CardDescription>
-                      Quản lý thông tin sản phẩm và giá cả
+                      {t("settings.productManagementDesc")}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>

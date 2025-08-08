@@ -158,6 +158,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     total: '총',
     productsShowing: '상품이 표시됩니다',
     productDescriptionPlaceholder: '상품 설명을 입력하세요 (선택사항)',
+    productManagementDesc: '상품 정보와 가격을 관리합니다',
   },
   en: {
     title: 'Settings',
@@ -316,6 +317,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     total: 'Total',
     productsShowing: 'products showing',
     productDescriptionPlaceholder: 'Enter product description (optional)',
+    productManagementDesc: 'Manage product information and pricing',
   },
   vi: {
     title: 'Cài đặt',
@@ -474,5 +476,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     total: 'Tổng cộng',
     productsShowing: 'sản phẩm đang hiển thị',
     productDescriptionPlaceholder: 'Nhập mô tả sản phẩm (tùy chọn)',
+    productManagementDesc: 'Quản lý thông tin sản phẩm và giá cả',
   },
 };
