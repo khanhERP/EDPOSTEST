@@ -2641,8 +2641,8 @@ export default function Settings() {
                                     >
                                       {product.isActive === true ||
                                       product.isActive === 1
-                                        ? "Có"
-                                        : "Không"}
+                                        ? t("settings.yes")
+                                        : t("common.no")}
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3">

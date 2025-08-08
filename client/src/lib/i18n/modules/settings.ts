@@ -165,6 +165,8 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     enterProductInfo: '새 상품 정보 입력',
     trackInventory: '재고 추적',
     enableInventoryTracking: '이 제품에 대한 재고 추적 활성화',
+    usageStatus: '사용 상태',
+    yes: '예',
   },
   en: {
     title: 'Settings',
@@ -330,6 +332,8 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     enterProductInfo: 'Enter new product information',
     trackInventory: 'Track Inventory',
     enableInventoryTracking: 'Enable inventory tracking for this product',
+    usageStatus: 'Usage Status',
+    yes: 'Yes',
   },
   vi: {
     title: 'Cài đặt',
@@ -495,5 +499,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     enterProductInfo: 'Nhập thông tin sản phẩm mới',
     trackInventory: 'Theo dõi tồn kho',
     enableInventoryTracking: 'Kích hoạt theo dõi tồn kho cho sản phẩm này',
+    usageStatus: 'Trạng thái sử dụng',
+    yes: 'Có',
   },
 };
