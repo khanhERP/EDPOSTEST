@@ -556,9 +556,12 @@ export function EInvoiceModal({
           `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}\nNgày phát hành: ${result.data?.invDate ? new Date(result.data.invDate).toLocaleString('vi-VN') : "N/A"}`,
         );
 
+        // Đóng modal ngay lập tức trước khi xử lý logic
+        onClose();
+
         // Xử lý logic khác nhau theo nguồn gọi
         if (source === 'pos') {
-          // Logic cho POS: chỉ xác nhận thanh toán và đóng modal
+          // Logic cho POS: chỉ xác nhận thanh toán
           console.log('🏪 POS E-Invoice: Processing payment completion');
           onConfirm({
             ...formData,
@@ -568,13 +571,12 @@ export function EInvoiceModal({
             paymentMethod: 'einvoice',
             source: 'pos'
           });
-          onClose();
         } else if (source === 'table' && orderId) {
           // Logic cho Table: Tự hoàn tất thanh toán luôn
           console.log('🍽️ Table E-Invoice: Completing payment directly for order:', orderId);
           console.log('🍽️ Invoice data received:', result.data);
 
-          // Gọi onConfirm trước để parent component biết về việc phát hành thành công
+          // Gọi onConfirm để parent component biết về việc phát hành thành công
           onConfirm({
             ...formData,
             invoiceData: result.data,
@@ -585,17 +587,12 @@ export function EInvoiceModal({
             orderId: orderId
           });
 
-          // Đóng modal ngay lập tức
-          onClose();
-
-          // Delay một chút để đảm bảo modal đã đóng rồi mới gọi mutation
-          setTimeout(() => {
-            console.log('🍽️ Executing payment completion for order:', orderId);
-            completePaymentMutation.mutate({
-              orderId: orderId,
-              paymentMethod: 'einvoice'
-            });
-          }, 100);
+          // Gọi mutation để hoàn tất thanh toán ngay lập tức
+          console.log('🍽️ Executing payment completion for order:', orderId);
+          completePaymentMutation.mutate({
+            orderId: orderId,
+            paymentMethod: 'einvoice'
+          });
         } else {
           // Fallback: trả về data cho parent component xử lý
           console.log('🔄 Fallback: Returning data to parent');
@@ -607,7 +604,6 @@ export function EInvoiceModal({
             paymentMethod: 'einvoice',
             source: source || 'pos'
           });
-          onClose();
         }
       } else {
         throw new Error(
