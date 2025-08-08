@@ -1189,64 +1189,36 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       />
 
       {/* E-Invoice Modal */}
-      <EInvoiceModal
-        isOpen={showEInvoiceModal}
-        onClose={() => {
-          setShowEInvoiceModal(false);
-          setOrderForPayment(null);
-        }}
-        onConfirm={(eInvoiceData) => {
-          console.log('🍽️ Table E-invoice confirmation received:', eInvoiceData);
-          console.log('🍽️ E-invoice data details:', {
-            orderId: eInvoiceData?.orderId,
-            source: eInvoiceData?.source,
-            paymentMethod: eInvoiceData?.paymentMethod,
-            invoiceNo: eInvoiceData?.invoiceData?.invoiceNo
-          });
-          
-          // Clear orderForPayment để cleanup state
-          setOrderForPayment(null);
-          
-          // Close all dialogs immediately
-          setOrderDetailsOpen(false);
-          setShowPaymentMethodModal(false);
-          setShowEInvoiceModal(false);
-          
-          console.log('✅ Table E-invoice process completed, dialogs closed, state cleared');
-        }}
-        total={(() => {
-          if (!orderForPayment || !orderItems || !Array.isArray(orderItems)) return 0;
-
-          let itemsTotal = 0;
-          let itemsTax = 0;
-
-          if (Array.isArray(products)) {
-            orderItems.forEach((item: any) => {
-              const itemSubtotal = Number(item.total || 0);
-              itemsTotal += itemSubtotal;
-
-              const product = products.find((p: any) => p.id === item.productId);
-              const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
-              itemsTax += (itemSubtotal * taxRate) / 100;
-            });
-          }
-
-          return itemsTotal + itemsTax;
-        })()}
-        cartItems={orderItems?.map((item: any) => ({
-          id: item.id,
-          name: item.productName || getProductName(item.productId),
-          price: parseFloat(item.unitPrice || '0'),
-          quantity: item.quantity,
-          sku: item.productSku || `SP${item.productId}`,
-          taxRate: (() => {
-            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-            return product?.taxRate ? parseFloat(product.taxRate) : 10;
-          })()
-        })) || []}
-        source="table"
-        orderId={orderForPayment?.id} // Truyền orderId để e-invoice modal tự xử lý
-      />
+      {showEInvoiceModal && selectedOrder && (
+        <EInvoiceModal
+          isOpen={showEInvoiceModal}
+          onClose={() => setShowEInvoiceModal(false)}
+          onConfirm={handleEInvoiceConfirm}
+          total={(() => {
+            const orderItems = selectedOrder.orderItems || [];
+            const subtotal = orderItems.reduce((sum, item) => {
+              const price = typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice;
+              const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+              return sum + (price * quantity);
+            }, 0);
+            const tax = subtotal * 0.0825;
+            return Math.round(subtotal + tax);
+          })()}
+          cartItems={(() => {
+            const orderItems = selectedOrder.orderItems || [];
+            return orderItems.map(item => ({
+              id: item.productId,
+              name: item.productName,
+              price: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
+              quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+              sku: item.productSku || `FOOD${String(item.productId).padStart(5, '0')}`,
+              taxRate: 8.25
+            }));
+          })()}
+          source="table"
+          orderId={selectedOrder.id}
+        />
+      )}
 
       {/* Receipt Modal */}
       <ReceiptModal
