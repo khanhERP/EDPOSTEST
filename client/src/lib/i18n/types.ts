@@ -566,6 +566,7 @@ export interface SettingsTranslations {
   defaultConnection: string;
   setAsDefaultConnection: string;
   operations: string;
+  cancel: string;
   totalCategories: string;
   totalProducts: string;
   lowStock: string;

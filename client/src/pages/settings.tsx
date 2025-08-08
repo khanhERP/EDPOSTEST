@@ -3811,7 +3811,7 @@ export default function Settings() {
                 resetEInvoiceForm();
               }}
             >
-              Hủy bỏ
+              {t("settings.cancel")}
             </Button>
             <Button
               onClick={
@@ -3819,7 +3819,7 @@ export default function Settings() {
               }
               className="bg-green-600 hover:bg-green-700"
             >
-              {editingEInvoice ? "Cập nhật" : "Thêm kết nối"}
+              {editingEInvoice ? t("common.update") : t("settings.addConnection")}
             </Button>
           </DialogFooter>
         </DialogContent>

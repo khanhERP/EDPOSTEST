@@ -103,6 +103,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     setAsDefaultConnection: "기본 연결로 설정",
     templatesDesc: "전자세금계산서 양식을 관리합니다",
     operations: "운영",
+    cancel: "취소",
     // Product Management
     totalCategories: '총 카테고리',
     totalProducts: '총 상품',
@@ -247,6 +248,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     setAsDefaultConnection: "Set as default connection",
     templatesDesc: "Manage electronic invoice templates",
     operations: "Operations",
+    cancel: "Cancel",
     // Product Management
     totalCategories: 'Total Categories',
     totalProducts: 'Total Products',
@@ -391,6 +393,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     setAsDefaultConnection: "Đặt làm kết nối mặc định",
     templatesDesc: "Quản lý các mẫu số hóa đơn điện tử",
     operations: "Hoạt động",
+    cancel: "Hủy bỏ",
     // Product Management
     totalCategories: 'Tổng số danh mục',
     totalProducts: 'Tổng số sản phẩm',
