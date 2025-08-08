@@ -3787,7 +3787,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="isDefault" className="text-right">
-                Mặc định
+                {t("settings.defaultConnection")}
               </Label>
               <div className="col-span-3 flex items-center space-x-2">
                 <Switch
@@ -3798,7 +3798,7 @@ export default function Settings() {
                   }
                 />
                 <Label htmlFor="isDefault" className="text-sm">
-                  Đặt làm kết nối mặc định
+                  {t("settings.setAsDefaultConnection")}
                 </Label>
               </div>
             </div>

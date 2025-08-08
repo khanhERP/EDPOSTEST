@@ -563,6 +563,8 @@ export interface SettingsTranslations {
   templateCodeLabel: string;
   templateSymbolLabel: string;
   templateDefault: string;
+  defaultConnection: string;
+  setAsDefaultConnection: string;
   operations: string;
   totalCategories: string;
   totalProducts: string;

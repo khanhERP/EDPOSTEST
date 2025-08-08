@@ -99,6 +99,8 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     templateCodeLabel: "템플릿 코드",
     templateSymbolLabel: "기호",
     templateDefault: "기본값",
+    defaultConnection: "기본값",
+    setAsDefaultConnection: "기본 연결로 설정",
     templatesDesc: "전자세금계산서 양식을 관리합니다",
     operations: "운영",
     // Product Management
@@ -241,6 +243,8 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     templateCodeLabel: "Template Code",
     templateSymbolLabel: "Symbol",
     templateDefault: "Default",
+    defaultConnection: "Default",
+    setAsDefaultConnection: "Set as default connection",
     templatesDesc: "Manage electronic invoice templates",
     operations: "Operations",
     // Product Management
@@ -383,6 +387,8 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     templateCodeLabel: "Mã mẫu",
     templateSymbolLabel: "Ký hiệu",
     templateDefault: "Mặc định",
+    defaultConnection: "Mặc định",
+    setAsDefaultConnection: "Đặt làm kết nối mặc định",
     templatesDesc: "Quản lý các mẫu số hóa đơn điện tử",
     operations: "Hoạt động",
     // Product Management
