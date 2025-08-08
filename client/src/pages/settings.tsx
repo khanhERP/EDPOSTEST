@@ -3700,7 +3700,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="loginUrl" className="text-right mt-2">
-                Đường dẫn <span className="text-red-500">*</span>
+                {t("settings.loginUrlLabel")} <span className="text-red-500">*</span>
               </Label>
               <div className="col-span-3 space-y-1">
                 <Input

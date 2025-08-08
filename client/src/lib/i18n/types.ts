@@ -522,6 +522,7 @@ export interface SettingsTranslations {
   pinCodeLabel: string;
   loginIdLabel: string;
   passwordLabel: string;
+  loginUrlLabel: string;
   addressPlaceholder: string;
   phonePlaceholder: string;
   emailPlaceholder: string;
