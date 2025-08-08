@@ -1189,7 +1189,7 @@ export function OrderManagement() {
                   >
                     <span className="text-2xl mr-3">💵</span>
                     <div className="text-left">
-                      <p className="font-medium">{t('orders.paymentMethods.cash')}</p>
+                      <p className="font-medium">{t('common.cash')}</p>
                       <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
                     </div>
                   </Button>
