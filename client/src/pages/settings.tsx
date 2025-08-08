@@ -3660,7 +3660,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="softwareName" className="text-right mt-2">
-                Phần mềm HĐ <span className="text-red-500">*</span>
+                {t("settings.softwareLabel")} <span className="text-red-500">*</span>
               </Label>
               <div className="col-span-3 space-y-1">
                 <Select

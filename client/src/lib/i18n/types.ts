@@ -524,6 +524,7 @@ export interface SettingsTranslations {
   passwordLabel: string;
   loginUrlLabel: string;
   signMethodLabel: string;
+  softwareLabel: string;
   addressPlaceholder: string;
   phonePlaceholder: string;
   emailPlaceholder: string;
