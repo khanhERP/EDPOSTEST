@@ -3750,7 +3750,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="cqtCode" className="text-right">
-                Loại mã CQT
+                {t("settings.cqtCodeLabel")}
               </Label>
               <Select
                 value={eInvoiceForm.cqtCode}
