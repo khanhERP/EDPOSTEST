@@ -520,6 +520,7 @@ export interface SettingsTranslations {
   taxIdPlaceholder: string;
   taxIdRequired: string;
   pinCodeLabel: string;
+  pinCodePlaceholder: string;
   loginIdLabel: string;
   passwordLabel: string;
   loginUrlLabel: string;

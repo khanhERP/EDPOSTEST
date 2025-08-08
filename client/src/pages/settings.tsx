@@ -1477,7 +1477,7 @@ export default function Settings() {
                               const value = e.target.value.replace(/\D/g, ''); // Chỉ cho phép số
                               handleStoreSettingChange("pinCode", value);
                             }}
-                            placeholder="Nhập mã PIN 4-6 chữ số"
+                            placeholder={t("settings.pinCodePlaceholder")}
                             maxLength={6}
                             pattern="[0-9]*"
                           />
