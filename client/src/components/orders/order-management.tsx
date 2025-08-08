@@ -1015,7 +1015,7 @@ export function OrderManagement() {
             {/* Order Summary */}
             {selectedOrder && (
               <div className="p-4 bg-blue-50 rounded-lg">
-                <p className="text-sm text-gray-600">Đơn hàng: {selectedOrder.orderNumber}</p>
+                <p className="text-sm text-gray-600">{t('orders.orderNumber')}: {selectedOrder.orderNumber}</p>
                 <p className="text-2xl font-bold text-blue-600">
                   {Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
                 </p>
