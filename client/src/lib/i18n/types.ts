@@ -527,6 +527,9 @@ export interface SettingsTranslations {
   softwareLabel: string;
   cqtCodeLabel: string;
   notesLabel: string;
+  selectSoftwarePlaceholder: string;
+  signMethodServer: string;
+  cqtCodeLevel1: string;
   addressPlaceholder: string;
   phonePlaceholder: string;
   emailPlaceholder: string;

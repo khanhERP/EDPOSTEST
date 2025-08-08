@@ -3686,7 +3686,7 @@ export default function Settings() {
                   <SelectTrigger
                     className={`${eInvoiceFormErrors.softwareName ? "border-red-500" : ""}`}
                   >
-                    <SelectValue placeholder="Chọn phần mềm HĐĐT" />
+                    <SelectValue placeholder={t("settings.selectSoftwarePlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {EINVOICE_PROVIDERS.map((provider) => (
@@ -3747,7 +3747,7 @@ export default function Settings() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Ký server">Ký server</SelectItem>
+                  <SelectItem value="Ký server">{t("settings.signMethodServer")}</SelectItem>
                   <SelectItem value="Ký USB Token">Ký USB Token</SelectItem>
                   <SelectItem value="Ký HSM">Ký HSM</SelectItem>
                 </SelectContent>
@@ -3767,7 +3767,7 @@ export default function Settings() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Cấp nhật">Cấp nhật</SelectItem>
+                  <SelectItem value="Cấp nhật">{t("settings.cqtCodeLevel1")}</SelectItem>
                   <SelectItem value="Cấp hai">Cấp hai</SelectItem>
                 </SelectContent>
               </Select>
