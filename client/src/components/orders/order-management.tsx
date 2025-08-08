@@ -107,10 +107,10 @@ export function OrderManagement() {
   });
 
   const pointsPaymentMutation = useMutation({
-    mutationFn: async ({ customerId, points, orderId, paymentMethod, remainingAmount }: { 
-      customerId: number; 
-      points: number; 
-      orderId: number; 
+    mutationFn: async ({ customerId, points, orderId, paymentMethod, remainingAmount }: {
+      customerId: number;
+      points: number;
+      orderId: number;
       paymentMethod?: string;
       remainingAmount?: number;
     }) => {
@@ -121,8 +121,8 @@ export function OrderManagement() {
       });
 
       // Then mark order as paid
-      await apiRequest('PUT', `/api/orders/${orderId}/status`, { 
-        status: 'paid', 
+      await apiRequest('PUT', `/api/orders/${orderId}/status`, {
+        status: 'paid',
         paymentMethod: paymentMethod || 'points',
         customerId,
         remainingAmount: remainingAmount || 0
@@ -152,10 +152,10 @@ export function OrderManagement() {
   });
 
   const mixedPaymentMutation = useMutation({
-    mutationFn: async ({ customerId, points, orderId, paymentMethod }: { 
-      customerId: number; 
-      points: number; 
-      orderId: number; 
+    mutationFn: async ({ customerId, points, orderId, paymentMethod }: {
+      customerId: number;
+      points: number;
+      orderId: number;
       paymentMethod: string;
     }) => {
       // First redeem all available points
@@ -165,10 +165,10 @@ export function OrderManagement() {
       });
 
       // Then mark order as paid with mixed payment
-      await apiRequest('PUT', `/api/orders/${orderId}/status`, { 
-        status: 'paid', 
+      await apiRequest('PUT', `/api/orders/${orderId}/status`, {
+        status: 'paid',
         paymentMethod: `points + ${paymentMethod}`,
-        customerId 
+        customerId
       });
     },
     onSuccess: () => {
@@ -256,9 +256,9 @@ export function OrderManagement() {
 
   const handlePaymentMethodSelect = (paymentMethod: string) => {
     if (orderForPayment) {
-      completePaymentMutation.mutate({ 
-        orderId: orderForPayment.id, 
-        paymentMethod 
+      completePaymentMutation.mutate({
+        orderId: orderForPayment.id,
+        paymentMethod
       });
     }
   };
@@ -280,8 +280,8 @@ export function OrderManagement() {
       { id: 9, nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
     ];
 
-    const paymentMethods = savedPaymentMethods 
-      ? JSON.parse(savedPaymentMethods) 
+    const paymentMethods = savedPaymentMethods
+      ? JSON.parse(savedPaymentMethods)
       : defaultPaymentMethods;
 
     // Filter to only return enabled payment methods
@@ -414,9 +414,9 @@ export function OrderManagement() {
         });
       } else {
         // Regular payment without points
-        completePaymentMutation.mutate({ 
-          orderId: selectedOrder.id, 
-          paymentMethod: selectedPaymentMethod.key 
+        completePaymentMutation.mutate({
+          orderId: selectedOrder.id,
+          paymentMethod: selectedPaymentMethod.key
         });
       }
       setShowQRPayment(false);
@@ -485,7 +485,7 @@ export function OrderManagement() {
     );
   }
 
-  const allOrders = orders ? (orders as Order[]).sort((a: Order, b: Order) => 
+  const allOrders = orders ? (orders as Order[]).sort((a: Order, b: Order) =>
     new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
   ) : [];
 
@@ -948,7 +948,7 @@ export function OrderManagement() {
                 <p className="text-sm text-gray-600">{t('orders.orderNumber')}: {selectedOrder.orderNumber}</p>
                 <p className="text-sm text-gray-600">Số tiền cần thanh toán:</p>
                 <p className="text-3xl font-bold text-green-600">
-                  {mixedPaymentData ? 
+                  {mixedPaymentData ?
                     `${mixedPaymentData.remainingAmount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫` :
                     `${Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫`
                   }
@@ -965,9 +965,9 @@ export function OrderManagement() {
             {qrCodeUrl && (
               <div className="flex justify-center">
                 <div className="bg-white p-4 rounded-lg border-2 border-gray-200 shadow-lg">
-                  <img 
-                    src={qrCodeUrl} 
-                    alt="QR Code for Payment" 
+                  <img
+                    src={qrCodeUrl}
+                    alt="QR Code for Payment"
                     className="w-64 h-64"
                   />
                 </div>
@@ -980,14 +980,14 @@ export function OrderManagement() {
 
             {/* Action Buttons */}
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
-                onClick={handleQRPaymentClose} 
+              <Button
+                variant="outline"
+                onClick={handleQRPaymentClose}
                 className="flex-1"
               >
                 Quay lại
               </Button>
-              <Button 
+              <Button
                 onClick={handleQRPaymentConfirm}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
               >
@@ -1022,7 +1022,7 @@ export function OrderManagement() {
                 {selectedCustomer && (
                   <div className="mt-2 pt-2 border-t border-blue-200">
                     <p className="text-sm text-gray-600">
-                      Điểm có sẵn: {(selectedCustomer.points || 0).toLocaleString()}P 
+                      Điểm có sẵn: {(selectedCustomer.points || 0).toLocaleString()}P
                       <span className="ml-2 text-green-600">
                         (≈ {((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫)
                       </span>
@@ -1101,7 +1101,7 @@ export function OrderManagement() {
                     <div className="text-orange-600">
                       <p className="text-sm">⚠ Không đủ điểm, cần thanh toán hỗn hợp</p>
                       <p className="text-sm">
-                        Sử dụng tất cả: {(selectedCustomer.points || 0).toLocaleString()}P 
+                        Sử dụng tất cả: {(selectedCustomer.points || 0).toLocaleString()}P
                         (≈ {((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫)
                       </p>
                       <p className="text-sm">
@@ -1118,17 +1118,17 @@ export function OrderManagement() {
             <Button variant="outline" onClick={() => setPointsPaymentOpen(false)}>
               Hủy
             </Button>
-            <Button 
+            <Button
               onClick={handlePointsPayment}
               disabled={
-                !selectedCustomer || 
+                !selectedCustomer ||
                 pointsPaymentMutation.isPending ||
                 (selectedCustomer.points || 0) === 0
               }
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {pointsPaymentMutation.isPending ? 'Đang xử lý...' : 
-               ((selectedCustomer?.points || 0) * 1000) >= Number(selectedOrder?.total || 0) ? 
+              {pointsPaymentMutation.isPending ? 'Đang xử lý...' :
+               ((selectedCustomer?.points || 0) * 1000) >= Number(selectedOrder?.total || 0) ?
                'Thanh toán bằng điểm' : 'Thanh toán hỗn hợp'}
             </Button>
           </div>
@@ -1161,7 +1161,7 @@ export function OrderManagement() {
                   <div className="flex justify-between text-blue-600">
                     <span>Thanh toán bằng điểm:</span>
                     <span className="font-medium">
-                      {mixedPaymentData.pointsToUse.toLocaleString()}P 
+                      {mixedPaymentData.pointsToUse.toLocaleString()}P
                       <span className="ml-1">(-{(mixedPaymentData.pointsToUse * 1000).toLocaleString()} ₫)</span>
                     </span>
                   </div>
@@ -1248,9 +1248,9 @@ export function OrderManagement() {
 
                           // Set QR code data and show QR payment modal
                           setQrCodeUrl(qrUrl);
-                          setSelectedPaymentMethod({ 
-                            key: 'transfer', 
-                            method: { name: 'Chuyển khoản', icon: '💳' } 
+                          setSelectedPaymentMethod({
+                            key: 'transfer',
+                            method: { name: 'Chuyển khoản', icon: '💳' }
                           });
                           setShowQRPayment(true);
                           setMixedPaymentOpen(false);
@@ -1297,9 +1297,9 @@ export function OrderManagement() {
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button variant="outline" onClick={() => setMixedPaymentOpen(false)}>
-                  {t('orders.mixedPaymentCancel')}
+                  {t('common.cancel')}
                 </Button>
-                <Button 
+                <Button
                   onClick={() => setMixedPaymentOpen(true)}
                   className="bg-orange-600 hover:bg-orange-700"
                 >
