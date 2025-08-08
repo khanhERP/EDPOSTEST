@@ -3148,7 +3148,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="trackInventory" className="text-right">
-                Theo dõi tồn kho
+                {t("settings.trackInventory")}
               </Label>
               <div className="col-span-3 flex items-center space-x-2">
                 <Checkbox

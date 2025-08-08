@@ -163,6 +163,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     usageStatus: '사용 상태',
     updateProductInfo: '상품 정보 업데이트',
     enterProductInfo: '새 상품 정보 입력',
+    trackInventory: '재고 추적',
   },
   en: {
     title: 'Settings',
@@ -326,6 +327,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     usageStatus: 'Usage Status',
     updateProductInfo: 'Update product information',
     enterProductInfo: 'Enter new product information',
+    trackInventory: 'Track Inventory',
   },
   vi: {
     title: 'Cài đặt',
@@ -489,5 +491,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     usageStatus: 'Trạng thái sử dụng',
     updateProductInfo: 'Cập nhật thông tin sản phẩm',
     enterProductInfo: 'Nhập thông tin sản phẩm mới',
+    trackInventory: 'Theo dõi tồn kho',
   },
 };
