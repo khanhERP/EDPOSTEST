@@ -78,6 +78,12 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     statusPlaceholder: "상태를 선택하세요",
     unitPrice: "단가",
     taxRate: "세율",
+    productManagement: "상품 관리",
+    addNewProduct: "새 상품 추가",
+    bulkImport: "대량 가져오기",
+    export: "내보내기",
+    loading: "로딩 중...",
+    actions: "작업",
   },
   en: {
     title: "Table Management",
@@ -166,6 +172,12 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     imageUrlOptional: "Image URL (optional)",
     unitPrice: "Unit Price",
     taxRate: "Tax Rate",
+    productManagement: "Product Management",
+    addNewProduct: "Add New Product",
+    bulkImport: "Bulk Import",
+    export: "Export",
+    loading: "Loading...",
+    actions: "Actions",
   },
   vi: {
     title: "Quản lý bàn",
@@ -281,5 +293,6 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     skuRequired: "SKU là bắt buộc",
     unitPrice: "Đơn giá",
     taxRate: "Thuế suất",
+    productManagement: "Quản lý sản phẩm",
   },
 };
