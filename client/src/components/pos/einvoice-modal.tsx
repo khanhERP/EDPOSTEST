@@ -284,27 +284,32 @@ export function EInvoiceModal({
           publishLater: true, // Flag to indicate this is for later publishing
         });
       } else if (source === 'table' && orderId) {
-        // Logic cho Table: Gọi mutation để hoàn tất thanh toán trước
+        // Logic cho Table: Hoàn tất thanh toán và hiển thị receipt
         console.log('🍽️ Table E-Invoice Later: Completing payment directly for order:', orderId);
-        console.log('🍽️ Executing payment completion for order (later publishing):', orderId);
         
-        // Gọi mutation để hoàn tất thanh toán ngay lập tức
-        await completePaymentMutation.mutateAsync({
-          orderId: orderId,
-          paymentMethod: 'einvoice'
-        });
+        try {
+          // Gọi mutation để hoàn tất thanh toán ngay lập tức
+          console.log('🍽️ Executing payment completion for order (later publishing):', orderId);
+          await completePaymentMutation.mutateAsync({
+            orderId: orderId,
+            paymentMethod: 'einvoice'
+          });
 
-        // Sau khi hoàn tất thanh toán, gọi onConfirm để hiển thị receipt
-        console.log('🍽️ Payment completed, now calling onConfirm for receipt display');
-        onConfirm({
-          ...formData,
-          cartItems: cartItems,
-          total: total,
-          paymentMethod: 'einvoice',
-          source: 'table',
-          orderId: orderId,
-          publishLater: true, // Flag to indicate this is for later publishing
-        });
+          // Sau khi hoàn tất thanh toán thành công, gọi onConfirm để hiển thị receipt
+          console.log('🍽️ Payment completed successfully, now calling onConfirm for receipt display');
+          onConfirm({
+            ...formData,
+            cartItems: cartItems,
+            total: total,
+            paymentMethod: 'einvoice',
+            source: 'table',
+            orderId: orderId,
+            publishLater: true, // Flag to indicate this is for later publishing
+          });
+        } catch (error) {
+          console.error('❌ Error completing payment for later publishing:', error);
+          alert('Có lỗi xảy ra khi hoàn tất thanh toán. Vui lòng thử lại.');
+        }
       } else {
         // Fallback: trả về data cho parent component xử lý
         console.log('🔄 Fallback: Returning data to parent (later publishing)');
