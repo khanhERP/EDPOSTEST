@@ -519,6 +519,7 @@ export interface SettingsTranslations {
   taxIdLabel: string;
   taxIdPlaceholder: string;
   pinCodeLabel: string;
+  loginIdLabel: string;
   addressPlaceholder: string;
   phonePlaceholder: string;
   emailPlaceholder: string;

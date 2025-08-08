@@ -3599,7 +3599,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="loginId" className="text-right mt-2">
-                ID đăng nhập <span className="text-red-500">*</span>
+                {t("settings.loginIdLabel")} <span className="text-red-500">*</span>
               </Label>
               <div className="col-span-3 space-y-1">
                 <Input
