@@ -56,7 +56,6 @@ export function PaymentMethodModal({
     const defaultPaymentMethods = [
       {
         id: 1,
-        name: t("common.cash"),
         nameKey: "cash",
         type: "cash",
         enabled: true,
@@ -64,7 +63,6 @@ export function PaymentMethodModal({
       },
       {
         id: 2,
-        name: t("common.creditCard"),
         nameKey: "creditCard",
         type: "card",
         enabled: false,
@@ -72,7 +70,6 @@ export function PaymentMethodModal({
       },
       {
         id: 3,
-        name: t("common.debitCard"),
         nameKey: "debitCard",
         type: "debit",
         enabled: false,
@@ -80,7 +77,6 @@ export function PaymentMethodModal({
       },
       {
         id: 4,
-        name: t("common.momo"),
         nameKey: "momo",
         type: "digital",
         enabled: false,
@@ -88,7 +84,6 @@ export function PaymentMethodModal({
       },
       {
         id: 5,
-        name: t("common.zalopay"),
         nameKey: "zalopay",
         type: "digital",
         enabled: false,
@@ -96,7 +91,6 @@ export function PaymentMethodModal({
       },
       {
         id: 6,
-        name: t("common.vnpay"),
         nameKey: "vnpay",
         type: "digital",
         enabled: false,
@@ -104,7 +98,6 @@ export function PaymentMethodModal({
       },
       {
         id: 7,
-        name: t("common.qrCode"),
         nameKey: "qrCode",
         type: "qr",
         enabled: true,
@@ -112,7 +105,6 @@ export function PaymentMethodModal({
       },
       {
         id: 8,
-        name: t("common.shopeepay"),
         nameKey: "shopeepay",
         type: "digital",
         enabled: false,
@@ -120,7 +112,6 @@ export function PaymentMethodModal({
       },
       {
         id: 9,
-        name: t("common.grabpay"),
         nameKey: "grabpay",
         type: "digital",
         enabled: false,
@@ -147,7 +138,6 @@ export function PaymentMethodModal({
       } else {
         paymentMethods.unshift({
           id: 1,
-          name: t("common.cash"),
           nameKey: "cash",
           type: "cash",
           enabled: true,
@@ -161,7 +151,7 @@ export function PaymentMethodModal({
       .filter((method) => method.enabled === true)
       .map((method) => ({
         id: method.nameKey,
-        name: method.name,
+        name: getPaymentMethodName(method.nameKey),
         icon: getIconComponent(method.type),
         description: getMethodDescription(method.nameKey),
       }));
@@ -183,6 +173,24 @@ export function PaymentMethodModal({
       default:
         return Wallet;
     }
+  };
+
+  const getPaymentMethodName = (nameKey: string) => {
+    const names = {
+      cash: t("common.cash"),
+      creditCard: t("common.creditCard"),
+      debitCard: t("common.debitCard"),
+      momo: t("common.momo"),
+      zalopay: t("common.zalopay"),
+      vnpay: t("common.vnpay"),
+      qrCode: t("common.qrCode"),
+      shopeepay: t("common.shopeepay"),
+      grabpay: t("common.grabpay"),
+    };
+    return (
+      names[nameKey as keyof typeof names] ||
+      t("common.paymentMethodGeneric")
+    );
   };
 
   const getMethodDescription = (nameKey: string) => {
