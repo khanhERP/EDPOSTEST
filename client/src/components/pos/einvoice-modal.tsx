@@ -97,7 +97,7 @@ export function EInvoiceModal({
       console.log('🎯 E-invoice modal completed payment successfully for order:', variables.orderId);
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-      
+
       toast({
         title: 'Thanh toán thành công',
         description: 'Hóa đơn điện tử đã được phát hành và đơn hàng đã được thanh toán',
@@ -112,7 +112,7 @@ export function EInvoiceModal({
         description: 'Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán',
         variant: 'destructive',
       });
-      
+
       console.log('❌ E-invoice modal: Payment failed for order:', variables.orderId);
     },
   });
@@ -253,15 +253,77 @@ export function EInvoiceModal({
     }
   };
 
+  const handlePublishLater = async () => {
+    // Validate required fields - same validation as handleConfirm
+    if (
+      !formData.invoiceProvider ||
+      !formData.customerName
+    ) {
+      alert(
+        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
+      );
+      return;
+    }
+
+    if (!formData.selectedTemplateId) {
+      alert("Vui lòng chọn mẫu số hóa đơn");
+      return;
+    }
+
+    // Validate cart items with detailed logging
+    console.log("🔍 VALIDATING CART ITEMS FOR E-INVOICE (PUBLISH LATER)");
+    console.log("Raw cartItems:", JSON.stringify(cartItems, null, 2));
+
+    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+      console.error("❌ No valid cart items found:", {
+        cartItems,
+        isArray: Array.isArray(cartItems),
+        length: cartItems?.length,
+        total: total,
+      });
+      alert(
+        "Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử.\n\nDữ liệu nhận được:\n- Số sản phẩm: " +
+          (cartItems?.length || 0) +
+          "\n- Tổng tiền: " +
+          total.toLocaleString("vi-VN") +
+          " ₫\n\nVui lòng thử lại từ màn hình bán hàng.",
+      );
+      return;
+    }
+
+    try {
+      console.log("🟡 PHÁT HÀNH SAU - Lưu thông tin hóa đơn không phát hành");
+
+      // Show success message without actually publishing
+      alert("Thông tin hóa đơn điện tử đã được lưu để phát hành sau!");
+
+      // Return data to parent component with publishLater flag
+      onConfirm({
+        ...formData,
+        cartItems: cartItems,
+        total: total,
+        paymentMethod: 'einvoice',
+        source: source || 'pos',
+        publishLater: true, // Flag to indicate this is for later publishing
+        orderId: orderId
+      });
+
+      onClose();
+    } catch (error) {
+      console.error("Error saving invoice for later:", error);
+      alert(`Có lỗi xảy ra khi lưu thông tin hóa đơn: ${error}`);
+    }
+  };
+
+
   const handleConfirm = async () => {
     // Validate required fields
     if (
       !formData.invoiceProvider ||
-      !formData.taxCode ||
       !formData.customerName
     ) {
       alert(
-        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT, Mã số thuế, và Tên đơn vị",
+        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
       );
       return;
     }
@@ -530,7 +592,7 @@ export function EInvoiceModal({
         alert(
           `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}\nNgày phát hành: ${result.data?.invDate ? new Date(result.data.invDate).toLocaleString('vi-VN') : "N/A"}`,
         );
-        
+
         // Xử lý logic khác nhau theo nguồn gọi
         if (source === 'pos') {
           // Logic cho POS: chỉ xác nhận thanh toán và đóng modal
@@ -548,7 +610,7 @@ export function EInvoiceModal({
           // Logic cho Table: Tự hoàn tất thanh toán luôn
           console.log('🍽️ Table E-Invoice: Completing payment directly for order:', orderId);
           console.log('🍽️ Invoice data received:', result.data);
-          
+
           // Gọi onConfirm trước để parent component biết về việc phát hành thành công
           onConfirm({
             ...formData,
@@ -559,10 +621,10 @@ export function EInvoiceModal({
             source: 'table',
             orderId: orderId
           });
-          
+
           // Đóng modal ngay lập tức
           onClose();
-          
+
           // Delay một chút để đảm bảo modal đã đóng rồi mới gọi mutation
           setTimeout(() => {
             console.log('🍽️ Executing payment completion for order:', orderId);
@@ -792,6 +854,14 @@ export function EInvoiceModal({
                   {t('einvoice.publish')}
                 </>
               )}
+            </Button>
+            <Button
+              onClick={handlePublishLater}
+              className="flex-1 bg-gray-500 hover:bg-gray-600 text-white"
+              disabled={isPublishing}
+            >
+              <span className="mr-2">⏳</span>
+              Phát hành sau
             </Button>
             <Button variant="outline" onClick={handleCancel} className="flex-1">
               <span className="mr-2">❌</span>
