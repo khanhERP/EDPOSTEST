@@ -521,6 +521,7 @@ export interface SettingsTranslations {
   taxIdRequired: string;
   pinCodeLabel: string;
   loginIdLabel: string;
+  passwordLabel: string;
   addressPlaceholder: string;
   phonePlaceholder: string;
   emailPlaceholder: string;

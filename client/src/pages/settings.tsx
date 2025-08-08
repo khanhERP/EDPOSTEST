@@ -3629,7 +3629,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="password" className="text-right mt-2">
-                Mật khẩu <span className="text-red-500">*</span>
+                {t("settings.passwordLabel")} <span className="text-red-500">*</span>
               </Label>
               <div className="col-span-3 space-y-1">
                 <Input
