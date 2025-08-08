@@ -3786,7 +3786,7 @@ export default function Settings() {
                   }))
                 }
                 className="col-span-3"
-                placeholder={t("common.additionalNotesPlaceholder")}
+                placeholder={t("common.notesPlaceholder")}
                 rows={3}
               />
             </div>
