@@ -352,8 +352,8 @@ export function OrderDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5" />
             {mode === "edit"
@@ -367,11 +367,11 @@ export function OrderDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0 overflow-hidden">
           {/* Menu Selection */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4 flex flex-col min-h-0">
             {/* Customer Info */}
-            <Card>
+            <Card className="flex-shrink-0">
               <CardContent className="p-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -405,7 +405,7 @@ export function OrderDialog({
             </Card>
 
             {/* Category Filter */}
-            <div className="flex gap-2 overflow-x-auto pb-2">
+            <div className="flex gap-2 overflow-x-auto pb-2 flex-shrink-0">
               <Button
                 variant={selectedCategory === null ? "default" : "outline"}
                 size="sm"
@@ -430,7 +430,7 @@ export function OrderDialog({
             </div>
 
             {/* Products Grid */}
-            <div className="grid grid-cols-2 gap-3 overflow-y-auto max-h-96">
+            <div className="grid grid-cols-2 gap-3 overflow-y-auto flex-1 min-h-0">
               {filteredProducts.map((product: Product) => (
                 <Card
                   key={product.id}
@@ -486,8 +486,8 @@ export function OrderDialog({
           </div>
 
           {/* Cart */}
-          <div className="flex flex-col h-full">
-            <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-col min-h-0 h-full">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <h3 className="text-lg font-semibold">
                 {mode === "edit"
                   ? t("orders.itemsAndNewItems")
@@ -501,7 +501,7 @@ export function OrderDialog({
             </div>
 
             {/* Scrollable Content Area */}
-            <div className="flex-1 overflow-y-auto space-y-4 pb-4">
+            <div className="flex-1 overflow-y-auto space-y-4 min-h-0">
               {/* Existing Items (Edit Mode Only) */}
               {mode === "edit" && existingItems.length > 0 && (
                 <>
@@ -616,10 +616,10 @@ export function OrderDialog({
 
         {/* DialogFooter with Summary and Order Button */}
         {(cart.length > 0 || (mode === "edit" && existingItems.length > 0)) && (
-          <DialogFooter className="pt-6">
+          <DialogFooter className="pt-4 pb-2 flex-shrink-0 border-t bg-white">
             <div className="flex items-center justify-between w-full">
               {/* Summary items in horizontal layout */}
-              <div className="flex items-center gap-4 text-sm">
+              <div className="flex items-center gap-4 text-sm flex-wrap">
                 {mode === "edit" && existingItems.length > 0 && (
                   <>
                     <div className="flex items-center gap-2">
@@ -691,7 +691,7 @@ export function OrderDialog({
               <Button
                 onClick={handlePlaceOrder}
                 disabled={createOrderMutation.isPending}
-                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
+                className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 flex-shrink-0"
                 size="lg"
               >
                 {createOrderMutation.isPending
