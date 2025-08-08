@@ -161,6 +161,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     productManagementDesc: '상품 정보와 가격을 관리합니다',
     stockStatus: '재고 상태',
     usageStatus: '사용 상태',
+    updateProductInfo: '상품 정보 업데이트',
   },
   en: {
     title: 'Settings',
@@ -322,6 +323,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     productManagementDesc: 'Manage product information and pricing',
     stockStatus: 'Stock Status',
     usageStatus: 'Usage Status',
+    updateProductInfo: 'Update product information',
   },
   vi: {
     title: 'Cài đặt',
@@ -483,5 +485,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     productManagementDesc: 'Quản lý thông tin sản phẩm và giá cả',
     stockStatus: 'Trạng thái kho',
     usageStatus: 'Trạng thái sử dụng',
+    updateProductInfo: 'Cập nhật thông tin sản phẩm',
   },
 };

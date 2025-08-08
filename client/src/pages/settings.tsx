@@ -3112,7 +3112,7 @@ export default function Settings() {
             </DialogTitle>
             <DialogDescription>
               {editingProduct
-                ? "Cập nhật thông tin sản phẩm"
+                ? t("settings.updateProductInfo")
                 : "Nhập thông tin sản phẩm mới"}
             </DialogDescription>
           </DialogHeader>
