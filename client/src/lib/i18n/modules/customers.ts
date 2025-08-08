@@ -399,5 +399,6 @@ export const customersTranslations: { [key: string]: CustomersTranslations } = {
     noPointHistory: "Không có lịch sử điểm",
     pointsUpdateFailed: "Cập nhật điểm thất bại",
     pointsUpdateError: "Đã xảy ra lỗi khi cập nhật điểm",
+    noRegisteredCustomers: "Chưa có khách hàng nào được đăng ký",
   },
 };
