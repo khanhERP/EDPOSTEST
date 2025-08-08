@@ -106,6 +106,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     defaultConnection: "기본값",
     setAsDefaultConnection: "기본 연결로 설정",
     templatesDesc: "전자세금계산서 양식을 관리합니다",
+    notesLabel: "메모",
     operations: "운영",
     cancel: "취소",
     // Product Management
@@ -255,6 +256,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     defaultConnection: "Default",
     setAsDefaultConnection: "Set as default connection",
     templatesDesc: "Manage electronic invoice templates",
+    notesLabel: "Notes",
     operations: "Operations",
     cancel: "Cancel",
     // Product Management
@@ -404,6 +406,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     defaultConnection: "Mặc định",
     setAsDefaultConnection: "Đặt làm kết nối mặc định",
     templatesDesc: "Quản lý các mẫu số hóa đơn điện tử",
+    notesLabel: "Ghi chú",
     operations: "Hoạt động",
     cancel: "Hủy bỏ",
     // Product Management

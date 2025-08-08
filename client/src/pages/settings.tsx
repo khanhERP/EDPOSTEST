@@ -3769,7 +3769,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="notes" className="text-right">
-                Ghi chú
+                {t("settings.notesLabel")}
               </Label>
               <Textarea
                 id="notes"

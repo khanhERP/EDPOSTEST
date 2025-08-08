@@ -526,6 +526,7 @@ export interface SettingsTranslations {
   signMethodLabel: string;
   softwareLabel: string;
   cqtCodeLabel: string;
+  notesLabel: string;
   addressPlaceholder: string;
   phonePlaceholder: string;
   emailPlaceholder: string;
