@@ -256,6 +256,7 @@ export function EInvoiceModal({
   const handlePublishLater = async () => {
     try {
       console.log("🟡 PHÁT HÀNH SAU - Lưu thông tin hóa đơn không phát hành");
+      console.log("🟡 Source:", source, "OrderId:", orderId);
 
       // Debug log current cart items (same as handleConfirm)
       console.log("=== PHÁT HÀNH SAU - KIỂM TRA DỮ LIỆU ===");
@@ -270,7 +271,7 @@ export function EInvoiceModal({
       // Đóng modal ngay lập tức trước khi xử lý logic
       onClose();
 
-      // Xử lý logic khác nhau theo nguồn gọi (same logic as handleConfirm)
+      // Xử lý logic khác nhau theo nguồn gọi
       if (source === 'pos') {
         // Logic cho POS: chỉ xác nhận thanh toán
         console.log('🏪 POS E-Invoice Later: Processing payment completion');
@@ -283,10 +284,18 @@ export function EInvoiceModal({
           publishLater: true, // Flag to indicate this is for later publishing
         });
       } else if (source === 'table' && orderId) {
-        // Logic cho Table: Tự hoàn tất thanh toán luôn
+        // Logic cho Table: Gọi mutation để hoàn tất thanh toán trước
         console.log('🍽️ Table E-Invoice Later: Completing payment directly for order:', orderId);
+        console.log('🍽️ Executing payment completion for order (later publishing):', orderId);
+        
+        // Gọi mutation để hoàn tất thanh toán ngay lập tức
+        await completePaymentMutation.mutateAsync({
+          orderId: orderId,
+          paymentMethod: 'einvoice'
+        });
 
-        // Gọi onConfirm để parent component biết về việc lưu thành công
+        // Sau khi hoàn tất thanh toán, gọi onConfirm để hiển thị receipt
+        console.log('🍽️ Payment completed, now calling onConfirm for receipt display');
         onConfirm({
           ...formData,
           cartItems: cartItems,
@@ -295,13 +304,6 @@ export function EInvoiceModal({
           source: 'table',
           orderId: orderId,
           publishLater: true, // Flag to indicate this is for later publishing
-        });
-
-        // Gọi mutation để hoàn tất thanh toán ngay lập tức
-        console.log('🍽️ Executing payment completion for order (later publishing):', orderId);
-        completePaymentMutation.mutate({
-          orderId: orderId,
-          paymentMethod: 'einvoice'
         });
       } else {
         // Fallback: trả về data cho parent component xử lý
