@@ -309,6 +309,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     materialType: "Nguyên vật liệu",
     finishedProductType: "Thành phẩm",
     imageUrlOptional: "URL hình ảnh (tùy chọn)",
+    imageUrl: "Nhập URL hình ảnh",
     confirmDeleteProduct: "Bạn có chắc chắn muốn xóa sản phẩm này?",
     productNameRequired: "Tên sản phẩm là bắt buộc",
     skuRequired: "SKU là bắt buộc",

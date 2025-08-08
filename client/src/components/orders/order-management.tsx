@@ -93,14 +93,14 @@ export function OrderManagement() {
       setPaymentModalOpen(false);
       setOrderForPayment(null);
       toast({
-        title: 'Thành công',
-        description: 'Đơn hàng đã được thanh toán thành công',
+        title: t('common.success'),
+        description: t('orders.orderStatusUpdated'),
       });
     },
     onError: () => {
       toast({
-        title: 'Lỗi',
-        description: 'Không thể hoàn thành thanh toán',
+        title: t('common.error'),
+        description: t('orders.orderStatusUpdateFailed'),
         variant: "destructive",
       });
     },
@@ -138,8 +138,8 @@ export function OrderManagement() {
       setPointsAmount("");
       setSearchTerm("");
       toast({
-        title: 'Thanh toán thành công',
-        description: 'Đơn hàng đã được thanh toán bằng điểm',
+        title: t('common.success'),
+        description: t('orders.pointsPaymentTitle'),
       });
     },
     onError: () => {
