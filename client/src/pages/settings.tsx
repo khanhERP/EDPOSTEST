@@ -3730,7 +3730,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="signMethod" className="text-right">
-                Phương thức ký
+                {t("settings.signMethodLabel")}
               </Label>
               <Select
                 value={eInvoiceForm.signMethod}

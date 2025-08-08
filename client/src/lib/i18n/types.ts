@@ -523,6 +523,7 @@ export interface SettingsTranslations {
   loginIdLabel: string;
   passwordLabel: string;
   loginUrlLabel: string;
+  signMethodLabel: string;
   addressPlaceholder: string;
   phonePlaceholder: string;
   emailPlaceholder: string;
