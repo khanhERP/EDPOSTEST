@@ -3786,7 +3786,7 @@ export default function Settings() {
                   }))
                 }
                 className="col-span-3"
-                placeholder="Ghi chú thêm (tùy chọn)"
+                placeholder={t("common.notesPlaceholder")}
                 rows={3}
               />
             </div>
@@ -3929,7 +3929,7 @@ export default function Settings() {
                   setTemplateForm((prev) => ({ ...prev, notes: e.target.value }))
                 }
                 className="col-span-3"
-                placeholder="Ghi chú thêm (tùy chọn)"
+                placeholder={t("common.notesPlaceholder")}
                 rows={3}
               />
             </div>
