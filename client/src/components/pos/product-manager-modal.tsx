@@ -522,7 +522,7 @@ export function ProductManagerModal({
                           {t("tables.price")}
                         </th>
                         <th className="text-left py-3 px-4 font-medium pos-text-primary">
-                          % Thuế
+                          {t("tables.taxRate")}
                         </th>
                         <th className="text-left py-3 px-4 font-medium pos-text-primary">
                           {t("tables.stock")}
@@ -709,7 +709,7 @@ export function ProductManagerModal({
                       name="taxRate"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>% Thuế</FormLabel>
+                          <FormLabel>{t("tables.taxRate")}</FormLabel>
                           <FormControl>
                             <Input
                               {...field}

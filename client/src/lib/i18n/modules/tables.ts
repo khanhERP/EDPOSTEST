@@ -77,6 +77,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     tableDeleteError: "테이블 삭제 중 오류가 발생했습니다",
     statusPlaceholder: "상태를 선택하세요",
     unitPrice: "단가",
+    taxRate: "세율",
   },
   en: {
     title: "Table Management",
@@ -164,6 +165,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     finishedProductType: "Finished Products",
     imageUrlOptional: "Image URL (optional)",
     unitPrice: "Unit Price",
+    taxRate: "Tax Rate",
   },
   vi: {
     title: "Quản lý bàn",
@@ -278,5 +280,6 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     productNameRequired: "Tên sản phẩm là bắt buộc",
     skuRequired: "SKU là bắt buộc",
     unitPrice: "Đơn giá",
+    taxRate: "Thuế suất",
   },
 };
