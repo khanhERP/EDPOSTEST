@@ -93,6 +93,36 @@ export interface POSTranslations {
   confirmAndSelectPayment: string;
   thankYouBusiness: string;
   keepReceiptRecords: string;
+  bulkImport: string;
+  bulkImportTitle: string;
+  bulkImportInstructions: string;
+  downloadTemplate: string;
+  fillProductInfo: string;
+  uploadAndPreview: string;
+  clickImportToComplete: string;
+  downloadTemplateButton: string;
+  selectExcelFile: string;
+  processing: string;
+  dataErrors: string;
+  dataPreview: string;
+  productsCount: string;
+  importProducts: string;
+  importing: string;
+  completedWithErrors: string;
+  errorReportDownloaded: string;
+  bulkImportSuccess: string;
+  bulkImportError: string;
+  cannotReadFile: string;
+  missingRequiredInfo: string;
+  productNameRequired: string;
+  skuRequired: string;
+  invalidPrice: string;
+  invalidCategoryId: string;
+  invalidTaxRate: string;
+  duplicateSku: string;
+  productsSuccessful: string;
+  productsWithErrors: string;
+  duplicateSkuCount: string;
 }
 
 export const posTranslations: { [key: string]: POSTranslations } = {
@@ -190,6 +220,36 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     cancel: '취소',
     confirmAndSelectPayment: '확인 및 결제 선택',
     thankYouBusiness: '이용해 주셔서 감사합니다!',
+    bulkImport: '일괄 가져오기',
+    bulkImportTitle: '일괄 가져오기',
+    bulkImportInstructions: 'Excel 파일을 다운로드하고 제품 정보를 채운 다음 업로드하여 제품을 가져옵니다.',
+    downloadTemplate: '템플릿 다운로드',
+    fillProductInfo: '제품 정보 채우기',
+    uploadAndPreview: '업로드 및 미리보기',
+    clickImportToComplete: '가져오기를 완료하려면 클릭',
+    downloadTemplateButton: '템플릿 다운로드',
+    selectExcelFile: 'Excel 파일 선택',
+    processing: '처리 중',
+    dataErrors: '데이터 오류',
+    dataPreview: '데이터 미리보기',
+    productsCount: '제품 수',
+    importProducts: '제품 가져오기',
+    importing: '가져오는 중',
+    completedWithErrors: '오류로 완료됨',
+    errorReportDownloaded: '오류 보고서가 다운로드되었습니다',
+    bulkImportSuccess: '일괄 가져오기 성공',
+    bulkImportError: '일괄 가져오기 오류',
+    cannotReadFile: '파일을 읽을 수 없습니다',
+    missingRequiredInfo: '필수 정보 누락',
+    productNameRequired: '제품 이름을 입력해야 합니다',
+    skuRequired: 'SKU는 필수입니다',
+    invalidPrice: '가격이 올바르지 않습니다',
+    invalidCategoryId: '잘못된 카테고리 ID',
+    invalidTaxRate: '잘못된 세율',
+    duplicateSku: '중복 SKU',
+    productsSuccessful: '성공적으로 가져온 제품',
+    productsWithErrors: '오류가 있는 제품',
+    duplicateSkuCount: '중복 SKU 수',
   },
   en: {
     title: 'POS System',
@@ -286,6 +346,36 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     confirmAndSelectPayment: 'Confirm & Select Payment',
     thankYouBusiness: 'Thank you for your business!',
     keepReceiptRecords: 'Please keep this receipt for your records',
+    bulkImport: 'Bulk Import',
+    bulkImportTitle: 'Bulk Import Products',
+    bulkImportInstructions: 'Download the Excel file, fill in product information, then upload to import products.',
+    downloadTemplate: 'Download Template',
+    fillProductInfo: 'Fill Product Info',
+    uploadAndPreview: 'Upload & Preview',
+    clickImportToComplete: 'Click to Complete Import',
+    downloadTemplateButton: 'Download Template',
+    selectExcelFile: 'Select Excel File',
+    processing: 'Processing',
+    dataErrors: 'Data Errors',
+    dataPreview: 'Data Preview',
+    productsCount: 'Products Count',
+    importProducts: 'Import Products',
+    importing: 'Importing',
+    completedWithErrors: 'Completed with Errors',
+    errorReportDownloaded: 'Error report downloaded',
+    bulkImportSuccess: 'Bulk Import Success',
+    bulkImportError: 'Bulk Import Error',
+    cannotReadFile: 'Cannot read file',
+    missingRequiredInfo: 'Missing required info',
+    productNameRequired: 'Product name is required',
+    skuRequired: 'SKU is required',
+    invalidPrice: 'Invalid price',
+    invalidCategoryId: 'Invalid category ID',
+    invalidTaxRate: 'Invalid tax rate',
+    duplicateSku: 'Duplicate SKU',
+    productsSuccessful: 'Products successful',
+    productsWithErrors: 'Products with errors',
+    duplicateSkuCount: 'Duplicate SKU count',
   },
   vi: {
     title: 'Hệ thống POS',
@@ -382,5 +472,35 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     confirmAndSelectPayment: 'Xác nhận & Chọn thanh toán',
     thankYouBusiness: 'Cảm ơn bạn đã mua hàng!',
     keepReceiptRecords: 'Vui lòng giữ hóa đơn để làm bằng chứng',
+    bulkImport: 'Nhập hàng loạt',
+    bulkImportTitle: 'Nhập sản phẩm hàng loạt',
+    bulkImportInstructions: 'Tải tệp Excel, điền thông tin sản phẩm, sau đó tải lên để nhập sản phẩm.',
+    downloadTemplate: 'Tải xuống mẫu',
+    fillProductInfo: 'Điền thông tin sản phẩm',
+    uploadAndPreview: 'Tải lên & Xem trước',
+    clickImportToComplete: 'Nhấp để hoàn tất nhập',
+    downloadTemplateButton: 'Tải xuống mẫu',
+    selectExcelFile: 'Chọn tệp Excel',
+    processing: 'Đang xử lý',
+    dataErrors: 'Lỗi dữ liệu',
+    dataPreview: 'Xem trước dữ liệu',
+    productsCount: 'Số lượng sản phẩm',
+    importProducts: 'Nhập sản phẩm',
+    importing: 'Đang nhập',
+    completedWithErrors: 'Hoàn thành với lỗi',
+    errorReportDownloaded: 'Báo cáo lỗi đã được tải xuống',
+    bulkImportSuccess: 'Nhập hàng loạt thành công',
+    bulkImportError: 'Lỗi nhập hàng loạt',
+    cannotReadFile: 'Không thể đọc tệp',
+    missingRequiredInfo: 'Thiếu thông tin bắt buộc',
+    productNameRequired: 'Tên sản phẩm là bắt buộc',
+    skuRequired: 'SKU là bắt buộc',
+    invalidPrice: 'Giá không hợp lệ',
+    invalidCategoryId: 'ID danh mục không hợp lệ',
+    invalidTaxRate: 'Thuế suất không hợp lệ',
+    duplicateSku: 'SKU trùng lặp',
+    productsSuccessful: 'Sản phẩm nhập thành công',
+    productsWithErrors: 'Sản phẩm có lỗi',
+    duplicateSkuCount: 'Số lượng SKU trùng lặp',
   },
 };

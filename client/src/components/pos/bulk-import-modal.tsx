@@ -154,7 +154,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
             row[4] === undefined ||
             !row[5]
           ) {
-            newErrors.push(`Dòng ${rowNumber}: Thiếu thông tin bắt buộc`);
+            newErrors.push(`Dòng ${rowNumber}: ${t('pos.missingRequiredInfo')}`);
             return;
           }
 
@@ -171,27 +171,27 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
           // Validate data
           if (!product.name) {
             newErrors.push(
-              `Dòng ${rowNumber}: Tên sản phẩm không được để trống`,
+              `Dòng ${rowNumber}: ${t('pos.productNameRequired')}`,
             );
           }
           if (!product.sku) {
-            newErrors.push(`Dòng ${rowNumber}: SKU không được để trống`);
+            newErrors.push(`Dòng ${rowNumber}: ${t('pos.skuRequired')}`);
           }
           if (isNaN(parseFloat(product.price))) {
-            newErrors.push(`Dòng ${rowNumber}: Giá không hợp lệ`);
+            newErrors.push(`Dòng ${rowNumber}: ${t('pos.invalidPrice')}`);
           }
           if (product.categoryId <= 0) {
-            newErrors.push(`Dòng ${rowNumber}: Category ID không hợp lệ`);
+            newErrors.push(`Dòng ${rowNumber}: ${t('pos.invalidCategoryId')}`);
           }
           if (product.taxRate && (isNaN(parseFloat(product.taxRate)) || parseFloat(product.taxRate) < 0 || parseFloat(product.taxRate) > 100)) {
-            newErrors.push(`Dòng ${rowNumber}: Phần trăm thuế không hợp lệ (0-100)`);
+            newErrors.push(`Dòng ${rowNumber}: ${t('pos.invalidTaxRate')}`);
           }
 
           // Check for duplicate SKU within the imported data
           const skuExists = validProducts.some((p) => p.sku === product.sku);
           if (skuExists) {
             newErrors.push(
-              `Dòng ${rowNumber}: SKU "${product.sku}" bị trùng lặp trong file`,
+              `Dòng ${rowNumber}: SKU "${product.sku}" ${t('pos.duplicateSku')}`,
             );
           }
 
@@ -208,7 +208,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
         setErrors(newErrors);
       } catch (error) {
         setErrors([
-          "Không thể đọc file Excel. Vui lòng kiểm tra định dạng file.",
+          t('pos.cannotReadFile'),
         ]);
       }
       setIsProcessing(false);
@@ -322,7 +322,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
       <DialogContent className="max-w-4xl max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            Nhập sản phẩm hàng loạt
+            {t('pos.bulkImportTitle')}
             {/* <Button variant="ghost" size="sm" onClick={handleClose}>
               <X size={20} />
             </Button> */}
@@ -332,12 +332,12 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
         <div className="p-6 space-y-6">
           {/* Instructions */}
           <div className="bg-blue-50 p-4 rounded-lg">
-            <h3 className="font-medium mb-2">Hướng dẫn:</h3>
+            <h3 className="font-medium mb-2">{t('pos.bulkImportInstructions')}</h3>
             <ol className="list-decimal list-inside space-y-1 text-sm">
-              <li>Tải xuống file mẫu Excel</li>
-              <li>Điền thông tin sản phẩm theo đúng định dạng</li>
-              <li>Upload file và xem trước dữ liệu</li>
-              <li>Nhấn "Nhập sản phẩm" để hoàn tất</li>
+              <li>{t('pos.downloadTemplate')}</li>
+              <li>{t('pos.fillProductInfo')}</li>
+              <li>{t('pos.uploadAndPreview')}</li>
+              <li>{t('pos.clickImportToComplete')}</li>
             </ol>
           </div>
 
@@ -345,7 +345,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
           <div className="flex space-x-4">
             <Button onClick={downloadTemplate} variant="outline">
               <Download className="mr-2" size={16} />
-              Tải file mẫu
+              {t('pos.downloadTemplateButton')}
             </Button>
 
             <div>
@@ -361,7 +361,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
                 disabled={isProcessing}
               >
                 <Upload className="mr-2" size={16} />
-                {isProcessing ? "Đang xử lý..." : "Chọn file Excel"}
+                {isProcessing ? t('pos.processing') : t('pos.selectExcelFile')}
               </Button>
             </div>
           </div>
@@ -372,7 +372,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
               <div className="flex items-center mb-2">
                 <AlertCircle className="mr-2 text-red-500" size={16} />
                 <h3 className="font-medium text-red-700">
-                  Có lỗi trong dữ liệu:
+                  {t('pos.dataErrors')}
                 </h3>
               </div>
               <ul className="list-disc list-inside space-y-1 text-sm text-red-600">
@@ -389,12 +389,11 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
               <div className="flex items-center mb-2">
                 <AlertCircle className="mr-2 text-red-500" size={16} />
                 <h3 className="font-medium text-red-700">
-                  Có {errorResults.length} sản phẩm bị lỗi
+                  {t('common.count')} {errorResults.length}{t('pos.productsWithErrors')}
                 </h3>
               </div>
               <p className="text-sm text-red-600">
-                File báo cáo lỗi chi tiết đã được tải xuống tự động vào máy tính
-                của bạn
+                {t('pos.errorReportDownloaded')}
               </p>
             </div>
           )}
@@ -403,17 +402,17 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
           {preview.length > 0 && (
             <div>
               <h3 className="font-medium mb-4">
-                Xem trước dữ liệu ({preview.length} sản phẩm):
+                {t('pos.dataPreview')} ({preview.length}{t('pos.productsCount')}):
               </h3>
               <div className="bg-gray-50 rounded-lg overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="text-left py-2 px-3">Tên sản phẩm</th>
-                      <th className="text-left py-2 px-3">SKU</th>
-                      <th className="text-left py-2 px-3">Giá</th>
-                      <th className="text-left py-2 px-3">% Thuế</th>
-                      <th className="text-left py-2 px-3">Số lượng</th>
+                      <th className="text-left py-2 px-3">{t('pos.productName')}</th>
+                      <th className="text-left py-2 px-3">{t('pos.sku')}</th>
+                      <th className="text-left py-2 px-3">{t('pos.price')}</th>
+                      <th className="text-left py-2 px-3">% {t('pos.taxRate')}</th>
+                      <th className="text-left py-2 px-3">{t('pos.quantity')}</th>
                       <th className="text-left py-2 px-3">Category ID</th>
                     </tr>
                   </thead>
@@ -448,7 +447,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
           {preview.length > 0 && errors.length === 0 && (
             <div className="flex justify-end space-x-3">
               <Button variant="outline" onClick={handleClose}>
-                Hủy
+                {t('pos.cancel')}
               </Button>
               <Button
                 onClick={handleImport}
@@ -456,11 +455,11 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
                 className="bg-green-600 hover:bg-green-700 text-white font-medium transition-colors duration-200"
               >
                 {bulkCreateMutation.isPending
-                  ? "Đang nhập..."
-                  : `Nhập ${preview.length} sản phẩm`}
+                  ? t('pos.importing')
+                  : `${t('pos.importProducts')} ${preview.length}${t('pos.productsCount')}`}
               </Button>
             </div>
-          )}
+          )}</div>
         </div>
       </DialogContent>
     </Dialog>
