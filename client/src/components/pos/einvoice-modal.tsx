@@ -258,73 +258,89 @@ export function EInvoiceModal({
       console.log("🟡 PHÁT HÀNH SAU - Lưu thông tin hóa đơn không phát hành");
       console.log("🟡 Source:", source, "OrderId:", orderId);
 
-      // Debug log current cart items (same as handleConfirm)
+      // Debug log current cart items
       console.log("=== PHÁT HÀNH SAU - KIỂM TRA DỮ LIỆU ===");
       console.log("cartItems received:", cartItems);
       console.log("cartItems length:", cartItems?.length || 0);
       console.log("cartItems detailed:", JSON.stringify(cartItems, null, 2));
       console.log("total amount:", total);
 
-      // Show success message without actually publishing
-      alert("Thông tin hóa đơn điện tử đã được lưu để phát hành sau!");
-
-      // Đóng modal ngay lập tức trước khi xử lý logic
-      onClose();
-
-      // Xử lý logic khác nhau theo nguồn gọi
-      if (source === 'pos') {
-        // Logic cho POS: chỉ xác nhận thanh toán
-        console.log('🏪 POS E-Invoice Later: Processing payment completion');
-        onConfirm({
-          ...formData,
-          cartItems: cartItems,
-          total: total,
-          paymentMethod: 'einvoice',
-          source: 'pos',
-          publishLater: true, // Flag to indicate this is for later publishing
-        });
-      } else if (source === 'table' && orderId) {
-        // Logic cho Table: Hoàn tất thanh toán và hiển thị receipt
-        console.log('🍽️ Table E-Invoice Later: Completing payment directly for order:', orderId);
-        
-        try {
-          // Gọi mutation để hoàn tất thanh toán ngay lập tức
-          console.log('🍽️ Executing payment completion for order (later publishing):', orderId);
-          await completePaymentMutation.mutateAsync({
-            orderId: orderId,
-            paymentMethod: 'einvoice'
-          });
-
-          // Sau khi hoàn tất thanh toán thành công, gọi onConfirm để hiển thị receipt
-          console.log('🍽️ Payment completed successfully, now calling onConfirm for receipt display');
-          onConfirm({
-            ...formData,
-            cartItems: cartItems,
-            total: total,
-            paymentMethod: 'einvoice',
-            source: 'table',
-            orderId: orderId,
-            publishLater: true, // Flag to indicate this is for later publishing
-          });
-        } catch (error) {
-          console.error('❌ Error completing payment for later publishing:', error);
-          alert('Có lỗi xảy ra khi hoàn tất thanh toán. Vui lòng thử lại.');
-        }
-      } else {
-        // Fallback: trả về data cho parent component xử lý
-        console.log('🔄 Fallback: Returning data to parent (later publishing)');
-        onConfirm({
-          ...formData,
-          cartItems: cartItems,
-          total: total,
-          paymentMethod: 'einvoice',
-          source: source || 'pos',
-          publishLater: true, // Flag to indicate this is for later publishing
-        });
+      // Validate cart items first
+      if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+        console.error("❌ No valid cart items found for later publishing");
+        alert("Không có sản phẩm nào trong giỏ hàng để lưu thông tin hóa đơn.");
+        return;
       }
+
+      // Prepare the invoice data to be returned
+      const invoiceData = {
+        ...formData,
+        cartItems: cartItems,
+        total: total,
+        paymentMethod: 'einvoice',
+        source: source || 'pos',
+        orderId: orderId,
+        publishLater: true, // Flag to indicate this is for later publishing
+      };
+
+      console.log("🟡 Prepared invoice data for later publishing:", invoiceData);
+
+      // Handle different sources
+      if (source === 'table' && orderId) {
+        // Logic cho Table: Hoàn tất thanh toán trước, sau đó hiển thị receipt
+        console.log('🍽️ Table E-Invoice Later: Completing payment for order:', orderId);
+        
+        // Gọi mutation để hoàn tất thanh toán
+        await completePaymentMutation.mutateAsync({
+          orderId: orderId,
+          paymentMethod: 'einvoice'
+        });
+
+        console.log('🍽️ Payment completed successfully for later publishing');
+        
+        // Đóng modal sau khi hoàn tất thanh toán thành công
+        onClose();
+        
+        // Show success message
+        toast({
+          title: 'Thành công',
+          description: 'Đơn hàng đã được thanh toán. Thông tin hóa đơn điện tử đã được lưu để phát hành sau.',
+        });
+
+        // Gọi onConfirm để hiển thị receipt
+        console.log('🍽️ Calling onConfirm for receipt display');
+        onConfirm(invoiceData);
+
+      } else {
+        // Logic cho POS hoặc fallback
+        console.log('🏪 POS/Fallback E-Invoice Later: Processing payment completion');
+        
+        // Đóng modal trước
+        onClose();
+        
+        // Show success message
+        toast({
+          title: 'Thành công', 
+          description: 'Thông tin hóa đơn điện tử đã được lưu để phát hành sau.',
+        });
+
+        // Gọi onConfirm để xử lý
+        onConfirm(invoiceData);
+      }
+
     } catch (error) {
-      console.error("Error saving invoice for later:", error);
-      alert(`Có lỗi xảy ra khi lưu thông tin hóa đơn: ${error}`);
+      console.error("❌ Error in handlePublishLater:", error);
+      
+      // Show detailed error message
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      toast({
+        title: 'Lỗi',
+        description: `Có lỗi xảy ra khi lưu thông tin hóa đơn: ${errorMessage}`,
+        variant: 'destructive',
+      });
+
+      // Keep modal open on error so user can retry
+      console.log('❌ Keeping modal open due to error');
     }
   };
 
