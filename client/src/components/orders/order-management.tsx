@@ -269,15 +269,15 @@ export function OrderManagement() {
 
     // Default payment methods if none saved
     const defaultPaymentMethods = [
-      { id: 1, name: t('orders.paymentMethods.cash'), nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
-      { id: 2, name: t('orders.paymentMethods.creditCard'), nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
-      { id: 3, name: t('orders.paymentMethods.debitCard'), nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
-      { id: 4, name: t('orders.paymentMethods.momo'), nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
-      { id: 5, name: t('orders.paymentMethods.zalopay'), nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
-      { id: 6, name: t('orders.paymentMethods.vnpay'), nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
-      { id: 7, name: t('orders.paymentMethods.qrCode'), nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
-      { id: 8, name: t('orders.paymentMethods.shopeepay'), nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
-      { id: 9, name: t('orders.paymentMethods.grabpay'), nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
+      { id: 1, nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
+      { id: 2, nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
+      { id: 3, nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
+      { id: 4, nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
+      { id: 5, nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
+      { id: 6, nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
+      { id: 7, nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
+      { id: 8, nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
+      { id: 9, nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
     ];
 
     const paymentMethods = savedPaymentMethods 
@@ -900,7 +900,7 @@ export function OrderManagement() {
                 <span className="text-2xl mr-3">{method.icon}</span>
                 <div className="text-left">
                   <p className="font-medium">
-                    {qrLoading && method.nameKey === 'qrCode' ? 'Đang tạo QR...' : method.name}
+                    {qrLoading && method.nameKey === 'qrCode' ? t('common.generatingQr') : t(`orders.paymentMethods.${method.nameKey}`)}
                   </p>
                 </div>
                 {qrLoading && method.nameKey === 'qrCode' && (
