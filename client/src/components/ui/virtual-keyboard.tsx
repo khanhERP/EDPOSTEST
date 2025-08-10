@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Delete, Shift, Space } from "lucide-react";
+import { Delete, ChevronUp, Space } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface VirtualKeyboardProps {
@@ -146,7 +146,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
             className="w-12 h-8 p-0 text-xs"
             onClick={handleShift}
           >
-            <Shift className="w-3 h-3" />
+            <ChevronUp className="w-3 h-3" />
           </Button>
           {bottomRowKeys.map((key) => (
             <Button
