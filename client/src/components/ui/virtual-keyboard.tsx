@@ -1,8 +1,7 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Backspace, Shift, Space } from "lucide-react";
+import { Delete, Shift, Space } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface VirtualKeyboardProps {
@@ -24,7 +23,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
   const [isCapsLock, setIsCapsLock] = useState(false);
 
   const numberKeys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
-  
+
   const topRowKeys = ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"];
   const middleRowKeys = ["a", "s", "d", "f", "g", "h", "j", "k", "l"];
   const bottomRowKeys = ["z", "x", "c", "v", "b", "n", "m"];
@@ -34,7 +33,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
 
   const handleKeyPress = (key: string) => {
     let finalKey = key;
-    
+
     if (key.match(/[a-z]/)) {
       if (isShiftPressed || isCapsLock) {
         finalKey = key.toUpperCase();
@@ -47,7 +46,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
     }
 
     onKeyPress(finalKey);
-    
+
     // Reset shift after key press (but not caps lock)
     if (isShiftPressed) {
       setIsShiftPressed(false);
@@ -89,7 +88,7 @@ const VirtualKeyboard: React.FC<VirtualKeyboardProps> = ({
             className="w-12 h-8 p-0 text-xs"
             onClick={onBackspace}
           >
-            <Backspace className="w-3 h-3" />
+            <Delete className="w-3 h-3" />
           </Button>
         </div>
 
