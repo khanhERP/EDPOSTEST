@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { X, Search } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { X, Search, Keyboard } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
+import VirtualKeyboard from "@/components/ui/virtual-keyboard";
 
 // E-invoice software providers mapping
 const EINVOICE_PROVIDERS = [
@@ -82,6 +83,10 @@ export function EInvoiceModal({
 
   const [isTaxCodeLoading, setIsTaxCodeLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
+  const [activeInputField, setActiveInputField] = useState<string | null>(null);
+  
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -177,6 +182,74 @@ export function EInvoiceModal({
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleVirtualKeyPress = (key: string) => {
+    if (!activeInputField) return;
+    
+    const currentValue = formData[activeInputField as keyof typeof formData] || '';
+    const newValue = currentValue + key;
+    handleInputChange(activeInputField, newValue);
+    
+    // Focus the input to show cursor position
+    const inputRef = inputRefs.current[activeInputField];
+    if (inputRef) {
+      inputRef.focus();
+      // Set cursor to end
+      setTimeout(() => {
+        inputRef.setSelectionRange(newValue.length, newValue.length);
+      }, 0);
+    }
+  };
+
+  const handleVirtualBackspace = () => {
+    if (!activeInputField) return;
+    
+    const currentValue = formData[activeInputField as keyof typeof formData] || '';
+    const newValue = currentValue.slice(0, -1);
+    handleInputChange(activeInputField, newValue);
+    
+    // Focus the input to show cursor position
+    const inputRef = inputRefs.current[activeInputField];
+    if (inputRef) {
+      inputRef.focus();
+      setTimeout(() => {
+        inputRef.setSelectionRange(newValue.length, newValue.length);
+      }, 0);
+    }
+  };
+
+  const handleVirtualEnter = () => {
+    // Hide keyboard on enter
+    setShowVirtualKeyboard(false);
+    setActiveInputField(null);
+  };
+
+  const handleInputFocus = (fieldName: string) => {
+    setActiveInputField(fieldName);
+    if (showVirtualKeyboard) {
+      // If keyboard is already shown, just switch focus
+      const inputRef = inputRefs.current[fieldName];
+      if (inputRef) {
+        inputRef.focus();
+      }
+    }
+  };
+
+  const toggleVirtualKeyboard = () => {
+    setShowVirtualKeyboard(!showVirtualKeyboard);
+    if (!showVirtualKeyboard) {
+      // If opening keyboard, focus on first input field
+      setActiveInputField('taxCode');
+      setTimeout(() => {
+        const inputRef = inputRefs.current['taxCode'];
+        if (inputRef) {
+          inputRef.focus();
+        }
+      }, 100);
+    } else {
+      setActiveInputField(null);
+    }
   };
 
   const handleGetTaxInfo = async () => {
@@ -756,10 +829,12 @@ export function EInvoiceModal({
                 <div className="flex gap-2">
                   <Input
                     id="taxCode"
+                    ref={(el) => {inputRefs.current['taxCode'] = el}}
                     value={formData.taxCode}
                     onChange={(e) =>
                       handleInputChange("taxCode", e.target.value)
                     }
+                    onFocus={() => handleInputFocus('taxCode')}
                     placeholder="0102222333-001"
                     disabled={false}
                     readOnly={false}
@@ -786,10 +861,12 @@ export function EInvoiceModal({
                 <Label htmlFor="customerName">{t('einvoice.companyName')}</Label>
                 <Input
                   id="customerName"
+                  ref={(el) => {inputRefs.current['customerName'] = el}}
                   value={formData.customerName}
                   onChange={(e) =>
                     handleInputChange("customerName", e.target.value)
                   }
+                  onFocus={() => handleInputFocus('customerName')}
                   placeholder="Công ty TNHH ABC"
                   disabled={false}
                   readOnly={false}
@@ -799,8 +876,10 @@ export function EInvoiceModal({
                 <Label htmlFor="address">{t('einvoice.address')}</Label>
                 <Input
                   id="address"
+                  ref={(el) => {inputRefs.current['address'] = el}}
                   value={formData.address}
                   onChange={(e) => handleInputChange("address", e.target.value)}
+                  onFocus={() => handleInputFocus('address')}
                   placeholder="Cầu Giấy, Hà Nội"
                   disabled={false}
                   readOnly={false}
@@ -810,10 +889,12 @@ export function EInvoiceModal({
                 <Label htmlFor="phoneNumber">{t('einvoice.idNumber')}</Label>
                 <Input
                   id="phoneNumber"
+                  ref={(el) => {inputRefs.current['phoneNumber'] = el}}
                   value={formData.phoneNumber}
                   onChange={(e) =>
                     handleInputChange("phoneNumber", e.target.value)
                   }
+                  onFocus={() => handleInputFocus('phoneNumber')}
                   placeholder="0123456789"
                   disabled={false}
                   readOnly={false}
@@ -823,10 +904,12 @@ export function EInvoiceModal({
                 <Label htmlFor="recipientName">{t('einvoice.recipient')}</Label>
                 <Input
                   id="recipientName"
+                  ref={(el) => {inputRefs.current['recipientName'] = el}}
                   value={formData.recipientName}
                   onChange={(e) =>
                     handleInputChange("recipientName", e.target.value)
                   }
+                  onFocus={() => handleInputFocus('recipientName')}
                   placeholder="Nguyễn Văn Ngọc"
                   disabled={false}
                   readOnly={false}
@@ -837,8 +920,10 @@ export function EInvoiceModal({
                 <Input
                   id="email"
                   type="email"
+                  ref={(el) => {inputRefs.current['email'] = el}}
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
+                  onFocus={() => handleInputFocus('email')}
                   placeholder="ngocnv@gmail.com"
                   disabled={false}
                   readOnly={false}
@@ -860,6 +945,44 @@ export function EInvoiceModal({
               </span>
             </div>
           </div>
+
+          {/* Virtual Keyboard Toggle */}
+          <div className="flex justify-center pt-2 border-t">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleVirtualKeyboard}
+              className={`${showVirtualKeyboard ? 'bg-blue-100 border-blue-300' : ''}`}
+            >
+              <Keyboard className="w-4 h-4 mr-2" />
+              {showVirtualKeyboard ? 'Ẩn bàn phím' : 'Hiện bàn phím ảo'}
+            </Button>
+          </div>
+
+          {/* Virtual Keyboard */}
+          {showVirtualKeyboard && (
+            <div className="mt-4">
+              <VirtualKeyboard
+                onKeyPress={handleVirtualKeyPress}
+                onBackspace={handleVirtualBackspace}
+                onEnter={handleVirtualEnter}
+                isVisible={showVirtualKeyboard}
+                className="mx-auto"
+              />
+              {activeInputField && (
+                <p className="text-sm text-gray-600 text-center mt-2">
+                  Đang nhập vào: {
+                    activeInputField === 'taxCode' ? 'Mã số thuế' :
+                    activeInputField === 'customerName' ? 'Tên đơn vị' :
+                    activeInputField === 'address' ? 'Địa chỉ' :
+                    activeInputField === 'phoneNumber' ? 'Số điện thoại' :
+                    activeInputField === 'recipientName' ? 'Người nhận' :
+                    activeInputField === 'email' ? 'Email' : activeInputField
+                  }
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4 border-t">
