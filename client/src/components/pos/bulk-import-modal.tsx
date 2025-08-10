@@ -459,7 +459,7 @@ export function BulkImportModal({ isOpen, onClose }: BulkImportModalProps) {
                   : `${t('pos.importProducts')} ${preview.length}${t('pos.productsCount')}`}
               </Button>
             </div>
-          )}</div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
