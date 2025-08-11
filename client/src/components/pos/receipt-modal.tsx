@@ -11,6 +11,7 @@ import logoPath from "@assets/EDPOS_1753091767028.png";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { EInvoiceModal } from "./einvoice-modal";
+import { PaymentMethodModal } from "./payment-method-modal";
 import { useState } from "react";
 import { useTranslation } from "@/lib/i18n";
 
@@ -39,6 +40,7 @@ export function ReceiptModal({
   cartItems = [],
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const { t } = useTranslation();
 
   // Debug logging when modal opens and when props change
@@ -167,6 +169,17 @@ export function ReceiptModal({
     alert("Email functionality would be implemented here");
   };
 
+  const handleConfirmAndSelectPayment = () => {
+    setShowPaymentMethodModal(true);
+  };
+
+  const handlePaymentMethodSelect = (method: string) => {
+    setShowPaymentMethodModal(false);
+    if (onConfirm) {
+      onConfirm();
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md w-full max-h-screen overflow-y-auto">
@@ -272,7 +285,7 @@ export function ReceiptModal({
                 {t('pos.cancel')}
               </Button>
               <Button
-                onClick={onConfirm}
+                onClick={handleConfirmAndSelectPayment}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
               >
                 {t('pos.confirmAndSelectPayment')}
@@ -291,6 +304,18 @@ export function ReceiptModal({
           )}
         </div>
       </DialogContent>
+
+      {/* Payment Method Modal */}
+      {showPaymentMethodModal && (
+        <PaymentMethodModal
+          isOpen={showPaymentMethodModal}
+          onClose={() => setShowPaymentMethodModal(false)}
+          onSelectMethod={handlePaymentMethodSelect}
+          total={receipt?.total || 0}
+          cartItems={cartItems}
+          onShowEInvoice={() => setShowEInvoiceModal(true)}
+        />
+      )}
 
       {/* E-Invoice Modal */}
       {showEInvoiceModal && (
