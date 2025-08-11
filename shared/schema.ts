@@ -253,9 +253,7 @@ export const insertOrderSchema = createInsertSchema(orders)
     orderedAt: true,
   })
   .extend({
-    tableId: integer("table_id")
-      .references(() => tables.id)
-      .nullable(),
+    tableId: z.number().nullable().optional(),
     status: z.enum(
       [
         "pending",
