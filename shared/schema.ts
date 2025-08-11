@@ -253,6 +253,9 @@ export const insertOrderSchema = createInsertSchema(orders)
     orderedAt: true,
   })
   .extend({
+    tableId: integer("table_id")
+      .references(() => tables.id)
+      .nullable(),
     status: z.enum(
       [
         "pending",
@@ -267,10 +270,11 @@ export const insertOrderSchema = createInsertSchema(orders)
         errorMap: () => ({ message: "Invalid order status" }),
       },
     ),
-    paymentMethod: z.enum(["cash", "card", "mobile"]).optional(),
+    paymentMethod: z.enum(["cash", "card", "mobile", "einvoice"]).optional(),
     paymentStatus: z.enum(["pending", "paid", "refunded"], {
       errorMap: () => ({ message: "Invalid payment status" }),
     }),
+    einvoiceStatus: z.number().min(0).max(10).optional().default(0),
   });
 
 export const insertOrderItemSchema = createInsertSchema(orderItems).omit({

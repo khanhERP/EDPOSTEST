@@ -481,16 +481,21 @@ export function EInvoiceModal({
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
 
-      // Show detailed error message
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast({
-        title: 'Lỗi',
-        description: `Có lỗi xảy ra khi lưu đơn hàng: ${errorMessage}`,
-        variant: 'destructive',
-      });
+      let errorMessage = "Có lỗi xảy ra khi lưu đơn hàng";
+      if (error instanceof Error) {
+        errorMessage = `Có lỗi xảy ra khi lưu đơn hàng: ${error.message}`;
+      } else if (typeof error === 'string') {
+        errorMessage = `Có lỗi xảy ra khi lưu đơn hàng: ${error}`;
+      } else {
+        errorMessage = `Có lỗi xảy ra khi lưu đơn hàng: ${JSON.stringify(error)}`;
+      }
 
-      // Keep modal open on error so user can retry
-      console.log('❌ Keeping modal open due to error');
+      toast({
+        variant: "destructive",
+        title: "Lỗi",
+        description: errorMessage
+      });
+      return;
     }
   };
 
@@ -558,7 +563,10 @@ export function EInvoiceModal({
           "Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn điện tử.\n\nDữ liệu nhận được:\n- Số sản phẩm: " +
             (cartItems?.length || 0) +
             "\n- Tổng tiền: " +
-            total.toLocaleString("vi-VN") +
+            total.toLocaleString("vi-VN", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }) +
             " ₫\n\nVui lòng thử lại từ màn hình bán hàng.",
         );
         return;
@@ -977,7 +985,7 @@ export function EInvoiceModal({
                   readOnly={false}
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="email">{t('einvoice.email')}</Label>
                 <Input
@@ -1039,7 +1047,7 @@ export function EInvoiceModal({
                     activeInputField === 'customerName' ? 'Tên đơn vị' :
                     activeInputField === 'address' ? 'Địa chỉ' :
                     activeInputField === 'phoneNumber' ? 'Số điện thoại' :
-                    
+
                     activeInputField === 'email' ? 'Email' : activeInputField
                   }
                 </p>
