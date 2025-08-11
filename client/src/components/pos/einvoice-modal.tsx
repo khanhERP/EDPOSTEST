@@ -435,10 +435,6 @@ export function EInvoiceModal({
 
       console.log("🟡 Prepared invoice data for later publishing:", invoiceData);
 
-      // Đóng modal e-invoice ngay lập tức
-      console.log('✅ Closing e-invoice modal and showing receipt');
-      onClose();
-
       // Show success message
       toast({
         title: 'Thành công',
@@ -458,6 +454,9 @@ export function EInvoiceModal({
 
         console.log('🍽️ Payment completed successfully for later publishing');
 
+        // Đóng modal e-invoice trước khi hiển thị receipt
+        onClose();
+
         // Gọi onConfirm để hiển thị receipt
         console.log('🍽️ Calling onConfirm for receipt display');
         onConfirm(invoiceData);
@@ -466,7 +465,11 @@ export function EInvoiceModal({
         // Logic cho POS hoặc fallback
         console.log('🏪 POS/Fallback E-Invoice Later: Processing payment completion');
 
+        // Đóng modal e-invoice trước khi hiển thị receipt
+        onClose();
+
         // Gọi onConfirm để hiển thị receipt modal
+        console.log('✅ Calling onConfirm to show receipt modal');
         onConfirm(invoiceData);
       }
 
