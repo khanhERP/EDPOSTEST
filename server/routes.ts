@@ -2748,6 +2748,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentMethod: invoiceData.paymentMethod,
         invoiceDate: new Date(invoiceData.invoiceDate),
         status: invoiceData.status || 'draft',
+        einvoiceStatus: invoiceData.einvoiceStatus || 0,
         notes: invoiceData.notes
       });
 

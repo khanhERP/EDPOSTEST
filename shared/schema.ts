@@ -375,6 +375,7 @@ export const invoices = pgTable("invoices", {
   paymentMethod: varchar("payment_method", { length: 50 }).notNull(),
   invoiceDate: timestamp("invoice_date").notNull(),
   status: varchar("status", { length: 20 }).notNull().default("draft"), // 'draft', 'published', 'cancelled'
+  einvoiceStatus: integer("einvoice_status").notNull().default(0), // 0=Chưa phát hành, 1=Đã phát hành, 2=Tạo nháp, 3=Đã duyệt, 4=Đã bị thay thế (hủy), 5=Thay thế tạm, 6=Thay thế, 7=Đã bị điều chỉnh, 8=Điều chỉnh tạm, 9=Điều chỉnh, 10=Đã hủy
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -510,6 +511,8 @@ export const insertInvoiceSchema = createInsertSchema(invoices).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  einvoiceStatus: z.number().min(0).max(10).optional().default(0),
 });
 
 export const insertInvoiceItemSchema = createInsertSchema(invoiceItems).omit({

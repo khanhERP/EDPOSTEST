@@ -345,6 +345,56 @@ export function EInvoiceModal({
         return;
       }
 
+      // Lưu hóa đơn vào database với trạng thái "Chưa phát hành" (0)
+      try {
+        console.log("💾 Saving unpublished invoice to database");
+        
+        const invoicePayload = {
+          customerId: null,
+          customerName: formData.customerName || "Khách hàng",
+          customerTaxCode: formData.taxCode || null,
+          customerAddress: formData.address || null,
+          customerPhone: formData.phoneNumber || null,
+          customerEmail: formData.email || null,
+          subtotal: (cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toFixed(2),
+          tax: (cartItems.reduce((sum, item) => sum + (item.price * item.quantity * (item.taxRate || 10) / 100), 0)).toFixed(2),
+          total: total.toFixed(2),
+          paymentMethod: 'einvoice',
+          invoiceDate: new Date().toISOString(),
+          status: 'draft',
+          einvoiceStatus: 0, // Chưa phát hành
+          notes: 'Hóa đơn đã lưu để phát hành sau',
+        };
+
+        const response = await fetch('/api/invoices', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...invoicePayload,
+            items: cartItems.map(item => ({
+              productId: item.id,
+              productName: item.name,
+              quantity: item.quantity,
+              unitPrice: parseFloat(item.price),
+              total: parseFloat(item.price) * item.quantity,
+              taxRate: parseFloat(item.taxRate || "10")
+            }))
+          })
+        });
+
+        if (response.ok) {
+          const savedInvoice = await response.json();
+          console.log("✅ Unpublished invoice saved to database:", savedInvoice);
+        } else {
+          throw new Error("Failed to save invoice to database");
+        }
+      } catch (dbError) {
+        console.error("❌ Database save error:", dbError);
+        throw new Error("Không thể lưu hóa đơn vào hệ thống");
+      }
+
       // Prepare the invoice data to be returned
       const invoiceData = {
         ...formData,
@@ -690,10 +740,69 @@ export function EInvoiceModal({
       console.log("Invoice published successfully:", result);
 
       if (result.success) {
-        // Show success message with invoice details
-        alert(
-          `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}\nNgày phát hành: ${result.data?.invDate ? new Date(result.data.invDate).toLocaleString('vi-VN') : "N/A"}`,
-        );
+        // Lưu hóa đơn vào database với trạng thái "Đã phát hành" (1)
+        try {
+          console.log("💾 Saving published invoice to database");
+          
+          const invoicePayload = {
+            customerId: null,
+            customerName: formData.customerName || "Khách hàng",
+            customerTaxCode: formData.taxCode || null,
+            customerAddress: formData.address || null,
+            customerPhone: formData.phoneNumber || null,
+            customerEmail: formData.email || null,
+            subtotal: (cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toFixed(2),
+            tax: (cartItems.reduce((sum, item) => sum + (item.price * item.quantity * (item.taxRate || 10) / 100), 0)).toFixed(2),
+            total: total.toFixed(2),
+            paymentMethod: 'einvoice',
+            invoiceDate: new Date().toISOString(),
+            status: 'published',
+            einvoiceStatus: 1, // Đã phát hành
+            notes: `E-Invoice: ${result.data?.invoiceNo || 'N/A'}`,
+          };
+
+          const response = await fetch('/api/invoices', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              ...invoicePayload,
+              items: cartItems.map(item => ({
+                productId: item.id,
+                productName: item.name,
+                quantity: item.quantity,
+                unitPrice: parseFloat(item.price),
+                total: parseFloat(item.price) * item.quantity,
+                taxRate: parseFloat(item.taxRate || "10")
+              }))
+            })
+          });
+
+          if (response.ok) {
+            const savedInvoice = await response.json();
+            console.log("✅ Invoice saved to database:", savedInvoice);
+            
+            toast({
+              title: "Thành công",
+              description: `Hóa đơn điện tử đã được phát hành và lưu thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}`,
+            });
+          } else {
+            console.error("❌ Failed to save invoice to database");
+            toast({
+              title: "Cảnh báo",
+              description: "Hóa đơn điện tử đã phát hành thành công nhưng không thể lưu vào hệ thống",
+              variant: "destructive",
+            });
+          }
+        } catch (dbError) {
+          console.error("❌ Database save error:", dbError);
+          toast({
+            title: "Cảnh báo", 
+            description: "Hóa đơn điện tử đã phát hành thành công nhưng có lỗi khi lưu vào hệ thống",
+            variant: "destructive",
+          });
+        }
 
         // Đóng modal ngay lập tức trước khi xử lý logic
         onClose();
