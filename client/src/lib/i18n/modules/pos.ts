@@ -123,6 +123,7 @@ export interface POSTranslations {
   productsSuccessful: string;
   productsWithErrors: string;
   duplicateSkuCount: string;
+  each: string;
 }
 
 export const posTranslations: { [key: string]: POSTranslations } = {
@@ -250,6 +251,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     productsSuccessful: '성공적으로 가져온 제품',
     productsWithErrors: '오류가 있는 제품',
     duplicateSkuCount: '중복 SKU 수',
+    each: '개당',
   },
   en: {
     title: 'POS System',
@@ -376,6 +378,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     productsSuccessful: 'Products successful',
     productsWithErrors: 'Products with errors',
     duplicateSkuCount: 'Duplicate SKU count',
+    each: 'each',
   },
   vi: {
     title: 'Hệ thống POS',
@@ -502,5 +505,6 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     productsSuccessful: 'Sản phẩm nhập thành công',
     productsWithErrors: 'Sản phẩm có lỗi',
     duplicateSkuCount: 'Số lượng SKU trùng lặp',
+    each: 'mỗi cái',
   },
 };

@@ -231,7 +231,7 @@ export function ShoppingCart({
                 <div className="flex-1 min-w-0 pr-2">
                   <h4 className="font-medium pos-text-primary text-sm truncate">{item.name}</h4>
                   <div className="space-y-1">
-                    <p className="text-xs pos-text-secondary">{parseFloat(item.price).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ each</p>
+                    <p className="text-xs pos-text-secondary">{parseFloat(item.price).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ {t('pos.each')}</p>
                     {item.taxRate && parseFloat(item.taxRate) > 0 && (
                       <p className="text-xs text-orange-600">
                         Thuế: {(parseFloat(item.price) * parseFloat(item.taxRate) / 100 * item.quantity).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ ({item.taxRate}%)
