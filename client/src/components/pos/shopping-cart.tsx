@@ -102,7 +102,7 @@ export function ShoppingCart({
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
         total: total.toFixed(2),
-        paymentMethod: "bankTransfer",
+        paymentMethod: "preview", // Sử dụng "preview" thay vì "bankTransfer" để phân biệt
         amountReceived: total.toFixed(2),
         change: "0.00",
         cashierName: "John Smith",

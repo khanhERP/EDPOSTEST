@@ -71,12 +71,11 @@ export function ReceiptModal({
 
   console.log("Receipt Modal receipt:", receipt);
 
-  // Auto-open print window for e-invoice receipts
+  // Auto-open print window for e-invoice receipts only
   useEffect(() => {
     if (isOpen && receipt && !isPreview && !hasAutoOpened) {
-      // Check if this is from e-invoice (has transactionId and payment method is einvoice)
-      const isFromEInvoice = receipt.paymentMethod === 'einvoice' || 
-                            (receipt.transactionId && receipt.transactionId.startsWith('TXN-'));
+      // Check if this is specifically from e-invoice
+      const isFromEInvoice = receipt.paymentMethod === 'einvoice';
       
       if (isFromEInvoice) {
         console.log("🖨️ Auto-opening print window for e-invoice receipt");
