@@ -189,85 +189,20 @@ export function ShoppingCart({
     try {
       // Kiểm tra nếu là "phát hành sau" (publishLater) 
       if (eInvoiceData.publishLater) {
-        console.log("📝 E-invoice saved for later publishing, showing receipt");
+        console.log("📝 E-invoice saved for later publishing, processing completed in e-invoice modal");
 
-        // Tạo transaction với payment method là einvoice
-        const transactionData = {
-          transaction: {
-            transactionId: `TXN-${Date.now()}`,
-            total: total.toFixed(2),
-            subtotal: subtotal.toFixed(2),
-            tax: tax.toFixed(2),
-            paymentMethod: 'einvoice',
-            amountReceived: total.toFixed(2),
-            change: "0.00",
-            cashierName: "John Smith",
-          },
-          items: cart.map(item => ({
-            productId: item.id,
-            productName: item.name,
-            price: parseFloat(item.price),
-            quantity: item.quantity,
-            total: parseFloat(item.total),
-            sku: item.sku,
-            taxRate: parseFloat(item.taxRate || "10"),
-          })),
-        };
-
-        console.log("Creating transaction for later publishing:", transactionData);
-
-        const response = await fetch('/api/transactions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(transactionData),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const receipt = await response.json();
-        console.log("Receipt created for later publishing:", receipt);
-
-        // Update product stock
-        for (const item of cart) {
-          try {
-            const stockResponse = await fetch('/api/inventory/update-stock', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                productId: item.id,
-                quantity: item.quantity,
-                type: 'subtract',
-                notes: `E-invoice sale (later) - Transaction ${receipt.transactionId}`,
-              }),
-            });
-
-            if (stockResponse.ok) {
-              console.log(`✅ Stock updated for product ${item.id}`);
-            }
-          } catch (stockError) {
-            console.error(`Stock update error for product ${item.id}:`, stockError);
-          }
-        }
-
-        // Clear cart trước khi hiển thị receipt modal
+        // Không cần tạo transaction ở đây vì đã được xử lý trong e-invoice modal
+        // Chỉ cần clear cart và hiển thị thông báo thành công
+        
+        // Clear cart
         onClearCart();
-
-        // Show receipt modal sau khi clear cart
-        console.log("📄 Showing receipt modal for later publishing");
-        setCurrentReceipt(receipt);
-        setShowReceiptModal(true);
 
         toast({
           title: "Thành công",
-          description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau. Receipt đã được tạo.",
+          description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
         });
 
+        console.log("✅ E-invoice later processing completed, cart cleared");
         return;
       }
 

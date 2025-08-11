@@ -718,18 +718,19 @@ export function PaymentMethodModal({
           console.log('📧 E-Invoice processing completed:', eInvoiceData);
           setShowEInvoice(false);
 
-          // Kiểm tra xem có phải là "phát hành sau" không
-          if (eInvoiceData.publishLater) {
-            console.log('⏳ E-Invoice scheduled for later publishing, proceeding to receipt');
-          } else {
-            console.log('✅ E-Invoice published immediately, proceeding to receipt');
-          }
-
           // Close payment modal first
           onClose();
-          
-          // Then complete the payment process and show receipt
-          onSelectMethod(selectedPaymentMethod);
+
+          // Kiểm tra xem có phải là "phát hành sau" không
+          if (eInvoiceData.publishLater) {
+            console.log('⏳ E-Invoice scheduled for later publishing, not calling onSelectMethod');
+            // Không gọi onSelectMethod vì đã được xử lý hoàn toàn trong e-invoice modal
+            return;
+          } else {
+            console.log('✅ E-Invoice published immediately, proceeding with payment completion');
+            // Chỉ gọi onSelectMethod khi phát hành ngay lập tức
+            onSelectMethod(selectedPaymentMethod);
+          }
         }}
         total={total}
         cartItems={cartItems}
