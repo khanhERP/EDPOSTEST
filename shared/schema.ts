@@ -360,6 +360,41 @@ export const inventoryTransactions = pgTable("inventory_transactions", {
   createdAt: varchar("created_at", { length: 50 }).notNull(),
 });
 
+export const invoices = pgTable("invoices", {
+  id: serial("id").primaryKey(),
+  invoiceNumber: varchar("invoice_number", { length: 50 }).unique().notNull(),
+  customerId: integer("customer_id").references(() => customers.id),
+  customerName: varchar("customer_name", { length: 100 }).notNull(),
+  customerTaxCode: varchar("customer_tax_code", { length: 20 }),
+  customerAddress: text("customer_address"),
+  customerPhone: varchar("customer_phone", { length: 20 }),
+  customerEmail: varchar("customer_email", { length: 100 }),
+  subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
+  tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  paymentMethod: varchar("payment_method", { length: 50 }).notNull(),
+  invoiceDate: timestamp("invoice_date").notNull(),
+  status: varchar("status", { length: 20 }).notNull().default("draft"), // 'draft', 'published', 'cancelled'
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const invoiceItems = pgTable("invoice_items", {
+  id: serial("id").primaryKey(),
+  invoiceId: integer("invoice_id")
+    .references(() => invoices.id)
+    .notNull(),
+  productId: integer("product_id")
+    .references(() => products.id)
+    .notNull(),
+  productName: varchar("product_name", { length: 200 }).notNull(),
+  quantity: integer("quantity").notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
+  taxRate: decimal("tax_rate", { precision: 5, scale: 2 }).notNull().default("10.00"),
+});
+
 export const eInvoiceConnections = pgTable("einvoice_connections", {
   id: serial("id").primaryKey(),
   symbol: varchar("symbol", { length: 10 }).notNull(),
@@ -471,12 +506,27 @@ export const insertInvoiceTemplateSchema = createInsertSchema(
   updatedAt: true,
 });
 
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInvoiceItemSchema = createInsertSchema(invoiceItems).omit({
+  id: true,
+  invoiceId: true,
+});
+
 export type EInvoiceConnection = typeof eInvoiceConnections.$inferSelect;
 export type InsertEInvoiceConnection = z.infer<
   typeof insertEInvoiceConnectionSchema
 >;
 export type InvoiceTemplate = typeof invoiceTemplates.$inferSelect;
 export type InsertInvoiceTemplate = z.infer<typeof insertInvoiceTemplateSchema>;
+export type Invoice = typeof invoices.$inferSelect;
+export type InvoiceItem = typeof invoiceItems.$inferSelect;
+export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
+export type InsertInvoiceItem = z.infer<typeof insertInvoiceItemSchema>;
 
 // Cart item type for frontend use
 export type CartItem = {

@@ -44,6 +44,13 @@ export function ShoppingCart({
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const { t } = useTranslation();
 
+  // State for E-invoice modal (assuming it exists in your project)
+  const [showEInvoice, setShowEInvoice] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(""); // To store the selected payment method for E-invoice
+  const [onClose, setOnClose] = useState(() => () => {}); // Placeholder for the close function of the E-invoice modal
+  const [onSelectMethod, setOnSelectMethod] = useState(() => () => {}); // Placeholder for the selection function
+  const [onShowEInvoice, setOnShowEInvoice] = useState(() => () => {}); // Placeholder for triggering the receipt modal after E-invoice
+
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
     if (item.taxRate && parseFloat(item.taxRate) > 0) {
@@ -141,8 +148,24 @@ export function ShoppingCart({
 
   const handleReceiptConfirm = () => {
     setShowReceiptPreview(false);
-    setShowPaymentMethodModal(true);
+    // For bank transfer, directly proceed to e-invoice confirmation
+    // For cash, you might have a different flow or proceed to payment confirmation
+    if (paymentMethod === "bankTransfer") {
+      setSelectedPaymentMethod("bankTransfer"); // Set the payment method
+      // Assuming E-invoice modal needs these callbacks and the current cart data
+      // You might need to pass actual functions for onClose and onSelectMethod from where EInvoiceModal is used
+      setOnClose(() => () => setShowPaymentMethodModal(false)); // Example: close payment method modal
+      setOnSelectMethod(() => (method: string) => {
+        // This would be called after E-invoice is handled, but the logic is now inside handleEInvoiceConfirm
+      });
+      setOnShowEInvoice(() => () => setShowPaymentMethodModal(true)); // Example: show payment method modal again after e-invoice
+      setShowEInvoice(true); // Show the e-invoice modal
+    } else {
+      // Handle cash payment flow if needed
+      setShowPaymentMethodModal(true); // Or directly call onCheckout if no further modal is needed
+    }
   };
+
 
   const handleCardPaymentMethodSelect = (method: string) => {
     setSelectedCardMethod(method);
@@ -153,6 +176,83 @@ export function ShoppingCart({
       change: 0,
     };
     onCheckout(paymentData);
+  };
+
+  const handleEInvoiceConfirm = async (eInvoiceData: any) => {
+    // Process E-invoice data here
+    console.log("E-invoice data:", eInvoiceData);
+
+    try {
+      // Create invoice record in database
+      const invoicePayload = {
+        customerId: eInvoiceData.customerId || null,
+        customerName: eInvoiceData.customerName || "Khách hàng",
+        customerTaxCode: eInvoiceData.taxCode || null,
+        customerAddress: eInvoiceData.address || null,
+        customerPhone: eInvoiceData.phoneNumber || null,
+        customerEmail: eInvoiceData.email || null,
+        subtotal: subtotal.toFixed(2),
+        tax: tax.toFixed(2),
+        total: total.toFixed(2),
+        paymentMethod: selectedPaymentMethod,
+        items: cart.map(item => ({
+          productId: item.id,
+          productName: item.name,
+          quantity: item.quantity,
+          unitPrice: parseFloat(item.price),
+          total: parseFloat(item.total),
+          taxRate: parseFloat(item.taxRate || "10")
+        })),
+        invoiceDate: new Date().toISOString(),
+        status: eInvoiceData.publishLater ? 'draft' : 'published',
+        notes: eInvoiceData.notes || null
+      };
+
+      console.log("Saving invoice to database:", invoicePayload);
+
+      // Save invoice to database (you may need to create this API endpoint)
+      const response = await fetch('/api/invoices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(invoicePayload)
+      });
+
+      if (response.ok) {
+        const savedInvoice = await response.json();
+        console.log("Invoice saved successfully:", savedInvoice);
+
+        // Show success message
+        toast({
+          title: "Thành công",
+          description: `Hóa đơn ${savedInvoice.invoiceNumber || 'đã được tạo'} đã được lưu thành công`,
+        });
+      } else {
+        console.error("Failed to save invoice:", response.statusText);
+        toast({
+          title: "Lỗi",
+          description: "Không thể lưu hóa đơn vào hệ thống",
+          variant: "destructive",
+        });
+      }
+
+    } catch (error) {
+      console.error("Error saving invoice:", error);
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi lưu hóa đơn",
+        variant: "destructive",
+      });
+    }
+
+    setShowEInvoice(false);
+    onSelectMethod(selectedPaymentMethod);
+    onClose();
+    // Trigger receipt modal
+    if (onShowEInvoice) {
+      onShowEInvoice();
+    }
   };
 
   const canCheckout = cart.length > 0;
@@ -359,6 +459,25 @@ export function ShoppingCart({
           taxRate: parseFloat(item.taxRate || "10")
         }))}
       />
+
+      {/* E-Invoice Modal (Assuming you have this component) */}
+      {/* You would need to pass the correct props like onClose, onSelectMethod, onShowEInvoice, etc. */}
+      {/* Example: */}
+      {/* <EInvoiceModal
+        isOpen={showEInvoice}
+        onClose={onClose} // Use the stored onClose function
+        onConfirm={handleEInvoiceConfirm}
+        selectedPaymentMethod={selectedPaymentMethod} // Pass the currently selected method
+        cartItems={cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+          taxRate: parseFloat(item.taxRate || "10")
+        }))}
+        total={total}
+      /> */}
     </aside>
   );
 }

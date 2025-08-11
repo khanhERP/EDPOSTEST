@@ -2721,6 +2721,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Invoices management
+  app.post("/api/invoices", async (req, res) => {
+    try {
+      const invoiceData = req.body;
+      console.log("Creating invoice record:", invoiceData);
+
+      // Import invoice schemas
+      const { invoices, invoiceItems, insertInvoiceSchema, insertInvoiceItemSchema } = await import("@shared/schema");
+
+      // Generate invoice number
+      const invoiceNumber = `INV-${Date.now()}`;
+      
+      // Validate invoice data
+      const validatedInvoice = insertInvoiceSchema.parse({
+        invoiceNumber,
+        customerId: invoiceData.customerId,
+        customerName: invoiceData.customerName,
+        customerTaxCode: invoiceData.customerTaxCode,
+        customerAddress: invoiceData.customerAddress,
+        customerPhone: invoiceData.customerPhone,
+        customerEmail: invoiceData.customerEmail,
+        subtotal: invoiceData.subtotal.toString(),
+        tax: invoiceData.tax.toString(),
+        total: invoiceData.total.toString(),
+        paymentMethod: invoiceData.paymentMethod,
+        invoiceDate: new Date(invoiceData.invoiceDate),
+        status: invoiceData.status || 'draft',
+        notes: invoiceData.notes
+      });
+
+      // Save invoice to database
+      const [savedInvoice] = await db
+        .insert(invoices)
+        .values(validatedInvoice)
+        .returning();
+
+      console.log("Invoice saved to database:", savedInvoice);
+
+      // Save invoice items
+      if (invoiceData.items && Array.isArray(invoiceData.items)) {
+        const invoiceItemsData = invoiceData.items.map((item: any) => 
+          insertInvoiceItemSchema.parse({
+            productId: item.productId,
+            productName: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice.toString(),
+            total: item.total.toString(),
+            taxRate: item.taxRate.toString()
+          })
+        );
+
+        const savedItems = await db
+          .insert(invoiceItems)
+          .values(invoiceItemsData.map(item => ({
+            ...item,
+            invoiceId: savedInvoice.id
+          })))
+          .returning();
+
+        console.log("Invoice items saved:", savedItems);
+      }
+
+      res.status(201).json(savedInvoice);
+
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({
+          error: "Invalid invoice data",
+          details: error.errors
+        });
+      }
+      res.status(500).json({ 
+        error: "Failed to create invoice",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  app.get("/api/invoices", async (req, res) => {
+    try {
+      // Here you would fetch invoices from database
+      // For now, return empty array
+      res.json([]);
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({ error: "Failed to fetch invoices" });
+    }
+  });
+
   // E-invoice publish proxy endpoint
   app.post("/api/einvoice/publish", async (req, res) => {
     try {
