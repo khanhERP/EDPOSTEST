@@ -435,6 +435,16 @@ export function EInvoiceModal({
 
       console.log("🟡 Prepared invoice data for later publishing:", invoiceData);
 
+      // Đóng modal e-invoice ngay lập tức
+      console.log('✅ Closing e-invoice modal and showing receipt');
+      onClose();
+
+      // Show success message
+      toast({
+        title: 'Thành công',
+        description: 'Thông tin hóa đơn điện tử đã được lưu để phát hành sau.',
+      });
+
       // Handle different sources
       if (source === 'table' && orderId) {
         // Logic cho Table: Hoàn tất thanh toán trước, sau đó hiển thị receipt
@@ -448,15 +458,6 @@ export function EInvoiceModal({
 
         console.log('🍽️ Payment completed successfully for later publishing');
 
-        // Đóng modal sau khi hoàn tất thanh toán thành công
-        onClose();
-
-        // Show success message
-        toast({
-          title: 'Thành công',
-          description: 'Đơn hàng đã được thanh toán. Thông tin hóa đơn điện tử đã được lưu để phát hành sau.',
-        });
-
         // Gọi onConfirm để hiển thị receipt
         console.log('🍽️ Calling onConfirm for receipt display');
         onConfirm(invoiceData);
@@ -465,16 +466,7 @@ export function EInvoiceModal({
         // Logic cho POS hoặc fallback
         console.log('🏪 POS/Fallback E-Invoice Later: Processing payment completion');
 
-        // Đóng modal trước
-        onClose();
-
-        // Show success message
-        toast({
-          title: 'Thành công',
-          description: 'Đơn hàng đã được lưu thành công. Thông tin hóa đơn điện tử đã được lưu để phát hành sau.',
-        });
-
-        // Gọi onConfirm để xử lý
+        // Gọi onConfirm để hiển thị receipt modal
         onConfirm(invoiceData);
       }
 
