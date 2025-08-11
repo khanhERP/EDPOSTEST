@@ -422,6 +422,29 @@ export function EInvoiceModal({
       const savedOrder = await response.json();
       console.log("✅ Order saved to database:", savedOrder);
 
+      // Tạo receipt data thực sự cho receipt modal
+      const receiptData = {
+        transactionId: savedOrder.orderNumber || `TXN-${Date.now()}`,
+        items: cartItems.map(item => ({
+          id: item.id,
+          productId: item.id,
+          productName: item.name,
+          price: (typeof item.price === 'string' ? item.price : item.price.toString()),
+          quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+          total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)).toFixed(2),
+          sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+          taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
+        })),
+        subtotal: calculatedSubtotal.toFixed(2),
+        tax: calculatedTax.toFixed(2),
+        total: (typeof total === 'number' && !isNaN(total) ? total : calculatedSubtotal + calculatedTax).toFixed(2),
+        paymentMethod: 'einvoice',
+        amountReceived: (typeof total === 'number' && !isNaN(total) ? total : calculatedSubtotal + calculatedTax).toFixed(2),
+        change: "0.00",
+        cashierName: "John Smith",
+        createdAt: new Date().toISOString()
+      };
+
       // Prepare the invoice data to be returned
       const invoiceData = {
         ...formData,
@@ -431,9 +454,11 @@ export function EInvoiceModal({
         source: source || 'pos',
         orderId: savedOrder.id,
         publishLater: true, // Flag to indicate this is for later publishing
+        receipt: receiptData // Truyền receipt data thực sự
       };
 
       console.log("🟡 Prepared invoice data for later publishing:", invoiceData);
+      console.log("📄 Receipt data created:", receiptData);
 
       // Show success message
       toast({

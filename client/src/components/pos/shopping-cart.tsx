@@ -189,20 +189,35 @@ export function ShoppingCart({
     try {
       // Kiểm tra nếu là "phát hành sau" (publishLater) 
       if (eInvoiceData.publishLater) {
-        console.log("📝 E-invoice saved for later publishing, processing completed in e-invoice modal");
+        console.log("📝 E-invoice saved for later publishing, processing receipt display");
 
-        // Không cần tạo transaction ở đây vì đã được xử lý trong e-invoice modal
-        // Chỉ cần clear cart và hiển thị thông báo thành công
-        
-        // Clear cart
-        onClearCart();
+        // Kiểm tra nếu có receipt data từ e-invoice modal
+        if (eInvoiceData.receipt) {
+          console.log("📄 Displaying receipt for later publishing:", eInvoiceData.receipt);
+          
+          // Clear cart trước khi hiển thị receipt modal
+          onClearCart();
 
-        toast({
-          title: "Thành công",
-          description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
-        });
+          // Hiển thị receipt modal với data thực sự
+          setCurrentReceipt(eInvoiceData.receipt);
+          setShowReceiptModal(true);
 
-        console.log("✅ E-invoice later processing completed, cart cleared");
+          toast({
+            title: "Thành công",
+            description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
+          });
+        } else {
+          console.log("⚠️ No receipt data found for later publishing");
+          // Clear cart
+          onClearCart();
+
+          toast({
+            title: "Thành công", 
+            description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
+          });
+        }
+
+        console.log("✅ E-invoice later processing completed");
         return;
       }
 
