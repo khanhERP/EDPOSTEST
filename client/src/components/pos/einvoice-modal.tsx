@@ -78,7 +78,6 @@ export function EInvoiceModal({
     address: "",
     phoneNumber: "",
     email: "",
-    recipientName: "",
   });
 
   const [isTaxCodeLoading, setIsTaxCodeLoading] = useState(false);
@@ -161,7 +160,6 @@ export function EInvoiceModal({
         address: "",
         phoneNumber: "",
         email: "",
-        recipientName: "",
       });
     }
   }, [isOpen]); // Only reset when modal opens/closes
@@ -979,21 +977,7 @@ export function EInvoiceModal({
                   readOnly={false}
                 />
               </div>
-              <div>
-                <Label htmlFor="recipientName">{t('einvoice.recipient')}</Label>
-                <Input
-                  id="recipientName"
-                  ref={(el) => {inputRefs.current['recipientName'] = el}}
-                  value={formData.recipientName}
-                  onChange={(e) =>
-                    handleInputChange("recipientName", e.target.value)
-                  }
-                  onFocus={() => handleInputFocus('recipientName')}
-                  placeholder="Nguyễn Văn Ngọc"
-                  disabled={false}
-                  readOnly={false}
-                />
-              </div>
+              
               <div>
                 <Label htmlFor="email">{t('einvoice.email')}</Label>
                 <Input
@@ -1055,7 +1039,7 @@ export function EInvoiceModal({
                     activeInputField === 'customerName' ? 'Tên đơn vị' :
                     activeInputField === 'address' ? 'Địa chỉ' :
                     activeInputField === 'phoneNumber' ? 'Số điện thoại' :
-                    activeInputField === 'recipientName' ? 'Người nhận' :
+                    
                     activeInputField === 'email' ? 'Email' : activeInputField
                   }
                 </p>
