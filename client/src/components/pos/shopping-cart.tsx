@@ -7,7 +7,7 @@ import { useTranslation } from "@/lib/i18n";
 import { PaymentMethodModal } from "./payment-method-modal";
 import { ReceiptModal } from "./receipt-modal";
 import type { CartItem } from "@shared/schema";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 interface ShoppingCartProps {
   cart: CartItem[];
