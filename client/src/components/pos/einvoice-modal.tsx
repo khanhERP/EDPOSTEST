@@ -85,7 +85,7 @@ export function EInvoiceModal({
   const [isPublishing, setIsPublishing] = useState(false);
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
   const [activeInputField, setActiveInputField] = useState<string | null>(null);
-  
+
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const { toast } = useToast();
@@ -186,11 +186,11 @@ export function EInvoiceModal({
 
   const handleVirtualKeyPress = (key: string) => {
     if (!activeInputField) return;
-    
+
     const currentValue = formData[activeInputField as keyof typeof formData] || '';
     const newValue = currentValue + key;
     handleInputChange(activeInputField, newValue);
-    
+
     // Focus the input to show cursor position
     const inputRef = inputRefs.current[activeInputField];
     if (inputRef) {
@@ -204,11 +204,11 @@ export function EInvoiceModal({
 
   const handleVirtualBackspace = () => {
     if (!activeInputField) return;
-    
+
     const currentValue = formData[activeInputField as keyof typeof formData] || '';
     const newValue = currentValue.slice(0, -1);
     handleInputChange(activeInputField, newValue);
-    
+
     // Focus the input to show cursor position
     const inputRef = inputRefs.current[activeInputField];
     if (inputRef) {
@@ -349,7 +349,7 @@ export function EInvoiceModal({
       try {
         console.log("💾 Saving unpublished invoice to database");
         console.log("💾 Cart items for invoice:", JSON.stringify(cartItems, null, 2));
-        
+
         // Calculate subtotal and tax with proper type conversion
         const calculatedSubtotal = cartItems.reduce((sum, item) => {
           const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
@@ -378,7 +378,7 @@ export function EInvoiceModal({
           customerEmail: formData.email || null,
           subtotal: calculatedSubtotal.toFixed(2),
           tax: calculatedTax.toFixed(2),
-          total: total.toFixed(2),
+          total: (typeof total === 'number' && !isNaN(total) ? total : 0).toFixed(2),
           paymentMethod: 'einvoice',
           invoiceDate: new Date().toISOString(),
           status: 'draft',
@@ -414,14 +414,14 @@ export function EInvoiceModal({
           const errorText = await response.text();
           console.error("❌ Database save failed with status:", response.status);
           console.error("❌ Error response:", errorText);
-          
+
           let errorData;
           try {
             errorData = JSON.parse(errorText);
           } catch {
             errorData = { error: errorText };
           }
-          
+
           throw new Error(`HTTP ${response.status}: ${errorData.error || errorData.details || errorText}`);
         }
       } catch (dbError) {
@@ -429,7 +429,7 @@ export function EInvoiceModal({
         console.error("- Error type:", dbError?.constructor?.name);
         console.error("- Error message:", dbError?.message);
         console.error("- Full error:", dbError);
-        
+
         const errorMessage = dbError instanceof Error ? dbError.message : String(dbError);
         throw new Error(`Không thể lưu hóa đơn vào hệ thống: ${errorMessage}`);
       }
@@ -451,7 +451,7 @@ export function EInvoiceModal({
       if (source === 'table' && orderId) {
         // Logic cho Table: Hoàn tất thanh toán trước, sau đó hiển thị receipt
         console.log('🍽️ Table E-Invoice Later: Completing payment for order:', orderId);
-        
+
         // Gọi mutation để hoàn tất thanh toán
         await completePaymentMutation.mutateAsync({
           orderId: orderId,
@@ -459,10 +459,10 @@ export function EInvoiceModal({
         });
 
         console.log('🍽️ Payment completed successfully for later publishing');
-        
+
         // Đóng modal sau khi hoàn tất thanh toán thành công
         onClose();
-        
+
         // Show success message
         toast({
           title: 'Thành công',
@@ -476,13 +476,13 @@ export function EInvoiceModal({
       } else {
         // Logic cho POS hoặc fallback
         console.log('🏪 POS/Fallback E-Invoice Later: Processing payment completion');
-        
+
         // Đóng modal trước
         onClose();
-        
+
         // Show success message
         toast({
-          title: 'Thành công', 
+          title: 'Thành công',
           description: 'Thông tin hóa đơn điện tử đã được lưu để phát hành sau.',
         });
 
@@ -492,7 +492,7 @@ export function EInvoiceModal({
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
-      
+
       // Show detailed error message
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast({
@@ -782,7 +782,7 @@ export function EInvoiceModal({
         // Lưu hóa đơn vào database với trạng thái "Đã phát hành" (1)
         try {
           console.log("💾 Saving published invoice to database");
-          
+
           // Calculate subtotal and tax with proper type conversion
           const calculatedSubtotal = cartItems.reduce((sum, item) => {
             const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
@@ -806,7 +806,7 @@ export function EInvoiceModal({
             customerEmail: formData.email || null,
             subtotal: calculatedSubtotal.toFixed(2),
             tax: calculatedTax.toFixed(2),
-            total: total.toFixed(2),
+            total: (typeof total === 'number' && !isNaN(total) ? total : 0).toFixed(2),
             paymentMethod: 'einvoice',
             invoiceDate: new Date().toISOString(),
             status: 'published',
@@ -835,7 +835,7 @@ export function EInvoiceModal({
           if (response.ok) {
             const savedInvoice = await response.json();
             console.log("✅ Invoice saved to database:", savedInvoice);
-            
+
             toast({
               title: "Thành công",
               description: `Hóa đơn điện tử đã được phát hành và lưu thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}`,
@@ -851,7 +851,7 @@ export function EInvoiceModal({
         } catch (dbError) {
           console.error("❌ Database save error:", dbError);
           toast({
-            title: "Cảnh báo", 
+            title: "Cảnh báo",
             description: "Hóa đơn điện tử đã phát hành thành công nhưng có lỗi khi lưu vào hệ thống",
             variant: "destructive",
           });
