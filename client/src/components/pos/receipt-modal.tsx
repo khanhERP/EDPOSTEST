@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { EInvoiceModal } from "./einvoice-modal";
 import { PaymentMethodModal } from "./payment-method-modal";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/i18n";
 
 interface ReceiptModalProps {
@@ -41,6 +41,7 @@ export function ReceiptModal({
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
+  const [hasAutoOpened, setHasAutoOpened] = useState(false);
   const { t } = useTranslation();
 
   // Debug logging when modal opens and when props change
@@ -69,6 +70,33 @@ export function ReceiptModal({
   }
 
   console.log("Receipt Modal receipt:", receipt);
+
+  // Auto-open print window for e-invoice receipts
+  useEffect(() => {
+    if (isOpen && receipt && !isPreview && !hasAutoOpened) {
+      // Check if this is from e-invoice (has transactionId and payment method is einvoice)
+      const isFromEInvoice = receipt.paymentMethod === 'einvoice' || 
+                            (receipt.transactionId && receipt.transactionId.startsWith('TXN-'));
+      
+      if (isFromEInvoice) {
+        console.log("🖨️ Auto-opening print window for e-invoice receipt");
+        setHasAutoOpened(true);
+        
+        // Small delay to ensure DOM is ready
+        setTimeout(() => {
+          handlePrint();
+        }, 500);
+      }
+    }
+  }, [isOpen, receipt, isPreview, hasAutoOpened]);
+
+  // Reset hasAutoOpened when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setHasAutoOpened(false);
+    }
+  }, [isOpen]);
+
   // Query store settings to get dynamic address
   const { data: storeSettings } = useQuery({
     queryKey: ["/api/store-settings"],
