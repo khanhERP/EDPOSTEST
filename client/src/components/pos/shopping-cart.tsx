@@ -51,6 +51,11 @@ export function ShoppingCart({
   const [onSelectMethod, setOnSelectMethod] = useState(() => () => {}); // Placeholder for the selection function
   const [onShowEInvoice, setOnShowEInvoice] = useState(() => () => {}); // Placeholder for triggering the receipt modal after E-invoice
 
+  // New states for Receipt Modal management
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [currentReceipt, setCurrentReceipt] = useState<any>(null);
+
+
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
     if (item.taxRate && parseFloat(item.taxRate) > 0) {
@@ -154,14 +159,14 @@ export function ShoppingCart({
   const handlePaymentMethodSelect = (method: string) => {
     console.log('🎯 Payment method selected:', method);
     setShowPaymentMethodModal(false);
-    
+
     // Complete the payment with the selected method
     const paymentData = {
       paymentMethod: method,
       amountReceived: total,
       change: 0,
     };
-    
+
     console.log('✅ Completing checkout with payment data:', paymentData);
     onCheckout(paymentData);
   };
@@ -179,83 +184,178 @@ export function ShoppingCart({
   };
 
   const handleEInvoiceConfirm = async (eInvoiceData: any) => {
-    // Process E-invoice data here
-    console.log("E-invoice data:", eInvoiceData);
+    console.log("📧 E-invoice confirmed:", eInvoiceData);
 
     try {
-      // Create invoice record in database
-      const invoicePayload = {
-        customerId: eInvoiceData.customerId || null,
-        customerName: eInvoiceData.customerName || "Khách hàng",
-        customerTaxCode: eInvoiceData.taxCode || null,
-        customerAddress: eInvoiceData.address || null,
-        customerPhone: eInvoiceData.phoneNumber || null,
-        customerEmail: eInvoiceData.email || null,
-        subtotal: (typeof subtotal === 'number' && !isNaN(subtotal) ? subtotal : 0).toFixed(2),
-        tax: (typeof tax === 'number' && !isNaN(tax) ? tax : 0).toFixed(2),
-        total: (typeof total === 'number' && !isNaN(total) ? total : 0).toFixed(2),
-        paymentMethod: selectedPaymentMethod,
-        invoiceDate: new Date().toISOString(),
-        status: eInvoiceData.publishLater ? 'draft' : 'published',
-        einvoiceStatus: eInvoiceData.publishLater ? 0 : 1, // 0=Chưa phát hành, 1=Đã phát hành
-        notes: eInvoiceData.notes || null,
-        items: cart.map(item => ({
-          productId: item.id,
-          productName: item.name,
-          quantity: item.quantity,
-          unitPrice: parseFloat(item.price),
-          total: parseFloat(item.total),
-          taxRate: parseFloat(item.taxRate || "10")
-        }))
-      };
+      // Kiểm tra nếu là "phát hành sau" (publishLater) 
+      if (eInvoiceData.publishLater) {
+        console.log("📝 E-invoice saved for later publishing, showing receipt");
 
-      console.log("Saving invoice to database:", invoicePayload);
+        // Tạo transaction với payment method là einvoice
+        const transactionData = {
+          transaction: {
+            transactionId: `TXN-${Date.now()}`,
+            total: total.toFixed(2),
+            subtotal: subtotal.toFixed(2),
+            tax: tax.toFixed(2),
+            paymentMethod: 'einvoice',
+            amountReceived: total.toFixed(2),
+            change: "0.00",
+            cashierName: "John Smith",
+          },
+          items: cart.map(item => ({
+            productId: item.id,
+            productName: item.name,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            total: parseFloat(item.total),
+            sku: item.sku,
+            taxRate: parseFloat(item.taxRate || "10"),
+          })),
+        };
 
-      // Save invoice to database using the existing API endpoint
-      const response = await fetch('/api/invoices', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(invoicePayload)
-      });
+        const response = await fetch('/api/transactions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(transactionData),
+        });
 
-      if (response.ok) {
-        const savedInvoice = await response.json();
-        console.log("Invoice saved successfully:", savedInvoice);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-        // Show success message
+        const receipt = await response.json();
+        console.log("Receipt created for later publishing:", receipt);
+
+        // Update product stock
+        for (const item of cart) {
+          try {
+            const stockResponse = await fetch('/api/inventory/update-stock', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                productId: item.id,
+                quantity: item.quantity,
+                type: 'subtract',
+                notes: `E-invoice sale (later) - Transaction ${receipt.transactionId}`,
+              }),
+            });
+
+            if (stockResponse.ok) {
+              console.log(`✅ Stock updated for product ${item.id}`);
+            }
+          } catch (stockError) {
+            console.error(`Stock update error for product ${item.id}:`, stockError);
+          }
+        }
+
+        // Show receipt modal
+        setShowReceiptModal(true);
+        setCurrentReceipt(receipt);
+
+        // Clear cart
+        clearCart();
+        setSelectedPaymentMethod(null);
+
+        return;
+      }
+
+      // Nếu phát hành thành công (có showReceipt flag)
+      if (eInvoiceData.showReceipt) {
+        console.log("✅ E-invoice published successfully, creating transaction and showing receipt");
+
+        // Tạo transaction với payment method là einvoice
+        const transactionData = {
+          transaction: {
+            transactionId: `TXN-${Date.now()}`,
+            total: total.toFixed(2),
+            subtotal: subtotal.toFixed(2),
+            tax: tax.toFixed(2),
+            paymentMethod: 'einvoice',
+            amountReceived: total.toFixed(2),
+            change: "0.00",
+            cashierName: "John Smith",
+          },
+          items: cart.map(item => ({
+            productId: item.id,
+            productName: item.name,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            total: parseFloat(item.total),
+            sku: item.sku,
+            taxRate: parseFloat(item.taxRate || "10"),
+          })),
+        };
+
+        console.log("Creating transaction for published e-invoice:", transactionData);
+
+        const response = await fetch('/api/transactions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(transactionData),
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const receipt = await response.json();
+        console.log("Receipt created for published e-invoice:", receipt);
+
+        // Update product stock
+        for (const item of cart) {
+          try {
+            const stockResponse = await fetch('/api/inventory/update-stock', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                productId: item.id,
+                quantity: item.quantity,
+                type: 'subtract',
+                notes: `E-invoice sale - Transaction ${receipt.transactionId} - Invoice ${eInvoiceData.invoiceData?.invoiceNo || 'N/A'}`,
+              }),
+            });
+
+            if (stockResponse.ok) {
+              console.log(`✅ Stock updated for product ${item.id}`);
+            }
+          } catch (stockError) {
+            console.error(`Stock update error for product ${item.id}:`, stockError);
+          }
+        }
+
+        // Show receipt modal
+        setShowReceiptModal(true);
+        setCurrentReceipt(receipt);
+
+        // Clear cart
+        clearCart();
+        setSelectedPaymentMethod(null);
+
         toast({
           title: "Thành công",
-          description: `Hóa đơn ${savedInvoice.invoiceNumber || 'đã được tạo'} đã được lưu thành công`,
-        });
-      } else {
-        const errorData = await response.text();
-        console.error("Failed to save invoice:", response.statusText, errorData);
-        toast({
-          title: "Lỗi",
-          description: "Không thể lưu hóa đơn vào hệ thống. Vui lòng thử lại.",
-          variant: "destructive",
+          description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${eInvoiceData.invoiceData?.invoiceNo || 'N/A'}`,
         });
       }
 
     } catch (error) {
-      console.error("Error saving invoice:", error);
+      console.error('Error processing e-invoice:', error);
       toast({
-        title: "Lỗi",
-        description: "Có lỗi xảy ra khi lưu hóa đơn. Vui lòng kiểm tra kết nối mạng.",
         variant: "destructive",
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi xử lý hóa đơn điện tử",
       });
     }
-
-    setShowEInvoice(false);
-    onSelectMethod(selectedPaymentMethod);
-    onClose();
-    // Trigger receipt modal
-    if (onShowEInvoice) {
-      onShowEInvoice();
-    }
   };
+
 
   const canCheckout = cart.length > 0;
 
@@ -460,6 +560,14 @@ export function ShoppingCart({
           sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
           taxRate: parseFloat(item.taxRate || "10")
         }))}
+      />
+
+      {/* Receipt Modal */}
+      <ReceiptModal
+        isOpen={showReceiptModal}
+        onClose={() => setShowReceiptModal(false)}
+        receipt={currentReceipt}
+        onConfirm={() => setShowReceiptModal(false)} // Confirming receipt usually means closing it
       />
 
       {/* E-Invoice Modal (Assuming you have this component) */}
