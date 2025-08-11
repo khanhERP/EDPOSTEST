@@ -349,6 +349,20 @@ export function EInvoiceModal({
       try {
         console.log("💾 Saving unpublished invoice to database");
         
+        // Calculate subtotal and tax with proper type conversion
+        const calculatedSubtotal = cartItems.reduce((sum, item) => {
+          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+          return sum + (itemPrice * itemQuantity);
+        }, 0);
+
+        const calculatedTax = cartItems.reduce((sum, item) => {
+          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+          const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
+          return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
+        }, 0);
+
         const invoicePayload = {
           customerId: null,
           customerName: formData.customerName || "Khách hàng",
@@ -356,8 +370,8 @@ export function EInvoiceModal({
           customerAddress: formData.address || null,
           customerPhone: formData.phoneNumber || null,
           customerEmail: formData.email || null,
-          subtotal: (cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toFixed(2),
-          tax: (cartItems.reduce((sum, item) => sum + (item.price * item.quantity * (item.taxRate || 10) / 100), 0)).toFixed(2),
+          subtotal: calculatedSubtotal.toFixed(2),
+          tax: calculatedTax.toFixed(2),
           total: total.toFixed(2),
           paymentMethod: 'einvoice',
           invoiceDate: new Date().toISOString(),
@@ -376,10 +390,10 @@ export function EInvoiceModal({
             items: cartItems.map(item => ({
               productId: item.id,
               productName: item.name,
-              quantity: item.quantity,
-              unitPrice: parseFloat(item.price),
-              total: parseFloat(item.price) * item.quantity,
-              taxRate: parseFloat(item.taxRate || "10")
+              quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+              unitPrice: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+              total: (typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity),
+              taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
             }))
           })
         });
@@ -744,6 +758,20 @@ export function EInvoiceModal({
         try {
           console.log("💾 Saving published invoice to database");
           
+          // Calculate subtotal and tax with proper type conversion
+          const calculatedSubtotal = cartItems.reduce((sum, item) => {
+            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+            const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+            return sum + (itemPrice * itemQuantity);
+          }, 0);
+
+          const calculatedTax = cartItems.reduce((sum, item) => {
+            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+            const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+            const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
+            return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
+          }, 0);
+
           const invoicePayload = {
             customerId: null,
             customerName: formData.customerName || "Khách hàng",
@@ -751,8 +779,8 @@ export function EInvoiceModal({
             customerAddress: formData.address || null,
             customerPhone: formData.phoneNumber || null,
             customerEmail: formData.email || null,
-            subtotal: (cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)).toFixed(2),
-            tax: (cartItems.reduce((sum, item) => sum + (item.price * item.quantity * (item.taxRate || 10) / 100), 0)).toFixed(2),
+            subtotal: calculatedSubtotal.toFixed(2),
+            tax: calculatedTax.toFixed(2),
             total: total.toFixed(2),
             paymentMethod: 'einvoice',
             invoiceDate: new Date().toISOString(),
@@ -771,10 +799,10 @@ export function EInvoiceModal({
               items: cartItems.map(item => ({
                 productId: item.id,
                 productName: item.name,
-                quantity: item.quantity,
-                unitPrice: parseFloat(item.price),
-                total: parseFloat(item.price) * item.quantity,
-                taxRate: parseFloat(item.taxRate || "10")
+                quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+                unitPrice: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+                total: (typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity),
+                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
               }))
             })
           });
