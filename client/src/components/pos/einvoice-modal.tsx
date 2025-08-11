@@ -328,7 +328,7 @@ export function EInvoiceModal({
 
   const handlePublishLater = async () => {
     try {
-      console.log("🟡 PHÁT HÀNH SAU - Lưu thông tin hóa đơn không phát hành");
+      console.log("🟡 PHÁT HÀNH SAU - Lưu thông tin đơn hàng không phát hành");
       console.log("🟡 Source:", source, "OrderId:", orderId);
 
       // Debug log current cart items
@@ -341,98 +341,88 @@ export function EInvoiceModal({
       // Validate cart items first
       if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
         console.error("❌ No valid cart items found for later publishing");
-        alert("Không có sản phẩm nào trong giỏ hàng để lưu thông tin hóa đơn.");
+        toast({
+          title: 'Lỗi',
+          description: 'Không có sản phẩm nào trong giỏ hàng để lưu thông tin.',
+          variant: 'destructive',
+        });
         return;
       }
 
-      // Lưu hóa đơn vào database với trạng thái "Chưa phát hành" (0)
-      try {
-        console.log("💾 Saving unpublished invoice to database");
-        console.log("💾 Cart items for invoice:", JSON.stringify(cartItems, null, 2));
+      // Calculate subtotal and tax with proper type conversion
+      const calculatedSubtotal = cartItems.reduce((sum, item) => {
+        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+        console.log(`💰 Item calculation: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Subtotal: ${itemPrice * itemQuantity}`);
+        return sum + (itemPrice * itemQuantity);
+      }, 0);
 
-        // Calculate subtotal and tax with proper type conversion
-        const calculatedSubtotal = cartItems.reduce((sum, item) => {
-          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-          console.log(`💰 Item calculation: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Subtotal: ${itemPrice * itemQuantity}`);
-          return sum + (itemPrice * itemQuantity);
-        }, 0);
+      const calculatedTax = cartItems.reduce((sum, item) => {
+        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
+        const itemTax = (itemPrice * itemQuantity * itemTaxRate / 100);
+        console.log(`💰 Tax calculation: ${item.name} - Tax rate: ${itemTaxRate}%, Tax: ${itemTax}`);
+        return sum + itemTax;
+      }, 0);
 
-        const calculatedTax = cartItems.reduce((sum, item) => {
-          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-          const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
-          const itemTax = (itemPrice * itemQuantity * itemTaxRate / 100);
-          console.log(`💰 Tax calculation: ${item.name} - Tax rate: ${itemTaxRate}%, Tax: ${itemTax}`);
-          return sum + itemTax;
-        }, 0);
+      console.log(`💰 Total calculations: Subtotal: ${calculatedSubtotal}, Tax: ${calculatedTax}, Total: ${total}`);
 
-        console.log(`💰 Total calculations: Subtotal: ${calculatedSubtotal}, Tax: ${calculatedTax}, Total: ${total}`);
-
-        const invoicePayload = {
-          customerId: null,
+      // Prepare order payload
+      const orderPayload = {
+        order: {
+          orderNumber: `ORD-${Date.now()}`,
+          tableId: null, // No table for POS orders
           customerName: formData.customerName || "Khách hàng",
-          customerTaxCode: formData.taxCode || null,
-          customerAddress: formData.address || null,
-          customerPhone: formData.phoneNumber || null,
-          customerEmail: formData.email || null,
           subtotal: calculatedSubtotal.toFixed(2),
           tax: calculatedTax.toFixed(2),
-          total: (typeof total === 'number' && !isNaN(total) ? total : 0).toFixed(2),
+          total: (typeof total === 'number' && !isNaN(total) ? total : calculatedSubtotal + calculatedTax).toFixed(2),
+          status: 'pending',
           paymentMethod: 'einvoice',
-          invoiceDate: new Date().toISOString(),
-          status: 'draft',
+          paymentStatus: 'pending',
           einvoiceStatus: 0, // Chưa phát hành
-          notes: 'Hóa đơn đã lưu để phát hành sau',
-          items: cartItems.map(item => ({
-            productId: item.id,
-            productName: item.name,
-            quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-            unitPrice: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-            total: (typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity),
-            taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
-          }))
-        };
+          notes: `E-Invoice Info - MST: ${formData.taxCode || 'N/A'}, Tên: ${formData.customerName}, Địa chỉ: ${formData.address || 'N/A'}`,
+          orderedAt: new Date(),
+          employeeId: null,
+          salesChannel: 'pos'
+        },
+        items: cartItems.map(item => ({
+          productId: item.id,
+          quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+          unitPrice: (typeof item.price === 'string' ? parseFloat(item.price) : item.price).toFixed(2),
+          total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)).toFixed(2),
+          notes: `Tax Rate: ${typeof item.taxRate === 'string' ? item.taxRate : (item.taxRate || 10)}%`
+        }))
+      };
 
-        console.log("💾 Invoice payload:", JSON.stringify(invoicePayload, null, 2));
+      console.log("💾 Order payload:", JSON.stringify(orderPayload, null, 2));
 
-        const response = await fetch('/api/invoices', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(invoicePayload)
-        });
+      // Save order to database
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderPayload)
+      });
 
-        console.log("💾 Response status:", response.status);
-        console.log("💾 Response headers:", Object.fromEntries(response.headers.entries()));
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Order save failed with status:", response.status);
+        console.error("❌ Error response:", errorText);
 
-        if (response.ok) {
-          const savedInvoice = await response.json();
-          console.log("✅Unpublished invoice saved to database:", savedInvoice);
-        } else {
-          const errorText = await response.text();
-          console.error("❌ Database save failed with status:", response.status);
-          console.error("❌ Error response:", errorText);
-
-          let errorData;
-          try {
-            errorData = JSON.parse(errorText);
-          } catch {
-            errorData = { error: errorText };
-          }
-
-          throw new Error(`HTTP ${response.status}: ${errorData.error || errorData.details || errorText}`);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText };
         }
-      } catch (dbError) {
-        console.error("❌ Database save error details:");
-        console.error("- Error type:", dbError?.constructor?.name);
-        console.error("- Error message:", dbError?.message);
-        console.error("- Full error:", dbError);
 
-        const errorMessage = dbError instanceof Error ? dbError.message : String(dbError);
-        throw new Error(`Không thể lưu hóa đơn vào hệ thống: ${errorMessage}`);
+        throw new Error(`HTTP ${response.status}: ${errorData.error || errorData.details || errorText}`);
       }
+
+      const savedOrder = await response.json();
+      console.log("✅ Order saved to database:", savedOrder);
 
       // Prepare the invoice data to be returned
       const invoiceData = {
@@ -441,7 +431,7 @@ export function EInvoiceModal({
         total: total,
         paymentMethod: 'einvoice',
         source: source || 'pos',
-        orderId: orderId,
+        orderId: savedOrder.id,
         publishLater: true, // Flag to indicate this is for later publishing
       };
 
@@ -483,7 +473,7 @@ export function EInvoiceModal({
         // Show success message
         toast({
           title: 'Thành công',
-          description: 'Thông tin hóa đơn điện tử đã được lưu để phát hành sau.',
+          description: 'Đơn hàng đã được lưu thành công. Thông tin hóa đơn điện tử đã được lưu để phát hành sau.',
         });
 
         // Gọi onConfirm để xử lý
@@ -497,7 +487,7 @@ export function EInvoiceModal({
       const errorMessage = error instanceof Error ? error.message : String(error);
       toast({
         title: 'Lỗi',
-        description: `Có lỗi xảy ra khi lưu thông tin hóa đơn: ${errorMessage}`,
+        description: `Có lỗi xảy ra khi lưu đơn hàng: ${errorMessage}`,
         variant: 'destructive',
       });
 
@@ -779,83 +769,10 @@ export function EInvoiceModal({
       console.log("Invoice published successfully:", result);
 
       if (result.success) {
-        // Lưu hóa đơn vào database với trạng thái "Đã phát hành" (1)
-        try {
-          console.log("💾 Saving published invoice to database");
-
-          // Calculate subtotal and tax with proper type conversion
-          const calculatedSubtotal = cartItems.reduce((sum, item) => {
-            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-            const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-            return sum + (itemPrice * itemQuantity);
-          }, 0);
-
-          const calculatedTax = cartItems.reduce((sum, item) => {
-            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-            const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-            const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
-            return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
-          }, 0);
-
-          const invoicePayload = {
-            customerId: null,
-            customerName: formData.customerName || "Khách hàng",
-            customerTaxCode: formData.taxCode || null,
-            customerAddress: formData.address || null,
-            customerPhone: formData.phoneNumber || null,
-            customerEmail: formData.email || null,
-            subtotal: calculatedSubtotal.toFixed(2),
-            tax: calculatedTax.toFixed(2),
-            total: (typeof total === 'number' && !isNaN(total) ? total : 0).toFixed(2),
-            paymentMethod: 'einvoice',
-            invoiceDate: new Date().toISOString(),
-            status: 'published',
-            einvoiceStatus: 1, // Đã phát hành
-            notes: `E-Invoice: ${result.data?.invoiceNo || 'N/A'}`,
-          };
-
-          const response = await fetch('/api/invoices', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              ...invoicePayload,
-              items: cartItems.map(item => ({
-                productId: item.id,
-                productName: item.name,
-                quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-                unitPrice: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-                total: (typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity),
-                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
-              }))
-            })
-          });
-
-          if (response.ok) {
-            const savedInvoice = await response.json();
-            console.log("✅ Invoice saved to database:", savedInvoice);
-
-            toast({
-              title: "Thành công",
-              description: `Hóa đơn điện tử đã được phát hành và lưu thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}`,
-            });
-          } else {
-            console.error("❌ Failed to save invoice to database");
-            toast({
-              title: "Cảnh báo",
-              description: "Hóa đơn điện tử đã phát hành thành công nhưng không thể lưu vào hệ thống",
-              variant: "destructive",
-            });
-          }
-        } catch (dbError) {
-          console.error("❌ Database save error:", dbError);
-          toast({
-            title: "Cảnh báo",
-            description: "Hóa đơn điện tử đã phát hành thành công nhưng có lỗi khi lưu vào hệ thống",
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Thành công",
+          description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}`,
+        });
 
         // Đóng modal ngay lập tức trước khi xử lý logic
         onClose();
