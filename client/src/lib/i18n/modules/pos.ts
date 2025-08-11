@@ -133,6 +133,7 @@ export interface POSTranslations {
   total: string;
   paymentMethod: string;
   amountReceived: string;
+  phone: string;
 }
 
 export const posTranslations: { [key: string]: POSTranslations } = {
@@ -270,6 +271,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     total: '총계:',
     paymentMethod: '결제 방법:',
     amountReceived: '받은 금액:',
+    phone: '전화:',
   },
   en: {
     title: 'POS System',
@@ -406,6 +408,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     total: 'Total:',
     paymentMethod: 'Payment Method:',
     amountReceived: 'Amount Received:',
+    phone: 'Phone:',
   },
   vi: {
     title: 'Hệ thống POS',
@@ -542,5 +545,6 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     total: 'Tổng cộng:',
     paymentMethod: 'Phương thức thanh toán:',
     amountReceived: 'Số tiền nhận:',
+    phone: 'Điện thoại:',
   },
 };

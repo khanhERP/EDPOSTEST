@@ -190,7 +190,7 @@ export function ReceiptModal({
               {storeSettings?.address || "123 Commerce St, City, State 12345"}
             </p>
             <p className="text-xs mb-2">
-              Phone: {storeSettings?.phone || "(555) 123-4567"}
+              {t('pos.phone')} {storeSettings?.phone || "(555) 123-4567"}
             </p>
             <div className="flex items-center justify-center">
               <img src={logoPath} alt="EDPOS Logo" className="h-6" />
