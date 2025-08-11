@@ -279,7 +279,7 @@ export function ReceiptModal({
         </div>
 
         <div className="flex justify-center p-2 border-t">
-          {isPreview && !receipt ? (
+          {isPreview ? (
             <div className="flex space-x-3 w-full">
               <Button onClick={onClose} variant="outline" className="flex-1">
                 {t('pos.cancel')}
