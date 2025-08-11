@@ -692,6 +692,18 @@ export function OrderManagement() {
                           {getOrderStatusBadge(selectedOrder.status).label}
                         </Badge>
                       </div>
+                      <div className="flex justify-between items-center">
+                        <span>Trạng thái hóa đơn điện tử:</span>
+                        <Badge variant={
+                          selectedOrder.einvoiceStatus === 1 ? "default" : 
+                          selectedOrder.einvoiceStatus === 2 ? "destructive" : 
+                          "secondary"
+                        }>
+                          {selectedOrder.einvoiceStatus === 1 ? "Đã phát hành" : 
+                           selectedOrder.einvoiceStatus === 2 ? "Lỗi phát hành" : 
+                           "Chưa phát hành"}
+                        </Badge>
+                      </div>
                       <div className="flex justify-between">
                         <span>{t('orders.orderTime')}:</span>
                         <span className="font-medium">
