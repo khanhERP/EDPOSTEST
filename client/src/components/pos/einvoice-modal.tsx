@@ -767,6 +767,53 @@ export function EInvoiceModal({
       console.log("Invoice published successfully:", result);
 
       if (result.success) {
+        console.log('✅ E-invoice published successfully, now saving to database');
+
+        // Lưu hóa đơn vào database với trạng thái "đã phát hành"
+        try {
+          const invoicePayload = {
+            customerName: formData.customerName,
+            customerTaxCode: formData.taxCode,
+            customerAddress: formData.address,
+            customerPhone: formData.phoneNumber,
+            customerEmail: formData.email,
+            subtotal: cartSubtotal.toFixed(2),
+            tax: cartTaxAmount.toFixed(2),
+            total: cartTotal.toFixed(2),
+            paymentMethod: 'einvoice',
+            invoiceDate: new Date().toISOString(),
+            status: 'published', // Trạng thái đã phát hành
+            einvoiceStatus: 1, // 1 = Đã phát hành
+            notes: `E-Invoice: ${result.data?.invoiceNo || 'N/A'} - Transaction ID: ${result.data?.transactionID || 'N/A'}`,
+            items: cartItems.map(item => ({
+              productId: item.id,
+              productName: item.name,
+              quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+              unitPrice: (typeof item.price === 'string' ? parseFloat(item.price) : item.price).toFixed(2),
+              total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)).toFixed(2),
+              taxRate: (typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)).toFixed(2)
+            }))
+          };
+
+          console.log('💾 Saving published invoice to database:', invoicePayload);
+
+          const saveResponse = await fetch('/api/invoices', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(invoicePayload)
+          });
+
+          if (saveResponse.ok) {
+            console.log('✅ Invoice saved to database successfully');
+          } else {
+            console.error('❌ Failed to save invoice to database:', await saveResponse.text());
+          }
+        } catch (saveError) {
+          console.error('❌ Error saving invoice to database:', saveError);
+        }
+
         toast({
           title: "Thành công",
           description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}`,
