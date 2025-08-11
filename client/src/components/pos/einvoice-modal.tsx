@@ -409,7 +409,7 @@ export function EInvoiceModal({
 
         if (response.ok) {
           const savedInvoice = await response.json();
-          console.log("✅ Unpublished invoice saved to database:", savedInvoice);
+          console.log("✅Unpublished invoice saved to database:", savedInvoice);
         } else {
           const errorText = await response.text();
           console.error("❌ Database save failed with status:", response.status);

@@ -151,6 +151,7 @@ export const orders = pgTable("orders", {
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method"), // "cash", "card", "mobile"
   paymentStatus: text("payment_status").notNull().default("pending"), // "pending", "paid", "refunded"
+  einvoiceStatus: integer("einvoice_status").notNull().default(0), // 0=Chưa phát hành, 1=Đã phát hành, 2=Tạo nháp, 3=Đã duyệt, 4=Đã bị thay thế (hủy), 5=Thay thế tạm, 6=Thay thế, 7=Đã bị điều chỉnh, 8=Điều chỉnh tạm, 9=Điều chỉnh, 10=Đã hủy
   notes: text("notes"),
   orderedAt: timestamp("ordered_at").defaultNow().notNull(),
   servedAt: timestamp("served_at"),

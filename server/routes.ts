@@ -2188,9 +2188,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         SELECT 
           COALESCE(t.salesChannel, 'Bán trực tiếp') as salesChannelName,
           e.name as sellerName,
-          SUM(t.totalAmount) as revenue,
+          SUM(t.total) as revenue,
           SUM(COALESCE(t.refundAmount, 0)) as returnValue,
-          SUM(t.totalAmount - COALESCE(t.refundAmount, 0)) as netRevenue
+          SUM(t.total - COALESCE(t.refundAmount, 0)) as netRevenue
         FROM transactions t
         LEFT JOIN employees e ON t.employeeId = e.id
         WHERE DATE(t.createdAt) BETWEEN ? AND ?
@@ -2740,7 +2740,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate invoice number
       const invoiceNumber = `INV-${Date.now()}`;
-      
+
       // Validate and prepare invoice data with proper type conversion
       const validatedInvoice = {
         invoiceNumber,
@@ -2775,10 +2775,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Save invoice items
       if (invoiceData.items && Array.isArray(invoiceData.items) && invoiceData.items.length > 0) {
         console.log("Processing invoice items:", invoiceData.items.length);
-        
+
         const invoiceItemsData = invoiceData.items.map((item: any, index: number) => {
           console.log(`Processing item ${index + 1}:`, item);
-          
+
           return {
             invoiceId: savedInvoice.id,
             productId: item.productId || 0,
@@ -2814,11 +2814,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error message:", error?.message);
       console.error("Error stack:", error?.stack);
       console.error("Request body:", JSON.stringify(req.body, null, 2));
-      
+
       // Check for specific database errors
       let errorMessage = "Failed to create invoice";
       let errorDetails = error instanceof Error ? error.message : "Unknown error";
-      
+
       if (error?.message?.includes("NOT NULL constraint failed")) {
         errorMessage = "Missing required database fields";
         errorDetails = "Some required fields are missing or null";
@@ -2829,7 +2829,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         errorMessage = "Duplicate data conflict";
         errorDetails = "Data already exists in database";
       }
-      
+
       res.status(500).json({ 
         error: errorMessage,
         details: errorDetails,
@@ -2923,6 +2923,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: "Failed to publish invoice",
         details: error.message,
         errorType: error.constructor.name
+      });
+    }
+  });
+
+  // Add einvoiceStatus column to orders table if it doesn't exist
+  try {
+    await db.execute(sql`
+      ALTER TABLE orders ADD COLUMN IF NOT EXISTS einvoice_status INTEGER NOT NULL DEFAULT 0
+    `);
+    console.log("Added einvoiceStatus column to orders table");
+  } catch (error) {
+    console.log("einvoiceStatus column already exists in orders table or addition failed:", error);
+  }
+  
+  // Save invoice as order (for both "Phát hành" and "Phát hành sau" functionality)
+  app.post("/api/invoices/save-as-order", async (req, res) => {
+    try {
+      const invoiceData = req.body;
+      const { publishType } = invoiceData; // "publish" hoặc "draft"
+      console.log("Creating order from invoice data:", JSON.stringify(invoiceData, null, 2));
+
+      // Validate required fields
+      if (!invoiceData.total || !invoiceData.customerName || !invoiceData.items) {
+        return res.status(400).json({
+          error: "Missing required fields",
+          details: "total, customerName and items are required",
+          received: invoiceData
+        });
+      }
+
+      // Calculate totals
+      const subtotal = parseFloat(invoiceData.subtotal || "0");
+      const tax = parseFloat(invoiceData.tax || "0");
+      const total = parseFloat(invoiceData.total || "0");
+
+      // Determine einvoice status based on publish type
+      let einvoiceStatus = 0; // Default: Chưa phát hành
+      let orderStatus = 'draft';
+      let statusMessage = "Đơn hàng đã được lưu để phát hành hóa đơn sau";
+
+      if (publishType === "publish") {
+        einvoiceStatus = 1; // Đã phát hành
+        orderStatus = 'paid';
+        statusMessage = "Hóa đơn điện tử đã được phát hành thành công";
+      }
+
+      // Create order data
+      const orderData = {
+        orderNumber: `ORD-${Date.now()}`,
+        tableId: null, // No table for POS orders
+        customerName: invoiceData.customerName,
+        customerPhone: invoiceData.customerPhone || null,
+        customerEmail: invoiceData.customerEmail || null,
+        subtotal: subtotal.toFixed(2),
+        tax: tax.toFixed(2),
+        total: total.toFixed(2),
+        status: orderStatus,
+        paymentMethod: 'einvoice',
+        paymentStatus: publishType === "publish" ? 'paid' : 'pending',
+        einvoiceStatus: einvoiceStatus,
+        notes: `E-Invoice Info - Tax Code: ${invoiceData.customerTaxCode || 'N/A'}, Address: ${invoiceData.customerAddress || 'N/A'}`,
+        orderedAt: new Date(),
+        employeeId: null, // Can be set if employee info is available
+        salesChannel: 'pos'
+      };
+
+      console.log("Order data to save:", orderData);
+
+      // Save order
+      const [savedOrder] = await db
+        .insert(orders)
+        .values(orderData)
+        .returning();
+
+      console.log("Order saved:", savedOrder);
+
+      // Save order items
+      if (invoiceData.items && Array.isArray(invoiceData.items)) {
+        const orderItemsData = invoiceData.items.map((item: any) => ({
+          orderId: savedOrder.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice.toString(),
+          total: item.total.toString(),
+          notes: `Tax Rate: ${item.taxRate}%`
+        }));
+
+        const savedItems = await db
+          .insert(orderItems)
+          .values(orderItemsData)
+          .returning();
+
+        console.log("Order items saved:", savedItems.length);
+      }
+
+      res.status(201).json({
+        success: true,
+        order: savedOrder,
+        message: statusMessage,
+        einvoiceStatus: einvoiceStatus
+      });
+
+    } catch (error) {
+      console.error("=== SAVE ORDER FROM INVOICE ERROR ===");
+      console.error("Error:", error);
+
+      res.status(500).json({ 
+        error: "Failed to save order from invoice",
+        details: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
