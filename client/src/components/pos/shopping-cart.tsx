@@ -195,6 +195,10 @@ export function ShoppingCart({
         tax: tax.toFixed(2),
         total: total.toFixed(2),
         paymentMethod: selectedPaymentMethod,
+        invoiceDate: new Date().toISOString(),
+        status: eInvoiceData.publishLater ? 'draft' : 'published',
+        einvoiceStatus: eInvoiceData.publishLater ? 0 : 1, // 0=Chưa phát hành, 1=Đã phát hành
+        notes: eInvoiceData.notes || null,
         items: cart.map(item => ({
           productId: item.id,
           productName: item.name,
@@ -202,15 +206,12 @@ export function ShoppingCart({
           unitPrice: parseFloat(item.price),
           total: parseFloat(item.total),
           taxRate: parseFloat(item.taxRate || "10")
-        })),
-        invoiceDate: new Date().toISOString(),
-        status: eInvoiceData.publishLater ? 'draft' : 'published',
-        notes: eInvoiceData.notes || null
+        }))
       };
 
       console.log("Saving invoice to database:", invoicePayload);
 
-      // Save invoice to database (you may need to create this API endpoint)
+      // Save invoice to database using the existing API endpoint
       const response = await fetch('/api/invoices', {
         method: 'POST',
         headers: {
@@ -229,10 +230,11 @@ export function ShoppingCart({
           description: `Hóa đơn ${savedInvoice.invoiceNumber || 'đã được tạo'} đã được lưu thành công`,
         });
       } else {
-        console.error("Failed to save invoice:", response.statusText);
+        const errorData = await response.text();
+        console.error("Failed to save invoice:", response.statusText, errorData);
         toast({
           title: "Lỗi",
-          description: "Không thể lưu hóa đơn vào hệ thống",
+          description: "Không thể lưu hóa đơn vào hệ thống. Vui lòng thử lại.",
           variant: "destructive",
         });
       }
@@ -241,7 +243,7 @@ export function ShoppingCart({
       console.error("Error saving invoice:", error);
       toast({
         title: "Lỗi",
-        description: "Có lỗi xảy ra khi lưu hóa đơn",
+        description: "Có lỗi xảy ra khi lưu hóa đơn. Vui lòng kiểm tra kết nối mạng.",
         variant: "destructive",
       });
     }
