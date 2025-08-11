@@ -348,11 +348,13 @@ export function EInvoiceModal({
       // Lưu hóa đơn vào database với trạng thái "Chưa phát hành" (0)
       try {
         console.log("💾 Saving unpublished invoice to database");
+        console.log("💾 Cart items for invoice:", JSON.stringify(cartItems, null, 2));
         
         // Calculate subtotal and tax with proper type conversion
         const calculatedSubtotal = cartItems.reduce((sum, item) => {
           const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
           const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+          console.log(`💰 Item calculation: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Subtotal: ${itemPrice * itemQuantity}`);
           return sum + (itemPrice * itemQuantity);
         }, 0);
 
@@ -360,8 +362,12 @@ export function EInvoiceModal({
           const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
           const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
           const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
-          return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
+          const itemTax = (itemPrice * itemQuantity * itemTaxRate / 100);
+          console.log(`💰 Tax calculation: ${item.name} - Tax rate: ${itemTaxRate}%, Tax: ${itemTax}`);
+          return sum + itemTax;
         }, 0);
+
+        console.log(`💰 Total calculations: Subtotal: ${calculatedSubtotal}, Tax: ${calculatedTax}, Total: ${total}`);
 
         const invoicePayload = {
           customerId: null,
@@ -378,35 +384,54 @@ export function EInvoiceModal({
           status: 'draft',
           einvoiceStatus: 0, // Chưa phát hành
           notes: 'Hóa đơn đã lưu để phát hành sau',
+          items: cartItems.map(item => ({
+            productId: item.id,
+            productName: item.name,
+            quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+            unitPrice: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+            total: (typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity),
+            taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
+          }))
         };
+
+        console.log("💾 Invoice payload:", JSON.stringify(invoicePayload, null, 2));
 
         const response = await fetch('/api/invoices', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            ...invoicePayload,
-            items: cartItems.map(item => ({
-              productId: item.id,
-              productName: item.name,
-              quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-              unitPrice: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-              total: (typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity),
-              taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
-            }))
-          })
+          body: JSON.stringify(invoicePayload)
         });
+
+        console.log("💾 Response status:", response.status);
+        console.log("💾 Response headers:", Object.fromEntries(response.headers.entries()));
 
         if (response.ok) {
           const savedInvoice = await response.json();
           console.log("✅ Unpublished invoice saved to database:", savedInvoice);
         } else {
-          throw new Error("Failed to save invoice to database");
+          const errorText = await response.text();
+          console.error("❌ Database save failed with status:", response.status);
+          console.error("❌ Error response:", errorText);
+          
+          let errorData;
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { error: errorText };
+          }
+          
+          throw new Error(`HTTP ${response.status}: ${errorData.error || errorData.details || errorText}`);
         }
       } catch (dbError) {
-        console.error("❌ Database save error:", dbError);
-        throw new Error("Không thể lưu hóa đơn vào hệ thống");
+        console.error("❌ Database save error details:");
+        console.error("- Error type:", dbError?.constructor?.name);
+        console.error("- Error message:", dbError?.message);
+        console.error("- Full error:", dbError);
+        
+        const errorMessage = dbError instanceof Error ? dbError.message : String(dbError);
+        throw new Error(`Không thể lưu hóa đơn vào hệ thống: ${errorMessage}`);
       }
 
       // Prepare the invoice data to be returned

@@ -17,7 +17,9 @@ import {
   attendanceRecords,
   products,
   inventoryTransactions,
-  invoiceTemplates, // Make sure invoiceTemplates is imported
+  invoiceTemplates,
+  invoices,
+  invoiceItems,
 } from "@shared/schema";
 import { initializeSampleData, db } from "./db";
 import { z } from "zod";
@@ -2725,33 +2727,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/invoices", async (req, res) => {
     try {
       const invoiceData = req.body;
-      console.log("Creating invoice record:", invoiceData);
+      console.log("Creating invoice record:", JSON.stringify(invoiceData, null, 2));
+
+      // Validate required fields
+      if (!invoiceData.total || !invoiceData.customerName) {
+        return res.status(400).json({
+          error: "Missing required fields",
+          details: "total and customerName are required",
+          received: invoiceData
+        });
+      }
 
       // Generate invoice number
       const invoiceNumber = `INV-${Date.now()}`;
       
-      // Validate and prepare invoice data
+      // Validate and prepare invoice data with proper type conversion
       const validatedInvoice = {
         invoiceNumber,
-        customerId: invoiceData.customerId,
+        customerId: invoiceData.customerId || null,
         customerName: invoiceData.customerName || "Khách hàng",
-        customerTaxCode: invoiceData.customerTaxCode,
-        customerAddress: invoiceData.customerAddress,
-        customerPhone: invoiceData.customerPhone,
-        customerEmail: invoiceData.customerEmail,
-        subtotal: invoiceData.subtotal,
-        tax: invoiceData.tax,
-        total: invoiceData.total,
+        customerTaxCode: invoiceData.customerTaxCode || null,
+        customerAddress: invoiceData.customerAddress || null,
+        customerPhone: invoiceData.customerPhone || null,
+        customerEmail: invoiceData.customerEmail || null,
+        subtotal: typeof invoiceData.subtotal === 'string' ? invoiceData.subtotal : invoiceData.subtotal?.toString() || "0",
+        tax: typeof invoiceData.tax === 'string' ? invoiceData.tax : invoiceData.tax?.toString() || "0",
+        total: typeof invoiceData.total === 'string' ? invoiceData.total : invoiceData.total?.toString() || "0",
         paymentMethod: invoiceData.paymentMethod || 'cash',
         invoiceDate: new Date(invoiceData.invoiceDate || new Date()),
         status: invoiceData.status || 'draft',
         einvoiceStatus: invoiceData.einvoiceStatus || 0,
-        notes: invoiceData.notes,
+        notes: invoiceData.notes || null,
         createdAt: new Date(),
         updatedAt: new Date()
       };
 
-      console.log("Validated invoice data:", validatedInvoice);
+      console.log("Validated invoice data:", JSON.stringify(validatedInvoice, null, 2));
 
       // Save invoice to database
       const [savedInvoice] = await db
@@ -2762,16 +2773,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Invoice saved to database:", savedInvoice);
 
       // Save invoice items
-      if (invoiceData.items && Array.isArray(invoiceData.items)) {
-        const invoiceItemsData = invoiceData.items.map((item: any) => ({
-          invoiceId: savedInvoice.id,
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice.toString(),
-          total: item.total.toString(),
-          taxRate: (item.taxRate || 10).toString()
-        }));
+      if (invoiceData.items && Array.isArray(invoiceData.items) && invoiceData.items.length > 0) {
+        console.log("Processing invoice items:", invoiceData.items.length);
+        
+        const invoiceItemsData = invoiceData.items.map((item: any, index: number) => {
+          console.log(`Processing item ${index + 1}:`, item);
+          
+          return {
+            invoiceId: savedInvoice.id,
+            productId: item.productId || 0,
+            productName: item.productName || `Product ${index + 1}`,
+            quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1),
+            unitPrice: typeof item.unitPrice === 'string' ? item.unitPrice : (item.unitPrice?.toString() || "0"),
+            total: typeof item.total === 'string' ? item.total : (item.total?.toString() || "0"),
+            taxRate: typeof item.taxRate === 'string' ? item.taxRate : ((item.taxRate || 10).toString())
+          };
+        });
+
+        console.log("Invoice items data:", JSON.stringify(invoiceItemsData, null, 2));
 
         const savedItems = await db
           .insert(invoiceItems)
@@ -2779,22 +2798,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .returning();
 
         console.log("Invoice items saved:", savedItems.length);
+      } else {
+        console.log("No invoice items to save");
       }
 
-      res.status(201).json(savedInvoice);
+      res.status(201).json({
+        success: true,
+        invoice: savedInvoice,
+        message: "Hóa đơn đã được lưu thành công"
+      });
 
     } catch (error) {
-      console.error("Error creating invoice:", error);
-      console.error("Error details:", {
-        message: error.message,
-        stack: error.stack,
-        requestBody: req.body
-      });
+      console.error("=== INVOICE CREATION ERROR ===");
+      console.error("Error type:", error?.constructor?.name);
+      console.error("Error message:", error?.message);
+      console.error("Error stack:", error?.stack);
+      console.error("Request body:", JSON.stringify(req.body, null, 2));
+      
+      // Check for specific database errors
+      let errorMessage = "Failed to create invoice";
+      let errorDetails = error instanceof Error ? error.message : "Unknown error";
+      
+      if (error?.message?.includes("NOT NULL constraint failed")) {
+        errorMessage = "Missing required database fields";
+        errorDetails = "Some required fields are missing or null";
+      } else if (error?.message?.includes("FOREIGN KEY constraint failed")) {
+        errorMessage = "Invalid reference data";
+        errorDetails = "Referenced data does not exist";
+      } else if (error?.message?.includes("UNIQUE constraint failed")) {
+        errorMessage = "Duplicate data conflict";
+        errorDetails = "Data already exists in database";
+      }
       
       res.status(500).json({ 
-        error: "Failed to create invoice",
-        details: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString()
+        error: errorMessage,
+        details: errorDetails,
+        timestamp: new Date().toISOString(),
+        requestData: req.body
       });
     }
   });
