@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { CreditCard, Banknote, Smartphone, Wallet, QrCode } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { CreditCard, Banknote, Smartphone, Wallet, QrCode, Keyboard } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import {
   Dialog,
@@ -12,6 +12,7 @@ import QRCodeLib from "qrcode";
 import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
 import { EInvoiceModal } from "./einvoice-modal";
 import { usePopupSignal } from "@/hooks/use-popup-signal";
+import VirtualKeyboard from "@/components/ui/virtual-keyboard";
 
 interface PaymentMethodModalProps {
   isOpen: boolean;
@@ -46,7 +47,9 @@ export function PaymentMethodModal({
   const [amountReceived, setAmountReceived] = useState("");
   const [showCashPayment, setShowCashPayment] = useState(false);
   const [currentTransactionUuid, setCurrentTransactionUuid] = useState<string | null>(null);
+  const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
   
+  const amountInputRef = useRef<HTMLInputElement>(null);
   const { listenForPaymentSuccess, removePaymentListener } = usePopupSignal();
 
   // Load payment methods from settings
@@ -391,6 +394,59 @@ export function PaymentMethodModal({
     setSelectedPaymentMethod("");
   };
 
+  // Virtual keyboard handlers
+  const handleVirtualKeyPress = (key: string) => {
+    const currentValue = amountReceived;
+    const newValue = currentValue + key;
+    setAmountReceived(newValue);
+    
+    // Focus the input to show cursor position
+    const inputRef = amountInputRef.current;
+    if (inputRef) {
+      inputRef.focus();
+      // Set cursor to end
+      setTimeout(() => {
+        inputRef.setSelectionRange(newValue.length, newValue.length);
+      }, 0);
+    }
+  };
+
+  const handleVirtualBackspace = () => {
+    const currentValue = amountReceived;
+    const newValue = currentValue.slice(0, -1);
+    setAmountReceived(newValue);
+    
+    // Focus the input to show cursor position
+    const inputRef = amountInputRef.current;
+    if (inputRef) {
+      inputRef.focus();
+      setTimeout(() => {
+        inputRef.setSelectionRange(newValue.length, newValue.length);
+      }, 0);
+    }
+  };
+
+  const handleVirtualEnter = () => {
+    // Hide keyboard on enter and try to complete payment if amount is sufficient
+    setShowVirtualKeyboard(false);
+    if (parseFloat(amountReceived) >= total) {
+      handleCashPaymentComplete();
+    }
+  };
+
+  const toggleVirtualKeyboard = () => {
+    setShowVirtualKeyboard(!showVirtualKeyboard);
+    if (!showVirtualKeyboard) {
+      // If opening keyboard, focus on amount input
+      setTimeout(() => {
+        const inputRef = amountInputRef.current;
+        if (inputRef) {
+          inputRef.focus();
+        }
+      }, 100);
+    }
+  };
+
   // Reset all states when modal closes
   useEffect(() => {
     if (!isOpen) {
@@ -401,6 +457,7 @@ export function PaymentMethodModal({
       setQrLoading(false);
       setShowCashPayment(false);
       setAmountReceived("");
+      setShowVirtualKeyboard(false);
       
       // Remove payment listener if exists
       if (currentTransactionUuid) {
@@ -552,6 +609,7 @@ export function PaymentMethodModal({
                       {t("common.customerAmount")}
                     </label>
                     <input
+                      ref={amountInputRef}
                       type="number"
                       step="1000"
                       placeholder={t("common.enterCustomerAmount")}
@@ -560,6 +618,19 @@ export function PaymentMethodModal({
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg text-center"
                       autoFocus
                     />
+                  </div>
+
+                  {/* Virtual Keyboard Toggle */}
+                  <div className="flex justify-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={toggleVirtualKeyboard}
+                      className={`${showVirtualKeyboard ? 'bg-blue-100 border-blue-300' : ''}`}
+                    >
+                      <Keyboard className="w-4 h-4 mr-2" />
+                      {showVirtualKeyboard ? 'Ẩn bàn phím' : 'Hiện bàn phím ảo'}
+                    </Button>
                   </div>
 
                   {amountReceived && parseFloat(amountReceived) >= total && (
@@ -602,6 +673,19 @@ export function PaymentMethodModal({
                     </div>
                   )}
                 </div>
+
+                {/* Virtual Keyboard */}
+                {showVirtualKeyboard && (
+                  <div className="mt-4">
+                    <VirtualKeyboard
+                      onKeyPress={handleVirtualKeyPress}
+                      onBackspace={handleVirtualBackspace}
+                      onEnter={handleVirtualEnter}
+                      isVisible={showVirtualKeyboard}
+                      className="border border-gray-200 rounded-lg"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-3">
