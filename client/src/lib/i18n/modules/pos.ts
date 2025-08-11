@@ -124,6 +124,15 @@ export interface POSTranslations {
   productsWithErrors: string;
   duplicateSkuCount: string;
   each: string;
+  mainStoreLocation: string;
+  transactionNumber: string;
+  date: string;
+  cashier: string;
+  subtotal: string;
+  tax: string;
+  total: string;
+  paymentMethod: string;
+  amountReceived: string;
 }
 
 export const posTranslations: { [key: string]: POSTranslations } = {
@@ -252,6 +261,15 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     productsWithErrors: '오류가 있는 제품',
     duplicateSkuCount: '중복 SKU 수',
     each: '개당',
+    mainStoreLocation: '본점 위치',
+    transactionNumber: '거래번호:',
+    date: '날짜:',
+    cashier: '계산원:',
+    subtotal: '소계:',
+    tax: '세금 (8.25%):',
+    total: '총계:',
+    paymentMethod: '결제 방법:',
+    amountReceived: '받은 금액:',
   },
   en: {
     title: 'POS System',
@@ -379,6 +397,15 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     productsWithErrors: 'Products with errors',
     duplicateSkuCount: 'Duplicate SKU count',
     each: 'each',
+    mainStoreLocation: 'Main Store Location',
+    transactionNumber: 'Transaction #:',
+    date: 'Date:',
+    cashier: 'Cashier:',
+    subtotal: 'Subtotal:',
+    tax: 'Tax (8.25%):',
+    total: 'Total:',
+    paymentMethod: 'Payment Method:',
+    amountReceived: 'Amount Received:',
   },
   vi: {
     title: 'Hệ thống POS',
@@ -506,5 +533,14 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     productsWithErrors: 'Sản phẩm có lỗi',
     duplicateSkuCount: 'Số lượng SKU trùng lặp',
     each: 'mỗi cái',
+    mainStoreLocation: 'Vị trí cửa hàng chính',
+    transactionNumber: 'Số giao dịch:',
+    date: 'Ngày:',
+    cashier: 'Thu ngân:',
+    subtotal: 'Tạm tính:',
+    tax: 'Thuế (8.25%):',
+    total: 'Tổng cộng:',
+    paymentMethod: 'Phương thức thanh toán:',
+    amountReceived: 'Số tiền nhận:',
   },
 };

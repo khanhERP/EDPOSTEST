@@ -185,7 +185,7 @@ export function ReceiptModal({
             <p className="text-xs font-semibold mb-1">
               {storeSettings?.storeName || "Easy Digital Point Of Sale Service"}
             </p>
-            <p className="text-xs mb-0.5">Main Store Location</p>
+            <p className="text-xs mb-0.5">{t('pos.mainStoreLocation')}</p>
             <p className="text-xs mb-0.5">
               {storeSettings?.address || "123 Commerce St, City, State 12345"}
             </p>
@@ -199,15 +199,15 @@ export function ReceiptModal({
 
           <div className="border-t border-b border-gray-300 py-3 mb-3">
             <div className="flex justify-between text-sm">
-              <span>Transaction #:</span>
+              <span>{t('pos.transactionNumber')}</span>
               <span>{receipt.transactionId}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>Date:</span>
+              <span>{t('pos.date')}</span>
               <span>{new Date(receipt.createdAt).toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>Cashier:</span>
+              <span>{t('pos.cashier')}</span>
               <span>{receipt.cashierName}</span>
             </div>
           </div>
@@ -230,24 +230,24 @@ export function ReceiptModal({
 
           <div className="border-t border-gray-300 pt-3 space-y-1">
             <div className="flex justify-between text-sm">
-              <span>Subtotal:</span>
+              <span>{t('pos.subtotal')}</span>
               <span>{receipt.subtotal} ₫</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>Tax (8.25%):</span>
+              <span>{t('pos.tax')}</span>
               <span>{receipt.tax} ₫</span>
             </div>
             <div className="flex justify-between font-bold">
-              <span>Total:</span>
+              <span>{t('pos.total')}</span>
               <span>{receipt.total} ₫</span>
             </div>
             <div className="flex justify-between text-sm mt-2">
-              <span>Payment Method:</span>
+              <span>{t('pos.paymentMethod')}</span>
               <span className="capitalize">{receipt.paymentMethod}</span>
             </div>
             {receipt.amountReceived && (
               <div className="flex justify-between text-sm">
-                <span>Amount Received:</span>
+                <span>{t('pos.amountReceived')}</span>
                 <span>{receipt.amountReceived} ₫</span>
               </div>
             )}
