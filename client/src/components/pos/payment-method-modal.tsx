@@ -725,13 +725,11 @@ export function PaymentMethodModal({
             console.log('✅ E-Invoice published immediately, proceeding to receipt');
           }
 
-          // Close payment modal and proceed with selected payment method
-          onSelectMethod(selectedPaymentMethod);
+          // Close payment modal first
           onClose();
-          // Trigger receipt modal
-          if (onShowEInvoice) {
-            onShowEInvoice();
-          }
+          
+          // Then complete the payment process and show receipt
+          onSelectMethod(selectedPaymentMethod);
         }}
         total={total}
         cartItems={cartItems}

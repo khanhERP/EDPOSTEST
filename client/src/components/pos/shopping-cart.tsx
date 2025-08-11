@@ -148,22 +148,22 @@ export function ShoppingCart({
 
   const handleReceiptConfirm = () => {
     setShowReceiptPreview(false);
-    // For bank transfer, directly proceed to e-invoice confirmation
-    // For cash, you might have a different flow or proceed to payment confirmation
-    if (paymentMethod === "bankTransfer") {
-      setSelectedPaymentMethod("bankTransfer"); // Set the payment method
-      // Assuming E-invoice modal needs these callbacks and the current cart data
-      // You might need to pass actual functions for onClose and onSelectMethod from where EInvoiceModal is used
-      setOnClose(() => () => setShowPaymentMethodModal(false)); // Example: close payment method modal
-      setOnSelectMethod(() => (method: string) => {
-        // This would be called after E-invoice is handled, but the logic is now inside handleEInvoiceConfirm
-      });
-      setOnShowEInvoice(() => () => setShowPaymentMethodModal(true)); // Example: show payment method modal again after e-invoice
-      setShowEInvoice(true); // Show the e-invoice modal
-    } else {
-      // Handle cash payment flow if needed
-      setShowPaymentMethodModal(true); // Or directly call onCheckout if no further modal is needed
-    }
+    setShowPaymentMethodModal(true);
+  };
+
+  const handlePaymentMethodSelect = (method: string) => {
+    console.log('🎯 Payment method selected:', method);
+    setShowPaymentMethodModal(false);
+    
+    // Complete the payment with the selected method
+    const paymentData = {
+      paymentMethod: method,
+      amountReceived: total,
+      change: 0,
+    };
+    
+    console.log('✅ Completing checkout with payment data:', paymentData);
+    onCheckout(paymentData);
   };
 
 
@@ -450,7 +450,7 @@ export function ShoppingCart({
       <PaymentMethodModal
         isOpen={showPaymentMethodModal}
         onClose={() => setShowPaymentMethodModal(false)}
-        onSelectMethod={handleCardPaymentMethodSelect}
+        onSelectMethod={handlePaymentMethodSelect}
         total={total}
         cartItems={cart.map(item => ({
           id: item.id,
