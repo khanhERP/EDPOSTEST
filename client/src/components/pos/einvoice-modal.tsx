@@ -454,23 +454,28 @@ export function EInvoiceModal({
 
         console.log('🍽️ Payment completed successfully for later publishing');
 
-        // Đóng modal e-invoice trước khi hiển thị receipt
-        onClose();
-
-        // Gọi onConfirm để hiển thị receipt
+        // Gọi onConfirm để hiển thị receipt trước khi đóng modal
         console.log('🍽️ Calling onConfirm for receipt display');
         onConfirm(invoiceData);
+
+        // Đóng modal e-invoice sau khi đã gọi onConfirm
+        setTimeout(() => {
+          onClose();
+        }, 100);
 
       } else {
         // Logic cho POS hoặc fallback
         console.log('🏪 POS/Fallback E-Invoice Later: Processing payment completion');
 
-        // Đóng modal e-invoice trước khi hiển thị receipt
-        onClose();
-
-        // Gọi onConfirm để hiển thị receipt modal
+        // Gọi onConfirm để hiển thị receipt modal trước
         console.log('✅ Calling onConfirm to show receipt modal');
         onConfirm(invoiceData);
+
+        // Đóng modal e-invoice sau một khoảng thời gian ngắn để đảm bảo receipt modal được hiển thị
+        setTimeout(() => {
+          console.log('🔒 Closing e-invoice modal after receipt modal is shown');
+          onClose();
+        }, 100);
       }
 
     } catch (error) {

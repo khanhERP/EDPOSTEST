@@ -214,6 +214,8 @@ export function ShoppingCart({
           })),
         };
 
+        console.log("Creating transaction for later publishing:", transactionData);
+
         const response = await fetch('/api/transactions', {
           method: 'POST',
           headers: {
@@ -253,13 +255,18 @@ export function ShoppingCart({
           }
         }
 
-        // Show receipt modal
-        setShowReceiptModal(true);
-        setCurrentReceipt(receipt);
+        // Clear cart trước khi hiển thị receipt modal
+        onClearCart();
 
-        // Clear cart
-        clearCart();
-        setSelectedPaymentMethod(null);
+        // Show receipt modal sau khi clear cart
+        console.log("📄 Showing receipt modal for later publishing");
+        setCurrentReceipt(receipt);
+        setShowReceiptModal(true);
+
+        toast({
+          title: "Thành công",
+          description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau. Receipt đã được tạo.",
+        });
 
         return;
       }
