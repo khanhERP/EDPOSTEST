@@ -322,9 +322,13 @@ export function ReceiptModal({
         <EInvoiceModal
           isOpen={showEInvoiceModal}
           onClose={() => setShowEInvoiceModal(false)}
-          onConfirm={() => {
+          onConfirm={(eInvoiceData) => {
+            console.log('📧 E-Invoice confirmed:', eInvoiceData);
             setShowEInvoiceModal(false);
-            // Handle e-invoice confirmation if needed
+            
+            // Sau khi e-invoice xử lý xong (phát hành ngay hoặc phát hành sau),
+            // hiển thị lại receipt modal để in hóa đơn
+            console.log('📄 Showing receipt modal after e-invoice processing');
           }}
           total={receipt?.total || 0}
           cartItems={(() => {

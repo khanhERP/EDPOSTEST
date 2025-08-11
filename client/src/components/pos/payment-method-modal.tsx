@@ -48,7 +48,7 @@ export function PaymentMethodModal({
   const [showCashPayment, setShowCashPayment] = useState(false);
   const [currentTransactionUuid, setCurrentTransactionUuid] = useState<string | null>(null);
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
-  
+
   const amountInputRef = useRef<HTMLInputElement>(null);
   const { listenForPaymentSuccess, removePaymentListener } = usePopupSignal();
 
@@ -399,7 +399,7 @@ export function PaymentMethodModal({
     const currentValue = amountReceived;
     const newValue = currentValue + key;
     setAmountReceived(newValue);
-    
+
     // Focus the input to show cursor position
     const inputRef = amountInputRef.current;
     if (inputRef) {
@@ -415,7 +415,7 @@ export function PaymentMethodModal({
     const currentValue = amountReceived;
     const newValue = currentValue.slice(0, -1);
     setAmountReceived(newValue);
-    
+
     // Focus the input to show cursor position
     const inputRef = amountInputRef.current;
     if (inputRef) {
@@ -458,7 +458,7 @@ export function PaymentMethodModal({
       setShowCashPayment(false);
       setAmountReceived("");
       setShowVirtualKeyboard(false);
-      
+
       // Remove payment listener if exists
       if (currentTransactionUuid) {
         removePaymentListener(currentTransactionUuid);
@@ -714,7 +714,25 @@ export function PaymentMethodModal({
       <EInvoiceModal
         isOpen={showEInvoice}
         onClose={handleEInvoiceClose}
-        onConfirm={handleEInvoiceConfirm}
+        onConfirm={(eInvoiceData) => {
+          console.log('📧 E-Invoice processing completed:', eInvoiceData);
+          setShowEInvoice(false);
+
+          // Kiểm tra xem có phải là "phát hành sau" không
+          if (eInvoiceData.publishLater) {
+            console.log('⏳ E-Invoice scheduled for later publishing, proceeding to receipt');
+          } else {
+            console.log('✅ E-Invoice published immediately, proceeding to receipt');
+          }
+
+          // Close payment modal and proceed with selected payment method
+          onSelectMethod(selectedPaymentMethod);
+          onClose();
+          // Trigger receipt modal
+          if (onShowEInvoice) {
+            onShowEInvoice();
+          }
+        }}
         total={total}
         cartItems={cartItems}
         source="pos"
