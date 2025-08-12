@@ -1531,6 +1531,28 @@ export interface SuppliersTranslations {
   noSuppliers: string;
   paymentTerms: string;
   confirmDelete: string;
+  addDescription: string;
+  editDescription: string;
+  code: string;
+  codePlaceholder: string;
+  taxId: string;
+  taxIdPlaceholder: string;
+  bankAccount: string;
+  bankAccountPlaceholder: string;
+  cash: string;
+  notes: string;
+  notesPlaceholder: string;
+  status: string;
+  createSuccess: string;
+  createSuccessDesc: string;
+  createFailed: string;
+  createFailedDesc: string;
+  updateSuccess: string;
+  updateSuccessDesc: string;
+  updateFailed: string;
+  updateFailedDesc: string;
+  validationError: string;
+  requiredFields: string;
 }
 
 // Type-safe translation keys
