@@ -163,7 +163,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     people: "명",
     showing: "표시",
     for: "~에 대한",
-    noData: "데이터가 없습니다",
 
     // Payment method modal
     selectPaymentMethod: "결제 방법 선택",
@@ -198,7 +197,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     momoWallet: "MoMo 전자지갑",
     zalopayWallet: "ZaloPay 전자지갑",
     vnpayWallet: "VNPay 전자지갑",
-    qrBanking: "QR 뱅킹",
     shopeepayWallet: "ShopeePay 전자지갑",
     grabpayWallet: "GrabPay 전자지갑",
     paymentMethodGeneric: "결제 방법",
@@ -301,7 +299,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     tableDeleteError: "Cannot delete a table that has been used.",
     showing: "Showing",
     for: "for",
-    noData: "No data",
     backToPOS: "Back to POS",
 
     // Payment method modal translations (already exist above)
@@ -337,7 +334,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     momoWallet: "MoMo E-Wallet",
     zalopayWallet: "ZaloPay E-Wallet",
     vnpayWallet: "VNPay E-Wallet",
-    qrBanking: "QR Banking",
     shopeepayWallet: "ShopeePay E-Wallet",
     grabpayWallet: "GrabPay E-Wallet",
     paymentMethodGeneric: "Payment Method",
@@ -439,7 +435,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     tableDeleteError: "Không thể xóa bàn đã được sử dụng.",
     showing: "Hiển thị",
     for: "cho",
-    noData: "Không có dữ liệu",
 
     // Payment method modal translations (already exist above)
     selectPaymentMethod: "Chọn phương thức thanh toán",
