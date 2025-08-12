@@ -851,7 +851,7 @@ export function ProductManagerModal({
 
                   <div className="flex justify-end space-x-3">
                     <Button type="button" variant="outline" onClick={resetForm}>
-                      {t("tables.cancel")}
+                      {t("common.cancel")}
                     </Button>
                     <Button
                       type="submit"
@@ -862,8 +862,8 @@ export function ProductManagerModal({
                       className="bg-green-600 hover:bg-green-700 text-white font-medium transition-colors duration-200"
                     >
                       {editingProduct
-                        ? t("tables.updateProduct")
-                        : t("tables.createProduct")}
+                        ? t("common.update")
+                        : t("common.create")}
                     </Button>
                   </div>
                 </form>
