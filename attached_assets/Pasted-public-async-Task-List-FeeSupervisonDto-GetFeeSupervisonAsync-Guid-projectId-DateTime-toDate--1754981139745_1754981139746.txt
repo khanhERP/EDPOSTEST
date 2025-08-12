@@ -1,0 +1,35 @@
+public async Task<List<FeeSupervisonDto>> GetFeeSupervisonAsync(Guid projectId, DateTime toDate)
+{
+    var contractAll = await _unitOfWork.Repository<Contract>().TableNoTracking.Include(w => w.Product).ThenInclude(w => w.Project).Include(e => e.Customer).Where(w => 
+    w.TransactionContractType == (int)EnumConTract.SPC 
+    && w.ContractStatus == (int)EnumConTractStatus.Signed
+    && w.ProjectId == projectId)
+    .ToListAsync();
+
+    var scheduleAll = await _unitOfWork.Repository<PaymentScheduleProduct>().TableNoTracking.Where(w => w.ProjectId == projectId).ToListAsync();
+
+    var query = (from contract in contractAll
+                 join schedule in scheduleAll
+                 on contract.ProductId equals schedule.ProductId
+                 group new { contract, schedule } by new { contract.Id } into g
+                 select new FeeSupervisonDto
+                 {
+                     ProductCode = g.Where(w => w.contract != null).Select(e => e.contract).FirstOrDefault()?.Product.ProductCode,
+                     HODueDate = g.Where(w => w.schedule != null).Select(e => e.schedule).OrderByDescending(e => e.DueDate).Skip(1).FirstOrDefault()?.DueDate,
+                     HandoverDate = g.Where(w => w.contract != null).Select(e => e.contract).FirstOrDefault()?.HandoverDate,
+                     ChargeDate = toDate.Date,
+                     NumberDays = g.Where(w => w.contract != null).Select(e => e.contract).FirstOrDefault()?.HandoverDate != null ?
+                                  (g.Where(w => w.contract != null).Select(e => e.contract).FirstOrDefault()?.HandoverDate.Value.Date - 
+                                  g.Where(w => w.schedule != null).Select(e => e.schedule).OrderByDescending(e => e.DueDate).Skip(1).FirstOrDefault()?.DueDate.Value.Date).Value.Days : 
+                                  (toDate.Date - g.Where(w => w.schedule != null).Select(e => e.schedule).OrderByDescending(e => e.DueDate).Skip(1).FirstOrDefault()?.DueDate.Value.Date).Value.Days,
+                     UnitPrice = g.Where(w => w.contract != null).Select(e => e.contract).FirstOrDefault()?.Product.Project.ProjectUnitPrice,
+                     Amount = g.Where(w => w.contract != null).Select(e => e.contract).FirstOrDefault()?.Product.Project.ProjectUnitPrice * (g.Where(w => w.contract != null).Select(e => e.contract).FirstOrDefault()?.HandoverDate != null ?
+                                  (g.Where(w => w.contract != null).Select(e => e.contract).FirstOrDefault()?.HandoverDate.Value.Date -
+                                  g.Where(w => w.schedule != null).Select(e => e.schedule).OrderByDescending(e => e.DueDate).Skip(1).FirstOrDefault()?.DueDate.Value.Date).Value.Days :
+                                  (toDate.Date - g.Where(w => w.schedule != null).Select(e => e.schedule).OrderByDescending(e => e.DueDate).Skip(1).FirstOrDefault()?.DueDate.Value.Date).Value.Days),
+                     Type = (int)ReceiptOptionType.SupervisonFee,
+                     ProductId = (Guid)(g.Where(w => w.contract != null).Select(e => e.contract).FirstOrDefault()?.ProductId),
+                     ProjectId = (Guid)(g.Where(w => w.contract != null).Select(e => e.contract).FirstOrDefault()?.ProjectId),
+                 }).Where(w => w.HandoverDate == null || w.HandoverDate <= w.HODueDate ).ToList();
+    return query;
+}
