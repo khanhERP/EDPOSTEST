@@ -1547,3 +1547,21 @@ export interface LanguageTranslations {
   en: { [key: string]: any };
   vi: { [key: string]: any };
 }
+
+// Main translations interface
+export interface Translations {
+  common: CommonTranslations;
+  navigation: NavigationTranslations;
+  pos: POSTranslations;
+  reports: ReportsTranslations;
+  tables: TablesTranslations;
+  orders: OrdersTranslations;
+  employees: EmployeesTranslations;
+  attendance: AttendanceTranslations;
+  customers: CustomersTranslations;
+  suppliers: SuppliersTranslations;
+  settings: SettingsTranslations;
+  inventory: InventoryTranslations;
+  einvoice: EInvoiceTranslations;
+  notFound: NotFoundTranslations;
+}
