@@ -688,26 +688,7 @@ export function EInvoiceModal({
   };
 
   const handlePublishLater = async () => {
-    // Validate required fields before proceeding
-    if (!formData.invoiceProvider || !formData.customerName) {
-      toast({
-        title: "Lỗi",
-        description: "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!formData.selectedTemplateId) {
-      toast({
-        title: "Lỗi", 
-        description: "Vui lòng chọn mẫu số hóa đơn",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate cart items
+    // Only validate cart items for publishLater - allow empty required fields
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
       toast({
         title: "Lỗi",
