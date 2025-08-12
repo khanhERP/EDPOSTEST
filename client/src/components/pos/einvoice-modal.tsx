@@ -454,11 +454,17 @@ export function EInvoiceModal({
         body: JSON.stringify(savePayload),
       });
 
+      if (!saveResponse.ok) {
+        const errorData = await saveResponse.json().catch(() => ({}));
+        console.error("Invoice save error response:", errorData);
+        throw new Error(errorData.message || errorData.details || `Lỗi lưu ${action === "publish" ? "phát hành" : "nháp"} - HTTP ${saveResponse.status}`);
+      }
+
       const invoiceData = await saveResponse.json();
 
-      if (!saveResponse.ok) {
-        console.error("Invoice save error response:", invoiceData);
-        throw new Error(invoiceData.message || invoiceData.details || `Lỗi lưu ${action === "publish" ? "phát hành" : "nháp"}`);
+      if (!invoiceData || !invoiceData.id) {
+        console.error("Invalid invoice data returned:", invoiceData);
+        throw new Error(`Không nhận được ID hóa đơn từ server`);
       }
 
       console.log(`📋 ${action === "publish" ? "Published" : "Draft"} invoice saved:`, invoiceData);
@@ -598,6 +604,14 @@ export function EInvoiceModal({
         // Logic cho "Phát hành sau" (lưu nháp)
         console.log('⏳ Processing "Publish Later" action');
 
+        // Verify that invoice was actually saved to database
+        if (!invoiceData || !invoiceData.id) {
+          console.error('❌ Invoice was not saved to database properly');
+          throw new Error('Lỗi lưu hóa đơn vào cơ sở dữ liệu');
+        }
+
+        console.log('✅ Invoice draft saved successfully with ID:', invoiceData.id);
+
         // Gọi onConfirm để trả về dữ liệu đã lưu nháp
         onConfirm({ ...invoicePayload, invoiceData: invoiceData, showReceipt: false });
 
@@ -674,6 +688,35 @@ export function EInvoiceModal({
   };
 
   const handlePublishLater = async () => {
+    // Validate required fields before proceeding
+    if (!formData.invoiceProvider || !formData.customerName) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!formData.selectedTemplateId) {
+      toast({
+        title: "Lỗi", 
+        description: "Vui lòng chọn mẫu số hóa đơn",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate cart items
+    if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
+      toast({
+        title: "Lỗi",
+        description: "Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn",
+        variant: "destructive",
+      });
+      return;
+    }
+
     await handlePublishAction("publishLater");
   };
 
