@@ -416,8 +416,8 @@ export function EInvoiceModal({
 
       console.log("💾 Invoice payload:", JSON.stringify(invoicePayload, null, 2));
 
-      // Validate that template is selected for action
-      if (!formData.selectedTemplateId) {
+      // Validate that template is selected for publish action only
+      if (action === "publish" && !formData.selectedTemplateId) {
         throw new Error("Vui lòng chọn mẫu số hóa đơn");
       }
 
