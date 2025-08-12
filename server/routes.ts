@@ -2936,7 +2936,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   } catch (error) {
     console.log("einvoiceStatus column already exists in orders table or addition failed:", error);
   }
-  
+
   // Save invoice as order (for both "Phát hành" and "Phát hành sau" functionality)
   app.post("/api/invoices/save-as-order", async (req, res) => {
     try {
@@ -2953,10 +2953,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Generate unique order number
+      const orderNumber = `INV-${Date.now()}`;
+      const createdAt = new Date();
+
       // Calculate totals
-      const subtotal = parseFloat(invoiceData.subtotal || "0");
-      const tax = parseFloat(invoiceData.tax || "0");
-      const total = parseFloat(invoiceData.total || "0");
+      const subtotal = parseFloat(invoiceData.subtotal);
+      const tax = parseFloat(invoiceData.tax);
+      const total = parseFloat(invoiceData.total);
 
       // Determine einvoice status based on publish type
       let einvoiceStatus = 0; // Default: Chưa phát hành
@@ -2971,21 +2975,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create order data
       const orderData = {
-        orderNumber: `ORD-${Date.now()}`,
+        orderNumber: orderNumber,
         tableId: null, // No table for POS orders
+        employeeId: null, // Can be set if employee info is available
+        status: orderStatus,
         customerName: invoiceData.customerName,
         customerPhone: invoiceData.customerPhone || null,
         customerEmail: invoiceData.customerEmail || null,
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
         total: total.toFixed(2),
-        status: orderStatus,
         paymentMethod: 'einvoice',
         paymentStatus: publishType === "publish" ? 'paid' : 'pending',
         einvoiceStatus: einvoiceStatus,
         notes: `E-Invoice Info - Tax Code: ${invoiceData.customerTaxCode || 'N/A'}, Address: ${invoiceData.customerAddress || 'N/A'}`,
-        orderedAt: new Date(),
-        employeeId: null, // Can be set if employee info is available
+        orderedAt: createdAt,
         salesChannel: 'pos'
       };
 
