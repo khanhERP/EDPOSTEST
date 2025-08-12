@@ -2739,14 +2739,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/invoices", async (req, res) => {
     try {
       const invoiceData = req.body;
-      console.log("Saving invoice to database:", invoiceData);
+      console.log("Creating invoice record:", JSON.stringify(invoiceData, null, 2));
 
-      // Validate required fields
-      if (!invoiceData.invoiceNumber || !invoiceData.total) {
+      // Enhanced validation for required fields
+      const requiredFields = ['invoiceNumber', 'buyerName', 'total'];
+      const missingFields = requiredFields.filter(field => !invoiceData[field]);
+      
+      if (missingFields.length > 0) {
+        console.error("Missing required fields:", missingFields);
         return res.status(400).json({
-          error: "Validation failed",
-          message: "invoiceNumber and total are required",
-          details: "Missing required fields"
+          error: "Missing required fields",
+          message: `Required fields are missing: ${missingFields.join(', ')}`,
+          details: `Please provide: ${missingFields.join(', ')}`,
+          receivedData: {
+            invoiceNumber: invoiceData.invoiceNumber || 'MISSING',
+            buyerName: invoiceData.buyerName || 'MISSING', 
+            total: invoiceData.total || 'MISSING'
+          }
+        });
+      }
+
+      // Validate numeric fields
+      if (isNaN(parseFloat(invoiceData.total))) {
+        return res.status(400).json({
+          error: "Invalid data",
+          message: "Total must be a valid number",
+          details: `Received total: ${invoiceData.total}`
         });
       }
 
@@ -2754,14 +2772,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const dbInvoiceData = {
         invoiceNumber: String(invoiceData.invoiceNumber),
         invoiceDate: invoiceData.invoiceDate || new Date().toISOString(),
-        buyerName: String(invoiceData.buyerName || "Khách hàng"),
+        buyerName: String(invoiceData.buyerName),
         buyerTaxCode: String(invoiceData.buyerTaxCode || ""),
         buyerAddress: String(invoiceData.buyerAddress || ""),
         buyerPhoneNumber: String(invoiceData.buyerPhoneNumber || ""),
         buyerEmail: String(invoiceData.buyerEmail || ""),
         subtotal: String(invoiceData.subtotal || "0"),
         tax: String(invoiceData.tax || "0"),
-        total: String(invoiceData.total || "0"),
+        total: String(invoiceData.total),
         paymentMethod: String(invoiceData.paymentMethod || "einvoice"),
         notes: String(invoiceData.notes || ""),
         source: String(invoiceData.source || "pos"),

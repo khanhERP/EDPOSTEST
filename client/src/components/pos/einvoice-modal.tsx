@@ -416,6 +416,11 @@ export function EInvoiceModal({
 
       console.log("💾 Invoice payload:", JSON.stringify(invoicePayload, null, 2));
 
+      // Validate that template is selected for action
+      if (!formData.selectedTemplateId) {
+        throw new Error("Vui lòng chọn mẫu số hóa đơn");
+      }
+
       // Save invoice to database
       // Save to invoices table based on publish type
       const savePayload = {
@@ -434,17 +439,9 @@ export function EInvoiceModal({
         source: invoicePayload.source,
         orderId: invoicePayload.orderId,
         einvoiceProvider: invoicePayload.einvoiceProvider,
-        einvoiceTemplate: invoicePayload.einvoiceTemplate,
+        einvoiceTemplate: formData.selectedTemplateId, // Use the actual selected template ID
         status: action === "publish" ? "published" : "draft",
         einvoiceStatus: action === "publish" ? 1 : 2,
-        items: cartItems.map(item => ({
-          productId: item.id,
-          productName: item.name,
-          quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-          unitPrice: (typeof item.price === 'string' ? parseFloat(item.price) : item.price).toString(),
-          total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)).toString(),
-          taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
-        }))
       };
 
       console.log("Sending invoice save payload:", JSON.stringify(savePayload, null, 2));
@@ -467,6 +464,27 @@ export function EInvoiceModal({
       console.log(`📋 ${action === "publish" ? "Published" : "Draft"} invoice saved:`, invoiceData);
 
       // Save invoice items to database
+      console.log("Preparing to save invoice items for invoice ID:", invoiceData.id);
+      
+      const itemsToSave = cartItems.map(item => {
+        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
+        const itemTotal = itemPrice * itemQuantity;
+        
+        return {
+          productId: item.id,
+          productName: item.name,
+          quantity: itemQuantity,
+          unitPrice: itemPrice.toFixed(2),
+          total: itemTotal.toFixed(2),
+          taxRate: itemTaxRate,
+          notes: `SKU: ${item.sku || 'N/A'}`
+        };
+      });
+
+      console.log("Invoice items to save:", JSON.stringify(itemsToSave, null, 2));
+
       const saveItemsResponse = await fetch("/api/invoice-items", {
         method: "POST",
         headers: {
@@ -474,23 +492,17 @@ export function EInvoiceModal({
         },
         body: JSON.stringify({
           invoiceId: invoiceData.id, // Use the ID of the saved invoice
-          items: cartItems.map(item => ({
-            productId: item.id,
-            quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-            unitPrice: (typeof item.price === 'string' ? parseFloat(item.price) : item.price).toFixed(2),
-            total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)).toFixed(2),
-            taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10),
-            notes: `Product name: ${item.name}`
-          }))
+          items: itemsToSave
         }),
       });
 
       if (!saveItemsResponse.ok) {
         const errorItemsData = await saveItemsResponse.json();
         console.error("❌ Error saving invoice items:", errorItemsData);
-        // Optionally handle this error, maybe rollback invoice creation or just log
+        throw new Error(`Lỗi lưu chi tiết hóa đơn: ${errorItemsData.message || 'Unknown error'}`);
       } else {
-        console.log("✅ Invoice items saved successfully");
+        const savedItems = await saveItemsResponse.json();
+        console.log(`✅ Invoice items saved successfully: ${savedItems.length} items`);
       }
 
       // Show success message

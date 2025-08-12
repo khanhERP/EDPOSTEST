@@ -367,11 +367,11 @@ export const invoices = pgTable("invoices", {
   id: serial("id").primaryKey(),
   invoiceNumber: varchar("invoice_number", { length: 50 }).unique().notNull(),
   customerId: integer("customer_id").references(() => customers.id),
-  customerName: varchar("customer_name", { length: 100 }).notNull(),
-  customerTaxCode: varchar("customer_tax_code", { length: 20 }),
-  customerAddress: text("customer_address"),
-  customerPhone: varchar("customer_phone", { length: 20 }),
-  customerEmail: varchar("customer_email", { length: 100 }),
+  buyerName: varchar("buyer_name", { length: 100 }).notNull(), // Renamed from customerName for clarity
+  buyerTaxCode: varchar("buyer_tax_code", { length: 20 }),
+  buyerAddress: text("buyer_address"),
+  buyerPhoneNumber: varchar("buyer_phone_number", { length: 20 }),
+  buyerEmail: varchar("buyer_email", { length: 100 }),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
@@ -380,6 +380,14 @@ export const invoices = pgTable("invoices", {
   status: varchar("status", { length: 20 }).notNull().default("draft"), // 'draft', 'published', 'cancelled'
   einvoiceStatus: integer("einvoice_status").notNull().default(0), // 0=Chưa phát hành, 1=Đã phát hành, 2=Tạo nháp, 3=Đã duyệt, 4=Đã bị thay thế (hủy), 5=Thay thế tạm, 6=Thay thế, 7=Đã bị điều chỉnh, 8=Điều chỉnh tạm, 9=Điều chỉnh, 10=Đã hủy
   notes: text("notes"),
+  source: varchar("source", { length: 20 }).default("pos"), // 'pos', 'table', 'online'
+  orderId: integer("order_id").references(() => orders.id),
+  einvoiceProvider: varchar("einvoice_provider", { length: 50 }),
+  einvoiceTemplate: varchar("einvoice_template", { length: 50 }),
+  providerInvoiceNumber: varchar("provider_invoice_number", { length: 100 }),
+  providerInvoiceSeries: varchar("provider_invoice_series", { length: 50 }),
+  providerInvoiceNumber_1: varchar("provider_invoice_number_1", { length: 100 }),
+  providerInvoiceNumber_2: varchar("provider_invoice_number_2", { length: 100 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
