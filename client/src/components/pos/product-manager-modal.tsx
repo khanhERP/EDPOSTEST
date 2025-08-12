@@ -215,7 +215,7 @@ export function ProductManagerModal({
       if (isNaN(num)) return '';
       return num.toLocaleString('vi-VN');
     }
-    
+
     // If it's a number
     if (isNaN(value)) return '';
     return value.toLocaleString('vi-VN');
@@ -469,7 +469,7 @@ export function ProductManagerModal({
                     {t("tables.export")}
                   </Button>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <Input
                     placeholder="Tìm kiếm theo tên hoặc mã SKU..."
@@ -679,12 +679,12 @@ export function ProductManagerModal({
                             <Input
                               {...field}
                               type="text"
-                              placeholder="100.000"
+                              placeholder={t("tables.pricePlaceholder")}
                               onChange={(e) => {
                                 const value = e.target.value;
                                 // Only allow numbers and dots
                                 const sanitized = value.replace(/[^0-9.]/g, '');
-                                
+
                                 // Just update with sanitized value, format on blur
                                 field.onChange(sanitized);
                               }}
