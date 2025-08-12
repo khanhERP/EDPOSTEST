@@ -1,7 +1,7 @@
 import { commonTranslations } from './modules/common';
 import { navigationTranslations } from './modules/navigation';
 import { attendanceTranslations } from './modules/attendance';
-import { customersTranslations } from './modules/customers';
+import { customersTranslations, suppliersTranslations } from './modules/customers';
 import { employeesTranslations } from './modules/employees';
 import { inventoryTranslations } from './modules/inventory';
 import { notFoundTranslations } from './modules/notFound';

@@ -1288,7 +1288,6 @@ export interface EInvoiceTranslations {
   checkout: string;
 }
 
-
 // POS translations interface
 export interface POSTranslations {
   title: string;
