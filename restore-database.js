@@ -1,7 +1,11 @@
 
-const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
+import { Pool } from 'pg';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -60,7 +64,7 @@ async function restoreDatabase(backupFilePath) {
 }
 
 // Sử dụng: node restore-database.js path/to/backup.sql
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   const backupFile = process.argv[2];
   if (!backupFile) {
     console.log('Sử dụng: node restore-database.js <path-to-backup-file>');
@@ -70,4 +74,4 @@ if (require.main === module) {
   restoreDatabase(backupFile).catch(console.error);
 }
 
-module.exports = { restoreDatabase };
+export { restoreDatabase };
