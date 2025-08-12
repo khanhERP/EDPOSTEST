@@ -101,6 +101,7 @@ export interface CommonTranslations {
   shopeepayWallet: string;
   grabpayWallet: string;
   paymentMethodGeneric: string;
+  backToPOS: string;
 }
 
 // Navigation translations interface

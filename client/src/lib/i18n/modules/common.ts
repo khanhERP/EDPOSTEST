@@ -301,8 +301,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     showing: "Showing",
     for: "for",
     noData: "No data",
+    backToPOS: "Back to POS",
 
-    // Payment method modal
+    // Payment method modal translations (already exist above)
     selectPaymentMethod: "Select Payment Method",
     totalAmount: "Total Amount",
     cashPayment: "Cash Payment",
