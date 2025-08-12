@@ -1522,6 +1522,14 @@ export interface SuppliersTranslations {
   addError: string;
   deleteSuccess: string;
   deleteError: string;
+  deleteSuccessDesc: string;
+  deleteFailed: string;
+  deleteFailedDesc: string;
+  active: string;
+  inactive: string;
+  noSuppliers: string;
+  paymentTerms: string;
+  confirmDelete: string;
 }
 
 // Type-safe translation keys
