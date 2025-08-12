@@ -20,6 +20,18 @@ import {
   invoiceTemplates,
   invoices,
   invoiceItems,
+  type NewProduct,
+  type NewTransaction,
+  type NewTransactionItem,
+  type NewCustomer,
+  type NewOrder,
+  type NewOrderItem,
+  type Table,
+  type NewTable,
+  type Employee,
+  type NewEmployee,
+  type Supplier,
+  type NewSupplier,
 } from "@shared/schema";
 import { initializeSampleData, db } from "./db";
 import { z } from "zod";
@@ -2727,144 +2739,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/invoices", async (req, res) => {
     try {
       const invoiceData = req.body;
-      console.log("Creating invoice record:", JSON.stringify(invoiceData, null, 2));
+      console.log("Saving invoice to database:", invoiceData);
 
-      // Validate required fields with more flexible checks
-      if (!invoiceData.total && !invoiceData.totalAmount) {
-        console.error("Missing total field in invoice data:", invoiceData);
+      // Validate required fields
+      if (!invoiceData.invoiceNumber || !invoiceData.total) {
         return res.status(400).json({
-          error: "Missing required fields",
-          details: "total or totalAmount is required",
-          received: invoiceData
+          error: "Validation failed",
+          message: "invoiceNumber and total are required",
+          details: "Missing required fields"
         });
       }
 
-      if (!invoiceData.buyerName && !invoiceData.customerName) {
-        console.error("Missing customer name in invoice data:", invoiceData);
-        return res.status(400).json({
-          error: "Missing required fields", 
-          details: "buyerName or customerName is required",
-          received: invoiceData
-        });
-      }
-
-      // Get total value from either field
-      const totalValue = invoiceData.total || invoiceData.totalAmount || "0";
-      
-      // Validate numeric fields
-      if (isNaN(parseFloat(totalValue)) || parseFloat(totalValue) <= 0) {
-        console.error("Invalid total value:", totalValue);
-        return res.status(400).json({
-          error: "Invalid total value",
-          details: "total must be a positive number",
-          received: { total: totalValue }
-        });
-      }
-
-      // Generate invoice number if not provided
-      const invoiceNumber = invoiceData.invoiceNumber || `INV-${Date.now()}`;
-
-      // Prepare invoice data with flexible field mapping
-      const validatedInvoice = {
-        invoiceNumber,
-        customerId: invoiceData.customerId || null,
-        customerName: invoiceData.buyerName || invoiceData.customerName || "Khách hàng",
-        customerTaxCode: invoiceData.buyerTaxCode || invoiceData.customerTaxCode || null,
-        customerAddress: invoiceData.buyerAddress || invoiceData.customerAddress || null,
-        customerPhone: invoiceData.buyerPhoneNumber || invoiceData.customerPhone || null,
-        customerEmail: invoiceData.buyerEmail || invoiceData.customerEmail || null,
-        subtotal: (invoiceData.subtotal || "0").toString(),
-        tax: (invoiceData.tax || "0").toString(),
-        total: totalValue.toString(),
-        paymentMethod: invoiceData.paymentMethod || 'einvoice',
-        invoiceDate: new Date(invoiceData.invoiceDate || new Date()),
-        status: invoiceData.status || 'draft',
-        einvoiceStatus: invoiceData.einvoiceStatus || 0,
-        notes: invoiceData.notes || null,
-        createdAt: new Date(),
-        updatedAt: new Date()
+      // Prepare invoice data for database with proper type conversion
+      const dbInvoiceData = {
+        invoiceNumber: String(invoiceData.invoiceNumber),
+        invoiceDate: invoiceData.invoiceDate || new Date().toISOString(),
+        buyerName: String(invoiceData.buyerName || "Khách hàng"),
+        buyerTaxCode: String(invoiceData.buyerTaxCode || ""),
+        buyerAddress: String(invoiceData.buyerAddress || ""),
+        buyerPhoneNumber: String(invoiceData.buyerPhoneNumber || ""),
+        buyerEmail: String(invoiceData.buyerEmail || ""),
+        subtotal: String(invoiceData.subtotal || "0"),
+        tax: String(invoiceData.tax || "0"),
+        total: String(invoiceData.total || "0"),
+        paymentMethod: String(invoiceData.paymentMethod || "einvoice"),
+        notes: String(invoiceData.notes || ""),
+        source: String(invoiceData.source || "pos"),
+        orderId: invoiceData.orderId ? parseInt(invoiceData.orderId) : null,
+        einvoiceProvider: String(invoiceData.einvoiceProvider || ""),
+        einvoiceTemplate: String(invoiceData.einvoiceTemplate || ""),
+        status: String(invoiceData.status || "draft"),
+        einvoiceStatus: invoiceData.einvoiceStatus ? parseInt(invoiceData.einvoiceStatus) : 2,
+        providerInvoiceNumber: invoiceData.providerInvoiceNumber ? String(invoiceData.providerInvoiceNumber) : null,
+        providerInvoiceSeries: invoiceData.providerInvoiceSeries ? String(invoiceData.providerInvoiceSeries) : null,
+        providerInvoiceNumber_1: invoiceData.providerInvoiceNumber_1 ? String(invoiceData.providerInvoiceNumber_1) : null,
+        providerInvoiceNumber_2: invoiceData.providerInvoiceNumber_2 ? String(invoiceData.providerInvoiceNumber_2) : null,
       };
 
-      console.log("Validated invoice data:", JSON.stringify(validatedInvoice, null, 2));
+      console.log("Processed invoice data for database:", dbInvoiceData);
 
-      // Save invoice to database
       const [savedInvoice] = await db
         .insert(invoices)
-        .values(validatedInvoice)
+        .values(dbInvoiceData)
         .returning();
 
-      console.log("Invoice saved to database:", savedInvoice);
+      console.log("Invoice saved successfully:", savedInvoice);
 
-      // Save invoice items if provided
-      if (invoiceData.items && Array.isArray(invoiceData.items) && invoiceData.items.length > 0) {
-        console.log("Processing invoice items:", invoiceData.items.length);
-
-        const invoiceItemsData = invoiceData.items.map((item: any, index: number) => {
-          console.log(`Processing item ${index + 1}:`, item);
-
-          return {
-            invoiceId: savedInvoice.id,
-            productId: item.productId || 0,
-            productName: item.productName || item.name || `Product ${index + 1}`,
-            quantity: parseInt(item.quantity) || 1,
-            unitPrice: (item.unitPrice || item.price || "0").toString(),
-            total: (item.total || "0").toString(),
-            taxRate: (item.taxRate || 10).toString()
-          };
-        });
-
-        console.log("Invoice items data:", JSON.stringify(invoiceItemsData, null, 2));
-
-        try {
-          const savedItems = await db
-            .insert(invoiceItems)
-            .values(invoiceItemsData)
-            .returning();
-
-          console.log("Invoice items saved:", savedItems.length);
-        } catch (itemError) {
-          console.error("Error saving invoice items:", itemError);
-          // Don't fail the whole request if items can't be saved
-        }
-      } else {
-        console.log("No invoice items to save");
-      }
-
-      res.status(201).json({
-        success: true,
-        invoice: savedInvoice,
-        id: savedInvoice.id,
-        invoiceNumber: savedInvoice.invoiceNumber,
-        message: "Hóa đơn đã được lưu thành công"
+      res.status(201).json(savedInvoice);
+    } catch (error) {
+      console.error("Error saving invoice:", error);
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        code: error.code
       });
 
-    } catch (error) {
-      console.error("=== INVOICE CREATION ERROR ===");
-      console.error("Error type:", error?.constructor?.name);
-      console.error("Error message:", error?.message);
-      console.error("Error stack:", error?.stack);
-      console.error("Request body:", JSON.stringify(req.body, null, 2));
+      res.status(500).json({
+        error: "Failed to save invoice",
+        message: error.message || "Unknown database error",
+        details: error.code || "DATABASE_ERROR"
+      });
+    }
+  });
 
-      // Check for specific database errors
-      let errorMessage = "Lỗi lưu nháp";
-      let errorDetails = error instanceof Error ? error.message : "Unknown error";
+  // Save invoice items to invoice_items table
+  app.post("/api/invoice-items", async (req, res) => {
+    try {
+      const { invoiceId, items } = req.body;
+      console.log("Saving invoice items:", { invoiceId, items });
 
-      if (error?.message?.includes("NOT NULL constraint failed")) {
-        errorMessage = "Thiếu thông tin bắt buộc";
-        errorDetails = "Một số trường bắt buộc chưa được điền";
-      } else if (error?.message?.includes("FOREIGN KEY constraint failed")) {
-        errorMessage = "Dữ liệu tham chiếu không hợp lệ";
-        errorDetails = "Dữ liệu tham chiếu không tồn tại";
-      } else if (error?.message?.includes("UNIQUE constraint failed")) {
-        errorMessage = "Dữ liệu bị trùng lặp";
-        errorDetails = "Dữ liệu đã tồn tại trong hệ thống";
+      if (!invoiceId || !items || !Array.isArray(items)) {
+        return res.status(400).json({
+          error: "Invalid data",
+          message: "invoiceId and items array are required",
+          details: "VALIDATION_ERROR"
+        });
       }
 
-      res.status(500).json({ 
-        error: errorMessage,
-        message: errorDetails,
-        details: errorDetails,
-        timestamp: new Date().toISOString()
+      if (items.length === 0) {
+        return res.status(400).json({
+          error: "Invalid data",
+          message: "Items array cannot be empty",
+          details: "NO_ITEMS"
+        });
+      }
+
+      // Validate and prepare items data
+      const dbItemsData = items.map((item, index) => {
+        if (!item.productId || !item.quantity || !item.unitPrice) {
+          throw new Error(`Item ${index + 1}: Missing required fields (productId, quantity, unitPrice)`);
+        }
+
+        return {
+          invoiceId: parseInt(invoiceId),
+          productId: parseInt(item.productId),
+          productName: String(item.productName || ""),
+          quantity: parseInt(item.quantity),
+          unitPrice: String(item.unitPrice),
+          total: String(item.total || "0"),
+          taxRate: parseFloat(item.taxRate || "10"),
+          notes: String(item.notes || "")
+        };
+      });
+
+      console.log("Processed invoice items for database:", dbItemsData);
+
+      const savedItems = await db
+        .insert(invoiceItems)
+        .values(dbItemsData)
+        .returning();
+
+      console.log("Invoice items saved successfully:", savedItems.length);
+
+      res.status(201).json(savedItems);
+    } catch (error) {
+      console.error("Error saving invoice items:", error);
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        code: error.code
+      });
+
+      res.status(500).json({
+        error: "Failed to save invoice items",
+        message: error.message || "Unknown database error",
+        details: error.code || "DATABASE_ERROR"
       });
     }
   });
@@ -2875,7 +2874,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .select()
         .from(invoices)
         .orderBy(desc(invoices.createdAt));
-      
+
       res.json(invoicesList);
     } catch (error) {
       console.error("Error fetching invoices:", error);
@@ -2886,7 +2885,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/invoice-items/:invoiceId", async (req, res) => {
     try {
       const invoiceId = parseInt(req.params.invoiceId);
-      
+
       if (isNaN(invoiceId)) {
         return res.status(400).json({ error: "Invalid invoice ID" });
       }
@@ -2896,7 +2895,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(invoiceItems)
         .where(eq(invoiceItems.invoiceId, invoiceId))
         .orderBy(invoiceItems.id);
-      
+
       res.json(items);
     } catch (error) {
       console.error("Error fetching invoice items:", error);
@@ -2907,7 +2906,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/invoices/:id", async (req, res) => {
     try {
       const invoiceId = parseInt(req.params.id);
-      
+
       if (isNaN(invoiceId)) {
         return res.status(400).json({ error: "Invalid invoice ID" });
       }
@@ -3092,6 +3091,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const orderItemsData = invoiceData.items.map((item: any) => ({
           orderId: savedOrder.id,
           productId: item.productId,
+          productName: item.productName,
           quantity: item.quantity,
           unitPrice: item.unitPrice.toString(),
           total: item.total.toString(),
