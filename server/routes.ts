@@ -2729,47 +2729,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const invoiceData = req.body;
       console.log("Creating invoice record:", JSON.stringify(invoiceData, null, 2));
 
-      // Validate required fields
-      if (!invoiceData.total || !invoiceData.customerName) {
-        console.error("Missing required fields in invoice data:", invoiceData);
+      // Validate required fields with more flexible checks
+      if (!invoiceData.total && !invoiceData.totalAmount) {
+        console.error("Missing total field in invoice data:", invoiceData);
         return res.status(400).json({
           error: "Missing required fields",
-          details: "total and customerName are required",
-          received: {
-            hasTotal: !!invoiceData.total,
-            hasCustomerName: !!invoiceData.customerName,
-            totalValue: invoiceData.total,
-            customerNameValue: invoiceData.customerName
-          }
+          details: "total or totalAmount is required",
+          received: invoiceData
         });
       }
 
+      if (!invoiceData.buyerName && !invoiceData.customerName) {
+        console.error("Missing customer name in invoice data:", invoiceData);
+        return res.status(400).json({
+          error: "Missing required fields", 
+          details: "buyerName or customerName is required",
+          received: invoiceData
+        });
+      }
+
+      // Get total value from either field
+      const totalValue = invoiceData.total || invoiceData.totalAmount || "0";
+      
       // Validate numeric fields
-      if (invoiceData.total && (isNaN(parseFloat(invoiceData.total)) || parseFloat(invoiceData.total) <= 0)) {
-        console.error("Invalid total value:", invoiceData.total);
+      if (isNaN(parseFloat(totalValue)) || parseFloat(totalValue) <= 0) {
+        console.error("Invalid total value:", totalValue);
         return res.status(400).json({
           error: "Invalid total value",
           details: "total must be a positive number",
-          received: { total: invoiceData.total }
+          received: { total: totalValue }
         });
       }
 
-      // Generate invoice number
-      const invoiceNumber = `INV-${Date.now()}`;
+      // Generate invoice number if not provided
+      const invoiceNumber = invoiceData.invoiceNumber || `INV-${Date.now()}`;
 
-      // Validate and prepare invoice data with proper type conversion
+      // Prepare invoice data with flexible field mapping
       const validatedInvoice = {
         invoiceNumber,
         customerId: invoiceData.customerId || null,
-        customerName: invoiceData.customerName || "Khách hàng",
-        customerTaxCode: invoiceData.customerTaxCode || null,
-        customerAddress: invoiceData.customerAddress || null,
-        customerPhone: invoiceData.customerPhone || null,
-        customerEmail: invoiceData.customerEmail || null,
-        subtotal: typeof invoiceData.subtotal === 'string' ? invoiceData.subtotal : invoiceData.subtotal?.toString() || "0",
-        tax: typeof invoiceData.tax === 'string' ? invoiceData.tax : invoiceData.tax?.toString() || "0",
-        total: typeof invoiceData.total === 'string' ? invoiceData.total : invoiceData.total?.toString() || "0",
-        paymentMethod: invoiceData.paymentMethod || 'cash',
+        customerName: invoiceData.buyerName || invoiceData.customerName || "Khách hàng",
+        customerTaxCode: invoiceData.buyerTaxCode || invoiceData.customerTaxCode || null,
+        customerAddress: invoiceData.buyerAddress || invoiceData.customerAddress || null,
+        customerPhone: invoiceData.buyerPhoneNumber || invoiceData.customerPhone || null,
+        customerEmail: invoiceData.buyerEmail || invoiceData.customerEmail || null,
+        subtotal: (invoiceData.subtotal || "0").toString(),
+        tax: (invoiceData.tax || "0").toString(),
+        total: totalValue.toString(),
+        paymentMethod: invoiceData.paymentMethod || 'einvoice',
         invoiceDate: new Date(invoiceData.invoiceDate || new Date()),
         status: invoiceData.status || 'draft',
         einvoiceStatus: invoiceData.einvoiceStatus || 0,
@@ -2788,7 +2795,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Invoice saved to database:", savedInvoice);
 
-      // Save invoice items
+      // Save invoice items if provided
       if (invoiceData.items && Array.isArray(invoiceData.items) && invoiceData.items.length > 0) {
         console.log("Processing invoice items:", invoiceData.items.length);
 
@@ -2798,22 +2805,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return {
             invoiceId: savedInvoice.id,
             productId: item.productId || 0,
-            productName: item.productName || `Product ${index + 1}`,
-            quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1),
-            unitPrice: typeof item.unitPrice === 'string' ? item.unitPrice : (item.unitPrice?.toString() || "0"),
-            total: typeof item.total === 'string' ? item.total : (item.total?.toString() || "0"),
-            taxRate: typeof item.taxRate === 'string' ? item.taxRate : ((item.taxRate || 10).toString())
+            productName: item.productName || item.name || `Product ${index + 1}`,
+            quantity: parseInt(item.quantity) || 1,
+            unitPrice: (item.unitPrice || item.price || "0").toString(),
+            total: (item.total || "0").toString(),
+            taxRate: (item.taxRate || 10).toString()
           };
         });
 
         console.log("Invoice items data:", JSON.stringify(invoiceItemsData, null, 2));
 
-        const savedItems = await db
-          .insert(invoiceItems)
-          .values(invoiceItemsData)
-          .returning();
+        try {
+          const savedItems = await db
+            .insert(invoiceItems)
+            .values(invoiceItemsData)
+            .returning();
 
-        console.log("Invoice items saved:", savedItems.length);
+          console.log("Invoice items saved:", savedItems.length);
+        } catch (itemError) {
+          console.error("Error saving invoice items:", itemError);
+          // Don't fail the whole request if items can't be saved
+        }
       } else {
         console.log("No invoice items to save");
       }
@@ -2821,6 +2833,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json({
         success: true,
         invoice: savedInvoice,
+        id: savedInvoice.id,
+        invoiceNumber: savedInvoice.invoiceNumber,
         message: "Hóa đơn đã được lưu thành công"
       });
 
@@ -2830,44 +2844,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error message:", error?.message);
       console.error("Error stack:", error?.stack);
       console.error("Request body:", JSON.stringify(req.body, null, 2));
-      console.error("Full error object:", error);
 
       // Check for specific database errors
-      let errorMessage = "Failed to create invoice";
+      let errorMessage = "Lỗi lưu nháp";
       let errorDetails = error instanceof Error ? error.message : "Unknown error";
 
       if (error?.message?.includes("NOT NULL constraint failed")) {
-        errorMessage = "Missing required database fields";
-        errorDetails = "Some required fields are missing or null";
-        console.error("NOT NULL constraint details:", error.message);
+        errorMessage = "Thiếu thông tin bắt buộc";
+        errorDetails = "Một số trường bắt buộc chưa được điền";
       } else if (error?.message?.includes("FOREIGN KEY constraint failed")) {
-        errorMessage = "Invalid reference data";
-        errorDetails = "Referenced data does not exist";
-        console.error("FOREIGN KEY constraint details:", error.message);
+        errorMessage = "Dữ liệu tham chiếu không hợp lệ";
+        errorDetails = "Dữ liệu tham chiếu không tồn tại";
       } else if (error?.message?.includes("UNIQUE constraint failed")) {
-        errorMessage = "Duplicate data conflict";
-        errorDetails = "Data already exists in database";
-        console.error("UNIQUE constraint details:", error.message);
-      } else if (error?.code === 'ECONNREFUSED') {
-        errorMessage = "Database connection failed";
-        errorDetails = "Cannot connect to database";
-      } else if (error?.code === 'SQLITE_ERROR') {
-        errorMessage = "Database error";
-        errorDetails = error.message || "SQLite database error";
+        errorMessage = "Dữ liệu bị trùng lặp";
+        errorDetails = "Dữ liệu đã tồn tại trong hệ thống";
       }
 
       res.status(500).json({ 
         error: errorMessage,
+        message: errorDetails,
         details: errorDetails,
-        timestamp: new Date().toISOString(),
-        errorCode: error?.code,
-        errorType: error?.constructor?.name,
-        requestData: {
-          hasTotal: !!req.body?.total,
-          hasCustomerName: !!req.body?.customerName,
-          hasItems: !!req.body?.items,
-          itemsLength: req.body?.items?.length || 0
-        }
+        timestamp: new Date().toISOString()
       });
     }
   });

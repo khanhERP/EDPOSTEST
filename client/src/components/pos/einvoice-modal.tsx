@@ -418,22 +418,50 @@ export function EInvoiceModal({
 
       // Save invoice to database
       // Save to invoices table based on publish type
+      const savePayload = {
+        invoiceNumber: invoicePayload.invoiceNumber,
+        invoiceDate: invoicePayload.invoiceDate,
+        buyerName: invoicePayload.buyerName,
+        buyerTaxCode: invoicePayload.buyerTaxCode,
+        buyerAddress: invoicePayload.buyerAddress,
+        buyerPhoneNumber: invoicePayload.buyerPhoneNumber,
+        buyerEmail: invoicePayload.buyerEmail,
+        subtotal: invoicePayload.subtotal,
+        tax: invoicePayload.tax,
+        total: invoicePayload.total,
+        paymentMethod: invoicePayload.paymentMethod,
+        notes: invoicePayload.notes,
+        source: invoicePayload.source,
+        orderId: invoicePayload.orderId,
+        einvoiceProvider: invoicePayload.einvoiceProvider,
+        einvoiceTemplate: invoicePayload.einvoiceTemplate,
+        status: action === "publish" ? "published" : "draft",
+        einvoiceStatus: action === "publish" ? 1 : 2,
+        items: cartItems.map(item => ({
+          productId: item.id,
+          productName: item.name,
+          quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+          unitPrice: (typeof item.price === 'string' ? parseFloat(item.price) : item.price).toString(),
+          total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)).toString(),
+          taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
+        }))
+      };
+
+      console.log("Sending invoice save payload:", JSON.stringify(savePayload, null, 2));
+
       const saveResponse = await fetch("/api/invoices", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...invoicePayload,
-          status: action === "publish" ? "published" : "draft", // Set status based on action
-          einvoiceStatus: action === "publish" ? 1 : 2 // 1=Đã phát hành, 2=Tạo nháp
-        }),
+        body: JSON.stringify(savePayload),
       });
 
       const invoiceData = await saveResponse.json();
 
       if (!saveResponse.ok) {
-        throw new Error(invoiceData.message || `Lỗi lưu ${action === "publish" ? "phát hành" : "nháp"}`);
+        console.error("Invoice save error response:", invoiceData);
+        throw new Error(invoiceData.message || invoiceData.details || `Lỗi lưu ${action === "publish" ? "phát hành" : "nháp"}`);
       }
 
       console.log(`📋 ${action === "publish" ? "Published" : "Draft"} invoice saved:`, invoiceData);
