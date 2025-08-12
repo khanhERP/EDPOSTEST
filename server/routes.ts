@@ -2731,10 +2731,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate required fields
       if (!invoiceData.total || !invoiceData.customerName) {
+        console.error("Missing required fields in invoice data:", invoiceData);
         return res.status(400).json({
           error: "Missing required fields",
           details: "total and customerName are required",
-          received: invoiceData
+          received: {
+            hasTotal: !!invoiceData.total,
+            hasCustomerName: !!invoiceData.customerName,
+            totalValue: invoiceData.total,
+            customerNameValue: invoiceData.customerName
+          }
+        });
+      }
+
+      // Validate numeric fields
+      if (invoiceData.total && (isNaN(parseFloat(invoiceData.total)) || parseFloat(invoiceData.total) <= 0)) {
+        console.error("Invalid total value:", invoiceData.total);
+        return res.status(400).json({
+          error: "Invalid total value",
+          details: "total must be a positive number",
+          received: { total: invoiceData.total }
         });
       }
 
@@ -2814,6 +2830,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error message:", error?.message);
       console.error("Error stack:", error?.stack);
       console.error("Request body:", JSON.stringify(req.body, null, 2));
+      console.error("Full error object:", error);
 
       // Check for specific database errors
       let errorMessage = "Failed to create invoice";
@@ -2822,19 +2839,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (error?.message?.includes("NOT NULL constraint failed")) {
         errorMessage = "Missing required database fields";
         errorDetails = "Some required fields are missing or null";
+        console.error("NOT NULL constraint details:", error.message);
       } else if (error?.message?.includes("FOREIGN KEY constraint failed")) {
         errorMessage = "Invalid reference data";
         errorDetails = "Referenced data does not exist";
+        console.error("FOREIGN KEY constraint details:", error.message);
       } else if (error?.message?.includes("UNIQUE constraint failed")) {
         errorMessage = "Duplicate data conflict";
         errorDetails = "Data already exists in database";
+        console.error("UNIQUE constraint details:", error.message);
+      } else if (error?.code === 'ECONNREFUSED') {
+        errorMessage = "Database connection failed";
+        errorDetails = "Cannot connect to database";
+      } else if (error?.code === 'SQLITE_ERROR') {
+        errorMessage = "Database error";
+        errorDetails = error.message || "SQLite database error";
       }
 
       res.status(500).json({ 
         error: errorMessage,
         details: errorDetails,
         timestamp: new Date().toISOString(),
-        requestData: req.body
+        errorCode: error?.code,
+        errorType: error?.constructor?.name,
+        requestData: {
+          hasTotal: !!req.body?.total,
+          hasCustomerName: !!req.body?.customerName,
+          hasItems: !!req.body?.items,
+          itemsLength: req.body?.items?.length || 0
+        }
       });
     }
   });

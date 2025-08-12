@@ -575,20 +575,57 @@ export function EInvoiceModal({
 
     } catch (error) {
       console.error(`❌ Error during ${publishMessage}:`, error);
+      console.error('Error details:', {
+        error,
+        errorType: typeof error,
+        errorConstructor: error?.constructor?.name,
+        errorMessage: error?.message,
+        errorStack: error?.stack,
+        formData: formData,
+        cartItems: cartItems,
+        source: source,
+        orderId: orderId
+      });
 
       let errorMessage = `Có lỗi xảy ra khi ${publishMessage.toLowerCase()}`;
+      let errorDetails = 'Lỗi không xác định';
+
       if (error instanceof Error) {
+        errorDetails = error.message;
         errorMessage = `Có lỗi xảy ra khi ${publishMessage.toLowerCase()}: ${error.message}`;
       } else if (typeof error === 'string') {
+        errorDetails = error;
         errorMessage = `Có lỗi xảy ra khi ${publishMessage.toLowerCase()}: ${error}`;
+      } else if (error && typeof error === 'object') {
+        // Handle fetch errors or API response errors
+        if (error.message) {
+          errorDetails = error.message;
+        } else if (error.error) {
+          errorDetails = error.error;
+        } else if (error.details) {
+          errorDetails = error.details;
+        } else {
+          errorDetails = JSON.stringify(error);
+        }
+        errorMessage = `Có lỗi xảy ra khi ${publishMessage.toLowerCase()}: ${errorDetails}`;
       } else {
-        errorMessage = `Có lỗi xảy ra khi ${publishMessage.toLowerCase()}: ${JSON.stringify(error)}`;
+        errorDetails = String(error);
+        errorMessage = `Có lỗi xảy ra khi ${publishMessage.toLowerCase()}: ${errorDetails}`;
+      }
+
+      // Check for specific network errors
+      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+        errorMessage = `Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng và thử lại.`;
+        errorDetails = 'Lỗi kết nối mạng';
+      } else if (errorMessage.includes('EADDRINUSE') || errorMessage.includes('address already in use')) {
+        errorMessage = `Server đang bận. Vui lòng thử lại sau ít phút.`;
+        errorDetails = 'Server đang bận';
       }
 
       toast({
         variant: "destructive",
         title: "Lỗi",
-        description: errorMessage
+        description: errorDetails
       });
       return;
     } finally {
