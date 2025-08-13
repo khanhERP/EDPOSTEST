@@ -85,13 +85,6 @@ export function CategorySidebar({
           />
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
         </div>
-        <Button 
-          onClick={handleBarcodeScan}
-          className="w-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center rounded-xl"
-        >
-          <BarChart3 className="mr-2" size={16} />
-          {t('pos.scanBarcode')}
-        </Button>
       </div>
       
       <div className="flex-1 overflow-y-auto">
