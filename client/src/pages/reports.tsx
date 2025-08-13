@@ -16,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, PieChart, TrendingUp, Utensils, Package, Users, Calendar, FileText, ShoppingCart } from "lucide-react";
 import { Link, useSearch } from "wouter";
 import { useTranslation } from "@/lib/i18n";
+import { SupplierReport } from "@/components/reports/supplier-report";
 import { EmployeeReport } from "@/components/reports/employee-report";
 import { SalesChannelReport } from "@/components/reports/sales-channel-report";
 import { FinancialReport } from "@/components/reports/financial-report";
@@ -28,7 +29,7 @@ export default function ReportsPage() {
   useEffect(() => {
     const params = new URLSearchParams(search);
     const tab = params.get('tab');
-    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday', 'order', 'inventory', 'customer', 'employee', 'saleschannel'].includes(tab)) {
+    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday', 'order', 'inventory', 'customer', 'supplier', 'employee', 'saleschannel'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [search]);
@@ -80,7 +81,7 @@ export default function ReportsPage() {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="saleschart" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.salesChart')}</span>
@@ -88,7 +89,7 @@ export default function ReportsPage() {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="menu" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <PieChart className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.menuAnalysis')}</span>
@@ -96,7 +97,7 @@ export default function ReportsPage() {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="table" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <Utensils className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.tableAnalysis')}</span>
@@ -104,7 +105,7 @@ export default function ReportsPage() {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="endofday" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.endOfDayReportTab")}</span>
@@ -112,7 +113,7 @@ export default function ReportsPage() {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="order" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.orderReportTab")}</span>
@@ -120,7 +121,7 @@ export default function ReportsPage() {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="inventory" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <Package className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.inventoryReport")}</span>
@@ -128,15 +129,23 @@ export default function ReportsPage() {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="customer" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <Users className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.customerReportTab")}</span>
                   <span className="sm:hidden">Customer</span>
                 </TabsTrigger>
                 <TabsTrigger 
+                  value="supplier" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
+                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t("reports.supplierReportTab")}</span>
+                  <span className="sm:hidden">Supplier</span>
+                </TabsTrigger>
+                <TabsTrigger 
                   value="employee" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <Users className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.employeeReportTab")}</span>
@@ -144,7 +153,7 @@ export default function ReportsPage() {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="saleschannel" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.salesChannelReportTab")}</span>
@@ -152,7 +161,7 @@ export default function ReportsPage() {
                 </TabsTrigger>
                 <TabsTrigger 
                   value="financial" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.financialReportTab")}</span>
@@ -195,6 +204,10 @@ export default function ReportsPage() {
 
             <TabsContent value="customer">
               <CustomerReport />
+            </TabsContent>
+
+            <TabsContent value="supplier">
+              <SupplierReport />
             </TabsContent>
 
             <TabsContent value="employee">
