@@ -94,6 +94,7 @@ app.use((req, res, next) => {
   } catch (error) {
     log('Failed to start WebSocket server:', error);
     console.error('WebSocket error details:', error);
+    // Continue without WebSocket if it fails
   }
 
   // importantly only setup vite in development and after
