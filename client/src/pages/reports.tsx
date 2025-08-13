@@ -27,7 +27,7 @@ export default function ReportsPage() {
   useEffect(() => {
     const params = new URLSearchParams(search);
     const tab = params.get('tab');
-    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'order', 'inventory', 'customer', 'employee', 'saleschannel', 'financial'].includes(tab)) {
+    if (tab && ['overview', 'sales', 'menu', 'table', 'saleschart', 'order', 'inventory'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [search]);
@@ -75,15 +75,7 @@ export default function ReportsPage() {
                 >
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.salesAnalysis')}</span>
-                  <span className="sm:hidden">Sales</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="saleschart" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
-                >
-                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{t('reports.salesChart')}</span>
-                  <span className="sm:hidden">Chart</span>
+                  <span className="sm:hidden">Sales Analysis</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="menu" 
@@ -91,7 +83,7 @@ export default function ReportsPage() {
                 >
                   <PieChart className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.menuAnalysis')}</span>
-                  <span className="sm:hidden">Menu</span>
+                  <span className="sm:hidden">Menu Analysis</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="table" 
@@ -99,15 +91,23 @@ export default function ReportsPage() {
                 >
                   <Utensils className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.tableAnalysis')}</span>
-                  <span className="sm:hidden">Table</span>
+                  <span className="sm:hidden">Table Analysis</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="saleschart" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
+                  <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t('reports.salesReport')}</span>
+                  <span className="sm:hidden">Sales Report</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="order" 
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{t("reports.orderReportTab")}</span>
-                  <span className="sm:hidden">Order</span>
+                  <span className="hidden sm:inline">{t("reports.purchaseReport")}</span>
+                  <span className="sm:hidden">Purchase Report</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="inventory" 
@@ -115,39 +115,7 @@ export default function ReportsPage() {
                 >
                   <Package className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.inventoryReport")}</span>
-                  <span className="sm:hidden">Inventory</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="customer" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
-                >
-                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{t("reports.customerReportTab")}</span>
-                  <span className="sm:hidden">Customer</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="employee" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
-                >
-                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{t("reports.employeeReportTab")}</span>
-                  <span className="sm:hidden">Employee</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="saleschannel" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
-                >
-                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{t("reports.salesChannelReportTab")}</span>
-                  <span className="sm:hidden">Sales Channel</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="financial" 
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
-                >
-                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{t("reports.financialReportTab")}</span>
-                  <span className="sm:hidden">Financial</span>
+                  <span className="sm:hidden">Inventory Report</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -160,10 +128,6 @@ export default function ReportsPage() {
               <SalesReport />
             </TabsContent>
 
-            <TabsContent value="saleschart">
-              <SalesChartReport />
-            </TabsContent>
-
             <TabsContent value="menu">
               <MenuReport />
             </TabsContent>
@@ -172,30 +136,16 @@ export default function ReportsPage() {
               <TableReport />
             </TabsContent>
 
+            <TabsContent value="saleschart">
+              <SalesChartReport />
+            </TabsContent>
+
             <TabsContent value="order">
               <OrderReport />
             </TabsContent>
 
             <TabsContent value="inventory">
               <InventoryReport />
-            </TabsContent>
-
-            <TabsContent value="customer">
-              <CustomerReport />
-            </TabsContent>
-
-            <TabsContent value="employee">
-              <EmployeeReport />
-            </TabsContent>
-
-            <TabsContent value="saleschannel">
-              <SalesChannelReport />
-            </TabsContent>
-
-            
-
-            <TabsContent value="financial">
-              <FinancialReport />
             </TabsContent>
           </Tabs>
         </div>

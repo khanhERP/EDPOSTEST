@@ -271,6 +271,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesChart: "매출 차트",
     salesChartDescription: "차트를 통한 시각적 매출 분석",
     salesReport: "매출 보고서",
+    purchaseReport: "구매 보고서",
 
     // Inventory report
     inventoryReport: "재고 보고서",
@@ -732,6 +733,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesChart: "Sales Chart",
     salesChartDescription: "Visual sales analysis through charts",
     salesReport: "Sales Report",
+    purchaseReport: "Purchase Report",
 
     // Inventory report
     inventoryReport: "Inventory Report",
@@ -1199,6 +1201,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesChart: "Biểu đồ bán hàng",
     salesChartDescription: "Phân tích doanh thu trực quan qua biểu đồ",
     salesReport: "Báo cáo bán hàng",
+    purchaseReport: "Báo cáo mua hàng",
 
     // Inventory report
     inventoryReport: "Báo cáo hàng hóa",
