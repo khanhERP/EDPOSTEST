@@ -42,61 +42,40 @@ export function DashboardOverview() {
   );
   const queryClient = useQueryClient();
 
-  const { data: transactions, isLoading: transactionsLoading, error: transactionsError, refetch: refetchTransactions } = useQuery({
+  const { data: transactions } = useQuery({
     queryKey: ["/api/transactions", startDate, endDate],
-    refetchInterval: 30000,
   });
 
-  const { data: tables, isLoading: tablesLoading, error: tablesError, refetch: refetchTables } = useQuery({
+  const { data: tables } = useQuery({
     queryKey: ["/api/tables", startDate, endDate],
-    refetchInterval: 30000,
   });
 
-  const handleRefresh = async () => {
-    try {
-      // Refresh the queries to get the latest data for the selected date
-      setStartDate(formatDateToYYYYMMDD(new Date()));
-      setEndDate(formatDateToYYYYMMDD(new Date()));
-      
-      await Promise.all([
-        refetchTransactions(),
-        refetchTables(),
-        queryClient.invalidateQueries({ queryKey: ["/api/orders"] })
-      ]);
-    } catch (error) {
-      console.error('Error refreshing dashboard data:', error);
-    }
+  const handleRefresh = () => {
+    // Refresh the queries to get the latest data for the selected date
+    setStartDate(formatDateToYYYYMMDD(new Date()));
+    setEndDate(formatDateToYYYYMMDD(new Date()));
+    queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
   };
 
   const getDashboardStats = () => {
-    // Return null if data is not available or not in correct format
     if (
       !transactions ||
       !tables ||
       !Array.isArray(transactions) ||
       !Array.isArray(tables)
-    ) {
-      console.log("Dashboard Debug - Missing data:", {
-        transactions: !!transactions,
-        tables: !!tables,
-        transactionsArray: Array.isArray(transactions),
-        tablesArray: Array.isArray(tables)
-      });
+    )
       return null;
-    }
 
-    console.log("Dashboard Debug - API Response:", {
+    console.log("Dashboard Debug:", {
       totalTransactions: transactions.length,
-      totalTables: tables.length,
       startDate,
       endDate,
       firstTransaction: transactions[0],
-      firstTable: tables[0],
       allTransactionDates: transactions.map((t: any) =>
-        new Date(t.createdAt || t.created_at).toDateString(),
+        new Date(t.createdAt).toDateString(),
       ),
-      transactionsStructure: transactions.slice(0, 2),
-      tablesStructure: tables.slice(0, 2)
     });
 
     const start = new Date(startDate);
@@ -194,41 +173,10 @@ export function DashboardOverview() {
     });
   };
 
-  // Show loading state
-  if (transactionsLoading || tablesLoading) {
+  if (!stats) {
     return (
       <div className="flex justify-center py-8">
         <div className="text-gray-500">{t("reports.loading")}</div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (transactionsError || tablesError) {
-    return (
-      <div className="flex flex-col items-center py-8 space-y-4">
-        <div className="text-red-500">
-          {t("reports.loadingError") || "Lỗi khi tải dữ liệu"}
-        </div>
-        <Button onClick={handleRefresh} variant="outline">
-          <Search className="w-4 h-4 mr-1" />
-          {t("reports.refresh")}
-        </Button>
-      </div>
-    );
-  }
-
-  // Show no data state
-  if (!stats) {
-    return (
-      <div className="flex flex-col items-center py-8 space-y-4">
-        <div className="text-gray-500">
-          {t("reports.noData") || "Không có dữ liệu để hiển thị"}
-        </div>
-        <Button onClick={handleRefresh} variant="outline">
-          <Search className="w-4 h-4 mr-1" />
-          {t("reports.refresh")}
-        </Button>
       </div>
     );
   }
