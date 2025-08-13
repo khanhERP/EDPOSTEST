@@ -60,21 +60,25 @@ export function DashboardOverview() {
   };
 
   const getDashboardStats = () => {
-    // If we have data from API, use it
-    if (
-      transactions &&
-      tables &&
-      Array.isArray(transactions) &&
-      Array.isArray(tables)
-    ) {
-      console.log("Dashboard Debug:", {
+    // Always try to use real data first, fall back gracefully
+    let periodRevenue = 0;
+    let periodOrderCount = 0;
+    let periodCustomerCount = 0;
+    let dailyAverageRevenue = 0;
+    let activeOrders = 0;
+    let occupiedTables = 0;
+    let monthRevenue = 0;
+    let averageOrderValue = 0;
+    let peakHour = 12;
+    let totalTables = 0;
+
+    // Process real transactions if available
+    if (transactions && Array.isArray(transactions) && transactions.length > 0) {
+      console.log("Dashboard Debug - Using real transaction data:", {
         totalTransactions: transactions.length,
         startDate,
         endDate,
         firstTransaction: transactions[0],
-        allTransactionDates: transactions.map((t: any) =>
-          new Date(t.createdAt).toDateString(),
-        ),
       });
 
       const start = new Date(startDate);
@@ -88,29 +92,23 @@ export function DashboardOverview() {
         return transactionDate >= start && transactionDate <= end;
       });
 
-      const periodRevenue = filteredTransactions.reduce(
-        (total: number, transaction: any) => total + Number(transaction.total),
+      periodRevenue = filteredTransactions.reduce(
+        (total: number, transaction: any) => total + Number(transaction.total || 0),
         0,
       );
 
-      const periodOrderCount = filteredTransactions.length;
-      const periodCustomerCount = filteredTransactions.length;
+      periodOrderCount = filteredTransactions.length;
+      periodCustomerCount = filteredTransactions.length;
 
       const daysDiff = Math.max(
         1,
         Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
       );
-      const dailyAverageRevenue = periodRevenue / daysDiff;
+      dailyAverageRevenue = periodRevenue / daysDiff;
+      monthRevenue = periodRevenue;
+      averageOrderValue = periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
 
-      const activeOrders = 0;
-      const occupiedTables = tables.filter(
-        (table: TableType) => table.status === "occupied",
-      );
-
-      const monthRevenue = periodRevenue;
-      const averageOrderValue =
-        periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
-
+      // Calculate peak hour
       const hourlyTransactions: { [key: number]: number } = {};
       filteredTransactions.forEach((transaction: any) => {
         const hour = new Date(
@@ -119,41 +117,46 @@ export function DashboardOverview() {
         hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
       });
 
-      const peakHour = Object.keys(hourlyTransactions).reduce(
-        (peak, hour) =>
-          hourlyTransactions[parseInt(hour)] > hourlyTransactions[parseInt(peak)]
-            ? hour
-            : peak,
-        "12",
-      );
-
-      return {
-        periodRevenue,
-        periodOrderCount,
-        periodCustomerCount,
-        dailyAverageRevenue,
-        activeOrders: activeOrders,
-        occupiedTables: occupiedTables.length,
-        monthRevenue,
-        averageOrderValue,
-        peakHour: parseInt(peakHour),
-        totalTables: tables.length,
-      };
+      if (Object.keys(hourlyTransactions).length > 0) {
+        peakHour = parseInt(Object.keys(hourlyTransactions).reduce(
+          (peak, hour) =>
+            hourlyTransactions[parseInt(hour)] > hourlyTransactions[parseInt(peak)]
+              ? hour
+              : peak,
+        ));
+      }
     }
 
-    // If no data from API, return mock/default data for demo purposes
-    console.log("Dashboard Debug - No API data, using mock data");
+    // Process real table data if available
+    if (tables && Array.isArray(tables) && tables.length > 0) {
+      console.log("Dashboard Debug - Using real table data:", tables.length);
+      totalTables = tables.length;
+      occupiedTables = tables.filter(
+        (table: TableType) => table.status === "occupied",
+      ).length;
+    } else {
+      // Default table data if none available
+      totalTables = 12;
+      occupiedTables = 2;
+    }
+
+    console.log("Dashboard Stats calculated:", {
+      periodRevenue,
+      periodOrderCount,
+      hasRealData: transactions && transactions.length > 0
+    });
+
     return {
-      periodRevenue: 1250000,
-      periodOrderCount: 15,
-      periodCustomerCount: 45,
-      dailyAverageRevenue: 416666,
-      activeOrders: 3,
-      occupiedTables: 4,
-      monthRevenue: 1250000,
-      averageOrderValue: 83333,
-      peakHour: 18,
-      totalTables: 12,
+      periodRevenue,
+      periodOrderCount,
+      periodCustomerCount,
+      dailyAverageRevenue,
+      activeOrders,
+      occupiedTables,
+      monthRevenue,
+      averageOrderValue,
+      peakHour,
+      totalTables,
     };
   };
 
@@ -179,8 +182,6 @@ export function DashboardOverview() {
       day: "numeric",
     });
   };
-
-  // Always show dashboard, never show loading state
 
   return (
     <div className="space-y-6">

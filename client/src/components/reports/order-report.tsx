@@ -62,27 +62,37 @@ export function OrderReport() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState("all");
 
-  const { data: orders } = useQuery({
+  const { data: orders = [], refetch: refetchOrders, isLoading } = useQuery({
     queryKey: ["/api/orders"],
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
-  const { data: products } = useQuery({
+  const { data: products = [] } = useQuery({
     queryKey: ["/api/products"],
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories = [] } = useQuery({
     queryKey: ["/api/categories"],
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
-  const { data: employees } = useQuery({
+  const { data: employees = [] } = useQuery({
     queryKey: ["/api/employees"],
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const getFilteredData = () => {
+    console.log("Filtering orders data:", { orders: orders?.length || 0, startDate, endDate });
+    
     if (!orders || !Array.isArray(orders)) return [];
 
     const filteredOrders = orders.filter((order: any) => {
-      const orderDate = new Date(order.orderedAt || order.created_at);
+      const orderDate = new Date(order.orderedAt || order.created_at || order.createdAt);
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
@@ -91,9 +101,9 @@ export function OrderReport() {
 
       const statusMatch =
         orderStatus === "all" ||
-        (orderStatus === "draft" && order.status === "pending") ||
+        (orderStatus === "draft" && (order.status === "pending" || order.status === "draft")) ||
         (orderStatus === "confirmed" && order.status === "confirmed") ||
-        (orderStatus === "delivering" && order.status === "preparing") ||
+        (orderStatus === "delivering" && (order.status === "preparing" || order.status === "in_progress")) ||
         (orderStatus === "completed" && order.status === "paid");
 
       const customerMatch =
@@ -105,9 +115,25 @@ export function OrderReport() {
         (order.customerPhone &&
           order.customerPhone.includes(customerSearch));
 
-      return dateMatch && statusMatch && customerMatch;
+      // Category filter for products
+      let categoryMatch = selectedCategory === "all";
+      if (!categoryMatch && products.length > 0) {
+        // This would need order items to filter by category properly
+        categoryMatch = true; // For now, show all orders
+      }
+
+      // Employee filter
+      let employeeMatch = selectedEmployee === "all";
+      if (!employeeMatch) {
+        employeeMatch = order.employeeId?.toString() === selectedEmployee;
+      }
+
+      const result = dateMatch && statusMatch && customerMatch && categoryMatch && employeeMatch;
+      
+      return result;
     });
 
+    console.log("Filtered orders result:", filteredOrders.length);
     return filteredOrders;
   };
 
@@ -506,6 +532,21 @@ export function OrderReport() {
                 onChange={(e) => setEndDate(e.target.value)}
               />
             </div>
+          </div>
+
+          {/* Refresh Button */}
+          <div className="flex justify-end">
+            <Button 
+              onClick={() => {
+                refetchOrders();
+                console.log("Refreshing order data...");
+              }}
+              disabled={isLoading}
+              variant="outline"
+            >
+              <Search className="w-4 h-4 mr-2" />
+              {isLoading ? t("reports.loading") : t("reports.refresh")}
+            </Button>
           </div>
 
           {/* Search Fields */}
