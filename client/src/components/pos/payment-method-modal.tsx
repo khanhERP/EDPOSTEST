@@ -296,7 +296,7 @@ export function PaymentMethodModal({
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.host}/ws`;
             const ws = new WebSocket(wsUrl);
-            
+
             ws.onopen = () => {
               ws.send(JSON.stringify({
                 type: 'qr_payment',
@@ -398,7 +398,7 @@ export function PaymentMethodModal({
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       const ws = new WebSocket(wsUrl);
-      
+
       ws.onopen = () => {
         ws.send(JSON.stringify({
           type: 'qr_payment_cancelled',
@@ -424,14 +424,20 @@ export function PaymentMethodModal({
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
-    // Process E-invoice data here
-    console.log("E-invoice data:", eInvoiceData);
-    setShowEInvoice(false);
-    onSelectMethod(selectedPaymentMethod);
+    console.log('📧 E-Invoice data received in payment modal:', eInvoiceData);
+
+    // Close payment modal first
     onClose();
-    // Trigger receipt modal
-    if (onShowEInvoice) {
-      onShowEInvoice();
+
+    // Kiểm tra xem có phải là "phát hành sau" không
+    if (eInvoiceData.publishLater) {
+      console.log('⏳ E-Invoice scheduled for later publishing, not calling onSelectMethod');
+      // Không gọi onSelectMethod vì đã được xử lý hoàn toàn trong e-invoice modal
+      return;
+    } else {
+      console.log('✅ E-Invoice published immediately, proceeding with payment completion');
+      // Chỉ gọi onSelectMethod khi phát hành ngay lập tức
+      onSelectMethod(selectedPaymentMethod);
     }
   };
 
@@ -512,7 +518,7 @@ export function PaymentMethodModal({
           const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
           const wsUrl = `${protocol}//${window.location.host}/ws`;
           const ws = new WebSocket(wsUrl);
-          
+
           ws.onopen = () => {
             ws.send(JSON.stringify({
               type: 'qr_payment_cancelled',
@@ -792,8 +798,7 @@ export function PaymentMethodModal({
         isOpen={showEInvoice}
         onClose={handleEInvoiceClose}
         onConfirm={(eInvoiceData) => {
-          console.log('📧 E-Invoice processing completed:', eInvoiceData);
-          setShowEInvoice(false);
+          console.log('📧 E-Invoice data received in payment modal:', eInvoiceData);
 
           // Close payment modal first
           onClose();

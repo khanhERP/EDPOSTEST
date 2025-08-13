@@ -21,6 +21,7 @@ interface ReceiptModalProps {
   receipt: Receipt | null;
   onConfirm?: () => void;
   isPreview?: boolean;
+  autoShowPrint?: boolean;
   cartItems?: Array<{
     id: number;
     name: string;
@@ -37,6 +38,7 @@ export function ReceiptModal({
   receipt,
   onConfirm,
   isPreview = false,
+  autoShowPrint = false,
   cartItems = [],
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
@@ -71,14 +73,14 @@ export function ReceiptModal({
 
   console.log("Receipt Modal receipt:", receipt);
 
-  // Auto-open print window for e-invoice receipts only
+  // Auto-open print window for e-invoice receipts or when autoShowPrint is true
   useEffect(() => {
     if (isOpen && receipt && !isPreview && !hasAutoOpened) {
-      // Check if this is specifically from e-invoice
+      // Check if this is specifically from e-invoice or has autoShowPrint flag
       const isFromEInvoice = receipt.paymentMethod === 'einvoice';
       
-      if (isFromEInvoice) {
-        console.log("🖨️ Auto-opening print window for e-invoice receipt");
+      if (isFromEInvoice || autoShowPrint) {
+        console.log(`🖨️ Auto-opening print window for ${isFromEInvoice ? 'e-invoice' : 'auto-print'} receipt`);
         setHasAutoOpened(true);
         
         // Small delay to ensure DOM is ready
@@ -87,7 +89,7 @@ export function ReceiptModal({
         }, 500);
       }
     }
-  }, [isOpen, receipt, isPreview, hasAutoOpened]);
+  }, [isOpen, receipt, isPreview, hasAutoOpened, autoShowPrint]);
 
   // Reset hasAutoOpened when modal closes
   useEffect(() => {

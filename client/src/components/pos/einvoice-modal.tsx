@@ -473,6 +473,10 @@ export function EInvoiceModal({
         description: 'Thông tin hóa đơn điện tử đã được lưu vào database để phát hành sau.',
       });
 
+      // Đóng modal e-invoice ngay lập tức để receipt modal có thể hiển thị
+      console.log('🔒 Closing e-invoice modal immediately for receipt display');
+      onClose();
+
       // Handle different sources
       if (source === 'table' && orderId) {
         // Logic cho Table: Hoàn tất thanh toán trước, sau đó hiển thị receipt
@@ -486,28 +490,25 @@ export function EInvoiceModal({
 
         console.log('🍽️ Payment completed successfully for later publishing');
 
-        // Gọi onConfirm để hiển thị receipt trước khi đóng modal
-        console.log('🍽️ Calling onConfirm for receipt display');
-        onConfirm(invoiceData);
-
-        // Đóng modal e-invoice sau khi đã gọi onConfirm
-        setTimeout(() => {
-          onClose();
-        }, 100);
+        // Gọi onConfirm để hiển thị receipt với flag để in hóa đơn
+        console.log('🍽️ Calling onConfirm for receipt display with print mode');
+        onConfirm({
+          ...invoiceData,
+          showReceipt: true,
+          autoShowPrint: true // Flag để tự động hiển thị chế độ in
+        });
 
       } else {
         // Logic cho POS hoặc fallback
         console.log('🏪 POS/Fallback E-Invoice Later: Processing payment completion');
 
-        // Gọi onConfirm để hiển thị receipt modal trước
-        console.log('✅ Calling onConfirm to show receipt modal');
-        onConfirm(invoiceData);
-
-        // Đóng modal e-invoice sau một khoảng thời gian ngắn để đảm bảo receipt modal được hiển thị
-        setTimeout(() => {
-          console.log('🔒 Closing e-invoice modal after receipt modal is shown');
-          onClose();
-        }, 100);
+        // Gọi onConfirm để hiển thị receipt modal với flag để in hóa đơn
+        console.log('✅ Calling onConfirm to show receipt modal with print mode');
+        onConfirm({
+          ...invoiceData,
+          showReceipt: true,
+          autoShowPrint: true // Flag để tự động hiển thị chế độ in
+        });
       }
 
     } catch (error) {
