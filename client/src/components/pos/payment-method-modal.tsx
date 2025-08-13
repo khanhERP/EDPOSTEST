@@ -17,7 +17,7 @@ import VirtualKeyboard from "@/components/ui/virtual-keyboard";
 interface PaymentMethodModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectMethod: (method: string) => void;
+  onSelectMethod: (method: string, data?: any) => void;
   total: number;
   onShowEInvoice?: () => void;
   cartItems?: Array<{
@@ -424,15 +424,19 @@ export function PaymentMethodModal({
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
-    console.log('📧 E-Invoice data received in payment modal:', eInvoiceData);
+    console.log('📧 E-invoice confirmed from payment modal:', eInvoiceData);
 
     // Close payment modal first
     onClose();
 
-    // Kiểm tra xem có phải là "phát hành sau" không
+    // Xử lý cho cả "phát hành ngay" và "phát hành sau"
     if (eInvoiceData.publishLater) {
-      console.log('⏳ E-Invoice scheduled for later publishing, not calling onSelectMethod');
-      // Không gọi onSelectMethod vì đã được xử lý hoàn toàn trong e-invoice modal
+      console.log('⏳ E-Invoice scheduled for later publishing');
+
+      // Cho "phát hành sau", chỉ cần gọi onSelectMethod với method đặc biệt
+      // Receipt modal sẽ được xử lý riêng trong shopping-cart hoặc component cha
+      console.log('📄 Calling onSelectMethod with publishLater data');
+      onSelectMethod('einvoice', eInvoiceData);
       return;
     } else {
       console.log('✅ E-Invoice published immediately, proceeding with payment completion');
@@ -521,7 +525,7 @@ export function PaymentMethodModal({
 
           ws.onopen = () => {
             console.log('Payment Modal: WebSocket connected for refresh message');
-            
+
             // If QR code was showing, send cancellation message first
             if (wasShowingQRCode || showQRCode || qrCodeUrl) {
               console.log('Payment Modal: Sending QR cancellation message');
@@ -529,7 +533,7 @@ export function PaymentMethodModal({
                 type: 'qr_payment_cancelled',
                 timestamp: new Date().toISOString()
               }));
-              
+
               // Wait a bit before sending refresh message
               setTimeout(() => {
                 console.log('Payment Modal: Sending refresh message');
@@ -832,23 +836,7 @@ export function PaymentMethodModal({
       <EInvoiceModal
         isOpen={showEInvoice}
         onClose={handleEInvoiceClose}
-        onConfirm={(eInvoiceData) => {
-          console.log('📧 E-Invoice data received in payment modal:', eInvoiceData);
-
-          // Close payment modal first
-          onClose();
-
-          // Kiểm tra xem có phải là "phát hành sau" không
-          if (eInvoiceData.publishLater) {
-            console.log('⏳ E-Invoice scheduled for later publishing, not calling onSelectMethod');
-            // Không gọi onSelectMethod vì đã được xử lý hoàn toàn trong e-invoice modal
-            return;
-          } else {
-            console.log('✅ E-Invoice published immediately, proceeding with payment completion');
-            // Chỉ gọi onSelectMethod khi phát hành ngay lập tức
-            onSelectMethod(selectedPaymentMethod);
-          }
-        }}
+        onConfirm={handleEInvoiceConfirm}
         total={total}
         cartItems={cartItems}
         source="pos"

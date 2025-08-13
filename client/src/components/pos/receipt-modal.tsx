@@ -75,11 +75,20 @@ export function ReceiptModal({
 
   // Auto-open print window for e-invoice receipts or when autoShowPrint is true
   useEffect(() => {
+    console.log('🔍 Receipt Modal useEffect triggered with:', {
+      isOpen,
+      hasReceipt: !!receipt,
+      isPreview,
+      hasAutoOpened,
+      autoShowPrint,
+      paymentMethod: receipt?.paymentMethod
+    });
+
     if (isOpen && receipt && !isPreview && !hasAutoOpened) {
       // Check if this is specifically from e-invoice or has autoShowPrint flag
       const isFromEInvoice = receipt.paymentMethod === 'einvoice';
       
-      console.log('🔍 Auto-print check:', {
+      console.log('🔍 Auto-print check PASSED initial conditions:', {
         isOpen,
         hasReceipt: !!receipt,
         isPreview,
@@ -97,7 +106,16 @@ export function ReceiptModal({
         setTimeout(() => {
           handlePrint();
         }, 500);
+      } else {
+        console.log('❌ Auto-print conditions not met:', { isFromEInvoice, autoShowPrint });
       }
+    } else {
+      console.log('❌ Initial conditions not met for auto-print:', {
+        isOpen,
+        hasReceipt: !!receipt,
+        isPreview,
+        hasAutoOpened
+      });
     }
   }, [isOpen, receipt, isPreview, hasAutoOpened, autoShowPrint]);
 
