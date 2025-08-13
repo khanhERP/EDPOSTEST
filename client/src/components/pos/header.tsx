@@ -26,8 +26,13 @@ import {
   UserCheck,
   Truck,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export function POSHeader() {
+interface POSHeaderProps {
+  onLogout?: () => void;
+}
+
+export function POSHeader({ onLogout }: POSHeaderProps) {
   const { t } = useTranslation();
   const [posMenuOpen, setPosMenuOpen] = useState(false);
   const [reportsSubmenuOpen, setReportsSubmenuOpen] = useState(false);
@@ -146,6 +151,17 @@ export function POSHeader() {
       minute: '2-digit',
       hour12: true
     });
+  };
+
+  const handleLogout = () => {
+    // Xóa trạng thái đăng nhập khỏi sessionStorage
+    sessionStorage.removeItem("pinAuthenticated");
+    // Gọi callback onLogout nếu có
+    if (onLogout) {
+      onLogout();
+    }
+    // Reload trang để quay về màn hình đăng nhập
+    window.location.reload();
   };
 
   return (
@@ -451,6 +467,19 @@ export function POSHeader() {
                       {t('settings.title')}
                     </button>
                   </Link>
+
+                  <div className="border-t border-gray-200 my-2"></div>
+
+                  <button 
+                    className="w-full flex items-center px-4 py-2 text-left hover:bg-red-50 hover:text-red-600 text-gray-700 transition-colors"
+                    onClick={() => {
+                      setPosMenuOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    <LogOut className="w-4 h-4 mr-3" />
+                    Đăng xuất
+                  </button>
                 </div>
               )}
             </div>

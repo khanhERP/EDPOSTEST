@@ -17,18 +17,18 @@ import AttendanceQRPage from "./pages/attendance-qr";
 import CustomerDisplay from "@/pages/customer-display";
 import NotFoundPage from "./pages/not-found";
 
-function Router() {
+function Router({ onLogout }: { onLogout: () => void }) {
   return (
     <Switch>
-      <Route path="/" component={POSPage} />
-      <Route path="/pos" component={POSPage} />
-      <Route path="/tables" component={TablesPage} />
-      <Route path="/inventory" component={InventoryPage} />
-      <Route path="/reports" component={ReportsPage} />
-      <Route path="/employees" component={EmployeesPage} />
-      <Route path="/settings" component={SettingsPage} />
-      <Route path="/suppliers" component={SuppliersPage} />
-      <Route path="/attendance" component={AttendancePage} />
+      <Route path="/" component={() => <POSPage onLogout={onLogout} />} />
+      <Route path="/pos" component={() => <POSPage onLogout={onLogout} />} />
+      <Route path="/tables" component={() => <TablesPage onLogout={onLogout} />} />
+      <Route path="/inventory" component={() => <InventoryPage onLogout={onLogout} />} />
+      <Route path="/reports" component={() => <ReportsPage onLogout={onLogout} />} />
+      <Route path="/employees" component={() => <EmployeesPage onLogout={onLogout} />} />
+      <Route path="/settings" component={() => <SettingsPage onLogout={onLogout} />} />
+      <Route path="/suppliers" component={() => <SuppliersPage onLogout={onLogout} />} />
+      <Route path="/attendance" component={() => <AttendancePage onLogout={onLogout} />} />
       <Route path="/attendance-qr" component={AttendanceQRPage} />
       <Route path="/customer-display" component={CustomerDisplay} />
       <Route path="*" component={NotFoundPage} />
@@ -43,6 +43,10 @@ function App() {
     setIsAuthenticated(true);
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -50,7 +54,7 @@ function App() {
         {!isAuthenticated ? (
           <PinAuth onAuthSuccess={handleAuthSuccess} />
         ) : (
-          <Router />
+          <Router onLogout={handleLogout} />
         )}
       </TooltipProvider>
     </QueryClientProvider>
