@@ -227,7 +227,7 @@ export function EInvoiceModal({
       console.log("🔄 Cart items or total changed:", {
         cartItems: cartItems?.length || 0,
         total,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().getTime().toString(),
       });
     }
   }, [cartItems, total, isOpen]);
@@ -449,10 +449,11 @@ export function EInvoiceModal({
       );
 
       // Prepare invoice payload
-      const currentDate = new Date();
+      const currentTimestamp = Date.now();
+      const invoiceDate = new Date(currentTimestamp).toISOString();
       const invoicePayload = {
         invoiceNumber: `INV-${Date.now()}`,
-        invoiceDate: currentDate.toISOString(),
+        invoiceDate: invoiceDate,
         buyerTaxCode: formData.taxCode || "",
         buyerName: formData.customerName || "Khách hàng",
         buyerAddress: formData.address || "",
@@ -647,7 +648,7 @@ export function EInvoiceModal({
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: currentDate.toISOString(),
+          createdAt: new Date(Date.now()).toISOString(),
         };
 
         // Gọi onConfirm để hiển thị receipt trước khi đóng modal
@@ -689,7 +690,7 @@ export function EInvoiceModal({
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: currentDate.toISOString(),
+          createdAt: new Date(Date.now()).toISOString(),
         };
 
         console.log("✅ Calling onConfirm to show receipt modal");
@@ -1103,7 +1104,8 @@ export function EInvoiceModal({
 
         // Prepare the invoice data to be saved
         const invoiceSavePayload = {
-          invoiceNumber: result.data?.invoiceNo || `INV-${Date.now()}`, // Use invoice number from provider
+          invoiceNumber:
+            result.data?.invoiceNo || `INV-${Date.now()}`, // Use invoice number from provider
           invoiceDate: new Date().toISOString(),
           buyerTaxCode: formData.taxCode || "",
           buyerName: formData.customerName || "Khách hàng",
@@ -1224,7 +1226,7 @@ export function EInvoiceModal({
             amountReceived: formData.total,
             change: "0.00",
             cashierName: "E-Invoice System",
-            createdAt: new Date().toISOString(),
+            createdAt: new Date().getTime().toString(),
           };
           onConfirm({
             ...invoiceSavePayload,
@@ -1264,7 +1266,7 @@ export function EInvoiceModal({
             amountReceived: formData.total,
             change: "0.00",
             cashierName: "E-Invoice System",
-            createdAt: new Date().toISOString(),
+            createdAt: new Date().getTime().toString(),
           };
           onConfirm({
             ...invoiceSavePayload,
