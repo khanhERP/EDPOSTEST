@@ -506,6 +506,7 @@ export function EInvoiceModal({
         console.log('✅ Calling onConfirm to show print dialog directly');
         onConfirm({
           ...invoiceData,
+          publishLater: true,
           showPrintDialog: true, // Flag để hiển thị print dialog trực tiếp
           receipt: receiptData // Đảm bảo receipt data được truyền
         });

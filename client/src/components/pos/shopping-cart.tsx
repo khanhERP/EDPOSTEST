@@ -313,6 +313,8 @@ export function ShoppingCart({
             : `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${eInvoiceData.invoiceData?.invoiceNo || 'N/A'}`,
         });
 
+        // Đảm bảo KHÔNG mở PaymentMethodModal
+        setShowPaymentMethodModal(false);
         return;
       }
 
