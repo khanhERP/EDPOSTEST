@@ -11,7 +11,7 @@ import { InventoryReport } from "@/components/reports/inventory-report";
 import { CustomerReport } from "@/components/reports/customer-report";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, PieChart, TrendingUp, Utensils, Package, Users, Calendar, FileText, ShoppingCart } from "lucide-react";
 import { Link, useSearch } from "wouter";
 import { useTranslation } from "@/lib/i18n";
