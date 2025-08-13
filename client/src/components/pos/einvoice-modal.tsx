@@ -1016,8 +1016,9 @@ export function EInvoiceModal({
           body: JSON.stringify(invoiceSavePayload),
         });
 
+        let savedInvoice = null;
         if (saveInvoiceResponse.ok) {
-          const savedInvoice = await saveInvoiceResponse.json();
+          savedInvoice = await saveInvoiceResponse.json();
           console.log('✅ Invoice saved to database successfully:', savedInvoice);
 
           // Save invoice items
