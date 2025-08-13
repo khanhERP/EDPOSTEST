@@ -115,13 +115,14 @@ export function ShoppingCart({
       ws.onopen = () => {
         console.log("Shopping Cart: Sending cart update to customer display");
 
-        // Send cart update with priority flag to override QR display
+        // Send cart update with high priority to override any QR display
         ws.send(JSON.stringify({
           type: 'cart_update',
           cart: updatedCart,
           timestamp: new Date().toISOString(),
           priority: 'high', // Flag to indicate this should override QR display
-          reason: 'new_items_added'
+          reason: updatedCart.length > 0 ? 'cart_updated' : 'cart_cleared',
+          source: 'pos_system'
         }));
 
         ws.close();
@@ -135,10 +136,8 @@ export function ShoppingCart({
     }
   };
 
-    // Only send update if cart is not empty
-    if (cart.length > 0) {
-      sendCartUpdate(cart);
-    }
+    // Always send cart update to ensure customer display shows current state
+    sendCartUpdate(cart);
   }, [cart, subtotal, tax, total]);
 
   const getPaymentMethods = () => {
