@@ -393,7 +393,7 @@ export function EInvoiceModal({
 
       // Prepare invoice payload
       const invoicePayload = {
-        invoiceNumber: `INV-${Date.now()}`, // Generate invoice number
+        invoiceNumber: `INV-${Date.now()}`,
         invoiceDate: new Date().toISOString(),
         buyerTaxCode: formData.taxCode || "",
         buyerName: formData.customerName || "Khách hàng",
@@ -471,13 +471,13 @@ export function EInvoiceModal({
 
       // Save invoice items to database
       console.log("Preparing to save invoice items for invoice ID:", invoiceData.id);
-      
+
       const itemsToSave = cartItems.map(item => {
         const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
         const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
         const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
         const itemTotal = itemPrice * itemQuantity;
-        
+
         return {
           productId: item.id,
           productName: item.name,

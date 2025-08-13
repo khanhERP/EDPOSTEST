@@ -18,7 +18,7 @@ export async function apiRequest(
     body: data
       ? JSON.stringify(data, (key, value) => {
           if (value instanceof Date) {
-            return { __type: "Date", value: value.toISOString() };
+            return value.toISOString();
           }
           return value;
         })
