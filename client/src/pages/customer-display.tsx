@@ -52,10 +52,14 @@ export default function CustomerDisplayPage() {
 
             switch (data.type) {
               case 'cart_update':
-                console.log("Customer Display: Updating cart:", data.cart);
-                setCart(data.cart || []);
-                // Clear QR payment when cart updates (new order started)
-                if (qrPayment) {
+                console.log("Customer Display: Updating cart:", data.cart, "Priority:", data.priority);
+                const newCart = data.cart || [];
+                setCart(newCart);
+                
+                // Clear QR payment when cart updates, especially for high priority updates
+                // This ensures new cart is shown immediately instead of QR
+                if (qrPayment && (newCart.length > 0 || data.priority === 'high')) {
+                  console.log("Customer Display: Cart update received (priority:", data.priority, "), clearing QR payment to show new order");
                   setQrPayment(null);
                 }
                 break;

@@ -106,28 +106,38 @@ export function ShoppingCart({
 
   // Broadcast cart updates to customer display
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-
+    const sendCartUpdate = (updatedCart: CartItem[]) => {
     try {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log("Broadcasting cart update to customer display:", cart);
+        console.log("Shopping Cart: Sending cart update to customer display");
+
+        // Send cart update with priority flag to override QR display
         ws.send(JSON.stringify({
           type: 'cart_update',
-          cart: cart,
-          subtotal,
-          tax,
-          total,
-          timestamp: new Date().toISOString()
+          cart: updatedCart,
+          timestamp: new Date().toISOString(),
+          priority: 'high', // Flag to indicate this should override QR display
+          reason: 'new_items_added'
         }));
+
+        ws.close();
       };
 
-      // Clean up
-      setTimeout(() => ws.close(), 1000);
+      ws.onerror = (error) => {
+        console.error("Shopping Cart: Failed to send cart update:", error);
+      };
     } catch (error) {
-      console.error("Failed to broadcast cart update:", error);
+      console.error("Shopping Cart: WebSocket error:", error);
+    }
+  };
+
+    // Only send update if cart is not empty
+    if (cart.length > 0) {
+      sendCartUpdate(cart);
     }
   }, [cart, subtotal, tax, total]);
 
