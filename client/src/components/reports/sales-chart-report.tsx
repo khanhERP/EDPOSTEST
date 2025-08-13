@@ -44,11 +44,12 @@ export function SalesChartReport() {
   const { t } = useTranslation();
 
   const [concernType, setConcernType] = useState("time");
+  const today = new Date(); // Define today once
   const [startDate, setStartDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
+    today.toISOString().split("T")[0],
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
+    today.toISOString().split("T")[0],
   );
   const [salesMethod, setSalesMethod] = useState("all");
   const [salesChannel, setSalesChannel] = useState("all");
@@ -276,9 +277,7 @@ export function SalesChartReport() {
 
   const renderReturnReport = () => {
     const filteredData = getFilteredData();
-    const dailyData: {
-      [date: string]: { returnCount: number; returnValue: number };
-    } = {};
+    const dailyData: { [date: string]: { returnCount: number; returnValue: number } } = {};
 
     filteredData.forEach((transaction: any) => {
       const date = new Date(

@@ -169,17 +169,30 @@ export function TableReport() {
         setEndDate(today.toISOString().split("T")[0]);
         break;
       case "week":
+        // Tuần trước: từ thứ 2 tuần trước đến chủ nhật tuần trước
+        const currentDayOfWeek = today.getDay(); // 0 = Chủ nhật, 1 = Thứ 2, ...
+        const daysToLastMonday = currentDayOfWeek === 0 ? 13 : currentDayOfWeek + 6; // Nếu hôm nay là CN thì lùi 13 ngày, không thì lùi (ngày hiện tại + 6)
+        const lastWeekMonday = new Date(today.getTime() - daysToLastMonday * 24 * 60 * 60 * 1000);
+        const lastWeekSunday = new Date(lastWeekMonday.getTime() + 6 * 24 * 60 * 60 * 1000);
+
+        setStartDate(lastWeekMonday.toISOString().split("T")[0]);
+        setEndDate(lastWeekSunday.toISOString().split("T")[0]);
+        break;
+      case "month":
+        // Tháng trước: từ ngày 1 tháng trước đến ngày cuối tháng trước
         setStartDate(
-          new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+          new Date(today.getFullYear(), today.getMonth() - 1, 1)
             .toISOString()
             .split("T")[0],
         );
-        setEndDate(today.toISOString().split("T")[0]);
+        setEndDate(
+          new Date(today.getFullYear(), today.getMonth(), 0)
+            .toISOString()
+            .split("T")[0],
+        );
         break;
-      case "month":
-        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-        setStartDate(monthStart.toISOString().split("T")[0]);
-        setEndDate(today.toISOString().split("T")[0]);
+      case "custom":
+        // Don't change dates for custom
         break;
     }
   };
