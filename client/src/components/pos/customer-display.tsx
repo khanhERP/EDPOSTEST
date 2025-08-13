@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/i18n";
 import logoPath from "@assets/EDPOS_1753091767028.png";
@@ -152,7 +151,7 @@ export function CustomerDisplay({
                     <span className="bg-green-100 p-2 rounded-lg mr-3">🛍️</span>
                     Đơn hàng của bạn
                   </h2>
-                  
+
                   <div className="space-y-4 max-h-96 overflow-y-auto">
                     {cart.map((item, index) => (
                       <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border-l-4 border-green-400">
@@ -187,7 +186,7 @@ export function CustomerDisplay({
                     <span className="bg-blue-100 p-2 rounded-lg mr-3">📋</span>
                     Tổng thanh toán
                   </h3>
-                  
+
                   <div className="space-y-4">
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Tạm tính:</span>
@@ -195,14 +194,14 @@ export function CustomerDisplay({
                         {subtotal.toLocaleString('vi-VN')} ₫
                       </span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center py-2 border-b border-gray-200">
                       <span className="text-gray-600">Thuế:</span>
                       <span className="font-medium">
                         {tax.toLocaleString('vi-VN')} ₫
                       </span>
                     </div>
-                    
+
                     <div className="flex justify-between items-center py-4 border-t-2 border-green-200">
                       <span className="text-xl font-bold text-gray-800">
                         Tổng cộng:

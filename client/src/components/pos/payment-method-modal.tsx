@@ -384,6 +384,31 @@ export function PaymentMethodModal({
     setQrCodeUrl("");
     setShowCashPayment(false);
     setAmountReceived("");
+    setSelectedPaymentMethod("");
+    setShowVirtualKeyboard(false);
+
+    // Remove payment listener if exists when going back from QR
+    if (currentTransactionUuid) {
+      removePaymentListener(currentTransactionUuid);
+      setCurrentTransactionUuid(null);
+    }
+
+    // Send message to customer display to clear QR payment
+    try {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws`;
+      const ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          type: 'qr_payment_cancelled',
+          timestamp: new Date().toISOString()
+        }));
+        ws.close();
+      };
+    } catch (error) {
+      console.error('Failed to send QR payment cancellation to customer display:', error);
+    }
   };
 
   const handleCashPaymentComplete = () => {
