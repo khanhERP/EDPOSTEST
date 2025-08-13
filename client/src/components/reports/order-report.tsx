@@ -65,29 +65,18 @@ export function OrderReport() {
   const { data: orders = [], refetch: refetchOrders, isLoading } = useQuery({
     queryKey: ["/api/orders", startDate, endDate],
     queryFn: async () => {
-      console.log("Fetching orders with date range:", { startDate, endDate });
       const params = new URLSearchParams();
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
       
-      const url = `/api/orders?${params.toString()}`;
-      console.log("API URL:", url);
-      
-      const response = await fetch(url);
+      const response = await fetch(`/api/orders?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch orders');
       
-      const data = await response.json();
-      console.log("Orders API response:", {
-        count: data?.length || 0,
-        dateParams: { startDate, endDate },
-        firstOrder: data?.[0]
-      });
-      
-      return data;
+      return response.json();
     },
     staleTime: 0,
     refetchOnWindowFocus: false,
-    enabled: !!startDate && !!endDate, // Only fetch when we have date range
+    enabled: !!startDate && !!endDate,
   });
 
   const { data: products = [] } = useQuery({
@@ -109,37 +98,12 @@ export function OrderReport() {
   });
 
   const getFilteredData = () => {
-    console.log("=== FILTERING ORDERS DEBUG ===");
-    console.log("Raw orders data:", { 
-      ordersLength: orders?.length || 0, 
-      startDate, 
-      endDate,
-      orderStatus,
-      firstOrder: orders?.[0],
-      ordersType: typeof orders,
-      isArray: Array.isArray(orders)
-    });
-    
     if (!orders || !Array.isArray(orders)) {
-      console.log("No orders data or not array, returning empty array");
       return [];
     }
 
     // Start with all orders from API (already filtered by date range on server)
     let filteredOrders = [...orders];
-
-    console.log("Orders from API (already date filtered):", {
-      count: filteredOrders.length,
-      dateRange: { startDate, endDate },
-      sampleOrders: filteredOrders.slice(0, 2).map(o => ({
-        id: o.id,
-        orderedAt: o.orderedAt,
-        total: o.total,
-        status: o.status
-      }))
-    });
-
-    console.log("Orders already filtered by date on server, count:", filteredOrders.length);
 
     // Apply status filter
     if (orderStatus !== "all") {
@@ -150,12 +114,9 @@ export function OrderReport() {
           (orderStatus === "delivering" && (order.status === "preparing" || order.status === "in_progress")) ||
           (orderStatus === "completed" && order.status === "paid");
         
-        console.log("Status check:", { orderStatus: order.status, filterStatus: orderStatus, statusMatch });
         return statusMatch;
       });
     }
-
-    console.log("After status filter:", filteredOrders.length);
 
     // Apply customer search filter
     if (customerSearch) {
@@ -178,9 +139,6 @@ export function OrderReport() {
         return employeeMatch;
       });
     }
-
-    console.log("Final filtered result:", filteredOrders.length);
-    console.log("=== END FILTERING DEBUG ===");
     
     return filteredOrders;
   };
@@ -586,13 +544,7 @@ export function OrderReport() {
           <div className="flex justify-end">
             <Button 
               onClick={async () => {
-                console.log("Refreshing order data with date range:", { startDate, endDate });
-                try {
-                  await refetchOrders();
-                  console.log("Orders refetched successfully");
-                } catch (error) {
-                  console.error("Error refreshing orders:", error);
-                }
+                await refetchOrders();
               }}
               disabled={isLoading}
               variant="outline"
