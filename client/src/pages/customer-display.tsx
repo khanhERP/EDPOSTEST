@@ -83,8 +83,12 @@ export default function CustomerDisplayPage() {
                 // Keep cart visible (don't clear it)
                 break;
               case 'refresh_customer_display':
-                console.log("Customer Display: Refresh requested, reloading page");
-                window.location.reload();
+                console.log("Customer Display: Refresh requested, reloading page in 500ms");
+                // Add a small delay to ensure all cleanup is done
+                setTimeout(() => {
+                  console.log("Customer Display: Executing page reload now");
+                  window.location.reload();
+                }, 500);
                 break;
               default:
                 console.log("Customer Display: Unknown message type:", data.type);

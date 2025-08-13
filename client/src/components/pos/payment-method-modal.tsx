@@ -513,31 +513,58 @@ export function PaymentMethodModal({
   useEffect(() => {
     if (!isOpen) {
       // Always send refresh message to customer display when modal closes
-      try {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws`;
-        const ws = new WebSocket(wsUrl);
+      const sendRefreshMessage = () => {
+        try {
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const wsUrl = `${protocol}//${window.location.host}/ws`;
+          const ws = new WebSocket(wsUrl);
 
-        ws.onopen = () => {
-          // If QR code was showing, send cancellation message first
-          if (wasShowingQRCode || showQRCode || qrCodeUrl) {
-            ws.send(JSON.stringify({
-              type: 'qr_payment_cancelled',
-              timestamp: new Date().toISOString()
-            }));
-          }
-          
-          // Always send refresh message to reload customer display
-          ws.send(JSON.stringify({
-            type: 'refresh_customer_display',
-            timestamp: new Date().toISOString()
-          }));
-          
-          ws.close();
-        };
-      } catch (error) {
-        console.error('Failed to send refresh message when modal closes:', error);
-      }
+          ws.onopen = () => {
+            console.log('Payment Modal: WebSocket connected for refresh message');
+            
+            // If QR code was showing, send cancellation message first
+            if (wasShowingQRCode || showQRCode || qrCodeUrl) {
+              console.log('Payment Modal: Sending QR cancellation message');
+              ws.send(JSON.stringify({
+                type: 'qr_payment_cancelled',
+                timestamp: new Date().toISOString()
+              }));
+              
+              // Wait a bit before sending refresh message
+              setTimeout(() => {
+                console.log('Payment Modal: Sending refresh message');
+                ws.send(JSON.stringify({
+                  type: 'refresh_customer_display',
+                  timestamp: new Date().toISOString()
+                }));
+                ws.close();
+              }, 100);
+            } else {
+              // Send refresh message immediately if no QR code
+              console.log('Payment Modal: Sending refresh message (no QR)');
+              ws.send(JSON.stringify({
+                type: 'refresh_customer_display',
+                timestamp: new Date().toISOString()
+              }));
+              ws.close();
+            }
+          };
+
+          ws.onerror = (error) => {
+            console.error('Payment Modal: WebSocket error:', error);
+          };
+
+          ws.onclose = () => {
+            console.log('Payment Modal: WebSocket closed after sending refresh message');
+          };
+
+        } catch (error) {
+          console.error('Payment Modal: Failed to send refresh message when modal closes:', error);
+        }
+      };
+
+      // Send refresh message after a small delay to ensure modal is fully closed
+      setTimeout(sendRefreshMessage, 50);
 
       // Reset all states
       setShowQRCode(false);
