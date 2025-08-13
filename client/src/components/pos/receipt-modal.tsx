@@ -87,11 +87,11 @@ export function ReceiptModal({
     if (isOpen && receipt && !isPreview) {
       // Check if this is specifically from e-invoice or has autoShowPrint flag
       const isFromEInvoice = receipt.paymentMethod === 'einvoice';
-      
+
       if (isFromEInvoice || autoShowPrint) {
         console.log(`🖨️ Auto-opening print window for ${isFromEInvoice ? 'e-invoice' : 'auto-print'} receipt`);
         setHasAutoOpened(true);
-        
+
         // Small delay to ensure DOM is ready
         setTimeout(() => {
           handlePrint();
@@ -135,9 +135,9 @@ export function ReceiptModal({
       const windowWidth = 400;
       // Add some padding for print margins and controls
       const windowHeight = Math.min(Math.max(contentHeight + 120, 300), 800);
-      
+
       console.log("Receipt content height:", contentHeight, "Window height:", windowHeight);
-      
+
       const printWindow = window.open("", "", `height=${windowHeight},width=${windowWidth}`);
       if (printWindow) {
         printWindow.document.write("<html><head><title>Receipt</title>");
@@ -148,7 +148,7 @@ export function ReceiptModal({
         printWindow.document.write(printContent.innerHTML);
         printWindow.document.write("</body></html>");
         printWindow.document.close();
-        
+
         // Wait for content to load then adjust window size
         printWindow.onload = () => {
           const actualContentHeight = printWindow.document.body.scrollHeight;
@@ -156,13 +156,13 @@ export function ReceiptModal({
           console.log("Actual content height:", actualContentHeight, "Resizing to:", newHeight);
           printWindow.resizeTo(windowWidth, newHeight);
         };
-        
+
         // Trigger print dialog
         printWindow.print();
-        
+
         // Multiple approaches to detect when printing is done and close modal
         let modalClosed = false;
-        
+
         // Method 1: Use onafterprint event
         printWindow.onafterprint = () => {
           if (!modalClosed) {
@@ -171,7 +171,7 @@ export function ReceiptModal({
             onClose();
           }
         };
-        
+
         // Method 2: Monitor window focus change (fallback)
         const handleFocus = () => {
           setTimeout(() => {
@@ -182,9 +182,9 @@ export function ReceiptModal({
             }
           }, 500);
         };
-        
+
         window.addEventListener('focus', handleFocus, { once: true });
-        
+
         // Method 3: Timer-based fallback (last resort)
         setTimeout(() => {
           if (!modalClosed) {
@@ -193,7 +193,7 @@ export function ReceiptModal({
             onClose();
           }
         }, 3000);
-        
+
         // Method 4: Check if print window is closed manually
         const checkClosed = setInterval(() => {
           if (printWindow.closed && !modalClosed) {
@@ -202,7 +202,7 @@ export function ReceiptModal({
             onClose();
           }
         }, 500);
-        
+
         // Clear interval after 10 seconds to prevent memory leaks
         setTimeout(() => {
           clearInterval(checkClosed);
@@ -361,7 +361,7 @@ export function ReceiptModal({
           isOpen={showPaymentMethodModal}
           onClose={() => setShowPaymentMethodModal(false)}
           onSelectMethod={handlePaymentMethodSelect}
-          total={receipt?.total || 0}
+          total={typeof receipt?.total === 'string' ? parseFloat(receipt.total) : (receipt?.total || 0)}
           cartItems={cartItems}
           onShowEInvoice={() => setShowEInvoiceModal(true)}
         />
@@ -375,18 +375,18 @@ export function ReceiptModal({
           onConfirm={(eInvoiceData) => {
             console.log('📧 E-Invoice confirmed:', eInvoiceData);
             setShowEInvoiceModal(false);
-            
+
             // Sau khi e-invoice xử lý xong (phát hành ngay hoặc phát hành sau),
             // hiển thị lại receipt modal để in hóa đơn
             console.log('📄 Showing receipt modal after e-invoice processing');
           }}
-          total={receipt?.total || 0}
+          total={typeof receipt?.total === 'string' ? parseFloat(receipt.total) : (receipt?.total || 0)}
           cartItems={(() => {
             console.log("🔄 Receipt Modal - Preparing cartItems for EInvoice:");
             console.log("- cartItems prop:", cartItems);
             console.log("- cartItems length:", cartItems?.length || 0);
             console.log("- receipt items:", receipt?.items);
-            
+
             // Always prefer cartItems prop since it has the most accurate data
             if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
               console.log("✅ Using cartItems prop for e-invoice (most accurate data)");
