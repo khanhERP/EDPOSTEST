@@ -516,17 +516,17 @@ export function PaymentMethodModal({
   // Reset all states when modal closes
   useEffect(() => {
     if (!isOpen) {
-      // Always send refresh message to customer display when modal closes
-      const sendRefreshMessage = () => {
+      // Always send message to customer display when modal closes
+      const sendCloseMessage = () => {
         try {
           const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
           const wsUrl = `${protocol}//${window.location.host}/ws`;
           const ws = new WebSocket(wsUrl);
 
           ws.onopen = () => {
-            console.log('Payment Modal: WebSocket connected for refresh message');
+            console.log('Payment Modal: WebSocket connected for close message');
 
-            // If QR code was showing, send cancellation message first
+            // If QR code was showing, send cancellation and restore cart
             if (wasShowingQRCode || showQRCode || qrCodeUrl) {
               console.log('Payment Modal: Sending QR cancellation message');
               ws.send(JSON.stringify({
@@ -534,21 +534,23 @@ export function PaymentMethodModal({
                 timestamp: new Date().toISOString()
               }));
 
-              // Wait a bit before sending refresh message
+              // Wait a bit then send cart restore message
               setTimeout(() => {
-                console.log('Payment Modal: Sending refresh message');
+                console.log('Payment Modal: Sending cart restore message');
                 ws.send(JSON.stringify({
-                  type: 'refresh_customer_display',
-                  timestamp: new Date().toISOString()
+                  type: 'restore_cart_display',
+                  timestamp: new Date().toISOString(),
+                  reason: 'payment_dialog_closed'
                 }));
                 ws.close();
               }, 100);
             } else {
-              // Send refresh message immediately if no QR code
-              console.log('Payment Modal: Sending refresh message (no QR)');
+              // Just send cart restore message if no QR code
+              console.log('Payment Modal: Sending cart restore message (no QR)');
               ws.send(JSON.stringify({
-                type: 'refresh_customer_display',
-                timestamp: new Date().toISOString()
+                type: 'restore_cart_display',
+                timestamp: new Date().toISOString(),
+                reason: 'payment_dialog_closed'
               }));
               ws.close();
             }
@@ -559,16 +561,16 @@ export function PaymentMethodModal({
           };
 
           ws.onclose = () => {
-            console.log('Payment Modal: WebSocket closed after sending refresh message');
+            console.log('Payment Modal: WebSocket closed after sending close message');
           };
 
         } catch (error) {
-          console.error('Payment Modal: Failed to send refresh message when modal closes:', error);
+          console.error('Payment Modal: Failed to send close message when modal closes:', error);
         }
       };
 
-      // Send refresh message after a small delay to ensure modal is fully closed
-      setTimeout(sendRefreshMessage, 50);
+      // Send close message after a small delay to ensure modal is fully closed
+      setTimeout(sendCloseMessage, 50);
 
       // Reset all states
       setShowQRCode(false);

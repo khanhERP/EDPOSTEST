@@ -90,6 +90,12 @@ export default function CustomerDisplayPage() {
                   window.location.reload();
                 }, 500);
                 break;
+              case 'restore_cart_display':
+                console.log("Customer Display: Restoring cart display, clearing QR payment");
+                // Clear QR payment to show cart again
+                setQrPayment(null);
+                // Cart should already be available, no need to modify it
+                break;
               default:
                 console.log("Customer Display: Unknown message type:", data.type);
             }
