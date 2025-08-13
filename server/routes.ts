@@ -423,12 +423,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/transactions", async (req, res) => {
     try {
       const { startDate, endDate } = req.query;
-      let query = db.select().from(transactionsTable);
+      console.log("Transactions API called with params:", { startDate, endDate });
+
+      let query = db.select().from(transactionsTable).orderBy(desc(transactionsTable.createdAt));
 
       if (startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
+        const start = new Date(startDate as string);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate as string);
         end.setHours(23, 59, 59, 999);
+
+        console.log("Applying date filter to transactions:", {
+          start: start.toISOString(),
+          end: end.toISOString(),
+          startParam: startDate,
+          endParam: endDate
+        });
 
         query = query.where(
           and(
@@ -438,8 +448,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
 
-      const transactions = await query;
-      res.json(transactions);
+      const transactionResults = await query;
+      console.log("Transactions query result:", {
+        count: transactionResults.length,
+        dateRange: { startDate, endDate }
+      });
+
+      res.json(transactionResults);
     } catch (error) {
       console.error("Error fetching transactions:", error);
       res.status(500).json({ message: "Failed to fetch transactions" });
@@ -780,7 +795,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { startDate, endDate } = req.query;
       console.log("Orders API called with params:", { startDate, endDate });
-      
+
       let query = db.select({
         id: orders.id,
         orderNumber: orders.orderNumber,
@@ -810,8 +825,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const end = new Date(endDate as string);
         end.setHours(23, 59, 59, 999);
 
-        console.log("Applying date filter:", { 
-          start: start.toISOString(), 
+        console.log("Applying date filter:", {
+          start: start.toISOString(),
           end: end.toISOString(),
           startParam: startDate,
           endParam: endDate
@@ -826,8 +841,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const orderResults = await query;
-      console.log("Orders query result:", { 
-        count: orderResults.length, 
+      console.log("Orders query result:", {
+        count: orderResults.length,
         firstOrder: orderResults[0],
         dateRange: { startDate, endDate },
         sampleDates: orderResults.slice(0, 3).map(o => ({
@@ -836,7 +851,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           total: o.total
         }))
       });
-      
+
       res.json(orderResults);
     } catch (error) {
       console.error("Error fetching orders:", error);
@@ -2825,7 +2840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           details: `Please provide: ${missingFields.join(', ')}`,
           receivedData: {
             invoiceNumber: invoiceData.invoiceNumber || 'MISSING',
-            buyerName: invoiceData.buyerName || 'MISSING', 
+            buyerName: invoiceData.buyerName || 'MISSING',
             total: invoiceData.total || 'MISSING'
           }
         });
@@ -3209,7 +3224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("=== SAVE ORDER FROM INVOICE ERROR ===");
       console.error("Error:", error);
 
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to save order from invoice",
         details: error instanceof Error ? error.message : "Unknown error"
       });

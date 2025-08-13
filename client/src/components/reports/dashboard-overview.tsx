@@ -44,12 +44,23 @@ export function DashboardOverview() {
 
   const { data: transactions, refetch: refetchTransactions } = useQuery({
     queryKey: ["/api/transactions", startDate, endDate],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        startDate,
+        endDate
+      });
+      const response = await fetch(`/api/transactions?${params}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
+      return response.json();
+    },
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
 
   const { data: tables, refetch: refetchTables } = useQuery({
-    queryKey: ["/api/tables", startDate, endDate],
+    queryKey: ["/api/tables"],
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
@@ -87,18 +98,11 @@ export function DashboardOverview() {
         startDate,
         endDate,
         firstTransaction: transactions[0],
+        dateRange: `${startDate} to ${endDate}`
       });
 
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-
-      const filteredTransactions = transactions.filter((transaction: any) => {
-        const transactionDate = new Date(
-          transaction.createdAt || transaction.created_at,
-        );
-        return transactionDate >= start && transactionDate <= end;
-      });
+      // Transactions are already filtered by API based on date range
+      const filteredTransactions = transactions;
 
       periodRevenue = filteredTransactions.reduce(
         (total: number, transaction: any) => total + Number(transaction.total || 0),
