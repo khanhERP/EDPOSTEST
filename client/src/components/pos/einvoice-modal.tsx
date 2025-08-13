@@ -490,24 +490,23 @@ export function EInvoiceModal({
 
         console.log('🍽️ Payment completed successfully for later publishing');
 
-        // Gọi onConfirm để hiển thị receipt với flag để in hóa đơn
-        console.log('🍽️ Calling onConfirm for receipt display with print mode');
+        // Gọi onConfirm để hiển thị print dialog trực tiếp
+        console.log('🍽️ Calling onConfirm for print dialog display');
         onConfirm({
           ...invoiceData,
-          showReceipt: true,
-          autoShowPrint: true // Flag để tự động hiển thị chế độ in
+          showPrintDialog: true, // Flag để hiển thị print dialog trực tiếp
+          receipt: receiptData
         });
 
       } else {
         // Logic cho POS hoặc fallback
         console.log('🏪 POS/Fallback E-Invoice Later: Processing payment completion');
 
-        // Gọi onConfirm để hiển thị receipt modal với flag để in hóa đơn
-        console.log('✅ Calling onConfirm to show receipt modal with print mode');
+        // Gọi onConfirm để hiển thị print dialog trực tiếp
+        console.log('✅ Calling onConfirm to show print dialog directly');
         onConfirm({
           ...invoiceData,
-          showReceipt: true,
-          autoShowPrint: true, // Flag để tự động hiển thị chế độ in
+          showPrintDialog: true, // Flag để hiển thị print dialog trực tiếp
           receipt: receiptData // Đảm bảo receipt data được truyền
         });
       }
@@ -925,8 +924,32 @@ export function EInvoiceModal({
 
         // Xử lý logic khác nhau theo nguồn gọi
         if (source === 'pos') {
-          // Logic cho POS: hiển thị receipt modal
-          console.log('🏪 POS E-Invoice: Processing payment completion and showing receipt');
+          // Logic cho POS: hiển thị print dialog trực tiếp
+          console.log('🏪 POS E-Invoice: Processing payment completion and showing print dialog');
+          
+          // Tạo receipt data cho print dialog
+          const receiptDataForPrint = {
+            transactionId: `TXN-${Date.now()}`,
+            items: cartItems.map(item => ({
+              id: item.id,
+              productId: item.id,
+              productName: item.name,
+              price: (typeof item.price === 'string' ? item.price : item.price.toString()),
+              quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+              total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)).toFixed(2),
+              sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+              taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
+            })),
+            subtotal: cartSubtotal.toFixed(2),
+            tax: cartTaxAmount.toFixed(2),
+            total: cartTotal.toFixed(2),
+            paymentMethod: 'einvoice',
+            amountReceived: cartTotal.toFixed(2),
+            change: "0.00",
+            cashierName: "System User",
+            createdAt: new Date().toISOString()
+          };
+
           onConfirm({
             ...formData,
             invoiceData: result.data,
@@ -934,12 +957,36 @@ export function EInvoiceModal({
             total: total,
             paymentMethod: 'einvoice',
             source: 'pos',
-            showReceipt: true // Flag để hiển thị receipt modal
+            showPrintDialog: true, // Flag để hiển thị print dialog trực tiếp
+            receipt: receiptDataForPrint
           });
         } else if (source === 'table' && orderId) {
           // Logic cho Table: Tự hoàn tất thanh toán luôn
           console.log('🍽️ Table E-Invoice: Completing payment directly for order:', orderId);
           console.log('🍽️ Invoice data received:', result.data);
+
+          // Tạo receipt data cho print dialog
+          const receiptDataForPrint = {
+            transactionId: `TXN-${Date.now()}`,
+            items: cartItems.map(item => ({
+              id: item.id,
+              productId: item.id,
+              productName: item.name,
+              price: (typeof item.price === 'string' ? item.price : item.price.toString()),
+              quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+              total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)).toFixed(2),
+              sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+              taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
+            })),
+            subtotal: cartSubtotal.toFixed(2),
+            tax: cartTaxAmount.toFixed(2),
+            total: cartTotal.toFixed(2),
+            paymentMethod: 'einvoice',
+            amountReceived: cartTotal.toFixed(2),
+            change: "0.00",
+            cashierName: "System User",
+            createdAt: new Date().toISOString()
+          };
 
           // Gọi onConfirm để parent component biết về việc phát hành thành công
           onConfirm({
@@ -950,7 +997,8 @@ export function EInvoiceModal({
             paymentMethod: 'einvoice',
             source: 'table',
             orderId: orderId,
-            showReceipt: true // Flag để hiển thị receipt modal
+            showPrintDialog: true, // Flag để hiển thị print dialog trực tiếp
+            receipt: receiptDataForPrint
           });
 
           // Gọi mutation để hoàn tất thanh toán ngay lập tức
@@ -962,6 +1010,30 @@ export function EInvoiceModal({
         } else {
           // Fallback: trả về data cho parent component xử lý
           console.log('🔄 Fallback: Returning data to parent');
+          
+          // Tạo receipt data cho print dialog
+          const receiptDataForPrint = {
+            transactionId: `TXN-${Date.now()}`,
+            items: cartItems.map(item => ({
+              id: item.id,
+              productId: item.id,
+              productName: item.name,
+              price: (typeof item.price === 'string' ? item.price : item.price.toString()),
+              quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+              total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)).toFixed(2),
+              sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+              taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
+            })),
+            subtotal: cartSubtotal.toFixed(2),
+            tax: cartTaxAmount.toFixed(2),
+            total: cartTotal.toFixed(2),
+            paymentMethod: 'einvoice',
+            amountReceived: cartTotal.toFixed(2),
+            change: "0.00",
+            cashierName: "System User",
+            createdAt: new Date().toISOString()
+          };
+
           onConfirm({
             ...formData,
             invoiceData: result.data,
@@ -969,7 +1041,8 @@ export function EInvoiceModal({
             total: total,
             paymentMethod: 'einvoice',
             source: source || 'pos',
-            showReceipt: true // Flag để hiển thị receipt modal
+            showPrintDialog: true, // Flag để hiển thị print dialog trực tiếp
+            receipt: receiptDataForPrint
           });
         }
       } else {

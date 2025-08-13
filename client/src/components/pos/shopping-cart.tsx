@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/lib/i18n";
 import { PaymentMethodModal } from "./payment-method-modal";
 import { ReceiptModal } from "./receipt-modal";
+import { PrintReceiptDialog } from "./print-receipt-dialog";
 import type { CartItem } from "@shared/schema";
 import { toast } from "@/hooks/use-toast";
 
@@ -54,6 +55,7 @@ export function ShoppingCart({
   // New states for Receipt Modal management
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [currentReceipt, setCurrentReceipt] = useState<any>(null);
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
 
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
@@ -70,13 +72,13 @@ export function ShoppingCart({
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
-    
+
     let ws: WebSocket;
 
     const connectWebSocket = () => {
       try {
         ws = new WebSocket(wsUrl);
-        
+
         ws.onopen = () => {
           console.log("Shopping Cart: WebSocket connected for customer display broadcasting");
         };
@@ -109,7 +111,7 @@ export function ShoppingCart({
 
     try {
       const ws = new WebSocket(wsUrl);
-      
+
       ws.onopen = () => {
         console.log("Broadcasting cart update to customer display:", cart);
         ws.send(JSON.stringify({
@@ -257,7 +259,7 @@ export function ShoppingCart({
         // Kiểm tra nếu có receipt data từ e-invoice modal
         if (eInvoiceData.receipt) {
           console.log("📄 Displaying receipt for later publishing:", eInvoiceData.receipt);
-          
+
           // Clear cart trước khi hiển thị receipt modal
           onClearCart();
 
@@ -587,7 +589,21 @@ export function ShoppingCart({
         isOpen={showReceiptModal}
         onClose={() => setShowReceiptModal(false)}
         receipt={currentReceipt}
-        onConfirm={() => setShowReceiptModal(false)} // Confirming receipt usually means closing it
+        cartItems={cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+          taxRate: parseFloat(item.taxRate || "10")
+        }))}
+      />
+
+      {/* Print Receipt Dialog */}
+      <PrintReceiptDialog
+        isOpen={showPrintDialog}
+        onClose={() => setShowPrintDialog(false)}
+        receipt={currentReceipt}
       />
 
       {/* E-Invoice Modal (Assuming you have this component) */}
