@@ -420,27 +420,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/transactions", async (req, res) => {
+  // Transactions endpoint
+  app.get("/api/transactions", async (req: Request, res: Response) => {
+    const startTime = Date.now();
     try {
       const { startDate, endDate } = req.query;
-      console.log("Transactions API called with params:", { startDate, endDate });
 
-      let query = db.select().from(transactionsTable).orderBy(desc(transactionsTable.createdAt));
+      console.log("📊 Transactions API called:", {
+        startDate,
+        endDate,
+        timestamp: new Date().toISOString()
+      });
+
+      // Test database connection first
+      try {
+        await db.execute(sql`SELECT 1 as test`);
+      } catch (dbError) {
+        console.error("❌ Database connection test failed:", dbError);
+        return res.status(503).json({ 
+          message: "Database connection failed",
+          error: "DATABASE_CONNECTION_ERROR",
+          details: dbError.message
+        });
+      }
+
+      let query = db.select({
+        id: transactionsTable.id,
+        total: transactionsTable.total,
+        paymentMethod: transactionsTable.paymentMethod,
+        createdAt: transactionsTable.createdAt,
+        cashierName: transactionsTable.cashierName,
+        customerId: transactionsTable.customerId,
+        customerName: transactionsTable.customerName,
+        customerPhone: transactionsTable.customerPhone,
+        discount: transactionsTable.discount,
+        tax: transactionsTable.tax,
+        subtotal: transactionsTable.subtotal,
+        change: transactionsTable.change,
+        amountReceived: transactionsTable.amountReceived,
+      }).from(transactionsTable);
 
       if (startDate && endDate) {
         const start = new Date(startDate as string);
-        start.setHours(0, 0, 0, 0);
         const end = new Date(endDate as string);
+
+        // Set end time to end of day (23:59:59.999)
         end.setHours(23, 59, 59, 999);
 
-        console.log("Applying date filter to transactions:", {
+        console.log("🔍 Date filtering:", {
           start: start.toISOString(),
           end: end.toISOString(),
           startParam: startDate,
           endParam: endDate
         });
 
-        // Use string comparison for date filtering since createdAt is stored as string
         query = query.where(
           and(
             gte(transactionsTable.createdAt, start.toISOString()),
@@ -449,25 +482,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
 
+      query = query.orderBy(desc(transactionsTable.createdAt));
+
       const transactionResults = await query;
-      console.log("Transactions query result:", {
+      const duration = Date.now() - startTime;
+
+      console.log("✅ Transactions query success:", {
         count: transactionResults.length,
+        duration: `${duration}ms`,
         dateRange: { startDate, endDate },
-        firstTransaction: transactionResults[0] || null
+        sample: transactionResults.slice(0, 2).map(t => ({
+          id: t.id,
+          total: t.total,
+          createdAt: t.createdAt
+        }))
       });
 
       res.json(transactionResults);
     } catch (error) {
-      console.error("Error fetching transactions:", error);
-      console.error("Error details:", {
+      const duration = Date.now() - startTime;
+      console.error("❌ Transactions API Error:", {
         message: error.message,
-        stack: error.stack,
-        params: { startDate, endDate }
+        code: error.code,
+        detail: error.detail,
+        duration: `${duration}ms`,
+        params: { startDate: req.query.startDate, endDate: req.query.endDate },
+        stack: error.stack?.split('\n').slice(0, 5).join('\n')
       });
+
       res.status(500).json({ 
         message: "Failed to fetch transactions",
-        error: error.message,
-        details: "DATABASE_ERROR"
+        error: error.message || "UNKNOWN_ERROR",
+        code: error.code || "DATABASE_ERROR",
+        timestamp: new Date().toISOString()
       });
     }
   });
