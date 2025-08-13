@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShoppingCart as CartIcon, Minus, Plus, Trash2, CreditCard, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +65,69 @@ export function ShoppingCart({
   }, 0);
   const total = subtotal + tax;
   const change = paymentMethod === "cash" ? Math.max(0, parseFloat(amountReceived || "0") - total) : 0;
+
+  // WebSocket connection for broadcasting cart updates to customer display
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    
+    let ws: WebSocket;
+
+    const connectWebSocket = () => {
+      try {
+        ws = new WebSocket(wsUrl);
+        
+        ws.onopen = () => {
+          console.log("Shopping Cart: WebSocket connected for customer display broadcasting");
+        };
+
+        ws.onerror = (error) => {
+          console.error("Shopping Cart: WebSocket error:", error);
+        };
+
+        ws.onclose = () => {
+          console.log("Shopping Cart: WebSocket disconnected");
+        };
+      } catch (error) {
+        console.error("Shopping Cart: Failed to create WebSocket:", error);
+      }
+    };
+
+    connectWebSocket();
+
+    return () => {
+      if (ws) {
+        ws.close();
+      }
+    };
+  }, []);
+
+  // Broadcast cart updates to customer display
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+
+    try {
+      const ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        console.log("Broadcasting cart update to customer display:", cart);
+        ws.send(JSON.stringify({
+          type: 'cart_update',
+          cart: cart,
+          subtotal,
+          tax,
+          total,
+          timestamp: new Date().toISOString()
+        }));
+      };
+
+      // Clean up
+      setTimeout(() => ws.close(), 1000);
+    } catch (error) {
+      console.error("Failed to broadcast cart update:", error);
+    }
+  }, [cart, subtotal, tax, total]);
 
   const getPaymentMethods = () => {
     // Only return cash and bank transfer payment methods

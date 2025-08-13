@@ -1,8 +1,9 @@
-
 import WebSocket, { WebSocketServer } from 'ws';
 import { Server } from 'http';
 
 let wss: WebSocketServer | null = null;
+// Keep track of all connected clients
+const clients = new Set<WebSocket>();
 
 export function initializeWebSocketServer(server: Server) {
   if (wss) {
@@ -17,20 +18,51 @@ export function initializeWebSocketServer(server: Server) {
     return;
   }
 
-  wss.on('connection', (ws: WebSocket) => {
+  wss.on('connection', (ws) => {
     console.log('Client connected');
+    clients.add(ws);
 
-    ws.on('message', (message: string) => {
-      console.log(`Received message => ${message}`);
-      // Handle incoming messages if needed
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        console.log('📩 Received WebSocket message:', data);
+
+        // Handle different message types
+        if (data.type === 'ping') {
+          ws.send(JSON.stringify({ type: 'pong' }));
+        } else if (data.type === 'cart_update') {
+          // Broadcast cart update to all connected clients (customer displays)
+          console.log('📡 Broadcasting cart update to customer displays');
+          clients.forEach(client => {
+            if (client.readyState === client.OPEN && client !== ws) {
+              client.send(JSON.stringify({
+                type: 'cart_update',
+                cart: data.cart,
+                subtotal: data.subtotal,
+                tax: data.tax,
+                total: data.total,
+                timestamp: data.timestamp
+              }));
+            }
+          });
+        } else if (data.type === 'customer_display_connected') {
+          console.log('👥 Customer display connected');
+          // Mark this connection as customer display if needed
+          (ws as any).isCustomerDisplay = true;
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
     });
 
     ws.on('close', () => {
       console.log('Client disconnected');
+      clients.delete(ws);
     });
 
-    ws.on('error', (error: Error) => {
+    ws.on('error', (error) => {
       console.error('WebSocket error:', error);
+      clients.delete(ws);
     });
   });
 

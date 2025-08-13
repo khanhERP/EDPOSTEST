@@ -14,6 +14,7 @@ import SettingsPage from "@/pages/settings";
 import SuppliersPage from "@/pages/suppliers";
 import AttendancePage from "@/pages/attendance";
 import AttendanceQRPage from "./pages/attendance-qr";
+import CustomerDisplay from "@/pages/customer-display";
 import NotFoundPage from "./pages/not-found";
 
 function Router() {
@@ -29,7 +30,8 @@ function Router() {
       <Route path="/suppliers" component={SuppliersPage} />
       <Route path="/attendance" component={AttendancePage} />
       <Route path="/attendance-qr" component={AttendanceQRPage} />
-      <Route component={NotFoundPage} />
+      <Route path="/customer-display" component={CustomerDisplay} />
+      <Route path="*" component={NotFoundPage} />
     </Switch>
   );
 }
