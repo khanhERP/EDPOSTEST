@@ -496,6 +496,25 @@ export function PaymentMethodModal({
   // Reset all states when modal closes
   useEffect(() => {
     if (!isOpen) {
+      // If QR code was showing, send cancellation message to customer display
+      if (showQRCode) {
+        try {
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const wsUrl = `${protocol}//${window.location.host}/ws`;
+          const ws = new WebSocket(wsUrl);
+          
+          ws.onopen = () => {
+            ws.send(JSON.stringify({
+              type: 'qr_payment_cancelled',
+              timestamp: new Date().toISOString()
+            }));
+            ws.close();
+          };
+        } catch (error) {
+          console.error('Failed to send QR payment cancellation when modal closes:', error);
+        }
+      }
+
       setShowQRCode(false);
       setQrCodeUrl("");
       setShowEInvoice(false);
@@ -511,7 +530,7 @@ export function PaymentMethodModal({
         setCurrentTransactionUuid(null);
       }
     }
-  }, [isOpen, currentTransactionUuid, removePaymentListener]);
+  }, [isOpen, currentTransactionUuid, removePaymentListener, showQRCode]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

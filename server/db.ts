@@ -205,6 +205,7 @@ export async function initializeSampleData() {
           id SERIAL PRIMARY KEY,
           name VARCHAR(100) NOT NULL,
           template_number VARCHAR(50) NOT NULL,
+          template_code VARCHAR(50),
           symbol VARCHAR(20) NOT NULL,
           use_ck BOOLEAN NOT NULL DEFAULT true,
           notes TEXT,
@@ -226,6 +227,75 @@ export async function initializeSampleData() {
       console.log("Invoice templates table initialized");
     } catch (error) {
       console.log("Invoice templates table already exists or initialization failed:", error);
+    }
+
+    // Initialize invoices table if it doesn't exist
+    try {
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS invoices (
+          id SERIAL PRIMARY KEY,
+          invoice_number VARCHAR(50) UNIQUE NOT NULL,
+          customer_id INTEGER,
+          customer_name VARCHAR(100) NOT NULL,
+          customer_tax_code VARCHAR(20),
+          customer_address TEXT,
+          customer_phone VARCHAR(20),
+          customer_email VARCHAR(100),
+          subtotal DECIMAL(10, 2) NOT NULL,
+          tax DECIMAL(10, 2) NOT NULL,
+          total DECIMAL(10, 2) NOT NULL,
+          payment_method VARCHAR(50) NOT NULL,
+          invoice_date TIMESTAMP NOT NULL,
+          status VARCHAR(20) NOT NULL DEFAULT 'draft',
+          einvoice_status INTEGER NOT NULL DEFAULT 0,
+          notes TEXT,
+          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+        )
+      `);
+
+      // Create indexes for better performance
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_invoices_invoice_number ON invoices(invoice_number)
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_invoices_customer_id ON invoices(customer_id)
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status)
+      `);
+
+      console.log("Invoices table initialized");
+    } catch (error) {
+      console.log("Invoices table already exists or initialization failed:", error);
+    }
+
+    // Initialize invoice_items table if it doesn't exist
+    try {
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS invoice_items (
+          id SERIAL PRIMARY KEY,
+          invoice_id INTEGER REFERENCES invoices(id) NOT NULL,
+          product_id INTEGER,
+          product_name VARCHAR(200) NOT NULL,
+          quantity INTEGER NOT NULL,
+          unit_price DECIMAL(10, 2) NOT NULL,
+          total DECIMAL(10, 2) NOT NULL,
+          tax_rate DECIMAL(5, 2) NOT NULL DEFAULT 10.00
+        )
+      `);
+
+      // Create indexes for better performance
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_invoice_items_invoice_id ON invoice_items(invoice_id)
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_invoice_items_product_id ON invoice_items(product_id)
+      `);
+
+      console.log("Invoice items table initialized");
+    } catch (error) {
+      console.log("Invoice items table already exists or initialization failed:", error);
     }
   } catch (error) {
     console.log("⚠️ Sample data initialization skipped:", error);
