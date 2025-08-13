@@ -38,6 +38,12 @@ export function OrderManagement() {
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
+    queryFn: async () => {
+      const response = await apiRequest('GET', '/api/orders');
+      const data = await response.json();
+      console.log('Orders data received:', data);
+      return Array.isArray(data) ? data : [];
+    },
   });
 
   const { data: tables } = useQuery({
@@ -488,6 +494,11 @@ export function OrderManagement() {
   const allOrders = orders ? (orders as Order[]).sort((a: Order, b: Order) =>
     new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
   ) : [];
+
+  console.log('Orders loading:', ordersLoading);
+  console.log('Raw orders data:', orders);
+  console.log('Processed orders count:', allOrders.length);
+  console.log('All orders:', allOrders);
 
   return (
     <div className="space-y-6">

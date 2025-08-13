@@ -37,19 +37,15 @@ import { initializeSampleData, db } from "./db";
 import { z } from "zod";
 import {
   eq,
-  desc,
-  asc,
   and,
-  or,
-  like,
-  count,
-  sum,
   gte,
-  lt,
   lte,
-  ilike,
+  sql,
+  inArray,
+  sum,
+  count,
+  desc,
 } from "drizzle-orm";
-import { sql } from "drizzle-orm";
 import {
   orders,
   orderItems,
@@ -437,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await db.execute(sql`SELECT 1 as test`);
       } catch (dbError) {
         console.error("❌ Database connection test failed:", dbError);
-        return res.status(503).json({ 
+        return res.status(503).json({
           message: "Database connection failed",
           error: "DATABASE_CONNECTION_ERROR",
           details: dbError.message
@@ -510,7 +506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stack: error.stack?.split('\n').slice(0, 5).join('\n')
       });
 
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to fetch transactions",
         error: error.message || "UNKNOWN_ERROR",
         code: error.code || "DATABASE_ERROR",
