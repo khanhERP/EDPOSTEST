@@ -493,11 +493,21 @@ export function PaymentMethodModal({
     }
   };
 
+  // Track previous QR state to handle cancellation
+  const [wasShowingQRCode, setWasShowingQRCode] = useState(false);
+
+  // Track when QR code is showing
+  useEffect(() => {
+    if (showQRCode) {
+      setWasShowingQRCode(true);
+    }
+  }, [showQRCode]);
+
   // Reset all states when modal closes
   useEffect(() => {
     if (!isOpen) {
-      // If QR code was showing, send cancellation message to customer display
-      if (showQRCode) {
+      // If QR code was showing at any point, send cancellation message to customer display
+      if (wasShowingQRCode || showQRCode || qrCodeUrl) {
         try {
           const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
           const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -515,6 +525,7 @@ export function PaymentMethodModal({
         }
       }
 
+      // Reset all states
       setShowQRCode(false);
       setQrCodeUrl("");
       setShowEInvoice(false);
@@ -523,6 +534,7 @@ export function PaymentMethodModal({
       setShowCashPayment(false);
       setAmountReceived("");
       setShowVirtualKeyboard(false);
+      setWasShowingQRCode(false);
 
       // Remove payment listener if exists
       if (currentTransactionUuid) {
@@ -530,7 +542,7 @@ export function PaymentMethodModal({
         setCurrentTransactionUuid(null);
       }
     }
-  }, [isOpen, currentTransactionUuid, removePaymentListener, showQRCode]);
+  }, [isOpen, currentTransactionUuid, removePaymentListener, showQRCode, qrCodeUrl, wasShowingQRCode]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
