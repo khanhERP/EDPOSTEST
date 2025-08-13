@@ -477,40 +477,14 @@ export function EInvoiceModal({
       console.log('🔒 Closing e-invoice modal immediately for receipt display');
       onClose();
 
-      // Handle different sources
-      if (source === 'table' && orderId) {
-        // Logic cho Table: Hoàn tất thanh toán trước, sau đó hiển thị receipt
-        console.log('🍽️ Table E-Invoice Later: Completing payment for order:', orderId);
-
-        // Gọi mutation để hoàn tất thanh toán
-        await completePaymentMutation.mutateAsync({
-          orderId: orderId,
-          paymentMethod: 'einvoice'
-        });
-
-        console.log('🍽️ Payment completed successfully for later publishing');
-
-        // Gọi onConfirm để hiển thị receipt với flag để in hóa đơn
-        console.log('🍽️ Calling onConfirm for receipt display with print mode');
-        onConfirm({
-          ...invoiceData,
-          showReceipt: true,
-          autoShowPrint: true // Flag để tự động hiển thị chế độ in
-        });
-
-      } else {
-        // Logic cho POS hoặc fallback
-        console.log('🏪 POS/Fallback E-Invoice Later: Processing payment completion');
-
-        // Gọi onConfirm để hiển thị receipt modal với flag để in hóa đơn
-        console.log('✅ Calling onConfirm to show receipt modal with print mode');
-        onConfirm({
-          ...invoiceData,
-          showReceipt: true,
-          autoShowPrint: true, // Flag để tự động hiển thị chế độ in
-          receipt: receiptData // Đảm bảo receipt data được truyền
-        });
-      }
+      // Gọi onConfirm để hiển thị receipt modal với flag để in hóa đơn
+      console.log('✅ Calling onConfirm to show print dialog directly');
+      onConfirm({
+        ...invoiceData,
+        publishLater: true,
+        showPrintDialog: true, // Flag để hiển thị print dialog trực tiếp
+        receipt: receiptData // Đảm bảo receipt data được truyền
+      });
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
