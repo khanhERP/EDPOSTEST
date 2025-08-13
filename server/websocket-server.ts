@@ -45,6 +45,21 @@ export function initializeWebSocketServer(server: Server) {
               }));
             }
           });
+        } else if (data.type === 'qr_payment') {
+          // Broadcast QR payment info to customer displays
+          console.log('📱 Broadcasting QR payment to customer displays');
+          clients.forEach(client => {
+            if (client.readyState === client.OPEN && client !== ws) {
+              client.send(JSON.stringify({
+                type: 'qr_payment',
+                qrCodeUrl: data.qrCodeUrl,
+                amount: data.amount,
+                paymentMethod: data.paymentMethod,
+                transactionUuid: data.transactionUuid,
+                timestamp: data.timestamp
+              }));
+            }
+          });
         } else if (data.type === 'customer_display_connected') {
           console.log('👥 Customer display connected');
           // Mark this connection as customer display if needed

@@ -290,6 +290,27 @@ export function PaymentMethodModal({
           });
           setQrCodeUrl(qrUrl);
           setShowQRCode(true);
+
+          // Send QR payment info to customer display via WebSocket
+          try {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            const ws = new WebSocket(wsUrl);
+            
+            ws.onopen = () => {
+              ws.send(JSON.stringify({
+                type: 'qr_payment',
+                qrCodeUrl: qrUrl,
+                amount: total,
+                transactionUuid: transactionUuid,
+                paymentMethod: 'QR Code',
+                timestamp: new Date().toISOString()
+              }));
+              ws.close();
+            };
+          } catch (error) {
+            console.error('Failed to send QR payment info to customer display:', error);
+          }
         } else {
           console.error("No QR data received from API");
           // Fallback to mock QR code

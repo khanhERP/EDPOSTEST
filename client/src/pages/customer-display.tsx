@@ -6,6 +6,12 @@ import type { CartItem } from "@shared/schema";
 export default function CustomerDisplayPage() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [storeInfo, setStoreInfo] = useState<any>(null);
+  const [qrPayment, setQrPayment] = useState<{
+    qrCodeUrl: string;
+    amount: number;
+    paymentMethod: string;
+    transactionUuid: string;
+  } | null>(null);
 
   // Calculate totals
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
@@ -48,10 +54,28 @@ export default function CustomerDisplayPage() {
               case 'cart_update':
                 console.log("Customer Display: Updating cart:", data.cart);
                 setCart(data.cart || []);
+                // Clear QR payment when cart updates (new order started)
+                if (qrPayment) {
+                  setQrPayment(null);
+                }
                 break;
               case 'store_info':
                 console.log("Customer Display: Updating store info:", data.storeInfo);
                 setStoreInfo(data.storeInfo);
+                break;
+              case 'qr_payment':
+                console.log("Customer Display: Showing QR payment:", data);
+                setQrPayment({
+                  qrCodeUrl: data.qrCodeUrl,
+                  amount: data.amount,
+                  paymentMethod: data.paymentMethod,
+                  transactionUuid: data.transactionUuid
+                });
+                break;
+              case 'payment_success':
+                console.log("Customer Display: Payment completed, clearing QR");
+                setQrPayment(null);
+                setCart([]);
                 break;
               default:
                 console.log("Customer Display: Unknown message type:", data.type);
@@ -105,6 +129,7 @@ export default function CustomerDisplayPage() {
       tax={tax}
       total={total}
       storeInfo={storeInfo}
+      qrPayment={qrPayment}
     />
   );
 }

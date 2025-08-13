@@ -13,6 +13,12 @@ interface CustomerDisplayProps {
     name: string;
     address?: string;
   };
+  qrPayment?: {
+    qrCodeUrl: string;
+    amount: number;
+    paymentMethod: string;
+    transactionUuid: string;
+  } | null;
 }
 
 export function CustomerDisplay({
@@ -20,7 +26,8 @@ export function CustomerDisplay({
   subtotal,
   tax,
   total,
-  storeInfo
+  storeInfo,
+  qrPayment
 }: CustomerDisplayProps) {
   const { t } = useTranslation();
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -81,7 +88,48 @@ export function CustomerDisplay({
       {/* Main Content */}
       <div className="flex-1 p-8">
         <div className="max-w-6xl mx-auto">
-          {cart.length === 0 ? (
+          {qrPayment ? (
+            // QR Payment Display
+            <div className="text-center py-12">
+              <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl mx-auto">
+                <div className="mb-8">
+                  <div className="text-6xl mb-4">📱</div>
+                  <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                    Quét mã QR để thanh toán
+                  </h2>
+                  <p className="text-lg text-gray-600 mb-6">
+                    Sử dụng ứng dụng ngân hàng để quét mã QR
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 rounded-2xl p-6 mb-6">
+                  <p className="text-sm text-gray-600 mb-2">Số tiền cần thanh toán</p>
+                  <p className="text-4xl font-bold text-green-600">
+                    {qrPayment.amount.toLocaleString('vi-VN')} ₫
+                  </p>
+                </div>
+
+                <div className="flex justify-center mb-6">
+                  <div className="bg-white p-6 rounded-2xl border-4 border-green-200 shadow-xl">
+                    <img
+                      src={qrPayment.qrCodeUrl}
+                      alt="QR Code thanh toán"
+                      className="w-80 h-80"
+                    />
+                  </div>
+                </div>
+
+                <div className="text-center">
+                  <p className="text-sm text-gray-500 mb-2">
+                    Mã giao dịch: {qrPayment.transactionUuid}
+                  </p>
+                  <p className="text-base text-blue-600 font-medium">
+                    Vui lòng quét mã QR để hoàn tất thanh toán
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : cart.length === 0 ? (
             // Empty Cart Display
             <div className="text-center py-20">
               <div className="mb-8">
