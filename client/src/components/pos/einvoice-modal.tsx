@@ -450,7 +450,7 @@ export function EInvoiceModal({
 
       // Prepare invoice payload
       const currentDate = new Date(); // Define currentDate here
-      const invoiceDate = currentDate.toISOString();
+      const invoiceDate = "";
       const invoicePayload = {
         invoiceNumber: `INV-${Date.now()}`,
         invoiceDate: invoiceDate,
@@ -649,7 +649,7 @@ export function EInvoiceModal({
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: currentDate.toISOString(), // Use currentDate
+          createdAt: "", // Use currentDate
         };
 
         // Gọi onConfirm để hiển thị receipt trước khi đóng modal
@@ -692,7 +692,7 @@ export function EInvoiceModal({
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: currentDate.toISOString(), // Use currentDate
+          createdAt: "", // Use currentDate
         };
 
         console.log("✅ Calling onConfirm to show receipt modal");
@@ -1048,7 +1048,7 @@ export function EInvoiceModal({
         paidTp: "TM", // Cash payment
         note: "",
         hdNo: "",
-        createdDate: new Date().toISOString(),
+        createdDate: "",
         clsfNo: selectedTemplate.templateNumber, // Mẫu số
         spcfNo: selectedTemplate.name, // Tên
         templateCode: selectedTemplate.templateCode || "", // Mã mẫu
@@ -1106,9 +1106,8 @@ export function EInvoiceModal({
 
         // Prepare the invoice data to be saved
         const invoiceSavePayload = {
-          invoiceNumber:
-            result.data?.invoiceNo || `INV-${Date.now()}`, // Use invoice number from provider
-          invoiceDate: new Date().toISOString(),
+          invoiceNumber: result.data?.invoiceNo || `INV-${Date.now()}`, // Use invoice number from provider
+          invoiceDate: "",
           buyerTaxCode: formData.taxCode || "",
           buyerName: formData.customerName || "Khách hàng",
           buyerAddress: formData.address || "",
@@ -1228,7 +1227,7 @@ export function EInvoiceModal({
             amountReceived: formData.total,
             change: "0.00",
             cashierName: "E-Invoice System",
-            createdAt: currentDate.toISOString(), // Use currentDate
+            createdAt: "", // Use currentDate
           };
           onConfirm({
             ...invoiceSavePayload,
@@ -1268,7 +1267,7 @@ export function EInvoiceModal({
             amountReceived: formData.total,
             change: "0.00",
             cashierName: "E-Invoice System",
-            createdAt: currentDate.toISOString(), // Use currentDate
+            createdAt: "", // Use currentDate
           };
           onConfirm({
             ...invoiceSavePayload,
