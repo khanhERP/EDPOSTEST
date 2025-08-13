@@ -77,6 +77,11 @@ export default function CustomerDisplayPage() {
                 setQrPayment(null);
                 setCart([]);
                 break;
+              case 'qr_payment_cancelled':
+                console.log("Customer Display: QR payment cancelled, clearing QR and showing cart");
+                setQrPayment(null);
+                // Keep cart visible (don't clear it)
+                break;
               default:
                 console.log("Customer Display: Unknown message type:", data.type);
             }
