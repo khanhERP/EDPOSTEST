@@ -36,13 +36,39 @@ export function OrderManagement() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const { data: orders, isLoading: ordersLoading } = useQuery({
+  const { data: orders, isLoading: ordersLoading, error: ordersError } = useQuery({
     queryKey: ['/api/orders'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/orders');
-      const data = await response.json();
-      console.log('Orders data received:', data);
-      return Array.isArray(data) ? data : [];
+      try {
+        const response = await apiRequest('GET', '/api/orders');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Orders API response:', data);
+        console.log('Orders API response type:', typeof data);
+        console.log('Orders API response isArray:', Array.isArray(data));
+        
+        // Handle different response formats
+        if (Array.isArray(data)) {
+          return data;
+        } else if (data && Array.isArray(data.orders)) {
+          return data.orders;
+        } else if (data && Array.isArray(data.data)) {
+          return data.data;
+        } else {
+          console.warn('Unexpected orders data format:', data);
+          return [];
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        toast({
+          title: 'Lỗi',
+          description: 'Không thể tải danh sách đơn hàng',
+          variant: 'destructive',
+        });
+        return [];
+      }
     },
   });
 
@@ -491,12 +517,30 @@ export function OrderManagement() {
     );
   }
 
+  // Hiển thị tất cả orders, không filter theo status
   const allOrders = orders ? (orders as Order[]).sort((a: Order, b: Order) =>
     new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
   ) : [];
 
+  // Nếu muốn chỉ hiển thị orders đang hoạt động, uncomment dòng dưới:
+  // const allOrders = orders ? (orders as Order[]).filter(order => 
+  //   !["paid", "cancelled"].includes(order.status)
+  // ).sort((a: Order, b: Order) =>
+  //   new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
+  // ) : [];
+
   console.log('Orders loading:', ordersLoading);
   console.log('Raw orders data:', orders);
+  console.log('Orders data type:', typeof orders);
+  console.log('Is orders array:', Array.isArray(orders));
+  console.log('Orders length:', orders?.length);
+  if (orders && Array.isArray(orders) && orders.length > 0) {
+    console.log('First order sample:', orders[0]);
+    console.log('Orders by status:', orders.reduce((acc, order) => {
+      acc[order.status] = (acc[order.status] || 0) + 1;
+      return acc;
+    }, {}));
+  }
   console.log('Processed orders count:', allOrders.length);
   console.log('All orders:', allOrders);
 
@@ -509,7 +553,7 @@ export function OrderManagement() {
           <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
         </div>
         <Badge variant="secondary" className="text-lg px-4 py-2">
-          {allOrders.length} {t('orders.ordersInProgress')}
+          {allOrders.length} đơn hàng
         </Badge>
       </div>
 
@@ -518,8 +562,8 @@ export function OrderManagement() {
         <Card>
           <CardContent className="py-12 text-center">
             <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('orders.noActiveOrders')}</h3>
-            <p className="text-gray-600">{t('orders.newOrdersWillAppearHere')}</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Không có đơn hàng nào</h3>
+            <p className="text-gray-600">Đơn hàng sẽ xuất hiện ở đây khi có dữ liệu</p>
           </CardContent>
         </Card>
       ) : (
