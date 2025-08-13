@@ -695,12 +695,12 @@ export function OrderManagement() {
                       <div className="flex justify-between items-center">
                         <span>Trạng thái hóa đơn điện tử:</span>
                         <Badge variant={
-                          selectedOrder.einvoiceStatus === 1 ? "default" : 
-                          selectedOrder.einvoiceStatus === 2 ? "destructive" : 
+                          selectedOrder.einvoiceStatus === 1 ? "default" :
+                          selectedOrder.einvoiceStatus === 2 ? "destructive" :
                           "secondary"
                         }>
-                          {selectedOrder.einvoiceStatus === 1 ? "Đã phát hành" : 
-                           selectedOrder.einvoiceStatus === 2 ? "Lỗi phát hành" : 
+                          {selectedOrder.einvoiceStatus === 1 ? "Đã phát hành" :
+                           selectedOrder.einvoiceStatus === 2 ? "Lỗi phát hành" :
                            "Chưa phát hành"}
                         </Badge>
                       </div>
@@ -775,21 +775,29 @@ export function OrderManagement() {
                   <h4 className="font-medium mb-2">{t('orders.totalAmount')}</h4>
                   <div className="space-y-1 text-sm">
                     {(() => {
-                      // Calculate total tax from all items
-                      let totalItemTax = 0;
+                      // Calculate total tax from all items using the correct method
                       let totalItemSubtotal = 0;
+                      let totalItemTax = 0;
 
                       if (Array.isArray(orderItems) && Array.isArray(products)) {
                         orderItems.forEach((item: any) => {
                           const product = products.find((p: any) => p.id === item.productId);
                           const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
-                          const itemSubtotal = Number(item.unitPrice || 0) * item.quantity;
+                          const itemUnitPrice = Number(item.unitPrice || 0);
+                          const itemQuantity = item.quantity;
+
+                          // Subtotal is unit price * quantity (before tax)
+                          const itemSubtotal = itemUnitPrice * itemQuantity;
+
+                          // Tax is calculated on the subtotal
                           const itemTax = (itemSubtotal * taxRate) / 100;
 
                           totalItemSubtotal += itemSubtotal;
                           totalItemTax += itemTax;
                         });
                       }
+
+                      const finalTotal = totalItemSubtotal + totalItemTax;
 
                       return (
                         <>
@@ -804,7 +812,7 @@ export function OrderManagement() {
                           <Separator />
                           <div className="flex justify-between font-medium">
                             <span>{t('orders.totalAmount')}:</span>
-                            <span>{(totalItemSubtotal + totalItemTax).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
+                            <span>{finalTotal.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
                           </div>
                         </>
                       );
