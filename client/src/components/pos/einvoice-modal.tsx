@@ -385,10 +385,13 @@ export function EInvoiceModal({
 
   const handlePublishAction = async (action: "publish" | "publishLater") => {
     const isPublishingAction = action === "publish";
-    const publishMessage = isPublishingAction ? "Phát hành" : "Phát hành sau";
+    const publishMessage = isPublishingAction ? "Phát hành" : "Lưu nháp";
     const toastTitle = isPublishingAction
       ? "✅ Phát hành thành công"
       : "📝 Lưu nháp thành công";
+
+    // Set selectedPaymentMethod to track which action is being processed
+    setSelectedPaymentMethod(action);
 
     try {
       console.log(`🟡 ${publishMessage} - Lưu thông tin đơn hàng`);
@@ -725,12 +728,18 @@ export function EInvoiceModal({
           invoiceData.id,
         );
 
-        // Gọi onConfirm để trả về dữ liệu đã lưu nháp
-        onConfirm({
-          ...invoiceSavePayload,
+        // Đặt flag publishLater để parent component biết đây là lưu nháp
+        const draftData = {
+          ...savePayload,
           invoiceData: invoiceData,
           showReceipt: false,
-        });
+          publishLater: true, // Flag để phân biệt với phát hành ngay
+        };
+
+        console.log("📝 Returning draft data to parent:", draftData);
+
+        // Gọi onConfirm để trả về dữ liệu đã lưu nháp
+        onConfirm(draftData);
 
         // Đóng modal e-invoice
         setTimeout(() => {
@@ -814,7 +823,7 @@ export function EInvoiceModal({
   };
 
   const handlePublishLater = async () => {
-    // Only validate cart items for publishLater - allow empty required fields
+    // Validate cart items for publishLater
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
       toast({
         title: "Lỗi",
@@ -824,6 +833,17 @@ export function EInvoiceModal({
       return;
     }
 
+    // Basic validation for draft - only require customer name
+    if (!formData.customerName.trim()) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng nhập tên khách hàng để lưu nháp",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsPublishing(true);
     await handlePublishAction("publishLater");
   };
 
@@ -1552,11 +1572,20 @@ export function EInvoiceModal({
             </Button>
             <Button
               onClick={handlePublishLater}
-              className="flex-1 bg-gray-500 hover:bg-gray-600 text-white"
+              className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white"
               disabled={isPublishing}
             >
-              <span className="mr-2">⏳</span>
-              Phát hành sau
+              {isPublishing && selectedPaymentMethod === "publishLater" ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  Đang lưu nháp...
+                </>
+              ) : (
+                <>
+                  <span className="mr-2">⏳</span>
+                  Phát hành sau
+                </>
+              )}
             </Button>
             <Button variant="outline" onClick={handleCancel} className="flex-1">
               <span className="mr-2">❌</span>
