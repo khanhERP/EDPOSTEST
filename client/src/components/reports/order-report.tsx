@@ -86,7 +86,7 @@ export function OrderReport() {
     }, 1000);
 
     return () => clearTimeout(timeoutId);
-  }, [startDate, endDate, orderStatus, customerSearch, refetchOrders]);
+  }, [startDate, endDate, orderStatus, customerSearch, selectedCategory, selectedEmployee, productSearch, refetchOrders]);
 
   const getFilteredData = () => {
     if (!orders || !Array.isArray(orders)) return [];
@@ -115,7 +115,14 @@ export function OrderReport() {
         (order.customerPhone &&
           order.customerPhone.includes(customerSearch));
 
-      return dateMatch && statusMatch && customerMatch;
+      // Employee filter
+      const employeeMatch =
+        selectedEmployee === "all" ||
+        order.cashierName === selectedEmployee ||
+        order.employeeId?.toString() === selectedEmployee ||
+        (order.cashierName && order.cashierName.includes(selectedEmployee));
+
+      return dateMatch && statusMatch && customerMatch && employeeMatch;
     });
 
     return filteredOrders;
@@ -156,14 +163,29 @@ export function OrderReport() {
 
     if (!products || !Array.isArray(products)) return [];
 
+    // Filter products by category and search term
+    const filteredProducts = products.filter((product: any) => {
+      const categoryMatch = 
+        selectedCategory === "all" || 
+        product.categoryId?.toString() === selectedCategory;
+      
+      const searchMatch = 
+        !productSearch ||
+        product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+        (product.sku && product.sku.toLowerCase().includes(productSearch.toLowerCase()));
+      
+      return categoryMatch && searchMatch;
+    });
+
     // For each filtered order, estimate product sales based on order total
     filteredOrders.forEach((order: any) => {
       const orderTotal = Number(order.total);
 
-      // Simulate order items by distributing order total among available products
-      // In a real system, this would come from order_items table
-      const randomProductsCount = Math.min(Math.floor(Math.random() * 3) + 1, products.length);
-      const selectedProducts = products
+      // Simulate order items by distributing order total among filtered products
+      if (filteredProducts.length === 0) return;
+      
+      const randomProductsCount = Math.min(Math.floor(Math.random() * 3) + 1, filteredProducts.length);
+      const selectedProducts = filteredProducts
         .sort(() => 0.5 - Math.random())
         .slice(0, randomProductsCount);
 
