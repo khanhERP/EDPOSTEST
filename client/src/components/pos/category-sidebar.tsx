@@ -162,7 +162,7 @@ export function CategorySidebar({
           className="w-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center rounded-xl"
         >
           <Receipt className="mr-2" size={16} />
-          Quản lý hóa đơn
+          {t('pos.manageInvoices')}
         </Button>
       </div>
     </aside>
