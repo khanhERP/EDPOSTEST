@@ -259,7 +259,7 @@ export function ReceiptModal({
                   <div className="flex-1">
                     <div>{item.productName}</div>
                     <div className="text-xs text-gray-600">
-                      SKU: {item.sku || `FOOD${String(item.productId || item.id).padStart(5, '0')}`}
+                      SKU: {`FOOD${String(item.productId || item.id).padStart(5, '0')}`}
                     </div>
                     <div className="text-xs text-gray-600">
                       {item.quantity} x {item.price} ₫
