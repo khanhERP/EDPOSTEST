@@ -272,6 +272,10 @@ export function ShoppingCart({
           // Clear cart trước khi hiển thị print dialog
           onClearCart();
 
+          // Đảm bảo tất cả modal khác đều đóng
+          setShowPaymentMethodModal(false);
+          setShowReceiptModal(false);
+
           // Hiển thị print receipt dialog thay vì receipt modal
           setCurrentReceipt(eInvoiceData.receipt);
           setShowPrintDialog(true);
@@ -284,6 +288,10 @@ export function ShoppingCart({
           console.log("⚠️ No receipt data found for later publishing");
           // Clear cart
           onClearCart();
+
+          // Đảm bảo tất cả modal khác đều đóng
+          setShowPaymentMethodModal(false);
+          setShowReceiptModal(false);
 
           toast({
             title: "Thành công", 

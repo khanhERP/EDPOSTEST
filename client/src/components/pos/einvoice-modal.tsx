@@ -473,10 +473,6 @@ export function EInvoiceModal({
         description: 'Thông tin hóa đơn điện tử đã được lưu vào database để phát hành sau.',
       });
 
-      // Đóng modal e-invoice ngay lập tức để receipt modal có thể hiển thị
-      console.log('🔒 Closing e-invoice modal immediately for receipt display');
-      onClose();
-
       // Handle different sources
       if (source === 'table' && orderId) {
         // Logic cho Table: Hoàn tất thanh toán trước, sau đó hiển thị receipt
@@ -490,26 +486,40 @@ export function EInvoiceModal({
 
         console.log('🍽️ Payment completed successfully for later publishing');
 
-        // Gọi onConfirm để hiển thị print dialog trực tiếp
-        console.log('🍽️ Calling onConfirm for print dialog display');
-        onConfirm({
-          ...invoiceData,
-          showPrintDialog: true, // Flag để hiển thị print dialog trực tiếp
-          receipt: receiptData
-        });
+        // Đóng modal e-invoice TRƯỚC khi gọi onConfirm
+        console.log('🔒 Closing e-invoice modal before showing print dialog');
+        onClose();
+
+        // Delay nhỏ để đảm bảo modal đã đóng
+        setTimeout(() => {
+          // Gọi onConfirm để hiển thị print dialog trực tiếp
+          console.log('🍽️ Calling onConfirm for print dialog display');
+          onConfirm({
+            ...invoiceData,
+            showPrintDialog: true, // Flag để hiển thị print dialog trực tiếp
+            receipt: receiptData
+          });
+        }, 100);
 
       } else {
         // Logic cho POS hoặc fallback
         console.log('🏪 POS/Fallback E-Invoice Later: Processing payment completion');
 
-        // Gọi onConfirm để hiển thị print dialog trực tiếp
-        console.log('✅ Calling onConfirm to show print dialog directly');
-        onConfirm({
-          ...invoiceData,
-          publishLater: true,
-          showPrintDialog: true, // Flag để hiển thị print dialog trực tiếp
-          receipt: receiptData // Đảm bảo receipt data được truyền
-        });
+        // Đóng modal e-invoice TRƯỚC khi gọi onConfirm
+        console.log('🔒 Closing e-invoice modal before showing print dialog');
+        onClose();
+
+        // Delay nhỏ để đảm bảo modal đã đóng
+        setTimeout(() => {
+          // Gọi onConfirm để hiển thị print dialog trực tiếp
+          console.log('✅ Calling onConfirm to show print dialog directly');
+          onConfirm({
+            ...invoiceData,
+            publishLater: true,
+            showPrintDialog: true, // Flag để hiển thị print dialog trực tiếp
+            receipt: receiptData // Đảm bảo receipt data được truyền
+          });
+        }, 100);
       }
 
     } catch (error) {
