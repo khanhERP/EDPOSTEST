@@ -67,15 +67,15 @@ export function OrderReport() {
     refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
-  const { data: products } = useQuery({
+  const { data: products, refetch: refetchProducts } = useQuery({
     queryKey: ["/api/products"],
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories, refetch: refetchCategories } = useQuery({
     queryKey: ["/api/categories"],
   });
 
-  const { data: employees } = useQuery({
+  const { data: employees, refetch: refetchEmployees } = useQuery({
     queryKey: ["/api/employees"],
   });
 
@@ -409,6 +409,20 @@ export function OrderReport() {
     },
   };
 
+  // Comprehensive refresh function
+  const handleRefreshData = async () => {
+    try {
+      await Promise.all([
+        refetchOrders(),
+        refetchProducts(),
+        refetchCategories(),
+        refetchEmployees()
+      ]);
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    }
+  };
+
   // Modified fetchOrderData function to use real data from API
   const fetchOrderData = async () => {
     try {
@@ -541,7 +555,7 @@ export function OrderReport() {
                 onChange={(e) => {
                   setStartDate(e.target.value);
                   // Auto-refresh data when date changes
-                  setTimeout(() => refetchOrders(), 500);
+                  setTimeout(() => handleRefreshData(), 500);
                 }}
               />
             </div>
@@ -553,13 +567,13 @@ export function OrderReport() {
                 onChange={(e) => {
                   setEndDate(e.target.value);
                   // Auto-refresh data when date changes
-                  setTimeout(() => refetchOrders(), 500);
+                  setTimeout(() => handleRefreshData(), 500);
                 }}
               />
             </div>
             <div className="flex items-end">
               <Button 
-                onClick={() => refetchOrders()} 
+                onClick={handleRefreshData} 
                 variant="outline"
                 className="w-full"
               >
