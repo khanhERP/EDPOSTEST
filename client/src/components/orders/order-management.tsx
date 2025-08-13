@@ -40,28 +40,39 @@ export function OrderManagement() {
     queryKey: ['/api/orders'],
     queryFn: async () => {
       try {
+        console.log('🔄 Fetching orders from API...');
         const response = await apiRequest('GET', '/api/orders');
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log('Orders API response:', data);
-        console.log('Orders API response type:', typeof data);
-        console.log('Orders API response isArray:', Array.isArray(data));
+        console.log('📊 Orders API response:', data);
+        console.log('📊 Orders API response type:', typeof data);
+        console.log('📊 Orders API response isArray:', Array.isArray(data));
+        console.log('📊 Orders API response length:', data?.length);
         
         // Handle different response formats
+        let processedData = [];
         if (Array.isArray(data)) {
-          return data;
+          processedData = data;
         } else if (data && Array.isArray(data.orders)) {
-          return data.orders;
+          processedData = data.orders;
         } else if (data && Array.isArray(data.data)) {
-          return data.data;
+          processedData = data.data;
         } else {
-          console.warn('Unexpected orders data format:', data);
-          return [];
+          console.warn('❌ Unexpected orders data format:', data);
+          processedData = [];
         }
+        
+        console.log('✅ Processed orders data:', {
+          count: processedData.length,
+          firstOrder: processedData[0],
+          allStatuses: processedData.map(o => o.status)
+        });
+        
+        return processedData;
       } catch (error) {
-        console.error('Error fetching orders:', error);
+        console.error('❌ Error fetching orders:', error);
         toast({
           title: 'Lỗi',
           description: 'Không thể tải danh sách đơn hàng',
@@ -517,32 +528,51 @@ export function OrderManagement() {
     );
   }
 
-  // Hiển thị tất cả orders, không filter theo status
-  const allOrders = orders ? (orders as Order[]).sort((a: Order, b: Order) =>
-    new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
-  ) : [];
+  // Process orders data safely
+  const allOrders = React.useMemo(() => {
+    console.log('🔄 Processing orders data...');
+    console.log('🔍 Raw orders:', { orders, type: typeof orders, isArray: Array.isArray(orders), length: orders?.length });
+    
+    if (!orders) {
+      console.log('❌ No orders data available');
+      return [];
+    }
+    
+    if (!Array.isArray(orders)) {
+      console.log('❌ Orders data is not an array:', orders);
+      return [];
+    }
+    
+    if (orders.length === 0) {
+      console.log('❌ Orders array is empty');
+      return [];
+    }
+    
+    // Hiển thị tất cả orders, không filter theo status
+    const sortedOrders = [...orders].sort((a: Order, b: Order) => {
+      const aTime = new Date(a.orderedAt || a.created_at).getTime();
+      const bTime = new Date(b.orderedAt || b.created_at).getTime();
+      return bTime - aTime;
+    });
+    
+    console.log('✅ Processed orders successfully:', {
+      count: sortedOrders.length,
+      statuses: sortedOrders.reduce((acc, order) => {
+        acc[order.status] = (acc[order.status] || 0) + 1;
+        return acc;
+      }, {}),
+      firstOrder: sortedOrders[0]
+    });
+    
+    return sortedOrders;
+  }, [orders]);
 
-  // Nếu muốn chỉ hiển thị orders đang hoạt động, uncomment dòng dưới:
-  // const allOrders = orders ? (orders as Order[]).filter(order => 
-  //   !["paid", "cancelled"].includes(order.status)
-  // ).sort((a: Order, b: Order) =>
-  //   new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
-  // ) : [];
-
-  console.log('Orders loading:', ordersLoading);
-  console.log('Raw orders data:', orders);
-  console.log('Orders data type:', typeof orders);
-  console.log('Is orders array:', Array.isArray(orders));
-  console.log('Orders length:', orders?.length);
-  if (orders && Array.isArray(orders) && orders.length > 0) {
-    console.log('First order sample:', orders[0]);
-    console.log('Orders by status:', orders.reduce((acc, order) => {
-      acc[order.status] = (acc[order.status] || 0) + 1;
-      return acc;
-    }, {}));
-  }
+  console.log('=== ORDER MANAGEMENT DEBUG ===');
+  console.log('Loading:', ordersLoading);
+  console.log('Error:', ordersError);
+  console.log('Raw orders:', orders);
   console.log('Processed orders count:', allOrders.length);
-  console.log('All orders:', allOrders);
+  console.log('All orders sample:', allOrders.slice(0, 2));
 
   return (
     <div className="space-y-6">

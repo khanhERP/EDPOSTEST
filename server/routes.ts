@@ -846,9 +846,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Orders
   app.get("/api/orders", async (req, res) => {
+    const startTime = Date.now();
     try {
       const { startDate, endDate } = req.query;
-      console.log("Orders API called with params:", { startDate, endDate });
+      console.log("📊 Orders API called with params:", { startDate, endDate, timestamp: new Date().toISOString() });
+
+      // Test database connection first
+      try {
+        await db.execute(sql`SELECT 1 as test`);
+      } catch (dbError) {
+        console.error("❌ Database connection test failed for orders:", dbError);
+        return res.status(503).json({
+          message: "Database connection failed",
+          error: "DATABASE_CONNECTION_ERROR"
+        });
+      }
 
       let query = db.select({
         id: orders.id,
@@ -868,7 +880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         orderedAt: orders.orderedAt,
         createdAt: orders.orderedAt, // Alias for compatibility
         created_at: orders.orderedAt, // Another alias
-        customerCount: sql<number>`1`, // Default customer count
+        customerCount: orders.customerCount || sql<number>`1`, // Use actual or default customer count
         salesChannel: orders.salesChannel,
         einvoiceStatus: orders.einvoiceStatus
       }).from(orders).orderBy(desc(orders.orderedAt));
@@ -879,7 +891,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const end = new Date(endDate as string);
         end.setHours(23, 59, 59, 999);
 
-        console.log("Applying date filter:", {
+        console.log("🔍 Applying date filter:", {
           start: start.toISOString(),
           end: end.toISOString(),
           startParam: startDate,
@@ -895,12 +907,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const orderResults = await query;
-      console.log("Orders query result:", {
+      const duration = Date.now() - startTime;
+      
+      console.log("✅ Orders query success:", {
         count: orderResults.length,
-        firstOrder: orderResults[0],
+        duration: `${duration}ms`,
         dateRange: { startDate, endDate },
-        sampleDates: orderResults.slice(0, 3).map(o => ({
+        statusBreakdown: orderResults.reduce((acc, order) => {
+          acc[order.status] = (acc[order.status] || 0) + 1;
+          return acc;
+        }, {}),
+        sample: orderResults.slice(0, 2).map(o => ({
           id: o.id,
+          orderNumber: o.orderNumber,
+          status: o.status,
           orderedAt: o.orderedAt,
           total: o.total
         }))
@@ -908,8 +928,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(orderResults);
     } catch (error) {
-      console.error("Error fetching orders:", error);
-      res.status(500).json({ message: "Failed to fetch orders" });
+      const duration = Date.now() - startTime;
+      console.error("❌ Orders API Error:", {
+        message: error.message,
+        code: error.code,
+        duration: `${duration}ms`,
+        params: { startDate: req.query.startDate, endDate: req.query.endDate },
+        stack: error.stack?.split('\n').slice(0, 5).join('\n')
+      });
+
+      res.status(500).json({
+        message: "Failed to fetch orders",
+        error: error.message || "UNKNOWN_ERROR",
+        code: error.code || "DATABASE_ERROR",
+        timestamp: new Date().toISOString()
+      });
     }
   });
 
