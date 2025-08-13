@@ -430,16 +430,15 @@ export function PaymentMethodModal({
     onClose();
 
     // Xử lý cho cả "phát hành ngay" và "phát hành sau"
-    if (eInvoiceData.publishLater) {
-      console.log('⏳ E-Invoice scheduled for later publishing');
+    if (eInvoiceData.publishLater || eInvoiceData.showPrintDialog) {
+      console.log('⏳ E-Invoice processed, calling onSelectMethod with data');
 
-      // Cho "phát hành sau", gọi onSelectMethod với showPrintDialog flag
-      console.log('📄 Calling onSelectMethod with publishLater and showPrintDialog data');
+      // Gọi onSelectMethod với data đầy đủ
       onSelectMethod('einvoice', eInvoiceData);
       return;
     } else {
       console.log('✅ E-Invoice published immediately, proceeding with payment completion');
-      // Cho "phát hành ngay", cũng gọi onSelectMethod với showPrintDialog flag
+      // Cho "phát hành ngay", cũng gọi onSelectMethod với data
       onSelectMethod('einvoice', eInvoiceData);
     }
   };

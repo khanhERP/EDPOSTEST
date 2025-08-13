@@ -268,14 +268,14 @@ export function ShoppingCart({
 
         // Kiểm tra nếu có receipt data từ e-invoice modal
         if (eInvoiceData.receipt) {
-          console.log("📄 Displaying receipt for later publishing:", eInvoiceData.receipt);
+          console.log("📄 Displaying print receipt dialog for later publishing:", eInvoiceData.receipt);
 
-          // Clear cart trước khi hiển thị receipt modal
+          // Clear cart trước khi hiển thị print dialog
           onClearCart();
 
-          // Hiển thị receipt modal với data thực sự
+          // Hiển thị print receipt dialog thay vì receipt modal
           setCurrentReceipt(eInvoiceData.receipt);
-          setShowReceiptModal(true);
+          setShowPrintDialog(true);
 
           toast({
             title: "Thành công",
@@ -296,7 +296,28 @@ export function ShoppingCart({
         return;
       }
 
-      // Nếu phát hành thành công (có showReceipt flag)
+      // Kiểm tra nếu có showPrintDialog flag (cho cả phát hành ngay và phát hành sau)
+      if (eInvoiceData.showPrintDialog && eInvoiceData.receipt) {
+        console.log("✅ E-invoice processed successfully, showing print dialog");
+
+        // Clear cart trước khi hiển thị print dialog
+        onClearCart();
+
+        // Hiển thị print receipt dialog
+        setCurrentReceipt(eInvoiceData.receipt);
+        setShowPrintDialog(true);
+
+        toast({
+          title: "Thành công",
+          description: eInvoiceData.publishLater 
+            ? "Thông tin hóa đơn điện tử đã được lưu để phát hành sau."
+            : `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${eInvoiceData.invoiceData?.invoiceNo || 'N/A'}`,
+        });
+
+        return;
+      }
+
+      // Nếu phát hành thành công (có showReceipt flag) - fallback cho tương thích ngược
       if (eInvoiceData.showReceipt) {
         console.log("✅ E-invoice published successfully, creating transaction and showing receipt");
 
@@ -364,13 +385,12 @@ export function ShoppingCart({
           }
         }
 
-        // Show receipt modal
-        setShowReceiptModal(true);
+        // Show print dialog thay vì receipt modal
+        setShowPrintDialog(true);
         setCurrentReceipt(receipt);
 
         // Clear cart
-        clearCart();
-        setSelectedPaymentMethod(null);
+        onClearCart();
 
         toast({
           title: "Thành công",
