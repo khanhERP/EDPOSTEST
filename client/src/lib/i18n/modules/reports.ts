@@ -1236,6 +1236,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseDetails: "Chi tiết thu chi",
     inventoryDetails: "Chi tiết hàng hóa",
     noReportData: "Không có dữ liệu báo cáo",
+    noDataAvailable: "Chưa có dữ liệu để hiển thị. Hãy thực hiện một số giao dịch trước.",
     centralBranch: "Chi nhánh trung tâm",
 
     // Financial report

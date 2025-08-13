@@ -144,7 +144,7 @@ export function OrderReport() {
       };
     } = {};
 
-    if (!products || !Array.isArray(products)) return [];
+    if (!products || !Array.isArray(products) || products.length === 0) return [];
 
     // For each filtered order, estimate product sales based on order total
     filteredOrders.forEach((order: any) => {
