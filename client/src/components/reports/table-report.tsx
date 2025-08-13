@@ -41,11 +41,11 @@ export function TableReport() {
   );
 
   const { data: orders = [] } = useQuery({
-    queryKey: ["/api/orders"],
+    queryKey: ["/api/orders", startDate, endDate],
   });
 
   const { data: tables = [] } = useQuery({
-    queryKey: ["/api/tables"],
+    queryKey: ["/api/tables", startDate, endDate],
   });
 
   const getTableData = () => {

@@ -57,7 +57,7 @@ export function InventoryReport() {
   const [selectedCategory, setSelectedCategory] = useState("all");
 
   const { data: products } = useQuery({
-    queryKey: ["/api/products"],
+    queryKey: ["/api/products", startDate, endDate],
   });
 
   const { data: categories } = useQuery({
@@ -65,15 +65,15 @@ export function InventoryReport() {
   });
 
   const { data: orders } = useQuery({
-    queryKey: ["/api/orders"],
+    queryKey: ["/api/orders", startDate, endDate],
   });
 
   const { data: employees } = useQuery({
-    queryKey: ["/api/employees"],
+    queryKey: ["/api/employees", startDate, endDate],
   });
 
   const { data: suppliers } = useQuery({
-    queryKey: ["/api/suppliers"],
+    queryKey: ["/api/suppliers", startDate, endDate],
   });
 
   const formatCurrency = (amount: number) => {

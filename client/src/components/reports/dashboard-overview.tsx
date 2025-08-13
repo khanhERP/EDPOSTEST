@@ -43,11 +43,11 @@ export function DashboardOverview() {
   const queryClient = useQueryClient();
 
   const { data: transactions } = useQuery({
-    queryKey: ["/api/transactions"],
+    queryKey: ["/api/transactions", startDate, endDate],
   });
 
   const { data: tables } = useQuery({
-    queryKey: ["/api/tables"],
+    queryKey: ["/api/tables", startDate, endDate],
   });
 
   const handleRefresh = () => {

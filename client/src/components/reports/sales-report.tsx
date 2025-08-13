@@ -41,7 +41,7 @@ export function SalesReport() {
   );
 
   const { data: transactions } = useQuery({
-    queryKey: ["/api/transactions"],
+    queryKey: ["/api/transactions", startDate, endDate],
   });
 
   const getSalesData = () => {
