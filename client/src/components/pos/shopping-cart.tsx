@@ -8,6 +8,7 @@ import { PaymentMethodModal } from "./payment-method-modal";
 import { ReceiptModal } from "./receipt-modal";
 import type { CartItem } from "@shared/schema";
 import { toast } from "@/hooks/use-toast";
+import { PrintReceiptDialog } from "./print-receipt-dialog"; // Assuming this component exists
 
 interface ShoppingCartProps {
   cart: CartItem[];
@@ -54,6 +55,7 @@ export function ShoppingCart({
   // New states for Receipt Modal management
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [currentReceipt, setCurrentReceipt] = useState<any>(null);
+  const [showPrintDialog, setShowPrintDialog] = useState(false); // State to control PrintReceiptDialog
 
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
@@ -70,13 +72,13 @@ export function ShoppingCart({
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
-    
+
     let ws: WebSocket;
 
     const connectWebSocket = () => {
       try {
         ws = new WebSocket(wsUrl);
-        
+
         ws.onopen = () => {
           console.log("Shopping Cart: WebSocket connected for customer display broadcasting");
         };
@@ -109,7 +111,7 @@ export function ShoppingCart({
 
     try {
       const ws = new WebSocket(wsUrl);
-      
+
       ws.onopen = () => {
         console.log("Broadcasting cart update to customer display:", cart);
         ws.send(JSON.stringify({
@@ -257,13 +259,17 @@ export function ShoppingCart({
         // Kiểm tra nếu có receipt data từ e-invoice modal
         if (eInvoiceData.receipt) {
           console.log("📄 Displaying receipt for later publishing:", eInvoiceData.receipt);
-          
-          // Clear cart trước khi hiển thị receipt modal
+
+          // Clear cart trước khi hiển thị print dialog
           onClearCart();
 
-          // Hiển thị receipt modal với data thực sự
+          // Đảm bảo tất cả modal khác đều đóng
+          setShowPaymentMethodModal(false);
+          setShowReceiptModal(false);
+
+          // Hiển thị print receipt dialog với auto-print
           setCurrentReceipt(eInvoiceData.receipt);
-          setShowReceiptModal(true);
+          setShowPrintDialog(true);
 
           toast({
             title: "Thành công",
@@ -273,6 +279,10 @@ export function ShoppingCart({
           console.log("⚠️ No receipt data found for later publishing");
           // Clear cart
           onClearCart();
+
+          // Đảm bảo tất cả modal khác đều đóng
+          setShowPaymentMethodModal(false);
+          setShowReceiptModal(false);
 
           toast({
             title: "Thành công", 
@@ -588,6 +598,27 @@ export function ShoppingCart({
         onClose={() => setShowReceiptModal(false)}
         receipt={currentReceipt}
         onConfirm={() => setShowReceiptModal(false)} // Confirming receipt usually means closing it
+      />
+
+      {/* Print Receipt Dialog */}
+      <PrintReceiptDialog
+        isOpen={showPrintDialog}
+        onClose={() => setShowPrintDialog(false)}
+        receipt={currentReceipt}
+        onPrintSuccess={() => {
+          console.log("Print receipt success!");
+          // Optionally handle post-print actions here
+          setShowPrintDialog(false);
+        }}
+        onPrintFail={() => {
+          console.error("Print receipt failed!");
+          toast({
+            variant: "destructive",
+            title: "Lỗi in",
+            description: "Không thể in hóa đơn. Vui lòng thử lại.",
+          });
+          setShowPrintDialog(false);
+        }}
       />
 
       {/* E-Invoice Modal (Assuming you have this component) */}

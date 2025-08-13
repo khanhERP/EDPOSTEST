@@ -105,7 +105,7 @@ export function ReceiptModal({
         // Small delay to ensure DOM is ready
         setTimeout(() => {
           handlePrint();
-        }, 500);
+        }, 300);
       } else {
         console.log('❌ Auto-print conditions not met:', { isFromEInvoice, autoShowPrint });
       }

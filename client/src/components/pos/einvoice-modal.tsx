@@ -388,7 +388,7 @@ export function EInvoiceModal({
           const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
           const itemSubtotal = itemPrice * itemQuantity;
           const itemTax = (itemSubtotal * itemTaxRate) / 100;
-          
+
           return {
             productId: item.id,
             productName: item.name,
@@ -834,7 +834,7 @@ export function EInvoiceModal({
               const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
               const itemSubtotal = itemPrice * itemQuantity;
               const itemTax = (itemSubtotal * itemTaxRate) / 100;
-              
+
               return {
                 productId: item.id,
                 productName: item.name,
@@ -934,7 +934,8 @@ export function EInvoiceModal({
             total: total,
             paymentMethod: 'einvoice',
             source: 'pos',
-            showReceipt: true // Flag để hiển thị receipt modal
+            showReceipt: true, // Flag để hiển thị receipt modal
+            autoShowPrint: true // Flag để tự động in hóa đơn
           });
         } else if (source === 'table' && orderId) {
           // Logic cho Table: Tự hoàn tất thanh toán luôn
@@ -950,7 +951,8 @@ export function EInvoiceModal({
             paymentMethod: 'einvoice',
             source: 'table',
             orderId: orderId,
-            showReceipt: true // Flag để hiển thị receipt modal
+            showReceipt: true, // Flag để hiển thị receipt modal
+            autoShowPrint: true // Flag để tự động in hóa đơn
           });
 
           // Gọi mutation để hoàn tất thanh toán ngay lập tức
