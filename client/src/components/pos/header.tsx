@@ -470,6 +470,19 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
 
                   <div className="border-t border-gray-200 my-2"></div>
 
+                  <a 
+                    href="/customer-display"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center px-4 py-2 text-left hover:bg-blue-50 hover:text-blue-600 text-gray-700 transition-colors"
+                    onClick={() => setPosMenuOpen(false)}
+                  >
+                    <Users className="w-4 h-4 mr-3" />
+                    Màn hình khách hàng
+                  </a>
+
+                  <div className="border-t border-gray-200 my-2"></div>
+
                   <button 
                     className="w-full flex items-center px-4 py-2 text-left hover:bg-red-50 hover:text-red-600 text-gray-700 transition-colors"
                     onClick={() => {
