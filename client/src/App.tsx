@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { PinAuth } from "@/components/auth/pin-auth";
 import POSPage from "@/pages/pos";
 import TablesPage from "@/pages/tables";
 import EmployeesPage from "@/pages/employees";
@@ -33,11 +35,21 @@ function Router() {
 }
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const handleAuthSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        {!isAuthenticated ? (
+          <PinAuth onAuthSuccess={handleAuthSuccess} />
+        ) : (
+          <Router />
+        )}
       </TooltipProvider>
     </QueryClientProvider>
   );
