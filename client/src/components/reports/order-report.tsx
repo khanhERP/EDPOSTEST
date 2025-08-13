@@ -63,25 +63,25 @@ export function OrderReport() {
   const [selectedEmployee, setSelectedEmployee] = useState("all");
 
   const { data: orders = [], refetch: refetchOrders, isLoading } = useQuery({
-    queryKey: ["/api/orders"],
+    queryKey: ["/api/orders", startDate, endDate],
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
 
   const { data: products = [] } = useQuery({
-    queryKey: ["/api/products"],
+    queryKey: ["/api/products", startDate, endDate],
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ["/api/categories"],
+    queryKey: ["/api/categories", startDate, endDate],
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
 
   const { data: employees = [] } = useQuery({
-    queryKey: ["/api/employees"],
+    queryKey: ["/api/employees", startDate, endDate],
     staleTime: 0,
     refetchOnWindowFocus: true,
   });

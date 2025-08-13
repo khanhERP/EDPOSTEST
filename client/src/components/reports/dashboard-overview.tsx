@@ -42,21 +42,29 @@ export function DashboardOverview() {
   );
   const queryClient = useQueryClient();
 
-  const { data: transactions } = useQuery({
+  const { data: transactions, refetch: refetchTransactions } = useQuery({
     queryKey: ["/api/transactions", startDate, endDate],
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
-  const { data: tables } = useQuery({
+  const { data: tables, refetch: refetchTables } = useQuery({
     queryKey: ["/api/tables", startDate, endDate],
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
-  const handleRefresh = () => {
-    // Refresh the queries to get the latest data for the selected date
-    setStartDate(formatDateToYYYYMMDD(new Date()));
-    setEndDate(formatDateToYYYYMMDD(new Date()));
-    queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+  const handleRefresh = async () => {
+    try {
+      // Refresh the queries to get the latest data for the selected date range
+      await Promise.all([
+        refetchTransactions(),
+        refetchTables(),
+        queryClient.invalidateQueries({ queryKey: ["/api/orders"] })
+      ]);
+    } catch (error) {
+      console.error('Error refreshing dashboard data:', error);
+    }
   };
 
   const getDashboardStats = () => {

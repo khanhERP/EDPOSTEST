@@ -422,9 +422,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/transactions", async (req, res) => {
     try {
-      const transactions = await storage.getTransactions();
+      const { startDate, endDate } = req.query;
+      let query = db.select().from(transactionsTable);
+
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+
+        query = query.where(
+          and(
+            gte(transactionsTable.createdAt, start.toISOString()),
+            lte(transactionsTable.createdAt, end.toISOString())
+          )
+        );
+      }
+
+      const transactions = await query;
       res.json(transactions);
     } catch (error) {
+      console.error("Error fetching transactions:", error);
       res.status(500).json({ message: "Failed to fetch transactions" });
     }
   });
@@ -761,11 +778,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Orders
   app.get("/api/orders", async (req, res) => {
     try {
-      const { tableId, status } = req.query;
-      const orders = await storage.getOrders(
-        tableId ? parseInt(tableId as string) : undefined,
-        status as string,
-      );
+      const { startDate, endDate } = req.query;
+      let query = db.select().from(orders);
+
+      if (startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+
+        query = query.where(
+          and(
+            gte(orders.orderedAt, start.toISOString()),
+            lte(orders.orderedAt, end.toISOString())
+          )
+        );
+      }
+
+      const orders = await query;
       res.json(orders);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch orders" });
@@ -1750,8 +1779,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Date range filter - IMPORTANT: Apply to transactions table
       if (startDate && endDate) {
-        const start = new Date(startDate as string);
-        const end = new Date(endDate as string);
+        const start = new Date(startDate);
+        const end = new Date(endDate);
         end.setHours(23, 59, 59, 999); // Include entire end date
 
         conditions.push(
@@ -2744,7 +2773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Enhanced validation for required fields
       const requiredFields = ['invoiceNumber', 'buyerName', 'total'];
       const missingFields = requiredFields.filter(field => !invoiceData[field]);
-      
+
       if (missingFields.length > 0) {
         console.error("Missing required fields:", missingFields);
         return res.status(400).json({
