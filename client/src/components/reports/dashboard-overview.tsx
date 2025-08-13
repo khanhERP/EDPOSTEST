@@ -112,6 +112,8 @@ export function DashboardOverview() {
       periodOrderCount = filteredTransactions.length;
       periodCustomerCount = filteredTransactions.length;
 
+      const start = new Date(startDate);
+      const end = new Date(endDate);
       const daysDiff = Math.max(
         1,
         Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
