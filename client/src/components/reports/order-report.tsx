@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Card,
@@ -62,40 +62,21 @@ export function OrderReport() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState("all");
 
-  const { data: orders, refetch: refetchOrders } = useQuery({
+  const { data: orders } = useQuery({
     queryKey: ["/api/orders"],
-    refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
-  const { data: products, refetch: refetchProducts } = useQuery({
+  const { data: products } = useQuery({
     queryKey: ["/api/products"],
   });
 
-  const { data: categories, refetch: refetchCategories } = useQuery({
+  const { data: categories } = useQuery({
     queryKey: ["/api/categories"],
   });
 
-  const { data: employees, refetch: refetchEmployees } = useQuery({
+  const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
   });
-
-  // Auto-refresh data when filters change
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      refetchOrders();
-    }, 1000);
-
-    return () => clearTimeout(timeoutId);
-  }, [
-    startDate,
-    endDate,
-    orderStatus,
-    customerSearch,
-    selectedCategory,
-    selectedEmployee,
-    productSearch,
-    refetchOrders,
-  ]);
 
   const getFilteredData = () => {
     if (!orders || !Array.isArray(orders)) return [];
@@ -110,8 +91,7 @@ export function OrderReport() {
 
       const statusMatch =
         orderStatus === "all" ||
-        (orderStatus === "draft" &&
-          (order.status === "pending" || order.status === "draft")) ||
+        (orderStatus === "draft" && order.status === "pending") ||
         (orderStatus === "confirmed" && order.status === "confirmed") ||
         (orderStatus === "delivering" && order.status === "preparing") ||
         (orderStatus === "completed" && order.status === "paid");
@@ -122,16 +102,10 @@ export function OrderReport() {
           order.customerName
             .toLowerCase()
             .includes(customerSearch.toLowerCase())) ||
-        (order.customerPhone && order.customerPhone.includes(customerSearch));
+        (order.customerPhone &&
+          order.customerPhone.includes(customerSearch));
 
-      // Employee filter
-      const employeeMatch =
-        selectedEmployee === "all" ||
-        order.cashierName === selectedEmployee ||
-        order.employeeId?.toString() === selectedEmployee ||
-        (order.cashierName && order.cashierName.includes(selectedEmployee));
-
-      return dateMatch && statusMatch && customerMatch && employeeMatch;
+      return dateMatch && statusMatch && customerMatch;
     });
 
     return filteredOrders;
@@ -153,18 +127,10 @@ export function OrderReport() {
     const statusMap = {
       pending: { label: t("reports.draft"), variant: "secondary" as const },
       confirmed: { label: t("reports.confirmed"), variant: "default" as const },
-      preparing: {
-        label: t("reports.delivering"),
-        variant: "outline" as const,
-      },
+      preparing: { label: t("reports.delivering"), variant: "outline" as const },
       paid: { label: t("reports.completed"), variant: "default" as const },
     };
-    return (
-      statusMap[status as keyof typeof statusMap] || {
-        label: status,
-        variant: "secondary" as const,
-      }
-    );
+    return statusMap[status as keyof typeof statusMap] || { label: status, variant: "secondary" as const };
   };
 
   const getProductData = () => {
@@ -180,33 +146,14 @@ export function OrderReport() {
 
     if (!products || !Array.isArray(products)) return [];
 
-    // Filter products by category and search term
-    const filteredProducts = products.filter((product: any) => {
-      const categoryMatch =
-        selectedCategory === "all" ||
-        product.categoryId?.toString() === selectedCategory;
-
-      const searchMatch =
-        !productSearch ||
-        product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-        (product.sku &&
-          product.sku.toLowerCase().includes(productSearch.toLowerCase()));
-
-      return categoryMatch && searchMatch;
-    });
-
     // For each filtered order, estimate product sales based on order total
     filteredOrders.forEach((order: any) => {
       const orderTotal = Number(order.total);
 
-      // Simulate order items by distributing order total among filtered products
-      if (filteredProducts.length === 0) return;
-
-      const randomProductsCount = Math.min(
-        Math.floor(Math.random() * 3) + 1,
-        filteredProducts.length,
-      );
-      const selectedProducts = filteredProducts
+      // Simulate order items by distributing order total among available products
+      // In a real system, this would come from order_items table
+      const randomProductsCount = Math.min(Math.floor(Math.random() * 3) + 1, products.length);
+      const selectedProducts = products
         .sort(() => 0.5 - Math.random())
         .slice(0, randomProductsCount);
 
@@ -230,7 +177,7 @@ export function OrderReport() {
       });
     });
 
-    return Object.values(productStats).filter((stat) => stat.quantity > 0);
+    return Object.values(productStats).filter(stat => stat.quantity > 0);
   };
 
   const getChartData = () => {
@@ -238,13 +185,10 @@ export function OrderReport() {
 
     if (concernType === "transaction") {
       // Daily order count chart
-      const dailyData: { [date: string]: { orders: number; value: number } } =
-        {};
+      const dailyData: { [date: string]: { orders: number; value: number } } = {};
 
       filteredOrders.forEach((order: any) => {
-        const date = new Date(order.orderedAt || order.created_at)
-          .toISOString()
-          .split("T")[0];
+        const date = new Date(order.orderedAt || order.created_at).toISOString().split('T')[0];
         if (!dailyData[date]) {
           dailyData[date] = { orders: 0, value: 0 };
         }
@@ -260,7 +204,7 @@ export function OrderReport() {
     } else {
       // Product quantity chart
       const productData = getProductData();
-      return productData.slice(0, 10).map((item) => ({
+      return productData.slice(0, 10).map(item => ({
         name: item.product.name,
         quantity: item.quantity,
         value: item.value,
@@ -279,8 +223,7 @@ export function OrderReport() {
             {t("reports.orderReportByTransaction")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-            {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -294,7 +237,7 @@ export function OrderReport() {
                   {t("reports.orderTime")}
                 </TableHead>
                 <TableHead className="text-center">
-                  {t("reports.customer")} / Loại đơn
+                  {t("reports.customer")}
                 </TableHead>
                 <TableHead className="text-center">
                   {t("reports.orderQuantity")}
@@ -317,23 +260,10 @@ export function OrderReport() {
                         {order.orderNumber || `ORD-${order.id}`}
                       </TableCell>
                       <TableCell className="text-center">
-                        {new Date(
-                          order.orderedAt || order.created_at,
-                        ).toLocaleString("vi-VN")}
+                        {new Date(order.orderedAt || order.created_at).toLocaleString("vi-VN")}
                       </TableCell>
                       <TableCell className="text-center">
-                        <div className="flex flex-col">
-                          <span>{order.customerName || "Khách lẻ"}</span>
-                          {order.tableId ? (
-                            <span className="text-xs text-gray-500">
-                              Bàn {order.tableNumber || order.tableId}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-blue-600 font-medium">
-                              Mang về
-                            </span>
-                          )}
-                        </div>
+                        {order.customerName || "Khách lẻ"}
                       </TableCell>
                       <TableCell className="text-center">
                         {order.customerCount || 1}
@@ -351,10 +281,7 @@ export function OrderReport() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className="text-center text-gray-500 italic"
-                  >
+                  <TableCell colSpan={6} className="text-center text-gray-500 italic">
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -377,8 +304,7 @@ export function OrderReport() {
             {t("reports.orderReportByProduct")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-            {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -405,9 +331,7 @@ export function OrderReport() {
                       {item.product.sku || item.product.id}
                     </TableCell>
                     <TableCell>{item.product.name}</TableCell>
-                    <TableCell className="text-center">
-                      {item.quantity}
-                    </TableCell>
+                    <TableCell className="text-center">{item.quantity}</TableCell>
                     <TableCell className="text-right text-green-600">
                       {formatCurrency(item.value)}
                     </TableCell>
@@ -415,10 +339,7 @@ export function OrderReport() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="text-center text-gray-500 italic"
-                  >
+                  <TableCell colSpan={4} className="text-center text-gray-500 italic">
                     {t("reports.noReportData")}
                   </TableCell>
                 </TableRow>
@@ -445,43 +366,29 @@ export function OrderReport() {
     },
   };
 
-  // Comprehensive refresh function
-  const handleRefreshData = async () => {
-    try {
-      await Promise.all([
-        refetchOrders(),
-        refetchProducts(),
-        refetchCategories(),
-        refetchEmployees(),
-      ]);
-    } catch (error) {
-      console.error("Error refreshing data:", error);
-    }
-  };
-
   // Modified fetchOrderData function to use real data from API
   const fetchOrderData = async () => {
     try {
-      const response = await fetch("/api/orders");
-      if (!response.ok) throw new Error("Failed to fetch orders");
+      const response = await fetch('/api/orders');
+      if (!response.ok) throw new Error('Failed to fetch orders');
       const orders = await response.json();
 
       // Get table data to map table names
-      const tablesResponse = await fetch("/api/tables");
+      const tablesResponse = await fetch('/api/tables');
       const tables = await tablesResponse.json();
       const tableMap = new Map(tables.map((t: any) => [t.id, t.tableNumber]));
 
       return orders.map((order: any) => ({
         id: order.id,
         orderNumber: order.orderNumber,
-        customerName: order.customerName || "Khách lẻ",
-        tableNumber: tableMap.get(order.tableId) || "Unknown",
+        customerName: order.customerName || 'Khách lẻ',
+        tableNumber: tableMap.get(order.tableId) || 'Unknown',
         total: parseFloat(order.total),
         status: order.status,
         createdAt: order.orderedAt,
       }));
     } catch (error) {
-      console.error("Error fetching order data:", error);
+      console.error('Error fetching order data:', error);
       return [];
     }
   };
@@ -533,15 +440,9 @@ export function OrderReport() {
                 <SelectContent>
                   <SelectItem value="all">{t("common.all")}</SelectItem>
                   <SelectItem value="draft">{t("reports.draft")}</SelectItem>
-                  <SelectItem value="confirmed">
-                    {t("reports.confirmed")}
-                  </SelectItem>
-                  <SelectItem value="delivering">
-                    {t("reports.delivering")}
-                  </SelectItem>
-                  <SelectItem value="completed">
-                    {t("reports.completed")}
-                  </SelectItem>
+                  <SelectItem value="confirmed">{t("reports.confirmed")}</SelectItem>
+                  <SelectItem value="delivering">{t("reports.delivering")}</SelectItem>
+                  <SelectItem value="completed">{t("reports.completed")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -549,10 +450,7 @@ export function OrderReport() {
             {/* Product Group */}
             <div>
               <Label>{t("reports.productGroup")}</Label>
-              <Select
-                value={selectedCategory}
-                onValueChange={setSelectedCategory}
-              >
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
                   <SelectValue placeholder={t("reports.productGroup")} />
                 </SelectTrigger>
@@ -561,10 +459,7 @@ export function OrderReport() {
                   {categories &&
                     Array.isArray(categories) &&
                     categories.map((category: any) => (
-                      <SelectItem
-                        key={category.id}
-                        value={category.id.toString()}
-                      >
+                      <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name}
                       </SelectItem>
                     ))}
@@ -575,10 +470,7 @@ export function OrderReport() {
             {/* Employee */}
             <div>
               <Label>{t("reports.employee")}</Label>
-              <Select
-                value={selectedEmployee}
-                onValueChange={setSelectedEmployee}
-              >
+              <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
                 <SelectTrigger>
                   <SelectValue placeholder={t("reports.employee")} />
                 </SelectTrigger>
@@ -587,10 +479,7 @@ export function OrderReport() {
                   {employees &&
                     Array.isArray(employees) &&
                     employees.map((employee: any) => (
-                      <SelectItem
-                        key={employee.id}
-                        value={employee.id.toString()}
-                      >
+                      <SelectItem key={employee.id} value={employee.id.toString()}>
                         {employee.name}
                       </SelectItem>
                     ))}
@@ -606,11 +495,7 @@ export function OrderReport() {
               <Input
                 type="date"
                 value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
-                  // Auto-refresh data when date changes
-                  setTimeout(() => handleRefreshData(), 500);
-                }}
+                onChange={(e) => setStartDate(e.target.value)}
               />
             </div>
             <div>
@@ -618,11 +503,7 @@ export function OrderReport() {
               <Input
                 type="date"
                 value={endDate}
-                onChange={(e) => {
-                  setEndDate(e.target.value);
-                  // Auto-refresh data when date changes
-                  setTimeout(() => handleRefreshData(), 500);
-                }}
+                onChange={(e) => setEndDate(e.target.value)}
               />
             </div>
           </div>
@@ -669,15 +550,12 @@ export function OrderReport() {
                 {t("reports.chartView")}
               </div>
               <div className="text-white font-semibold">
-                {concernType === "transaction"
-                  ? t("reports.transactionConcern")
-                  : t("reports.productConcern")}
+                {concernType === "transaction" ? t("reports.transactionConcern") : t("reports.productConcern")}
               </div>
             </div>
           </CardTitle>
           <CardDescription className="text-blue-100 mt-2">
-            {t("reports.visualRepresentation")} - {t("reports.fromDate")}:{" "}
-            {formatDate(startDate)} {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.visualRepresentation")} - {t("reports.fromDate")}: {formatDate(startDate)} {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
@@ -698,59 +576,17 @@ export function OrderReport() {
                     barCategoryGap="25%"
                   >
                     <defs>
-                      <linearGradient
-                        id="orderGradient"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="#10b981"
-                          stopOpacity={0.9}
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="#10b981"
-                          stopOpacity={0.6}
-                        />
+                      <linearGradient id="orderGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#10b981" stopOpacity={0.6} />
                       </linearGradient>
-                      <linearGradient
-                        id="valueGradient"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="#3b82f6"
-                          stopOpacity={0.9}
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="#3b82f6"
-                          stopOpacity={0.6}
-                        />
+                      <linearGradient id="valueGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.6} />
                       </linearGradient>
-                      <linearGradient
-                        id="quantityGradient"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop
-                          offset="0%"
-                          stopColor="#f59e0b"
-                          stopOpacity={0.9}
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="#f59e0b"
-                          stopOpacity={0.6}
-                        />
+                      <linearGradient id="quantityGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.6} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -787,20 +623,19 @@ export function OrderReport() {
                     />
                     <ChartTooltip
                       content={<ChartTooltipContent />}
-                      labelStyle={{
-                        color: "#1e293b",
+                      labelStyle={{ 
+                        color: "#1e293b", 
                         fontWeight: 600,
                         fontSize: 13,
-                        marginBottom: 4,
+                        marginBottom: 4
                       }}
                       contentStyle={{
                         backgroundColor: "rgba(255, 255, 255, 0.98)",
                         border: "1px solid #e2e8f0",
                         borderRadius: "12px",
-                        boxShadow:
-                          "0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.05)",
+                        boxShadow: "0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.05)",
                         padding: "12px 16px",
-                        backdropFilter: "blur(8px)",
+                        backdropFilter: "blur(8px)"
                       }}
                       cursor={{ fill: "rgba(59, 130, 246, 0.05)" }}
                     />
@@ -870,9 +705,7 @@ export function OrderReport() {
 
       {/* Data Tables */}
       <div className="space-y-6">
-        {concernType === "transaction"
-          ? renderTransactionTable()
-          : renderProductTable()}
+        {concernType === "transaction" ? renderTransactionTable() : renderProductTable()}
       </div>
     </div>
   );

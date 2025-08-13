@@ -17,20 +17,8 @@ export async function apiRequest(
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data
       ? JSON.stringify(data, (key, value) => {
-          // Handle Date objects properly
           if (value instanceof Date) {
-            return value.toISOString();
-          }
-          // Handle string dates that might be passed as Date-like values
-          if (typeof value === 'string' && key.toLowerCase().includes('date')) {
-            try {
-              const testDate = new Date(value);
-              if (!isNaN(testDate.getTime())) {
-                return testDate.toISOString();
-              }
-            } catch (e) {
-              // If not a valid date, return as is
-            }
+            return { __type: "Date", value: value.toISOString() };
           }
           return value;
         })
