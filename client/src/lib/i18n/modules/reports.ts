@@ -244,6 +244,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseType: "수입/지출",
     productName: "상품명",
     soldQuantity: "판매 수량",
+    quantitySold: "판매 수량",
     returnQuantity: "반품 수량",
 
     // Report specific content
@@ -873,6 +874,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseType: "Revenue/Expense",
     productName: "Product Name",
     soldQuantity: "Sold Quantity",
+    quantitySold: "Quantity Sold",
     returnQuantity: "Return Quantity",
 
     // Report specific content
@@ -1340,6 +1342,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseType: "Loại thu/chi",
     productName: "Tên sản phẩm",
     soldQuantity: "Số lượng bán",
+    quantitySold: "Số lượng đã bán",
     returnQuantity: "Số lượng trả",
 
     // Report specific content
