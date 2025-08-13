@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -9,457 +9,409 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-  DollarSign,
   TrendingUp,
-  Users,
+  DollarSign,
   ShoppingCart,
-  CalendarDays,
+  Users,
   Clock,
-  RefreshCw,
-  TrendingDown,
-  Package,
-  CreditCard,
+  Target,
+  Search,
 } from "lucide-react";
+import type { Order, Table as TableType } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  LineChart,
-  Line,
-} from "recharts";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
+
+export function formatDateToYYYYMMDD(date: Date | string | number): string {
+  const d = new Date(date); // Ensure input is a Date
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 export function DashboardOverview() {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
 
-  // Date filters
   const [startDate, setStartDate] = useState<string>(
-    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    formatDateToYYYYMMDD(new Date()), // Set to a date that has sample data
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
+    formatDateToYYYYMMDD(new Date()), // End date with sample data
   );
+  const queryClient = useQueryClient();
 
-  // Fetch real data from APIs
-  const { data: orders = [], refetch: refetchOrders, isLoading: ordersLoading } = useQuery({
-    queryKey: ["/api/orders", startDate, endDate],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (startDate) params.append('startDate', startDate);
-      if (endDate) params.append('endDate', endDate);
-
-      const response = await fetch(`/api/orders?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch orders');
-
-      return response.json();
-    },
+  const { data: transactions, refetch: refetchTransactions } = useQuery({
+    queryKey: ["/api/transactions", startDate, endDate],
     staleTime: 0,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
   });
 
-  const { data: products = [] } = useQuery({
-    queryKey: ["/api/products"],
-    staleTime: 30000,
-    refetchOnWindowFocus: false,
+  const { data: tables, refetch: refetchTables } = useQuery({
+    queryKey: ["/api/tables", startDate, endDate],
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
-  const { data: employees = [] } = useQuery({
-    queryKey: ["/api/employees"],
-    staleTime: 30000,
-    refetchOnWindowFocus: false,
-  });
-
-  const { data: tables = [] } = useQuery({
-    queryKey: ["/api/tables"],
-    staleTime: 30000,
-    refetchOnWindowFocus: false,
-  });
-
-  // Process data with useMemo for performance
-  const dashboardData = useMemo(() => {
-    if (!orders || !Array.isArray(orders)) {
-      return {
-        totalRevenue: 0,
-        totalOrders: 0,
-        avgOrderValue: 0,
-        todayRevenue: 0,
-        recentOrders: [],
-        revenueChart: [],
-        orderStatusChart: [],
-        paymentMethodChart: [],
-        topProducts: [],
-      };
+  const handleRefresh = async () => {
+    try {
+      // Refresh the queries to get the latest data for the selected date range
+      await Promise.all([
+        refetchTransactions(),
+        refetchTables(),
+        queryClient.invalidateQueries({ queryKey: ["/api/orders"] })
+      ]);
+    } catch (error) {
+      console.error('Error refreshing dashboard data:', error);
     }
+  };
 
-    // Filter orders by date range and status
-    const filteredOrders = orders.filter((order: any) => {
-      const orderDate = new Date(order.orderedAt || order.created_at);
+  const getDashboardStats = () => {
+    // Always try to use real data first, fall back gracefully
+    let periodRevenue = 0;
+    let periodOrderCount = 0;
+    let periodCustomerCount = 0;
+    let dailyAverageRevenue = 0;
+    let activeOrders = 0;
+    let occupiedTables = 0;
+    let monthRevenue = 0;
+    let averageOrderValue = 0;
+    let peakHour = 12;
+    let totalTables = 0;
+
+    // Process real transactions if available
+    if (transactions && Array.isArray(transactions) && transactions.length > 0) {
+      console.log("Dashboard Debug - Using real transaction data:", {
+        totalTransactions: transactions.length,
+        startDate,
+        endDate,
+        firstTransaction: transactions[0],
+      });
+
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      const dateMatch = orderDate >= start && orderDate <= end;
-      const statusMatch = order.status === 'paid';
+      const filteredTransactions = transactions.filter((transaction: any) => {
+        const transactionDate = new Date(
+          transaction.createdAt || transaction.created_at,
+        );
+        return transactionDate >= start && transactionDate <= end;
+      });
 
-      return dateMatch && statusMatch;
+      periodRevenue = filteredTransactions.reduce(
+        (total: number, transaction: any) => total + Number(transaction.total || 0),
+        0,
+      );
+
+      periodOrderCount = filteredTransactions.length;
+      periodCustomerCount = filteredTransactions.length;
+
+      const daysDiff = Math.max(
+        1,
+        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+      );
+      dailyAverageRevenue = periodRevenue / daysDiff;
+      monthRevenue = periodRevenue;
+      averageOrderValue = periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
+
+      // Calculate peak hour
+      const hourlyTransactions: { [key: number]: number } = {};
+      filteredTransactions.forEach((transaction: any) => {
+        const hour = new Date(
+          transaction.createdAt || transaction.created_at,
+        ).getHours();
+        hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
+      });
+
+      if (Object.keys(hourlyTransactions).length > 0) {
+        peakHour = parseInt(Object.keys(hourlyTransactions).reduce(
+          (peak, hour) =>
+            hourlyTransactions[parseInt(hour)] > hourlyTransactions[parseInt(peak)]
+              ? hour
+              : peak,
+        ));
+      }
+    }
+
+    // Process real table data if available
+    if (tables && Array.isArray(tables) && tables.length > 0) {
+      console.log("Dashboard Debug - Using real table data:", tables.length);
+      totalTables = tables.length;
+      occupiedTables = tables.filter(
+        (table: TableType) => table.status === "occupied",
+      ).length;
+    } else {
+      // Default table data if none available
+      totalTables = 12;
+      occupiedTables = 2;
+    }
+
+    console.log("Dashboard Stats calculated:", {
+      periodRevenue,
+      periodOrderCount,
+      hasRealData: transactions && transactions.length > 0
     });
-
-    // Calculate metrics
-    const totalRevenue = filteredOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
-    const totalOrders = filteredOrders.length;
-    const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
-    // Today's revenue
-    const today = new Date().toISOString().split('T')[0];
-    const todayOrders = filteredOrders.filter((order: any) => {
-      const orderDate = new Date(order.orderedAt || order.created_at).toISOString().split('T')[0];
-      return orderDate === today;
-    });
-    const todayRevenue = todayOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
-
-    // Recent orders (last 10)
-    const recentOrders = [...filteredOrders]
-      .sort((a, b) => new Date(b.orderedAt || b.created_at).getTime() - new Date(a.orderedAt || a.created_at).getTime())
-      .slice(0, 10);
-
-    // Revenue chart (daily)
-    const revenueByDay: { [date: string]: number } = {};
-    filteredOrders.forEach((order: any) => {
-      const date = new Date(order.orderedAt || order.created_at).toISOString().split('T')[0];
-      revenueByDay[date] = (revenueByDay[date] || 0) + Number(order.total || 0);
-    });
-
-    const revenueChart = Object.entries(revenueByDay)
-      .map(([date, revenue]) => ({
-        name: new Date(date).toLocaleDateString('vi-VN'),
-        value: revenue,
-      }))
-      .sort((a, b) => new Date(a.name.split('/').reverse().join('-')).getTime() - new Date(b.name.split('/').reverse().join('-')).getTime());
-
-    // Order status chart
-    const statusCounts: { [status: string]: number } = {};
-    orders.forEach((order: any) => {
-      statusCounts[order.status] = (statusCounts[order.status] || 0) + 1;
-    });
-
-    const orderStatusChart = Object.entries(statusCounts).map(([status, count]) => ({
-      name: status,
-      value: count,
-    }));
-
-    // Payment method chart
-    const paymentCounts: { [method: string]: number } = {};
-    filteredOrders.forEach((order: any) => {
-      const method = order.paymentMethod || 'cash';
-      paymentCounts[method] = (paymentCounts[method] || 0) + 1;
-    });
-
-    const paymentMethodChart = Object.entries(paymentCounts).map(([method, count]) => ({
-      name: method,
-      value: count,
-    }));
 
     return {
-      totalRevenue,
-      totalOrders,
-      avgOrderValue,
-      todayRevenue,
-      recentOrders,
-      revenueChart,
-      orderStatusChart,
-      paymentMethodChart,
-      topProducts: [],
+      periodRevenue,
+      periodOrderCount,
+      periodCustomerCount,
+      dailyAverageRevenue,
+      activeOrders,
+      occupiedTables,
+      monthRevenue,
+      averageOrderValue,
+      peakHour,
+      totalTables,
     };
-  }, [orders, startDate, endDate]);
+  };
+
+  const stats = getDashboardStats();
 
   const formatCurrency = (amount: number) => {
     return `${amount.toLocaleString()} ₫`;
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
+    // Map translation language codes to locale codes
+    const localeMap = {
+      ko: "ko-KR",
+      en: "en-US", 
+      vi: "vi-VN"
+    };
+    
+    const locale = localeMap[currentLanguage] || "ko-KR";
+    
+    return new Date(dateStr).toLocaleDateString(locale, {
       year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusMap = {
-      pending: { label: "Chờ xử lý", variant: "secondary" as const },
-      confirmed: { label: "Đã xác nhận", variant: "default" as const },
-      preparing: { label: "Đang chuẩn bị", variant: "outline" as const },
-      paid: { label: "Đã thanh toán", variant: "default" as const },
-    };
-    return statusMap[status as keyof typeof statusMap] || { label: status, variant: "secondary" as const };
-  };
-
-  const chartConfig = {
-    value: {
-      label: "Doanh thu",
-      color: "#10b981",
-    },
-  };
-
-  const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
-
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Date Selector */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            {t("reports.dashboard")}
-          </CardTitle>
-          <CardDescription>
-            {t("reports.dashboardDescription")}
-          </CardDescription>
-        </CardHeader>
-      </Card>
-
-      {/* Date Range Filter */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <div className="flex justify-between items-center">
             <div>
-              <Label>{t("reports.startDate")}</Label>
+              <CardTitle>{t("reports.dashboard")}</CardTitle>
+              <CardDescription>
+                {t("reports.dashboardDescription")}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="start-date-picker">
+                {t("reports.startDate")}:
+              </Label>
               <Input
+                id="start-date-picker"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                className="w-auto"
               />
-            </div>
-            <div>
-              <Label>{t("reports.endDate")}</Label>
+              <Label htmlFor="end-date-picker">{t("reports.endDate")}:</Label>
               <Input
+                id="end-date-picker"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                className="w-auto"
               />
+              <Button
+                onClick={handleRefresh}
+                size="sm"
+                variant="outline"
+                className="ml-2"
+              >
+                <Search className="w-4 h-4 mr-1" />
+                {t("reports.refresh")}
+              </Button>
             </div>
-            <Button 
-              onClick={async () => {
-                await refetchOrders();
-              }}
-              disabled={ordersLoading}
-              variant="outline"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${ordersLoading ? 'animate-spin' : ''}`} />
-              {ordersLoading ? t("reports.loading") : t("reports.refresh")}
-            </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("reports.totalRevenue")}
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(dashboardData.totalRevenue)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {formatDate(startDate)} - {formatDate(endDate)}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("reports.totalOrders")}
-            </CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{dashboardData.totalOrders}</div>
-            <p className="text-xs text-muted-foreground">
-              {t("reports.ordersCount")}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("reports.averageOrderValue")}
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(dashboardData.avgOrderValue)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t("reports.perOrder")}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("reports.todayRevenue")}
-            </CardTitle>
-            <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(dashboardData.todayRevenue)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {new Date().toLocaleDateString("vi-VN")}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("reports.revenueChart")}</CardTitle>
-            <CardDescription>
-              {t("reports.dailyRevenue")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ChartContainer config={chartConfig}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dashboardData.revenueChart}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis tickFormatter={(value) => `${(value / 1000).toFixed(0)}K`} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="value" fill="#10b981" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Order Status Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("reports.orderStatus")}</CardTitle>
-            <CardDescription>
-              {t("reports.orderStatusDistribution")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={dashboardData.orderStatusChart}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {dashboardData.orderStatusChart.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <ChartTooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Recent Orders */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("reports.recentOrders")}</CardTitle>
-          <CardDescription>
-            {t("reports.recentOrdersDescription")}
-          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("reports.orderNumber")}</TableHead>
-                <TableHead>{t("reports.customer")}</TableHead>
-                <TableHead>{t("reports.total")}</TableHead>
-                <TableHead>{t("reports.status")}</TableHead>
-                <TableHead>{t("reports.orderTime")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {dashboardData.recentOrders.length > 0 ? (
-                dashboardData.recentOrders.map((order: any) => {
-                  const statusConfig = getStatusBadge(order.status);
-                  return (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">
-                        {order.orderNumber || `ORD-${order.id}`}
-                      </TableCell>
-                      <TableCell>
-                        {order.customerName || "Khách lẻ"}
-                      </TableCell>
-                      <TableCell className="text-green-600">
-                        {formatCurrency(Number(order.total))}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={statusConfig.variant}>
-                          {statusConfig.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {new Date(order.orderedAt || order.created_at).toLocaleString("vi-VN")}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-gray-500 italic">
-                    {t("reports.noRecentOrders")}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
       </Card>
+
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.periodRevenue")}
+                </p>
+                <p className="text-2xl font-bold text-green-600">
+                  {formatCurrency(stats.periodRevenue)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {startDate} ~ {endDate}
+                </p>
+              </div>
+              <DollarSign className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.orderCount")}
+                </p>
+                <p className="text-2xl font-bold">{stats.periodOrderCount}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {t("reports.averageOrderValue")}{" "}
+                  {formatCurrency(stats.averageOrderValue)}
+                </p>
+              </div>
+              <ShoppingCart className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.customerCount")}
+                </p>
+                <p className="text-2xl font-bold">
+                  {stats.periodCustomerCount}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {t("reports.peakHour")} {stats.peakHour}{" "}
+                  <span>{t("reports.hour")}</span>
+                </p>
+              </div>
+              <Users className="w-8 h-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.monthRevenue")}
+                </p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {formatCurrency(stats.monthRevenue)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {startDate === endDate 
+                    ? formatDate(startDate)
+                    : `${formatDate(startDate)} - ${formatDate(endDate)}`
+                  }
+                </p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Current Status */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              {t("reports.realTimeStatus")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">
+                {t("reports.pendingOrders")}
+              </span>
+              <Badge variant={stats.activeOrders > 0 ? "default" : "outline"}>
+                {stats.activeOrders} {t("reports.count")}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">
+                {t("reports.occupiedTables")}
+              </span>
+              <Badge
+                variant={stats.occupiedTables > 0 ? "destructive" : "outline"}
+              >
+                {stats.occupiedTables} / {stats.totalTables}
+              </Badge>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600">
+                {t("reports.tableUtilization")}
+              </span>
+              <Badge variant="secondary">
+                {Math.round((stats.occupiedTables / stats.totalTables) * 100)} %
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="w-5 h-5" />
+              {t("reports.performanceMetrics")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>{t("reports.salesAchievementRate")}</span>
+                <span className="font-medium">
+                  {Math.round((stats.dailyAverageRevenue / 500000) * 100)}%
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-green-500 h-2 rounded-full transition-all"
+                  style={{
+                    width: `${Math.min((stats.dailyAverageRevenue / 500000) * 100, 100)}%`,
+                  }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>{t("reports.tableTurnoverRate")}</span>
+                <span className="font-medium">
+                  {stats.totalTables > 0
+                    ? (stats.periodOrderCount / stats.totalTables).toFixed(1)
+                    : 0}{" "}
+                  {t("reports.times")}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-blue-500 h-2 rounded-full transition-all"
+                  style={{
+                    width: `${Math.min((stats.periodOrderCount / stats.totalTables / 5) * 100, 100)}%`,
+                  }}
+                ></div>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t">
+              <div className="text-xs text-gray-500">
+                {t("reports.targetAverageDailySales")
+                  .replace("{amount}", formatCurrency(500000))
+                  .replace("{turnovers}", "5")}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
