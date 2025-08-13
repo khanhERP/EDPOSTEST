@@ -553,7 +553,7 @@ export function EInvoiceModal({
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: currentDate.toISOString()
+          createdAt: new Date().toISOString() // Create fresh Date object
         };
 
         // Gọi onConfirm để hiển thị receipt trước khi đóng modal
@@ -589,7 +589,7 @@ export function EInvoiceModal({
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: currentDate.toISOString()
+          createdAt: new Date().toISOString() // Create fresh Date object
         };
 
         console.log('✅ Calling onConfirm to show receipt modal');
@@ -1074,7 +1074,7 @@ export function EInvoiceModal({
             amountReceived: formData.total,
             change: "0.00",
             cashierName: "E-Invoice System",
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString() // Create fresh Date object
           };
           onConfirm({ ...invoiceSavePayload, invoiceData: savedInvoice, receipt: receiptData, showReceipt: true });
         } else if (source === 'table' && orderId) {
@@ -1105,7 +1105,7 @@ export function EInvoiceModal({
             amountReceived: formData.total,
             change: "0.00",
             cashierName: "E-Invoice System",
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString() // Create fresh Date object
           };
           onConfirm({ ...invoiceSavePayload, invoiceData: savedInvoice, receipt: receiptData, showReceipt: true });
         }
