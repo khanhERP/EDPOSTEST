@@ -48,7 +48,7 @@ interface EInvoiceModalProps {
     sku?: string;
     taxRate?: number;
   }>;
-  source?: 'pos' | 'table'; // Thêm prop để phân biệt nguồn gọi
+  source?: "pos" | "table"; // Thêm prop để phân biệt nguồn gọi
   orderId?: number; // Thêm orderId để tự xử lý cập nhật trạng thái
 }
 
@@ -58,7 +58,7 @@ export function EInvoiceModal({
   onConfirm,
   total,
   cartItems = [],
-  source = 'pos', // Default là 'pos' để tương thích ngược
+  source = "pos", // Default là 'pos' để tương thích ngược
   orderId, // Thêm orderId prop
 }: EInvoiceModalProps) {
   // Debug log to track cart items data flow
@@ -96,31 +96,55 @@ export function EInvoiceModal({
 
   // Mutation để hoàn tất thanh toán và cập nhật trạng thái
   const completePaymentMutation = useMutation({
-    mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) => {
-      console.log('🔄 E-invoice modal: Starting payment completion mutation for order:', orderId);
-      return apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod });
+    mutationFn: ({
+      orderId,
+      paymentMethod,
+    }: {
+      orderId: number;
+      paymentMethod: string;
+    }) => {
+      console.log(
+        "🔄 E-invoice modal: Starting payment completion mutation for order:",
+        orderId,
+      );
+      return apiRequest("PUT", `/api/orders/${orderId}/status`, {
+        status: "paid",
+        paymentMethod,
+      });
     },
     onSuccess: (data, variables) => {
-      console.log('🎯 E-invoice modal completed payment successfully for order:', variables.orderId);
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      console.log(
+        "🎯 E-invoice modal completed payment successfully for order:",
+        variables.orderId,
+      );
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
 
       toast({
-        title: 'Thanh toán thành công',
-        description: 'Hóa đơn điện tử đã được phát hành và đơn hàng đã được thanh toán',
+        title: "Thanh toán thành công",
+        description:
+          "Hóa đơn điện tử đã được phát hành và đơn hàng đã được thanh toán",
       });
 
-      console.log('✅ E-invoice modal: Payment completed, queries invalidated');
+      console.log("✅ E-invoice modal: Payment completed, queries invalidated");
     },
     onError: (error, variables) => {
-      console.error('❌ Error completing payment from e-invoice modal for order:', variables.orderId, error);
+      console.error(
+        "❌ Error completing payment from e-invoice modal for order:",
+        variables.orderId,
+        error,
+      );
       toast({
-        title: 'Lỗi',
-        description: 'Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán',
-        variant: 'destructive',
+        title: "Lỗi",
+        description:
+          "Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán",
+        variant: "destructive",
       });
 
-      console.log('❌ E-invoice modal: Payment failed for order:', variables.orderId);
+      console.log(
+        "❌ E-invoice modal: Payment failed for order:",
+        variables.orderId,
+      );
     },
   });
 
@@ -137,7 +161,9 @@ export function EInvoiceModal({
   });
 
   // Filter templates to only show ones that are in use (useCK: true)
-  const invoiceTemplates = allInvoiceTemplates.filter(template => template.useCK === true);
+  const invoiceTemplates = allInvoiceTemplates.filter(
+    (template) => template.useCK === true,
+  );
 
   // Reset form only when modal opens, not when cartItems/total changes
   useEffect(() => {
@@ -156,18 +182,28 @@ export function EInvoiceModal({
 
       // Calculate subtotal and tax here
       const calculatedSubtotal = cartItems.reduce((sum, item) => {
-        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-        return sum + (itemPrice * itemQuantity);
+        const itemPrice =
+          typeof item.price === "string" ? parseFloat(item.price) : item.price;
+        const itemQuantity =
+          typeof item.quantity === "string"
+            ? parseInt(item.quantity)
+            : item.quantity;
+        return sum + itemPrice * itemQuantity;
       }, 0);
 
       const calculatedTax = cartItems.reduce((sum, item) => {
-        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
-        return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
+        const itemPrice =
+          typeof item.price === "string" ? parseFloat(item.price) : item.price;
+        const itemQuantity =
+          typeof item.quantity === "string"
+            ? parseInt(item.quantity)
+            : item.quantity;
+        const itemTaxRate =
+          typeof item.taxRate === "string"
+            ? parseFloat(item.taxRate || "10")
+            : item.taxRate || 10;
+        return sum + (itemPrice * itemQuantity * itemTaxRate) / 100;
       }, 0);
-
 
       setFormData({
         invoiceProvider: "EasyInvoice", // Default provider
@@ -206,7 +242,8 @@ export function EInvoiceModal({
   const handleVirtualKeyPress = (key: string) => {
     if (!activeInputField) return;
 
-    const currentValue = formData[activeInputField as keyof typeof formData] || '';
+    const currentValue =
+      formData[activeInputField as keyof typeof formData] || "";
     const newValue = currentValue + key;
     handleInputChange(activeInputField, newValue);
 
@@ -224,7 +261,8 @@ export function EInvoiceModal({
   const handleVirtualBackspace = () => {
     if (!activeInputField) return;
 
-    const currentValue = formData[activeInputField as keyof typeof formData] || '';
+    const currentValue =
+      formData[activeInputField as keyof typeof formData] || "";
     const newValue = currentValue.slice(0, -1);
     handleInputChange(activeInputField, newValue);
 
@@ -259,9 +297,9 @@ export function EInvoiceModal({
     setShowVirtualKeyboard(!showVirtualKeyboard);
     if (!showVirtualKeyboard) {
       // If opening keyboard, focus on first input field
-      setActiveInputField('taxCode');
+      setActiveInputField("taxCode");
       setTimeout(() => {
-        const inputRef = inputRefs.current['taxCode'];
+        const inputRef = inputRefs.current["taxCode"];
         if (inputRef) {
           inputRef.focus();
         }
@@ -348,7 +386,9 @@ export function EInvoiceModal({
   const handlePublishAction = async (action: "publish" | "publishLater") => {
     const isPublishingAction = action === "publish";
     const publishMessage = isPublishingAction ? "Phát hành" : "Phát hành sau";
-    const toastTitle = isPublishingAction ? "✅ Phát hành thành công" : "📝 Lưu nháp thành công";
+    const toastTitle = isPublishingAction
+      ? "✅ Phát hành thành công"
+      : "📝 Lưu nháp thành công";
 
     try {
       console.log(`🟡 ${publishMessage} - Lưu thông tin đơn hàng`);
@@ -365,37 +405,54 @@ export function EInvoiceModal({
       if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
         console.error("❌ No valid cart items found for publishing");
         toast({
-          title: 'Lỗi',
-          description: 'Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn.',
-          variant: 'destructive',
+          title: "Lỗi",
+          description: "Không có sản phẩm nào trong giỏ hàng để tạo hóa đơn.",
+          variant: "destructive",
         });
         return;
       }
 
       // Calculate subtotal and tax with proper type conversion
       const calculatedSubtotal = cartItems.reduce((sum, item) => {
-        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-        console.log(`💰 Item calculation: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Subtotal: ${itemPrice * itemQuantity}`);
-        return sum + (itemPrice * itemQuantity);
+        const itemPrice =
+          typeof item.price === "string" ? parseFloat(item.price) : item.price;
+        const itemQuantity =
+          typeof item.quantity === "string"
+            ? parseInt(item.quantity)
+            : item.quantity;
+        console.log(
+          `💰 Item calculation: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Subtotal: ${itemPrice * itemQuantity}`,
+        );
+        return sum + itemPrice * itemQuantity;
       }, 0);
 
       const calculatedTax = cartItems.reduce((sum, item) => {
-        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
-        const itemTax = (itemPrice * itemQuantity * itemTaxRate / 100);
-        console.log(`💰 Tax calculation: ${item.name} - Tax rate: ${itemTaxRate}%, Tax: ${itemTax}`);
+        const itemPrice =
+          typeof item.price === "string" ? parseFloat(item.price) : item.price;
+        const itemQuantity =
+          typeof item.quantity === "string"
+            ? parseInt(item.quantity)
+            : item.quantity;
+        const itemTaxRate =
+          typeof item.taxRate === "string"
+            ? parseFloat(item.taxRate || "10")
+            : item.taxRate || 10;
+        const itemTax = (itemPrice * itemQuantity * itemTaxRate) / 100;
+        console.log(
+          `💰 Tax calculation: ${item.name} - Tax rate: ${itemTaxRate}%, Tax: ${itemTax}`,
+        );
         return sum + itemTax;
       }, 0);
 
-      console.log(`💰 Total calculations: Subtotal: ${calculatedSubtotal}, Tax: ${calculatedTax}, Total: ${total}`);
+      console.log(
+        `💰 Total calculations: Subtotal: ${calculatedSubtotal}, Tax: ${calculatedTax}, Total: ${total}`,
+      );
 
       // Prepare invoice payload
       const currentDate = new Date();
       const invoicePayload = {
         invoiceNumber: `INV-${Date.now()}`,
-        invoiceDate: currentDate.toISOString(),
+        invoiceDate: "",
         buyerTaxCode: formData.taxCode || "",
         buyerName: formData.customerName || "Khách hàng",
         buyerAddress: formData.address || "",
@@ -403,11 +460,14 @@ export function EInvoiceModal({
         buyerEmail: formData.email || "",
         subtotal: calculatedSubtotal.toFixed(2),
         tax: calculatedTax.toFixed(2),
-        total: (typeof total === 'number' && !isNaN(total) ? total : calculatedSubtotal + calculatedTax).toFixed(2),
-        paymentMethod: 'einvoice',
+        total: (typeof total === "number" && !isNaN(total)
+          ? total
+          : calculatedSubtotal + calculatedTax
+        ).toFixed(2),
+        paymentMethod: "einvoice",
         // Add other fields as necessary, e.g., linked to original order if available
         notes: `E-Invoice Info - Provider: ${formData.invoiceProvider}, Template: ${formData.selectedTemplateId}`,
-        source: source || 'pos',
+        source: source || "pos",
         orderId: orderId, // Link to original order if available
         einvoiceProvider: formData.invoiceProvider,
         einvoiceTemplate: formData.selectedTemplateId,
@@ -415,7 +475,10 @@ export function EInvoiceModal({
         einvoiceStatus: action === "publish" ? 1 : 2, // 1=Đã phát hành, 2=Tạo nháp
       };
 
-      console.log("💾 Invoice payload:", JSON.stringify(invoicePayload, null, 2));
+      console.log(
+        "💾 Invoice payload:",
+        JSON.stringify(invoicePayload, null, 2),
+      );
 
       // Validate that template is selected for publish action only
       if (action === "publish" && !formData.selectedTemplateId) {
@@ -445,7 +508,10 @@ export function EInvoiceModal({
         einvoiceStatus: action === "publish" ? 1 : 2,
       };
 
-      console.log("Sending invoice save payload:", JSON.stringify(savePayload, null, 2));
+      console.log(
+        "Sending invoice save payload:",
+        JSON.stringify(savePayload, null, 2),
+      );
 
       const saveResponse = await fetch("/api/invoices", {
         method: "POST",
@@ -458,7 +524,11 @@ export function EInvoiceModal({
       if (!saveResponse.ok) {
         const errorData = await saveResponse.json().catch(() => ({}));
         console.error("Invoice save error response:", errorData);
-        throw new Error(errorData.message || errorData.details || `Lỗi lưu ${action === "publish" ? "phát hành" : "nháp"} - HTTP ${saveResponse.status}`);
+        throw new Error(
+          errorData.message ||
+            errorData.details ||
+            `Lỗi lưu ${action === "publish" ? "phát hành" : "nháp"} - HTTP ${saveResponse.status}`,
+        );
       }
 
       const invoiceData = await saveResponse.json();
@@ -468,15 +538,28 @@ export function EInvoiceModal({
         throw new Error(`Không nhận được ID hóa đơn từ server`);
       }
 
-      console.log(`📋 ${action === "publish" ? "Published" : "Draft"} invoice saved:`, invoiceData);
+      console.log(
+        `📋 ${action === "publish" ? "Published" : "Draft"} invoice saved:`,
+        invoiceData,
+      );
 
       // Save invoice items to database
-      console.log("Preparing to save invoice items for invoice ID:", invoiceData.id);
+      console.log(
+        "Preparing to save invoice items for invoice ID:",
+        invoiceData.id,
+      );
 
-      const itemsToSave = cartItems.map(item => {
-        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
+      const itemsToSave = cartItems.map((item) => {
+        const itemPrice =
+          typeof item.price === "string" ? parseFloat(item.price) : item.price;
+        const itemQuantity =
+          typeof item.quantity === "string"
+            ? parseInt(item.quantity)
+            : item.quantity;
+        const itemTaxRate =
+          typeof item.taxRate === "string"
+            ? parseFloat(item.taxRate || "10")
+            : item.taxRate || 10;
         const itemTotal = itemPrice * itemQuantity;
 
         return {
@@ -486,11 +569,14 @@ export function EInvoiceModal({
           unitPrice: itemPrice.toFixed(2),
           total: itemTotal.toFixed(2),
           taxRate: itemTaxRate,
-          notes: `SKU: ${item.sku || 'N/A'}`
+          notes: `SKU: ${item.sku || "N/A"}`,
         };
       });
 
-      console.log("Invoice items to save:", JSON.stringify(itemsToSave, null, 2));
+      console.log(
+        "Invoice items to save:",
+        JSON.stringify(itemsToSave, null, 2),
+      );
 
       const saveItemsResponse = await fetch("/api/invoice-items", {
         method: "POST",
@@ -499,44 +585,52 @@ export function EInvoiceModal({
         },
         body: JSON.stringify({
           invoiceId: invoiceData.id, // Use the ID of the saved invoice
-          items: itemsToSave
+          items: itemsToSave,
         }),
       });
 
       if (!saveItemsResponse.ok) {
         const errorItemsData = await saveItemsResponse.json();
         console.error("❌ Error saving invoice items:", errorItemsData);
-        throw new Error(`Lỗi lưu chi tiết hóa đơn: ${errorItemsData.message || 'Unknown error'}`);
+        throw new Error(
+          `Lỗi lưu chi tiết hóa đơn: ${errorItemsData.message || "Unknown error"}`,
+        );
       } else {
         const savedItems = await saveItemsResponse.json();
-        console.log(`✅ Invoice items saved successfully: ${savedItems.length} items`);
+        console.log(
+          `✅ Invoice items saved successfully: ${savedItems.length} items`,
+        );
       }
 
       // Show success message
       toast({
         title: toastTitle,
-        description: action === "publish"
-          ? `Hóa đơn điện tử đã được phát hành với mã: ${invoiceData.invoiceNumber}`
-          : `Hóa đơn đã được lưu nháp với mã: ${invoiceData.invoiceNumber}`,
+        description:
+          action === "publish"
+            ? `Hóa đơn điện tử đã được phát hành với mã: ${invoiceData.invoiceNumber}`
+            : `Hóa đơn đã được lưu nháp với mã: ${invoiceData.invoiceNumber}`,
       });
 
       // Handle different sources
-      if (source === 'table' && orderId && action === "publish") {
+      if (source === "table" && orderId && action === "publish") {
         // Logic cho Table: Hoàn tất thanh toán trước, sau đó hiển thị receipt
-        console.log('🍽️ Table E-Invoice Publish: Completing payment for order:', orderId);
+        console.log(
+          "🍽️ Table E-Invoice Publish: Completing payment for order:",
+          orderId,
+        );
 
         // Gọi mutation để hoàn tất thanh toán
         await completePaymentMutation.mutateAsync({
           orderId: orderId,
-          paymentMethod: 'einvoice'
+          paymentMethod: "einvoice",
         });
 
-        console.log('🍽️ Payment completed successfully for publish');
+        console.log("🍽️ Payment completed successfully for publish");
 
         // Tạo receipt data để hiển thị
         const receiptData = {
           transactionId: invoiceData.invoiceNumber,
-          items: cartItems.map(item => ({
+          items: cartItems.map((item) => ({
             id: item.id,
             productId: item.id,
             productName: item.name,
@@ -544,35 +638,41 @@ export function EInvoiceModal({
             quantity: item.quantity,
             total: (item.price * item.quantity).toString(),
             sku: item.sku,
-            taxRate: item.taxRate
+            taxRate: item.taxRate,
           })),
           subtotal: formData.subtotal,
           tax: formData.tax,
           total: formData.total,
-          paymentMethod: 'einvoice',
+          paymentMethod: "einvoice",
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: new Date().getTime() // Use timestamp instead
+          createdAt: new Date().getTime(), // Use timestamp instead
         };
 
         // Gọi onConfirm để hiển thị receipt trước khi đóng modal
-        console.log('🍽️ Calling onConfirm for receipt display');
-        onConfirm({ ...invoicePayload, invoiceData: invoiceData, receipt: receiptData, showReceipt: true });
+        console.log("🍽️ Calling onConfirm for receipt display");
+        onConfirm({
+          ...invoicePayload,
+          invoiceData: invoiceData,
+          receipt: receiptData,
+          showReceipt: true,
+        });
 
         // Đóng modal e-invoice sau khi đã gọi onConfirm
         setTimeout(() => {
           onClose();
         }, 100);
-
-      } else if (source === 'pos' && action === "publish") {
+      } else if (source === "pos" && action === "publish") {
         // Logic cho POS: hiển thị receipt modal
-        console.log('🏪 POS E-Invoice Publish: Processing payment completion and showing receipt');
+        console.log(
+          "🏪 POS E-Invoice Publish: Processing payment completion and showing receipt",
+        );
 
         // Tạo receipt data để hiển thị
         const receiptData = {
           transactionId: invoiceData.invoiceNumber,
-          items: cartItems.map(item => ({
+          items: cartItems.map((item) => ({
             id: item.id,
             productId: item.id,
             productName: item.name,
@@ -580,57 +680,73 @@ export function EInvoiceModal({
             quantity: item.quantity,
             total: (item.price * item.quantity).toString(),
             sku: item.sku,
-            taxRate: item.taxRate
+            taxRate: item.taxRate,
           })),
           subtotal: formData.subtotal,
           tax: formData.tax,
           total: formData.total,
-          paymentMethod: 'einvoice',
+          paymentMethod: "einvoice",
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: new Date().getTime() // Use timestamp instead
+          createdAt: new Date().getTime(), // Use timestamp instead
         };
 
-        console.log('✅ Calling onConfirm to show receipt modal');
-        onConfirm({ ...invoicePayload, invoiceData: invoiceData, receipt: receiptData, showReceipt: true });
+        console.log("✅ Calling onConfirm to show receipt modal");
+        onConfirm({
+          ...invoicePayload,
+          invoiceData: invoiceData,
+          receipt: receiptData,
+          showReceipt: true,
+        });
 
         // Đóng modal e-invoice sau một khoảng thời gian ngắn để đảm bảo receipt modal được hiển thị
         setTimeout(() => {
-          console.log('🔒 Closing e-invoice modal after receipt modal is shown');
+          console.log(
+            "🔒 Closing e-invoice modal after receipt modal is shown",
+          );
           onClose();
         }, 100);
-
       } else if (action === "publishLater") {
         // Logic cho "Phát hành sau" (lưu nháp)
         console.log('⏳ Processing "Publish Later" action');
 
         // Verify that invoice was actually saved to database
         if (!invoiceData || !invoiceData.id) {
-          console.error('❌ Invoice was not saved to database properly');
-          throw new Error('Lỗi lưu hóa đơn vào cơ sở dữ liệu');
+          console.error("❌ Invoice was not saved to database properly");
+          throw new Error("Lỗi lưu hóa đơn vào cơ sở dữ liệu");
         }
 
-        console.log('✅ Invoice draft saved successfully with ID:', invoiceData.id);
+        console.log(
+          "✅ Invoice draft saved successfully with ID:",
+          invoiceData.id,
+        );
 
         // Gọi onConfirm để trả về dữ liệu đã lưu nháp
-        onConfirm({ ...invoicePayload, invoiceData: invoiceData, showReceipt: false });
+        onConfirm({
+          ...invoicePayload,
+          invoiceData: invoiceData,
+          showReceipt: false,
+        });
 
         // Đóng modal e-invoice
         setTimeout(() => {
-          console.log('🔒 Closing e-invoice modal after saving draft');
+          console.log("🔒 Closing e-invoice modal after saving draft");
           onClose();
         }, 100);
       } else {
         // Fallback: trả về data cho parent component xử lý
-        console.log('🔄 Fallback: Returning data to parent');
-        onConfirm({ ...invoicePayload, invoiceData: invoiceData, showReceipt: isPublishingAction });
+        console.log("🔄 Fallback: Returning data to parent");
+        onConfirm({
+          ...invoicePayload,
+          invoiceData: invoiceData,
+          showReceipt: isPublishingAction,
+        });
         onClose(); // Close modal in fallback case too
       }
-
     } catch (error) {
       console.error(`❌ Error during ${publishMessage}:`, error);
-      console.error('Error details:', {
+      console.error("Error details:", {
         error,
         errorType: typeof error,
         errorConstructor: error?.constructor?.name,
@@ -639,19 +755,19 @@ export function EInvoiceModal({
         formData: formData,
         cartItems: cartItems,
         source: source,
-        orderId: orderId
+        orderId: orderId,
       });
 
       let errorMessage = `Có lỗi xảy ra khi ${publishMessage.toLowerCase()}`;
-      let errorDetails = 'Lỗi không xác định';
+      let errorDetails = "Lỗi không xác định";
 
       if (error instanceof Error) {
         errorDetails = error.message;
         errorMessage = `Có lỗi xảy ra khi ${publishMessage.toLowerCase()}: ${error.message}`;
-      } else if (typeof error === 'string') {
+      } else if (typeof error === "string") {
         errorDetails = error;
         errorMessage = `Có lỗi xảy ra khi ${publishMessage.toLowerCase()}: ${error}`;
-      } else if (error && typeof error === 'object') {
+      } else if (error && typeof error === "object") {
         // Handle fetch errors or API response errors
         if (error.message) {
           errorDetails = error.message;
@@ -669,18 +785,24 @@ export function EInvoiceModal({
       }
 
       // Check for specific network errors
-      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+      if (
+        errorMessage.includes("Failed to fetch") ||
+        errorMessage.includes("NetworkError")
+      ) {
         errorMessage = `Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng và thử lại.`;
-        errorDetails = 'Lỗi kết nối mạng';
-      } else if (errorMessage.includes('EADDRINUSE') || errorMessage.includes('address already in use')) {
+        errorDetails = "Lỗi kết nối mạng";
+      } else if (
+        errorMessage.includes("EADDRINUSE") ||
+        errorMessage.includes("address already in use")
+      ) {
         errorMessage = `Server đang bận. Vui lòng thử lại sau ít phút.`;
-        errorDetails = 'Server đang bận';
+        errorDetails = "Server đang bận";
       }
 
       toast({
         variant: "destructive",
         title: "Lỗi",
-        description: errorDetails
+        description: errorDetails,
       });
       return;
     } finally {
@@ -704,10 +826,7 @@ export function EInvoiceModal({
 
   const handleConfirm = async () => {
     // Validate required fields
-    if (
-      !formData.invoiceProvider ||
-      !formData.customerName
-    ) {
+    if (!formData.invoiceProvider || !formData.customerName) {
       alert(
         "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
       );
@@ -899,7 +1018,7 @@ export function EInvoiceModal({
 
       // Get selected template data for API mapping
       const selectedTemplate = invoiceTemplates.find(
-        (template) => template.id.toString() === formData.selectedTemplateId
+        (template) => template.id.toString() === formData.selectedTemplateId,
       );
 
       if (!selectedTemplate) {
@@ -926,7 +1045,7 @@ export function EInvoiceModal({
         paidTp: "TM", // Cash payment
         note: "",
         hdNo: "",
-        createdDate: new Date().toISOString(),
+        createdDate: "",
         clsfNo: selectedTemplate.templateNumber, // Mẫu số
         spcfNo: selectedTemplate.name, // Tên
         templateCode: selectedTemplate.templateCode || "", // Mã mẫu
@@ -969,7 +1088,8 @@ export function EInvoiceModal({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message || `API call failed: ${response.status} ${response.statusText}`,
+          errorData.message ||
+            `API call failed: ${response.status} ${response.statusText}`,
         );
       }
 
@@ -977,12 +1097,14 @@ export function EInvoiceModal({
       console.log("Invoice published successfully:", result);
 
       if (result.success) {
-        console.log('✅ E-invoice published successfully, now saving invoice data to database');
+        console.log(
+          "✅ E-invoice published successfully, now saving invoice data to database",
+        );
 
         // Prepare the invoice data to be saved
         const invoiceSavePayload = {
           invoiceNumber: result.data?.invoiceNo || `INV-${Date.now()}`, // Use invoice number from provider
-          invoiceDate: new Date().toISOString(),
+          invoiceDate: "",
           buyerTaxCode: formData.taxCode || "",
           buyerName: formData.customerName || "Khách hàng",
           buyerAddress: formData.address || "",
@@ -991,13 +1113,13 @@ export function EInvoiceModal({
           subtotal: cartSubtotal.toFixed(2),
           tax: cartTaxAmount.toFixed(2),
           total: cartTotal.toFixed(2),
-          paymentMethod: 'einvoice',
-          notes: `E-Invoice: ${result.data?.invoiceNo || 'N/A'} - MST: ${formData.taxCode}, Tên: ${formData.customerName}, SĐT: ${formData.phoneNumber || 'N/A'}`,
-          source: source || 'pos',
+          paymentMethod: "einvoice",
+          notes: `E-Invoice: ${result.data?.invoiceNo || "N/A"} - MST: ${formData.taxCode}, Tên: ${formData.customerName}, SĐT: ${formData.phoneNumber || "N/A"}`,
+          source: source || "pos",
           orderId: orderId, // Link to original order if available
           einvoiceProvider: formData.invoiceProvider,
           einvoiceTemplate: formData.selectedTemplateId,
-          status: 'published', // Status for our system
+          status: "published", // Status for our system
           einvoiceStatus: 1, // 1 = Published
           providerInvoiceNumber: result.data?.invoiceNo, // Store provider's invoice number
           providerInvoiceSeries: result.data?.invoiceSerial, // Store provider's series
@@ -1005,13 +1127,16 @@ export function EInvoiceModal({
           providerInvoiceNumber_2: result.data?.invoiceNumber_2, // Store provider's number_2
         };
 
-        console.log('💾 Saving published invoice to database:', invoiceSavePayload);
+        console.log(
+          "💾 Saving published invoice to database:",
+          invoiceSavePayload,
+        );
 
         // Save invoice to our database
-        const saveInvoiceResponse = await fetch('/api/invoices', {
-          method: 'POST',
+        const saveInvoiceResponse = await fetch("/api/invoices", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(invoiceSavePayload),
         });
@@ -1019,45 +1144,70 @@ export function EInvoiceModal({
         let savedInvoice = null;
         if (saveInvoiceResponse.ok) {
           savedInvoice = await saveInvoiceResponse.json();
-          console.log('✅ Invoice saved to database successfully:', savedInvoice);
+          console.log(
+            "✅ Invoice saved to database successfully:",
+            savedInvoice,
+          );
 
           // Save invoice items
-          const saveItemsResponse = await fetch('/api/invoice-items', {
-            method: 'POST',
+          const saveItemsResponse = await fetch("/api/invoice-items", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({
               invoiceId: savedInvoice.id, // Use the ID of the saved invoice
-              items: cartItems.map(item => ({
+              items: cartItems.map((item) => ({
                 productId: item.id,
-                quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-                unitPrice: (typeof item.price === 'string' ? parseFloat(item.price) : item.price).toFixed(2),
-                total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)).toFixed(2),
-                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10),
-                notes: `Product name: ${item.name}`
-              }))
+                quantity:
+                  typeof item.quantity === "string"
+                    ? parseInt(item.quantity)
+                    : item.quantity,
+                unitPrice: (typeof item.price === "string"
+                  ? parseFloat(item.price)
+                  : item.price
+                ).toFixed(2),
+                total: (
+                  (typeof item.price === "string"
+                    ? parseFloat(item.price)
+                    : item.price) *
+                  (typeof item.quantity === "string"
+                    ? parseInt(item.quantity)
+                    : item.quantity)
+                ).toFixed(2),
+                taxRate:
+                  typeof item.taxRate === "string"
+                    ? parseFloat(item.taxRate || "10")
+                    : item.taxRate || 10,
+                notes: `Product name: ${item.name}`,
+              })),
             }),
           });
 
           if (!saveItemsResponse.ok) {
-            console.error('❌ Error saving invoice items:', await saveItemsResponse.text());
+            console.error(
+              "❌ Error saving invoice items:",
+              await saveItemsResponse.text(),
+            );
           } else {
-            console.log('✅ Invoice items saved successfully');
+            console.log("✅ Invoice items saved successfully");
           }
-
         } else {
-          console.error('❌ Failed to save invoice to database:', await saveInvoiceResponse.text());
+          console.error(
+            "❌ Failed to save invoice to database:",
+            await saveInvoiceResponse.text(),
+          );
         }
 
         // Handle different sources for publish action
-        if (source === 'pos') {
+        if (source === "pos") {
           // Logic for POS: show receipt modal
-          console.log('🏪 POS E-Invoice Publish: Showing receipt');
+          console.log("🏪 POS E-Invoice Publish: Showing receipt");
 
           const receiptData = {
-            transactionId: savedInvoice?.invoiceNumber || invoiceSavePayload.invoiceNumber,
-            items: cartItems.map(item => ({
+            transactionId:
+              savedInvoice?.invoiceNumber || invoiceSavePayload.invoiceNumber,
+            items: cartItems.map((item) => ({
               id: item.id,
               productId: item.id,
               productName: item.name,
@@ -1065,30 +1215,39 @@ export function EInvoiceModal({
               quantity: item.quantity,
               total: (item.price * item.quantity).toString(),
               sku: item.sku,
-              taxRate: item.taxRate
+              taxRate: item.taxRate,
             })),
             subtotal: formData.subtotal,
             tax: formData.tax,
             total: formData.total,
-            paymentMethod: 'einvoice',
+            paymentMethod: "einvoice",
             amountReceived: formData.total,
             change: "0.00",
             cashierName: "E-Invoice System",
-            createdAt: new Date().getTime() // Use timestamp instead
+            createdAt: new Date().getTime(), // Use timestamp instead
           };
-          onConfirm({ ...invoiceSavePayload, invoiceData: savedInvoice, receipt: receiptData, showReceipt: true });
-        } else if (source === 'table' && orderId) {
+          onConfirm({
+            ...invoiceSavePayload,
+            invoiceData: savedInvoice,
+            receipt: receiptData,
+            showReceipt: true,
+          });
+        } else if (source === "table" && orderId) {
           // Logic for Table: Complete payment and show receipt
-          console.log('🍽️ Table E-Invoice Publish: Completing payment for order:', orderId);
+          console.log(
+            "🍽️ Table E-Invoice Publish: Completing payment for order:",
+            orderId,
+          );
           await completePaymentMutation.mutateAsync({
             orderId: orderId,
-            paymentMethod: 'einvoice'
+            paymentMethod: "einvoice",
           });
-          console.log('🍽️ Payment completed successfully for publish');
+          console.log("🍽️ Payment completed successfully for publish");
 
           const receiptData = {
-            transactionId: savedInvoice?.invoiceNumber || invoiceSavePayload.invoiceNumber,
-            items: cartItems.map(item => ({
+            transactionId:
+              savedInvoice?.invoiceNumber || invoiceSavePayload.invoiceNumber,
+            items: cartItems.map((item) => ({
               id: item.id,
               productId: item.id,
               productName: item.name,
@@ -1096,22 +1255,26 @@ export function EInvoiceModal({
               quantity: item.quantity,
               total: (item.price * item.quantity).toString(),
               sku: item.sku,
-              taxRate: item.taxRate
+              taxRate: item.taxRate,
             })),
             subtotal: formData.subtotal,
             tax: formData.tax,
             total: formData.total,
-            paymentMethod: 'einvoice',
+            paymentMethod: "einvoice",
             amountReceived: formData.total,
             change: "0.00",
             cashierName: "E-Invoice System",
-            createdAt: new Date().getTime() // Use timestamp instead
+            createdAt: new Date().getTime(), // Use timestamp instead
           };
-          onConfirm({ ...invoiceSavePayload, invoiceData: savedInvoice, receipt: receiptData, showReceipt: true });
+          onConfirm({
+            ...invoiceSavePayload,
+            invoiceData: savedInvoice,
+            receipt: receiptData,
+            showReceipt: true,
+          });
         }
 
         onClose(); // Close modal after processing
-
       } else {
         throw new Error(
           result.message || "Có lỗi xảy ra khi phát hành hóa đơn",
@@ -1134,7 +1297,7 @@ export function EInvoiceModal({
       <DialogContent className="max-w-2xl max-h-screen overflow-y-auto [&>button]:hidden">
         <DialogHeader>
           <DialogTitle className="text-blue-700 bg-blue-100 p-3 rounded-t-lg">
-            {t('einvoice.title')}
+            {t("einvoice.title")}
           </DialogTitle>
         </DialogHeader>
 
@@ -1142,11 +1305,13 @@ export function EInvoiceModal({
           {/* E-invoice Provider Information */}
           <div>
             <h3 className="text-base font-medium mb-4">
-              {t('einvoice.providerInfo')}
+              {t("einvoice.providerInfo")}
             </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="invoiceProvider">{t('einvoice.providerUnit')}</Label>
+                <Label htmlFor="invoiceProvider">
+                  {t("einvoice.providerUnit")}
+                </Label>
                 <Select
                   value={formData.invoiceProvider}
                   onValueChange={(value) =>
@@ -1154,7 +1319,7 @@ export function EInvoiceModal({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t('einvoice.selectProvider')} />
+                    <SelectValue placeholder={t("einvoice.selectProvider")} />
                   </SelectTrigger>
                   <SelectContent>
                     {EINVOICE_PROVIDERS.map((provider) => (
@@ -1166,7 +1331,9 @@ export function EInvoiceModal({
                 </Select>
               </div>
               <div>
-                <Label htmlFor="invoiceTemplate">{t('einvoice.invoiceTemplate')}</Label>
+                <Label htmlFor="invoiceTemplate">
+                  {t("einvoice.invoiceTemplate")}
+                </Label>
                 <Select
                   value={formData.selectedTemplateId}
                   onValueChange={(value) =>
@@ -1174,11 +1341,14 @@ export function EInvoiceModal({
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t('einvoice.selectTemplate')} />
+                    <SelectValue placeholder={t("einvoice.selectTemplate")} />
                   </SelectTrigger>
                   <SelectContent>
                     {invoiceTemplates.map((template) => (
-                      <SelectItem key={template.id} value={template.id.toString()}>
+                      <SelectItem
+                        key={template.id}
+                        value={template.id.toString()}
+                      >
                         {template.name}
                       </SelectItem>
                     ))}
@@ -1190,19 +1360,23 @@ export function EInvoiceModal({
 
           {/* Customer Information */}
           <div>
-            <h3 className="text-base font-medium mb-4">{t('einvoice.customerInfo')}</h3>
+            <h3 className="text-base font-medium mb-4">
+              {t("einvoice.customerInfo")}
+            </h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="taxCode">{t('einvoice.taxCode')}</Label>
+                <Label htmlFor="taxCode">{t("einvoice.taxCode")}</Label>
                 <div className="flex gap-2">
                   <Input
                     id="taxCode"
-                    ref={(el) => {inputRefs.current['taxCode'] = el}}
+                    ref={(el) => {
+                      inputRefs.current["taxCode"] = el;
+                    }}
                     value={formData.taxCode}
                     onChange={(e) =>
                       handleInputChange("taxCode", e.target.value)
                     }
-                    onFocus={() => handleInputFocus('taxCode')}
+                    onFocus={() => handleInputFocus("taxCode")}
                     placeholder="0102222333-001"
                     disabled={false}
                     readOnly={false}
@@ -1220,49 +1394,57 @@ export function EInvoiceModal({
                         Đang tải...
                       </>
                     ) : (
-                      t('einvoice.getInfo')
+                      t("einvoice.getInfo")
                     )}
                   </Button>
                 </div>
               </div>
               <div>
-                <Label htmlFor="customerName">{t('einvoice.companyName')}</Label>
+                <Label htmlFor="customerName">
+                  {t("einvoice.companyName")}
+                </Label>
                 <Input
                   id="customerName"
-                  ref={(el) => {inputRefs.current['customerName'] = el}}
+                  ref={(el) => {
+                    inputRefs.current["customerName"] = el;
+                  }}
                   value={formData.customerName}
                   onChange={(e) =>
                     handleInputChange("customerName", e.target.value)
                   }
-                  onFocus={() => handleInputFocus('customerName')}
+                  onFocus={() => handleInputFocus("customerName")}
                   placeholder="Công ty TNHH ABC"
                   disabled={false}
                   readOnly={false}
                 />
               </div>
               <div>
-                <Label htmlFor="address">{t('einvoice.address')}</Label>
+                <Label htmlFor="address">{t("einvoice.address")}</Label>
                 <Input
                   id="address"
-                  ref={(el) => {inputRefs.current['address'] = el}}
+                  ref={(el) => {
+                    inputRefs.current["address"] = el;
+                  }}
                   value={formData.address}
                   onChange={(e) => handleInputChange("address", e.target.value)}
-                  onFocus={() => handleInputFocus('address')}
+                  onFocus={() => handleInputFocus("address")}
                   placeholder="Cầu Giấy, Hà Nội"
                   disabled={false}
                   readOnly={false}
                 />
               </div>
               <div>
-                <Label htmlFor="phoneNumber">{t('einvoice.idNumber')}</Label>
+                <Label htmlFor="phoneNumber">{t("einvoice.idNumber")}</Label>
                 <Input
                   id="phoneNumber"
-                  ref={(el) => {inputRefs.current['phoneNumber'] = el}}
+                  ref={(el) => {
+                    inputRefs.current["phoneNumber"] = el;
+                  }}
                   value={formData.phoneNumber}
                   onChange={(e) =>
                     handleInputChange("phoneNumber", e.target.value)
                   }
-                  onFocus={() => handleInputFocus('phoneNumber')}
+                  onFocus={() => handleInputFocus("phoneNumber")}
                   placeholder="0123456789"
                   disabled={false}
                   readOnly={false}
@@ -1270,14 +1452,16 @@ export function EInvoiceModal({
               </div>
 
               <div>
-                <Label htmlFor="email">{t('einvoice.email')}</Label>
+                <Label htmlFor="email">{t("einvoice.email")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  ref={(el) => {inputRefs.current['email'] = el}}
+                  ref={(el) => {
+                    inputRefs.current["email"] = el;
+                  }}
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  onFocus={() => handleInputFocus('email')}
+                  onFocus={() => handleInputFocus("email")}
                   placeholder="ngocnv@gmail.com"
                   disabled={false}
                   readOnly={false}
@@ -1289,9 +1473,10 @@ export function EInvoiceModal({
           {/* Total Amount Display */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex justify-between items-center">
-              <span className="font-medium">{t('einvoice.totalAmount')}</span>
+              <span className="font-medium">{t("einvoice.totalAmount")}</span>
               <span className="text-lg font-bold text-blue-600">
-                {formData.total.toLocaleString("vi-VN", { // Use formData.total
+                {formData.total.toLocaleString("vi-VN", {
+                  // Use formData.total
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}{" "}
@@ -1306,10 +1491,10 @@ export function EInvoiceModal({
               variant="outline"
               size="sm"
               onClick={toggleVirtualKeyboard}
-              className={`${showVirtualKeyboard ? 'bg-blue-100 border-blue-300' : ''}`}
+              className={`${showVirtualKeyboard ? "bg-blue-100 border-blue-300" : ""}`}
             >
               <Keyboard className="w-4 h-4 mr-2" />
-              {showVirtualKeyboard ? 'Ẩn bàn phím' : 'Hiện bàn phím ảo'}
+              {showVirtualKeyboard ? "Ẩn bàn phím" : "Hiện bàn phím ảo"}
             </Button>
           </div>
 
@@ -1325,14 +1510,18 @@ export function EInvoiceModal({
               />
               {activeInputField && (
                 <p className="text-sm text-gray-600 text-center mt-2">
-                  Đang nhập vào: {
-                    activeInputField === 'taxCode' ? 'Mã số thuế' :
-                    activeInputField === 'customerName' ? 'Tên đơn vị' :
-                    activeInputField === 'address' ? 'Địa chỉ' :
-                    activeInputField === 'phoneNumber' ? 'Số điện thoại' :
-
-                    activeInputField === 'email' ? 'Email' : activeInputField
-                  }
+                  Đang nhập vào:{" "}
+                  {activeInputField === "taxCode"
+                    ? "Mã số thuế"
+                    : activeInputField === "customerName"
+                      ? "Tên đơn vị"
+                      : activeInputField === "address"
+                        ? "Địa chỉ"
+                        : activeInputField === "phoneNumber"
+                          ? "Số điện thoại"
+                          : activeInputField === "email"
+                            ? "Email"
+                            : activeInputField}
                 </p>
               )}
             </div>
@@ -1348,12 +1537,12 @@ export function EInvoiceModal({
               {isPublishing ? (
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                  {t('einvoice.publishing')}
+                  {t("einvoice.publishing")}
                 </>
               ) : (
                 <>
                   <span className="mr-2">✅</span>
-                  {t('einvoice.publish')}
+                  {t("einvoice.publish")}
                 </>
               )}
             </Button>
@@ -1367,7 +1556,7 @@ export function EInvoiceModal({
             </Button>
             <Button variant="outline" onClick={handleCancel} className="flex-1">
               <span className="mr-2">❌</span>
-              {t('einvoice.cancel')}
+              {t("einvoice.cancel")}
             </Button>
           </div>
         </div>
