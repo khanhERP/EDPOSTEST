@@ -91,7 +91,7 @@ export function DashboardOverview() {
     let peakHour = 12;
     let totalTables = 0;
 
-    // Process real transactions if available
+    // Process real transactions if available - with safe null checks
     if (transactions && Array.isArray(transactions) && transactions.length > 0) {
       console.log("Dashboard Debug - Using real transaction data:", {
         totalTransactions: transactions.length,
@@ -101,11 +101,25 @@ export function DashboardOverview() {
         dateRange: `${startDate} to ${endDate}`
       });
 
-      // Transactions are already filtered by API based on date range
-      const filteredTransactions = transactions;
+      // Safely process transactions with null checks
+      const filteredTransactions = transactions.filter(transaction => 
+        transaction && 
+        typeof transaction === 'object' && 
+        transaction.total !== null && 
+        transaction.total !== undefined
+      );
 
+      // Safe calculation of revenue
       periodRevenue = filteredTransactions.reduce(
-        (total: number, transaction: any) => total + Number(transaction.total || 0),
+        (total: number, transaction: any) => {
+          try {
+            const amount = Number(transaction?.total || 0);
+            return total + (isNaN(amount) ? 0 : amount);
+          } catch (error) {
+            console.warn("Error processing transaction total:", transaction);
+            return total;
+          }
+        },
         0,
       );
 
@@ -122,34 +136,49 @@ export function DashboardOverview() {
       monthRevenue = periodRevenue;
       averageOrderValue = periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
 
-      // Calculate peak hour
+      // Calculate peak hour with safe date handling
       const hourlyTransactions: { [key: number]: number } = {};
       filteredTransactions.forEach((transaction: any) => {
-        const hour = new Date(
-          transaction.createdAt || transaction.created_at,
-        ).getHours();
-        hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
+        try {
+          const dateStr = transaction?.createdAt || transaction?.created_at;
+          if (dateStr) {
+            const hour = new Date(dateStr).getHours();
+            if (!isNaN(hour) && hour >= 0 && hour <= 23) {
+              hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
+            }
+          }
+        } catch (error) {
+          console.warn("Error processing transaction date:", transaction);
+        }
       });
 
       if (Object.keys(hourlyTransactions).length > 0) {
-        peakHour = parseInt(Object.keys(hourlyTransactions).reduce(
-          (peak, hour) =>
-            hourlyTransactions[parseInt(hour)] > hourlyTransactions[parseInt(peak)]
-              ? hour
-              : peak,
-        ));
+        try {
+          peakHour = parseInt(Object.keys(hourlyTransactions).reduce(
+            (peak, hour) =>
+              hourlyTransactions[parseInt(hour)] > hourlyTransactions[parseInt(peak)]
+                ? hour
+                : peak,
+          ));
+        } catch (error) {
+          console.warn("Error calculating peak hour:", error);
+          peakHour = 12; // Default fallback
+        }
       }
+    } else {
+      console.log("Dashboard Debug - No transaction data available, using defaults");
     }
 
-    // Process real table data if available
+    // Process real table data if available with safe null checks
     if (tables && Array.isArray(tables) && tables.length > 0) {
       console.log("Dashboard Debug - Using real table data:", tables.length);
       totalTables = tables.length;
       occupiedTables = tables.filter(
-        (table: TableType) => table.status === "occupied",
+        (table: TableType) => table && table.status === "occupied",
       ).length;
     } else {
       // Default table data if none available
+      console.log("Dashboard Debug - No table data available, using defaults");
       totalTables = 12;
       occupiedTables = 2;
     }
