@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Search, BarChart3, Settings, Coffee, Cookie, Smartphone, Home, User, Grid3X3, Receipt } from "lucide-react";
+import { Search, BarChart3, Settings, Coffee, Cookie, Smartphone, Home, User, Grid3X3 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +12,6 @@ interface CategorySidebarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onOpenProductManager: () => void;
-  onOpenInvoiceManager: () => void;
   onAddToCart: (productId: number) => void;
 }
 
@@ -30,7 +29,6 @@ export function CategorySidebar({
   searchQuery,
   onSearchChange,
   onOpenProductManager,
-  onOpenInvoiceManager,
   onAddToCart
 }: CategorySidebarProps) {
   const { toast } = useToast();
@@ -149,20 +147,13 @@ export function CategorySidebar({
         </div>
       </div>
       
-      <div className="p-4 border-t pos-border space-y-3">
+      <div className="p-4 border-t pos-border">
         <Button 
           onClick={onOpenProductManager}
           className="w-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center rounded-xl"
         >
           <Settings className="mr-2" size={16} />
           {t('pos.manageProducts')}
-        </Button>
-        <Button 
-          onClick={onOpenInvoiceManager}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center rounded-xl"
-        >
-          <Receipt className="mr-2" size={16} />
-          Quản lý hóa đơn
         </Button>
       </div>
     </aside>

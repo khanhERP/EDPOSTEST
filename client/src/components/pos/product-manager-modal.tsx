@@ -215,7 +215,7 @@ export function ProductManagerModal({
       if (isNaN(num)) return '';
       return num.toLocaleString('vi-VN');
     }
-
+    
     // If it's a number
     if (isNaN(value)) return '';
     return value.toLocaleString('vi-VN');
@@ -469,7 +469,7 @@ export function ProductManagerModal({
                     {t("tables.export")}
                   </Button>
                 </div>
-
+                
                 <div className="flex items-center space-x-2">
                   <Input
                     placeholder="Tìm kiếm theo tên hoặc mã SKU..."
@@ -679,12 +679,12 @@ export function ProductManagerModal({
                             <Input
                               {...field}
                               type="text"
-                              placeholder={t("tables.pricePlaceholder")}
+                              placeholder="100.000"
                               onChange={(e) => {
                                 const value = e.target.value;
                                 // Only allow numbers and dots
                                 const sanitized = value.replace(/[^0-9.]/g, '');
-
+                                
                                 // Just update with sanitized value, format on blur
                                 field.onChange(sanitized);
                               }}
@@ -851,7 +851,7 @@ export function ProductManagerModal({
 
                   <div className="flex justify-end space-x-3">
                     <Button type="button" variant="outline" onClick={resetForm}>
-                      {t("common.cancel")}
+                      {t("tables.cancel")}
                     </Button>
                     <Button
                       type="submit"
@@ -862,8 +862,8 @@ export function ProductManagerModal({
                       className="bg-green-600 hover:bg-green-700 text-white font-medium transition-colors duration-200"
                     >
                       {editingProduct
-                        ? t("common.update")
-                        : t("common.create")}
+                        ? t("tables.updateProduct")
+                        : t("tables.createProduct")}
                     </Button>
                   </div>
                 </form>

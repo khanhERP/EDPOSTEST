@@ -101,7 +101,6 @@ export interface CommonTranslations {
   shopeepayWallet: string;
   grabpayWallet: string;
   paymentMethodGeneric: string;
-  backToPOS: string;
 }
 
 // Navigation translations interface
@@ -1289,6 +1288,7 @@ export interface EInvoiceTranslations {
   checkout: string;
 }
 
+
 // POS translations interface
 export interface POSTranslations {
   title: string;
@@ -1523,36 +1523,6 @@ export interface SuppliersTranslations {
   addError: string;
   deleteSuccess: string;
   deleteError: string;
-  deleteSuccessDesc: string;
-  deleteFailed: string;
-  deleteFailedDesc: string;
-  active: string;
-  inactive: string;
-  noSuppliers: string;
-  paymentTerms: string;
-  confirmDelete: string;
-  addDescription: string;
-  editDescription: string;
-  code: string;
-  codePlaceholder: string;
-  taxId: string;
-  taxIdPlaceholder: string;
-  bankAccount: string;
-  bankAccountPlaceholder: string;
-  cash: string;
-  notes: string;
-  notesPlaceholder: string;
-  status: string;
-  createSuccess: string;
-  createSuccessDesc: string;
-  createFailed: string;
-  createFailedDesc: string;
-  updateSuccess: string;
-  updateSuccessDesc: string;
-  updateFailed: string;
-  updateFailedDesc: string;
-  validationError: string;
-  requiredFields: string;
 }
 
 // Type-safe translation keys
@@ -1577,22 +1547,4 @@ export interface LanguageTranslations {
   ko: { [key: string]: any };
   en: { [key: string]: any };
   vi: { [key: string]: any };
-}
-
-// Main translations interface
-export interface Translations {
-  common: CommonTranslations;
-  navigation: NavigationTranslations;
-  pos: POSTranslations;
-  reports: ReportsTranslations;
-  tables: TablesTranslations;
-  orders: OrdersTranslations;
-  employees: EmployeesTranslations;
-  attendance: AttendanceTranslations;
-  customers: CustomersTranslations;
-  suppliers: SuppliersTranslations;
-  settings: SettingsTranslations;
-  inventory: InventoryTranslations;
-  einvoice: EInvoiceTranslations;
-  notFound: NotFoundTranslations;
 }

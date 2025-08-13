@@ -6,15 +6,11 @@ import { ProductGrid } from "@/components/pos/product-grid";
 import { ShoppingCart } from "@/components/pos/shopping-cart";
 import { ReceiptModal } from "@/components/pos/receipt-modal";
 import { ProductManagerModal } from "@/components/pos/product-manager-modal";
-import { InvoiceManagerModal } from "@/components/pos/invoice-manager-modal";
-import { EInvoiceModal } from "@/components/pos/einvoice-modal";
 import { usePOS } from "@/hooks/use-pos";
 
 export default function POSPage() {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [showProductManagerModal, setShowProductManagerModal] = useState(false);
-  const [showInvoiceManager, setShowInvoiceManager] = useState(false);
-  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [lastCartItems, setLastCartItems] = useState<any[]>([]);
@@ -129,7 +125,6 @@ export default function POSPage() {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onOpenProductManager={() => setShowProductManagerModal(true)}
-          onOpenInvoiceManager={() => setShowInvoiceManager(true)}
           onAddToCart={addToCart}
         />
 
@@ -157,22 +152,6 @@ export default function POSPage() {
       </div>
 
       {/* Modals */}
-      {/* Product Manager Modal */}
-      {showProductManagerModal && (
-        <ProductManagerModal
-          isOpen={showProductManagerModal}
-          onClose={() => setShowProductManagerModal(false)}
-        />
-      )}
-
-      {/* Invoice Manager Modal */}
-      {showInvoiceManager && (
-        <InvoiceManagerModal
-          isOpen={showInvoiceManager}
-          onClose={() => setShowInvoiceManager(false)}
-        />
-      )}
-
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
@@ -183,9 +162,9 @@ export default function POSPage() {
         cartItems={lastCartItems}
       />
 
-      <EInvoiceModal
-        isOpen={showEInvoiceModal}
-        onClose={() => setShowEInvoiceModal(false)}
+      <ProductManagerModal
+        isOpen={showProductManagerModal}
+        onClose={() => setShowProductManagerModal(false)}
       />
     </div>
   );
