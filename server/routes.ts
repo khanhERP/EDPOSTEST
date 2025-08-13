@@ -2771,6 +2771,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Prepare invoice data for database with proper type conversion
       const dbInvoiceData = {
         invoiceNumber: String(invoiceData.invoiceNumber),
+        transactionNumber: invoiceData.transactionNumber ? String(invoiceData.transactionNumber) : null,
+        cashierName: invoiceData.cashierName ? String(invoiceData.cashierName) : null,
         invoiceDate: invoiceData.invoiceDate || new Date().toISOString(),
         buyerName: String(invoiceData.buyerName),
         buyerTaxCode: String(invoiceData.buyerTaxCode || ""),
