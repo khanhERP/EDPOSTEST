@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Card,
@@ -62,8 +62,9 @@ export function OrderReport() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedEmployee, setSelectedEmployee] = useState("all");
 
-  const { data: orders } = useQuery({
+  const { data: orders, refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
 
   const { data: products } = useQuery({
@@ -78,6 +79,15 @@ export function OrderReport() {
     queryKey: ["/api/employees"],
   });
 
+  // Auto-refresh data when filters change
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      refetchOrders();
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [startDate, endDate, orderStatus, customerSearch, refetchOrders]);
+
   const getFilteredData = () => {
     if (!orders || !Array.isArray(orders)) return [];
 
@@ -91,7 +101,7 @@ export function OrderReport() {
 
       const statusMatch =
         orderStatus === "all" ||
-        (orderStatus === "draft" && order.status === "pending") ||
+        (orderStatus === "draft" && (order.status === "pending" || order.status === "draft")) ||
         (orderStatus === "confirmed" && order.status === "confirmed") ||
         (orderStatus === "delivering" && order.status === "preparing") ||
         (orderStatus === "completed" && order.status === "paid");
@@ -237,7 +247,7 @@ export function OrderReport() {
                   {t("reports.orderTime")}
                 </TableHead>
                 <TableHead className="text-center">
-                  {t("reports.customer")}
+                  {t("reports.customer")} / Loại đơn
                 </TableHead>
                 <TableHead className="text-center">
                   {t("reports.orderQuantity")}
@@ -263,7 +273,18 @@ export function OrderReport() {
                         {new Date(order.orderedAt || order.created_at).toLocaleString("vi-VN")}
                       </TableCell>
                       <TableCell className="text-center">
-                        {order.customerName || "Khách lẻ"}
+                        <div className="flex flex-col">
+                          <span>{order.customerName || "Khách lẻ"}</span>
+                          {order.tableId ? (
+                            <span className="text-xs text-gray-500">
+                              Bàn {order.tableNumber || order.tableId}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-blue-600 font-medium">
+                              Mang về
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-center">
                         {order.customerCount || 1}
@@ -495,7 +516,11 @@ export function OrderReport() {
               <Input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  // Auto-refresh data when date changes
+                  setTimeout(() => refetchOrders(), 500);
+                }}
               />
             </div>
             <div>
@@ -503,8 +528,21 @@ export function OrderReport() {
               <Input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  // Auto-refresh data when date changes
+                  setTimeout(() => refetchOrders(), 500);
+                }}
               />
+            </div>
+            <div className="flex items-end">
+              <Button 
+                onClick={() => refetchOrders()} 
+                variant="outline"
+                className="w-full"
+              >
+                🔄 Làm mới
+              </Button>
             </div>
           </div>
 
