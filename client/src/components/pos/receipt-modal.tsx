@@ -12,7 +12,6 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { EInvoiceModal } from "./einvoice-modal";
 import { PaymentMethodModal } from "./payment-method-modal";
-import { PrintReceiptDialog } from "./print-receipt-dialog";
 import { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/i18n";
 
@@ -44,7 +43,6 @@ export function ReceiptModal({
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
-  const [showPrintDialog, setShowPrintDialog] = useState(false);
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
   const { t } = useTranslation();
 
@@ -140,7 +138,87 @@ export function ReceiptModal({
   if (!receipt) return null;
 
   const handlePrint = () => {
-    setShowPrintDialog(true);
+    const printContent = document.getElementById("receipt-content");
+    if (printContent) {
+      // Calculate content height dynamically
+      const contentHeight = printContent.scrollHeight;
+      const windowWidth = 400;
+      // Add some padding for print margins and controls
+      const windowHeight = Math.min(Math.max(contentHeight + 120, 300), 800);
+      
+      console.log("Receipt content height:", contentHeight, "Window height:", windowHeight);
+      
+      const printWindow = window.open("", "", `height=${windowHeight},width=${windowWidth}`);
+      if (printWindow) {
+        printWindow.document.write("<html><head><title>Receipt</title>");
+        printWindow.document.write(
+          "<style>body { font-family: monospace; font-size: 12px; margin: 0; padding: 16px; min-height: auto; } .text-center { text-align: center; } .text-right { text-align: right; } .border-t { border-top: 1px solid #000; } .border-b { border-bottom: 1px solid #000; } .py-2 { padding: 4px 0; } .mb-4 { margin-bottom: 8px; } .mb-2 { margin-bottom: 4px; } .mt-4 { margin-top: 8px; } .mt-2 { margin-top: 4px; } .space-y-1 > * + * { margin-top: 2px; } .flex { display: flex; } .justify-between { justify-content: space-between; } .text-sm { font-size: 11px; } .text-xs { font-size: 10px; } .font-bold { font-weight: bold; } @media print { body { min-height: auto !important; height: auto !important; } } @page { margin: 10mm; size: auto; }</style>",
+        );
+        printWindow.document.write("</head><body>");
+        printWindow.document.write(printContent.innerHTML);
+        printWindow.document.write("</body></html>");
+        printWindow.document.close();
+        
+        // Wait for content to load then adjust window size
+        printWindow.onload = () => {
+          const actualContentHeight = printWindow.document.body.scrollHeight;
+          const newHeight = Math.min(Math.max(actualContentHeight + 100, 300), 800);
+          console.log("Actual content height:", actualContentHeight, "Resizing to:", newHeight);
+          printWindow.resizeTo(windowWidth, newHeight);
+        };
+        
+        // Trigger print dialog
+        printWindow.print();
+        
+        // Multiple approaches to detect when printing is done and close modal
+        let modalClosed = false;
+        
+        // Method 1: Use onafterprint event
+        printWindow.onafterprint = () => {
+          if (!modalClosed) {
+            modalClosed = true;
+            printWindow.close();
+            onClose();
+          }
+        };
+        
+        // Method 2: Monitor window focus change (fallback)
+        const handleFocus = () => {
+          setTimeout(() => {
+            if (!modalClosed) {
+              modalClosed = true;
+              printWindow.close();
+              onClose();
+            }
+          }, 500);
+        };
+        
+        window.addEventListener('focus', handleFocus, { once: true });
+        
+        // Method 3: Timer-based fallback (last resort)
+        setTimeout(() => {
+          if (!modalClosed) {
+            modalClosed = true;
+            printWindow.close();
+            onClose();
+          }
+        }, 3000);
+        
+        // Method 4: Check if print window is closed manually
+        const checkClosed = setInterval(() => {
+          if (printWindow.closed && !modalClosed) {
+            modalClosed = true;
+            clearInterval(checkClosed);
+            onClose();
+          }
+        }, 500);
+        
+        // Clear interval after 10 seconds to prevent memory leaks
+        setTimeout(() => {
+          clearInterval(checkClosed);
+        }, 10000);
+      }
+    }
   };
 
   const handleEmail = () => {
@@ -350,13 +428,6 @@ export function ReceiptModal({
           })()}
         />
       )}
-
-      {/* Print Receipt Dialog */}
-      <PrintReceiptDialog
-        isOpen={showPrintDialog}
-        onClose={() => setShowPrintDialog(false)}
-        receipt={receipt}
-      />
     </Dialog>
   );
 }

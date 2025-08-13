@@ -52,14 +52,10 @@ export default function CustomerDisplayPage() {
 
             switch (data.type) {
               case 'cart_update':
-                console.log("Customer Display: Updating cart:", data.cart, "Priority:", data.priority);
-                const newCart = data.cart || [];
-                setCart(newCart);
-                
-                // Always clear QR payment when receiving cart updates from POS
-                // This ensures cart is always shown when POS makes changes
+                console.log("Customer Display: Updating cart:", data.cart);
+                setCart(data.cart || []);
+                // Clear QR payment when cart updates (new order started)
                 if (qrPayment) {
-                  console.log("Customer Display: Cart update received, clearing QR payment to show cart. Previous QR:", qrPayment, "New cart length:", newCart.length);
                   setQrPayment(null);
                 }
                 break;
@@ -86,18 +82,13 @@ export default function CustomerDisplayPage() {
                 setQrPayment(null);
                 // Keep cart visible (don't clear it)
                 break;
-              case 'force_customer_refresh':
-                console.log("Customer Display: Force refresh requested, reloading immediately", data);
-                // Force immediate reload without any delay
-                window.location.reload();
-                break;
               case 'refresh_customer_display':
-                console.log("Customer Display: Refresh requested, reloading page in 200ms");
-                // Reduced delay for faster refresh
+                console.log("Customer Display: Refresh requested, reloading page in 500ms");
+                // Add a small delay to ensure all cleanup is done
                 setTimeout(() => {
                   console.log("Customer Display: Executing page reload now");
                   window.location.reload();
-                }, 200);
+                }, 500);
                 break;
               default:
                 console.log("Customer Display: Unknown message type:", data.type);
