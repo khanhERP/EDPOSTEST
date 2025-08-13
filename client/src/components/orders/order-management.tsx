@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -47,9 +47,6 @@ export function OrderManagement() {
         }
         const data = await response.json();
         console.log('📊 Orders API response:', data);
-        console.log('📊 Orders API response type:', typeof data);
-        console.log('📊 Orders API response isArray:', Array.isArray(data));
-        console.log('📊 Orders API response length:', data?.length);
         
         // Handle different response formats
         let processedData = [];
@@ -66,21 +63,17 @@ export function OrderManagement() {
         
         console.log('✅ Processed orders data:', {
           count: processedData.length,
-          firstOrder: processedData[0],
-          allStatuses: processedData.map(o => o.status)
+          firstOrder: processedData[0]
         });
         
         return processedData;
       } catch (error) {
         console.error('❌ Error fetching orders:', error);
-        toast({
-          title: 'Lỗi',
-          description: 'Không thể tải danh sách đơn hàng',
-          variant: 'destructive',
-        });
         return [];
       }
     },
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const { data: tables } = useQuery({
@@ -522,8 +515,36 @@ export function OrderManagement() {
 
   if (ordersLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">{t('orders.orderManagement')}</h2>
+            <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          <span className="ml-3 text-gray-600">Đang tải đơn hàng...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (ordersError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">{t('orders.orderManagement')}</h2>
+            <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">Lỗi khi tải dữ liệu đơn hàng</p>
+            <Button onClick={() => window.location.reload()}>Thử lại</Button>
+          </div>
+        </div>
       </div>
     );
   }
