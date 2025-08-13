@@ -392,9 +392,10 @@ export function EInvoiceModal({
       console.log(`💰 Total calculations: Subtotal: ${calculatedSubtotal}, Tax: ${calculatedTax}, Total: ${total}`);
 
       // Prepare invoice payload
+      const currentDate = new Date();
       const invoicePayload = {
         invoiceNumber: `INV-${Date.now()}`,
-        invoiceDate: new Date(),
+        invoiceDate: currentDate.toISOString(),
         buyerTaxCode: formData.taxCode || "",
         buyerName: formData.customerName || "Khách hàng",
         buyerAddress: formData.address || "",
