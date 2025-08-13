@@ -1236,11 +1236,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenueExpenseDetails: "Chi tiết thu chi",
     inventoryDetails: "Chi tiết hàng hóa",
     noReportData: "Không có dữ liệu báo cáo",
-    noDataAvailable: "Chưa có dữ liệu để hiển thị. Hãy thực hiện một số giao dịch trước.",
     centralBranch: "Chi nhánh trung tâm",
 
     // Financial report
-    financialReport: "Báo cáo tài chính", 
+    financialReport: "Báo cáo tài chính",
     financialReportTab: "Báo cáo tài chính",
     financialReportDescription: "Phân tích lợi nhuận và hiệu suất tài chính",
     periodFilter: "Bộ lọc khoảng thời gian",

@@ -37,15 +37,19 @@ import { initializeSampleData, db } from "./db";
 import { z } from "zod";
 import {
   eq,
-  and,
-  gte,
-  lte,
-  sql,
-  inArray,
-  sum,
-  count,
   desc,
+  asc,
+  and,
+  or,
+  like,
+  count,
+  sum,
+  gte,
+  lt,
+  lte,
+  ilike,
 } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   orders,
   orderItems,
@@ -416,102 +420,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Transactions endpoint
-  app.get("/api/transactions", async (req: Request, res: Response) => {
-    const startTime = Date.now();
+  app.get("/api/transactions", async (req, res) => {
     try {
-      const { startDate, endDate } = req.query;
-
-      console.log("📊 Transactions API called:", {
-        startDate,
-        endDate,
-        timestamp: new Date().toISOString()
-      });
-
-      // Test database connection first
-      try {
-        await db.execute(sql`SELECT 1 as test`);
-      } catch (dbError) {
-        console.error("❌ Database connection test failed:", dbError);
-        return res.status(503).json({
-          message: "Database connection failed",
-          error: "DATABASE_CONNECTION_ERROR",
-          details: dbError.message
-        });
-      }
-
-      let query = db.select({
-        id: transactionsTable.id,
-        total: transactionsTable.total,
-        paymentMethod: transactionsTable.paymentMethod,
-        createdAt: transactionsTable.createdAt,
-        cashierName: transactionsTable.cashierName,
-        customerId: transactionsTable.customerId,
-        customerName: transactionsTable.customerName,
-        customerPhone: transactionsTable.customerPhone,
-        discount: transactionsTable.discount,
-        tax: transactionsTable.tax,
-        subtotal: transactionsTable.subtotal,
-        change: transactionsTable.change,
-        amountReceived: transactionsTable.amountReceived,
-      }).from(transactionsTable);
-
-      if (startDate && endDate) {
-        const start = new Date(startDate as string);
-        const end = new Date(endDate as string);
-
-        // Set end time to end of day (23:59:59.999)
-        end.setHours(23, 59, 59, 999);
-
-        console.log("🔍 Date filtering:", {
-          start: start.toISOString(),
-          end: end.toISOString(),
-          startParam: startDate,
-          endParam: endDate
-        });
-
-        query = query.where(
-          and(
-            gte(transactionsTable.createdAt, start.toISOString()),
-            lte(transactionsTable.createdAt, end.toISOString())
-          )
-        );
-      }
-
-      query = query.orderBy(desc(transactionsTable.createdAt));
-
-      const transactionResults = await query;
-      const duration = Date.now() - startTime;
-
-      console.log("✅ Transactions query success:", {
-        count: transactionResults.length,
-        duration: `${duration}ms`,
-        dateRange: { startDate, endDate },
-        sample: transactionResults.slice(0, 2).map(t => ({
-          id: t.id,
-          total: t.total,
-          createdAt: t.createdAt
-        }))
-      });
-
-      res.json(transactionResults);
+      const transactions = await storage.getTransactions();
+      res.json(transactions);
     } catch (error) {
-      const duration = Date.now() - startTime;
-      console.error("❌ Transactions API Error:", {
-        message: error.message,
-        code: error.code,
-        detail: error.detail,
-        duration: `${duration}ms`,
-        params: { startDate: req.query.startDate, endDate: req.query.endDate },
-        stack: error.stack?.split('\n').slice(0, 5).join('\n')
-      });
-
-      res.status(500).json({
-        message: "Failed to fetch transactions",
-        error: error.message || "UNKNOWN_ERROR",
-        code: error.code || "DATABASE_ERROR",
-        timestamp: new Date().toISOString()
-      });
+      res.status(500).json({ message: "Failed to fetch transactions" });
     }
   });
 
@@ -846,103 +760,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Orders
   app.get("/api/orders", async (req, res) => {
-    const startTime = Date.now();
     try {
-      const { startDate, endDate } = req.query;
-      console.log("📊 Orders API called with params:", { startDate, endDate, timestamp: new Date().toISOString() });
-
-      // Test database connection first
-      try {
-        await db.execute(sql`SELECT 1 as test`);
-      } catch (dbError) {
-        console.error("❌ Database connection test failed for orders:", dbError);
-        return res.status(503).json({
-          message: "Database connection failed",
-          error: "DATABASE_CONNECTION_ERROR"
-        });
-      }
-
-      let query = db.select({
-        id: orders.id,
-        orderNumber: orders.orderNumber,
-        tableId: orders.tableId,
-        employeeId: orders.employeeId,
-        status: orders.status,
-        customerName: orders.customerName,
-        customerPhone: orders.customerPhone,
-        customerEmail: orders.customerEmail,
-        subtotal: orders.subtotal,
-        tax: orders.tax,
-        total: orders.total,
-        paymentMethod: orders.paymentMethod,
-        paymentStatus: orders.paymentStatus,
-        notes: orders.notes,
-        orderedAt: orders.orderedAt,
-        createdAt: orders.orderedAt, // Alias for compatibility
-        created_at: orders.orderedAt, // Another alias
-        customerCount: orders.customerCount || sql<number>`1`, // Use actual or default customer count
-        salesChannel: orders.salesChannel,
-        einvoiceStatus: orders.einvoiceStatus
-      }).from(orders).orderBy(desc(orders.orderedAt));
-
-      if (startDate && endDate) {
-        const start = new Date(startDate as string);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(endDate as string);
-        end.setHours(23, 59, 59, 999);
-
-        console.log("🔍 Applying date filter:", {
-          start: start.toISOString(),
-          end: end.toISOString(),
-          startParam: startDate,
-          endParam: endDate
-        });
-
-        query = query.where(
-          and(
-            gte(orders.orderedAt, start.toISOString()),
-            lte(orders.orderedAt, end.toISOString())
-          )
-        );
-      }
-
-      const orderResults = await query;
-      const duration = Date.now() - startTime;
-      
-      console.log("✅ Orders query success:", {
-        count: orderResults.length,
-        duration: `${duration}ms`,
-        dateRange: { startDate, endDate },
-        statusBreakdown: orderResults.reduce((acc, order) => {
-          acc[order.status] = (acc[order.status] || 0) + 1;
-          return acc;
-        }, {}),
-        sample: orderResults.slice(0, 2).map(o => ({
-          id: o.id,
-          orderNumber: o.orderNumber,
-          status: o.status,
-          orderedAt: o.orderedAt,
-          total: o.total
-        }))
-      });
-
-      res.json(orderResults);
+      const { tableId, status } = req.query;
+      const orders = await storage.getOrders(
+        tableId ? parseInt(tableId as string) : undefined,
+        status as string,
+      );
+      res.json(orders);
     } catch (error) {
-      const duration = Date.now() - startTime;
-      console.error("❌ Orders API Error:", {
-        message: error.message,
-        code: error.code,
-        duration: `${duration}ms`,
-        params: { startDate: req.query.startDate, endDate: req.query.endDate },
-        stack: error.stack?.split('\n').slice(0, 5).join('\n')
-      });
-
-      res.status(500).json({
-        message: "Failed to fetch orders",
-        error: error.message || "UNKNOWN_ERROR",
-        code: error.code || "DATABASE_ERROR",
-        timestamp: new Date().toISOString()
-      });
+      res.status(500).json({ message: "Failed to fetch orders" });
     }
   });
 
@@ -1924,8 +1750,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Date range filter - IMPORTANT: Apply to transactions table
       if (startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
+        const start = new Date(startDate as string);
+        const end = new Date(endDate as string);
         end.setHours(23, 59, 59, 999); // Include entire end date
 
         conditions.push(
@@ -2918,7 +2744,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Enhanced validation for required fields
       const requiredFields = ['invoiceNumber', 'buyerName', 'total'];
       const missingFields = requiredFields.filter(field => !invoiceData[field]);
-
+      
       if (missingFields.length > 0) {
         console.error("Missing required fields:", missingFields);
         return res.status(400).json({
@@ -2927,7 +2753,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           details: `Please provide: ${missingFields.join(', ')}`,
           receivedData: {
             invoiceNumber: invoiceData.invoiceNumber || 'MISSING',
-            buyerName: invoiceData.buyerName || 'MISSING',
+            buyerName: invoiceData.buyerName || 'MISSING', 
             total: invoiceData.total || 'MISSING'
           }
         });
@@ -2945,8 +2771,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Prepare invoice data for database with proper type conversion
       const dbInvoiceData = {
         invoiceNumber: String(invoiceData.invoiceNumber),
-        transactionNumber: invoiceData.transactionNumber ? String(invoiceData.transactionNumber) : null,
-        cashierName: invoiceData.cashierName ? String(invoiceData.cashierName) : null,
         invoiceDate: invoiceData.invoiceDate || new Date().toISOString(),
         buyerName: String(invoiceData.buyerName),
         buyerTaxCode: String(invoiceData.buyerTaxCode || ""),
@@ -3311,7 +3135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("=== SAVE ORDER FROM INVOICE ERROR ===");
       console.error("Error:", error);
 
-      res.status(500).json({
+      res.status(500).json({ 
         error: "Failed to save order from invoice",
         details: error instanceof Error ? error.message : "Unknown error"
       });

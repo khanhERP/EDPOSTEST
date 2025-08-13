@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -25,7 +24,7 @@ import type { Order, Table as TableType } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 
 export function formatDateToYYYYMMDD(date: Date | string | number): string {
-  const d = new Date(date);
+  const d = new Date(date); // Ensure input is a Date
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
@@ -36,115 +35,118 @@ export function DashboardOverview() {
   const { t, currentLanguage } = useTranslation();
 
   const [startDate, setStartDate] = useState<string>(
-    formatDateToYYYYMMDD(new Date()),
+    formatDateToYYYYMMDD(new Date()), // Set to a date that has sample data
   );
   const [endDate, setEndDate] = useState<string>(
-    formatDateToYYYYMMDD(new Date()),
+    formatDateToYYYYMMDD(new Date()), // End date with sample data
   );
   const queryClient = useQueryClient();
 
   const { data: transactions } = useQuery({
-    queryKey: ["/api/transactions", startDate, endDate],
+    queryKey: ["/api/transactions"],
   });
 
   const { data: tables } = useQuery({
     queryKey: ["/api/tables"],
   });
 
-  const handleRefresh = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] }),
-      queryClient.invalidateQueries({ queryKey: ["/api/tables"] }),
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] })
-    ]);
+  const handleRefresh = () => {
+    // Refresh the queries to get the latest data for the selected date
+    setStartDate(formatDateToYYYYMMDD(new Date()));
+    setEndDate(formatDateToYYYYMMDD(new Date()));
+    queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
   };
 
   const getDashboardStats = () => {
-    let periodRevenue = 0;
-    let periodOrderCount = 0;
-    let periodCustomerCount = 0;
-    let dailyAverageRevenue = 0;
-    let activeOrders = 0;
-    let occupiedTables = 0;
-    let monthRevenue = 0;
-    let averageOrderValue = 0;
-    let peakHour = 12;
-    let totalTables = 12;
+    if (
+      !transactions ||
+      !tables ||
+      !Array.isArray(transactions) ||
+      !Array.isArray(tables)
+    )
+      return null;
 
-    // Process real transactions if available
-    if (transactions && Array.isArray(transactions) && transactions.length > 0) {
-      console.log("Dashboard Debug - Using real transaction data:", {
-        totalTransactions: transactions.length,
-        dateRange: `${startDate} to ${endDate}`
-      });
+    console.log("Dashboard Debug:", {
+      totalTransactions: transactions.length,
+      startDate,
+      endDate,
+      firstTransaction: transactions[0],
+      allTransactionDates: transactions.map((t: any) =>
+        new Date(t.createdAt).toDateString(),
+      ),
+    });
 
-      // Transactions are already filtered by API based on date range
-      const filteredTransactions = transactions;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999); // Include the entire end date
 
-      periodRevenue = filteredTransactions.reduce(
-        (total: number, transaction: any) => total + Number(transaction.total || 0),
-        0,
+    const filteredTransactions = transactions.filter((transaction: any) => {
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
       );
+      return transactionDate >= start && transactionDate <= end;
+    });
 
-      periodOrderCount = filteredTransactions.length;
-      periodCustomerCount = filteredTransactions.length;
+    // Period stats
+    const periodRevenue = filteredTransactions.reduce(
+      (total: number, transaction: any) => total + Number(transaction.total),
+      0,
+    );
 
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      const daysDiff = Math.max(
-        1,
-        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
-      );
-      dailyAverageRevenue = periodRevenue / daysDiff;
-      monthRevenue = periodRevenue;
-      averageOrderValue = periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
+    const periodOrderCount = filteredTransactions.length;
+    const periodCustomerCount = filteredTransactions.length; // Each transaction represents customers
 
-      // Calculate peak hour
-      const hourlyTransactions: { [key: number]: number } = {};
-      filteredTransactions.forEach((transaction: any) => {
-        const hour = new Date(
-          transaction.createdAt || transaction.created_at,
-        ).getHours();
-        hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
-      });
+    // Daily average for the period
+    const daysDiff = Math.max(
+      1,
+      Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+    );
+    const dailyAverageRevenue = periodRevenue / daysDiff;
 
-      if (Object.keys(hourlyTransactions).length > 0) {
-        peakHour = parseInt(Object.keys(hourlyTransactions).reduce(
-          (peak, hour) =>
-            hourlyTransactions[parseInt(hour)] > hourlyTransactions[parseInt(peak)]
-              ? hour
-              : peak,
-        ));
-      }
-    } else {
-      console.log("Dashboard Debug - No transaction data available, using defaults");
-    }
+    // Current status (for active orders, we need to check the orders table separately)
+    const activeOrders = 0; // Will show 0 since we're using transactions data
 
-    // Process real table data if available
-    if (tables && Array.isArray(tables) && tables.length > 0) {
-      console.log("Dashboard Debug - Using real table data:", tables.length);
-      totalTables = tables.length;
-      occupiedTables = tables.filter(
-        (table: TableType) => table.status === "occupied",
-      ).length;
-    } else {
-      // Default table data if none available
-      console.log("Dashboard Debug - No table data available, using defaults");
-      totalTables = 12;
-      occupiedTables = 2;
-    }
+    const occupiedTables = tables.filter(
+      (table: TableType) => table.status === "occupied",
+    );
+
+    // Revenue for selected date range (displayed as "month revenue")
+    const monthRevenue = periodRevenue;
+
+    // Average order value
+    const averageOrderValue =
+      periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
+
+    // Peak hours analysis from filtered transactions
+    const hourlyTransactions: { [key: number]: number } = {};
+    filteredTransactions.forEach((transaction: any) => {
+      const hour = new Date(
+        transaction.createdAt || transaction.created_at,
+      ).getHours();
+      hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
+    });
+
+    const peakHour = Object.keys(hourlyTransactions).reduce(
+      (peak, hour) =>
+        hourlyTransactions[parseInt(hour)] > hourlyTransactions[parseInt(peak)]
+          ? hour
+          : peak,
+      "12",
+    );
 
     return {
       periodRevenue,
       periodOrderCount,
       periodCustomerCount,
       dailyAverageRevenue,
-      activeOrders,
-      occupiedTables,
+      activeOrders: activeOrders,
+      occupiedTables: occupiedTables.length,
       monthRevenue,
       averageOrderValue,
-      peakHour,
-      totalTables,
+      peakHour: parseInt(peakHour),
+      totalTables: tables.length,
     };
   };
 
@@ -155,20 +157,29 @@ export function DashboardOverview() {
   };
 
   const formatDate = (dateStr: string) => {
+    // Map translation language codes to locale codes
     const localeMap = {
       ko: "ko-KR",
       en: "en-US", 
       vi: "vi-VN"
     };
-
+    
     const locale = localeMap[currentLanguage] || "ko-KR";
-
+    
     return new Date(dateStr).toLocaleDateString(locale, {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
   };
+
+  if (!stats) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="text-gray-500">{t("reports.loading")}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

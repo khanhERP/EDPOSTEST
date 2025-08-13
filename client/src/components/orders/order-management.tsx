@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,44 +36,8 @@ export function OrderManagement() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
-  const { data: orders, isLoading: ordersLoading, error: ordersError } = useQuery({
+  const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
-    queryFn: async () => {
-      try {
-        console.log('🔄 Fetching orders from API...');
-        const response = await apiRequest('GET', '/api/orders');
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        console.log('📊 Orders API response:', data);
-        
-        // Handle different response formats
-        let processedData = [];
-        if (Array.isArray(data)) {
-          processedData = data;
-        } else if (data && Array.isArray(data.orders)) {
-          processedData = data.orders;
-        } else if (data && Array.isArray(data.data)) {
-          processedData = data.data;
-        } else {
-          console.warn('❌ Unexpected orders data format:', data);
-          processedData = [];
-        }
-        
-        console.log('✅ Processed orders data:', {
-          count: processedData.length,
-          firstOrder: processedData[0]
-        });
-        
-        return processedData;
-      } catch (error) {
-        console.error('❌ Error fetching orders:', error);
-        return [];
-      }
-    },
-    retry: 3,
-    retryDelay: 1000,
   });
 
   const { data: tables } = useQuery({
@@ -515,85 +479,15 @@ export function OrderManagement() {
 
   if (ordersLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{t('orders.orderManagement')}</h2>
-            <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
-          </div>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
-          <span className="ml-3 text-gray-600">Đang tải đơn hàng...</span>
-        </div>
+      <div className="flex items-center justify-center py-8">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
     );
   }
 
-  if (ordersError) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">{t('orders.orderManagement')}</h2>
-            <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
-          </div>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <p className="text-red-600 mb-4">Lỗi khi tải dữ liệu đơn hàng</p>
-            <Button onClick={() => window.location.reload()}>Thử lại</Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Process orders data safely
-  const allOrders = React.useMemo(() => {
-    console.log('🔄 Processing orders data...');
-    console.log('🔍 Raw orders:', { orders, type: typeof orders, isArray: Array.isArray(orders), length: orders?.length });
-    
-    if (!orders) {
-      console.log('❌ No orders data available');
-      return [];
-    }
-    
-    if (!Array.isArray(orders)) {
-      console.log('❌ Orders data is not an array:', orders);
-      return [];
-    }
-    
-    if (orders.length === 0) {
-      console.log('❌ Orders array is empty');
-      return [];
-    }
-    
-    // Hiển thị tất cả orders, không filter theo status
-    const sortedOrders = [...orders].sort((a: Order, b: Order) => {
-      const aTime = new Date(a.orderedAt || a.created_at).getTime();
-      const bTime = new Date(b.orderedAt || b.created_at).getTime();
-      return bTime - aTime;
-    });
-    
-    console.log('✅ Processed orders successfully:', {
-      count: sortedOrders.length,
-      statuses: sortedOrders.reduce((acc, order) => {
-        acc[order.status] = (acc[order.status] || 0) + 1;
-        return acc;
-      }, {}),
-      firstOrder: sortedOrders[0]
-    });
-    
-    return sortedOrders;
-  }, [orders]);
-
-  console.log('=== ORDER MANAGEMENT DEBUG ===');
-  console.log('Loading:', ordersLoading);
-  console.log('Error:', ordersError);
-  console.log('Raw orders:', orders);
-  console.log('Processed orders count:', allOrders.length);
-  console.log('All orders sample:', allOrders.slice(0, 2));
+  const allOrders = orders ? (orders as Order[]).sort((a: Order, b: Order) =>
+    new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
+  ) : [];
 
   return (
     <div className="space-y-6">
@@ -604,7 +498,7 @@ export function OrderManagement() {
           <p className="text-gray-600">{t('orders.realTimeOrderStatus')}</p>
         </div>
         <Badge variant="secondary" className="text-lg px-4 py-2">
-          {allOrders.length} đơn hàng
+          {allOrders.length} {t('orders.ordersInProgress')}
         </Badge>
       </div>
 
@@ -613,8 +507,8 @@ export function OrderManagement() {
         <Card>
           <CardContent className="py-12 text-center">
             <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Không có đơn hàng nào</h3>
-            <p className="text-gray-600">Đơn hàng sẽ xuất hiện ở đây khi có dữ liệu</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('orders.noActiveOrders')}</h3>
+            <p className="text-gray-600">{t('orders.newOrdersWillAppearHere')}</p>
           </CardContent>
         </Card>
       ) : (

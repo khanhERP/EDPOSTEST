@@ -366,8 +366,6 @@ export const inventoryTransactions = pgTable("inventory_transactions", {
 export const invoices = pgTable("invoices", {
   id: serial("id").primaryKey(),
   invoiceNumber: varchar("invoice_number", { length: 50 }).unique().notNull(),
-  transactionNumber: varchar("transaction_number", { length: 50 }),
-  cashierName: varchar("cashier_name", { length: 100 }),
   customerId: integer("customer_id").references(() => customers.id),
   buyerName: varchar("buyer_name", { length: 100 }).notNull(), // Renamed from customerName for clarity
   buyerTaxCode: varchar("buyer_tax_code", { length: 20 }),

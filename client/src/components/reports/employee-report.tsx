@@ -59,7 +59,7 @@ export function EmployeeReport() {
   const [salesChannel, setSalesChannel] = useState("all");
 
   const { data: employees } = useQuery({
-    queryKey: ["/api/employees", startDate, endDate],
+    queryKey: ["/api/employees"],
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -69,12 +69,12 @@ export function EmployeeReport() {
   });
 
   const { data: products } = useQuery({
-    queryKey: ["/api/products", startDate, endDate],
+    queryKey: ["/api/products"],
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
   const { data: categories } = useQuery({
-    queryKey: ["/api/categories", startDate, endDate],
+    queryKey: ["/api/categories"],
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 

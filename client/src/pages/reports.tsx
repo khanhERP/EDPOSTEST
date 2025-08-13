@@ -6,6 +6,7 @@ import { SalesChartReport } from "@/components/reports/sales-chart-report";
 import { MenuReport } from "@/components/reports/menu-report";
 import { TableReport } from "@/components/reports/table-report";
 import { DashboardOverview } from "@/components/reports/dashboard-overview";
+import { EndOfDayReport } from "@/components/reports/end-of-day-report";
 import { OrderReport } from "@/components/reports/order-report";
 import { InventoryReport } from "@/components/reports/inventory-report";
 import { CustomerReport } from "@/components/reports/customer-report";
@@ -15,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, PieChart, TrendingUp, Utensils, Package, Users, Calendar, FileText, ShoppingCart } from "lucide-react";
 import { Link, useSearch } from "wouter";
 import { useTranslation } from "@/lib/i18n";
+import { SupplierReport } from "@/components/reports/supplier-report";
 import { EmployeeReport } from "@/components/reports/employee-report";
 import { SalesChannelReport } from "@/components/reports/sales-channel-report";
 import { FinancialReport } from "@/components/reports/financial-report";
@@ -27,7 +29,7 @@ export default function ReportsPage() {
   useEffect(() => {
     const params = new URLSearchParams(search);
     const tab = params.get('tab');
-    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'order', 'inventory', 'customer', 'employee', 'saleschannel', 'financial'].includes(tab)) {
+    if (tab && ['overview', 'sales', 'saleschart', 'menu', 'table', 'endofday', 'order', 'inventory', 'customer', 'supplier', 'employee', 'saleschannel'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [search]);
@@ -102,6 +104,14 @@ export default function ReportsPage() {
                   <span className="sm:hidden">Table</span>
                 </TabsTrigger>
                 <TabsTrigger 
+                  value="endofday" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
+                  <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t("reports.endOfDayReportTab")}</span>
+                  <span className="sm:hidden">EOD</span>
+                </TabsTrigger>
+                <TabsTrigger 
                   value="order" 
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
@@ -125,7 +135,14 @@ export default function ReportsPage() {
                   <span className="hidden sm:inline">{t("reports.customerReportTab")}</span>
                   <span className="sm:hidden">Customer</span>
                 </TabsTrigger>
-
+                <TabsTrigger 
+                  value="supplier" 
+                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
+                >
+                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{t("reports.supplierReportTab")}</span>
+                  <span className="sm:hidden">Supplier</span>
+                </TabsTrigger>
                 <TabsTrigger 
                   value="employee" 
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
@@ -173,6 +190,10 @@ export default function ReportsPage() {
               <TableReport />
             </TabsContent>
 
+            <TabsContent value="endofday">
+              <EndOfDayReport />
+            </TabsContent>
+
             <TabsContent value="order">
               <OrderReport />
             </TabsContent>
@@ -185,7 +206,9 @@ export default function ReportsPage() {
               <CustomerReport />
             </TabsContent>
 
-
+            <TabsContent value="supplier">
+              <SupplierReport />
+            </TabsContent>
 
             <TabsContent value="employee">
               <EmployeeReport />
@@ -193,6 +216,10 @@ export default function ReportsPage() {
 
             <TabsContent value="saleschannel">
               <SalesChannelReport />
+            </TabsContent>
+
+            <TabsContent value="eod" className="hidden">
+              <EndOfDayReport />
             </TabsContent>
 
             <TabsContent value="financial">

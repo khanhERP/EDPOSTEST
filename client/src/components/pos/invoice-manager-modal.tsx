@@ -27,8 +27,6 @@ import { format } from "date-fns";
 interface Invoice {
   id: number;
   invoiceNumber: string;
-  transactionNumber?: string;
-  cashierName?: string;
   customerId?: number;
   customerName: string;
   customerTaxCode?: string;
@@ -222,8 +220,6 @@ export function InvoiceManagerModal({ isOpen, onClose }: InvoiceManagerModalProp
                 <TableHeader>
                   <TableRow>
                     <TableHead>Số hóa đơn</TableHead>
-                    <TableHead>Số giao dịch</TableHead>
-                    <TableHead>Thu ngân</TableHead>
                     <TableHead>Khách hàng</TableHead>
                     <TableHead>Ngày tạo</TableHead>
                     <TableHead>Tổng tiền</TableHead>
@@ -235,13 +231,13 @@ export function InvoiceManagerModal({ isOpen, onClose }: InvoiceManagerModalProp
                 <TableBody>
                   {isLoadingInvoices ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8">
+                      <TableCell colSpan={7} className="text-center py-8">
                         Đang tải...
                       </TableCell>
                     </TableRow>
                   ) : filteredInvoices.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8">
+                      <TableCell colSpan={7} className="text-center py-8">
                         {searchQuery ? "Không tìm thấy hóa đơn nào" : "Chưa có hóa đơn nào"}
                       </TableCell>
                     </TableRow>
@@ -250,12 +246,6 @@ export function InvoiceManagerModal({ isOpen, onClose }: InvoiceManagerModalProp
                       <TableRow key={invoice.id}>
                         <TableCell className="font-medium">
                           {invoice.invoiceNumber}
-                        </TableCell>
-                        <TableCell>
-                          {invoice.transactionNumber || "N/A"}
-                        </TableCell>
-                        <TableCell>
-                          {invoice.cashierName || "N/A"}
                         </TableCell>
                         <TableCell>
                           <div>

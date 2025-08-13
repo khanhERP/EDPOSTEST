@@ -32,39 +32,20 @@ import { useTranslation, useLanguageStore } from "@/lib/i18n";
 export function SalesReport() {
   const { t } = useTranslation();
 
-  const [dateRange, setDateRange] = useState("month");
-  const [startDate, setStartDate] = useState<string>(() => {
-    // Tháng trước: từ ngày 1 tháng trước
-    const today = new Date();
-    const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    return lastMonthStart.toISOString().split("T")[0];
-  });
-  const [endDate, setEndDate] = useState<string>(() => {
-    // Tháng trước: đến ngày cuối tháng trước
-    const today = new Date();
-    const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-    return lastMonthEnd.toISOString().split("T")[0];
-  });
+  const [dateRange, setDateRange] = useState("week");
+  const [startDate, setStartDate] = useState<string>(
+    new Date().toISOString().split("T")[0],
+  );
+  const [endDate, setEndDate] = useState<string>(
+    new Date().toISOString().split("T")[0],
+  );
 
-  const { data: transactions, isLoading } = useQuery({
-    queryKey: ["/api/transactions", startDate, endDate],
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+  const { data: transactions } = useQuery({
+    queryKey: ["/api/transactions"],
   });
 
   const getSalesData = () => {
-    // Return empty data structure instead of null when no transactions
-    if (!transactions || !Array.isArray(transactions)) {
-      return {
-        dailySales: [],
-        paymentMethods: [],
-        hourlySales: {},
-        totalRevenue: 0,
-        totalOrders: 0,
-        totalCustomers: 0,
-        averageOrderValue: 0,
-      };
-    }
+    if (!transactions || !Array.isArray(transactions)) return null;
 
     console.log("Sales Report Debug:", {
       totalTransactions: transactions.length,
@@ -167,23 +148,23 @@ export function SalesReport() {
         setEndDate(today.toISOString().split("T")[0]);
         break;
       case "week":
-        // Tuần trước: từ thứ 2 tuần trước đến chủ nhật tuần trước
-        const lastWeekStart = new Date(today);
-        lastWeekStart.setDate(today.getDate() - today.getDay() - 6); // Thứ 2 tuần trước
-        const lastWeekEnd = new Date(lastWeekStart);
-        lastWeekEnd.setDate(lastWeekStart.getDate() + 6); // Chủ nhật tuần trước
-        setStartDate(lastWeekStart.toISOString().split("T")[0]);
-        setEndDate(lastWeekEnd.toISOString().split("T")[0]);
+        setStartDate(
+          new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0],
+        );
+        setEndDate(today.toISOString().split("T")[0]);
         break;
       case "month":
-        // Tháng trước: từ ngày 1 tháng trước đến ngày cuối tháng trước
-        const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0); // Ngày cuối tháng trước
-        setStartDate(lastMonthStart.toISOString().split("T")[0]);
+        // Tháng trước
+        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+        setStartDate(lastMonth.toISOString().split("T")[0]);
         setEndDate(lastMonthEnd.toISOString().split("T")[0]);
         break;
       case "custom":
-        // Không thay đổi ngày khi chọn custom
+        setStartDate(today.toISOString().split("T")[0]);
+        setEndDate(today.toISOString().split("T")[0]);
         break;
     }
   };
@@ -212,8 +193,7 @@ export function SalesReport() {
 
   const salesData = getSalesData();
 
-  // Show loading only when actually loading
-  if (isLoading) {
+  if (!salesData) {
     return (
       <div className="flex justify-center py-8">
         <div className="text-gray-500">{t("reports.loading")}</div>
@@ -248,7 +228,9 @@ export function SalesReport() {
                 <SelectContent>
                   <SelectItem value="today">{t("reports.toDay")}</SelectItem>
                   <SelectItem value="week">{t("reports.lastWeek")}</SelectItem>
-                  <SelectItem value="month">{t("reports.lastMonth")}</SelectItem>
+                  <SelectItem value="month">
+                    {t("reports.lastMonth")}
+                  </SelectItem>
                   <SelectItem value="custom">{t("reports.custom")}</SelectItem>
                 </SelectContent>
               </Select>

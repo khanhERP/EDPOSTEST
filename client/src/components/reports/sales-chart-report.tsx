@@ -54,7 +54,7 @@ export function SalesChartReport() {
   const [salesChannel, setSalesChannel] = useState("all");
 
   const { data: transactions } = useQuery({
-    queryKey: ["/api/transactions", startDate, endDate],
+    queryKey: ["/api/transactions"],
   });
 
   const { data: employees } = useQuery({
