@@ -408,7 +408,7 @@ export function ReceiptModal({
                 name: item.productName,
                 price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
                 quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-                sku: item.productId,
+                sku: item.productId?.toString() || `FOOD${String(item.id).padStart(5, '0')}`,
                 taxRate: 10
               }));
             } else {
