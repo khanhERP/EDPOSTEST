@@ -33,19 +33,34 @@ export function SalesReport() {
   const { t } = useTranslation();
 
   const [dateRange, setDateRange] = useState("week");
-  const [startDate, setStartDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
-  );
-  const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
-  );
+  const [startDate, setStartDate] = useState<string>(() => {
+    // Set to 7 days ago
+    return new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  });
+  const [endDate, setEndDate] = useState<string>(() => {
+    // Set to today
+    return new Date().toISOString().split("T")[0];
+  });
 
-  const { data: transactions } = useQuery({
+  const { data: transactions, isLoading } = useQuery({
     queryKey: ["/api/transactions", startDate, endDate],
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const getSalesData = () => {
-    if (!transactions || !Array.isArray(transactions)) return null;
+    // Return empty data structure instead of null when no transactions
+    if (!transactions || !Array.isArray(transactions)) {
+      return {
+        dailySales: [],
+        paymentMethods: [],
+        hourlySales: {},
+        totalRevenue: 0,
+        totalOrders: 0,
+        totalCustomers: 0,
+        averageOrderValue: 0,
+      };
+    }
 
     console.log("Sales Report Debug:", {
       totalTransactions: transactions.length,
@@ -148,23 +163,22 @@ export function SalesReport() {
         setEndDate(today.toISOString().split("T")[0]);
         break;
       case "week":
+        // 7 ngày trước đến hôm nay
         setStartDate(
-          new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+          new Date(Date.now() - 6 * 24 * 60 * 60 * 1000)
             .toISOString()
             .split("T")[0],
         );
         setEndDate(today.toISOString().split("T")[0]);
         break;
       case "month":
-        // Tháng trước
-        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-        setStartDate(lastMonth.toISOString().split("T")[0]);
-        setEndDate(lastMonthEnd.toISOString().split("T")[0]);
+        // Tháng hiện tại
+        const firstDayThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        setStartDate(firstDayThisMonth.toISOString().split("T")[0]);
+        setEndDate(today.toISOString().split("T")[0]);
         break;
       case "custom":
-        setStartDate(today.toISOString().split("T")[0]);
-        setEndDate(today.toISOString().split("T")[0]);
+        // Không thay đổi ngày khi chọn custom
         break;
     }
   };
@@ -193,7 +207,8 @@ export function SalesReport() {
 
   const salesData = getSalesData();
 
-  if (!salesData) {
+  // Show loading only when actually loading
+  if (isLoading) {
     return (
       <div className="flex justify-center py-8">
         <div className="text-gray-500">{t("reports.loading")}</div>
