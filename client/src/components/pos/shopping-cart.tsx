@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { ShoppingCart as CartIcon, Minus, Plus, Trash2, CreditCard, Banknote } from "lucide-react";
+import {
+  ShoppingCart as CartIcon,
+  Minus,
+  Plus,
+  Trash2,
+  CreditCard,
+  Banknote,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +23,7 @@ interface ShoppingCartProps {
   onClearCart: () => void;
   onCheckout: (paymentData: any) => void;
   isProcessing: boolean;
-  orders?: Array<{ id: string; name: string; cart: CartItem[]; }>;
+  orders?: Array<{ id: string; name: string; cart: CartItem[] }>;
   activeOrderId?: string;
   onCreateNewOrder?: () => void;
   onSwitchOrder?: (orderId: string) => void;
@@ -34,7 +41,7 @@ export function ShoppingCart({
   activeOrderId,
   onCreateNewOrder,
   onSwitchOrder,
-  onRemoveOrder
+  onRemoveOrder,
 }: ShoppingCartProps) {
   const [paymentMethod, setPaymentMethod] = useState<string>("bankTransfer");
   const [amountReceived, setAmountReceived] = useState<string>("");
@@ -55,30 +62,38 @@ export function ShoppingCart({
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [currentReceipt, setCurrentReceipt] = useState<any>(null);
 
-
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
     if (item.taxRate && parseFloat(item.taxRate) > 0) {
-      return sum + (parseFloat(item.price) * parseFloat(item.taxRate) / 100 * item.quantity);
+      return (
+        sum +
+        ((parseFloat(item.price) * parseFloat(item.taxRate)) / 100) *
+          item.quantity
+      );
     }
     return sum;
   }, 0);
   const total = subtotal + tax;
-  const change = paymentMethod === "cash" ? Math.max(0, parseFloat(amountReceived || "0") - total) : 0;
+  const change =
+    paymentMethod === "cash"
+      ? Math.max(0, parseFloat(amountReceived || "0") - total)
+      : 0;
 
   // WebSocket connection for broadcasting cart updates to customer display
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws`;
-    
+
     let ws: WebSocket;
 
     const connectWebSocket = () => {
       try {
         ws = new WebSocket(wsUrl);
-        
+
         ws.onopen = () => {
-          console.log("Shopping Cart: WebSocket connected for customer display broadcasting");
+          console.log(
+            "Shopping Cart: WebSocket connected for customer display broadcasting",
+          );
         };
 
         ws.onerror = (error) => {
@@ -104,22 +119,24 @@ export function ShoppingCart({
 
   // Broadcast cart updates to customer display
   useEffect(() => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws`;
 
     try {
       const ws = new WebSocket(wsUrl);
-      
+
       ws.onopen = () => {
         console.log("Broadcasting cart update to customer display:", cart);
-        ws.send(JSON.stringify({
-          type: 'cart_update',
-          cart: cart,
-          subtotal,
-          tax,
-          total,
-          timestamp: new Date().toISOString()
-        }));
+        ws.send(
+          JSON.stringify({
+            type: "cart_update",
+            cart: cart,
+            subtotal,
+            tax,
+            total,
+            timestamp: new Date().toISOString(),
+          }),
+        );
       };
 
       // Clean up
@@ -132,8 +149,22 @@ export function ShoppingCart({
   const getPaymentMethods = () => {
     // Only return cash and bank transfer payment methods
     const paymentMethods = [
-      { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
-      { id: 2, name: "Chuyển khoản", nameKey: "bankTransfer", type: "transfer", enabled: true, icon: "🏦" },
+      {
+        id: 1,
+        name: "Tiền mặt",
+        nameKey: "cash",
+        type: "cash",
+        enabled: true,
+        icon: "💵",
+      },
+      {
+        id: 2,
+        name: "Chuyển khoản",
+        nameKey: "bankTransfer",
+        type: "transfer",
+        enabled: true,
+        icon: "🏦",
+      },
     ];
 
     return paymentMethods;
@@ -152,15 +183,15 @@ export function ShoppingCart({
       // Show receipt preview first for non-cash payments
       const receipt = {
         transactionId: `TXN-${Date.now()}`,
-        items: cart.map(item => ({
+        items: cart.map((item) => ({
           id: item.id,
           productId: item.id,
           productName: item.name,
           price: parseFloat(item.price).toFixed(2),
           quantity: item.quantity,
           total: parseFloat(item.total).toFixed(2),
-          sku: `ITEM${String(item.id).padStart(3, '0')}`,
-          taxRate: parseFloat(item.taxRate || "10")
+          sku: `ITEM${String(item.id).padStart(3, "0")}`,
+          taxRate: parseFloat(item.taxRate || "10"),
         })),
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
@@ -169,14 +200,14 @@ export function ShoppingCart({
         amountReceived: total.toFixed(2),
         change: "0.00",
         cashierName: "John Smith",
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
 
       // Create cartItems in the format expected by receipt modal with detailed logging
       console.log("🛒 Processing cart items for receipt:", cart);
       console.log("🛒 Cart items count:", cart.length);
 
-      const cartItemsForReceipt = cart.map(item => {
+      const cartItemsForReceipt = cart.map((item) => {
         console.log(`🔍 Processing cart item ${item.id}:`, {
           id: item.id,
           name: item.name,
@@ -186,17 +217,26 @@ export function ShoppingCart({
           quantityType: typeof item.quantity,
           taxRate: item.taxRate,
           total: item.total,
-          sku: item.sku
+          sku: item.id,
         });
 
         const processedItem = {
           id: item.id,
           name: item.name,
-          price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-          quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-          sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`, // Use more descriptive SKU format
-          taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10),
-          total: parseFloat(item.total)
+          price:
+            typeof item.price === "string"
+              ? parseFloat(item.price)
+              : item.price,
+          quantity:
+            typeof item.quantity === "string"
+              ? parseInt(item.quantity)
+              : item.quantity,
+          sku: item.id, // Use more descriptive SKU format
+          taxRate:
+            typeof item.taxRate === "string"
+              ? parseFloat(item.taxRate || "10")
+              : item.taxRate || 10,
+          total: parseFloat(item.total),
         };
         console.log(`📦 Processed item ${item.id}:`, processedItem);
         return processedItem;
@@ -220,7 +260,7 @@ export function ShoppingCart({
   };
 
   const handlePaymentMethodSelect = (method: string) => {
-    console.log('🎯 Payment method selected:', method);
+    console.log("🎯 Payment method selected:", method);
     setShowPaymentMethodModal(false);
 
     // Complete the payment with the selected method
@@ -230,10 +270,9 @@ export function ShoppingCart({
       change: 0,
     };
 
-    console.log('✅ Completing checkout with payment data:', paymentData);
+    console.log("✅ Completing checkout with payment data:", paymentData);
     onCheckout(paymentData);
   };
-
 
   const handleCardPaymentMethodSelect = (method: string) => {
     setSelectedCardMethod(method);
@@ -250,14 +289,19 @@ export function ShoppingCart({
     console.log("📧 E-invoice confirmed:", eInvoiceData);
 
     try {
-      // Kiểm tra nếu là "phát hành sau" (publishLater) 
+      // Kiểm tra nếu là "phát hành sau" (publishLater)
       if (eInvoiceData.publishLater) {
-        console.log("📝 E-invoice saved for later publishing, processing receipt display");
+        console.log(
+          "📝 E-invoice saved for later publishing, processing receipt display",
+        );
 
         // Kiểm tra nếu có receipt data từ e-invoice modal
         if (eInvoiceData.receipt) {
-          console.log("📄 Displaying receipt for later publishing:", eInvoiceData.receipt);
-          
+          console.log(
+            "📄 Displaying receipt for later publishing:",
+            eInvoiceData.receipt,
+          );
+
           // Clear cart trước khi hiển thị receipt modal
           onClearCart();
 
@@ -267,7 +311,8 @@ export function ShoppingCart({
 
           toast({
             title: "Thành công",
-            description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
+            description:
+              "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
           });
         } else {
           console.log("⚠️ No receipt data found for later publishing");
@@ -275,8 +320,9 @@ export function ShoppingCart({
           onClearCart();
 
           toast({
-            title: "Thành công", 
-            description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
+            title: "Thành công",
+            description:
+              "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
           });
         }
 
@@ -286,7 +332,9 @@ export function ShoppingCart({
 
       // Nếu phát hành thành công (có showReceipt flag)
       if (eInvoiceData.showReceipt) {
-        console.log("✅ E-invoice published successfully, creating transaction and showing receipt");
+        console.log(
+          "✅ E-invoice published successfully, creating transaction and showing receipt",
+        );
 
         // Tạo transaction với payment method là einvoice
         const transactionData = {
@@ -295,28 +343,31 @@ export function ShoppingCart({
             total: total.toFixed(2),
             subtotal: subtotal.toFixed(2),
             tax: tax.toFixed(2),
-            paymentMethod: 'einvoice',
+            paymentMethod: "einvoice",
             amountReceived: total.toFixed(2),
             change: "0.00",
             cashierName: "John Smith",
           },
-          items: cart.map(item => ({
+          items: cart.map((item) => ({
             productId: item.id,
             productName: item.name,
             price: parseFloat(item.price),
             quantity: item.quantity,
             total: parseFloat(item.total),
-            sku: item.sku,
+            sku: item.id,
             taxRate: parseFloat(item.taxRate || "10"),
           })),
         };
 
-        console.log("Creating transaction for published e-invoice:", transactionData);
+        console.log(
+          "Creating transaction for published e-invoice:",
+          transactionData,
+        );
 
-        const response = await fetch('/api/transactions', {
-          method: 'POST',
+        const response = await fetch("/api/transactions", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(transactionData),
         });
@@ -331,16 +382,16 @@ export function ShoppingCart({
         // Update product stock
         for (const item of cart) {
           try {
-            const stockResponse = await fetch('/api/inventory/update-stock', {
-              method: 'POST',
+            const stockResponse = await fetch("/api/inventory/update-stock", {
+              method: "POST",
               headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
               },
               body: JSON.stringify({
                 productId: item.id,
                 quantity: item.quantity,
-                type: 'subtract',
-                notes: `E-invoice sale - Transaction ${receipt.transactionId} - Invoice ${eInvoiceData.invoiceData?.invoiceNo || 'N/A'}`,
+                type: "subtract",
+                notes: `E-invoice sale - Transaction ${receipt.transactionId} - Invoice ${eInvoiceData.invoiceData?.invoiceNo || "N/A"}`,
               }),
             });
 
@@ -348,7 +399,10 @@ export function ShoppingCart({
               console.log(`✅ Stock updated for product ${item.id}`);
             }
           } catch (stockError) {
-            console.error(`Stock update error for product ${item.id}:`, stockError);
+            console.error(
+              `Stock update error for product ${item.id}:`,
+              stockError,
+            );
           }
         }
 
@@ -357,17 +411,16 @@ export function ShoppingCart({
         setCurrentReceipt(receipt);
 
         // Clear cart
-        clearCart();
-        setSelectedPaymentMethod(null);
+        onClearCart();
+        //setSelectedPaymentMethod(null);
 
         toast({
           title: "Thành công",
-          description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${eInvoiceData.invoiceData?.invoiceNo || 'N/A'}`,
+          description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${eInvoiceData.invoiceData?.invoiceNo || "N/A"}`,
         });
       }
-
     } catch (error) {
-      console.error('Error processing e-invoice:', error);
+      console.error("Error processing e-invoice:", error);
       toast({
         variant: "destructive",
         title: "Lỗi",
@@ -376,14 +429,15 @@ export function ShoppingCart({
     }
   };
 
-
   const canCheckout = cart.length > 0;
 
   return (
     <aside className="w-96 bg-white shadow-material border-l pos-border flex flex-col">
       <div className="p-4 border-b pos-border mt-2">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl pos-text-primary font-semibold">{t('pos.purchaseHistory')}</h2>
+          <h2 className="text-xl pos-text-primary font-semibold">
+            {t("pos.purchaseHistory")}
+          </h2>
           {onCreateNewOrder && (
             <Button
               onClick={onCreateNewOrder}
@@ -391,7 +445,7 @@ export function ShoppingCart({
               variant="outline"
               className="text-xs px-2 py-1"
             >
-              + {t('pos.newOrder')}
+              + {t("pos.newOrder")}
             </Button>
           )}
         </div>
@@ -428,13 +482,15 @@ export function ShoppingCart({
         )}
 
         <div className="flex items-center justify-between text-sm pos-text-secondary">
-          <span>{cart.length} {t('common.items')}</span>
+          <span>
+            {cart.length} {t("common.items")}
+          </span>
           {cart.length > 0 && (
-            <button 
+            <button
               onClick={onClearCart}
               className="text-red-500 hover:text-red-700 transition-colors"
             >
-              {t('pos.clearCart')}
+              {t("pos.clearCart")}
             </button>
           )}
         </div>
@@ -443,20 +499,39 @@ export function ShoppingCart({
         {cart.length === 0 ? (
           <div className="text-center py-12">
             <CartIcon className="mx-auto text-gray-400 mb-4" size={48} />
-            <h3 className="text-lg font-medium pos-text-secondary mb-2">{t('pos.emptyCart')}</h3>
-            <p className="pos-text-tertiary">{t('pos.addProductsToStart')}</p>
+            <h3 className="text-lg font-medium pos-text-secondary mb-2">
+              {t("pos.emptyCart")}
+            </h3>
+            <p className="pos-text-tertiary">{t("pos.addProductsToStart")}</p>
           </div>
         ) : (
           cart.map((item) => (
             <div key={item.id} className="bg-gray-50 rounded-lg p-2">
               <div className="flex items-start justify-between">
                 <div className="flex-1 min-w-0 pr-2">
-                  <h4 className="font-medium pos-text-primary text-sm truncate">{item.name}</h4>
+                  <h4 className="font-medium pos-text-primary text-sm truncate">
+                    {item.name}
+                  </h4>
                   <div className="space-y-1">
-                    <p className="text-xs pos-text-secondary">{parseFloat(item.price).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ {t('pos.each')}</p>
+                    <p className="text-xs pos-text-secondary">
+                      {parseFloat(item.price).toLocaleString("vi-VN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}{" "}
+                      ₫ {t("pos.each")}
+                    </p>
                     {item.taxRate && parseFloat(item.taxRate) > 0 && (
                       <p className="text-xs text-orange-600">
-                        Thuế: {(parseFloat(item.price) * parseFloat(item.taxRate) / 100 * item.quantity).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ ({item.taxRate}%)
+                        Thuế:{" "}
+                        {(
+                          ((parseFloat(item.price) * parseFloat(item.taxRate)) /
+                            100) *
+                          item.quantity
+                        ).toLocaleString("vi-VN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        ₫ ({item.taxRate}%)
                       </p>
                     )}
                   </div>
@@ -466,17 +541,23 @@ export function ShoppingCart({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
+                      onClick={() =>
+                        onUpdateQuantity(item.id, item.quantity - 1)
+                      }
                       className="w-6 h-6 p-0"
                       disabled={item.quantity <= 1}
                     >
                       <Minus size={10} />
                     </Button>
-                    <span className="w-6 text-center font-medium text-xs">{item.quantity}</span>
+                    <span className="w-6 text-center font-medium text-xs">
+                      {item.quantity}
+                    </span>
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
+                      onClick={() =>
+                        onUpdateQuantity(item.id, item.quantity + 1)
+                      }
                       className="w-6 h-6 p-0"
                       disabled={item.quantity >= item.stock}
                     >
@@ -491,7 +572,13 @@ export function ShoppingCart({
                       <Trash2 size={10} />
                     </Button>
                   </div>
-                  <div className="font-bold pos-text-primary text-sm">{parseFloat(item.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</div>
+                  <div className="font-bold pos-text-primary text-sm">
+                    {parseFloat(item.total).toLocaleString("vi-VN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}{" "}
+                    ₫
+                  </div>
                 </div>
               </div>
             </div>
@@ -503,27 +590,49 @@ export function ShoppingCart({
         <div className="border-t pos-border p-4 space-y-4">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="pos-text-secondary">{t('tables.subtotal')}:</span>
-              <span className="font-medium">{subtotal.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
+              <span className="pos-text-secondary">
+                {t("tables.subtotal")}:
+              </span>
+              <span className="font-medium">
+                {subtotal.toLocaleString("vi-VN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}{" "}
+                ₫
+              </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="pos-text-secondary">{t('tables.tax')}:</span>
-              <span className="font-medium">{tax.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
+              <span className="pos-text-secondary">{t("tables.tax")}:</span>
+              <span className="font-medium">
+                {tax.toLocaleString("vi-VN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}{" "}
+                ₫
+              </span>
             </div>
             <div className="border-t pt-2">
               <div className="flex justify-between">
-                <span className="text-lg font-bold pos-text-primary">{t('tables.total')}:</span>
-                <span className="text-lg font-bold text-blue-600">{total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
+                <span className="text-lg font-bold pos-text-primary">
+                  {t("tables.total")}:
+                </span>
+                <span className="text-lg font-bold text-blue-600">
+                  {total.toLocaleString("vi-VN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  ₫
+                </span>
               </div>
             </div>
           </div>
 
-
-
           {/* Cash Payment */}
           {paymentMethod === "cash" && (
             <div className="space-y-2">
-              <Label className="text-sm font-medium pos-text-primary">{t('tables.amountReceived')}</Label>
+              <Label className="text-sm font-medium pos-text-primary">
+                {t("tables.amountReceived")}
+              </Label>
               <Input
                 type="number"
                 step="0.01"
@@ -532,8 +641,16 @@ export function ShoppingCart({
                 onChange={(e) => setAmountReceived(e.target.value)}
               />
               <div className="flex justify-between text-sm">
-                <span className="pos-text-secondary">{t('tables.change')}:</span>
-                <span className="font-bold text-green-600">{change.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
+                <span className="pos-text-secondary">
+                  {t("tables.change")}:
+                </span>
+                <span className="font-bold text-green-600">
+                  {change.toLocaleString("vi-VN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
+                  ₫
+                </span>
               </div>
             </div>
           )}
@@ -544,7 +661,7 @@ export function ShoppingCart({
             className="w-full btn-success flex items-center justify-center"
           >
             <CartIcon className="mr-2" size={16} />
-            {isProcessing ? "Processing..." : t('pos.checkout')}
+            {isProcessing ? "Processing..." : t("pos.checkout")}
           </Button>
         </div>
       )}
@@ -556,13 +673,13 @@ export function ShoppingCart({
         receipt={previewReceipt}
         onConfirm={handleReceiptConfirm}
         isPreview={true}
-        cartItems={cart.map(item => ({
+        cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,
           price: parseFloat(item.price),
           quantity: item.quantity,
-          sku: `ITEM${String(item.id).padStart(3, '0')}`,
-          taxRate: parseFloat(item.taxRate || "10")
+          sku: `ITEM${String(item.id).padStart(3, "0")}`,
+          taxRate: parseFloat(item.taxRate || "10"),
         }))}
       />
 
@@ -572,13 +689,13 @@ export function ShoppingCart({
         onClose={() => setShowPaymentMethodModal(false)}
         onSelectMethod={handlePaymentMethodSelect}
         total={total}
-        cartItems={cart.map(item => ({
+        cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,
           price: parseFloat(item.price),
           quantity: item.quantity,
-          sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
-          taxRate: parseFloat(item.taxRate || "10")
+          sku: String(item.id),
+          taxRate: parseFloat(item.taxRate || "10"),
         }))}
       />
 
