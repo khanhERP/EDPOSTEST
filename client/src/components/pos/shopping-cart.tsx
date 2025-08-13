@@ -305,7 +305,7 @@ export function ShoppingCart({
           // Clear cart trước khi hiển thị receipt modal
           onClearCart();
 
-          // Hiển thị receipt modal với data thực sự
+          // Hiển thị receipt modal với data thực sự, isPreview = false để có thể in ngay
           setCurrentReceipt(eInvoiceData.receipt);
           setShowReceiptModal(true);
 
@@ -704,7 +704,17 @@ export function ShoppingCart({
         isOpen={showReceiptModal}
         onClose={() => setShowReceiptModal(false)}
         receipt={currentReceipt}
-        onConfirm={() => setShowReceiptModal(false)} // Confirming receipt usually means closing it
+        onConfirm={() => setShowReceiptModal(false)}
+        isPreview={false} // Không phải preview, có thể in ngay
+        autoShowPrint={true} // Tự động hiển thị dialog in
+        cartItems={cart.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: `FOOD${String(item.id).padStart(5, "0")}`,
+          taxRate: parseFloat(item.taxRate || "10"),
+        }))}
       />
 
       {/* E-Invoice Modal (Assuming you have this component) */}
