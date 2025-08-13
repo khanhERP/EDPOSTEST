@@ -371,7 +371,8 @@ export const invoices = pgTable("invoices", {
   customerId: integer("customer_id").references(() => customers.id),
   buyerName: varchar("buyer_name", { length: 100 }).notNull(), // Renamed from customerName for clarity
   buyerTaxCode: varchar("buyer_tax_code", { length: 20 }),
-  buyerAddress: text("buyer_address"),</old_str>
+  buyerAddress: text("buyer_address"),
+  buyerPhoneNumber: varchar("buyer_phone_number", { length: 20 }),</old_str>
   buyerPhoneNumber: varchar("buyer_phone_number", { length: 20 }),
   buyerEmail: varchar("buyer_email", { length: 100 }),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
