@@ -191,7 +191,7 @@ export function EInvoiceModal({
       console.log("🔄 Cart items or total changed:", {
         cartItems: cartItems?.length || 0,
         total,
-        timestamp: new Date().toISOString(),
+        timestamp: new Date().getTime(),
       });
     }
   }, [cartItems, total, isOpen]);
@@ -553,7 +553,7 @@ export function EInvoiceModal({
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: new Date().toISOString() // Create fresh Date object
+          createdAt: new Date().getTime() // Use timestamp instead
         };
 
         // Gọi onConfirm để hiển thị receipt trước khi đóng modal
@@ -589,7 +589,7 @@ export function EInvoiceModal({
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: new Date().toISOString() // Create fresh Date object
+          createdAt: new Date().getTime() // Use timestamp instead
         };
 
         console.log('✅ Calling onConfirm to show receipt modal');
@@ -1074,7 +1074,7 @@ export function EInvoiceModal({
             amountReceived: formData.total,
             change: "0.00",
             cashierName: "E-Invoice System",
-            createdAt: new Date().toISOString() // Create fresh Date object
+            createdAt: new Date().getTime() // Use timestamp instead
           };
           onConfirm({ ...invoiceSavePayload, invoiceData: savedInvoice, receipt: receiptData, showReceipt: true });
         } else if (source === 'table' && orderId) {
@@ -1105,7 +1105,7 @@ export function EInvoiceModal({
             amountReceived: formData.total,
             change: "0.00",
             cashierName: "E-Invoice System",
-            createdAt: new Date().toISOString() // Create fresh Date object
+            createdAt: new Date().getTime() // Use timestamp instead
           };
           onConfirm({ ...invoiceSavePayload, invoiceData: savedInvoice, receipt: receiptData, showReceipt: true });
         }
