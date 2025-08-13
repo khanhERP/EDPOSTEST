@@ -369,10 +369,7 @@ export const invoices = pgTable("invoices", {
   transactionNumber: varchar("transaction_number", { length: 50 }),
   cashierName: varchar("cashier_name", { length: 100 }),
   customerId: integer("customer_id").references(() => customers.id),
-  buyerName: varchar("buyer_name", { length: 100 }).notNull(), // Renamed from customerName for clarity
-  buyerTaxCode: varchar("buyer_tax_code", { length: 20 }),
-  buyerAddress: text("buyer_address"),
-  buyerPhoneNumber: varchar("buyer_phone_number", { length: 20 }),</old_str>
+  buyerName: varchar("buyer_name", { length: 100 }).notNull(), // Renamed from customerName for clarityoneNumber: varchar("buyer_phone_number", { length: 20 }),</old_str>
   buyerPhoneNumber: varchar("buyer_phone_number", { length: 20 }),
   buyerEmail: varchar("buyer_email", { length: 100 }),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
@@ -388,9 +385,13 @@ export const invoices = pgTable("invoices", {
   einvoiceProvider: varchar("einvoice_provider", { length: 50 }),
   einvoiceTemplate: varchar("einvoice_template", { length: 50 }),
   providerInvoiceNumber: varchar("provider_invoice_number", { length: 100 }),
-  providerInvoiceSeries: varchar("provider_invoice_series", { length: 50 }),
-  providerInvoiceNumber_1: varchar("provider_invoice_number_1", { length: 100 }),
-  providerInvoiceNumber_2: varchar("provider_invoice_number_2", { length: 100 }),
+  providerInvoiceSeries: varchar("provider_invoice_series", { length: 50 })
+   ,
+  provider,
+ InvoiceNumber_1: varchar("provider_invoice_number_1", { length: 100 })
+   ,
+  provider,
+ InvoiceNumber_2: varchar("provider_invoice_number_2", { length: 100 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -406,8 +407,10 @@ export const invoiceItems = pgTable("invoice_items", {
   productName: varchar("product_name", { length: 200 }).notNull(),
   quantity: integer("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
-  total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  taxRate: decimal("tax_rate", { precision: 5, scale: 2 }).notNull().default("10.00"),
+  total: decimal("total", { precision: 10, scale: 2 }).no
+    tNull(),
+ 
+     taxRate: decimal("tax_rate", { precision: 5, scale: 2 }).notNull().default("10.00"),
 });
 
 export const eInvoiceConnections = pgTable("einvoice_connections", {
@@ -519,14 +522,16 @@ export const insertInvoiceTemplateSchema = createInsertSchema(
   id: true,
   createdAt: true,
   updatedAt: true,
-});
+}
+  );
 
-export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+expo  rt const ins  ertInvoiceSchema =  cr eateInsertSchema(  in
+  voices).om  it({
   id: true,
   createdAt: true,
   updatedAt: true,
 }).extend({
-  einvoiceStatus: z.number().min(0).max(10).optional().default(0),
+    einvoiceStatus: z.number().min(0).max(10).optional().default(0),
 });
 
 export const insertInvoiceItemSchema = createInsertSchema(invoiceItems).omit({
@@ -652,6 +657,7 @@ export const pointTransactionsRelations = relations(
 );
 
 // Receipt data type
-export type Receipt = Transaction & {
+export type Receipt = Transac
+tion & {
   items: (TransactionItem & { productName: string })[];
 };
