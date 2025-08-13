@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -44,17 +45,6 @@ export function DashboardOverview() {
 
   const { data: transactions } = useQuery({
     queryKey: ["/api/transactions", startDate, endDate],
-    queryFn: async () => {
-      const params = new URLSearchParams({
-        startDate,
-        endDate
-      });
-      const response = await fetch(`/api/transactions?${params}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch transactions');
-      }
-      return response.json();
-    },
   });
 
   const { data: tables } = useQuery({
@@ -81,14 +71,23 @@ export function DashboardOverview() {
     let peakHour = 12;
     let totalTables = 12;
 
-    if (transactions && transactions.length > 0) {
-      periodRevenue = transactions.reduce(
+    // Process real transactions if available
+    if (transactions && Array.isArray(transactions) && transactions.length > 0) {
+      console.log("Dashboard Debug - Using real transaction data:", {
+        totalTransactions: transactions.length,
+        dateRange: `${startDate} to ${endDate}`
+      });
+
+      // Transactions are already filtered by API based on date range
+      const filteredTransactions = transactions;
+
+      periodRevenue = filteredTransactions.reduce(
         (total: number, transaction: any) => total + Number(transaction.total || 0),
         0,
       );
 
-      periodOrderCount = transactions.length;
-      periodCustomerCount = transactions.length;
+      periodOrderCount = filteredTransactions.length;
+      periodCustomerCount = filteredTransactions.length;
 
       const start = new Date(startDate);
       const end = new Date(endDate);
@@ -102,8 +101,10 @@ export function DashboardOverview() {
 
       // Calculate peak hour
       const hourlyTransactions: { [key: number]: number } = {};
-      transactions.forEach((transaction: any) => {
-        const hour = new Date(transaction.createdAt || transaction.created_at).getHours();
+      filteredTransactions.forEach((transaction: any) => {
+        const hour = new Date(
+          transaction.createdAt || transaction.created_at,
+        ).getHours();
         hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
       });
 
@@ -115,14 +116,21 @@ export function DashboardOverview() {
               : peak,
         ));
       }
+    } else {
+      console.log("Dashboard Debug - No transaction data available, using defaults");
     }
 
-    if (tables && tables.length > 0) {
+    // Process real table data if available
+    if (tables && Array.isArray(tables) && tables.length > 0) {
+      console.log("Dashboard Debug - Using real table data:", tables.length);
       totalTables = tables.length;
       occupiedTables = tables.filter(
         (table: TableType) => table.status === "occupied",
       ).length;
     } else {
+      // Default table data if none available
+      console.log("Dashboard Debug - No table data available, using defaults");
+      totalTables = 12;
       occupiedTables = 2;
     }
 
