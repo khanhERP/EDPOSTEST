@@ -1240,7 +1240,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     centralBranch: "Chi nhánh trung tâm",
 
     // Financial report
-    financialReport: "Báo cáo tài chính",
+    financialReport: "Báo cáo tài chính", 
     financialReportTab: "Báo cáo tài chính",
     financialReportDescription: "Phân tích lợi nhuận và hiệu suất tài chính",
     periodFilter: "Bộ lọc khoảng thời gian",
