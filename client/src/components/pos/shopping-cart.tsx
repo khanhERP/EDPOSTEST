@@ -707,7 +707,14 @@ export function ShoppingCart({
         onConfirm={() => setShowReceiptModal(false)}
         isPreview={false} // Không phải preview, có thể in ngay
         autoShowPrint={true} // Tự động hiển thị dialog in
-        cartItems={cart.map((item) => ({
+        cartItems={currentReceipt ? (currentReceipt.items || []).map((item: any) => ({
+          id: item.productId || item.id,
+          name: item.productName || item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: `FOOD${String(item.productId || item.id).padStart(5, "0")}`,
+          taxRate: parseFloat(item.taxRate || "10"),
+        })) : cart.map((item) => ({
           id: item.id,
           name: item.name,
           price: parseFloat(item.price),
