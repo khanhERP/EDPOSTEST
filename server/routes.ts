@@ -440,6 +440,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           endParam: endDate
         });
 
+        // Use string comparison for date filtering since createdAt is stored as string
         query = query.where(
           and(
             gte(transactionsTable.createdAt, start.toISOString()),
@@ -451,13 +452,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const transactionResults = await query;
       console.log("Transactions query result:", {
         count: transactionResults.length,
-        dateRange: { startDate, endDate }
+        dateRange: { startDate, endDate },
+        firstTransaction: transactionResults[0] || null
       });
 
       res.json(transactionResults);
     } catch (error) {
       console.error("Error fetching transactions:", error);
-      res.status(500).json({ message: "Failed to fetch transactions" });
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        params: { startDate, endDate }
+      });
+      res.status(500).json({ 
+        message: "Failed to fetch transactions",
+        error: error.message,
+        details: "DATABASE_ERROR"
+      });
     }
   });
 
