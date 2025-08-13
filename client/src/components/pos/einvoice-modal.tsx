@@ -507,7 +507,8 @@ export function EInvoiceModal({
         onConfirm({
           ...invoiceData,
           showReceipt: true,
-          autoShowPrint: true // Flag để tự động hiển thị chế độ in
+          autoShowPrint: true, // Flag để tự động hiển thị chế độ in
+          receipt: receiptData // Đảm bảo receipt data được truyền
         });
       }
 

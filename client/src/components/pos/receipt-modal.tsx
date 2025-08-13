@@ -79,6 +79,16 @@ export function ReceiptModal({
       // Check if this is specifically from e-invoice or has autoShowPrint flag
       const isFromEInvoice = receipt.paymentMethod === 'einvoice';
       
+      console.log('🔍 Auto-print check:', {
+        isOpen,
+        hasReceipt: !!receipt,
+        isPreview,
+        hasAutoOpened,
+        isFromEInvoice,
+        autoShowPrint,
+        paymentMethod: receipt.paymentMethod
+      });
+      
       if (isFromEInvoice || autoShowPrint) {
         console.log(`🖨️ Auto-opening print window for ${isFromEInvoice ? 'e-invoice' : 'auto-print'} receipt`);
         setHasAutoOpened(true);

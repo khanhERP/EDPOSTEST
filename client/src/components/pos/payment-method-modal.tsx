@@ -17,7 +17,7 @@ import VirtualKeyboard from "@/components/ui/virtual-keyboard";
 interface PaymentMethodModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectMethod: (method: string) => void;
+  onSelectMethod: (method: string, data?: any) => void;
   total: number;
   onShowEInvoice?: () => void;
   cartItems?: Array<{
@@ -424,15 +424,24 @@ export function PaymentMethodModal({
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
-    console.log('📧 E-Invoice data received in payment modal:', eInvoiceData);
+    console.log('📧 E-invoice confirmed from payment modal:', eInvoiceData);
 
     // Close payment modal first
     onClose();
 
     // Kiểm tra xem có phải là "phát hành sau" không
     if (eInvoiceData.publishLater) {
-      console.log('⏳ E-Invoice scheduled for later publishing, not calling onSelectMethod');
-      // Không gọi onSelectMethod vì đã được xử lý hoàn toàn trong e-invoice modal
+      console.log('⏳ E-Invoice scheduled for later publishing');
+
+      // Kiểm tra nếu có showReceipt flag và receipt data
+      if (eInvoiceData.showReceipt && eInvoiceData.receipt) {
+        console.log('📄 Triggering receipt display with auto-print for later publishing');
+        // Gọi onSelectMethod với data đặc biệt để hiển thị receipt với auto-print
+        onSelectMethod('einvoice_later', {
+          receipt: eInvoiceData.receipt,
+          autoShowPrint: eInvoiceData.autoShowPrint || true
+        });
+      }
       return;
     } else {
       console.log('✅ E-Invoice published immediately, proceeding with payment completion');
@@ -797,23 +806,7 @@ export function PaymentMethodModal({
       <EInvoiceModal
         isOpen={showEInvoice}
         onClose={handleEInvoiceClose}
-        onConfirm={(eInvoiceData) => {
-          console.log('📧 E-Invoice data received in payment modal:', eInvoiceData);
-
-          // Close payment modal first
-          onClose();
-
-          // Kiểm tra xem có phải là "phát hành sau" không
-          if (eInvoiceData.publishLater) {
-            console.log('⏳ E-Invoice scheduled for later publishing, not calling onSelectMethod');
-            // Không gọi onSelectMethod vì đã được xử lý hoàn toàn trong e-invoice modal
-            return;
-          } else {
-            console.log('✅ E-Invoice published immediately, proceeding with payment completion');
-            // Chỉ gọi onSelectMethod khi phát hành ngay lập tức
-            onSelectMethod(selectedPaymentMethod);
-          }
-        }}
+        onConfirm={handleEInvoiceConfirm}
         total={total}
         cartItems={cartItems}
         source="pos"
