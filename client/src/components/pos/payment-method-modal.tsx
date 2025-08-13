@@ -17,7 +17,7 @@ import VirtualKeyboard from "@/components/ui/virtual-keyboard";
 interface PaymentMethodModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelectMethod: (method: string, data?: any) => void;
+  onSelectMethod: (method: string) => void;
   total: number;
   onShowEInvoice?: () => void;
   cartItems?: Array<{
@@ -424,24 +424,15 @@ export function PaymentMethodModal({
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
-    console.log('📧 E-invoice confirmed from payment modal:', eInvoiceData);
+    console.log('📧 E-Invoice data received in payment modal:', eInvoiceData);
 
     // Close payment modal first
     onClose();
 
     // Kiểm tra xem có phải là "phát hành sau" không
     if (eInvoiceData.publishLater) {
-      console.log('⏳ E-Invoice scheduled for later publishing');
-
-      // Kiểm tra nếu có showReceipt flag và receipt data
-      if (eInvoiceData.showReceipt && eInvoiceData.receipt) {
-        console.log('📄 Triggering receipt display with auto-print for later publishing');
-        // Gọi onSelectMethod với data đặc biệt để hiển thị receipt với auto-print
-        onSelectMethod('einvoice_later', {
-          receipt: eInvoiceData.receipt,
-          autoShowPrint: eInvoiceData.autoShowPrint || true
-        });
-      }
+      console.log('⏳ E-Invoice scheduled for later publishing, not calling onSelectMethod');
+      // Không gọi onSelectMethod vì đã được xử lý hoàn toàn trong e-invoice modal
       return;
     } else {
       console.log('✅ E-Invoice published immediately, proceeding with payment completion');
@@ -521,23 +512,31 @@ export function PaymentMethodModal({
   // Reset all states when modal closes
   useEffect(() => {
     if (!isOpen) {
-      // If QR code was showing at any point, send cancellation message to customer display
-      if (wasShowingQRCode || showQRCode || qrCodeUrl) {
-        try {
-          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-          const wsUrl = `${protocol}//${window.location.host}/ws`;
-          const ws = new WebSocket(wsUrl);
+      // Always send refresh message to customer display when modal closes
+      try {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
+        const ws = new WebSocket(wsUrl);
 
-          ws.onopen = () => {
+        ws.onopen = () => {
+          // If QR code was showing, send cancellation message first
+          if (wasShowingQRCode || showQRCode || qrCodeUrl) {
             ws.send(JSON.stringify({
               type: 'qr_payment_cancelled',
               timestamp: new Date().toISOString()
             }));
-            ws.close();
-          };
-        } catch (error) {
-          console.error('Failed to send QR payment cancellation when modal closes:', error);
-        }
+          }
+          
+          // Always send refresh message to reload customer display
+          ws.send(JSON.stringify({
+            type: 'refresh_customer_display',
+            timestamp: new Date().toISOString()
+          }));
+          
+          ws.close();
+        };
+      } catch (error) {
+        console.error('Failed to send refresh message when modal closes:', error);
       }
 
       // Reset all states
@@ -806,7 +805,23 @@ export function PaymentMethodModal({
       <EInvoiceModal
         isOpen={showEInvoice}
         onClose={handleEInvoiceClose}
-        onConfirm={handleEInvoiceConfirm}
+        onConfirm={(eInvoiceData) => {
+          console.log('📧 E-Invoice data received in payment modal:', eInvoiceData);
+
+          // Close payment modal first
+          onClose();
+
+          // Kiểm tra xem có phải là "phát hành sau" không
+          if (eInvoiceData.publishLater) {
+            console.log('⏳ E-Invoice scheduled for later publishing, not calling onSelectMethod');
+            // Không gọi onSelectMethod vì đã được xử lý hoàn toàn trong e-invoice modal
+            return;
+          } else {
+            console.log('✅ E-Invoice published immediately, proceeding with payment completion');
+            // Chỉ gọi onSelectMethod khi phát hành ngay lập tức
+            onSelectMethod(selectedPaymentMethod);
+          }
+        }}
         total={total}
         cartItems={cartItems}
         source="pos"

@@ -82,6 +82,10 @@ export default function CustomerDisplayPage() {
                 setQrPayment(null);
                 // Keep cart visible (don't clear it)
                 break;
+              case 'refresh_customer_display':
+                console.log("Customer Display: Refresh requested, reloading page");
+                window.location.reload();
+                break;
               default:
                 console.log("Customer Display: Unknown message type:", data.type);
             }
