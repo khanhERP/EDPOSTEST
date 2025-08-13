@@ -775,7 +775,7 @@ export function OrderManagement() {
                   <h4 className="font-medium mb-2">{t('orders.totalAmount')}</h4>
                   <div className="space-y-1 text-sm">
                     {(() => {
-                      // Calculate total tax from all items using the correct method
+                      // Calculate totals properly based on item data
                       let totalItemSubtotal = 0;
                       let totalItemTax = 0;
 
@@ -786,11 +786,11 @@ export function OrderManagement() {
                           const itemUnitPrice = Number(item.unitPrice || 0);
                           const itemQuantity = item.quantity;
 
-                          // Subtotal is unit price * quantity (before tax)
+                          // Calculate subtotal (before tax)
                           const itemSubtotal = itemUnitPrice * itemQuantity;
-
-                          // Tax is calculated on the subtotal
-                          const itemTax = (itemSubtotal * taxRate) / 100;
+                          
+                          // Calculate tax amount
+                          const itemTax = taxRate > 0 ? (itemSubtotal * taxRate) / 100 : 0;
 
                           totalItemSubtotal += itemSubtotal;
                           totalItemTax += itemTax;
@@ -802,16 +802,16 @@ export function OrderManagement() {
                       return (
                         <>
                           <div className="flex justify-between">
-                            <span>{t('orders.subtotal')}:</span>
+                            <span>Tổng phụ:</span>
                             <span>{totalItemSubtotal.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>{t('orders.tax')}:</span>
+                            <span>Thuế:</span>
                             <span>{totalItemTax.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
                           </div>
                           <Separator />
                           <div className="flex justify-between font-medium">
-                            <span>{t('orders.totalAmount')}:</span>
+                            <span>Tổng tiền:</span>
                             <span>{finalTotal.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
                           </div>
                         </>
