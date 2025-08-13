@@ -8,7 +8,11 @@ import { ReceiptModal } from "@/components/pos/receipt-modal";
 import { ProductManagerModal } from "@/components/pos/product-manager-modal";
 import { usePOS } from "@/hooks/use-pos";
 
-export default function POSPage() {
+interface POSPageProps {
+  onLogout?: () => void;
+}
+
+export default function POS({ onLogout }: POSPageProps) {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [showProductManagerModal, setShowProductManagerModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | "all">("all");
@@ -112,7 +116,7 @@ export default function POSPage() {
   return (
     <div className="min-h-screen bg-green-50 grocery-bg">
       {/* Header */}
-      <POSHeader />
+      <POSHeader onLogout={onLogout} />
 
       {/* Right Sidebar */}
       <RightSidebar />
