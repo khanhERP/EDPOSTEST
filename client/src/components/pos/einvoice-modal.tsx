@@ -449,8 +449,8 @@ export function EInvoiceModal({
       );
 
       // Prepare invoice payload
-      const currentTimestamp = Date.now();
-      const invoiceDate = new Date(currentTimestamp).toISOString();
+      const currentDate = new Date(); // Define currentDate here
+      const invoiceDate = currentDate.toISOString();
       const invoicePayload = {
         invoiceNumber: `INV-${Date.now()}`,
         invoiceDate: invoiceDate,
@@ -630,7 +630,8 @@ export function EInvoiceModal({
 
         // Tạo receipt data để hiển thị
         const receiptData = {
-          transactionId: invoiceData.invoiceNumber,
+          transactionId:
+            savedInvoice?.invoiceNumber || invoiceSavePayload.invoiceNumber,
           items: cartItems.map((item) => ({
             id: item.id,
             productId: item.id,
@@ -648,14 +649,14 @@ export function EInvoiceModal({
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: new Date().toISOString(),
+          createdAt: currentDate.toISOString(), // Use currentDate
         };
 
         // Gọi onConfirm để hiển thị receipt trước khi đóng modal
         console.log("🍽️ Calling onConfirm for receipt display");
         onConfirm({
-          ...invoicePayload,
-          invoiceData: invoiceData,
+          ...invoiceSavePayload,
+          invoiceData: savedInvoice,
           receipt: receiptData,
           showReceipt: true,
         });
@@ -672,7 +673,8 @@ export function EInvoiceModal({
 
         // Tạo receipt data để hiển thị
         const receiptData = {
-          transactionId: invoiceData.invoiceNumber,
+          transactionId:
+            savedInvoice?.invoiceNumber || invoiceSavePayload.invoiceNumber,
           items: cartItems.map((item) => ({
             id: item.id,
             productId: item.id,
@@ -690,13 +692,13 @@ export function EInvoiceModal({
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: new Date().toISOString(),
+          createdAt: currentDate.toISOString(), // Use currentDate
         };
 
         console.log("✅ Calling onConfirm to show receipt modal");
         onConfirm({
-          ...invoicePayload,
-          invoiceData: invoiceData,
+          ...invoiceSavePayload,
+          invoiceData: savedInvoice,
           receipt: receiptData,
           showReceipt: true,
         });
@@ -725,7 +727,7 @@ export function EInvoiceModal({
 
         // Gọi onConfirm để trả về dữ liệu đã lưu nháp
         onConfirm({
-          ...invoicePayload,
+          ...invoiceSavePayload,
           invoiceData: invoiceData,
           showReceipt: false,
         });
@@ -739,7 +741,7 @@ export function EInvoiceModal({
         // Fallback: trả về data cho parent component xử lý
         console.log("🔄 Fallback: Returning data to parent");
         onConfirm({
-          ...invoicePayload,
+          ...invoiceSavePayload,
           invoiceData: invoiceData,
           showReceipt: isPublishingAction,
         });
@@ -1226,7 +1228,7 @@ export function EInvoiceModal({
             amountReceived: formData.total,
             change: "0.00",
             cashierName: "E-Invoice System",
-            createdAt: new Date().toISOString(),
+            createdAt: currentDate.toISOString(), // Use currentDate
           };
           onConfirm({
             ...invoiceSavePayload,
@@ -1266,7 +1268,7 @@ export function EInvoiceModal({
             amountReceived: formData.total,
             change: "0.00",
             cashierName: "E-Invoice System",
-            createdAt: new Date().toISOString(),
+            createdAt: currentDate.toISOString(), // Use currentDate
           };
           onConfirm({
             ...invoiceSavePayload,
