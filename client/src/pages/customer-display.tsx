@@ -82,13 +82,18 @@ export default function CustomerDisplayPage() {
                 setQrPayment(null);
                 // Keep cart visible (don't clear it)
                 break;
+              case 'force_customer_refresh':
+                console.log("Customer Display: Force refresh requested, reloading immediately", data);
+                // Force immediate reload without any delay
+                window.location.reload();
+                break;
               case 'refresh_customer_display':
-                console.log("Customer Display: Refresh requested, reloading page in 500ms");
-                // Add a small delay to ensure all cleanup is done
+                console.log("Customer Display: Refresh requested, reloading page in 200ms");
+                // Reduced delay for faster refresh
                 setTimeout(() => {
                   console.log("Customer Display: Executing page reload now");
                   window.location.reload();
-                }, 500);
+                }, 200);
                 break;
               default:
                 console.log("Customer Display: Unknown message type:", data.type);

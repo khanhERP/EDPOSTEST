@@ -516,59 +516,60 @@ export function PaymentMethodModal({
   // Reset all states when modal closes
   useEffect(() => {
     if (!isOpen) {
-      // Always send refresh message to customer display when modal closes
-      const sendRefreshMessage = () => {
+      // Always force customer display refresh when modal closes
+      const forceRefreshCustomerDisplay = () => {
         try {
           const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
           const wsUrl = `${protocol}//${window.location.host}/ws`;
-          const ws = new WebSocket(wsUrl);
 
-          ws.onopen = () => {
-            console.log('Payment Modal: WebSocket connected for refresh message');
+          // Create multiple WebSocket connections to ensure message delivery
+          for (let attempt = 0; attempt < 3; attempt++) {
+            setTimeout(() => {
+              try {
+                const ws = new WebSocket(wsUrl);
 
-            // If QR code was showing, send cancellation message first
-            if (wasShowingQRCode || showQRCode || qrCodeUrl) {
-              console.log('Payment Modal: Sending QR cancellation message');
-              ws.send(JSON.stringify({
-                type: 'qr_payment_cancelled',
-                timestamp: new Date().toISOString()
-              }));
+                ws.onopen = () => {
+                  console.log(`Payment Modal: WebSocket attempt ${attempt + 1} connected for refresh`);
 
-              // Wait a bit before sending refresh message
-              setTimeout(() => {
-                console.log('Payment Modal: Sending refresh message');
-                ws.send(JSON.stringify({
-                  type: 'refresh_customer_display',
-                  timestamp: new Date().toISOString()
-                }));
-                ws.close();
-              }, 100);
-            } else {
-              // Send refresh message immediately if no QR code
-              console.log('Payment Modal: Sending refresh message (no QR)');
-              ws.send(JSON.stringify({
-                type: 'refresh_customer_display',
-                timestamp: new Date().toISOString()
-              }));
-              ws.close();
-            }
-          };
+                  // Send force refresh message - this will cause hard reload
+                  ws.send(JSON.stringify({
+                    type: 'force_customer_refresh',
+                    reason: 'payment_modal_closed',
+                    timestamp: new Date().toISOString(),
+                    attempt: attempt + 1
+                  }));
 
-          ws.onerror = (error) => {
-            console.error('Payment Modal: WebSocket error:', error);
-          };
+                  // Also send legacy refresh message for compatibility
+                  setTimeout(() => {
+                    ws.send(JSON.stringify({
+                      type: 'refresh_customer_display',
+                      timestamp: new Date().toISOString()
+                    }));
+                    ws.close();
+                  }, 50);
+                };
 
-          ws.onclose = () => {
-            console.log('Payment Modal: WebSocket closed after sending refresh message');
-          };
+                ws.onerror = (error) => {
+                  console.error(`Payment Modal: WebSocket attempt ${attempt + 1} error:`, error);
+                };
+
+                ws.onclose = () => {
+                  console.log(`Payment Modal: WebSocket attempt ${attempt + 1} closed after sending refresh`);
+                };
+
+              } catch (error) {
+                console.error(`Payment Modal: Failed WebSocket attempt ${attempt + 1}:`, error);
+              }
+            }, attempt * 100); // Stagger attempts by 100ms
+          }
 
         } catch (error) {
-          console.error('Payment Modal: Failed to send refresh message when modal closes:', error);
+          console.error('Payment Modal: Failed to force refresh customer display:', error);
         }
       };
 
-      // Send refresh message after a small delay to ensure modal is fully closed
-      setTimeout(sendRefreshMessage, 50);
+      // Force refresh immediately when modal starts closing
+      forceRefreshCustomerDisplay();
 
       // Reset all states
       setShowQRCode(false);
