@@ -33,9 +33,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 export function SupplierReport() {
   const { t } = useTranslation();
   const [startDate, setStartDate] = useState<string>(
-    new Date(new Date().setMonth(new Date().getMonth() - 1))
-      .toISOString()
-      .split("T")[0]
+    new Date().toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState<string>(
     new Date().toISOString().split("T")[0]
