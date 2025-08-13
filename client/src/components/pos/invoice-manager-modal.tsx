@@ -34,7 +34,7 @@ interface Invoice {
   customerTaxCode?: string;
   customerAddress?: string;
   customerPhone?: string;
-  customerEmail?: string;
+  customerEmail?: string;</old_str>
   subtotal: string;
   tax: string;
   total: string;
@@ -225,27 +225,29 @@ export function InvoiceManagerModal({ isOpen, onClose }: InvoiceManagerModalProp
                     <TableHead>Số giao dịch</TableHead>
                     <TableHead>Thu ngân</TableHead>
                     <TableHead>Khách hàng</TableHead>
+                    <TableHead>Mã số thuế</TableHead>
+                    <TableHead>Địa chỉ</TableHead>
                     <TableHead>Ngày tạo</TableHead>
                     <TableHead>Tổng tiền</TableHead>
                     <TableHead>Trạng thái</TableHead>
                     <TableHead>Phương thức TT</TableHead>
                     <TableHead className="text-right">Thao tác</TableHead>
                   </TableRow>
-                </TableHeader>
+                </TableHeader></old_str>
                 <TableBody>
                   {isLoadingInvoices ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8">
+                      <TableCell colSpan={11} className="text-center py-8">
                         Đang tải...
                       </TableCell>
-                    </TableRow>
+                    </TableRow></old_str>
                   ) : filteredInvoices.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8">
+                      <TableCell colSpan={11} className="text-center py-8">
                         {searchQuery ? "Không tìm thấy hóa đơn nào" : "Chưa có hóa đơn nào"}
                       </TableCell>
                     </TableRow>
-                  ) : (
+                  ) : (</old_str>
                     filteredInvoices.map((invoice) => (
                       <TableRow key={invoice.id}>
                         <TableCell className="font-medium">
@@ -258,16 +260,21 @@ export function InvoiceManagerModal({ isOpen, onClose }: InvoiceManagerModalProp
                           {invoice.cashierName || "N/A"}
                         </TableCell>
                         <TableCell>
-                          <div>
-                            <div className="font-medium">{invoice.customerName}</div>
-                            {invoice.customerTaxCode && (
-                              <div className="text-sm text-gray-500">MST: {invoice.customerTaxCode}</div>
-                            )}
+                          <div className="font-medium">{invoice.customerName}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {invoice.customerTaxCode || "N/A"}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm max-w-[200px] truncate" title={invoice.customerAddress || "N/A"}>
+                            {invoice.customerAddress || "N/A"}
                           </div>
                         </TableCell>
                         <TableCell>
                           {format(new Date(invoice.createdAt), "dd/MM/yyyy HH:mm")}
-                        </TableCell>
+                        </TableCell></old_str>
                         <TableCell>
                           {new Intl.NumberFormat('vi-VN').format(parseFloat(invoice.total))} ₫
                         </TableCell>
