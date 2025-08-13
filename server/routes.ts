@@ -781,14 +781,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { startDate, endDate } = req.query;
       console.log("Orders API called with params:", { startDate, endDate });
       
-      let query = db.select().from(orders).orderBy(desc(orders.orderedAt));
+      let query = db.select({
+        id: orders.id,
+        orderNumber: orders.orderNumber,
+        tableId: orders.tableId,
+        employeeId: orders.employeeId,
+        status: orders.status,
+        customerName: orders.customerName,
+        customerPhone: orders.customerPhone,
+        customerEmail: orders.customerEmail,
+        subtotal: orders.subtotal,
+        tax: orders.tax,
+        total: orders.total,
+        paymentMethod: orders.paymentMethod,
+        paymentStatus: orders.paymentStatus,
+        notes: orders.notes,
+        orderedAt: orders.orderedAt,
+        createdAt: orders.orderedAt, // Alias for compatibility
+        created_at: orders.orderedAt, // Another alias
+        customerCount: sql<number>`1`, // Default customer count
+        salesChannel: orders.salesChannel,
+        einvoiceStatus: orders.einvoiceStatus
+      }).from(orders).orderBy(desc(orders.orderedAt));
 
       if (startDate && endDate) {
         const start = new Date(startDate as string);
+        start.setHours(0, 0, 0, 0);
         const end = new Date(endDate as string);
         end.setHours(23, 59, 59, 999);
 
-        console.log("Applying date filter:", { start: start.toISOString(), end: end.toISOString() });
+        console.log("Applying date filter:", { 
+          start: start.toISOString(), 
+          end: end.toISOString(),
+          startParam: startDate,
+          endParam: endDate
+        });
 
         query = query.where(
           and(
@@ -799,7 +826,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const orderResults = await query;
-      console.log("Orders query result:", { count: orderResults.length, firstOrder: orderResults[0] });
+      console.log("Orders query result:", { 
+        count: orderResults.length, 
+        firstOrder: orderResults[0],
+        dateRange: { startDate, endDate },
+        sampleDates: orderResults.slice(0, 3).map(o => ({
+          id: o.id,
+          orderedAt: o.orderedAt,
+          total: o.total
+        }))
+      });
       
       res.json(orderResults);
     } catch (error) {

@@ -65,16 +65,29 @@ export function OrderReport() {
   const { data: orders = [], refetch: refetchOrders, isLoading } = useQuery({
     queryKey: ["/api/orders", startDate, endDate],
     queryFn: async () => {
+      console.log("Fetching orders with date range:", { startDate, endDate });
       const params = new URLSearchParams();
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
       
-      const response = await fetch(`/api/orders?${params.toString()}`);
+      const url = `/api/orders?${params.toString()}`;
+      console.log("API URL:", url);
+      
+      const response = await fetch(url);
       if (!response.ok) throw new Error('Failed to fetch orders');
-      return response.json();
+      
+      const data = await response.json();
+      console.log("Orders API response:", {
+        count: data?.length || 0,
+        dateParams: { startDate, endDate },
+        firstOrder: data?.[0]
+      });
+      
+      return data;
     },
     staleTime: 0,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
+    enabled: !!startDate && !!endDate, // Only fetch when we have date range
   });
 
   const { data: products = [] } = useQuery({
@@ -102,39 +115,31 @@ export function OrderReport() {
       startDate, 
       endDate,
       orderStatus,
-      firstOrder: orders?.[0]
+      firstOrder: orders?.[0],
+      ordersType: typeof orders,
+      isArray: Array.isArray(orders)
     });
     
     if (!orders || !Array.isArray(orders)) {
-      console.log("No orders data or not array");
+      console.log("No orders data or not array, returning empty array");
       return [];
     }
 
-    // Show all orders regardless of date if no date filtering is needed
-    let filteredOrders = orders;
+    // Start with all orders from API (already filtered by date range on server)
+    let filteredOrders = [...orders];
 
-    // Apply date filter
-    if (startDate && endDate) {
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+    console.log("Orders from API (already date filtered):", {
+      count: filteredOrders.length,
+      dateRange: { startDate, endDate },
+      sampleOrders: filteredOrders.slice(0, 2).map(o => ({
+        id: o.id,
+        orderedAt: o.orderedAt,
+        total: o.total,
+        status: o.status
+      }))
+    });
 
-      filteredOrders = orders.filter((order: any) => {
-        const orderDate = new Date(order.orderedAt || order.created_at || order.createdAt);
-        const dateMatch = orderDate >= start && orderDate <= end;
-        
-        console.log("Date check:", {
-          orderDate: orderDate.toISOString(),
-          start: start.toISOString(),
-          end: end.toISOString(),
-          dateMatch
-        });
-        
-        return dateMatch;
-      });
-    }
-
-    console.log("After date filter:", filteredOrders.length);
+    console.log("Orders already filtered by date on server, count:", filteredOrders.length);
 
     // Apply status filter
     if (orderStatus !== "all") {
