@@ -382,7 +382,7 @@ export function ReceiptModal({
               console.log("⚠️ Fallback to receipt items for e-invoice");
               return receipt.items.map(item => ({
                 id: item.productId || item.id,
-                name: item.productName || item.name,
+                name: item.productName,
                 price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
                 quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
                 sku: item.sku || `FOOD${String(item.productId || item.id).padStart(5, '0')}`,
