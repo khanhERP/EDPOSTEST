@@ -59,6 +59,7 @@ const stockUpdateSchema = (t: any) => z.object({
   price: z.string().optional(),
   categoryId: z.number().optional(),
   productType: z.number().optional(),
+  taxRate: z.string().optional(),
 });
 
 type StockUpdateForm = z.infer<typeof stockUpdateSchema>;
@@ -321,6 +322,7 @@ export default function InventoryPage() {
         categoryId: categories[0]?.id || 1,
         productType: 1,
         trackInventory: true,
+        taxRate: "8.00",
       });
     } else {
       // Load existing product data for editing
@@ -369,6 +371,7 @@ export default function InventoryPage() {
         stock: data.quantity || 0,
         categoryId: data.categoryId || 1,
         productType: data.productType || 1,
+        taxRate: data.taxRate || "8.00",
         imageUrl: null,
         isActive: true,
         trackInventory: data.trackInventory !== false,
@@ -843,6 +846,27 @@ export default function InventoryPage() {
                           <FormControl>
                             <Input
                               placeholder={t("inventory.pricePlaceholder")}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={stockUpdateForm.control}
+                      name="taxRate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Thuế (%)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              max="100"
+                              placeholder="8.00"
                               {...field}
                             />
                           </FormControl>
