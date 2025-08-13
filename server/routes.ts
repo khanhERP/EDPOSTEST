@@ -779,12 +779,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders", async (req, res) => {
     try {
       const { startDate, endDate } = req.query;
-      let query = db.select().from(orders);
+      console.log("Orders API called with params:", { startDate, endDate });
+      
+      let query = db.select().from(orders).orderBy(desc(orders.orderedAt));
 
       if (startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
+        const start = new Date(startDate as string);
+        const end = new Date(endDate as string);
         end.setHours(23, 59, 59, 999);
+
+        console.log("Applying date filter:", { start: start.toISOString(), end: end.toISOString() });
 
         query = query.where(
           and(
@@ -794,9 +798,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
 
-      const orders = await query;
-      res.json(orders);
+      const orderResults = await query;
+      console.log("Orders query result:", { count: orderResults.length, firstOrder: orderResults[0] });
+      
+      res.json(orderResults);
     } catch (error) {
+      console.error("Error fetching orders:", error);
       res.status(500).json({ message: "Failed to fetch orders" });
     }
   });

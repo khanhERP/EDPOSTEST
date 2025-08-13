@@ -64,76 +64,119 @@ export function OrderReport() {
 
   const { data: orders = [], refetch: refetchOrders, isLoading } = useQuery({
     queryKey: ["/api/orders", startDate, endDate],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
+      
+      const response = await fetch(`/api/orders?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      return response.json();
+    },
     staleTime: 0,
     refetchOnWindowFocus: true,
   });
 
   const { data: products = [] } = useQuery({
-    queryKey: ["/api/products", startDate, endDate],
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    queryKey: ["/api/products"],
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: categories = [] } = useQuery({
-    queryKey: ["/api/categories", startDate, endDate],
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    queryKey: ["/api/categories"],
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 
   const { data: employees = [] } = useQuery({
-    queryKey: ["/api/employees", startDate, endDate],
-    staleTime: 0,
-    refetchOnWindowFocus: true,
+    queryKey: ["/api/employees"],
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
 
   const getFilteredData = () => {
-    console.log("Filtering orders data:", { orders: orders?.length || 0, startDate, endDate });
+    console.log("=== FILTERING ORDERS DEBUG ===");
+    console.log("Raw orders data:", { 
+      ordersLength: orders?.length || 0, 
+      startDate, 
+      endDate,
+      orderStatus,
+      firstOrder: orders?.[0]
+    });
     
-    if (!orders || !Array.isArray(orders)) return [];
+    if (!orders || !Array.isArray(orders)) {
+      console.log("No orders data or not array");
+      return [];
+    }
 
-    const filteredOrders = orders.filter((order: any) => {
-      const orderDate = new Date(order.orderedAt || order.created_at || order.createdAt);
+    // Show all orders regardless of date if no date filtering is needed
+    let filteredOrders = orders;
+
+    // Apply date filter
+    if (startDate && endDate) {
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      const dateMatch = orderDate >= start && orderDate <= end;
+      filteredOrders = orders.filter((order: any) => {
+        const orderDate = new Date(order.orderedAt || order.created_at || order.createdAt);
+        const dateMatch = orderDate >= start && orderDate <= end;
+        
+        console.log("Date check:", {
+          orderDate: orderDate.toISOString(),
+          start: start.toISOString(),
+          end: end.toISOString(),
+          dateMatch
+        });
+        
+        return dateMatch;
+      });
+    }
 
-      const statusMatch =
-        orderStatus === "all" ||
-        (orderStatus === "draft" && (order.status === "pending" || order.status === "draft")) ||
-        (orderStatus === "confirmed" && order.status === "confirmed") ||
-        (orderStatus === "delivering" && (order.status === "preparing" || order.status === "in_progress")) ||
-        (orderStatus === "completed" && order.status === "paid");
+    console.log("After date filter:", filteredOrders.length);
 
-      const customerMatch =
-        !customerSearch ||
-        (order.customerName &&
-          order.customerName
-            .toLowerCase()
-            .includes(customerSearch.toLowerCase())) ||
-        (order.customerPhone &&
-          order.customerPhone.includes(customerSearch));
+    // Apply status filter
+    if (orderStatus !== "all") {
+      filteredOrders = filteredOrders.filter((order: any) => {
+        const statusMatch =
+          (orderStatus === "draft" && (order.status === "pending" || order.status === "draft")) ||
+          (orderStatus === "confirmed" && order.status === "confirmed") ||
+          (orderStatus === "delivering" && (order.status === "preparing" || order.status === "in_progress")) ||
+          (orderStatus === "completed" && order.status === "paid");
+        
+        console.log("Status check:", { orderStatus: order.status, filterStatus: orderStatus, statusMatch });
+        return statusMatch;
+      });
+    }
 
-      // Category filter for products
-      let categoryMatch = selectedCategory === "all";
-      if (!categoryMatch && products.length > 0) {
-        // This would need order items to filter by category properly
-        categoryMatch = true; // For now, show all orders
-      }
+    console.log("After status filter:", filteredOrders.length);
 
-      // Employee filter
-      let employeeMatch = selectedEmployee === "all";
-      if (!employeeMatch) {
-        employeeMatch = order.employeeId?.toString() === selectedEmployee;
-      }
+    // Apply customer search filter
+    if (customerSearch) {
+      filteredOrders = filteredOrders.filter((order: any) => {
+        const customerMatch =
+          (order.customerName &&
+            order.customerName
+              .toLowerCase()
+              .includes(customerSearch.toLowerCase())) ||
+          (order.customerPhone &&
+            order.customerPhone.includes(customerSearch));
+        return customerMatch;
+      });
+    }
 
-      const result = dateMatch && statusMatch && customerMatch && categoryMatch && employeeMatch;
-      
-      return result;
-    });
+    // Apply employee filter
+    if (selectedEmployee !== "all") {
+      filteredOrders = filteredOrders.filter((order: any) => {
+        const employeeMatch = order.employeeId?.toString() === selectedEmployee;
+        return employeeMatch;
+      });
+    }
 
-    console.log("Filtered orders result:", filteredOrders.length);
+    console.log("Final filtered result:", filteredOrders.length);
+    console.log("=== END FILTERING DEBUG ===");
+    
     return filteredOrders;
   };
 
@@ -537,9 +580,14 @@ export function OrderReport() {
           {/* Refresh Button */}
           <div className="flex justify-end">
             <Button 
-              onClick={() => {
-                refetchOrders();
-                console.log("Refreshing order data...");
+              onClick={async () => {
+                console.log("Refreshing order data with date range:", { startDate, endDate });
+                try {
+                  await refetchOrders();
+                  console.log("Orders refetched successfully");
+                } catch (error) {
+                  console.error("Error refreshing orders:", error);
+                }
               }}
               disabled={isLoading}
               variant="outline"
