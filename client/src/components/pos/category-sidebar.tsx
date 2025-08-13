@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import type { Category, Product } from "@shared/schema";
+import { InvoiceManagementModal } from "./invoice-management-modal";
+import { useState } from "react";
 
 interface CategorySidebarProps {
   selectedCategory: number | "all";
@@ -33,6 +35,7 @@ export function CategorySidebar({
 }: CategorySidebarProps) {
   const { toast } = useToast();
   const { t } = useTranslation();
+  const [showInvoiceManagement, setShowInvoiceManagement] = useState(false);
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -142,7 +145,7 @@ export function CategorySidebar({
       
       <div className="p-4 border-t pos-border space-y-3">
         <Button 
-          onClick={() => window.open('/tables', '_blank')}
+          onClick={() => setShowInvoiceManagement(true)}
           className="w-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center rounded-xl"
         >
           <User className="mr-2" size={16} />
@@ -156,6 +159,12 @@ export function CategorySidebar({
           {t('pos.manageProducts')}
         </Button>
       </div>
+
+      {/* Invoice Management Modal */}
+      <InvoiceManagementModal
+        isOpen={showInvoiceManagement}
+        onClose={() => setShowInvoiceManagement(false)}
+      />
     </aside>
   );
 }

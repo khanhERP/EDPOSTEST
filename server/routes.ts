@@ -2841,12 +2841,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/invoices", async (req, res) => {
     try {
-      // Here you would fetch invoices from database
-      // For now, return empty array
-      res.json([]);
+      const invoicesList = await db
+        .select()
+        .from(invoices)
+        .orderBy(desc(invoices.createdAt));
+
+      res.json(invoicesList);
     } catch (error) {
       console.error("Error fetching invoices:", error);
       res.status(500).json({ error: "Failed to fetch invoices" });
+    }
+  });
+
+  app.get("/api/invoice-items/:invoiceId", async (req, res) => {
+    try {
+      const invoiceId = parseInt(req.params.invoiceId);
+      
+      if (isNaN(invoiceId)) {
+        return res.status(400).json({ error: "Invalid invoice ID" });
+      }
+
+      const items = await db
+        .select()
+        .from(invoiceItems)
+        .where(eq(invoiceItems.invoiceId, invoiceId))
+        .orderBy(invoiceItems.id);
+
+      res.json(items);
+    } catch (error) {
+      console.error("Error fetching invoice items:", error);
+      res.status(500).json({ error: "Failed to fetch invoice items" });
     }
   });
 
