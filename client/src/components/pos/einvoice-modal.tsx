@@ -450,7 +450,7 @@ export function EInvoiceModal({
 
       // Prepare invoice payload
       const currentDate = new Date(); // Define currentDate here
-      const invoiceDate = "";
+      const invoiceDate = currentDate.toISOString();
       const invoicePayload = {
         invoiceNumber: `INV-${Date.now()}`,
         invoiceDate: invoiceDate,
@@ -490,7 +490,7 @@ export function EInvoiceModal({
       // Save to invoices table based on publish type
       const savePayload = {
         invoiceNumber: invoicePayload.invoiceNumber,
-        invoiceDate: invoicePayload.invoiceDate,
+        invoiceDate: currentDate.toISOString(),
         buyerName: invoicePayload.buyerName,
         buyerTaxCode: invoicePayload.buyerTaxCode,
         buyerAddress: invoicePayload.buyerAddress,
@@ -1105,9 +1105,10 @@ export function EInvoiceModal({
         );
 
         // Prepare the invoice data to be saved
+        const currentDate = new Date();
         const invoiceSavePayload = {
           invoiceNumber: result.data?.invoiceNo || `INV-${Date.now()}`, // Use invoice number from provider
-          invoiceDate: "",
+          invoiceDate: currentDate.toISOString(),
           buyerTaxCode: formData.taxCode || "",
           buyerName: formData.customerName || "Khách hàng",
           buyerAddress: formData.address || "",
