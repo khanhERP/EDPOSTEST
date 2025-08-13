@@ -10,7 +10,12 @@ export function initializeWebSocketServer(server: Server) {
     return;
   }
 
-  wss = new WebSocketServer({ server, path: '/ws' });
+  try {
+    wss = new WebSocketServer({ server, path: '/ws' });
+  } catch (error) {
+    console.error('Failed to create WebSocket server:', error);
+    return;
+  }
 
   wss.on('connection', (ws: WebSocket) => {
     console.log('Client connected');
