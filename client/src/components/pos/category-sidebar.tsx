@@ -140,7 +140,14 @@ export function CategorySidebar({
         </div>
       </div>
       
-      <div className="p-4 border-t pos-border">
+      <div className="p-4 border-t pos-border space-y-3">
+        <Button 
+          onClick={() => window.open('/tables', '_blank')}
+          className="w-full bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center rounded-xl"
+        >
+          <User className="mr-2" size={16} />
+          {t('orders.orderManagement')}
+        </Button>
         <Button 
           onClick={onOpenProductManager}
           className="w-full bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center rounded-xl"
