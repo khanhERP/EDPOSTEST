@@ -392,9 +392,10 @@ export function EInvoiceModal({
       console.log(`💰 Total calculations: Subtotal: ${calculatedSubtotal}, Tax: ${calculatedTax}, Total: ${total}`);
 
       // Prepare invoice payload
+      const currentDate = new Date();
       const invoicePayload = {
-        invoiceNumber: `INV-${Date.now()}`, // Generate invoice number
-        invoiceDate: new Date().toISOString(),
+        invoiceNumber: `INV-${Date.now()}`,
+        invoiceDate: currentDate.toISOString(),
         buyerTaxCode: formData.taxCode || "",
         buyerName: formData.customerName || "Khách hàng",
         buyerAddress: formData.address || "",
@@ -471,13 +472,13 @@ export function EInvoiceModal({
 
       // Save invoice items to database
       console.log("Preparing to save invoice items for invoice ID:", invoiceData.id);
-      
+
       const itemsToSave = cartItems.map(item => {
         const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
         const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
         const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
         const itemTotal = itemPrice * itemQuantity;
-        
+
         return {
           productId: item.id,
           productName: item.name,
@@ -552,7 +553,7 @@ export function EInvoiceModal({
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: new Date().toISOString()
+          createdAt: currentDate.toISOString()
         };
 
         // Gọi onConfirm để hiển thị receipt trước khi đóng modal
@@ -588,7 +589,7 @@ export function EInvoiceModal({
           amountReceived: formData.total,
           change: "0.00",
           cashierName: "E-Invoice System",
-          createdAt: new Date().toISOString()
+          createdAt: currentDate.toISOString()
         };
 
         console.log('✅ Calling onConfirm to show receipt modal');
