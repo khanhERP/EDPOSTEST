@@ -24,7 +24,7 @@ import type { Order, Table as TableType } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 
 export function formatDateToYYYYMMDD(date: Date | string | number): string {
-  const d = new Date(date); // Ensure input is a Date
+  const d = new Date(date);
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
@@ -35,14 +35,14 @@ export function DashboardOverview() {
   const { t, currentLanguage } = useTranslation();
 
   const [startDate, setStartDate] = useState<string>(
-    formatDateToYYYYMMDD(new Date()), // Set to a date that has sample data
+    formatDateToYYYYMMDD(new Date()),
   );
   const [endDate, setEndDate] = useState<string>(
-    formatDateToYYYYMMDD(new Date()), // End date with sample data
+    formatDateToYYYYMMDD(new Date()),
   );
   const queryClient = useQueryClient();
 
-  const { data: transactions, refetch: refetchTransactions } = useQuery({
+  const { data: transactions } = useQuery({
     queryKey: ["/api/transactions", startDate, endDate],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -55,31 +55,21 @@ export function DashboardOverview() {
       }
       return response.json();
     },
-    staleTime: 0,
-    refetchOnWindowFocus: true,
   });
 
-  const { data: tables, refetch: refetchTables } = useQuery({
+  const { data: tables } = useQuery({
     queryKey: ["/api/tables"],
-    staleTime: 0,
-    refetchOnWindowFocus: true,
   });
 
   const handleRefresh = async () => {
-    try {
-      // Refresh the queries to get the latest data for the selected date range
-      await Promise.all([
-        refetchTransactions(),
-        refetchTables(),
-        queryClient.invalidateQueries({ queryKey: ["/api/orders"] })
-      ]);
-    } catch (error) {
-      console.error('Error refreshing dashboard data:', error);
-    }
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] }),
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] })
+    ]);
   };
 
   const getDashboardStats = () => {
-    // Always try to use real data first, fall back gracefully
     let periodRevenue = 0;
     let periodOrderCount = 0;
     let periodCustomerCount = 0;
@@ -89,42 +79,16 @@ export function DashboardOverview() {
     let monthRevenue = 0;
     let averageOrderValue = 0;
     let peakHour = 12;
-    let totalTables = 0;
+    let totalTables = 12;
 
-    // Process real transactions if available - with safe null checks
-    if (transactions && Array.isArray(transactions) && transactions.length > 0) {
-      console.log("Dashboard Debug - Using real transaction data:", {
-        totalTransactions: transactions.length,
-        startDate,
-        endDate,
-        firstTransaction: transactions[0],
-        dateRange: `${startDate} to ${endDate}`
-      });
-
-      // Safely process transactions with null checks
-      const filteredTransactions = transactions.filter(transaction => 
-        transaction && 
-        typeof transaction === 'object' && 
-        transaction.total !== null && 
-        transaction.total !== undefined
-      );
-
-      // Safe calculation of revenue
-      periodRevenue = filteredTransactions.reduce(
-        (total: number, transaction: any) => {
-          try {
-            const amount = Number(transaction?.total || 0);
-            return total + (isNaN(amount) ? 0 : amount);
-          } catch (error) {
-            console.warn("Error processing transaction total:", transaction);
-            return total;
-          }
-        },
+    if (transactions && transactions.length > 0) {
+      periodRevenue = transactions.reduce(
+        (total: number, transaction: any) => total + Number(transaction.total || 0),
         0,
       );
 
-      periodOrderCount = filteredTransactions.length;
-      periodCustomerCount = filteredTransactions.length;
+      periodOrderCount = transactions.length;
+      periodCustomerCount = transactions.length;
 
       const start = new Date(startDate);
       const end = new Date(endDate);
@@ -136,58 +100,31 @@ export function DashboardOverview() {
       monthRevenue = periodRevenue;
       averageOrderValue = periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
 
-      // Calculate peak hour with safe date handling
+      // Calculate peak hour
       const hourlyTransactions: { [key: number]: number } = {};
-      filteredTransactions.forEach((transaction: any) => {
-        try {
-          const dateStr = transaction?.createdAt || transaction?.created_at;
-          if (dateStr) {
-            const hour = new Date(dateStr).getHours();
-            if (!isNaN(hour) && hour >= 0 && hour <= 23) {
-              hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
-            }
-          }
-        } catch (error) {
-          console.warn("Error processing transaction date:", transaction);
-        }
+      transactions.forEach((transaction: any) => {
+        const hour = new Date(transaction.createdAt || transaction.created_at).getHours();
+        hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
       });
 
       if (Object.keys(hourlyTransactions).length > 0) {
-        try {
-          peakHour = parseInt(Object.keys(hourlyTransactions).reduce(
-            (peak, hour) =>
-              hourlyTransactions[parseInt(hour)] > hourlyTransactions[parseInt(peak)]
-                ? hour
-                : peak,
-          ));
-        } catch (error) {
-          console.warn("Error calculating peak hour:", error);
-          peakHour = 12; // Default fallback
-        }
+        peakHour = parseInt(Object.keys(hourlyTransactions).reduce(
+          (peak, hour) =>
+            hourlyTransactions[parseInt(hour)] > hourlyTransactions[parseInt(peak)]
+              ? hour
+              : peak,
+        ));
       }
-    } else {
-      console.log("Dashboard Debug - No transaction data available, using defaults");
     }
 
-    // Process real table data if available with safe null checks
-    if (tables && Array.isArray(tables) && tables.length > 0) {
-      console.log("Dashboard Debug - Using real table data:", tables.length);
+    if (tables && tables.length > 0) {
       totalTables = tables.length;
       occupiedTables = tables.filter(
-        (table: TableType) => table && table.status === "occupied",
+        (table: TableType) => table.status === "occupied",
       ).length;
     } else {
-      // Default table data if none available
-      console.log("Dashboard Debug - No table data available, using defaults");
-      totalTables = 12;
       occupiedTables = 2;
     }
-
-    console.log("Dashboard Stats calculated:", {
-      periodRevenue,
-      periodOrderCount,
-      hasRealData: transactions && transactions.length > 0
-    });
 
     return {
       periodRevenue,
@@ -210,15 +147,14 @@ export function DashboardOverview() {
   };
 
   const formatDate = (dateStr: string) => {
-    // Map translation language codes to locale codes
     const localeMap = {
       ko: "ko-KR",
       en: "en-US", 
       vi: "vi-VN"
     };
-    
+
     const locale = localeMap[currentLanguage] || "ko-KR";
-    
+
     return new Date(dateStr).toLocaleDateString(locale, {
       year: "numeric",
       month: "long",
