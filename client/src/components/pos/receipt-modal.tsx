@@ -84,7 +84,7 @@ export function ReceiptModal({
       paymentMethod: receipt?.paymentMethod
     });
 
-    if (isOpen && receipt && !isPreview && !hasAutoOpened) {
+    if (isOpen && receipt && !isPreview) {
       // Check if this is specifically from e-invoice or has autoShowPrint flag
       const isFromEInvoice = receipt.paymentMethod === 'einvoice';
       
@@ -408,8 +408,8 @@ export function ReceiptModal({
                 name: item.productName,
                 price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
                 quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-                sku: item.sku || `FOOD${String(item.productId || item.id).padStart(5, '0')}`,
-                taxRate: item.taxRate || 10
+                sku: item.productId,
+                taxRate: 10
               }));
             } else {
               console.error("❌ No valid cart items found for e-invoice");
