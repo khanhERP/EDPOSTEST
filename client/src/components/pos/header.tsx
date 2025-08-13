@@ -300,20 +300,6 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                               <span className="truncate">{t('reports.salesAnalysis')}</span>
                             </button>
                           </Link>
-                          <Link href="/reports?tab=saleschart">
-                            <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search === "?tab=saleschart" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
-                              }`}
-                              onClick={() => {
-                                setReportsSubmenuOpen(false);
-                                setPosMenuOpen(false);
-                              }}
-                            >
-                              <PieChart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.salesReport')}</span>
-                            </button>
-                          </Link>
                           <Link href="/reports?tab=menu">
                             <button
                               className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
@@ -342,6 +328,20 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                               <span className="truncate">{t('reports.tableAnalysis')}</span>
                             </button>
                           </Link>
+                          <Link href="/reports?tab=saleschart">
+                            <button
+                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
+                                location === "/reports" && window.location.search === "?tab=saleschart" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                              }`}
+                              onClick={() => {
+                                setReportsSubmenuOpen(false);
+                                setPosMenuOpen(false);
+                              }}
+                            >
+                              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                              <span className="truncate">{t('reports.salesReport')}</span>
+                            </button>
+                          </Link>
                           <Link href="/reports?tab=order">
                             <button
                               className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
@@ -353,7 +353,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                               }}
                             >
                               <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t("reports.orderReport")}</span>
+                              <span className="truncate">{t("reports.purchaseReport")}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=inventory">
@@ -368,48 +368,6 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                             >
                               <Package className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
                               <span className="truncate">{t("reports.inventoryReport")}</span>
-                            </button>
-                          </Link>
-                          <Link href="/reports?tab=customer">
-                            <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search === "?tab=customer" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
-                              }`}
-                              onClick={() => {
-                                setReportsSubmenuOpen(false);
-                                setPosMenuOpen(false);
-                              }}
-                            >
-                              <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.customerReportTab')}</span>
-                            </button>
-                          </Link>
-                          <Link href="/reports?tab=saleschannel">
-                            <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search === "?tab=saleschannel" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
-                              }`}
-                              onClick={() => {
-                                setReportsSubmenuOpen(false);
-                                setPosMenuOpen(false);
-                              }}
-                            >
-                              <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.salesChannelReportTab')}</span>
-                            </button>
-                          </Link>
-                          <Link href="/reports?tab=employee">
-                            <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search === "?tab=employee" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
-                              }`}
-                              onClick={() => {
-                                setReportsSubmenuOpen(false);
-                                setPosMenuOpen(false);
-                              }}
-                            >
-                              <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t("reports.employeeReportTab")}</span>
                             </button>
                           </Link>
                         </div>
