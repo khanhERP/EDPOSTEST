@@ -2773,7 +2773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         invoiceNumber: String(invoiceData.invoiceNumber),
         transactionNumber: invoiceData.transactionNumber ? String(invoiceData.transactionNumber) : null,
         cashierName: invoiceData.cashierName ? String(invoiceData.cashierName) : null,
-        invoiceDate: invoiceData.invoiceDate || new Date().toISOString(),
+        invoiceDate: invoiceData.invoiceDate ? new Date(invoiceData.invoiceDate).toISOString() : new Date().toISOString(),
         buyerName: String(invoiceData.buyerName),
         buyerTaxCode: String(invoiceData.buyerTaxCode || ""),
         buyerAddress: String(invoiceData.buyerAddress || ""),
@@ -3092,7 +3092,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         paymentStatus: publishType === "publish" ? 'paid' : 'pending',
         einvoiceStatus: einvoiceStatus,
         notes: `E-Invoice Info - Tax Code: ${invoiceData.customerTaxCode || 'N/A'}, Address: ${invoiceData.customerAddress || 'N/A'}`,
-        orderedAt: createdAt,
+        orderedAt: createdAt.toISOString(),
         salesChannel: 'pos'
       };
 

@@ -394,7 +394,7 @@ export function EInvoiceModal({
       // Prepare invoice payload
       const invoicePayload = {
         invoiceNumber: `INV-${Date.now()}`,
-        invoiceDate: new Date().toISOString(),
+        invoiceDate: new Date(),
         buyerTaxCode: formData.taxCode || "",
         buyerName: formData.customerName || "Khách hàng",
         buyerAddress: formData.address || "",
