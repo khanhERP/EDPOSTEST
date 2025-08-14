@@ -353,35 +353,39 @@ export default function SalesOrders() {
                     <p className="mt-2 text-gray-500">Đang tải...</p>
                   </div>
                 ) : (
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    <div className="grid grid-cols-10 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded">
+                  <div className="space-y-2">
+                    {/* Fixed Header */}
+                    <div className="grid grid-cols-10 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded sticky top-0 z-10">
                       <div className="col-span-2">Số đơn bán</div>
                       <div className="col-span-2">Ngày đơn bán</div>
                       <div className="col-span-3">Khách hàng</div>
                       <div className="col-span-2">Thành tiền</div>
                       <div className="col-span-1">Trạng thái</div>
                     </div>
-                    {filteredInvoices.map((invoice) => (
-                      <div
-                        key={invoice.id}
-                        className={`grid grid-cols-10 gap-2 text-xs p-2 rounded cursor-pointer hover:bg-blue-50 ${
-                          selectedInvoice?.id === invoice.id ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
-                        }`}
-                        onClick={() => setSelectedInvoice(invoice)}
-                      >
-                        <div className="col-span-2 font-medium">
-                          {invoice.tradeNumber || invoice.invoiceNumber || `DH${String(invoice.id).padStart(8, '0')}`}
+                    {/* Scrollable Content */}
+                    <div className="max-h-80 overflow-y-auto space-y-2">
+                      {filteredInvoices.map((invoice) => (
+                        <div
+                          key={invoice.id}
+                          className={`grid grid-cols-10 gap-2 text-xs p-2 rounded cursor-pointer hover:bg-blue-50 ${
+                            selectedInvoice?.id === invoice.id ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
+                          }`}
+                          onClick={() => setSelectedInvoice(invoice)}
+                        >
+                          <div className="col-span-2 font-medium">
+                            {invoice.tradeNumber || invoice.invoiceNumber || `DH${String(invoice.id).padStart(8, '0')}`}
+                          </div>
+                          <div className="col-span-2">{formatDate(invoice.invoiceDate)}</div>
+                          <div className="col-span-3 truncate">{invoice.customerName}</div>
+                          <div className="col-span-2 text-right font-medium">
+                            {formatCurrency(invoice.total)}
+                          </div>
+                          <div className="col-span-1">
+                            {getInvoiceStatusBadge(invoice.invoiceStatus || 1)}
+                          </div>
                         </div>
-                        <div className="col-span-2">{formatDate(invoice.invoiceDate)}</div>
-                        <div className="col-span-3 truncate">{invoice.customerName}</div>
-                        <div className="col-span-2 text-right font-medium">
-                          {formatCurrency(invoice.total)}
-                        </div>
-                        <div className="col-span-1">
-                          {getInvoiceStatusBadge(invoice.invoiceStatus || 1)}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
                 
