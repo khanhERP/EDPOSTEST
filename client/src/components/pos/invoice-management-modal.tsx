@@ -142,6 +142,24 @@ export function InvoiceManagementModal({
     });
   };
 
+  const getPaymentMethodName = (paymentMethod: string) => {
+    // Convert string to number for comparison
+    const methodType = parseInt(paymentMethod);
+    
+    switch (methodType) {
+      case 1:
+        return t('common.cash'); // "Tiền mặt"
+      case 2:
+        return 'Chuyển khoản'; // Bank transfer
+      case 3:
+        return 'TM/CK'; // Cash/Bank transfer combination
+      case 4:
+        return 'Đối trừ công nợ'; // Debt offset
+      default:
+        return paymentMethod; // Return original value if not numeric
+    }
+  };
+
   return (
     <>
       {/* Main Invoice List Modal */}
@@ -208,7 +226,7 @@ export function InvoiceManagementModal({
                           </div>
                         </td>
                         <td className="p-3">
-                          <Badge variant="outline">{invoice.paymentMethod}</Badge>
+                          <Badge variant="outline">{getPaymentMethodName(invoice.paymentMethod)}</Badge>
                         </td>
                         <td className="p-3">
                           {getEInvoiceStatusBadge(invoice.einvoiceStatus)}
@@ -366,7 +384,7 @@ export function InvoiceManagementModal({
                     </div>
                     <div className="flex justify-between text-sm text-gray-600">
                       <span>Phương thức thanh toán:</span>
-                      <Badge variant="outline">{selectedInvoice.paymentMethod}</Badge>
+                      <Badge variant="outline">{getPaymentMethodName(selectedInvoice.paymentMethod)}</Badge>
                     </div>
                   </div>
                 </CardContent>
