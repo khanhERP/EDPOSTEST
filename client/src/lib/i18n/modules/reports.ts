@@ -7,7 +7,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     dashboard: "대시보드",
     dashboardDescription: "전체 매출 및 운영 현황을 한눈에 확인하세요",
     salesAnalysis: "매출 분석",
-    menuAnalysis: "상품 보고서",
+    menuAnalysis: "메뉴 분석",
     tableAnalysis: "테이블 분석",
     backToTables: "테이블로 돌아가기",
     noPaymentData: "결제 데이터가 없습니다.",
@@ -496,7 +496,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     dashboard: "Dashboard",
     dashboardDescription: "Overview of total sales and operational status",
     salesAnalysis: "Sales Analysis",
-    menuAnalysis: "Product Report",
+    menuAnalysis: "Menu Analysis",
     tableAnalysis: "Table Analysis",
     backToTables: "Back to Tables",
 
@@ -827,7 +827,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     dashboard: "Bảng điều khiển",
     dashboardDescription: "Tổng quan về doanh thu và tình trạng vận hành",
     salesAnalysis: "Phân tích bán hàng",
-    menuAnalysis: "Báo cáo Hàng hóa",
+    menuAnalysis: "Phân tích thực đơn",
     tableAnalysis: "Phân tích bàn",
     backToTables: "Quay lại bàn",
 
