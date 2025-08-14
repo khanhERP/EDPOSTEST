@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Card,
@@ -54,6 +54,8 @@ export function SalesChartReport() {
   );
   const [salesMethod, setSalesMethod] = useState("all");
   const [salesChannel, setSalesChannel] = useState("all");
+  const [savedSettings, setSavedSettings] = useState<any>(null);
+  const [previousReportData, setPreviousReportData] = useState<any>(null);
 
   const { data: transactions } = useQuery({
     queryKey: ["/api/transactions"],
@@ -62,6 +64,67 @@ export function SalesChartReport() {
   const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
   });
+
+  // Load previous report settings when analysis type changes
+  useEffect(() => {
+    const loadPreviousSettings = () => {
+      try {
+        const storageKey = `salesReport_${analysisType}_${concernType}_settings`;
+        const savedConfig = localStorage.getItem(storageKey);
+        
+        if (savedConfig) {
+          const parsedConfig = JSON.parse(savedConfig);
+          setSavedSettings(parsedConfig);
+          
+          // Apply saved settings if they exist
+          if (parsedConfig.dateRange) {
+            setStartDate(parsedConfig.dateRange.startDate || startDate);
+            setEndDate(parsedConfig.dateRange.endDate || endDate);
+          }
+          if (parsedConfig.filters) {
+            setSalesMethod(parsedConfig.filters.salesMethod || "all");
+            setSalesChannel(parsedConfig.filters.salesChannel || "all");
+          }
+        }
+
+        // Load previous report data for comparison
+        const dataKey = `salesReport_${analysisType}_${concernType}_data`;
+        const savedData = localStorage.getItem(dataKey);
+        if (savedData) {
+          setPreviousReportData(JSON.parse(savedData));
+        }
+      } catch (error) {
+        console.warn("Failed to load previous report settings:", error);
+      }
+    };
+
+    loadPreviousSettings();
+  }, [analysisType, concernType]);
+
+  // Save current settings when filters change
+  useEffect(() => {
+    const saveCurrentSettings = () => {
+      try {
+        const storageKey = `salesReport_${analysisType}_${concernType}_settings`;
+        const currentSettings = {
+          dateRange: { startDate, endDate },
+          filters: { salesMethod, salesChannel },
+          lastUpdated: new Date().toISOString(),
+          analysisType,
+          concernType
+        };
+        
+        localStorage.setItem(storageKey, JSON.stringify(currentSettings));
+      } catch (error) {
+        console.warn("Failed to save current settings:", error);
+      }
+    };
+
+    // Only save if we have meaningful data
+    if (startDate && endDate) {
+      saveCurrentSettings();
+    }
+  }, [startDate, endDate, salesMethod, salesChannel, analysisType, concernType]);
 
   const getFilteredData = () => {
     if (!transactions || !Array.isArray(transactions)) return [];
@@ -845,25 +908,61 @@ export function SalesChartReport() {
     }
   };
 
+  // Save current report data for future comparison
+  const saveCurrentReportData = (data: any) => {
+    try {
+      const dataKey = `salesReport_${analysisType}_${concernType}_data`;
+      const reportData = {
+        data,
+        generatedAt: new Date().toISOString(),
+        settings: {
+          dateRange: { startDate, endDate },
+          filters: { salesMethod, salesChannel },
+          analysisType,
+          concernType
+        }
+      };
+      
+      localStorage.setItem(dataKey, JSON.stringify(reportData));
+    } catch (error) {
+      console.warn("Failed to save report data:", error);
+    }
+  };
+
   const renderReportTable = () => {
+    let reportContent;
+    
     if (analysisType === "time") {
       switch (concernType) {
         case "time":
-          return renderTimeReport();
+          reportContent = renderTimeReport();
+          break;
         case "profit":
-          return renderProfitReport();
+          reportContent = renderProfitReport();
+          break;
         case "discount":
-          return renderDiscountReport();
+          reportContent = renderDiscountReport();
+          break;
         case "return":
-          return renderReturnReport();
+          reportContent = renderReturnReport();
+          break;
         case "employee":
-          return renderEmployeeReport();
+          reportContent = renderEmployeeReport();
+          break;
         default:
-          return renderTimeReport();
+          reportContent = renderTimeReport();
       }
     } else {
-      return renderAnalysisTypeReport();
+      reportContent = renderAnalysisTypeReport();
     }
+
+    // Save current data for future reference
+    const currentData = getFilteredData();
+    if (currentData && currentData.length > 0) {
+      saveCurrentReportData(currentData);
+    }
+
+    return reportContent;
   };
 
   const shouldShowChart = () => {
@@ -1059,6 +1158,42 @@ export function SalesChartReport() {
         </CardHeader>
       </Card>
 
+      {/* Previous Settings Information */}
+      {savedSettings && (
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm flex items-center gap-2 text-blue-700">
+              <Calendar className="w-4 h-4" />
+              {t("reports.previousReportSettings")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+              <div>
+                <span className="font-medium text-blue-600">{t("reports.lastPeriod")}:</span>
+                <div className="text-blue-800">
+                  {savedSettings.dateRange?.startDate} - {savedSettings.dateRange?.endDate}
+                </div>
+              </div>
+              <div>
+                <span className="font-medium text-blue-600">{t("reports.salesMethod")}:</span>
+                <div className="text-blue-800">{savedSettings.filters?.salesMethod || "N/A"}</div>
+              </div>
+              <div>
+                <span className="font-medium text-blue-600">{t("reports.salesChannel")}:</span>
+                <div className="text-blue-800">{savedSettings.filters?.salesChannel || "N/A"}</div>
+              </div>
+              <div>
+                <span className="font-medium text-blue-600">{t("reports.lastUpdated")}:</span>
+                <div className="text-blue-800">
+                  {savedSettings.lastUpdated ? new Date(savedSettings.lastUpdated).toLocaleDateString("vi-VN") : "N/A"}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Filters */}
       <Card>
         <CardContent className="space-y-4 pt-6">
@@ -1066,7 +1201,13 @@ export function SalesChartReport() {
             {/* Analysis Type Selector */}
             <div>
               <Label>{t("reports.analyzeBy")} </Label>
-              <Select value={analysisType} onValueChange={setAnalysisType}>
+              <Select value={analysisType} onValueChange={(value) => {
+                setAnalysisType(value);
+                // Reset concern type when analysis type changes
+                if (value !== "time") {
+                  setConcernType("time");
+                }
+              }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -1089,6 +1230,25 @@ export function SalesChartReport() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Concern Type - Only show for time analysis */}
+            {analysisType === "time" && (
+              <div>
+                <Label>{t("reports.concernType")}</Label>
+                <Select value={concernType} onValueChange={setConcernType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="time">{t("reports.timeReport")}</SelectItem>
+                    <SelectItem value="profit">{t("reports.profitReport")}</SelectItem>
+                    <SelectItem value="discount">{t("reports.discountReport")}</SelectItem>
+                    <SelectItem value="return">{t("reports.returnReport")}</SelectItem>
+                    <SelectItem value="employee">{t("reports.employeeReport")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Sales Method Filter */}
             <div>
