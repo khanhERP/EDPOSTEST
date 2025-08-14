@@ -52,21 +52,30 @@ export function SalesReport() {
         transaction.createdAt || transaction.created_at,
       );
 
-      // Chuyển ngày giao dịch về dạng YYYY-MM-DD để so sánh
-      const transactionDateStr = transactionDate.toISOString().split('T')[0];
-      
-      // So sánh trực tiếp string date để tránh vấn đề timezone
-      const isInRange = transactionDateStr >= startDate && transactionDateStr <= endDate;
-      
-      // Debug log để kiểm tra dữ liệu
-      if (!isInRange) {
-        console.log("Transaction filtered out:", {
-          transactionDate: transactionDateStr,
-          startDate: startDate,
-          endDate: endDate,
-          transactionId: transaction.id
-        });
-      }
+      // Đặt múi giờ về UTC để tránh vấn đề timezone
+      const transactionDateOnly = new Date(
+        transactionDate.getFullYear(),
+        transactionDate.getMonth(),
+        transactionDate.getDate(),
+      );
+
+      const start = new Date(startDate);
+      const startDateOnly = new Date(
+        start.getFullYear(),
+        start.getMonth(),
+        start.getDate(),
+      );
+
+      const end = new Date(endDate);
+      const endDateOnly = new Date(
+        end.getFullYear(),
+        end.getMonth(),
+        end.getDate(),
+      );
+
+      const isInRange =
+        transactionDateOnly >= startDateOnly &&
+        transactionDateOnly <= endDateOnly;
 
       return isInRange;
     });
