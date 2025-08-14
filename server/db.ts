@@ -15,8 +15,8 @@ import path from 'path';
 config({ path: path.resolve('.env') });
 config({ path: path.resolve('.env.local') });
 
-// Use DATABASE_URL from environment (Replit Secrets takes precedence)
-const DATABASE_URL = process.env.DATABASE_URL;
+// Use CUSTOM_DATABASE_URL first, then fallback to DATABASE_URL
+const DATABASE_URL = process.env.CUSTOM_DATABASE_URL || process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
   throw new Error(
@@ -34,12 +34,13 @@ export const pool = new Pool({
 // Log database connection info with detailed debugging
 console.log("🔍 Environment check:");
 console.log("  - NODE_ENV:", process.env.NODE_ENV);
-console.log("  - DATABASE_URL exists:", !!DATABASE_URL);
+console.log("  - CUSTOM_DATABASE_URL exists:", !!process.env.CUSTOM_DATABASE_URL);
+console.log("  - DATABASE_URL exists:", !!process.env.DATABASE_URL);
+console.log("  - Using URL:", process.env.CUSTOM_DATABASE_URL ? "CUSTOM_DATABASE_URL" : "DATABASE_URL");
 console.log("  - DATABASE_URL preview:", DATABASE_URL?.substring(0, 50) + "...");
 console.log("  - DATABASE_URL full (masked):", DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
 console.log("  - Contains 1.55.212.138:", DATABASE_URL?.includes('1.55.212.138'));
 console.log("  - Contains neon:", DATABASE_URL?.includes('neon'));
-console.log("  - Source: .env file priority");
 console.log("🔗 Database connection string:", DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
 
 export const db = drizzle({ client: pool, schema });
