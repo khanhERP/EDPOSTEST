@@ -91,6 +91,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Analysis types
     analysisType: "분석 유형",
+    analyzeBy: "분석 기준",
     timeAnalysis: "시간",
     productAnalysis: "판매",
     employeeAnalysis: "직원별 판매",
@@ -571,6 +572,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Analysis types
     analysisType: "Analysis Type",
+    analyzeBy: "Analyze By",
     timeAnalysis: "Time Analysis",
     productAnalysis: "Product Analysis",
     employeeAnalysis: "Employee Analysis",
@@ -891,11 +893,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Analysis types
     analysisType: "Phân tích theo",
-    timeAnalysis: "Phân tích theo thời gian",
-    productAnalysis: "Phân tích theo hàng hóa",
-    employeeAnalysis: "Phân tích theo nhân viên",
-    customerAnalysis: "Phân tích theo khách hàng",
-    channelAnalysis: "Phân tích theo kênh bán hàng",
+    analyzeBy: "Phân tích theo",
+    timeAnalysis: "Thời gian",
+    productAnalysis: "Hàng hóa",
+    employeeAnalysis: "Nhân viên",
+    customerAnalysis: "Khách hàng",
+    channelAnalysis: "Kênh bán hàng",
 
     // Additional dashboard keys
     periodRevenue: "Doanh thu kỳ",
