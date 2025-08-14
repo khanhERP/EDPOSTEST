@@ -11,9 +11,9 @@ neonConfig.webSocketConstructor = ws;
 import { config } from 'dotenv';
 import path from 'path';
 
-// Load .env files first, then let Replit Secrets override if needed
-config({ path: path.resolve('.env') });
+// Load .env.local first, then override with .env to ensure .env has priority
 config({ path: path.resolve('.env.local') });
+config({ path: path.resolve('.env') });
 
 // Use DATABASE_URL first, then fallback to CUSTOM_DATABASE_URL
 const DATABASE_URL = process.env.DATABASE_URL || process.env.CUSTOM_DATABASE_URL;
