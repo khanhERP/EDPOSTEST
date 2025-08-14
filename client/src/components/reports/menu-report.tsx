@@ -300,7 +300,7 @@ export function MenuReport() {
                   {t("reports.totalOrders")}
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {displayData.totalQuantity.toLocaleString()}
+                  {Number(displayData.totalQuantity || 0).toLocaleString()}
                 </p>
               </div>
               <Award className="w-8 h-8 text-blue-500" />
@@ -339,8 +339,8 @@ export function MenuReport() {
                   ? (category.revenue / displayData.totalRevenue) * 100
                   : 0;
               const quantityPercentage =
-                displayData.totalQuantity > 0
-                  ? (category.quantity / displayData.totalQuantity) * 100
+                Number(displayData.totalQuantity) > 0
+                  ? (category.quantity / Number(displayData.totalQuantity)) * 100
                   : 0;
 
               return (
