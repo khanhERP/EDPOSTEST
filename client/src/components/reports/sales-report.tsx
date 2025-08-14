@@ -181,8 +181,31 @@ export function SalesReport() {
       [method: string]: { count: number; revenue: number };
     } = {};
 
+    // Map to consolidate similar payment methods
+    const consolidatePaymentMethod = (method: string): string => {
+      switch (method.toLowerCase()) {
+        case 'credit_card':
+        case 'creditcard':
+          return 'credit_card';
+        case 'debit_card':
+        case 'debitcard':
+          return 'debit_card';
+        case 'qr_code':
+        case 'qrcode':
+          return 'qrCode';
+        case 'card':
+          return 'card';
+        case 'transfer':
+        case 'bank_transfer':
+          return 'transfer';
+        default:
+          return method;
+      }
+    };
+
     filteredTransactions.forEach((transaction: any) => {
-      const method = transaction.paymentMethod || "cash";
+      const rawMethod = transaction.paymentMethod || "cash";
+      const method = consolidatePaymentMethod(rawMethod);
       if (!paymentMethods[method]) {
         paymentMethods[method] = { count: 0, revenue: 0 };
       }
