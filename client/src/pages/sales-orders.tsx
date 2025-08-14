@@ -109,6 +109,9 @@ export default function SalesOrders() {
         invoiceStatus: 3, // 3 = Đã hủy
         status: "cancelled" // Also update the status field for consistency
       });
+      if (!response.ok) {
+        throw new Error('Failed to cancel invoice');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -120,6 +123,10 @@ export default function SalesOrders() {
       setSelectedInvoice(null);
       setIsEditing(false);
       setEditableInvoice(null);
+    },
+    onError: (error) => {
+      console.error('Error canceling invoice:', error);
+      setShowCancelDialog(false);
     },
   });
 
@@ -639,11 +646,15 @@ export default function SalesOrders() {
                       <Button 
                         size="sm" 
                         className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
-                        onClick={() => setShowCancelDialog(true)}
-                        disabled={selectedInvoice?.invoiceStatus === 3}
+                        onClick={() => {
+                          if (selectedInvoice && selectedInvoice.invoiceStatus !== 3) {
+                            setShowCancelDialog(true);
+                          }
+                        }}
+                        disabled={selectedInvoice?.invoiceStatus === 3 || cancelInvoiceMutation.isPending}
                       >
                         <X className="w-4 h-4" />
-                        Hủy đơn
+                        {cancelInvoiceMutation.isPending ? 'Đang hủy...' : 'Hủy đơn'}
                       </Button>
                       {!isEditing ? (
                         <Button 
