@@ -63,14 +63,14 @@ export function SalesReport() {
       end.setHours(23, 59, 59, 999);
 
       const isInRange = transactionDate >= start && transactionDate <= end;
-      
+
       // Debug log để kiểm tra dữ liệu
       if (!isInRange) {
         console.log("Transaction filtered out:", {
           transactionDate: transactionDate.toISOString(),
           startDate: start.toISOString(),
           endDate: end.toISOString(),
-          transactionId: transaction.id
+          transactionId: transaction.id,
         });
       }
 
@@ -80,9 +80,10 @@ export function SalesReport() {
     console.log("Filtered Transactions:", {
       count: filteredTransactions.length,
       dateRange: `${startDate} to ${endDate}`,
-      filteredTransactionDates: filteredTransactions.map(t => 
-        new Date(t.createdAt || t.created_at).toISOString().split('T')[0]
-      )
+      filteredTransactionDates: filteredTransactions.map(
+        (t) =>
+          new Date(t.createdAt || t.created_at).toISOString().split("T")[0],
+      ),
     });
 
     // Daily sales breakdown
@@ -187,7 +188,9 @@ export function SalesReport() {
           today.getMonth() - 1,
           1,
         );
+        console.log("lastMonth", lastMonth);
         const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
+        console.log("lastMonthEnd", lastMonthEnd);
         setStartDate(lastMonth.toISOString().split("T")[0]);
         setEndDate(lastMonthEnd.toISOString().split("T")[0]);
         break;
@@ -205,8 +208,8 @@ export function SalesReport() {
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     // Đảm bảo ngày tháng được hiển thị đúng timezone
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
   };
