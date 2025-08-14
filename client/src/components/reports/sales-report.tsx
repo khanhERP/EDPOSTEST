@@ -32,7 +32,7 @@ import { useTranslation, useLanguageStore } from "@/lib/i18n";
 export function SalesReport() {
   const { t } = useTranslation();
 
-  const [dateRange, setDateRange] = useState("week");
+  const [dateRange, setDateRange] = useState("today");
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0],
   );
@@ -150,16 +150,25 @@ export function SalesReport() {
       case "week":
         // Tuần trước: từ thứ 2 tuần trước đến chủ nhật tuần trước
         const currentDayOfWeek = today.getDay(); // 0 = Chủ nhật, 1 = Thứ 2, ...
-        const daysToLastMonday = currentDayOfWeek === 0 ? 13 : currentDayOfWeek + 6; // Nếu hôm nay là CN thì lùi 13 ngày, không thì lùi (ngày hiện tại + 6)
-        const lastWeekMonday = new Date(today.getTime() - daysToLastMonday * 24 * 60 * 60 * 1000);
-        const lastWeekSunday = new Date(lastWeekMonday.getTime() + 6 * 24 * 60 * 60 * 1000);
-        
+        const daysToLastMonday =
+          currentDayOfWeek === 0 ? 13 : currentDayOfWeek + 6; // Nếu hôm nay là CN thì lùi 13 ngày, không thì lùi (ngày hiện tại + 6)
+        const lastWeekMonday = new Date(
+          today.getTime() - daysToLastMonday * 24 * 60 * 60 * 1000,
+        );
+        const lastWeekSunday = new Date(
+          lastWeekMonday.getTime() + 6 * 24 * 60 * 60 * 1000,
+        );
+
         setStartDate(lastWeekMonday.toISOString().split("T")[0]);
         setEndDate(lastWeekSunday.toISOString().split("T")[0]);
         break;
       case "month":
         // Tháng trước: từ ngày 1 tháng trước đến ngày cuối tháng trước
-        const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+        const lastMonth = new Date(
+          today.getFullYear(),
+          today.getMonth() - 1,
+          1,
+        );
         const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
         setStartDate(lastMonth.toISOString().split("T")[0]);
         setEndDate(lastMonthEnd.toISOString().split("T")[0]);
