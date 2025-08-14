@@ -335,12 +335,12 @@ export function ShoppingCart({
         console.log('✅ E-invoice published immediately, showing receipt modal');
         console.log('📄 Receipt data received:', eInvoiceData.receipt);
 
-        // Hiển thị receipt modal với dữ liệu từ e-invoice
+        // Clear cart trước khi hiển thị receipt
+        onClearCart();
+
+        // Hiển thị receipt modal với dữ liệu từ e-invoice và autoShowPrint = true
         setCurrentReceipt(eInvoiceData.receipt);
         setShowReceiptModal(true);
-
-        // Clear cart sau khi hiển thị receipt
-        onClearCart();
 
         toast({
           title: "Thành công",
@@ -727,7 +727,7 @@ export function ShoppingCart({
         receipt={currentReceipt}
         onConfirm={() => setShowReceiptModal(false)}
         isPreview={false} // Không phải preview, có thể in ngay
-        autoShowPrint={true} // Tự động hiển thị dialog in
+        autoShowPrint={true} // Tự động hiển thị dialog in cho tất cả các trường hợp
         cartItems={
           currentReceipt
             ? (currentReceipt.items || []).map((item: any) => ({
