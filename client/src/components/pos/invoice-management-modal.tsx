@@ -180,7 +180,7 @@ export function InvoiceManagementModal({
                     {invoices.map((invoice) => (
                       <tr key={invoice.id} className="border-b hover:bg-gray-50">
                         <td className="p-3">
-                          <div className="font-mono text-sm">{invoice.invoiceNumber}</div>
+                          <div className="font-mono text-sm">{invoice.tradeNumber}</div>
                         </td>
                         <td className="p-3">
                           <div className="font-medium">{invoice.customerName}</div>
