@@ -1271,41 +1271,7 @@ export function SalesChartReport() {
         </CardHeader>
       </Card>
 
-      {/* Previous Settings Information */}
-      {savedSettings && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2 text-blue-700">
-              <Calendar className="w-4 h-4" />
-              {t("reports.previousReportSettings")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-              <div>
-                <span className="font-medium text-blue-600">{t("reports.lastPeriod")}:</span>
-                <div className="text-blue-800">
-                  {savedSettings.dateRange?.startDate} - {savedSettings.dateRange?.endDate}
-                </div>
-              </div>
-              <div>
-                <span className="font-medium text-blue-600">{t("reports.salesMethod")}:</span>
-                <div className="text-blue-800">{savedSettings.filters?.salesMethod || "N/A"}</div>
-              </div>
-              <div>
-                <span className="font-medium text-blue-600">{t("reports.salesChannel")}:</span>
-                <div className="text-blue-800">{savedSettings.filters?.salesChannel || "N/A"}</div>
-              </div>
-              <div>
-                <span className="font-medium text-blue-600">{t("reports.lastUpdated")}:</span>
-                <div className="text-blue-800">
-                  {savedSettings.lastUpdated ? new Date(savedSettings.lastUpdated).toLocaleDateString("vi-VN") : "N/A"}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      
 
       {/* Filters */}
       <Card>
