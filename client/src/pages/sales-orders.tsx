@@ -542,6 +542,35 @@ export default function SalesOrders() {
             {/* Invoices List */}
             <Card>
               <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Danh sách đơn hàng</CardTitle>
+                  <div className="flex gap-2">
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex items-center gap-2 border-red-500 text-red-600 hover:bg-red-50"
+                      onClick={() => {
+                        // Handle bulk cancel orders
+                        console.log('Bulk cancel orders');
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                      Hủy đơn
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
+                      onClick={() => {
+                        // Handle export to excel
+                        console.log('Export to excel');
+                      }}
+                    >
+                      <FileText className="w-4 h-4" />
+                      Xuất excel
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
