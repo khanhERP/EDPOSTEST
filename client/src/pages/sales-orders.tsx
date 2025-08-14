@@ -359,7 +359,7 @@ export default function SalesOrders() {
                       <div className="col-span-2">Ngày đơn bán</div>
                       <div className="col-span-3">Khách hàng</div>
                       <div className="col-span-2">Thành tiền</div>
-                      <div className="col-span-1">Trạng thái đơn</div>
+                      <div className="col-span-1">Trạng thái</div>
                     </div>
                     {filteredInvoices.map((invoice) => (
                       <div
