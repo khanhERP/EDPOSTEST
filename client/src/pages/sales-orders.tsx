@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Calendar, Search, FileText, Package, Printer, Mail, X } from "lucide-react";
+import { Calendar, Search, FileText, Package, Printer, Mail, X, Download } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
 interface Invoice {
@@ -566,7 +566,7 @@ export default function SalesOrders() {
                         console.log('Export to excel');
                       }}
                     >
-                      <FileText className="w-4 h-4" />
+                      <Download className="w-4 h-4" />
                       Xuất excel
                     </Button>
                   </div>
