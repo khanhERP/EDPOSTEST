@@ -185,14 +185,24 @@ export default function SalesOrders() {
     },
   });
 
-  // Mutation for canceling invoice
+  // Mutation for canceling invoice or order
   const cancelInvoiceMutation = useMutation({
-    mutationFn: async (invoiceId: number) => {
+    mutationFn: async (item: { id: number, type: string }) => {
       try {
-        const response = await apiRequest("PUT", `/api/invoices/${invoiceId}`, { 
-          invoiceStatus: 3, // 3 = Đã hủy
-          status: "cancelled" // Also update the status field for consistency
-        });
+        let response;
+        
+        if (item.type === 'order') {
+          // For orders, update status to 'cancelled'
+          response = await apiRequest("PUT", `/api/orders/${item.id}/status`, { 
+            status: "cancelled"
+          });
+        } else {
+          // For invoices, update invoiceStatus to 3 and status to 'cancelled'
+          response = await apiRequest("PUT", `/api/invoices/${item.id}`, { 
+            invoiceStatus: 3, // 3 = Đã hủy
+            status: "cancelled"
+          });
+        }
         
         if (!response.ok) {
           const errorData = await response.text();
@@ -201,17 +211,17 @@ export default function SalesOrders() {
         
         return response.json();
       } catch (error) {
-        console.error('Cancel invoice error:', error);
+        console.error('Cancel order/invoice error:', error);
         throw error;
       }
     },
-    onSuccess: (data, invoiceId) => {
-      console.log('Invoice cancelled successfully:', invoiceId);
+    onSuccess: (data, item) => {
+      console.log('Order/Invoice cancelled successfully:', item);
       
       // 1. Đóng dialog xác nhận
       setShowCancelDialog(false);
       
-      // 2. Refresh danh sách hóa đơn
+      // 2. Refresh danh sách hóa đơn và đơn hàng
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       
@@ -220,7 +230,7 @@ export default function SalesOrders() {
       setIsEditing(false);
       setEditableInvoice(null);
       
-      console.log('Invoice details section should now be hidden');
+      console.log('Order/Invoice details section should now be hidden');
     },
     onError: (error) => {
       console.error('Error canceling invoice:', error);
@@ -889,8 +899,11 @@ export default function SalesOrders() {
             <AlertDialogAction 
               onClick={() => {
                 if (selectedInvoice) {
-                  console.log('Cancelling invoice:', selectedInvoice.id);
-                  cancelInvoiceMutation.mutate(selectedInvoice.id);
+                  console.log('Cancelling order/invoice:', selectedInvoice.id, selectedInvoice.type);
+                  cancelInvoiceMutation.mutate({ 
+                    id: selectedInvoice.id, 
+                    type: selectedInvoice.type || 'invoice' 
+                  });
                 }
               }}
               disabled={cancelInvoiceMutation.isPending}
