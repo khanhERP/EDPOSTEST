@@ -185,16 +185,25 @@ export function TableReport() {
         break;
       case "month":
         // Tháng trước: từ ngày 1 tháng trước đến ngày cuối tháng trước
-        setStartDate(
-          new Date(today.getFullYear(), today.getMonth() - 1, 1)
-            .toISOString()
-            .split("T")[0],
-        );
-        setEndDate(
-          new Date(today.getFullYear(), today.getMonth(), 0)
-            .toISOString()
-            .split("T")[0],
-        );
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        // Tính tháng trước
+        const lastMonthYear = month === 0 ? year - 1 : year;
+        const lastMonth = month === 0 ? 11 : month - 1;
+        
+        // Ngày đầu tháng trước
+        const lastMonthStart = new Date(lastMonthYear, lastMonth, 1);
+        // Ngày cuối tháng trước
+        const lastMonthEnd = new Date(lastMonthYear, lastMonth + 1, 0);
+
+        // Format thành YYYY-MM-DD
+        const startDateStr = `${lastMonthStart.getFullYear()}-${(lastMonthStart.getMonth() + 1).toString().padStart(2, "0")}-${lastMonthStart.getDate().toString().padStart(2, "0")}`;
+        const endDateStr = `${lastMonthEnd.getFullYear()}-${(lastMonthEnd.getMonth() + 1).toString().padStart(2, "0")}-${lastMonthEnd.getDate().toString().padStart(2, "0")}`;
+
+        setStartDate(startDateStr);
+        setEndDate(endDateStr);
         break;
       case "custom":
         // Don't change dates for custom
