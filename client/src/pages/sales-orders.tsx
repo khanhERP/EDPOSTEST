@@ -204,11 +204,28 @@ export default function SalesOrders() {
         }
         
         if (!response.ok) {
-          const errorData = await response.text();
-          throw new Error(`Không thể hủy đơn hàng: ${response.status} - ${errorData}`);
+          let errorMessage = `HTTP ${response.status}`;
+          try {
+            const errorData = await response.text();
+            errorMessage = errorData || errorMessage;
+          } catch (textError) {
+            console.error('Could not parse error response:', textError);
+          }
+          throw new Error(`Không thể hủy đơn hàng: ${errorMessage}`);
         }
         
-        return response.json();
+        // Try to parse JSON response, but don't fail if it's not JSON
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            return await response.json();
+          } else {
+            return { success: true, message: 'Order cancelled successfully' };
+          }
+        } catch (jsonError) {
+          console.warn('Response is not valid JSON, but request was successful:', jsonError);
+          return { success: true, message: 'Order cancelled successfully' };
+        }
       } catch (error) {
         console.error('Cancel order/invoice error:', error);
         throw error;
