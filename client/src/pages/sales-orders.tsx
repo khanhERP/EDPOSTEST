@@ -114,15 +114,21 @@ export default function SalesOrders() {
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, invoiceId) => {
+      console.log('Invoice cancelled successfully:', invoiceId);
+      
       // 1. Đóng dialog xác nhận
       setShowCancelDialog(false);
+      
       // 2. Refresh danh sách hóa đơn
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-      // 3. Ẩn vùng chi tiết đơn hàng
+      
+      // 3. Ẩn vùng chi tiết đơn hàng - Clear all related states
       setSelectedInvoice(null);
       setIsEditing(false);
       setEditableInvoice(null);
+      
+      console.log('Invoice details section should now be hidden');
     },
     onError: (error) => {
       console.error('Error canceling invoice:', error);
@@ -726,6 +732,7 @@ export default function SalesOrders() {
             <AlertDialogAction 
               onClick={() => {
                 if (selectedInvoice) {
+                  console.log('Cancelling invoice:', selectedInvoice.id);
                   cancelInvoiceMutation.mutate(selectedInvoice.id);
                 }
               }}
