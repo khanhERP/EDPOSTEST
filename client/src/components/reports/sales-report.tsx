@@ -51,28 +51,35 @@ export function SalesReport() {
       totalTransactions: transactions.length,
       startDate,
       endDate,
-      firstTransaction: transactions[0],
+      dateRangeSelected: dateRange,
+      firstTransactionDate: transactions[0] ? new Date(transactions[0].createdAt || transactions[0].created_at).toDateString() : null,
+      lastTransactionDate: transactions[transactions.length - 1] ? new Date(transactions[transactions.length - 1].createdAt || transactions[transactions.length - 1].created_at).toDateString() : null,
     });
 
     const filteredTransactions = transactions.filter((transaction: any) => {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
+      
+      // Đặt múi giờ về UTC để tránh vấn đề timezone
+      const transactionDateOnly = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
+      
       const start = new Date(startDate);
+      const startDateOnly = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      
       const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+      const endDateOnly = new Date(end.getFullYear(), end.getMonth(), end.getDate());
 
-      const isInRange = transactionDate >= start && transactionDate <= end;
+      const isInRange = transactionDateOnly >= startDateOnly && transactionDateOnly <= endDateOnly;
 
-      // Debug log để kiểm tra dữ liệu
-      if (!isInRange) {
-        console.log("Transaction filtered out:", {
-          transactionDate: transactionDate.toISOString(),
-          startDate: start.toISOString(),
-          endDate: end.toISOString(),
-          transactionId: transaction.id,
-        });
-      }
+      // Debug log để kiểm tra dữ liệu được filter
+      console.log("Transaction filter check:", {
+        transactionDate: transactionDateOnly.toDateString(),
+        startDate: startDateOnly.toDateString(),
+        endDate: endDateOnly.toDateString(),
+        isInRange,
+        transactionId: transaction.id,
+      });
 
       return isInRange;
     });
@@ -92,9 +99,9 @@ export function SalesReport() {
     } = {};
 
     filteredTransactions.forEach((transaction: any) => {
-      const date = new Date(transaction.createdAt || transaction.created_at)
-        .toISOString()
-        .split("T")[0];
+      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
+      // Sử dụng format ngày nhất quán
+      const date = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, '0')}-${transactionDate.getDate().toString().padStart(2, '0')}`;
 
       if (!dailySales[date]) {
         dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
