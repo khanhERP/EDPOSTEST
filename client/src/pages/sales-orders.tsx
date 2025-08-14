@@ -480,7 +480,12 @@ export default function SalesOrders() {
                         <Package className="w-4 h-4" />
                         Lưu
                       </Button>
-                      <Button size="sm" variant="outline" className="flex items-center gap-2 border-red-500 text-red-600 hover:bg-red-50">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex items-center gap-2 border-red-500 text-red-600 hover:bg-red-50"
+                        onClick={() => setSelectedInvoice(null)}
+                      >
                         <X className="w-4 h-4" />
                         Đóng
                       </Button>
