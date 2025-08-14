@@ -2220,7 +2220,7 @@ export function SalesChartReport() {
       {/* Filters */}
       <Card>
         <CardContent className="space-y-4 pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Analysis Type Selector */}
             <div>
               <Label>{t("reports.analyzeBy")}</Label>
@@ -2257,39 +2257,44 @@ export function SalesChartReport() {
               </Select>
             </div>
 
-            {/* Sales Method Filter */}
-            <div>
-              <Label>{t("reports.salesMethod")}</Label>
-              <Select value={salesMethod} onValueChange={setSalesMethod}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("common.all")}</SelectItem>
-                  <SelectItem value="no_delivery">
-                    {t("reports.noDelivery")}
-                  </SelectItem>
-                  <SelectItem value="delivery">
-                    {t("reports.delivery")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Only show Sales Method and Sales Channel for non-time analysis */}
+            {analysisType !== "time" && (
+              <>
+                {/* Sales Method Filter */}
+                <div>
+                  <Label>{t("reports.salesMethod")}</Label>
+                  <Select value={salesMethod} onValueChange={setSalesMethod}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
+                      <SelectItem value="no_delivery">
+                        {t("reports.noDelivery")}
+                      </SelectItem>
+                      <SelectItem value="delivery">
+                        {t("reports.delivery")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            {/* Sales Channel Filter */}
-            <div>
-              <Label>{t("reports.salesChannel")}</Label>
-              <Select value={salesChannel} onValueChange={setSalesChannel}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("common.all")}</SelectItem>
-                  <SelectItem value="direct">{t("reports.direct")}</SelectItem>
-                  <SelectItem value="other">{t("reports.other")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                {/* Sales Channel Filter */}
+                <div>
+                  <Label>{t("reports.salesChannel")}</Label>
+                  <Select value={salesChannel} onValueChange={setSalesChannel}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
+                      <SelectItem value="direct">{t("reports.direct")}</SelectItem>
+                      <SelectItem value="other">{t("reports.other")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Additional filters based on analysis type - only show for non-time analysis */}
@@ -2406,22 +2411,60 @@ export function SalesChartReport() {
             </div>
           )}
 
-          {/* Date Range */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {/* Show concern type selector only for time analysis */}
+          {analysisType === "time" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>{t("reports.concernType")}</Label>
+                <Select value={concernType} onValueChange={setConcernType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="time">{t("reports.timeSales")}</SelectItem>
+                    <SelectItem value="profit">{t("reports.profitByInvoice")}</SelectItem>
+                    <SelectItem value="discount">{t("reports.invoiceDiscount")}</SelectItem>
+                    <SelectItem value="return">{t("reports.returnByInvoice")}</SelectItem>
+                    <SelectItem value="employee">{t("reports.employeeSales")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {/* Date Range - highlighted for time analysis */}
+          <div className={`grid grid-cols-1 md:grid-cols-4 gap-4 ${
+            analysisType === "time" ? "p-4 bg-blue-50 rounded-lg border-2 border-blue-200" : ""
+          }`}>
+            {analysisType === "time" && (
+              <div className="md:col-span-4 mb-2">
+                <h3 className="text-sm font-medium text-blue-800 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  {t("reports.dateRangeFilter")}
+                </h3>
+                <p className="text-xs text-blue-600">{t("reports.selectAnalysisPeriod")}</p>
+              </div>
+            )}
             <div>
-              <Label>{t("reports.startDate")}</Label>
+              <Label className={analysisType === "time" ? "text-blue-700 font-medium" : ""}>
+                {t("reports.startDate")}
+              </Label>
               <Input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                className={analysisType === "time" ? "border-blue-300 focus:border-blue-500" : ""}
               />
             </div>
             <div>
-              <Label>{t("reports.endDate")}</Label>
+              <Label className={analysisType === "time" ? "text-blue-700 font-medium" : ""}>
+                {t("reports.endDate")}
+              </Label>
               <Input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                className={analysisType === "time" ? "border-blue-300 focus:border-blue-500" : ""}
               />
             </div>
             <div className="flex items-end">
@@ -2431,7 +2474,11 @@ export function SalesChartReport() {
                   refetchTransactions();
                   refetchOrders();
                 }}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+                className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 ${
+                  analysisType === "time" 
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-gray-600 hover:bg-gray-700 text-white"
+                }`}
               >
                 <Search className="w-4 h-4" />
                 {t("common.refresh")}
