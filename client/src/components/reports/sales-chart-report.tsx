@@ -1003,7 +1003,7 @@ export function SalesChartReport() {
           <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4">
             {/* Analysis Type Selector */}
             <div>
-              <Label>{t("reports.analyzeBy")}</Label>
+              <Label>{t("reports.analyzeBy")}: </Label>
               <Select value={analysisType} onValueChange={setAnalysisType}>
                 <SelectTrigger>
                   <SelectValue />
