@@ -11,7 +11,8 @@ import {
   ChevronLeft,
   Menu,
   Package,
-  ShoppingCart
+  ShoppingCart,
+  FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -53,6 +54,11 @@ export function RightSidebar() {
       icon: ShoppingCart,
       label: t('nav.pos'),
       href: "/pos",
+    },
+    {
+      icon: FileText,
+      label: "Danh sách đơn bán",
+      href: "/sales-orders",
     },
     {
       icon: Package,
