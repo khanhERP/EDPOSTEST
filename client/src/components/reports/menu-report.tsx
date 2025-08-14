@@ -297,7 +297,7 @@ export function MenuReport() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalOrders")}
+                  {t("reports.totalQuantitySold")}
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
                   {Number(displayData.totalQuantity || 0).toLocaleString()}
