@@ -883,7 +883,7 @@ export function EInvoiceModal({
               tax: cartTaxAmount.toFixed(2),
               total: cartTotal.toFixed(2),
               status: 'paid', // Trạng thái đã thanh toán
-              paymentMethod: 2, // Sử dụng integer thay vì string - 2 = Chuyển khoản cho e-invoice
+              paymentMethod: 'einvoice', // Sử dụng string theo schema định nghĩa
               paymentStatus: 'paid',
               einvoiceStatus: 1, // 1 = Đã phát hành
               notes: `E-Invoice: ${result.data?.invoiceNo || 'N/A'} - MST: ${formData.taxCode}, Tên: ${formData.customerName}, SĐT: ${formData.phoneNumber || 'N/A'}`,
@@ -961,13 +961,15 @@ export function EInvoiceModal({
 
         console.log('📄 Created receipt data for published e-invoice:', receiptData);
 
-        // Đóng modal ngay lập tức trước khi xử lý logic
-        onClose();
-
-        // Xử lý logic khác nhau theo nguồn gọi
+        // Xử lý logic khác nhau theo nguồn gọi trước khi đóng modal
         if (source === 'pos') {
           // Logic cho POS: hiển thị receipt modal
           console.log('🏪 POS E-Invoice: Processing payment completion and showing receipt');
+          
+          // Đóng modal e-invoice ngay lập tức
+          onClose();
+          
+          // Gọi onConfirm để hiển thị receipt modal
           onConfirm({
             ...formData,
             invoiceData: result.data,
@@ -980,6 +982,8 @@ export function EInvoiceModal({
             publishedImmediately: true // Flag để phân biệt với phát hành sau
           });
         } else if (source === 'table' && orderId) {
+          // Đóng modal e-invoice trước
+          onClose();
           // Logic cho Table: Tự hoàn tất thanh toán luôn
           console.log('🍽️ Table E-Invoice: Completing payment directly for order:', orderId);
           console.log('🍽️ Invoice data received:', result.data);
@@ -1007,6 +1011,10 @@ export function EInvoiceModal({
         } else {
           // Fallback: trả về data cho parent component xử lý
           console.log('🔄 Fallback: Returning data to parent');
+          
+          // Đóng modal e-invoice trước
+          onClose();
+          
           onConfirm({
             ...formData,
             invoiceData: result.data,
