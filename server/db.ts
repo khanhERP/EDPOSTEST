@@ -20,11 +20,14 @@ export const pool = new Pool({
   connectionTimeoutMillis: 2000,
 });
 
-// Log database connection info
+// Log database connection info with detailed debugging
 console.log("🔍 Environment check:");
 console.log("  - NODE_ENV:", process.env.NODE_ENV);
 console.log("  - DATABASE_URL exists:", !!process.env.DATABASE_URL);
 console.log("  - DATABASE_URL preview:", process.env.DATABASE_URL?.substring(0, 50) + "...");
+console.log("  - DATABASE_URL full (masked):", process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
+console.log("  - Contains 1.55.212.138:", process.env.DATABASE_URL?.includes('1.55.212.138'));
+console.log("  - Contains neon:", process.env.DATABASE_URL?.includes('neon'));
 console.log("🔗 Database connection string:", process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
 
 export const db = drizzle({ client: pool, schema });
