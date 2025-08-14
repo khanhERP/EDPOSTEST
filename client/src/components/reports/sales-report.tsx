@@ -218,6 +218,7 @@ export function SalesReport() {
       card: t("reports.card"),
       creditCard: t("reports.credit_card"),
       credit_card: t("reports.credit_card"),
+      einvoice: t("reports.einvoice"),
       mobile: "Mobile",
     };
     return labels[method as keyof typeof labels] || method;
