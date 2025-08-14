@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TrendingUp, FileText, Calendar } from "lucide-react";
+import { TrendingUp, FileText, Calendar, Package, DollarSign, Users, ShoppingCart, BarChart3, Search } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import {
   ChartContainer,
@@ -118,6 +118,10 @@ export function SalesChartReport() {
           if (parsedConfig.filters) {
             setSalesMethod(parsedConfig.filters.salesMethod || "all");
             setSalesChannel(parsedConfig.filters.salesChannel || "all");
+          }
+          // Apply concern type from legacy report
+          if (parsedConfig.concernType) {
+            setConcernType(parsedConfig.concernType);
           }
         }
 
@@ -336,6 +340,34 @@ export function SalesChartReport() {
         t("reports.comprehensiveSalesReport")
       );
     } else {
+      // Handle different concern types for each analysis type
+      const reportTitles = {
+        product: {
+          sales: t("reports.productSalesReport"),
+          inventory: t("reports.inventoryReport"),
+          profit: t("reports.productProfitReport"),
+        },
+        employee: {
+          sales: t("reports.employeeSalesReport"),
+          performance: t("reports.employeePerformanceReport"),
+        },
+        customer: {
+          sales: t("reports.customerSalesReport"),
+          loyalty: t("reports.customerLoyaltyReport"),
+        },
+        channel: {
+          sales: t("reports.channelSalesReport"),
+          profit: t("reports.channelProfitReport"),
+          products: t("reports.channelProductsReport"),
+        },
+      };
+
+      const typeReports = reportTitles[analysisType as keyof typeof reportTitles];
+      if (typeReports && concernType in typeReports) {
+        return typeReports[concernType as keyof typeof typeReports];
+      }
+
+      // Fallback to basic analysis type names
       const analysisTypes = {
         product: t("reports.productSalesReport"),
         employee: t("reports.employeeSalesReport"),
@@ -986,313 +1018,557 @@ export function SalesChartReport() {
     switch (analysisType) {
       case "product": {
         const data = getProductAnalysisData();
+        
+        // Render UI similar to inventory report from legacy reports
         return (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("reports.productCode")}</TableHead>
-                <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">
-                  {t("reports.quantitySold")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.revenue")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.returnQuantity")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.returnValue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.netRevenue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.totalCost")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.grossProfit")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.length > 0 ? (
-                data
-                  .sort((a, b) => b.netRevenue - a.netRevenue)
-                  .slice(0, 20)
-                  .map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">
-                        {item.productCode}
-                      </TableCell>
-                      <TableCell>{item.productName}</TableCell>
-                      <TableCell className="text-center">
-                        {item.quantitySold}
-                      </TableCell>
-                      <TableCell className="text-right text-green-600">
-                        {formatCurrency(item.revenue)}
-                      </TableCell>
-                      <TableCell className="text-center text-red-600">
-                        {item.quantityReturned}
-                      </TableCell>
-                      <TableCell className="text-right text-red-600">
-                        {formatCurrency(item.returnValue)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(item.netRevenue)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(item.totalCost)}
-                      </TableCell>
-                      <TableCell className="text-right text-blue-600">
-                        {formatCurrency(item.profit)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-              ) : (
+          <>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalProducts")}</p>
+                      <p className="text-2xl font-bold">{data.length}</p>
+                    </div>
+                    <Package className="w-8 h-8 text-blue-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalQuantitySold")}</p>
+                      <p className="text-2xl font-bold">
+                        {data.reduce((sum, item) => sum + item.quantitySold, 0)}
+                      </p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-green-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalRevenue")}</p>
+                      <p className="text-2xl font-bold">
+                        {formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0))}
+                      </p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-emerald-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalProfit")}</p>
+                      <p className="text-2xl font-bold">
+                        {formatCurrency(data.reduce((sum, item) => sum + item.profit, 0))}
+                      </p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-purple-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Data Table */}
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-gray-500">
-                    {t("reports.noData")}
-                  </TableCell>
+                  <TableHead>{t("reports.productCode")}</TableHead>
+                  <TableHead>{t("reports.productName")}</TableHead>
+                  <TableHead className="text-center">
+                    {t("reports.quantitySold")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.revenue")}
+                  </TableHead>
+                  <TableHead className="text-center">
+                    {t("reports.returnQuantity")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.returnValue")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.netRevenue")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.totalCost")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.grossProfit")}
+                  </TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {data.length > 0 ? (
+                  data
+                    .sort((a, b) => b.netRevenue - a.netRevenue)
+                    .slice(0, 20)
+                    .map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">
+                          {item.productCode}
+                        </TableCell>
+                        <TableCell>{item.productName}</TableCell>
+                        <TableCell className="text-center">
+                          {item.quantitySold}
+                        </TableCell>
+                        <TableCell className="text-right text-green-600">
+                          {formatCurrency(item.revenue)}
+                        </TableCell>
+                        <TableCell className="text-center text-red-600">
+                          {item.quantityReturned}
+                        </TableCell>
+                        <TableCell className="text-right text-red-600">
+                          {formatCurrency(item.returnValue)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(item.netRevenue)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(item.totalCost)}
+                        </TableCell>
+                        <TableCell className="text-right text-blue-600">
+                          {formatCurrency(item.profit)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center text-gray-500">
+                      {t("reports.noData")}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </>
         );
       }
 
       case "employee": {
         const data = getEmployeeAnalysisData();
+        
+        // Render UI similar to employee report from legacy reports
         return (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("reports.seller")}</TableHead>
-                <TableHead className="text-center">
-                  {t("reports.orders")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.totalProducts")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.totalRevenue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.returnValue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.netRevenue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.averageOrderValue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.totalCost")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.grossProfit")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.length > 0 ? (
-                data
-                  .sort((a, b) => b.netRevenue - a.netRevenue)
-                  .map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">
-                        {item.employee}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {item.orders}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {item.totalProducts}
-                      </TableCell>
-                      <TableCell className="text-right text-green-600">
-                        {formatCurrency(item.revenue)}
-                      </TableCell>
-                      <TableCell className="text-right text-red-600">
-                        {formatCurrency(item.returnValue)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(item.netRevenue)}
-                      </TableCell>
-                      <TableCell className="text-right text-blue-600">
-                        {formatCurrency(item.averageOrderValue)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(item.totalCost)}
-                      </TableCell>
-                      <TableCell className="text-right text-purple-600">
-                        {formatCurrency(item.grossProfit)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-              ) : (
+          <>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalEmployees")}</p>
+                      <p className="text-2xl font-bold">{data.length}</p>
+                    </div>
+                    <Users className="w-8 h-8 text-blue-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalOrders")}</p>
+                      <p className="text-2xl font-bold">
+                        {data.reduce((sum, item) => sum + item.orders, 0)}
+                      </p>
+                    </div>
+                    <ShoppingCart className="w-8 h-8 text-green-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalRevenue")}</p>
+                      <p className="text-2xl font-bold">
+                        {formatCurrency(data.reduce((sum, item) => sum + item.netRevenue, 0))}
+                      </p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-emerald-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.avgOrderValue")}</p>
+                      <p className="text-2xl font-bold">
+                        {formatCurrency(
+                          data.length > 0 
+                            ? data.reduce((sum, item) => sum + item.averageOrderValue, 0) / data.length 
+                            : 0
+                        )}
+                      </p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-purple-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Data Table */}
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-gray-500">
-                    {t("reports.noData")}
-                  </TableCell>
+                  <TableHead>{t("reports.seller")}</TableHead>
+                  <TableHead className="text-center">
+                    {t("reports.orders")}
+                  </TableHead>
+                  <TableHead className="text-center">
+                    {t("reports.totalProducts")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.totalRevenue")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.returnValue")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.netRevenue")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.averageOrderValue")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.totalCost")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.grossProfit")}
+                  </TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {data.length > 0 ? (
+                  data
+                    .sort((a, b) => b.netRevenue - a.netRevenue)
+                    .map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">
+                          {item.employee}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {item.orders}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {item.totalProducts}
+                        </TableCell>
+                        <TableCell className="text-right text-green-600">
+                          {formatCurrency(item.revenue)}
+                        </TableCell>
+                        <TableCell className="text-right text-red-600">
+                          {formatCurrency(item.returnValue)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(item.netRevenue)}
+                        </TableCell>
+                        <TableCell className="text-right text-blue-600">
+                          {formatCurrency(item.averageOrderValue)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(item.totalCost)}
+                        </TableCell>
+                        <TableCell className="text-right text-purple-600">
+                          {formatCurrency(item.grossProfit)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center text-gray-500">
+                      {t("reports.noData")}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </>
         );
       }
 
       case "customer": {
         const data = getCustomerAnalysisData();
+        
+        // Render UI similar to customer report from legacy reports
         return (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("reports.customer")}</TableHead>
-                <TableHead className="text-center">
-                  {t("reports.orders")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.totalProducts")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.revenue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.returnValue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.netRevenue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.averageOrderValue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.lastOrder")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.length > 0 ? (
-                data
-                  .sort((a, b) => b.netRevenue - a.netRevenue)
-                  .slice(0, 20)
-                  .map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">
-                        {item.customer}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {item.orders}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {item.totalProducts}
-                      </TableCell>
-                      <TableCell className="text-right text-green-600">
-                        {formatCurrency(item.revenue)}
-                      </TableCell>
-                      <TableCell className="text-right text-red-600">
-                        {formatCurrency(item.returnValue)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(item.netRevenue)}
-                      </TableCell>
-                      <TableCell className="text-right text-blue-600">
-                        {formatCurrency(item.averageOrderValue)}
-                      </TableCell>
-                      <TableCell className="text-right text-sm">
-                        {item.lastOrderDate}
-                      </TableCell>
-                    </TableRow>
-                  ))
-              ) : (
+          <>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalCustomers")}</p>
+                      <p className="text-2xl font-bold">{data.length}</p>
+                    </div>
+                    <Users className="w-8 h-8 text-blue-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalOrders")}</p>
+                      <p className="text-2xl font-bold">
+                        {data.reduce((sum, item) => sum + item.orders, 0)}
+                      </p>
+                    </div>
+                    <ShoppingCart className="w-8 h-8 text-green-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalRevenue")}</p>
+                      <p className="text-2xl font-bold">
+                        {formatCurrency(data.reduce((sum, item) => sum + item.netRevenue, 0))}
+                      </p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-emerald-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.avgOrderValue")}</p>
+                      <p className="text-2xl font-bold">
+                        {formatCurrency(
+                          data.length > 0 
+                            ? data.reduce((sum, item) => sum + item.averageOrderValue, 0) / data.length 
+                            : 0
+                        )}
+                      </p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-purple-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Data Table */}
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-gray-500">
-                    {t("reports.noData")}
-                  </TableCell>
+                  <TableHead>{t("reports.customer")}</TableHead>
+                  <TableHead className="text-center">
+                    {t("reports.orders")}
+                  </TableHead>
+                  <TableHead className="text-center">
+                    {t("reports.totalProducts")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.revenue")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.returnValue")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.netRevenue")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.averageOrderValue")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.lastOrder")}
+                  </TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {data.length > 0 ? (
+                  data
+                    .sort((a, b) => b.netRevenue - a.netRevenue)
+                    .slice(0, 20)
+                    .map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">
+                          {item.customer}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {item.orders}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {item.totalProducts}
+                        </TableCell>
+                        <TableCell className="text-right text-green-600">
+                          {formatCurrency(item.revenue)}
+                        </TableCell>
+                        <TableCell className="text-right text-red-600">
+                          {formatCurrency(item.returnValue)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(item.netRevenue)}
+                        </TableCell>
+                        <TableCell className="text-right text-blue-600">
+                          {formatCurrency(item.averageOrderValue)}
+                        </TableCell>
+                        <TableCell className="text-right text-sm">
+                          {item.lastOrderDate}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center text-gray-500">
+                      {t("reports.noData")}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </>
         );
       }
 
       case "channel": {
         const data = getChannelAnalysisData();
+        
+        // Render UI similar to sales channel report from legacy reports
         return (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("reports.salesChannel")}</TableHead>
-                <TableHead className="text-center">
-                  {t("reports.orders")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.totalProducts")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.revenue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.returnValue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.netRevenue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.commission")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.grossProfit")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.netProfit")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.length > 0 ? (
-                data
-                  .sort((a, b) => b.netRevenue - a.netRevenue)
-                  .map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">
-                        {item.salesChannel}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {item.orders}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {item.totalProducts}
-                      </TableCell>
-                      <TableCell className="text-right text-green-600">
-                        {formatCurrency(item.revenue)}
-                      </TableCell>
-                      <TableCell className="text-right text-red-600">
-                        {formatCurrency(item.returnValue)}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(item.netRevenue)}
-                      </TableCell>
-                      <TableCell className="text-right text-orange-600">
-                        {formatCurrency(item.commission)}
-                      </TableCell>
-                      <TableCell className="text-right text-purple-600">
-                        {formatCurrency(item.grossProfit)}
-                      </TableCell>
-                      <TableCell className="text-right text-blue-600">
-                        {formatCurrency(item.netProfit)}
-                      </TableCell>
-                    </TableRow>
-                  ))
-              ) : (
+          <>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalChannels")}</p>
+                      <p className="text-2xl font-bold">{data.length}</p>
+                    </div>
+                    <BarChart3 className="w-8 h-8 text-blue-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalOrders")}</p>
+                      <p className="text-2xl font-bold">
+                        {data.reduce((sum, item) => sum + item.orders, 0)}
+                      </p>
+                    </div>
+                    <ShoppingCart className="w-8 h-8 text-green-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalRevenue")}</p>
+                      <p className="text-2xl font-bold">
+                        {formatCurrency(data.reduce((sum, item) => sum + item.netRevenue, 0))}
+                      </p>
+                    </div>
+                    <DollarSign className="w-8 h-8 text-emerald-500" />
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-600">{t("reports.totalProfit")}</p>
+                      <p className="text-2xl font-bold">
+                        {formatCurrency(data.reduce((sum, item) => sum + item.netProfit, 0))}
+                      </p>
+                    </div>
+                    <TrendingUp className="w-8 h-8 text-purple-500" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Data Table */}
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-gray-500">
-                    {t("reports.noData")}
-                  </TableCell>
+                  <TableHead>{t("reports.salesChannel")}</TableHead>
+                  <TableHead className="text-center">
+                    {t("reports.orders")}
+                  </TableHead>
+                  <TableHead className="text-center">
+                    {t("reports.totalProducts")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.revenue")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.returnValue")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.netRevenue")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.commission")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.grossProfit")}
+                  </TableHead>
+                  <TableHead className="text-right">
+                    {t("reports.netProfit")}
+                  </TableHead>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {data.length > 0 ? (
+                  data
+                    .sort((a, b) => b.netRevenue - a.netRevenue)
+                    .map((item, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">
+                          {item.salesChannel}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {item.orders}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {item.totalProducts}
+                        </TableCell>
+                        <TableCell className="text-right text-green-600">
+                          {formatCurrency(item.revenue)}
+                        </TableCell>
+                        <TableCell className="text-right text-red-600">
+                          {formatCurrency(item.returnValue)}
+                        </TableCell>
+                        <TableCell className="text-right font-medium">
+                          {formatCurrency(item.netRevenue)}
+                        </TableCell>
+                        <TableCell className="text-right text-orange-600">
+                          {formatCurrency(item.commission)}
+                        </TableCell>
+                        <TableCell className="text-right text-purple-600">
+                          {formatCurrency(item.grossProfit)}
+                        </TableCell>
+                        <TableCell className="text-right text-blue-600">
+                          {formatCurrency(item.netProfit)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center text-gray-500">
+                      {t("reports.noData")}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </>
         );
       }
 
@@ -1614,7 +1890,7 @@ export function SalesChartReport() {
                   setAnalysisType(value);
                   // Reset concern type when analysis type changes
                   if (value !== "time") {
-                    setConcernType("time");
+                    setConcernType("sales");
                   }
                 }}
               >
@@ -1640,6 +1916,56 @@ export function SalesChartReport() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Concern Type Selector - Show for time analysis or when using legacy reports */}
+            {(analysisType === "time" || (analysisType !== "time" && savedSettings)) && (
+              <div>
+                <Label>
+                  {analysisType === "time" 
+                    ? t("reports.concernType") 
+                    : t("reports.reportType")
+                  }
+                </Label>
+                <Select value={concernType} onValueChange={setConcernType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {analysisType === "time" ? (
+                      <>
+                        <SelectItem value="time">{t("reports.timeReport")}</SelectItem>
+                        <SelectItem value="profit">{t("reports.profitReport")}</SelectItem>
+                        <SelectItem value="discount">{t("reports.discountReport")}</SelectItem>
+                        <SelectItem value="return">{t("reports.returnReport")}</SelectItem>
+                        <SelectItem value="employee">{t("reports.employeeReport")}</SelectItem>
+                      </>
+                    ) : analysisType === "product" ? (
+                      <>
+                        <SelectItem value="sales">{t("reports.productSalesReport")}</SelectItem>
+                        <SelectItem value="inventory">{t("reports.inventoryReport")}</SelectItem>
+                        <SelectItem value="profit">{t("reports.productProfitReport")}</SelectItem>
+                      </>
+                    ) : analysisType === "employee" ? (
+                      <>
+                        <SelectItem value="sales">{t("reports.employeeSalesReport")}</SelectItem>
+                        <SelectItem value="performance">{t("reports.employeePerformanceReport")}</SelectItem>
+                      </>
+                    ) : analysisType === "customer" ? (
+                      <>
+                        <SelectItem value="sales">{t("reports.customerSalesReport")}</SelectItem>
+                        <SelectItem value="loyalty">{t("reports.customerLoyaltyReport")}</SelectItem>
+                      </>
+                    ) : analysisType === "channel" ? (
+                      <>
+                        <SelectItem value="sales">{t("reports.channelSalesReport")}</SelectItem>
+                        <SelectItem value="profit">{t("reports.channelProfitReport")}</SelectItem>
+                        <SelectItem value="products">{t("reports.channelProductsReport")}</SelectItem>
+                      </>
+                    ) : null}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Sales Method Filter */}
             <div>
