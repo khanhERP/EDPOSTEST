@@ -106,7 +106,8 @@ export default function SalesOrders() {
   const cancelInvoiceMutation = useMutation({
     mutationFn: async (invoiceId: number) => {
       const response = await apiRequest("PUT", `/api/invoices/${invoiceId}`, { 
-        invoiceStatus: 3 // 3 = Đã hủy
+        invoiceStatus: 3, // 3 = Đã hủy
+        status: "cancelled" // Also update the status field for consistency
       });
       return response.json();
     },
@@ -118,7 +119,8 @@ export default function SalesOrders() {
       if (selectedInvoice) {
         setSelectedInvoice({
           ...selectedInvoice,
-          invoiceStatus: 3
+          invoiceStatus: 3,
+          status: "cancelled"
         });
       }
     },
