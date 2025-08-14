@@ -47,39 +47,35 @@ export function SalesReport() {
   const getSalesData = () => {
     if (!transactions || !Array.isArray(transactions)) return null;
 
-    console.log("Sales Report Debug:", {
-      totalTransactions: transactions.length,
-      startDate,
-      endDate,
-      dateRangeSelected: dateRange,
-      firstTransactionDate: transactions[0] ? new Date(transactions[0].createdAt || transactions[0].created_at).toDateString() : null,
-      lastTransactionDate: transactions[transactions.length - 1] ? new Date(transactions[transactions.length - 1].createdAt || transactions[transactions.length - 1].created_at).toDateString() : null,
-    });
-
     const filteredTransactions = transactions.filter((transaction: any) => {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
-      
+
       // Đặt múi giờ về UTC để tránh vấn đề timezone
-      const transactionDateOnly = new Date(transactionDate.getFullYear(), transactionDate.getMonth(), transactionDate.getDate());
-      
+      const transactionDateOnly = new Date(
+        transactionDate.getFullYear(),
+        transactionDate.getMonth(),
+        transactionDate.getDate(),
+      );
+
       const start = new Date(startDate);
-      const startDateOnly = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-      
+      const startDateOnly = new Date(
+        start.getFullYear(),
+        start.getMonth(),
+        start.getDate(),
+      );
+
       const end = new Date(endDate);
-      const endDateOnly = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      const endDateOnly = new Date(
+        end.getFullYear(),
+        end.getMonth(),
+        end.getDate(),
+      );
 
-      const isInRange = transactionDateOnly >= startDateOnly && transactionDateOnly <= endDateOnly;
-
-      // Debug log để kiểm tra dữ liệu được filter
-      console.log("Transaction filter check:", {
-        transactionDate: transactionDateOnly.toDateString(),
-        startDate: startDateOnly.toDateString(),
-        endDate: endDateOnly.toDateString(),
-        isInRange,
-        transactionId: transaction.id,
-      });
+      const isInRange =
+        transactionDateOnly >= startDateOnly &&
+        transactionDateOnly <= endDateOnly;
 
       return isInRange;
     });
@@ -99,9 +95,11 @@ export function SalesReport() {
     } = {};
 
     filteredTransactions.forEach((transaction: any) => {
-      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
       // Sử dụng format ngày nhất quán
-      const date = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, '0')}-${transactionDate.getDate().toString().padStart(2, '0')}`;
+      const date = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, "0")}-${transactionDate.getDate().toString().padStart(2, "0")}`;
 
       if (!dailySales[date]) {
         dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
@@ -191,12 +189,26 @@ export function SalesReport() {
       case "month":
         // Tháng trước: từ ngày 1 tháng trước đến ngày cuối tháng trước
         const currentDate = new Date();
-        const lastMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-        const lastMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
-        
-        console.log("Tháng trước - Ngày bắt đầu:", lastMonthStart.toDateString());
-        console.log("Tháng trước - Ngày kết thúc:", lastMonthEnd.toDateString());
-        
+        const lastMonthStart = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() - 1,
+          1,
+        );
+        const lastMonthEnd = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          0,
+        );
+
+        console.log(
+          "Tháng trước - Ngày bắt đầu:",
+          lastMonthStart.toDateString(),
+        );
+        console.log(
+          "Tháng trước - Ngày kết thúc:",
+          lastMonthEnd.toDateString(),
+        );
+
         setStartDate(lastMonthStart.toISOString().split("T")[0]);
         setEndDate(lastMonthEnd.toISOString().split("T")[0]);
         break;
