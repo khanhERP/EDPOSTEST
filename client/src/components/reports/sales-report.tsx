@@ -1134,7 +1134,6 @@ export function SalesReport() {
             <div className="flex items-center gap-4">
               {/* Analysis Type Selector */}
               <div className="flex items-center gap-2">
-                <Label>{t("reports.analysisType")}:</Label>
                 <Select value={analysisType} onValueChange={setAnalysisType}>
                   <SelectTrigger className="w-48">
                     <SelectValue />
