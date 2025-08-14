@@ -883,7 +883,7 @@ export function EInvoiceModal({
               tax: cartTaxAmount.toFixed(2),
               total: cartTotal.toFixed(2),
               status: 'paid', // Trạng thái đã thanh toán
-              paymentMethod: 'einvoice', // Sử dụng string theo schema định nghĩa
+              paymentMethod: paymentMethodCode, // Sử dụng mã số integer thay vì string
               paymentStatus: 'paid',
               einvoiceStatus: 1, // 1 = Đã phát hành
               notes: `E-Invoice: ${result.data?.invoiceNo || 'N/A'} - MST: ${formData.taxCode}, Tên: ${formData.customerName}, SĐT: ${formData.phoneNumber || 'N/A'}`,
