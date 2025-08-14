@@ -291,7 +291,9 @@ export function SalesChartReport() {
 
   const renderReturnReport = () => {
     const filteredData = getFilteredData();
-    const dailyData: { [date: string]: { returnCount: number; returnValue: number } } = {};
+    const dailyData: {
+      [date: string]: { returnCount: number; returnValue: number };
+    } = {};
 
     filteredData.forEach((transaction: any) => {
       const date = new Date(
@@ -404,14 +406,15 @@ export function SalesChartReport() {
         filteredData.forEach((transaction: any) => {
           const items = transaction.items || [];
           items.forEach((item: any) => {
-            const productName = item.productName || item.name || "Unknown Product";
+            const productName =
+              item.productName || item.name || "Unknown Product";
             if (!productData[productName]) {
               productData[productName] = {
                 revenue: 0,
                 quantity: 0,
                 cost: 0,
                 returnQuantity: 0,
-                returnValue: 0
+                returnValue: 0,
               };
             }
 
@@ -444,22 +447,33 @@ export function SalesChartReport() {
             </TableHeader>
             <TableBody>
               {Object.entries(productData)
-                .sort(([,a], [,b]) => (b.revenue - b.returnValue) - (a.revenue - a.returnValue))
+                .sort(
+                  ([, a], [, b]) =>
+                    b.revenue - b.returnValue - (a.revenue - a.returnValue),
+                )
                 .map(([productName, data]) => (
-                <TableRow key={productName}>
-                  <TableCell className="font-medium">{productName}</TableCell>
-                  <TableCell>{data.quantity}</TableCell>
-                  <TableCell className="text-red-600">{data.returnQuantity}</TableCell>
-                  <TableCell className="text-green-600">{formatCurrency(data.revenue)}</TableCell>
-                  <TableCell className="text-red-600">{formatCurrency(data.returnValue)}</TableCell>
-                  <TableCell className="font-medium">
-                    {formatCurrency(data.revenue - data.returnValue)}
-                  </TableCell>
-                  <TableCell className="text-blue-600">
-                    {formatCurrency((data.revenue - data.returnValue) - data.cost)}
-                  </TableCell>
-                </TableRow>
-              ))}
+                  <TableRow key={productName}>
+                    <TableCell className="font-medium">{productName}</TableCell>
+                    <TableCell>{data.quantity}</TableCell>
+                    <TableCell className="text-red-600">
+                      {data.returnQuantity}
+                    </TableCell>
+                    <TableCell className="text-green-600">
+                      {formatCurrency(data.revenue)}
+                    </TableCell>
+                    <TableCell className="text-red-600">
+                      {formatCurrency(data.returnValue)}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {formatCurrency(data.revenue - data.returnValue)}
+                    </TableCell>
+                    <TableCell className="text-blue-600">
+                      {formatCurrency(
+                        data.revenue - data.returnValue - data.cost,
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
               {Object.keys(productData).length === 0 && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center text-gray-500">
@@ -494,7 +508,7 @@ export function SalesChartReport() {
               orders: 0,
               productsSold: {},
               topProduct: "",
-              totalProducts: 0
+              totalProducts: 0,
             };
           }
 
@@ -510,7 +524,8 @@ export function SalesChartReport() {
           // Track products sold by this employee
           const items = transaction.items || [];
           items.forEach((item: any) => {
-            const productName = item.productName || item.name || "Unknown Product";
+            const productName =
+              item.productName || item.name || "Unknown Product";
             const quantity = Number(item.quantity || 1);
 
             if (!employeeData[cashier].productsSold[productName]) {
@@ -552,21 +567,35 @@ export function SalesChartReport() {
             </TableHeader>
             <TableBody>
               {Object.entries(employeeData)
-                .sort(([,a], [,b]) => (b.revenue - b.returnValue) - (a.revenue - a.returnValue))
+                .sort(
+                  ([, a], [, b]) =>
+                    b.revenue - b.returnValue - (a.revenue - a.returnValue),
+                )
                 .map(([cashier, data]) => {
                   const netRevenue = data.revenue - data.returnValue;
-                  const avgOrderValue = data.orders > 0 ? netRevenue / data.orders : 0;
+                  const avgOrderValue =
+                    data.orders > 0 ? netRevenue / data.orders : 0;
 
                   return (
                     <TableRow key={cashier}>
                       <TableCell className="font-medium">{cashier}</TableCell>
                       <TableCell>{data.orders}</TableCell>
                       <TableCell>{data.totalProducts}</TableCell>
-                      <TableCell className="text-sm">{data.topProduct}</TableCell>
-                      <TableCell className="text-green-600">{formatCurrency(data.revenue)}</TableCell>
-                      <TableCell className="text-red-600">{formatCurrency(data.returnValue)}</TableCell>
-                      <TableCell className="font-medium">{formatCurrency(netRevenue)}</TableCell>
-                      <TableCell className="text-blue-600">{formatCurrency(avgOrderValue)}</TableCell>
+                      <TableCell className="text-sm">
+                        {data.topProduct}
+                      </TableCell>
+                      <TableCell className="text-green-600">
+                        {formatCurrency(data.revenue)}
+                      </TableCell>
+                      <TableCell className="text-red-600">
+                        {formatCurrency(data.returnValue)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(netRevenue)}
+                      </TableCell>
+                      <TableCell className="text-blue-600">
+                        {formatCurrency(avgOrderValue)}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -597,7 +626,10 @@ export function SalesChartReport() {
         } = {};
 
         filteredData.forEach((transaction: any) => {
-          const customer = transaction.customerName || transaction.customerPhone || "Walk-in Customer";
+          const customer =
+            transaction.customerName ||
+            transaction.customerPhone ||
+            "Walk-in Customer";
           if (!customerData[customer]) {
             customerData[customer] = {
               revenue: 0,
@@ -606,12 +638,14 @@ export function SalesChartReport() {
               totalProducts: 0,
               avgOrderValue: 0,
               lastOrderDate: "",
-              loyaltyPoints: 0
+              loyaltyPoints: 0,
             };
           }
 
           const amount = Number(transaction.total);
-          const orderDate = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString("vi-VN");
+          const orderDate = new Date(
+            transaction.createdAt || transaction.created_at,
+          ).toLocaleDateString("vi-VN");
 
           customerData[customer].orders += 1;
           customerData[customer].lastOrderDate = orderDate;
@@ -652,7 +686,10 @@ export function SalesChartReport() {
             </TableHeader>
             <TableBody>
               {Object.entries(customerData)
-                .sort(([,a], [,b]) => (b.revenue - b.returnValue) - (a.revenue - a.returnValue))
+                .sort(
+                  ([, a], [, b]) =>
+                    b.revenue - b.returnValue - (a.revenue - a.returnValue),
+                )
                 .map(([customer, data]) => {
                   const netRevenue = data.revenue - data.returnValue;
 
@@ -661,11 +698,21 @@ export function SalesChartReport() {
                       <TableCell className="font-medium">{customer}</TableCell>
                       <TableCell>{data.orders}</TableCell>
                       <TableCell>{data.totalProducts}</TableCell>
-                      <TableCell className="text-green-600">{formatCurrency(data.revenue)}</TableCell>
-                      <TableCell className="text-red-600">{formatCurrency(data.returnValue)}</TableCell>
-                      <TableCell className="font-medium">{formatCurrency(netRevenue)}</TableCell>
-                      <TableCell className="text-blue-600">{formatCurrency(data.avgOrderValue)}</TableCell>
-                      <TableCell className="text-sm">{data.lastOrderDate}</TableCell>
+                      <TableCell className="text-green-600">
+                        {formatCurrency(data.revenue)}
+                      </TableCell>
+                      <TableCell className="text-red-600">
+                        {formatCurrency(data.returnValue)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(netRevenue)}
+                      </TableCell>
+                      <TableCell className="text-blue-600">
+                        {formatCurrency(data.avgOrderValue)}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {data.lastOrderDate}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -705,7 +752,7 @@ export function SalesChartReport() {
               totalProducts: 0,
               avgOrderValue: 0,
               commission: 0,
-              netProfit: 0
+              netProfit: 0,
             };
           }
 
@@ -732,7 +779,7 @@ export function SalesChartReport() {
         Object.entries(channelData).forEach(([channel, data]) => {
           const netRevenue = data.revenue - data.returnValue;
           data.avgOrderValue = data.orders > 0 ? netRevenue / data.orders : 0;
-          data.netProfit = netRevenue - data.commission - (netRevenue * 0.6); // Subtract commission and cost
+          data.netProfit = netRevenue - data.commission - netRevenue * 0.6; // Subtract commission and cost
         });
 
         return (
@@ -751,7 +798,10 @@ export function SalesChartReport() {
             </TableHeader>
             <TableBody>
               {Object.entries(channelData)
-                .sort(([,a], [,b]) => (b.revenue - b.returnValue) - (a.revenue - a.returnValue))
+                .sort(
+                  ([, a], [, b]) =>
+                    b.revenue - b.returnValue - (a.revenue - a.returnValue),
+                )
                 .map(([channel, data]) => {
                   const netRevenue = data.revenue - data.returnValue;
 
@@ -760,11 +810,21 @@ export function SalesChartReport() {
                       <TableCell className="font-medium">{channel}</TableCell>
                       <TableCell>{data.orders}</TableCell>
                       <TableCell>{data.totalProducts}</TableCell>
-                      <TableCell className="text-green-600">{formatCurrency(data.revenue)}</TableCell>
-                      <TableCell className="text-red-600">{formatCurrency(data.returnValue)}</TableCell>
-                      <TableCell className="font-medium">{formatCurrency(netRevenue)}</TableCell>
-                      <TableCell className="text-orange-600">{formatCurrency(data.commission)}</TableCell>
-                      <TableCell className="text-blue-600">{formatCurrency(data.netProfit)}</TableCell>
+                      <TableCell className="text-green-600">
+                        {formatCurrency(data.revenue)}
+                      </TableCell>
+                      <TableCell className="text-red-600">
+                        {formatCurrency(data.returnValue)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(netRevenue)}
+                      </TableCell>
+                      <TableCell className="text-orange-600">
+                        {formatCurrency(data.commission)}
+                      </TableCell>
+                      <TableCell className="text-blue-600">
+                        {formatCurrency(data.netProfit)}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -810,7 +870,9 @@ export function SalesChartReport() {
     if (analysisType === "time") {
       return ["time", "profit", "employee"].includes(concernType);
     } else {
-      return ["product", "employee", "customer", "channel"].includes(analysisType);
+      return ["product", "employee", "customer", "channel"].includes(
+        analysisType,
+      );
     }
   };
 
@@ -1009,11 +1071,21 @@ export function SalesChartReport() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="time">{t("reports.timeAnalysis")}</SelectItem>
-                  <SelectItem value="product">{t("reports.productSalesAnalysis")}</SelectItem>
-                  <SelectItem value="employee">{t("reports.employeeSalesAnalysis")}</SelectItem>
-                  <SelectItem value="customer">{t("reports.customerSalesAnalysis")}</SelectItem>
-                  <SelectItem value="channel">{t("reports.channelSalesAnalysis")}</SelectItem>
+                  <SelectItem value="time">
+                    {t("reports.timeAnalysis")}
+                  </SelectItem>
+                  <SelectItem value="product">
+                    {t("reports.productSalesAnalysis")}
+                  </SelectItem>
+                  <SelectItem value="employee">
+                    {t("reports.employeeSalesAnalysis")}
+                  </SelectItem>
+                  <SelectItem value="customer">
+                    {t("reports.customerSalesAnalysis")}
+                  </SelectItem>
+                  <SelectItem value="channel">
+                    {t("reports.channelSalesAnalysis")}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
