@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { RightSidebar } from "@/components/ui/right-sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,6 +45,7 @@ interface InvoiceItem {
 
 export default function SalesOrders() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -57,6 +58,8 @@ export default function SalesOrders() {
   const [orderNumberSearch, setOrderNumberSearch] = useState("");
   const [customerCodeSearch, setCustomerCodeSearch] = useState("");
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableInvoice, setEditableInvoice] = useState<Invoice | null>(null);
 
   // Query invoices
   const { data: invoices = [], isLoading } = useQuery({
@@ -76,6 +79,24 @@ export default function SalesOrders() {
       return response.json();
     },
     enabled: !!selectedInvoice?.id,
+  });
+
+  // Mutation for updating invoice
+  const updateInvoiceMutation = useMutation({
+    mutationFn: async (updatedInvoice: Invoice) => {
+      const response = await apiRequest("PUT", `/api/invoices/${updatedInvoice.id}`, updatedInvoice);
+      return response.json();
+    },
+    onSuccess: () => {
+      // Refresh invoices list
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      setIsEditing(false);
+      setEditableInvoice(null);
+      // Update selected invoice with new data
+      if (editableInvoice) {
+        setSelectedInvoice(editableInvoice);
+      }
+    },
   });
 
   const getPaymentMethodName = (method: number) => {
@@ -178,6 +199,33 @@ export default function SalesOrders() {
       month: '2-digit',
       year: 'numeric'
     });
+  };
+
+  const handleEditInvoice = () => {
+    if (selectedInvoice) {
+      setEditableInvoice({ ...selectedInvoice });
+      setIsEditing(true);
+    }
+  };
+
+  const handleSaveInvoice = () => {
+    if (editableInvoice) {
+      updateInvoiceMutation.mutate(editableInvoice);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditableInvoice(null);
+  };
+
+  const updateEditableInvoiceField = (field: keyof Invoice, value: string) => {
+    if (editableInvoice) {
+      setEditableInvoice({
+        ...editableInvoice,
+        [field]: value
+      });
+    }
   };
 
   const calculateTotals = () => {
@@ -350,23 +398,64 @@ export default function SalesOrders() {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="font-medium">Số đơn bán:</span>
-                          <div>{selectedInvoice.tradeNumber || selectedInvoice.invoiceNumber}</div>
+                          {isEditing && editableInvoice ? (
+                            <Input 
+                              value={editableInvoice.tradeNumber || editableInvoice.invoiceNumber || ''}
+                              onChange={(e) => updateEditableInvoiceField('tradeNumber', e.target.value)}
+                              className="mt-1"
+                            />
+                          ) : (
+                            <div>{selectedInvoice.tradeNumber || selectedInvoice.invoiceNumber}</div>
+                          )}
                         </div>
                         <div>
                           <span className="font-medium">Ngày:</span>
-                          <div>{formatDate(selectedInvoice.invoiceDate)}</div>
+                          {isEditing && editableInvoice ? (
+                            <Input 
+                              type="date"
+                              value={editableInvoice.invoiceDate.split('T')[0]}
+                              onChange={(e) => updateEditableInvoiceField('invoiceDate', e.target.value)}
+                              className="mt-1"
+                            />
+                          ) : (
+                            <div>{formatDate(selectedInvoice.invoiceDate)}</div>
+                          )}
                         </div>
                         <div>
                           <span className="font-medium">Khách hàng:</span>
-                          <div>{selectedInvoice.customerName}</div>
+                          {isEditing && editableInvoice ? (
+                            <Input 
+                              value={editableInvoice.customerName}
+                              onChange={(e) => updateEditableInvoiceField('customerName', e.target.value)}
+                              className="mt-1"
+                            />
+                          ) : (
+                            <div>{selectedInvoice.customerName}</div>
+                          )}
                         </div>
                         <div>
                           <span className="font-medium">Điện thoại:</span>
-                          <div>{selectedInvoice.customerPhone || '-'}</div>
+                          {isEditing && editableInvoice ? (
+                            <Input 
+                              value={editableInvoice.customerPhone || ''}
+                              onChange={(e) => updateEditableInvoiceField('customerPhone', e.target.value)}
+                              className="mt-1"
+                            />
+                          ) : (
+                            <div>{selectedInvoice.customerPhone || '-'}</div>
+                          )}
                         </div>
                         <div className="col-span-2">
                           <span className="font-medium">Địa chỉ:</span>
-                          <div>{selectedInvoice.customerAddress || '-'}</div>
+                          {isEditing && editableInvoice ? (
+                            <Input 
+                              value={editableInvoice.customerAddress || ''}
+                              onChange={(e) => updateEditableInvoiceField('customerAddress', e.target.value)}
+                              className="mt-1"
+                            />
+                          ) : (
+                            <div>{selectedInvoice.customerAddress || '-'}</div>
+                          )}
                         </div>
                         <div>
                           <span className="font-medium">Hình thức bán:</span>
@@ -374,11 +463,27 @@ export default function SalesOrders() {
                         </div>
                         <div>
                           <span className="font-medium">Ký hiệu hóa đơn:</span>
-                          <div>{selectedInvoice.symbol || '1C21DTD'}</div>
+                          {isEditing && editableInvoice ? (
+                            <Input 
+                              value={editableInvoice.symbol || ''}
+                              onChange={(e) => updateEditableInvoiceField('symbol', e.target.value)}
+                              className="mt-1"
+                            />
+                          ) : (
+                            <div>{selectedInvoice.symbol || '1C21DTD'}</div>
+                          )}
                         </div>
                         <div>
                           <span className="font-medium">Số hóa đơn:</span>
-                          <div>{selectedInvoice.invoiceNumber || String(selectedInvoice.id).padStart(8, '0')}</div>
+                          {isEditing && editableInvoice ? (
+                            <Input 
+                              value={editableInvoice.invoiceNumber || ''}
+                              onChange={(e) => updateEditableInvoiceField('invoiceNumber', e.target.value)}
+                              className="mt-1"
+                            />
+                          ) : (
+                            <div>{selectedInvoice.invoiceNumber || String(selectedInvoice.id).padStart(8, '0')}</div>
+                          )}
                         </div>
                         <div>
                           <span className="font-medium">Trạng thái:</span>
@@ -461,9 +566,18 @@ export default function SalesOrders() {
                     {/* Notes */}
                     <div>
                       <label className="block text-sm font-medium mb-2">Ghi chú</label>
-                      <div className="p-3 bg-gray-50 rounded border min-h-[80px]">
-                        {selectedInvoice.notes || 'Không có ghi chú'}
-                      </div>
+                      {isEditing && editableInvoice ? (
+                        <textarea
+                          value={editableInvoice.notes || ''}
+                          onChange={(e) => updateEditableInvoiceField('notes', e.target.value)}
+                          className="w-full p-3 border rounded min-h-[80px] resize-none"
+                          placeholder="Nhập ghi chú..."
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded border min-h-[80px]">
+                          {selectedInvoice.notes || 'Không có ghi chú'}
+                        </div>
+                      )}
                     </div>
 
                     {/* Action Buttons */}
@@ -472,19 +586,48 @@ export default function SalesOrders() {
                         <Printer className="w-4 h-4" />
                         Hủy đơn
                       </Button>
-                      <Button size="sm" variant="outline" className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50">
-                        <FileText className="w-4 h-4" />
-                        Sửa đơn
-                      </Button>
-                      <Button size="sm" variant="outline" className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50">
-                        <Package className="w-4 h-4" />
-                        Lưu
-                      </Button>
+                      {!isEditing ? (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
+                          onClick={handleEditInvoice}
+                        >
+                          <FileText className="w-4 h-4" />
+                          Sửa đơn
+                        </Button>
+                      ) : (
+                        <>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                            onClick={handleSaveInvoice}
+                            disabled={updateInvoiceMutation.isPending}
+                          >
+                            <Package className="w-4 h-4" />
+                            {updateInvoiceMutation.isPending ? 'Đang lưu...' : 'Lưu'}
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex items-center gap-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                            onClick={handleCancelEdit}
+                          >
+                            <X className="w-4 h-4" />
+                            Hủy sửa
+                          </Button>
+                        </>
+                      )}
                       <Button 
                         size="sm" 
                         variant="outline" 
                         className="flex items-center gap-2 border-red-500 text-red-600 hover:bg-red-50"
-                        onClick={() => setSelectedInvoice(null)}
+                        onClick={() => {
+                          setSelectedInvoice(null);
+                          setIsEditing(false);
+                          setEditableInvoice(null);
+                        }}
                       >
                         <X className="w-4 h-4" />
                         Đóng
