@@ -52,18 +52,26 @@ export function SalesReport() {
         transaction.createdAt || transaction.created_at,
       );
 
-      // Chuyển ngày giao dịch về dạng YYYY-MM-DD để so sánh
-      const transactionDateStr = transactionDate.toISOString().split('T')[0];
+      // Đặt múi giờ về UTC để tránh vấn đề timezone
+      const transactionDateOnly = new Date(
+        transactionDate.getFullYear(),
+        transactionDate.getMonth(),
+        transactionDate.getDate(),
+      );
 
-      // So sánh trực tiếp string date để tránh vấn đề timezone
-      const isInRange = transactionDateStr >= startDate && transactionDateStr <= endDate;
+      const start = new Date(startDate + "T00:00:00");
+      const end = new Date(endDate + "T23:59:59");
+      console.log("start", start);
+      console.log("end", end);
+
+      const isInRange =
+        transactionDateOnly >= start && transactionDateOnly <= end;
 
       return isInRange;
     });
 
-    console.log("Filtered Transactions in getSalesData:", {
-      total: transactions.length,
-      filtered: filteredTransactions.length,
+    console.log("Filtered Transactions:", {
+      count: filteredTransactions.length,
       dateRange: `${startDate} to ${endDate}`,
       filteredTransactionDates: filteredTransactions.map(
         (t) =>
@@ -180,15 +188,6 @@ export function SalesReport() {
           currentDate.getFullYear(),
           currentDate.getMonth(),
           0,
-        );
-
-        console.log(
-          "Tháng trước - Ngày bắt đầu:",
-          lastMonthStart.toDateString(),
-        );
-        console.log(
-          "Tháng trước - Ngày kết thúc:",
-          lastMonthEnd.toDateString(),
         );
 
         setStartDate(lastMonthStart.toISOString().split("T")[0]);
