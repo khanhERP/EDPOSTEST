@@ -21,6 +21,10 @@ export const pool = new Pool({
 });
 
 // Log database connection info
+console.log("🔍 Environment check:");
+console.log("  - NODE_ENV:", process.env.NODE_ENV);
+console.log("  - DATABASE_URL exists:", !!process.env.DATABASE_URL);
+console.log("  - DATABASE_URL preview:", process.env.DATABASE_URL?.substring(0, 50) + "...");
 console.log("🔗 Database connection string:", process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
 
 export const db = drizzle({ client: pool, schema });
