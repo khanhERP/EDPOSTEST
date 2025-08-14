@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Search, FileText, Package, Printer, Mail } from "lucide-react";
+import { Calendar, Search, FileText, Package, Printer, Mail, X } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
 interface Invoice {
@@ -467,16 +467,21 @@ export default function SalesOrders() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-2 pt-4">
-                      <Button size="sm" className="flex items-center gap-2">
+                    <div className="flex gap-2 pt-4 border-t">
+                      <Button size="sm" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
                         <Printer className="w-4 h-4" />
-                        In đơn
+                        Hủy đơn
                       </Button>
-                      <Button size="sm" variant="outline" className="flex items-center gap-2">
-                        <Mail className="w-4 h-4" />
-                        Lưu đơn
+                      <Button size="sm" variant="outline" className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50">
+                        <FileText className="w-4 h-4" />
+                        Sửa đơn
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button size="sm" variant="outline" className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50">
+                        <Package className="w-4 h-4" />
+                        Lưu
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex items-center gap-2 border-red-500 text-red-600 hover:bg-red-50">
+                        <X className="w-4 h-4" />
                         Đóng
                       </Button>
                     </div>
