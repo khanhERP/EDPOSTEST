@@ -544,6 +544,10 @@ export function SalesChartReport() {
             label: t("reports.netRevenue"),
             color: "#3b82f6",
           },
+          value: {
+            label: t("reports.value"),
+            color: "#3b82f6",
+          },
         };
       default:
         return {};

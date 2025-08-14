@@ -461,6 +461,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     applyFilters: "필터 적용",
     resetFilters: "필터 초기화",
     uniqueProducts: "고유 상품",
+    
+    // Chart specific keys
+    value: "값",
+    chartData: "차트 데이터",
+    xAxis: "X축",
+    yAxis: "Y축",
+    legend: "범례",
+    dataPoints: "데이터 포인트",
   },
   en: {
     title: "Reports",
@@ -982,6 +990,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     applyFilters: "Apply Filters",
     resetFilters: "Reset Filters",
     uniqueProducts: "Unique Products",
+    
+    // Chart specific keys
+    value: "Value",
+    chartData: "Chart Data",
+    xAxis: "X Axis",
+    yAxis: "Y Axis",
+    legend: "Legend",
+    dataPoints: "Data Points",
     credit_card: "Credit Card",
   },
   vi: {
@@ -1450,5 +1466,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     applyFilters: "Áp dụng bộ lọc",
     resetFilters: "Đặt lại bộ lọc",
     uniqueProducts: "Sản phẩm duy nhất",
+    
+    // Chart specific keys
+    value: "Giá trị",
+    chartData: "Dữ liệu biểu đồ",
+    xAxis: "Trục X",
+    yAxis: "Trục Y", 
+    legend: "Chú thích",
+    dataPoints: "Điểm dữ liệu",
   },
 };

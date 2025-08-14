@@ -461,6 +461,22 @@ export interface ReportsTranslations {
   tableTurnoverRate: string;
   times: string;
   targetAverageDailySales: string;
+
+  // Common report keys
+  chartView: string;
+  visualRepresentation: string;
+  filters: string;
+  applyFilters: string;
+  resetFilters: string;
+  uniqueProducts: string;
+
+  // Chart specific keys
+  value: string;
+  chartData: string;
+  xAxis: string;
+  yAxis: string;
+  legend: string;
+  dataPoints: string;
 }
 
 // Settings translations interface

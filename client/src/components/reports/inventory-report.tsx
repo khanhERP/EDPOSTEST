@@ -1229,6 +1229,18 @@ export function InventoryReport() {
       label: t("reports.quantity"),
       color: "#10b981",
     },
+    revenue: {
+      label: t("reports.revenue"),
+      color: "#10b981",
+    },
+    profit: {
+      label: t("reports.profit"),
+      color: "#3b82f6",
+    },
+    inventoryValue: {
+      label: t("reports.inventoryValue"),
+      color: "#8b5cf6",
+    },
   };
 
   return (
