@@ -72,13 +72,15 @@ export function SalesChartReport() {
         // Define mapping from analysis type to legacy report storage keys
         const legacyReportMapping = {
           time: `salesReport_time_${concernType}_settings`,
-          product: 'inventoryReport_settings', // Báo cáo Hàng hóa
-          employee: 'employeeReport_settings', // Báo cáo nhân viên  
-          customer: 'customerReport_settings', // Báo cáo khách hàng
-          channel: 'salesChannelReport_settings' // Báo cáo kênh bán hàng
+          product: "inventoryReport_settings", // Báo cáo Hàng hóa
+          employee: "employeeReport_settings", // Báo cáo nhân viên
+          customer: "customerReport_settings", // Báo cáo khách hàng
+          channel: "salesChannelReport_settings", // Báo cáo kênh bán hàng
         };
 
-        const storageKey = legacyReportMapping[analysisType] || `salesReport_${analysisType}_${concernType}_settings`;
+        const storageKey =
+          legacyReportMapping[analysisType] ||
+          `salesReport_${analysisType}_${concernType}_settings`;
         const savedConfig = localStorage.getItem(storageKey);
 
         if (savedConfig) {
@@ -99,13 +101,15 @@ export function SalesChartReport() {
         // Load previous report data for comparison
         const legacyDataMapping = {
           time: `salesReport_time_${concernType}_data`,
-          product: 'inventoryReport_data',
-          employee: 'employeeReport_data',
-          customer: 'customerReport_data', 
-          channel: 'salesChannelReport_data'
+          product: "inventoryReport_data",
+          employee: "employeeReport_data",
+          customer: "customerReport_data",
+          channel: "salesChannelReport_data",
         };
 
-        const dataKey = legacyDataMapping[analysisType] || `salesReport_${analysisType}_${concernType}_data`;
+        const dataKey =
+          legacyDataMapping[analysisType] ||
+          `salesReport_${analysisType}_${concernType}_data`;
         const savedData = localStorage.getItem(dataKey);
         if (savedData) {
           setPreviousReportData(JSON.parse(savedData));
@@ -125,19 +129,21 @@ export function SalesChartReport() {
         // Save to both current format and legacy format for compatibility
         const legacyReportMapping = {
           time: `salesReport_time_${concernType}_settings`,
-          product: 'inventoryReport_settings',
-          employee: 'employeeReport_settings', 
-          customer: 'customerReport_settings',
-          channel: 'salesChannelReport_settings'
+          product: "inventoryReport_settings",
+          employee: "employeeReport_settings",
+          customer: "customerReport_settings",
+          channel: "salesChannelReport_settings",
         };
 
-        const storageKey = legacyReportMapping[analysisType] || `salesReport_${analysisType}_${concernType}_settings`;
+        const storageKey =
+          legacyReportMapping[analysisType] ||
+          `salesReport_${analysisType}_${concernType}_settings`;
         const currentSettings = {
           dateRange: { startDate, endDate },
           filters: { salesMethod, salesChannel },
           lastUpdated: new Date().toISOString(),
           analysisType,
-          concernType
+          concernType,
         };
 
         localStorage.setItem(storageKey, JSON.stringify(currentSettings));
@@ -150,7 +156,14 @@ export function SalesChartReport() {
     if (startDate && endDate) {
       saveCurrentSettings();
     }
-  }, [startDate, endDate, salesMethod, salesChannel, analysisType, concernType]);
+  }, [
+    startDate,
+    endDate,
+    salesMethod,
+    salesChannel,
+    analysisType,
+    concernType,
+  ]);
 
   const getFilteredData = () => {
     if (!transactions || !Array.isArray(transactions)) return [];
@@ -481,17 +494,19 @@ export function SalesChartReport() {
     const filteredData = getFilteredData();
     if (!filteredData.length) return [];
 
-    const productData: { [productId: string]: { 
-      productCode: string;
-      productName: string;
-      quantitySold: number; 
-      revenue: number; 
-      quantityReturned: number;
-      returnValue: number;
-      netRevenue: number;
-      totalCost: number;
-      profit: number;
-    } } = {};
+    const productData: {
+      [productId: string]: {
+        productCode: string;
+        productName: string;
+        quantitySold: number;
+        revenue: number;
+        quantityReturned: number;
+        returnValue: number;
+        netRevenue: number;
+        totalCost: number;
+        profit: number;
+      };
+    } = {};
 
     // Process transactions to build product sales data
     filteredData.forEach((transaction: any) => {
@@ -528,7 +543,8 @@ export function SalesChartReport() {
       } else {
         items.forEach((item: any) => {
           const productId = item.id || item.productId || "unknown";
-          const productName = item.productName || item.name || "Unknown Product";
+          const productName =
+            item.productName || item.name || "Unknown Product";
           const productCode = item.sku || item.productCode || productId;
 
           if (!productData[productId]) {
@@ -561,7 +577,7 @@ export function SalesChartReport() {
     });
 
     // Calculate net revenue and profit
-    Object.values(productData).forEach(data => {
+    Object.values(productData).forEach((data) => {
       data.netRevenue = data.revenue - data.returnValue;
       data.profit = data.netRevenue - data.totalCost;
     });
@@ -588,7 +604,8 @@ export function SalesChartReport() {
     } = {};
 
     filteredData.forEach((transaction: any) => {
-      const cashier = transaction.cashierName || transaction.employeeName || "Unknown";
+      const cashier =
+        transaction.cashierName || transaction.employeeName || "Unknown";
       if (!employeeData[cashier]) {
         employeeData[cashier] = {
           employee: cashier,
@@ -622,9 +639,10 @@ export function SalesChartReport() {
     });
 
     // Calculate derived metrics
-    Object.values(employeeData).forEach(data => {
+    Object.values(employeeData).forEach((data) => {
       data.netRevenue = data.revenue - data.returnValue;
-      data.averageOrderValue = data.orders > 0 ? data.netRevenue / data.orders : 0;
+      data.averageOrderValue =
+        data.orders > 0 ? data.netRevenue / data.orders : 0;
       data.grossProfit = data.netRevenue - data.totalCost;
     });
 
@@ -650,7 +668,10 @@ export function SalesChartReport() {
     } = {};
 
     filteredData.forEach((transaction: any) => {
-      const customer = transaction.customerName || transaction.customerPhone || "Walk-in Customer";
+      const customer =
+        transaction.customerName ||
+        transaction.customerPhone ||
+        "Walk-in Customer";
       const customerId = transaction.customerId || customer;
 
       if (!customerData[customerId]) {
@@ -669,7 +690,9 @@ export function SalesChartReport() {
       }
 
       const amount = Number(transaction.total);
-      const orderDate = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString("vi-VN");
+      const orderDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      ).toLocaleDateString("vi-VN");
 
       customerData[customerId].orders += 1;
       customerData[customerId].lastOrderDate = orderDate;
@@ -689,9 +712,10 @@ export function SalesChartReport() {
     });
 
     // Calculate derived metrics
-    Object.values(customerData).forEach(data => {
+    Object.values(customerData).forEach((data) => {
       data.netRevenue = data.revenue - data.returnValue;
-      data.averageOrderValue = data.orders > 0 ? data.netRevenue / data.orders : 0;
+      data.averageOrderValue =
+        data.orders > 0 ? data.netRevenue / data.orders : 0;
       data.grossProfit = data.netRevenue - data.totalCost;
     });
 
@@ -754,7 +778,7 @@ export function SalesChartReport() {
     });
 
     // Calculate derived metrics
-    Object.values(channelData).forEach(data => {
+    Object.values(channelData).forEach((data) => {
       data.netRevenue = data.revenue - data.returnValue;
       data.grossProfit = data.netRevenue - data.totalCost;
       data.netProfit = data.grossProfit - data.commission;
@@ -773,13 +797,27 @@ export function SalesChartReport() {
               <TableRow>
                 <TableHead>{t("reports.productCode")}</TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">{t("reports.quantitySold")}</TableHead>
-                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-center">{t("reports.returnQuantity")}</TableHead>
-                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.totalCost")}</TableHead>
-                <TableHead className="text-right">{t("reports.grossProfit")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.quantitySold")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.returnQuantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.totalCost")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.grossProfit")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -789,9 +827,13 @@ export function SalesChartReport() {
                   .slice(0, 20)
                   .map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium">{item.productCode}</TableCell>
+                      <TableCell className="font-medium">
+                        {item.productCode}
+                      </TableCell>
                       <TableCell>{item.productName}</TableCell>
-                      <TableCell className="text-center">{item.quantitySold}</TableCell>
+                      <TableCell className="text-center">
+                        {item.quantitySold}
+                      </TableCell>
                       <TableCell className="text-right text-green-600">
                         {formatCurrency(item.revenue)}
                       </TableCell>
@@ -831,14 +873,30 @@ export function SalesChartReport() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.seller")}</TableHead>
-                <TableHead className="text-center">{t("reports.orders")}</TableHead>
-                <TableHead className="text-center">{t("reports.totalProducts")}</TableHead>
-                <TableHead className="text-right">{t("reports.totalRevenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.averageOrderValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.totalCost")}</TableHead>
-                <TableHead className="text-right">{t("reports.grossProfit")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.orders")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.totalProducts")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.totalRevenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.averageOrderValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.totalCost")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.grossProfit")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -847,9 +905,15 @@ export function SalesChartReport() {
                   .sort((a, b) => b.netRevenue - a.netRevenue)
                   .map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium">{item.employee}</TableCell>
-                      <TableCell className="text-center">{item.orders}</TableCell>
-                      <TableCell className="text-center">{item.totalProducts}</TableCell>
+                      <TableCell className="font-medium">
+                        {item.employee}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {item.orders}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {item.totalProducts}
+                      </TableCell>
                       <TableCell className="text-right text-green-600">
                         {formatCurrency(item.revenue)}
                       </TableCell>
@@ -889,13 +953,27 @@ export function SalesChartReport() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.customer")}</TableHead>
-                <TableHead className="text-center">{t("reports.orders")}</TableHead>
-                <TableHead className="text-center">{t("reports.totalProducts")}</TableHead>
-                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.averageOrderValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.lastOrder")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.orders")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.totalProducts")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.averageOrderValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.lastOrder")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -905,9 +983,15 @@ export function SalesChartReport() {
                   .slice(0, 20)
                   .map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium">{item.customer}</TableCell>
-                      <TableCell className="text-center">{item.orders}</TableCell>
-                      <TableCell className="text-center">{item.totalProducts}</TableCell>
+                      <TableCell className="font-medium">
+                        {item.customer}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {item.orders}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {item.totalProducts}
+                      </TableCell>
                       <TableCell className="text-right text-green-600">
                         {formatCurrency(item.revenue)}
                       </TableCell>
@@ -944,14 +1028,30 @@ export function SalesChartReport() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.salesChannel")}</TableHead>
-                <TableHead className="text-center">{t("reports.orders")}</TableHead>
-                <TableHead className="text-center">{t("reports.totalProducts")}</TableHead>
-                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
-                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
-                <TableHead className="text-right">{t("reports.commission")}</TableHead>
-                <TableHead className="text-right">{t("reports.grossProfit")}</TableHead>
-                <TableHead className="text-right">{t("reports.netProfit")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.orders")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.totalProducts")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.commission")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.grossProfit")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netProfit")}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -960,9 +1060,15 @@ export function SalesChartReport() {
                   .sort((a, b) => b.netRevenue - a.netRevenue)
                   .map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell className="font-medium">{item.salesChannel}</TableCell>
-                      <TableCell className="text-center">{item.orders}</TableCell>
-                      <TableCell className="text-center">{item.totalProducts}</TableCell>
+                      <TableCell className="font-medium">
+                        {item.salesChannel}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {item.orders}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {item.totalProducts}
+                      </TableCell>
                       <TableCell className="text-right text-green-600">
                         {formatCurrency(item.revenue)}
                       </TableCell>
@@ -1011,8 +1117,8 @@ export function SalesChartReport() {
           dateRange: { startDate, endDate },
           filters: { salesMethod, salesChannel },
           analysisType,
-          concernType
-        }
+          concernType,
+        },
       };
 
       localStorage.setItem(dataKey, JSON.stringify(reportData));
@@ -1061,7 +1167,9 @@ export function SalesChartReport() {
     if (analysisType === "time") {
       return ["time", "profit", "employee"].includes(concernType);
     } else {
-      return ["product", "employee", "customer", "channel"].includes(analysisType);
+      return ["product", "employee", "customer", "channel"].includes(
+        analysisType,
+      );
     }
   };
 
@@ -1297,8 +1405,6 @@ export function SalesChartReport() {
         </CardHeader>
       </Card>
 
-
-
       {/* Filters */}
       <Card>
         <CardContent className="space-y-4 pt-6">
@@ -1306,13 +1412,16 @@ export function SalesChartReport() {
             {/* Analysis Type Selector */}
             <div>
               <Label>{t("reports.analyzeBy")}</Label>
-              <Select value={analysisType} onValueChange={(value) => {
-                setAnalysisType(value);
-                // Reset concern type when analysis type changes
-                if (value !== "time") {
-                  setConcernType("time");
-                }
-              }}>
+              <Select
+                value={analysisType}
+                onValueChange={(value) => {
+                  setAnalysisType(value);
+                  // Reset concern type when analysis type changes
+                  if (value !== "time") {
+                    setConcernType("time");
+                  }
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -1335,25 +1444,6 @@ export function SalesChartReport() {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Concern Type - Only show for time analysis */}
-            {analysisType === "time" && (
-              <div>
-                <Label>{t("reports.concernType")}</Label>
-                <Select value={concernType} onValueChange={setConcernType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="time">{t("reports.timeReport")}</SelectItem>
-                    <SelectItem value="profit">{t("reports.profitReport")}</SelectItem>
-                    <SelectItem value="discount">{t("reports.discountReport")}</SelectItem>
-                    <SelectItem value="return">{t("reports.returnReport")}</SelectItem>
-                    <SelectItem value="employee">{t("reports.employeeReport")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
 
             {/* Sales Method Filter */}
             <div>
