@@ -1,11 +1,9 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+
+import { Pool } from 'pg';
+import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 import { categories, products, employees, tables, orders, orderItems, transactions, transactionItems, attendanceRecords, storeSettings, suppliers, customers } from '@shared/schema';
 import { sql } from 'drizzle-orm';
-
-neonConfig.webSocketConstructor = ws;
 
 // Load environment variables from .env file with higher priority
 import { config } from 'dotenv';
@@ -36,14 +34,15 @@ console.log("🔍 Environment check:");
 console.log("  - NODE_ENV:", process.env.NODE_ENV);
 console.log("  - CUSTOM_DATABASE_URL exists:", !!process.env.CUSTOM_DATABASE_URL);
 console.log("  - DATABASE_URL exists:", !!process.env.DATABASE_URL);
-console.log("  - Using URL:", process.env.DATABASE_URL ? "DATABASE_URL" : "CUSTOM_DATABASE_URL");
+console.log("  - EXTERNAL_DB_URL exists:", !!process.env.EXTERNAL_DB_URL);
+console.log("  - Using URL:", process.env.EXTERNAL_DB_URL ? "EXTERNAL_DB_URL" : process.env.CUSTOM_DATABASE_URL ? "CUSTOM_DATABASE_URL" : "DATABASE_URL");
 console.log("  - DATABASE_URL preview:", DATABASE_URL?.substring(0, 50) + "...");
 console.log("  - DATABASE_URL full (masked):", DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
 console.log("  - Contains 1.55.212.138:", DATABASE_URL?.includes('1.55.212.138'));
 console.log("  - Contains neon:", DATABASE_URL?.includes('neon'));
 console.log("🔗 Database connection string:", DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
 
-export const db = drizzle({ client: pool, schema });
+export const db = drizzle(pool, { schema });
 
 // Initialize sample data function
 export async function initializeSampleData() {
