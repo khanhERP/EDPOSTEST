@@ -18,8 +18,9 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
   },
   en: {
     pos: 'POS',
-    tables: 'Tables',
-    inventory: 'Inventory',
+    tables: "Tables",
+    salesOrders: "Sales Orders",
+    inventory: "Inventory",
     reports: 'Reports',
     employees: 'Employees',
     attendance: 'Attendance',
@@ -31,8 +32,9 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
   },
   vi: {
     pos: 'Bán hàng',
-    tables: 'Bán theo bàn',
-    inventory: 'Kho hàng',
+    tables: "Bàn ăn",
+    salesOrders: "Danh sách đơn bán",
+    inventory: "Kho hàng",
     reports: 'Báo cáo',
     employees: 'Nhân viên',
     attendance: 'Chấm công',

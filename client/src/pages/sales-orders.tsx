@@ -1,0 +1,497 @@
+
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { RightSidebar } from "@/components/ui/right-sidebar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Search, FileText, Package, Printer, Mail } from "lucide-react";
+import { useTranslation } from "@/lib/i18n";
+
+interface Invoice {
+  id: number;
+  invoiceNumber: string;
+  tradeNumber: string;
+  templateNumber: string;
+  symbol: string;
+  customerName: string;
+  customerTaxCode: string;
+  customerAddress: string;
+  customerPhone: string;
+  customerEmail: string;
+  subtotal: string;
+  tax: string;
+  total: string;
+  paymentMethod: number;
+  invoiceDate: string;
+  status: string;
+  einvoiceStatus: number;
+  notes: string;
+  createdAt: string;
+}
+
+interface InvoiceItem {
+  id: number;
+  invoiceId: number;
+  productId: number;
+  productName: string;
+  quantity: number;
+  unitPrice: string;
+  total: string;
+  taxRate: string;
+}
+
+export default function SalesOrders() {
+  const { t } = useTranslation();
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+  const [endDate, setEndDate] = useState(() => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  });
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [orderNumberSearch, setOrderNumberSearch] = useState("");
+  const [customerCodeSearch, setCustomerCodeSearch] = useState("");
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+
+  // Query invoices
+  const { data: invoices = [], isLoading } = useQuery({
+    queryKey: ["/api/invoices"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/invoices");
+      return response.json();
+    },
+  });
+
+  // Query invoice items for selected invoice
+  const { data: invoiceItems = [] } = useQuery({
+    queryKey: ["/api/invoice-items", selectedInvoice?.id],
+    queryFn: async () => {
+      if (!selectedInvoice?.id) return [];
+      const response = await apiRequest("GET", `/api/invoice-items/${selectedInvoice.id}`);
+      return response.json();
+    },
+    enabled: !!selectedInvoice?.id,
+  });
+
+  const getPaymentMethodName = (method: number) => {
+    switch (method) {
+      case 1:
+        return "Tiền mặt";
+      case 2:
+        return "Chuyển khoản";
+      case 3:
+        return "TM/CK";
+      case 4:
+        return "Đối trừ công nợ";
+      default:
+        return "Tiền mặt";
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const statusColors = {
+      draft: "bg-gray-100 text-gray-800",
+      published: "bg-green-100 text-green-800",
+      cancelled: "bg-red-100 text-red-800",
+    };
+    
+    const statusLabels = {
+      draft: "Nháp",
+      published: "Đã xuất",
+      cancelled: "Đã hủy",
+    };
+
+    return (
+      <Badge className={statusColors[status as keyof typeof statusColors] || statusColors.draft}>
+        {statusLabels[status as keyof typeof statusLabels] || status}
+      </Badge>
+    );
+  };
+
+  const getEInvoiceStatusBadge = (status: number) => {
+    const statusLabels = {
+      0: "Chưa phát hành",
+      1: "Đã phát hành",
+      2: "Tạo nháp",
+      3: "Đã duyệt",
+      4: "Đã bị thay thế (hủy)",
+      5: "Thay thế tạm",
+      6: "Thay thế",
+      7: "Đã bị điều chỉnh",
+      8: "Điều chỉnh tạm",
+      9: "Điều chỉnh",
+      10: "Đã hủy",
+    };
+
+    const statusColors = {
+      0: "bg-gray-100 text-gray-800",
+      1: "bg-green-100 text-green-800",
+      2: "bg-blue-100 text-blue-800",
+      3: "bg-green-100 text-green-800",
+      4: "bg-red-100 text-red-800",
+      5: "bg-yellow-100 text-yellow-800",
+      6: "bg-green-100 text-green-800",
+      7: "bg-orange-100 text-orange-800",
+      8: "bg-yellow-100 text-yellow-800",
+      9: "bg-orange-100 text-orange-800",
+      10: "bg-red-100 text-red-800",
+    };
+
+    return (
+      <Badge className={statusColors[status as keyof typeof statusColors] || statusColors[0]}>
+        {statusLabels[status as keyof typeof statusLabels] || "Không xác định"}
+      </Badge>
+    );
+  };
+
+  const filteredInvoices = invoices.filter((invoice: Invoice) => {
+    const invoiceDate = new Date(invoice.invoiceDate);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    const dateMatch = invoiceDate >= start && invoiceDate <= end;
+    const customerMatch = !customerSearch || 
+      invoice.customerName.toLowerCase().includes(customerSearch.toLowerCase());
+    const orderMatch = !orderNumberSearch || 
+      invoice.tradeNumber?.toLowerCase().includes(orderNumberSearch.toLowerCase()) ||
+      invoice.invoiceNumber?.toLowerCase().includes(orderNumberSearch.toLowerCase());
+    const customerCodeMatch = !customerCodeSearch || 
+      invoice.customerTaxCode?.toLowerCase().includes(customerCodeSearch.toLowerCase());
+
+    return dateMatch && customerMatch && orderMatch && customerCodeMatch;
+  });
+
+  const formatCurrency = (amount: string | number) => {
+    const num = typeof amount === 'string' ? parseFloat(amount) : amount;
+    return new Intl.NumberFormat('vi-VN').format(num);
+  };
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  const calculateTotals = () => {
+    const totals = filteredInvoices.reduce((acc, invoice) => {
+      acc.subtotal += parseFloat(invoice.subtotal);
+      acc.tax += parseFloat(invoice.tax);
+      acc.total += parseFloat(invoice.total);
+      return acc;
+    }, { subtotal: 0, tax: 0, total: 0 });
+
+    return totals;
+  };
+
+  const totals = calculateTotals();
+
+  return (
+    <div className="min-h-screen bg-green-50">
+      <RightSidebar />
+      
+      <div className="main-content p-6">
+        <div className="max-w-full mx-auto">
+          {/* Header */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <FileText className="w-6 h-6 text-green-600" />
+              <h1 className="text-2xl font-bold text-gray-800">Danh sách đơn hàng bán</h1>
+            </div>
+          </div>
+
+          {/* Filters */}
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg">Bộ lọc</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Từ ngày</label>
+                  <Input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Đến ngày</label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Khách hàng</label>
+                  <Input
+                    placeholder="Tìm theo tên khách hàng"
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Khách viên</label>
+                  <Input
+                    placeholder="Tìm theo số hóa đơn"
+                    value={orderNumberSearch}
+                    onChange={(e) => setOrderNumberSearch(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Số đơn bán</label>
+                  <Input
+                    placeholder="Tìm theo số đơn bán"
+                    value={orderNumberSearch}
+                    onChange={(e) => setOrderNumberSearch(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Mã khách hàng</label>
+                  <Input
+                    placeholder="Tìm theo mã khách hàng"
+                    value={customerCodeSearch}
+                    onChange={(e) => setCustomerCodeSearch(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Invoices List */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Danh sách hóa đơn ({filteredInvoices.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+                    <p className="mt-2 text-gray-500">Đang tải...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded">
+                      <div className="col-span-3">Số đơn bán</div>
+                      <div className="col-span-2">Ngày đơn bán</div>
+                      <div className="col-span-3">Khách hàng</div>
+                      <div className="col-span-2">Thành tiền</div>
+                      <div className="col-span-2">Trạng thái</div>
+                    </div>
+                    {filteredInvoices.map((invoice) => (
+                      <div
+                        key={invoice.id}
+                        className={`grid grid-cols-12 gap-2 text-xs p-2 rounded cursor-pointer hover:bg-blue-50 ${
+                          selectedInvoice?.id === invoice.id ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
+                        }`}
+                        onClick={() => setSelectedInvoice(invoice)}
+                      >
+                        <div className="col-span-3 font-medium">
+                          {invoice.tradeNumber || invoice.invoiceNumber || `DH${String(invoice.id).padStart(8, '0')}`}
+                        </div>
+                        <div className="col-span-2">{formatDate(invoice.invoiceDate)}</div>
+                        <div className="col-span-3 truncate">{invoice.customerName}</div>
+                        <div className="col-span-2 text-right font-medium">
+                          {formatCurrency(invoice.total)}
+                        </div>
+                        <div className="col-span-2">
+                          {getEInvoiceStatusBadge(invoice.einvoiceStatus)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {/* Totals */}
+                <div className="mt-4 pt-4 border-t bg-blue-50 p-3 rounded">
+                  <div className="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Tổng tiền hàng:</span>
+                      <div className="font-bold text-blue-600">{formatCurrency(totals.subtotal)}</div>
+                    </div>
+                    <div>
+                      <span className="font-medium">Tổng thuế:</span>
+                      <div className="font-bold text-orange-600">{formatCurrency(totals.tax)}</div>
+                    </div>
+                    <div>
+                      <span className="font-medium">Tổng cộng:</span>
+                      <div className="font-bold text-green-600">{formatCurrency(totals.total)}</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Invoice Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Chi tiết đơn hàng</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {selectedInvoice ? (
+                  <div className="space-y-4">
+                    {/* Invoice Info */}
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium">Số đơn bán:</span>
+                          <div>{selectedInvoice.tradeNumber || selectedInvoice.invoiceNumber}</div>
+                        </div>
+                        <div>
+                          <span className="font-medium">Ngày:</span>
+                          <div>{formatDate(selectedInvoice.invoiceDate)}</div>
+                        </div>
+                        <div>
+                          <span className="font-medium">Khách hàng:</span>
+                          <div>{selectedInvoice.customerName}</div>
+                        </div>
+                        <div>
+                          <span className="font-medium">Điện thoại:</span>
+                          <div>{selectedInvoice.customerPhone || '-'}</div>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="font-medium">Địa chỉ:</span>
+                          <div>{selectedInvoice.customerAddress || '-'}</div>
+                        </div>
+                        <div>
+                          <span className="font-medium">Hình thức bán:</span>
+                          <div>Bán tại cửa hàng</div>
+                        </div>
+                        <div>
+                          <span className="font-medium">Ký hiệu hóa đơn:</span>
+                          <div>{selectedInvoice.symbol || '1C21DTD'}</div>
+                        </div>
+                        <div>
+                          <span className="font-medium">Số hóa đơn:</span>
+                          <div>{selectedInvoice.invoiceNumber || String(selectedInvoice.id).padStart(8, '0')}</div>
+                        </div>
+                        <div>
+                          <span className="font-medium">Trạng thái:</span>
+                          <div>{getEInvoiceStatusBadge(selectedInvoice.einvoiceStatus)}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Invoice Items */}
+                    <div>
+                      <h4 className="font-medium mb-3">Danh sách hàng hóa</h4>
+                      <div className="border rounded-lg overflow-hidden">
+                        <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2">
+                          <div className="col-span-1">STT</div>
+                          <div className="col-span-3">Mã hàng</div>
+                          <div className="col-span-3">Tên hàng</div>
+                          <div className="col-span-1">ĐVT</div>
+                          <div className="col-span-1">SL</div>
+                          <div className="col-span-1">Đơn giá</div>
+                          <div className="col-span-1">Thành tiền</div>
+                          <div className="col-span-1">Thuế GTGT</div>
+                        </div>
+                        {invoiceItems.map((item: InvoiceItem, index: number) => (
+                          <div key={item.id} className="grid grid-cols-12 gap-2 text-xs p-2 border-t">
+                            <div className="col-span-1">{index + 1}</div>
+                            <div className="col-span-3">SP{String(item.productId).padStart(3, '0')}</div>
+                            <div className="col-span-3">{item.productName}</div>
+                            <div className="col-span-1">Cái</div>
+                            <div className="col-span-1 text-center">{item.quantity}</div>
+                            <div className="col-span-1 text-right">{formatCurrency(item.unitPrice)}</div>
+                            <div className="col-span-1 text-right">{formatCurrency(item.total)}</div>
+                            <div className="col-span-1 text-center">{item.taxRate}%</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Summary */}
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span>Tổng tiền thanh toán:</span>
+                            <span className="font-bold">{formatCurrency(selectedInvoice.subtotal)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Thành tiền:</span>
+                            <span className="font-bold">{formatCurrency(selectedInvoice.subtotal)}</span>
+                          </div>
+                          <div className="flex justify-between text-red-600">
+                            <span>Giảm giá %:</span>
+                            <span>0</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Thuế suất (10%) Thuế GTGT:</span>
+                            <span className="font-bold">{formatCurrency(selectedInvoice.tax)}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex justify-between">
+                            <span>Khách hàng trả:</span>
+                            <span className="font-bold">{formatCurrency(selectedInvoice.total)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Tiền mặt:</span>
+                            <span className="font-bold">{formatCurrency(selectedInvoice.total)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Chuyển khoản:</span>
+                            <span>0</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>QR Code InfoCAMS:</span>
+                            <span className="font-bold">{formatCurrency(selectedInvoice.total)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Ghi chú</label>
+                      <div className="p-3 bg-gray-50 rounded border min-h-[80px]">
+                        {selectedInvoice.notes || 'Không có ghi chú'}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 pt-4">
+                      <Button size="sm" className="flex items-center gap-2">
+                        <Printer className="w-4 h-4" />
+                        In đơn
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        Lưu đơn
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        Đóng
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-500">
+                    <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p>Chọn một hóa đơn để xem chi tiết</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

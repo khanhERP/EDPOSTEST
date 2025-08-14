@@ -57,7 +57,7 @@ export function RightSidebar() {
     },
     {
       icon: FileText,
-      label: "Danh sách đơn bán",
+      label: t('nav.salesOrders'),
       href: "/sales-orders",
     },
     {

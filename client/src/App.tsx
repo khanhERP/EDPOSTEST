@@ -15,6 +15,7 @@ import SuppliersPage from "@/pages/suppliers";
 import AttendancePage from "@/pages/attendance";
 import AttendanceQRPage from "./pages/attendance-qr";
 import CustomerDisplay from "@/pages/customer-display";
+import SalesOrders from "@/pages/sales-orders";
 import NotFoundPage from "./pages/not-found";
 
 function Router({ onLogout }: { onLogout: () => void }) {
@@ -30,7 +31,9 @@ function Router({ onLogout }: { onLogout: () => void }) {
       <Route path="/suppliers" component={() => <SuppliersPage onLogout={onLogout} />} />
       <Route path="/attendance" component={() => <AttendancePage onLogout={onLogout} />} />
       <Route path="/attendance-qr" component={AttendanceQRPage} />
+      <Route path="/inventory" component={InventoryPage} />
       <Route path="/customer-display" component={CustomerDisplay} />
+      <Route path="/sales-orders" component={SalesOrders} />
       <Route path="*" component={NotFoundPage} />
     </Switch>
   );
