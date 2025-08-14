@@ -2972,6 +2972,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/invoices/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = req.body;
+      const tenantDb = await getTenantDatabase(req);
+
+      console.log(`Updating invoice ${id} with data:`, updateData);
+
+      // Build update fields, ensuring both invoiceStatus and invoice_status are updated
+      const updateFields: any = {};
+
+      if (updateData.invoiceStatus !== undefined) {
+        updateFields.invoiceStatus = updateData.invoiceStatus;
+        updateFields.invoice_status = updateData.invoiceStatus; // Keep both fields in sync
+      }
+
+      if (updateData.invoice_status !== undefined) {
+        updateFields.invoice_status = updateData.invoice_status;
+        updateFields.invoiceStatus = updateData.invoice_status; // Keep both fields in sync
+      }
+
+      // Add other fields that might be updated
+      Object.keys(updateData).forEach(key => {
+        if (key !== 'invoiceStatus' && key !== 'invoice_status') {
+          updateFields[key] = updateData[key];
+        }
+      });
+
+      console.log(`Update fields:`, updateFields);
+
+      // Update invoice directly using drizzle
+      const [updatedInvoice] = await db
+        .update(invoices)
+        .set(updateFields)
+        .where(eq(invoices.id, id))
+        .returning();
+
+      if (!updatedInvoice) {
+        return res.status(404).json({ message: "Invoice not found" });
+      }
+
+      console.log(`Invoice updated successfully:`, updatedInvoice);
+      res.json(updatedInvoice);
+    } catch (error) {
+      console.error("Error updating invoice:", error);
+      res.status(500).json({ message: "Failed to update invoice", error: error.message });
+    }
+  });
+
   app.get("/api/invoice-items/:invoiceId", async (req: TenantRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.invoiceId);
@@ -3188,7 +3237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Directly execute a simple query to check DB connection
       const result = await db.execute(sql`SELECT current_database(), current_user, inet_server_addr(), inet_server_port()`);
-      
+
       // Safely access properties of the first row if it exists
       const dbInfo = result && result.length > 0 ? result[0] : {};
 
