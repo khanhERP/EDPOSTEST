@@ -173,8 +173,8 @@ export function MenuReport() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Date Range Filter */}
-          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            <div className="col-span-1">
               <Label>{t("reports.dateRange")}</Label>
               <Select value={dateRange} onValueChange={handleDateRangeChange}>
                 <SelectTrigger>
@@ -193,7 +193,7 @@ export function MenuReport() {
 
             {dateRange === "custom" && (
               <>
-                <div>
+                <div className="col-span-1">
                   <Label>{t("reports.startDate")}</Label>
                   <Input
                     type="date"
@@ -201,7 +201,7 @@ export function MenuReport() {
                     onChange={(e) => setStartDate(e.target.value)}
                   />
                 </div>
-                <div>
+                <div className="col-span-1">
                   <Label>{t("reports.endDate")}</Label>
                   <Input
                     type="date"
@@ -213,7 +213,7 @@ export function MenuReport() {
             )}
 
             {/* Product Search */}
-            <div>
+            <div className="col-span-1">
               <Label>{t("reports.productFilter")}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -227,7 +227,7 @@ export function MenuReport() {
             </div>
 
             {/* Category Filter */}
-            <div>
+            <div className="col-span-1">
               <Label>{t("common.category")}</Label>
               <Select
                 value={selectedCategory}
@@ -251,7 +251,7 @@ export function MenuReport() {
             </div>
 
             {/* Product Type Filter */}
-            <div>
+            <div className="col-span-1">
               <Label>{t("reports.productType")}</Label>
               <Select value={productType} onValueChange={setProductType}>
                 <SelectTrigger>
