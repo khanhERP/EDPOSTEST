@@ -368,6 +368,7 @@ export const invoices = pgTable("invoices", {
   invoiceNumber: varchar("invoice_number", { length: 50 }),
   tradeNumber: varchar("trade_number", { length: 50 }).unique(),
   templateNumber: varchar("template_number", { length: 50 }),
+  symbol: varchar("symbol", { length: 20 }),
   customerId: integer("customer_id").references(() => customers.id),
   customerName: varchar("customer_name", { length: 100 }).notNull(),
   customerTaxCode: varchar("customer_tax_code", { length: 20 }),

@@ -20,6 +20,7 @@ interface Invoice {
   invoiceNumber: string;
   tradeNumber: string;
   templateNumber?: string;
+  symbol?: string;
   customerName: string;
   customerTaxCode?: string;
   customerAddress?: string;
@@ -189,6 +190,9 @@ export function InvoiceManagementModal({
                           <div className="font-mono text-sm">{invoice.invoiceNumber || "Chưa có"}</div>
                           {invoice.templateNumber && (
                             <div className="text-sm text-gray-500">Mẫu: {invoice.templateNumber}</div>
+                          )}
+                          {invoice.symbol && (
+                            <div className="text-sm text-gray-500">Kí hiệu: {invoice.symbol}</div>
                           )}
                         </td>
                         <td className="p-3">
