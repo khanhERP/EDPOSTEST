@@ -85,167 +85,141 @@ export const db = drizzle(pool, { schema });
 // Initialize sample data function
 export async function initializeSampleData() {
   try {
-    console.log("Running database migrations...");
+    console.log("🚀 Running optimized database migrations...");
+    
+    // Batch migrations for better performance
+    const migrationPromises = [];
 
-    // Run migration for membership thresholds
-    try {
-      await db.execute(sql`
-        ALTER TABLE store_settings 
-        ADD COLUMN IF NOT EXISTS gold_threshold TEXT DEFAULT '300000'
-      `);
-      await db.execute(sql`
-        ALTER TABLE store_settings 
-        ADD COLUMN IF NOT EXISTS vip_threshold TEXT DEFAULT '1000000'
-      `);
+    // Membership thresholds migration
+    migrationPromises.push(
+      (async () => {
+        try {
+          await db.execute(sql`
+            ALTER TABLE store_settings 
+            ADD COLUMN IF NOT EXISTS gold_threshold TEXT DEFAULT '300000',
+            ADD COLUMN IF NOT EXISTS vip_threshold TEXT DEFAULT '1000000'
+          `);
+          await db.execute(sql`
+            UPDATE store_settings 
+            SET gold_threshold = COALESCE(gold_threshold, '300000'), 
+                vip_threshold = COALESCE(vip_threshold, '1000000')
+          `);
+          console.log("✅ Membership thresholds migration completed");
+        } catch (error) {
+          console.log("⚠️ Membership thresholds migration skipped:", error.message);
+        }
+      })()
+    );
 
-      // Update existing records
-      await db.execute(sql`
-        UPDATE store_settings 
-        SET gold_threshold = COALESCE(gold_threshold, '300000'), 
-            vip_threshold = COALESCE(vip_threshold, '1000000')
-      `);
+    // Product columns migration
+    migrationPromises.push(
+      (async () => {
+        try {
+          await db.execute(sql`
+            ALTER TABLE products 
+            ADD COLUMN IF NOT EXISTS product_type INTEGER DEFAULT 1,
+            ADD COLUMN IF NOT EXISTS tax_rate DECIMAL(5,2) DEFAULT 10.00
+          `);
+          await db.execute(sql`
+            UPDATE products 
+            SET product_type = 1 WHERE product_type IS NULL,
+                tax_rate = 10.00 WHERE tax_rate IS NULL
+          `);
+          await db.execute(sql`
+            CREATE INDEX IF NOT EXISTS idx_products_product_type ON products(product_type)
+          `);
+          console.log("✅ Product columns migration completed");
+        } catch (error) {
+          console.log("⚠️ Product columns migration skipped:", error.message);
+        }
+      })()
+    );
 
-      console.log(
-        "Migration for membership thresholds completed successfully.",
-      );
-    } catch (migrationError) {
-      console.log("Migration already applied or error:", migrationError);
-    }
+    // Store settings pinCode migration
+    migrationPromises.push(
+      (async () => {
+        try {
+          await db.execute(sql`
+            ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS pin_code TEXT
+          `);
+          console.log("✅ PinCode migration completed");
+        } catch (error) {
+          console.log("⚠️ PinCode migration skipped:", error.message);
+        }
+      })()
+    );
 
-    // Run migration for product_type column
-    try {
-      await db.execute(sql`
-        ALTER TABLE products ADD COLUMN IF NOT EXISTS product_type INTEGER DEFAULT 1
-      `);
-      await db.execute(sql`
-        UPDATE products SET product_type = 1 WHERE product_type IS NULL
-      `);
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_products_product_type ON products(product_type)
-      `);
+    // Invoice-related migrations
+    migrationPromises.push(
+      (async () => {
+        try {
+          await db.execute(sql`
+            ALTER TABLE invoice_templates 
+            ADD COLUMN IF NOT EXISTS template_code VARCHAR(50)
+          `);
+          console.log("✅ TemplateCode migration completed");
+        } catch (error) {
+          console.log("⚠️ TemplateCode migration skipped:", error.message);
+        }
+      })()
+    );
 
-      console.log("Migration for product_type column completed successfully.");
-    } catch (migrationError) {
-      console.log(
-        "Product type migration already applied or error:",
-        migrationError,
-      );
-    }
+    migrationPromises.push(
+      (async () => {
+        try {
+          await db.execute(sql`
+            ALTER TABLE invoices 
+            ADD COLUMN IF NOT EXISTS trade_number VARCHAR(50),
+            ADD COLUMN IF NOT EXISTS invoice_status INTEGER DEFAULT 1
+          `);
+          
+          // Data migration for trade_number
+          await db.execute(sql`
+            UPDATE invoices 
+            SET trade_number = invoice_number 
+            WHERE trade_number IS NULL OR trade_number = ''
+          `);
+          
+          await db.execute(sql`
+            UPDATE invoices SET invoice_number = NULL
+          `);
+          
+          // Create indexes
+          await db.execute(sql`
+            CREATE INDEX IF NOT EXISTS idx_invoices_trade_number ON invoices(trade_number);
+            CREATE INDEX IF NOT EXISTS idx_invoices_invoice_status ON invoices(invoice_status)
+          `);
+          console.log("✅ Invoice columns migration completed");
+        } catch (error) {
+          console.log("⚠️ Invoice columns migration skipped:", error.message);
+        }
+      })()
+    );
 
-    // Run migration for tax_rate column
-    try {
-      await db.execute(sql`
-        ALTER TABLE products ADD COLUMN IF NOT EXISTS tax_rate DECIMAL(5,2) DEFAULT 10.00
-      `);
-      await db.execute(sql`
-        UPDATE products SET tax_rate = 10.00 WHERE tax_rate IS NULL
-      `);
+    // Employee email constraint migration
+    migrationPromises.push(
+      (async () => {
+        try {
+          await db.execute(sql`
+            ALTER TABLE employees DROP CONSTRAINT IF EXISTS employees_email_unique
+          `);
+          await db.execute(sql`
+            CREATE UNIQUE INDEX IF NOT EXISTS employees_email_unique_idx 
+            ON employees (email) 
+            WHERE email IS NOT NULL AND email != ''
+          `);
+          await db.execute(sql`
+            UPDATE employees SET email = NULL WHERE email = ''
+          `);
+          console.log("✅ Employee email constraint migration completed");
+        } catch (error) {
+          console.log("⚠️ Employee email migration skipped:", error.message);
+        }
+      })()
+    );
 
-      console.log("Migration for tax_rate column completed successfully.");
-    } catch (migrationError) {
-      console.log(
-        "Tax rate migration already applied or error:",
-        migrationError,
-      );
-    }
-
-    // Run migration for pinCode column in store_settings
-    try {
-      await db.execute(sql`
-        ALTER TABLE store_settings ADD COLUMN IF NOT EXISTS pin_code TEXT
-      `);
-
-      console.log("Migration for pinCode column completed successfully.");
-    } catch (migrationError) {
-      console.log(
-        "PinCode migration already applied or error:",
-        migrationError,
-      );
-    }
-
-    // Add templateCode column to invoice_templates table
-    try {
-      await db.execute(sql`
-        ALTER TABLE invoice_templates 
-        ADD COLUMN IF NOT EXISTS template_code VARCHAR(50)
-      `);
-      console.log("Migration for templateCode column completed successfully.");
-    } catch (error) {
-      console.log(
-        "TemplateCode migration failed or column already exists:",
-        error,
-      );
-    }
-
-    // Add trade_number column to invoices table and migrate data
-    try {
-      await db.execute(sql`
-        ALTER TABLE invoices ADD COLUMN IF NOT EXISTS trade_number VARCHAR(50)
-      `);
-
-      // Copy data from invoice_number to trade_number
-      await db.execute(sql`
-        UPDATE invoices SET trade_number = invoice_number WHERE trade_number IS NULL OR trade_number = ''
-      `);
-
-      // Clear invoice_number column
-      await db.execute(sql`
-        UPDATE invoices SET invoice_number = NULL
-      `);
-
-      // Create index for trade_number
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_invoices_trade_number ON invoices(trade_number)
-      `);
-
-      console.log("Migration for trade_number column completed successfully.");
-    } catch (error) {
-      console.log("Trade number migration failed or already applied:", error);
-    }
-
-    // Add invoice_status column to invoices table
-    try {
-      await db.execute(sql`
-        ALTER TABLE invoices ADD COLUMN IF NOT EXISTS invoice_status INTEGER NOT NULL DEFAULT 1
-      `);
-
-      // Create index for invoice_status
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_invoices_invoice_status ON invoices(invoice_status)
-      `);
-
-      console.log(
-        "Migration for invoice_status column completed successfully.",
-      );
-    } catch (error) {
-      console.log("Invoice status migration failed or already applied:", error);
-    }
-
-    // Run migration for email constraint in employees table
-    try {
-      await db.execute(sql`
-        ALTER TABLE employees DROP CONSTRAINT IF EXISTS employees_email_unique
-      `);
-
-      await db.execute(sql`
-        CREATE UNIQUE INDEX IF NOT EXISTS employees_email_unique_idx 
-        ON employees (email) 
-        WHERE email IS NOT NULL AND email != ''
-      `);
-
-      await db.execute(sql`
-        UPDATE employees SET email = NULL WHERE email = ''
-      `);
-
-      console.log(
-        "Migration for employees email constraint completed successfully.",
-      );
-    } catch (migrationError) {
-      console.log(
-        "Email constraint migration already applied or error:",
-        migrationError,
-      );
-    }
+    // Run all migrations in parallel for better performance
+    await Promise.allSettled(migrationPromises);
 
     // Check if customers table has data
     const customerCount = await db
