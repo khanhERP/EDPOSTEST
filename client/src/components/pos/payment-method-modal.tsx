@@ -426,13 +426,13 @@ export function PaymentMethodModal({
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
     console.log('📧 E-Invoice confirmed from payment modal:', eInvoiceData);
 
-    // Close E-invoice modal and payment modal
-    setShowEInvoice(false);
-    onClose();
-
-    // Truyền dữ liệu về shopping cart để xử lý
+    // Truyền dữ liệu về shopping cart để xử lý trước
     console.log('📤 Passing e-invoice data back to shopping cart for processing');
     onSelectMethod('einvoice', eInvoiceData);
+
+    // Close E-invoice modal and payment modal sau
+    setShowEInvoice(false);
+    onClose();
   };
 
   const handleEInvoiceClose = () => {

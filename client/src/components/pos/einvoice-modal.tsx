@@ -502,11 +502,11 @@ export function EInvoiceModal({
         description: 'Thông tin hóa đơn điện tử đã được lưu vào database để phát hành sau.',
       });
 
-      // Đóng modal e-invoice sau khi truyền dữ liệu
-      onClose();
-
       console.log('✅ Calling onConfirm with e-invoice data for later publishing');
       onConfirm(invoiceData);
+
+      // Đóng modal e-invoice sau khi truyền dữ liệu
+      onClose();
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
