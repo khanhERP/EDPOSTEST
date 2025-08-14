@@ -1,20 +1,35 @@
-
-import { Pool } from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "@shared/schema";
-import { categories, products, employees, tables, orders, orderItems, transactions, transactionItems, attendanceRecords, storeSettings, suppliers, customers } from '@shared/schema';
-import { sql } from 'drizzle-orm';
+import {
+  categories,
+  products,
+  employees,
+  tables,
+  orders,
+  orderItems,
+  transactions,
+  transactionItems,
+  attendanceRecords,
+  storeSettings,
+  suppliers,
+  customers,
+} from "@shared/schema";
+import { sql } from "drizzle-orm";
 
 // Load environment variables from .env file with higher priority
-import { config } from 'dotenv';
-import path from 'path';
+import { config } from "dotenv";
+import path from "path";
 
 // Load .env.local first, then override with .env to ensure .env has priority
-config({ path: path.resolve('.env.local') });
-config({ path: path.resolve('.env') });
+config({ path: path.resolve(".env.local") });
+config({ path: path.resolve(".env") });
 
 // Use EXTERNAL_DB_URL first, then fallback to CUSTOM_DATABASE_URL, then DATABASE_URL
-const DATABASE_URL = process.env.EXTERNAL_DB_URL || process.env.CUSTOM_DATABASE_URL || process.env.DATABASE_URL;
+const DATABASE_URL =
+  process.env.EXTERNAL_DB_URL ||
+  process.env.CUSTOM_DATABASE_URL ||
+  process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
   throw new Error(
@@ -22,27 +37,48 @@ if (!DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ 
-  connectionString: DATABASE_URL,
-  max: 10,
-  idleTimeoutMillis: 60000,
-  connectionTimeoutMillis: 10000,
-  acquireTimeoutMillis: 10000,
-  ssl: DATABASE_URL?.includes('1.55.212.138') ? { rejectUnauthorized: false } : undefined,
+export const pool = new Pool({
+  host: "1.55.212.138",
+  user: "postgres",
+  password: "Info@2025",
+  database: "edpos",
+  port: 5432,
 });
 
 // Log database connection info with detailed debugging
 console.log("🔍 Environment check:");
 console.log("  - NODE_ENV:", process.env.NODE_ENV);
-console.log("  - CUSTOM_DATABASE_URL exists:", !!process.env.CUSTOM_DATABASE_URL);
+console.log(
+  "  - CUSTOM_DATABASE_URL exists:",
+  !!process.env.CUSTOM_DATABASE_URL,
+);
 console.log("  - DATABASE_URL exists:", !!process.env.DATABASE_URL);
 console.log("  - EXTERNAL_DB_URL exists:", !!process.env.EXTERNAL_DB_URL);
-console.log("  - Using URL:", process.env.EXTERNAL_DB_URL ? "EXTERNAL_DB_URL" : process.env.CUSTOM_DATABASE_URL ? "CUSTOM_DATABASE_URL" : "DATABASE_URL");
-console.log("  - DATABASE_URL preview:", DATABASE_URL?.substring(0, 50) + "...");
-console.log("  - DATABASE_URL full (masked):", DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
-console.log("  - Contains 1.55.212.138:", DATABASE_URL?.includes('1.55.212.138'));
-console.log("  - Contains neon:", DATABASE_URL?.includes('neon'));
-console.log("🔗 Database connection string:", DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
+console.log(
+  "  - Using URL:",
+  process.env.EXTERNAL_DB_URL
+    ? "EXTERNAL_DB_URL"
+    : process.env.CUSTOM_DATABASE_URL
+      ? "CUSTOM_DATABASE_URL"
+      : "DATABASE_URL",
+);
+console.log(
+  "  - DATABASE_URL preview:",
+  DATABASE_URL?.substring(0, 50) + "...",
+);
+console.log(
+  "  - DATABASE_URL full (masked):",
+  DATABASE_URL?.replace(/:[^:@]*@/, ":****@"),
+);
+console.log(
+  "  - Contains 1.55.212.138:",
+  DATABASE_URL?.includes("1.55.212.138"),
+);
+console.log("  - Contains neon:", DATABASE_URL?.includes("neon"));
+console.log(
+  "🔗 Database connection string:",
+  DATABASE_URL?.replace(/:[^:@]*@/, ":****@"),
+);
 
 export const db = drizzle(pool, { schema });
 
@@ -69,7 +105,9 @@ export async function initializeSampleData() {
             vip_threshold = COALESCE(vip_threshold, '1000000')
       `);
 
-      console.log("Migration for membership thresholds completed successfully.");
+      console.log(
+        "Migration for membership thresholds completed successfully.",
+      );
     } catch (migrationError) {
       console.log("Migration already applied or error:", migrationError);
     }
@@ -88,7 +126,10 @@ export async function initializeSampleData() {
 
       console.log("Migration for product_type column completed successfully.");
     } catch (migrationError) {
-      console.log("Product type migration already applied or error:", migrationError);
+      console.log(
+        "Product type migration already applied or error:",
+        migrationError,
+      );
     }
 
     // Run migration for tax_rate column
@@ -102,7 +143,10 @@ export async function initializeSampleData() {
 
       console.log("Migration for tax_rate column completed successfully.");
     } catch (migrationError) {
-      console.log("Tax rate migration already applied or error:", migrationError);
+      console.log(
+        "Tax rate migration already applied or error:",
+        migrationError,
+      );
     }
 
     // Run migration for pinCode column in store_settings
@@ -113,7 +157,10 @@ export async function initializeSampleData() {
 
       console.log("Migration for pinCode column completed successfully.");
     } catch (migrationError) {
-      console.log("PinCode migration already applied or error:", migrationError);
+      console.log(
+        "PinCode migration already applied or error:",
+        migrationError,
+      );
     }
 
     // Add templateCode column to invoice_templates table
@@ -124,7 +171,10 @@ export async function initializeSampleData() {
       `);
       console.log("Migration for templateCode column completed successfully.");
     } catch (error) {
-      console.log("TemplateCode migration failed or column already exists:", error);
+      console.log(
+        "TemplateCode migration failed or column already exists:",
+        error,
+      );
     }
 
     // Add trade_number column to invoices table and migrate data
@@ -132,22 +182,22 @@ export async function initializeSampleData() {
       await db.execute(sql`
         ALTER TABLE invoices ADD COLUMN IF NOT EXISTS trade_number VARCHAR(50)
       `);
-      
+
       // Copy data from invoice_number to trade_number
       await db.execute(sql`
         UPDATE invoices SET trade_number = invoice_number WHERE trade_number IS NULL OR trade_number = ''
       `);
-      
+
       // Clear invoice_number column
       await db.execute(sql`
         UPDATE invoices SET invoice_number = NULL
       `);
-      
+
       // Create index for trade_number
       await db.execute(sql`
         CREATE INDEX IF NOT EXISTS idx_invoices_trade_number ON invoices(trade_number)
       `);
-      
+
       console.log("Migration for trade_number column completed successfully.");
     } catch (error) {
       console.log("Trade number migration failed or already applied:", error);
@@ -158,13 +208,15 @@ export async function initializeSampleData() {
       await db.execute(sql`
         ALTER TABLE invoices ADD COLUMN IF NOT EXISTS invoice_status INTEGER NOT NULL DEFAULT 1
       `);
-      
+
       // Create index for invoice_status
       await db.execute(sql`
         CREATE INDEX IF NOT EXISTS idx_invoices_invoice_status ON invoices(invoice_status)
       `);
-      
-      console.log("Migration for invoice_status column completed successfully.");
+
+      console.log(
+        "Migration for invoice_status column completed successfully.",
+      );
     } catch (error) {
       console.log("Invoice status migration failed or already applied:", error);
     }
@@ -185,13 +237,20 @@ export async function initializeSampleData() {
         UPDATE employees SET email = NULL WHERE email = ''
       `);
 
-      console.log("Migration for employees email constraint completed successfully.");
+      console.log(
+        "Migration for employees email constraint completed successfully.",
+      );
     } catch (migrationError) {
-      console.log("Email constraint migration already applied or error:", migrationError);
+      console.log(
+        "Email constraint migration already applied or error:",
+        migrationError,
+      );
     }
 
     // Check if customers table has data
-    const customerCount = await db.select({ count: sql<number>`count(*)` }).from(customers);
+    const customerCount = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(customers);
     if (customerCount[0]?.count === 0) {
       console.log("🔄 Inserting sample customers data...");
       await db.execute(sql`
@@ -228,7 +287,10 @@ export async function initializeSampleData() {
       `);
       console.log("Inventory transactions table initialized");
     } catch (error) {
-      console.log("Inventory transactions table already exists or initialization failed:", error);
+      console.log(
+        "Inventory transactions table already exists or initialization failed:",
+        error,
+      );
     }
 
     // Initialize einvoice_connections table if it doesn't exist
@@ -262,7 +324,10 @@ export async function initializeSampleData() {
 
       console.log("E-invoice connections table initialized");
     } catch (error) {
-      console.log("E-invoice connections table already exists or initialization failed:", error);
+      console.log(
+        "E-invoice connections table already exists or initialization failed:",
+        error,
+      );
     }
 
     // Initialize invoice_templates table if it doesn't exist
@@ -293,7 +358,10 @@ export async function initializeSampleData() {
 
       console.log("Invoice templates table initialized");
     } catch (error) {
-      console.log("Invoice templates table already exists or initialization failed:", error);
+      console.log(
+        "Invoice templates table already exists or initialization failed:",
+        error,
+      );
     }
 
     // Initialize invoices table if it doesn't exist
@@ -334,7 +402,10 @@ export async function initializeSampleData() {
 
       console.log("Invoices table initialized");
     } catch (error) {
-      console.log("Invoices table already exists or initialization failed:", error);
+      console.log(
+        "Invoices table already exists or initialization failed:",
+        error,
+      );
     }
 
     // Initialize invoice_items table if it doesn't exist
@@ -362,7 +433,10 @@ export async function initializeSampleData() {
 
       console.log("Invoice items table initialized");
     } catch (error) {
-      console.log("Invoice items table already exists or initialization failed:", error);
+      console.log(
+        "Invoice items table already exists or initialization failed:",
+        error,
+      );
     }
   } catch (error) {
     console.log("⚠️ Sample data initialization skipped:", error);

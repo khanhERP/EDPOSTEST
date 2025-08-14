@@ -344,7 +344,7 @@ export function SalesChartReport() {
       queryClient.removeQueries({
         queryKey: ["/api/orders"],
       });
-      
+
       // Then invalidate and refetch
       await queryClient.invalidateQueries({
         queryKey: ["/api/transactions"],
@@ -352,12 +352,12 @@ export function SalesChartReport() {
       await queryClient.invalidateQueries({
         queryKey: ["/api/orders"],
       });
-      
+
       // Force refetch
       refetchTransactions();
       refetchOrders();
     };
-    
+
     invalidateAndRefetch();
   }, [startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee, queryClient, refetchTransactions, refetchOrders]);
 
@@ -492,7 +492,7 @@ export function SalesChartReport() {
         (transaction.cashierName && transaction.cashierName.includes(selectedEmployee));
 
       const result = dateMatch && methodMatch && channelMatch && employeeMatch;
-      
+
       if (!result) {
         console.log("Transaction filtered out:", {
           id: transaction.id,
@@ -2408,27 +2408,6 @@ export function SalesChartReport() {
                   </Select>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Show concern type selector only for time analysis */}
-          {analysisType === "time" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>{t("reports.concernType")}</Label>
-                <Select value={concernType} onValueChange={setConcernType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="time">{t("reports.timeSales")}</SelectItem>
-                    <SelectItem value="profit">{t("reports.profitByInvoice")}</SelectItem>
-                    <SelectItem value="discount">{t("reports.invoiceDiscount")}</SelectItem>
-                    <SelectItem value="return">{t("reports.returnByInvoice")}</SelectItem>
-                    <SelectItem value="employee">{t("reports.employeeSales")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           )}
 
