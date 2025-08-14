@@ -122,7 +122,16 @@ export function SalesChartReport() {
   useEffect(() => {
     const saveCurrentSettings = () => {
       try {
-        const storageKey = `salesReport_${analysisType}_${concernType}_settings`;
+        // Save to both current format and legacy format for compatibility
+        const legacyReportMapping = {
+          time: `salesReport_time_${concernType}_settings`,
+          product: 'inventoryReport_settings',
+          employee: 'employeeReport_settings', 
+          customer: 'customerReport_settings',
+          channel: 'salesChannelReport_settings'
+        };
+
+        const storageKey = legacyReportMapping[analysisType] || `salesReport_${analysisType}_${concernType}_settings`;
         const currentSettings = {
           dateRange: { startDate, endDate },
           filters: { salesMethod, salesChannel },
@@ -131,7 +140,7 @@ export function SalesChartReport() {
           concernType
         };
 
-        localStorage.setItem(storageKey, JSON.JSON.stringify(currentSettings));
+        localStorage.setItem(storageKey, JSON.stringify(currentSettings));
       } catch (error) {
         console.warn("Failed to save current settings:", error);
       }
