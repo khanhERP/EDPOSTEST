@@ -51,10 +51,10 @@ export function OrderReport() {
   // Filters
   const [concernType, setConcernType] = useState("transaction");
   const [startDate, setStartDate] = useState<string>(
-    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    new Date().toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
+    new Date().toISOString().split("T")[0]
   );
   const [orderStatus, setOrderStatus] = useState("all");
   const [customerSearch, setCustomerSearch] = useState("");
@@ -147,6 +147,7 @@ export function OrderReport() {
     if (!products || !Array.isArray(products)) return [];
 
     // For each filtered order, estimate product sales based on order total
+    // In a real system, this would come from order_items table
     filteredOrders.forEach((order: any) => {
       const orderTotal = Number(order.total);
 

@@ -35,10 +35,10 @@ export function DashboardOverview() {
   const { t, currentLanguage } = useTranslation();
 
   const [startDate, setStartDate] = useState<string>(
-    formatDateToYYYYMMDD(new Date()), // Set to a date that has sample data
+    new Date().toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState<string>(
-    formatDateToYYYYMMDD(new Date()), // End date with sample data
+    new Date().toISOString().split("T")[0]
   );
   const queryClient = useQueryClient();
 
@@ -163,9 +163,9 @@ export function DashboardOverview() {
       en: "en-US", 
       vi: "vi-VN"
     };
-    
+
     const locale = localeMap[currentLanguage] || "ko-KR";
-    
+
     return new Date(dateStr).toLocaleDateString(locale, {
       year: "numeric",
       month: "long",

@@ -49,10 +49,10 @@ export function SalesChannelReport() {
   // Filters
   const [concernType, setConcernType] = useState("sales");
   const [startDate, setStartDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
+    new Date().toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
+    new Date().toISOString().split("T")[0]
   );
   const [selectedSeller, setSelectedSeller] = useState("all");
   const [selectedSalesChannel, setSelectedSalesChannel] = useState("all");

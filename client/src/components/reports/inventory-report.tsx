@@ -47,10 +47,10 @@ export function InventoryReport() {
   // Filters
   const [concernType, setConcernType] = useState("sales");
   const [startDate, setStartDate] = useState<string>(
-    new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    new Date().toISOString().split("T")[0]
   );
   const [endDate, setEndDate] = useState<string>(
-    new Date().toISOString().split("T")[0],
+    new Date().toISOString().split("T")[0]
   );
   const [productSearch, setProductSearch] = useState("");
   const [productType, setProductType] = useState("all");
