@@ -193,8 +193,10 @@ export function SalesReport() {
         setEndDate(endDateStr);
         break;
       case "custom":
-        setStartDate(today.toISOString().split("T")[0]);
-        setEndDate(today.toISOString().split("T")[0]);
+        // Luôn set ngày hiện tại khi chọn tùy chỉnh
+        const currentDate = new Date().toISOString().split("T")[0];
+        setStartDate(currentDate);
+        setEndDate(currentDate);
         break;
     }
   };

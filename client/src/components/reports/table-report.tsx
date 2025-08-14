@@ -206,7 +206,10 @@ export function TableReport() {
         setEndDate(endDateStr);
         break;
       case "custom":
-        // Don't change dates for custom
+        // Luôn set ngày hiện tại khi chọn tùy chỉnh
+        const currentDate = new Date().toISOString().split("T")[0];
+        setStartDate(currentDate);
+        setEndDate(currentDate);
         break;
     }
   };
