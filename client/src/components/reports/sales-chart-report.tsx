@@ -84,7 +84,10 @@ export function SalesChartReport() {
       salesChannel,
       analysisType,
       concernType,
+      selectedEmployee,
     ],
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache
   });
 
   const { data: employees } = useQuery({
@@ -119,10 +122,12 @@ export function SalesChartReport() {
       endDate,
       selectedEmployee,
       salesChannel,
+      salesMethod,
       analysisType,
       concernType,
     ],
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache
   });
 
   // Load previous report settings when analysis type changes
@@ -305,7 +310,7 @@ export function SalesChartReport() {
     queryClient.invalidateQueries({
       queryKey: ["/api/orders"],
     });
-  }, [startDate, endDate, salesMethod, salesChannel, analysisType, concernType, queryClient]);
+  }, [startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee, queryClient]);
 
   // Invalidate product-related queries when product filters change
   useEffect(() => {
@@ -320,6 +325,16 @@ export function SalesChartReport() {
       queryKey: ["/api/customers"],
     });
   }, [customerSearch, queryClient]);
+
+  // Force refetch when analysis type changes
+  useEffect(() => {
+    queryClient.refetchQueries({
+      queryKey: ["/api/transactions"],
+    });
+    queryClient.refetchQueries({
+      queryKey: ["/api/orders"],
+    });
+  }, [analysisType, concernType, queryClient]);
 
   // Save current settings when filters change
   useEffect(() => {
@@ -339,7 +354,15 @@ export function SalesChartReport() {
           `salesReport_${analysisType}_${concernType}_settings`;
         const currentSettings = {
           dateRange: { startDate, endDate },
-          filters: { salesMethod, salesChannel },
+          filters: { 
+            salesMethod, 
+            salesChannel,
+            selectedEmployee,
+            customerSearch,
+            productSearch,
+            selectedCategory,
+            productType
+          },
           lastUpdated: new Date().toISOString(),
           analysisType,
           concernType,
@@ -360,6 +383,11 @@ export function SalesChartReport() {
     endDate,
     salesMethod,
     salesChannel,
+    selectedEmployee,
+    customerSearch,
+    productSearch,
+    selectedCategory,
+    productType,
     analysisType,
     concernType,
   ]);
@@ -376,6 +404,9 @@ export function SalesChartReport() {
       endDate,
       salesMethod,
       salesChannel,
+      selectedEmployee,
+      analysisType,
+      concernType,
       transactionCount: transactions.length,
     });
 
@@ -404,7 +435,14 @@ export function SalesChartReport() {
         (salesChannel === "other" && 
           transaction.salesChannel && transaction.salesChannel !== "direct" && transaction.salesChannel !== "pos");
 
-      const result = dateMatch && methodMatch && channelMatch;
+      // Employee filter for all analysis types
+      const employeeMatch =
+        selectedEmployee === "all" ||
+        transaction.cashierName === selectedEmployee ||
+        transaction.employeeId?.toString() === selectedEmployee ||
+        (transaction.cashierName && transaction.cashierName.includes(selectedEmployee));
+
+      const result = dateMatch && methodMatch && channelMatch && employeeMatch;
       
       if (!result) {
         console.log("Transaction filtered out:", {
@@ -413,8 +451,10 @@ export function SalesChartReport() {
           dateMatch,
           methodMatch,
           channelMatch,
+          employeeMatch,
           deliveryMethod: transaction.deliveryMethod,
           salesChannel: transaction.salesChannel,
+          cashierName: transaction.cashierName,
         });
       }
 
@@ -424,6 +464,15 @@ export function SalesChartReport() {
     console.log("Filtered results:", {
       originalCount: transactions.length,
       filteredCount: filteredTransactions.length,
+      filters: {
+        startDate,
+        endDate,
+        salesMethod,
+        salesChannel,
+        selectedEmployee,
+        analysisType,
+        concernType,
+      },
     });
 
     return filteredTransactions;
