@@ -585,6 +585,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     employeeAnalysis: "Employee Analysis",
     customerAnalysis: "Customer Analysis",
     channelAnalysis: "Channel Analysis",
+    productSalesAnalysis: "Product Sales Analysis",
+    employeeSalesAnalysis: "Employee Sales Analysis", 
+    customerSalesAnalysis: "Customer Sales Analysis",
+    channelSalesAnalysis: "Channel Sales Analysis",
 
     // Additional report keys
     topProduct: "Top Product",

@@ -1010,10 +1010,10 @@ export function SalesChartReport() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="time">{t("reports.timeAnalysis")}</SelectItem>
-                  <SelectItem value="product">{t("reports.productAnalysis")}</SelectItem>
-                  <SelectItem value="employee">{t("reports.employeeAnalysis")}</SelectItem>
-                  <SelectItem value="customer">{t("reports.customerAnalysis")}</SelectItem>
-                  <SelectItem value="channel">{t("reports.channelAnalysis")}</SelectItem>
+                  <SelectItem value="product">{t("reports.productSalesAnalysis")}</SelectItem>
+                  <SelectItem value="employee">{t("reports.employeeSalesAnalysis")}</SelectItem>
+                  <SelectItem value="customer">{t("reports.customerSalesAnalysis")}</SelectItem>
+                  <SelectItem value="channel">{t("reports.channelSalesAnalysis")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
