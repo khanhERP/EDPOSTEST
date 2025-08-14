@@ -190,15 +190,14 @@ export function SalesReport() {
         break;
       case "month":
         // Tháng trước: từ ngày 1 tháng trước đến ngày cuối tháng trước
-        const lastMonth = new Date(
-          today.getFullYear(),
-          today.getMonth() - 1,
-          1,
-        );
-        console.log("lastMonth", lastMonth);
-        const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-        console.log("lastMonthEnd", lastMonthEnd);
-        setStartDate(lastMonth.toISOString().split("T")[0]);
+        const currentDate = new Date();
+        const lastMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+        
+        console.log("Tháng trước - Ngày bắt đầu:", lastMonthStart.toDateString());
+        console.log("Tháng trước - Ngày kết thúc:", lastMonthEnd.toDateString());
+        
+        setStartDate(lastMonthStart.toISOString().split("T")[0]);
         setEndDate(lastMonthEnd.toISOString().split("T")[0]);
         break;
       case "custom":
