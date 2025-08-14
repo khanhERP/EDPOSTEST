@@ -268,12 +268,9 @@ export function ShoppingCart({
     if (method === 'einvoice' && eInvoiceData) {
       console.log("📧 Processing e-invoice data:", eInvoiceData);
       
-      if (eInvoiceData.publishLater) {
-        console.log("⏳ E-invoice publish later - calling handleEInvoiceConfirm");
-        handleEInvoiceConfirm(eInvoiceData);
-        return;
-      } else if (eInvoiceData.publishedImmediately) {
-        console.log("✅ E-invoice published immediately - calling handleEInvoiceConfirm");
+      // Xử lý cho cả phát hành sau và phát hành ngay
+      if (eInvoiceData.publishLater || eInvoiceData.publishedImmediately) {
+        console.log("✅ E-invoice processed - calling handleEInvoiceConfirm");
         handleEInvoiceConfirm(eInvoiceData);
         return;
       }
