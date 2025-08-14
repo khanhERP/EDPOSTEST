@@ -46,9 +46,9 @@ class TenantManager {
         isActive: true
       },
       {
-        subdomain: 'nha_hang_vitaly',
-        databaseUrl: process.env.NHA_HANG_VITALY_DATABASE_URL || process.env.DATABASE_URL!,
-        storeName: 'Nha_hang_vitaly - Nhà hàng Vitaly',
+        subdomain: 'vitaly',
+        databaseUrl: process.env.VITALY_DATABASE_URL || process.env.DATABASE_URL!,
+        storeName: 'Vitaly - Nhà hàng Vitaly',
         isActive: true
       }
       // Add more tenants as needed
