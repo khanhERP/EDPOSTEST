@@ -267,14 +267,16 @@ export class DatabaseStorage implements IStorage {
   async getProductsByCategory(
     categoryId: number,
     includeInactive: boolean = false,
+    tenantDb?: any,
   ): Promise<Product[]> {
+    const database = tenantDb || db;
     let whereCondition = eq(products.categoryId, categoryId);
 
     if (!includeInactive) {
       whereCondition = and(whereCondition, eq(products.isActive, true));
     }
 
-    const result = await db
+    const result = await database
       .select()
       .from(products)
       .where(whereCondition)
@@ -302,14 +304,19 @@ export class DatabaseStorage implements IStorage {
   async searchProducts(
     query: string,
     includeInactive: boolean = false,
+    tenantDb?: any,
   ): Promise<Product[]> {
-    let whereCondition = ilike(products.name, `%${query}%`);
+    const database = tenantDb || db;
+    let whereCondition = or(
+      ilike(products.name, `%${query}%`),
+      ilike(products.sku, `%${query}%`)
+    );
 
     if (!includeInactive) {
       whereCondition = and(whereCondition, eq(products.isActive, true));
     }
 
-    return await db.select().from(products).where(whereCondition);
+    return await database.select().from(products).where(whereCondition);
   }
 
   async createProduct(insertProduct: InsertProduct): Promise<Product> {

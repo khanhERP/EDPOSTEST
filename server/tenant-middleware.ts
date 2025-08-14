@@ -12,14 +12,19 @@ export interface TenantRequest extends Request {
 
 export function tenantMiddleware(req: TenantRequest, res: Response, next: NextFunction) {
   try {
-    // Extract subdomain from host header
-    const host = req.get('host') || req.get('x-forwarded-host') || '';
-    const subdomain = extractSubdomain(host);
+    // For development, allow tenant to be specified via query parameter
+    let subdomain = req.query.tenant as string;
+    
+    // If no tenant parameter, extract from host header
+    if (!subdomain) {
+      const host = req.get('host') || req.get('x-forwarded-host') || '';
+      subdomain = extractSubdomain(host);
+    }
 
     if (!subdomain) {
       return res.status(400).json({ 
         error: 'Invalid subdomain',
-        message: 'Please access through a valid subdomain (e.g., store1.yourapp.replit.app)'
+        message: 'Please access through a valid subdomain (e.g., store1.yourapp.replit.app) or add ?tenant=demo parameter'
       });
     }
 
@@ -56,19 +61,14 @@ function extractSubdomain(host: string): string | null {
   // Remove port if present
   const hostWithoutPort = host.split(':')[0];
   
-  // Handle development environment
-  if (hostWithoutPort.includes('replit.dev')) {
-    // Format: subdomain-hash.username.replit.dev
-    const parts = hostWithoutPort.split('.');
-    if (parts.length >= 3) {
-      const firstPart = parts[0];
-      // Extract subdomain from hash format (e.g., "store1-abc123" -> "store1")
-      const subdomainMatch = firstPart.match(/^([a-zA-Z0-9-]+)-[a-f0-9]+$/);
-      return subdomainMatch ? subdomainMatch[1] : firstPart;
-    }
+  // Handle development environment (Replit)
+  if (hostWithoutPort.includes('replit.dev') || hostWithoutPort.includes('replit.co')) {
+    // Format: c2bc841a-a304-4215-98b0-ab6349baf209-00-21m0gfgjl6ikj.worf.replit.dev
+    // For replit dev URLs, we'll look for URL parameters or use a default
+    return 'demo'; // Default for development
   }
   
-  // Handle production custom domain
+  // Handle production custom domain with subdomain
   if (hostWithoutPort.includes('replit.app')) {
     // Format: subdomain.appname.replit.app
     const parts = hostWithoutPort.split('.');
@@ -77,13 +77,18 @@ function extractSubdomain(host: string): string | null {
     }
   }
 
-  // Handle custom domain
+  // Handle custom domain with subdomain
   const parts = hostWithoutPort.split('.');
   if (parts.length >= 2) {
-    return parts[0];
+    const subdomain = parts[0];
+    // Skip www prefix
+    if (subdomain === 'www') {
+      return 'demo'; // Default when www is used
+    }
+    return subdomain;
   }
 
-  return 'main'; // Default subdomain
+  return 'demo'; // Default subdomain for development
 }
 
 export async function getTenantDatabase(req: TenantRequest) {

@@ -24,13 +24,25 @@ class TenantManager {
       {
         subdomain: 'demo',
         databaseUrl: process.env.DEMO_DATABASE_URL || process.env.DATABASE_URL!,
-        storeName: 'Demo Store',
+        storeName: 'Demo Store - Cửa hàng demo',
         isActive: true
       },
       {
         subdomain: 'store1',
         databaseUrl: process.env.STORE1_DATABASE_URL || process.env.DATABASE_URL!,
-        storeName: 'Store 1',
+        storeName: 'Store 1 - Cửa hàng số 1',
+        isActive: true
+      },
+      {
+        subdomain: 'store2',
+        databaseUrl: process.env.STORE2_DATABASE_URL || process.env.DATABASE_URL!,
+        storeName: 'Store 2 - Cửa hàng số 2',
+        isActive: true
+      },
+      {
+        subdomain: 'restaurant1',
+        databaseUrl: process.env.RESTAURANT1_DATABASE_URL || process.env.DATABASE_URL!,
+        storeName: 'Restaurant 1 - Nhà hàng số 1',
         isActive: true
       }
       // Add more tenants as needed
