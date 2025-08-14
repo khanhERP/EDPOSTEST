@@ -98,6 +98,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerAnalysis: "판매",
     channelAnalysis: "판매",
 
+    // Additional report keys
+    topProduct: "최고 상품",
+    totalProducts: "총 상품",
+    lastOrder: "마지막 주문",
+    commission: "수수료",
+    netProfit: "순이익",
+
     // Additional dashboard keys
     periodRevenue: "기간 매출",
     monthRevenue: "월간 매출",
@@ -579,6 +586,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerAnalysis: "Customer Analysis",
     channelAnalysis: "Channel Analysis",
 
+    // Additional report keys
+    topProduct: "Top Product",
+    totalProducts: "Total Products", 
+    lastOrder: "Last Order",
+    commission: "Commission",
+    netProfit: "Net Profit",
+
     // Additional dashboard keys
     periodRevenue: "Period Revenue",
     monthRevenue: "Monthly Revenue",
@@ -899,6 +913,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     employeeAnalysis: "Nhân viên",
     customerAnalysis: "Khách hàng",
     channelAnalysis: "Kênh bán hàng",
+
+    // Additional report keys  
+    topProduct: "Sản phẩm bán chạy nhất",
+    totalProducts: "Tổng sản phẩm",
+    lastOrder: "Đơn hàng cuối",
+    commission: "Hoa hồng",
+    netProfit: "Lợi nhuận ròng",
 
     // Additional dashboard keys
     periodRevenue: "Doanh thu kỳ",

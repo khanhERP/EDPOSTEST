@@ -390,8 +390,15 @@ export function SalesChartReport() {
 
     switch (analysisType) {
       case "product": {
+        // Product sales analysis with comprehensive data
         const productData: {
-          [productName: string]: { revenue: number; quantity: number };
+          [productName: string]: { 
+            revenue: number; 
+            quantity: number; 
+            cost: number;
+            returnQuantity: number;
+            returnValue: number;
+          };
         } = {};
 
         filteredData.forEach((transaction: any) => {
@@ -399,10 +406,26 @@ export function SalesChartReport() {
           items.forEach((item: any) => {
             const productName = item.productName || item.name || "Unknown Product";
             if (!productData[productName]) {
-              productData[productName] = { revenue: 0, quantity: 0 };
+              productData[productName] = { 
+                revenue: 0, 
+                quantity: 0, 
+                cost: 0,
+                returnQuantity: 0,
+                returnValue: 0
+              };
             }
-            productData[productName].revenue += Number(item.total || item.price * item.quantity);
-            productData[productName].quantity += Number(item.quantity || 1);
+            
+            const itemTotal = Number(item.total || item.price * item.quantity);
+            const itemQuantity = Number(item.quantity || 1);
+            
+            if (itemTotal > 0) {
+              productData[productName].revenue += itemTotal;
+              productData[productName].quantity += itemQuantity;
+              productData[productName].cost += itemTotal * 0.6; // Assume 60% cost ratio
+            } else {
+              productData[productName].returnValue += Math.abs(itemTotal);
+              productData[productName].returnQuantity += itemQuantity;
+            }
           });
         });
 
@@ -411,21 +434,35 @@ export function SalesChartReport() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead>{t("reports.quantity")}</TableHead>
+                <TableHead>{t("reports.quantitySold")}</TableHead>
+                <TableHead>{t("reports.returnQuantity")}</TableHead>
                 <TableHead>{t("reports.revenue")}</TableHead>
+                <TableHead>{t("reports.returnValue")}</TableHead>
+                <TableHead>{t("reports.netRevenue")}</TableHead>
+                <TableHead>{t("reports.grossProfit")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.entries(productData).map(([productName, data]) => (
+              {Object.entries(productData)
+                .sort(([,a], [,b]) => (b.revenue - b.returnValue) - (a.revenue - a.returnValue))
+                .map(([productName, data]) => (
                 <TableRow key={productName}>
-                  <TableCell>{productName}</TableCell>
+                  <TableCell className="font-medium">{productName}</TableCell>
                   <TableCell>{data.quantity}</TableCell>
-                  <TableCell>{formatCurrency(data.revenue)}</TableCell>
+                  <TableCell className="text-red-600">{data.returnQuantity}</TableCell>
+                  <TableCell className="text-green-600">{formatCurrency(data.revenue)}</TableCell>
+                  <TableCell className="text-red-600">{formatCurrency(data.returnValue)}</TableCell>
+                  <TableCell className="font-medium">
+                    {formatCurrency(data.revenue - data.returnValue)}
+                  </TableCell>
+                  <TableCell className="text-blue-600">
+                    {formatCurrency((data.revenue - data.returnValue) - data.cost)}
+                  </TableCell>
                 </TableRow>
               ))}
               {Object.keys(productData).length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-gray-500">
+                  <TableCell colSpan={7} className="text-center text-gray-500">
                     {t("reports.noData")}
                   </TableCell>
                 </TableRow>
@@ -436,22 +473,67 @@ export function SalesChartReport() {
       }
 
       case "employee": {
+        // Employee performance analysis with product sales breakdown
         const employeeData: {
-          [cashier: string]: { revenue: number; returnValue: number };
+          [cashier: string]: { 
+            revenue: number; 
+            returnValue: number;
+            orders: number;
+            productsSold: { [product: string]: number };
+            topProduct: string;
+            totalProducts: number;
+          };
         } = {};
 
         filteredData.forEach((transaction: any) => {
           const cashier = transaction.cashierName || "Unknown";
           if (!employeeData[cashier]) {
-            employeeData[cashier] = { revenue: 0, returnValue: 0 };
+            employeeData[cashier] = { 
+              revenue: 0, 
+              returnValue: 0, 
+              orders: 0,
+              productsSold: {},
+              topProduct: "",
+              totalProducts: 0
+            };
           }
 
           const amount = Number(transaction.total);
+          employeeData[cashier].orders += 1;
+
           if (amount > 0) {
             employeeData[cashier].revenue += amount;
           } else {
             employeeData[cashier].returnValue += Math.abs(amount);
           }
+
+          // Track products sold by this employee
+          const items = transaction.items || [];
+          items.forEach((item: any) => {
+            const productName = item.productName || item.name || "Unknown Product";
+            const quantity = Number(item.quantity || 1);
+            
+            if (!employeeData[cashier].productsSold[productName]) {
+              employeeData[cashier].productsSold[productName] = 0;
+            }
+            employeeData[cashier].productsSold[productName] += quantity;
+            employeeData[cashier].totalProducts += quantity;
+          });
+        });
+
+        // Calculate top product for each employee
+        Object.entries(employeeData).forEach(([cashier, data]) => {
+          let maxQuantity = 0;
+          let topProduct = "";
+          
+          Object.entries(data.productsSold).forEach(([product, quantity]) => {
+            if (quantity > maxQuantity) {
+              maxQuantity = quantity;
+              topProduct = product;
+            }
+          });
+          
+          data.topProduct = topProduct || "N/A";
         });
 
         return (
@@ -459,25 +541,38 @@ export function SalesChartReport() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.seller")}</TableHead>
+                <TableHead>{t("reports.orders")}</TableHead>
+                <TableHead>{t("reports.totalProducts")}</TableHead>
+                <TableHead>{t("reports.topProduct")}</TableHead>
                 <TableHead>{t("reports.totalRevenue")}</TableHead>
                 <TableHead>{t("reports.returnValue")}</TableHead>
                 <TableHead>{t("reports.netRevenue")}</TableHead>
+                <TableHead>{t("reports.averageOrderValue")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.entries(employeeData).map(([cashier, data]) => (
-                <TableRow key={cashier}>
-                  <TableCell>{cashier}</TableCell>
-                  <TableCell>{formatCurrency(data.revenue)}</TableCell>
-                  <TableCell>{formatCurrency(data.returnValue)}</TableCell>
-                  <TableCell>
-                    {formatCurrency(data.revenue - data.returnValue)}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {Object.entries(employeeData)
+                .sort(([,a], [,b]) => (b.revenue - b.returnValue) - (a.revenue - a.returnValue))
+                .map(([cashier, data]) => {
+                  const netRevenue = data.revenue - data.returnValue;
+                  const avgOrderValue = data.orders > 0 ? netRevenue / data.orders : 0;
+                  
+                  return (
+                    <TableRow key={cashier}>
+                      <TableCell className="font-medium">{cashier}</TableCell>
+                      <TableCell>{data.orders}</TableCell>
+                      <TableCell>{data.totalProducts}</TableCell>
+                      <TableCell className="text-sm">{data.topProduct}</TableCell>
+                      <TableCell className="text-green-600">{formatCurrency(data.revenue)}</TableCell>
+                      <TableCell className="text-red-600">{formatCurrency(data.returnValue)}</TableCell>
+                      <TableCell className="font-medium">{formatCurrency(netRevenue)}</TableCell>
+                      <TableCell className="text-blue-600">{formatCurrency(avgOrderValue)}</TableCell>
+                    </TableRow>
+                  );
+                })}
               {Object.keys(employeeData).length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-gray-500">
+                  <TableCell colSpan={8} className="text-center text-gray-500">
                     {t("reports.noData")}
                   </TableCell>
                 </TableRow>
@@ -488,18 +583,57 @@ export function SalesChartReport() {
       }
 
       case "customer": {
+        // Customer analysis with detailed purchase behavior
         const customerData: {
-          [customer: string]: { revenue: number; orders: number };
+          [customer: string]: { 
+            revenue: number; 
+            orders: number;
+            returnValue: number;
+            totalProducts: number;
+            avgOrderValue: number;
+            lastOrderDate: string;
+            loyaltyPoints: number;
+          };
         } = {};
 
         filteredData.forEach((transaction: any) => {
           const customer = transaction.customerName || transaction.customerPhone || "Walk-in Customer";
           if (!customerData[customer]) {
-            customerData[customer] = { revenue: 0, orders: 0 };
+            customerData[customer] = { 
+              revenue: 0, 
+              orders: 0,
+              returnValue: 0,
+              totalProducts: 0,
+              avgOrderValue: 0,
+              lastOrderDate: "",
+              loyaltyPoints: 0
+            };
           }
 
-          customerData[customer].revenue += Number(transaction.total);
+          const amount = Number(transaction.total);
+          const orderDate = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString("vi-VN");
+          
           customerData[customer].orders += 1;
+          customerData[customer].lastOrderDate = orderDate;
+
+          if (amount > 0) {
+            customerData[customer].revenue += amount;
+            customerData[customer].loyaltyPoints += Math.floor(amount / 1000); // 1 point per 1000 VND
+          } else {
+            customerData[customer].returnValue += Math.abs(amount);
+          }
+
+          // Count products purchased
+          const items = transaction.items || [];
+          items.forEach((item: any) => {
+            customerData[customer].totalProducts += Number(item.quantity || 1);
+          });
+        });
+
+        // Calculate average order value
+        Object.entries(customerData).forEach(([customer, data]) => {
+          const netRevenue = data.revenue - data.returnValue;
+          data.avgOrderValue = data.orders > 0 ? netRevenue / data.orders : 0;
         });
 
         return (
@@ -508,20 +642,36 @@ export function SalesChartReport() {
               <TableRow>
                 <TableHead>{t("reports.customer")}</TableHead>
                 <TableHead>{t("reports.orders")}</TableHead>
+                <TableHead>{t("reports.totalProducts")}</TableHead>
                 <TableHead>{t("reports.revenue")}</TableHead>
+                <TableHead>{t("reports.returnValue")}</TableHead>
+                <TableHead>{t("reports.netRevenue")}</TableHead>
+                <TableHead>{t("reports.averageOrderValue")}</TableHead>
+                <TableHead>{t("reports.lastOrder")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.entries(customerData).map(([customer, data]) => (
-                <TableRow key={customer}>
-                  <TableCell>{customer}</TableCell>
-                  <TableCell>{data.orders}</TableCell>
-                  <TableCell>{formatCurrency(data.revenue)}</TableCell>
-                </TableRow>
-              ))}
+              {Object.entries(customerData)
+                .sort(([,a], [,b]) => (b.revenue - b.returnValue) - (a.revenue - a.returnValue))
+                .map(([customer, data]) => {
+                  const netRevenue = data.revenue - data.returnValue;
+                  
+                  return (
+                    <TableRow key={customer}>
+                      <TableCell className="font-medium">{customer}</TableCell>
+                      <TableCell>{data.orders}</TableCell>
+                      <TableCell>{data.totalProducts}</TableCell>
+                      <TableCell className="text-green-600">{formatCurrency(data.revenue)}</TableCell>
+                      <TableCell className="text-red-600">{formatCurrency(data.returnValue)}</TableCell>
+                      <TableCell className="font-medium">{formatCurrency(netRevenue)}</TableCell>
+                      <TableCell className="text-blue-600">{formatCurrency(data.avgOrderValue)}</TableCell>
+                      <TableCell className="text-sm">{data.lastOrderDate}</TableCell>
+                    </TableRow>
+                  );
+                })}
               {Object.keys(customerData).length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-gray-500">
+                  <TableCell colSpan={8} className="text-center text-gray-500">
                     {t("reports.noData")}
                   </TableCell>
                 </TableRow>
@@ -532,18 +682,57 @@ export function SalesChartReport() {
       }
 
       case "channel": {
+        // Sales channel analysis with comprehensive metrics
         const channelData: {
-          [channel: string]: { revenue: number; orders: number };
+          [channel: string]: { 
+            revenue: number; 
+            orders: number;
+            returnValue: number;
+            totalProducts: number;
+            avgOrderValue: number;
+            commission: number;
+            netProfit: number;
+          };
         } = {};
 
         filteredData.forEach((transaction: any) => {
           const channel = transaction.salesChannel || "Direct";
           if (!channelData[channel]) {
-            channelData[channel] = { revenue: 0, orders: 0 };
+            channelData[channel] = { 
+              revenue: 0, 
+              orders: 0,
+              returnValue: 0,
+              totalProducts: 0,
+              avgOrderValue: 0,
+              commission: 0,
+              netProfit: 0
+            };
           }
 
-          channelData[channel].revenue += Number(transaction.total);
+          const amount = Number(transaction.total);
           channelData[channel].orders += 1;
+
+          if (amount > 0) {
+            channelData[channel].revenue += amount;
+            // Calculate commission based on channel type
+            const commissionRate = channel === "Direct" ? 0 : 0.05; // 5% for other channels
+            channelData[channel].commission += amount * commissionRate;
+          } else {
+            channelData[channel].returnValue += Math.abs(amount);
+          }
+
+          // Count products sold through this channel
+          const items = transaction.items || [];
+          items.forEach((item: any) => {
+            channelData[channel].totalProducts += Number(item.quantity || 1);
+          });
+        });
+
+        // Calculate metrics
+        Object.entries(channelData).forEach(([channel, data]) => {
+          const netRevenue = data.revenue - data.returnValue;
+          data.avgOrderValue = data.orders > 0 ? netRevenue / data.orders : 0;
+          data.netProfit = netRevenue - data.commission - (netRevenue * 0.6); // Subtract commission and cost
         });
 
         return (
@@ -552,20 +741,36 @@ export function SalesChartReport() {
               <TableRow>
                 <TableHead>{t("reports.salesChannel")}</TableHead>
                 <TableHead>{t("reports.orders")}</TableHead>
+                <TableHead>{t("reports.totalProducts")}</TableHead>
                 <TableHead>{t("reports.revenue")}</TableHead>
+                <TableHead>{t("reports.returnValue")}</TableHead>
+                <TableHead>{t("reports.netRevenue")}</TableHead>
+                <TableHead>{t("reports.commission")}</TableHead>
+                <TableHead>{t("reports.netProfit")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.entries(channelData).map(([channel, data]) => (
-                <TableRow key={channel}>
-                  <TableCell>{channel}</TableCell>
-                  <TableCell>{data.orders}</TableCell>
-                  <TableCell>{formatCurrency(data.revenue)}</TableCell>
-                </TableRow>
-              ))}
+              {Object.entries(channelData)
+                .sort(([,a], [,b]) => (b.revenue - b.returnValue) - (a.revenue - a.returnValue))
+                .map(([channel, data]) => {
+                  const netRevenue = data.revenue - data.returnValue;
+                  
+                  return (
+                    <TableRow key={channel}>
+                      <TableCell className="font-medium">{channel}</TableCell>
+                      <TableCell>{data.orders}</TableCell>
+                      <TableCell>{data.totalProducts}</TableCell>
+                      <TableCell className="text-green-600">{formatCurrency(data.revenue)}</TableCell>
+                      <TableCell className="text-red-600">{formatCurrency(data.returnValue)}</TableCell>
+                      <TableCell className="font-medium">{formatCurrency(netRevenue)}</TableCell>
+                      <TableCell className="text-orange-600">{formatCurrency(data.commission)}</TableCell>
+                      <TableCell className="text-blue-600">{formatCurrency(data.netProfit)}</TableCell>
+                    </TableRow>
+                  );
+                })}
               {Object.keys(channelData).length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-gray-500">
+                  <TableCell colSpan={8} className="text-center text-gray-500">
                     {t("reports.noData")}
                   </TableCell>
                 </TableRow>
