@@ -1003,7 +1003,7 @@ export function SalesChartReport() {
           <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4">
             {/* Analysis Type Selector */}
             <div>
-              <Label>{t("reports.analyzeBy")}: </Label>
+              <Label>{t("reports.analyzeBy")} </Label>
               <Select value={analysisType} onValueChange={setAnalysisType}>
                 <SelectTrigger>
                   <SelectValue />
@@ -1017,35 +1017,6 @@ export function SalesChartReport() {
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Concerns Filter - Only show for time analysis */}
-            {analysisType === "time" && (
-              <div>
-                <Label>{t("reports.concernType")}</Label>
-                <Select value={concernType} onValueChange={setConcernType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="time">
-                      {t("reports.timeReport")}
-                    </SelectItem>
-                    <SelectItem value="profit">
-                      {t("reports.profitReport")}
-                    </SelectItem>
-                    <SelectItem value="discount">
-                      {t("reports.discountReport")}
-                    </SelectItem>
-                    <SelectItem value="return">
-                      {t("reports.returnReport")}
-                    </SelectItem>
-                    <SelectItem value="employee">
-                      {t("reports.employeeReport")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
 
             {/* Sales Method Filter */}
             <div>
