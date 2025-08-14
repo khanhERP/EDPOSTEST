@@ -1638,9 +1638,7 @@ export function SalesChartReport() {
     if (analysisType === "time") {
       return ["time", "profit", "employee"].includes(concernType);
     } else {
-      return ["product", "employee", "customer", "channel"].includes(
-        analysisType,
-      );
+      return true; // Always show chart for non-time analysis types
     }
   };
 
@@ -1801,58 +1799,84 @@ export function SalesChartReport() {
   };
 
   const getChartConfig = () => {
-    switch (concernType) {
-      case "time":
-        return {
-          revenue: {
-            label: t("reports.totalRevenue"),
-            color: "#10b981",
-          },
-          returnValue: {
-            label: t("reports.returnValue"),
-            color: "#ef4444",
-          },
-          netRevenue: {
-            label: t("reports.netRevenue"),
-            color: "#3b82f6",
-          },
-        };
-      case "profit":
-        return {
-          revenue: {
-            label: t("reports.revenue"),
-            color: "#10b981",
-          },
-          cost: {
-            label: t("reports.totalCost"),
-            color: "#f59e0b",
-          },
-          profit: {
-            label: t("reports.grossProfit"),
-            color: "#3b82f6",
-          },
-        };
-      case "employee":
-        return {
-          revenue: {
-            label: t("reports.totalRevenue"),
-            color: "#10b981",
-          },
-          returnValue: {
-            label: t("reports.returnValue"),
-            color: "#ef4444",
-          },
-          netRevenue: {
-            label: t("reports.netRevenue"),
-            color: "#3b82f6",
-          },
-          value: {
-            label: t("reports.value"),
-            color: "#3b82f6",
-          },
-        };
-      default:
-        return {};
+    if (analysisType === "time") {
+      switch (concernType) {
+        case "time":
+          return {
+            revenue: {
+              label: t("reports.totalRevenue"),
+              color: "#10b981",
+            },
+            returnValue: {
+              label: t("reports.returnValue"),
+              color: "#ef4444",
+            },
+            netRevenue: {
+              label: t("reports.netRevenue"),
+              color: "#3b82f6",
+            },
+          };
+        case "profit":
+          return {
+            revenue: {
+              label: t("reports.revenue"),
+              color: "#10b981",
+            },
+            cost: {
+              label: t("reports.totalCost"),
+              color: "#f59e0b",
+            },
+            profit: {
+              label: t("reports.grossProfit"),
+              color: "#3b82f6",
+            },
+          };
+        case "employee":
+          return {
+            revenue: {
+              label: t("reports.totalRevenue"),
+              color: "#10b981",
+            },
+            returnValue: {
+              label: t("reports.returnValue"),
+              color: "#ef4444",
+            },
+            netRevenue: {
+              label: t("reports.netRevenue"),
+              color: "#3b82f6",
+            },
+          };
+        default:
+          return {};
+      }
+    } else {
+      // Config for non-time analysis types
+      return {
+        revenue: {
+          label: t("reports.revenue"),
+          color: "#10b981",
+        },
+        netRevenue: {
+          label: t("reports.netRevenue"),
+          color: "#3b82f6",
+        },
+        profit: {
+          label: t("reports.profit"),
+          color: "#8b5cf6",
+        },
+        grossProfit: {
+          label: t("reports.grossProfit"),
+          color: "#8b5cf6",
+        },
+        netProfit: {
+          label: t("reports.netProfit"),
+          color: "#8b5cf6",
+        },
+        orders: {
+          label: t("reports.orders"),
+          color: "#f59e0b",
+        },
+      };
     }
   };
 
@@ -1917,51 +1941,20 @@ export function SalesChartReport() {
               </Select>
             </div>
 
-            {/* Concern Type Selector - Show for time analysis or when using legacy reports */}
-            {(analysisType === "time" || (analysisType !== "time" && savedSettings)) && (
+            {/* Concern Type Selector - Only show for time analysis */}
+            {analysisType === "time" && (
               <div>
-                <Label>
-                  {analysisType === "time" 
-                    ? t("reports.concernType") 
-                    : t("reports.reportType")
-                  }
-                </Label>
+                <Label>{t("reports.concernType")}</Label>
                 <Select value={concernType} onValueChange={setConcernType}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {analysisType === "time" ? (
-                      <>
-                        <SelectItem value="time">{t("reports.timeReport")}</SelectItem>
-                        <SelectItem value="profit">{t("reports.profitReport")}</SelectItem>
-                        <SelectItem value="discount">{t("reports.discountReport")}</SelectItem>
-                        <SelectItem value="return">{t("reports.returnReport")}</SelectItem>
-                        <SelectItem value="employee">{t("reports.employeeReport")}</SelectItem>
-                      </>
-                    ) : analysisType === "product" ? (
-                      <>
-                        <SelectItem value="sales">{t("reports.productSalesReport")}</SelectItem>
-                        <SelectItem value="inventory">{t("reports.inventoryReport")}</SelectItem>
-                        <SelectItem value="profit">{t("reports.productProfitReport")}</SelectItem>
-                      </>
-                    ) : analysisType === "employee" ? (
-                      <>
-                        <SelectItem value="sales">{t("reports.employeeSalesReport")}</SelectItem>
-                        <SelectItem value="performance">{t("reports.employeePerformanceReport")}</SelectItem>
-                      </>
-                    ) : analysisType === "customer" ? (
-                      <>
-                        <SelectItem value="sales">{t("reports.customerSalesReport")}</SelectItem>
-                        <SelectItem value="loyalty">{t("reports.customerLoyaltyReport")}</SelectItem>
-                      </>
-                    ) : analysisType === "channel" ? (
-                      <>
-                        <SelectItem value="sales">{t("reports.channelSalesReport")}</SelectItem>
-                        <SelectItem value="profit">{t("reports.channelProfitReport")}</SelectItem>
-                        <SelectItem value="products">{t("reports.channelProductsReport")}</SelectItem>
-                      </>
-                    ) : null}
+                    <SelectItem value="time">{t("reports.timeReport")}</SelectItem>
+                    <SelectItem value="profit">{t("reports.profitReport")}</SelectItem>
+                    <SelectItem value="discount">{t("reports.discountReport")}</SelectItem>
+                    <SelectItem value="return">{t("reports.returnReport")}</SelectItem>
+                    <SelectItem value="employee">{t("reports.employeeReport")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -2338,7 +2331,7 @@ export function SalesChartReport() {
 
             {/* Chart Legend */}
             <div className="mt-4 flex flex-wrap justify-center gap-4">
-              {concernType === "time" && (
+              {analysisType === "time" && concernType === "time" && (
                 <>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-emerald-500"></div>
@@ -2360,7 +2353,7 @@ export function SalesChartReport() {
                   </div>
                 </>
               )}
-              {concernType === "profit" && (
+              {analysisType === "time" && concernType === "profit" && (
                 <>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-emerald-500"></div>
@@ -2382,7 +2375,7 @@ export function SalesChartReport() {
                   </div>
                 </>
               )}
-              {concernType === "employee" && (
+              {analysisType === "time" && concernType === "employee" && (
                 <>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded bg-emerald-500"></div>
@@ -2400,6 +2393,94 @@ export function SalesChartReport() {
                     <div className="w-3 h-3 rounded bg-blue-500"></div>
                     <span className="text-sm text-gray-600">
                       {t("reports.netRevenue")}
+                    </span>
+                  </div>
+                </>
+              )}
+              {analysisType === "product" && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.revenue")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-blue-500"></div>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.netRevenue")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-purple-500"></div>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.profit")}
+                    </span>
+                  </div>
+                </>
+              )}
+              {analysisType === "employee" && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.revenue")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-blue-500"></div>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.netRevenue")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-purple-500"></div>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.grossProfit")}
+                    </span>
+                  </div>
+                </>
+              )}
+              {analysisType === "customer" && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.revenue")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-blue-500"></div>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.netRevenue")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-amber-500"></div>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.orders")}
+                    </span>
+                  </div>
+                </>
+              )}
+              {analysisType === "channel" && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.revenue")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-blue-500"></div>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.netRevenue")}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded bg-purple-500"></div>
+                    <span className="text-sm text-gray-600">
+                      {t("reports.netProfit")}
                     </span>
                   </div>
                 </>
