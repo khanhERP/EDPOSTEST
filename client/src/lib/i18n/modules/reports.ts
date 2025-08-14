@@ -476,11 +476,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Analysis types
     analyzeBy: "Phân tích theo",
-    timeAnalysis: "Thời gian", 
-    productAnalysis: "Mặt hàng",
-    employeeAnalysis: "Nhân viên theo hàng bán",
-    customerAnalysis: "Khách hàng", 
-    channelAnalysis: "Kênh bán hàng",
+    timeAnalysis: "Phân tích theo thời gian", 
+    productAnalysis: "Phân tích theo mặt hàng",
+    employeeAnalysis: "Phân tích theo nhân viên theo hàng bán",
+    customerAnalysis: "Phân tích theo khách hàng", 
+    channelAnalysis: "Phân tích theo kênh bán",
 
     // Common report keys
     chartView: "차트 보기",
