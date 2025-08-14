@@ -347,7 +347,7 @@ export function ShoppingCart({
           description: `Hóa đơn điện tử đã được phát hành thành công! Số HĐ: ${eInvoiceData.invoiceData?.invoiceNo || 'N/A'}`,
         });
 
-        console.log('✅ E-invoice immediate processing completed');
+        console.log('✅ E-invoice immediate processing completed, receipt modal shown');
         return;
       }
 
