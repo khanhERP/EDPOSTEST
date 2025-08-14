@@ -7,14 +7,24 @@ import { sql } from 'drizzle-orm';
 
 neonConfig.webSocketConstructor = ws;
 
-if (!process.env.DATABASE_URL) {
+// Load environment variables from .env file with higher priority
+import { config } from 'dotenv';
+import path from 'path';
+
+// Load .env.local first (highest priority), then .env
+config({ path: path.resolve('.env.local') });
+config({ path: path.resolve('.env') });
+
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
   throw new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?",
   );
 }
 
 export const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
+  connectionString: DATABASE_URL,
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
@@ -23,12 +33,13 @@ export const pool = new Pool({
 // Log database connection info with detailed debugging
 console.log("🔍 Environment check:");
 console.log("  - NODE_ENV:", process.env.NODE_ENV);
-console.log("  - DATABASE_URL exists:", !!process.env.DATABASE_URL);
-console.log("  - DATABASE_URL preview:", process.env.DATABASE_URL?.substring(0, 50) + "...");
-console.log("  - DATABASE_URL full (masked):", process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
-console.log("  - Contains 1.55.212.138:", process.env.DATABASE_URL?.includes('1.55.212.138'));
-console.log("  - Contains neon:", process.env.DATABASE_URL?.includes('neon'));
-console.log("🔗 Database connection string:", process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
+console.log("  - DATABASE_URL exists:", !!DATABASE_URL);
+console.log("  - DATABASE_URL preview:", DATABASE_URL?.substring(0, 50) + "...");
+console.log("  - DATABASE_URL full (masked):", DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
+console.log("  - Contains 1.55.212.138:", DATABASE_URL?.includes('1.55.212.138'));
+console.log("  - Contains neon:", DATABASE_URL?.includes('neon'));
+console.log("  - Source: .env file priority");
+console.log("🔗 Database connection string:", DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
 
 export const db = drizzle({ client: pool, schema });
 
