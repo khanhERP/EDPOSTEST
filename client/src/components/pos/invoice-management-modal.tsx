@@ -172,7 +172,6 @@ export function InvoiceManagementModal({
                       <th className="text-left p-3 font-medium">Tổng tiền</th>
                       <th className="text-left p-3 font-medium">Thanh toán</th>
                       <th className="text-left p-3 font-medium">Trạng thái</th>
-                      <th className="text-left p-3 font-medium">HĐĐT</th>
                       <th className="text-left p-3 font-medium">Ngày tạo</th>
                       <th className="text-center p-3 font-medium">Thao tác</th>
                     </tr>
@@ -197,9 +196,6 @@ export function InvoiceManagementModal({
                         </td>
                         <td className="p-3">
                           <Badge variant="outline">{invoice.paymentMethod}</Badge>
-                        </td>
-                        <td className="p-3">
-                          {getStatusBadge(invoice.status)}
                         </td>
                         <td className="p-3">
                           {getEInvoiceStatusBadge(invoice.einvoiceStatus)}
