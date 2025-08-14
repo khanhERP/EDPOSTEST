@@ -450,96 +450,345 @@ export function SalesChartReport() {
     );
   };
 
-  const renderAnalysisTypeReport = () => {
+  // Product analysis data processing (from inventory-report)
+  const getProductAnalysisData = () => {
     const filteredData = getFilteredData();
+    if (!filteredData.length) return [];
 
+    const productData: { [productId: string]: { 
+      productCode: string;
+      productName: string;
+      quantitySold: number; 
+      revenue: number; 
+      quantityReturned: number;
+      returnValue: number;
+      netRevenue: number;
+      totalCost: number;
+      profit: number;
+    } } = {};
+
+    // Process transactions to build product sales data
+    filteredData.forEach((transaction: any) => {
+      const items = transaction.items || [];
+      
+      // If no items, create a synthetic item from transaction data
+      if (items.length === 0) {
+        const productName = "General Sale";
+        const productId = "general";
+        
+        if (!productData[productId]) {
+          productData[productId] = {
+            productCode: "GEN001",
+            productName,
+            quantitySold: 0,
+            revenue: 0,
+            quantityReturned: 0,
+            returnValue: 0,
+            netRevenue: 0,
+            totalCost: 0,
+            profit: 0,
+          };
+        }
+
+        const amount = Number(transaction.total);
+        if (amount > 0) {
+          productData[productId].quantitySold += 1;
+          productData[productId].revenue += amount;
+          productData[productId].totalCost += amount * 0.6;
+        } else {
+          productData[productId].quantityReturned += 1;
+          productData[productId].returnValue += Math.abs(amount);
+        }
+      } else {
+        items.forEach((item: any) => {
+          const productId = item.id || item.productId || "unknown";
+          const productName = item.productName || item.name || "Unknown Product";
+          const productCode = item.sku || item.productCode || productId;
+          
+          if (!productData[productId]) {
+            productData[productId] = {
+              productCode,
+              productName,
+              quantitySold: 0,
+              revenue: 0,
+              quantityReturned: 0,
+              returnValue: 0,
+              netRevenue: 0,
+              totalCost: 0,
+              profit: 0,
+            };
+          }
+
+          const itemTotal = Number(item.total || item.price * item.quantity);
+          const itemQuantity = Number(item.quantity || 1);
+
+          if (itemTotal > 0) {
+            productData[productId].quantitySold += itemQuantity;
+            productData[productId].revenue += itemTotal;
+            productData[productId].totalCost += itemTotal * 0.6; // 60% cost ratio
+          } else {
+            productData[productId].quantityReturned += itemQuantity;
+            productData[productId].returnValue += Math.abs(itemTotal);
+          }
+        });
+      }
+    });
+
+    // Calculate net revenue and profit
+    Object.values(productData).forEach(data => {
+      data.netRevenue = data.revenue - data.returnValue;
+      data.profit = data.netRevenue - data.totalCost;
+    });
+
+    return Object.values(productData);
+  };
+
+  // Employee analysis data processing (from employee-report)
+  const getEmployeeAnalysisData = () => {
+    const filteredData = getFilteredData();
+    const employeeData: {
+      [cashier: string]: {
+        employee: string;
+        revenue: number;
+        returnValue: number;
+        netRevenue: number;
+        orders: number;
+        totalProducts: number;
+        topProduct: string;
+        averageOrderValue: number;
+        totalCost: number;
+        grossProfit: number;
+      };
+    } = {};
+
+    filteredData.forEach((transaction: any) => {
+      const cashier = transaction.cashierName || transaction.employeeName || "Unknown";
+      if (!employeeData[cashier]) {
+        employeeData[cashier] = {
+          employee: cashier,
+          revenue: 0,
+          returnValue: 0,
+          netRevenue: 0,
+          orders: 0,
+          totalProducts: 0,
+          topProduct: "N/A",
+          averageOrderValue: 0,
+          totalCost: 0,
+          grossProfit: 0,
+        };
+      }
+
+      const amount = Number(transaction.total);
+      employeeData[cashier].orders += 1;
+
+      if (amount > 0) {
+        employeeData[cashier].revenue += amount;
+        employeeData[cashier].totalCost += amount * 0.6;
+      } else {
+        employeeData[cashier].returnValue += Math.abs(amount);
+      }
+
+      // Count products
+      const items = transaction.items || [];
+      items.forEach((item: any) => {
+        employeeData[cashier].totalProducts += Number(item.quantity || 1);
+      });
+    });
+
+    // Calculate derived metrics
+    Object.values(employeeData).forEach(data => {
+      data.netRevenue = data.revenue - data.returnValue;
+      data.averageOrderValue = data.orders > 0 ? data.netRevenue / data.orders : 0;
+      data.grossProfit = data.netRevenue - data.totalCost;
+    });
+
+    return Object.values(employeeData);
+  };
+
+  // Customer analysis data processing (from customer-report)
+  const getCustomerAnalysisData = () => {
+    const filteredData = getFilteredData();
+    const customerData: {
+      [customerId: string]: {
+        customer: string;
+        revenue: number;
+        returnValue: number;
+        netRevenue: number;
+        orders: number;
+        totalProducts: number;
+        averageOrderValue: number;
+        lastOrderDate: string;
+        totalCost: number;
+        grossProfit: number;
+      };
+    } = {};
+
+    filteredData.forEach((transaction: any) => {
+      const customer = transaction.customerName || transaction.customerPhone || "Walk-in Customer";
+      const customerId = transaction.customerId || customer;
+      
+      if (!customerData[customerId]) {
+        customerData[customerId] = {
+          customer,
+          revenue: 0,
+          returnValue: 0,
+          netRevenue: 0,
+          orders: 0,
+          totalProducts: 0,
+          averageOrderValue: 0,
+          lastOrderDate: "",
+          totalCost: 0,
+          grossProfit: 0,
+        };
+      }
+
+      const amount = Number(transaction.total);
+      const orderDate = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString("vi-VN");
+
+      customerData[customerId].orders += 1;
+      customerData[customerId].lastOrderDate = orderDate;
+
+      if (amount > 0) {
+        customerData[customerId].revenue += amount;
+        customerData[customerId].totalCost += amount * 0.6;
+      } else {
+        customerData[customerId].returnValue += Math.abs(amount);
+      }
+
+      // Count products
+      const items = transaction.items || [];
+      items.forEach((item: any) => {
+        customerData[customerId].totalProducts += Number(item.quantity || 1);
+      });
+    });
+
+    // Calculate derived metrics
+    Object.values(customerData).forEach(data => {
+      data.netRevenue = data.revenue - data.returnValue;
+      data.averageOrderValue = data.orders > 0 ? data.netRevenue / data.orders : 0;
+      data.grossProfit = data.netRevenue - data.totalCost;
+    });
+
+    return Object.values(customerData);
+  };
+
+  // Sales channel analysis data processing (from sales-channel-report)
+  const getChannelAnalysisData = () => {
+    const filteredData = getFilteredData();
+    const channelData: {
+      [channel: string]: {
+        salesChannel: string;
+        revenue: number;
+        returnValue: number;
+        netRevenue: number;
+        orders: number;
+        totalProducts: number;
+        commission: number;
+        netProfit: number;
+        totalCost: number;
+        grossProfit: number;
+      };
+    } = {};
+
+    filteredData.forEach((transaction: any) => {
+      const channel = transaction.salesChannel || "Direct";
+      if (!channelData[channel]) {
+        channelData[channel] = {
+          salesChannel: channel,
+          revenue: 0,
+          returnValue: 0,
+          netRevenue: 0,
+          orders: 0,
+          totalProducts: 0,
+          commission: 0,
+          netProfit: 0,
+          totalCost: 0,
+          grossProfit: 0,
+        };
+      }
+
+      const amount = Number(transaction.total);
+      channelData[channel].orders += 1;
+
+      if (amount > 0) {
+        channelData[channel].revenue += amount;
+        channelData[channel].totalCost += amount * 0.6;
+        // Calculate commission based on channel type
+        const commissionRate = channel === "Direct" ? 0 : 0.05; // 5% for other channels
+        channelData[channel].commission += amount * commissionRate;
+      } else {
+        channelData[channel].returnValue += Math.abs(amount);
+      }
+
+      // Count products
+      const items = transaction.items || [];
+      items.forEach((item: any) => {
+        channelData[channel].totalProducts += Number(item.quantity || 1);
+      });
+    });
+
+    // Calculate derived metrics
+    Object.values(channelData).forEach(data => {
+      data.netRevenue = data.revenue - data.returnValue;
+      data.grossProfit = data.netRevenue - data.totalCost;
+      data.netProfit = data.grossProfit - data.commission;
+    });
+
+    return Object.values(channelData);
+  };
+
+  const renderAnalysisTypeReport = () => {
     switch (analysisType) {
       case "product": {
-        // Product sales analysis with comprehensive data
-        const productData: {
-          [productName: string]: {
-            revenue: number;
-            quantity: number;
-            cost: number;
-            returnQuantity: number;
-            returnValue: number;
-          };
-        } = {};
-
-        filteredData.forEach((transaction: any) => {
-          const items = transaction.items || [];
-          items.forEach((item: any) => {
-            const productName =
-              item.productName || item.name || "Unknown Product";
-            if (!productData[productName]) {
-              productData[productName] = {
-                revenue: 0,
-                quantity: 0,
-                cost: 0,
-                returnQuantity: 0,
-                returnValue: 0,
-              };
-            }
-
-            const itemTotal = Number(item.total || item.price * item.quantity);
-            const itemQuantity = Number(item.quantity || 1);
-
-            if (itemTotal > 0) {
-              productData[productName].revenue += itemTotal;
-              productData[productName].quantity += itemQuantity;
-              productData[productName].cost += itemTotal * 0.6; // Assume 60% cost ratio
-            } else {
-              productData[productName].returnValue += Math.abs(itemTotal);
-              productData[productName].returnQuantity += itemQuantity;
-            }
-          });
-        });
-
+        const data = getProductAnalysisData();
         return (
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>{t("reports.productCode")}</TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead>{t("reports.quantitySold")}</TableHead>
-                <TableHead>{t("reports.returnQuantity")}</TableHead>
-                <TableHead>{t("reports.revenue")}</TableHead>
-                <TableHead>{t("reports.returnValue")}</TableHead>
-                <TableHead>{t("reports.netRevenue")}</TableHead>
-                <TableHead>{t("reports.grossProfit")}</TableHead>
+                <TableHead className="text-center">{t("reports.quantitySold")}</TableHead>
+                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
+                <TableHead className="text-center">{t("reports.returnQuantity")}</TableHead>
+                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
+                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
+                <TableHead className="text-right">{t("reports.totalCost")}</TableHead>
+                <TableHead className="text-right">{t("reports.grossProfit")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.entries(productData)
-                .sort(
-                  ([, a], [, b]) =>
-                    b.revenue - b.returnValue - (a.revenue - a.returnValue),
-                )
-                .map(([productName, data]) => (
-                  <TableRow key={productName}>
-                    <TableCell className="font-medium">{productName}</TableCell>
-                    <TableCell>{data.quantity}</TableCell>
-                    <TableCell className="text-red-600">
-                      {data.returnQuantity}
-                    </TableCell>
-                    <TableCell className="text-green-600">
-                      {formatCurrency(data.revenue)}
-                    </TableCell>
-                    <TableCell className="text-red-600">
-                      {formatCurrency(data.returnValue)}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(data.revenue - data.returnValue)}
-                    </TableCell>
-                    <TableCell className="text-blue-600">
-                      {formatCurrency(
-                        data.revenue - data.returnValue - data.cost,
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              {Object.keys(productData).length === 0 && (
+              {data.length > 0 ? (
+                data
+                  .sort((a, b) => b.netRevenue - a.netRevenue)
+                  .slice(0, 20)
+                  .map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{item.productCode}</TableCell>
+                      <TableCell>{item.productName}</TableCell>
+                      <TableCell className="text-center">{item.quantitySold}</TableCell>
+                      <TableCell className="text-right text-green-600">
+                        {formatCurrency(item.revenue)}
+                      </TableCell>
+                      <TableCell className="text-center text-red-600">
+                        {item.quantityReturned}
+                      </TableCell>
+                      <TableCell className="text-right text-red-600">
+                        {formatCurrency(item.returnValue)}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(item.netRevenue)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(item.totalCost)}
+                      </TableCell>
+                      <TableCell className="text-right text-blue-600">
+                        {formatCurrency(item.profit)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+              ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-gray-500">
+                  <TableCell colSpan={9} className="text-center text-gray-500">
                     {t("reports.noData")}
                   </TableCell>
                 </TableRow>
@@ -550,121 +799,54 @@ export function SalesChartReport() {
       }
 
       case "employee": {
-        // Employee performance analysis with product sales breakdown
-        const employeeData: {
-          [cashier: string]: {
-            revenue: number;
-            returnValue: number;
-            orders: number;
-            productsSold: { [product: string]: number };
-            topProduct: string;
-            totalProducts: number;
-          };
-        } = {};
-
-        filteredData.forEach((transaction: any) => {
-          const cashier = transaction.cashierName || "Unknown";
-          if (!employeeData[cashier]) {
-            employeeData[cashier] = {
-              revenue: 0,
-              returnValue: 0,
-              orders: 0,
-              productsSold: {},
-              topProduct: "",
-              totalProducts: 0,
-            };
-          }
-
-          const amount = Number(transaction.total);
-          employeeData[cashier].orders += 1;
-
-          if (amount > 0) {
-            employeeData[cashier].revenue += amount;
-          } else {
-            employeeData[cashier].returnValue += Math.abs(amount);
-          }
-
-          // Track products sold by this employee
-          const items = transaction.items || [];
-          items.forEach((item: any) => {
-            const productName =
-              item.productName || item.name || "Unknown Product";
-            const quantity = Number(item.quantity || 1);
-
-            if (!employeeData[cashier].productsSold[productName]) {
-              employeeData[cashier].productsSold[productName] = 0;
-            }
-            employeeData[cashier].productsSold[productName] += quantity;
-            employeeData[cashier].totalProducts += quantity;
-          });
-        });
-
-        // Calculate top product for each employee
-        Object.entries(employeeData).forEach(([cashier, data]) => {
-          let maxQuantity = 0;
-          let topProduct = "";
-
-          Object.entries(data.productsSold).forEach(([product, quantity]) => {
-            if (quantity > maxQuantity) {
-              maxQuantity = quantity;
-              topProduct = product;
-            }
-          });
-
-          data.topProduct = topProduct || "N/A";
-        });
-
+        const data = getEmployeeAnalysisData();
         return (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.seller")}</TableHead>
-                <TableHead>{t("reports.orders")}</TableHead>
-                <TableHead>{t("reports.totalProducts")}</TableHead>
-                <TableHead>{t("reports.topProduct")}</TableHead>
-                <TableHead>{t("reports.totalRevenue")}</TableHead>
-                <TableHead>{t("reports.returnValue")}</TableHead>
-                <TableHead>{t("reports.netRevenue")}</TableHead>
-                <TableHead>{t("reports.averageOrderValue")}</TableHead>
+                <TableHead className="text-center">{t("reports.orders")}</TableHead>
+                <TableHead className="text-center">{t("reports.totalProducts")}</TableHead>
+                <TableHead className="text-right">{t("reports.totalRevenue")}</TableHead>
+                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
+                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
+                <TableHead className="text-right">{t("reports.averageOrderValue")}</TableHead>
+                <TableHead className="text-right">{t("reports.totalCost")}</TableHead>
+                <TableHead className="text-right">{t("reports.grossProfit")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.entries(employeeData)
-                .sort(
-                  ([, a], [, b]) =>
-                    b.revenue - b.returnValue - (a.revenue - a.returnValue),
-                )
-                .map(([cashier, data]) => {
-                  const netRevenue = data.revenue - data.returnValue;
-                  const avgOrderValue =
-                    data.orders > 0 ? netRevenue / data.orders : 0;
-
-                  return (
-                    <TableRow key={cashier}>
-                      <TableCell className="font-medium">{cashier}</TableCell>
-                      <TableCell>{data.orders}</TableCell>
-                      <TableCell>{data.totalProducts}</TableCell>
-                      <TableCell className="text-sm">
-                        {data.topProduct}
+              {data.length > 0 ? (
+                data
+                  .sort((a, b) => b.netRevenue - a.netRevenue)
+                  .map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{item.employee}</TableCell>
+                      <TableCell className="text-center">{item.orders}</TableCell>
+                      <TableCell className="text-center">{item.totalProducts}</TableCell>
+                      <TableCell className="text-right text-green-600">
+                        {formatCurrency(item.revenue)}
                       </TableCell>
-                      <TableCell className="text-green-600">
-                        {formatCurrency(data.revenue)}
+                      <TableCell className="text-right text-red-600">
+                        {formatCurrency(item.returnValue)}
                       </TableCell>
-                      <TableCell className="text-red-600">
-                        {formatCurrency(data.returnValue)}
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(item.netRevenue)}
                       </TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(netRevenue)}
+                      <TableCell className="text-right text-blue-600">
+                        {formatCurrency(item.averageOrderValue)}
                       </TableCell>
-                      <TableCell className="text-blue-600">
-                        {formatCurrency(avgOrderValue)}
+                      <TableCell className="text-right">
+                        {formatCurrency(item.totalCost)}
+                      </TableCell>
+                      <TableCell className="text-right text-purple-600">
+                        {formatCurrency(item.grossProfit)}
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-              {Object.keys(employeeData).length === 0 && (
+                  ))
+              ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-gray-500">
+                  <TableCell colSpan={9} className="text-center text-gray-500">
                     {t("reports.noData")}
                   </TableCell>
                 </TableRow>
@@ -675,111 +857,49 @@ export function SalesChartReport() {
       }
 
       case "customer": {
-        // Customer analysis with detailed purchase behavior
-        const customerData: {
-          [customer: string]: {
-            revenue: number;
-            orders: number;
-            returnValue: number;
-            totalProducts: number;
-            avgOrderValue: number;
-            lastOrderDate: string;
-            loyaltyPoints: number;
-          };
-        } = {};
-
-        filteredData.forEach((transaction: any) => {
-          const customer =
-            transaction.customerName ||
-            transaction.customerPhone ||
-            "Walk-in Customer";
-          if (!customerData[customer]) {
-            customerData[customer] = {
-              revenue: 0,
-              orders: 0,
-              returnValue: 0,
-              totalProducts: 0,
-              avgOrderValue: 0,
-              lastOrderDate: "",
-              loyaltyPoints: 0,
-            };
-          }
-
-          const amount = Number(transaction.total);
-          const orderDate = new Date(
-            transaction.createdAt || transaction.created_at,
-          ).toLocaleDateString("vi-VN");
-
-          customerData[customer].orders += 1;
-          customerData[customer].lastOrderDate = orderDate;
-
-          if (amount > 0) {
-            customerData[customer].revenue += amount;
-            customerData[customer].loyaltyPoints += Math.floor(amount / 1000); // 1 point per 1000 VND
-          } else {
-            customerData[customer].returnValue += Math.abs(amount);
-          }
-
-          // Count products purchased
-          const items = transaction.items || [];
-          items.forEach((item: any) => {
-            customerData[customer].totalProducts += Number(item.quantity || 1);
-          });
-        });
-
-        // Calculate average order value
-        Object.entries(customerData).forEach(([customer, data]) => {
-          const netRevenue = data.revenue - data.returnValue;
-          data.avgOrderValue = data.orders > 0 ? netRevenue / data.orders : 0;
-        });
-
+        const data = getCustomerAnalysisData();
         return (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.customer")}</TableHead>
-                <TableHead>{t("reports.orders")}</TableHead>
-                <TableHead>{t("reports.totalProducts")}</TableHead>
-                <TableHead>{t("reports.revenue")}</TableHead>
-                <TableHead>{t("reports.returnValue")}</TableHead>
-                <TableHead>{t("reports.netRevenue")}</TableHead>
-                <TableHead>{t("reports.averageOrderValue")}</TableHead>
-                <TableHead>{t("reports.lastOrder")}</TableHead>
+                <TableHead className="text-center">{t("reports.orders")}</TableHead>
+                <TableHead className="text-center">{t("reports.totalProducts")}</TableHead>
+                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
+                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
+                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
+                <TableHead className="text-right">{t("reports.averageOrderValue")}</TableHead>
+                <TableHead className="text-right">{t("reports.lastOrder")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.entries(customerData)
-                .sort(
-                  ([, a], [, b]) =>
-                    b.revenue - b.returnValue - (a.revenue - a.returnValue),
-                )
-                .map(([customer, data]) => {
-                  const netRevenue = data.revenue - data.returnValue;
-
-                  return (
-                    <TableRow key={customer}>
-                      <TableCell className="font-medium">{customer}</TableCell>
-                      <TableCell>{data.orders}</TableCell>
-                      <TableCell>{data.totalProducts}</TableCell>
-                      <TableCell className="text-green-600">
-                        {formatCurrency(data.revenue)}
+              {data.length > 0 ? (
+                data
+                  .sort((a, b) => b.netRevenue - a.netRevenue)
+                  .slice(0, 20)
+                  .map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{item.customer}</TableCell>
+                      <TableCell className="text-center">{item.orders}</TableCell>
+                      <TableCell className="text-center">{item.totalProducts}</TableCell>
+                      <TableCell className="text-right text-green-600">
+                        {formatCurrency(item.revenue)}
                       </TableCell>
-                      <TableCell className="text-red-600">
-                        {formatCurrency(data.returnValue)}
+                      <TableCell className="text-right text-red-600">
+                        {formatCurrency(item.returnValue)}
                       </TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(netRevenue)}
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(item.netRevenue)}
                       </TableCell>
-                      <TableCell className="text-blue-600">
-                        {formatCurrency(data.avgOrderValue)}
+                      <TableCell className="text-right text-blue-600">
+                        {formatCurrency(item.averageOrderValue)}
                       </TableCell>
-                      <TableCell className="text-sm">
-                        {data.lastOrderDate}
+                      <TableCell className="text-right text-sm">
+                        {item.lastOrderDate}
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-              {Object.keys(customerData).length === 0 && (
+                  ))
+              ) : (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center text-gray-500">
                     {t("reports.noData")}
@@ -792,108 +912,54 @@ export function SalesChartReport() {
       }
 
       case "channel": {
-        // Sales channel analysis with comprehensive metrics
-        const channelData: {
-          [channel: string]: {
-            revenue: number;
-            orders: number;
-            returnValue: number;
-            totalProducts: number;
-            avgOrderValue: number;
-            commission: number;
-            netProfit: number;
-          };
-        } = {};
-
-        filteredData.forEach((transaction: any) => {
-          const channel = transaction.salesChannel || "Direct";
-          if (!channelData[channel]) {
-            channelData[channel] = {
-              revenue: 0,
-              orders: 0,
-              returnValue: 0,
-              totalProducts: 0,
-              avgOrderValue: 0,
-              commission: 0,
-              netProfit: 0,
-            };
-          }
-
-          const amount = Number(transaction.total);
-          channelData[channel].orders += 1;
-
-          if (amount > 0) {
-            channelData[channel].revenue += amount;
-            // Calculate commission based on channel type
-            const commissionRate = channel === "Direct" ? 0 : 0.05; // 5% for other channels
-            channelData[channel].commission += amount * commissionRate;
-          } else {
-            channelData[channel].returnValue += Math.abs(amount);
-          }
-
-          // Count products sold through this channel
-          const items = transaction.items || [];
-          items.forEach((item: any) => {
-            channelData[channel].totalProducts += Number(item.quantity || 1);
-          });
-        });
-
-        // Calculate metrics
-        Object.entries(channelData).forEach(([channel, data]) => {
-          const netRevenue = data.revenue - data.returnValue;
-          data.avgOrderValue = data.orders > 0 ? netRevenue / data.orders : 0;
-          data.netProfit = netRevenue - data.commission - netRevenue * 0.6; // Subtract commission and cost
-        });
-
+        const data = getChannelAnalysisData();
         return (
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>{t("reports.salesChannel")}</TableHead>
-                <TableHead>{t("reports.orders")}</TableHead>
-                <TableHead>{t("reports.totalProducts")}</TableHead>
-                <TableHead>{t("reports.revenue")}</TableHead>
-                <TableHead>{t("reports.returnValue")}</TableHead>
-                <TableHead>{t("reports.netRevenue")}</TableHead>
-                <TableHead>{t("reports.commission")}</TableHead>
-                <TableHead>{t("reports.netProfit")}</TableHead>
+                <TableHead className="text-center">{t("reports.orders")}</TableHead>
+                <TableHead className="text-center">{t("reports.totalProducts")}</TableHead>
+                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
+                <TableHead className="text-right">{t("reports.returnValue")}</TableHead>
+                <TableHead className="text-right">{t("reports.netRevenue")}</TableHead>
+                <TableHead className="text-right">{t("reports.commission")}</TableHead>
+                <TableHead className="text-right">{t("reports.grossProfit")}</TableHead>
+                <TableHead className="text-right">{t("reports.netProfit")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Object.entries(channelData)
-                .sort(
-                  ([, a], [, b]) =>
-                    b.revenue - b.returnValue - (a.revenue - a.returnValue),
-                )
-                .map(([channel, data]) => {
-                  const netRevenue = data.revenue - data.returnValue;
-
-                  return (
-                    <TableRow key={channel}>
-                      <TableCell className="font-medium">{channel}</TableCell>
-                      <TableCell>{data.orders}</TableCell>
-                      <TableCell>{data.totalProducts}</TableCell>
-                      <TableCell className="text-green-600">
-                        {formatCurrency(data.revenue)}
+              {data.length > 0 ? (
+                data
+                  .sort((a, b) => b.netRevenue - a.netRevenue)
+                  .map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{item.salesChannel}</TableCell>
+                      <TableCell className="text-center">{item.orders}</TableCell>
+                      <TableCell className="text-center">{item.totalProducts}</TableCell>
+                      <TableCell className="text-right text-green-600">
+                        {formatCurrency(item.revenue)}
                       </TableCell>
-                      <TableCell className="text-red-600">
-                        {formatCurrency(data.returnValue)}
+                      <TableCell className="text-right text-red-600">
+                        {formatCurrency(item.returnValue)}
                       </TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(netRevenue)}
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(item.netRevenue)}
                       </TableCell>
-                      <TableCell className="text-orange-600">
-                        {formatCurrency(data.commission)}
+                      <TableCell className="text-right text-orange-600">
+                        {formatCurrency(item.commission)}
                       </TableCell>
-                      <TableCell className="text-blue-600">
-                        {formatCurrency(data.netProfit)}
+                      <TableCell className="text-right text-purple-600">
+                        {formatCurrency(item.grossProfit)}
+                      </TableCell>
+                      <TableCell className="text-right text-blue-600">
+                        {formatCurrency(item.netProfit)}
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-              {Object.keys(channelData).length === 0 && (
+                  ))
+              ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-gray-500">
+                  <TableCell colSpan={9} className="text-center text-gray-500">
                     {t("reports.noData")}
                   </TableCell>
                 </TableRow>
@@ -969,115 +1035,162 @@ export function SalesChartReport() {
     if (analysisType === "time") {
       return ["time", "profit", "employee"].includes(concernType);
     } else {
-      return ["product", "employee", "customer", "channel"].includes(
-        analysisType,
-      );
+      return ["product", "employee", "customer", "channel"].includes(analysisType);
     }
   };
 
   const getChartData = () => {
-    const filteredData = getFilteredData();
+    if (analysisType === "time") {
+      const filteredData = getFilteredData();
 
-    switch (concernType) {
-      case "time": {
-        const dailyData: {
-          [date: string]: { revenue: number; returnValue: number };
-        } = {};
+      switch (concernType) {
+        case "time": {
+          const dailyData: {
+            [date: string]: { revenue: number; returnValue: number };
+          } = {};
 
-        filteredData.forEach((transaction: any) => {
-          const date = new Date(
-            transaction.createdAt || transaction.created_at,
-          ).toLocaleDateString("vi-VN");
-          if (!dailyData[date]) {
-            dailyData[date] = { revenue: 0, returnValue: 0 };
-          }
+          filteredData.forEach((transaction: any) => {
+            const date = new Date(
+              transaction.createdAt || transaction.created_at,
+            ).toLocaleDateString("vi-VN");
+            if (!dailyData[date]) {
+              dailyData[date] = { revenue: 0, returnValue: 0 };
+            }
 
-          const amount = Number(transaction.total);
-          if (amount > 0) {
-            dailyData[date].revenue += amount;
-          } else {
-            dailyData[date].returnValue += Math.abs(amount);
-          }
-        });
+            const amount = Number(transaction.total);
+            if (amount > 0) {
+              dailyData[date].revenue += amount;
+            } else {
+              dailyData[date].returnValue += Math.abs(amount);
+            }
+          });
 
-        return Object.entries(dailyData).map(([date, data]) => ({
-          name: date,
-          revenue: data.revenue,
-          returnValue: data.returnValue,
-          netRevenue: data.revenue - data.returnValue,
-        }));
-      }
+          return Object.entries(dailyData).map(([date, data]) => ({
+            name: date,
+            revenue: data.revenue,
+            returnValue: data.returnValue,
+            netRevenue: data.revenue - data.returnValue,
+          }));
+        }
 
-      case "profit": {
-        const dailyData: {
-          [date: string]: {
-            totalAmount: number;
-            discount: number;
-            revenue: number;
-            cost: number;
-          };
-        } = {};
-
-        filteredData.forEach((transaction: any) => {
-          const date = new Date(
-            transaction.createdAt || transaction.created_at,
-          ).toLocaleDateString("vi-VN");
-          if (!dailyData[date]) {
-            dailyData[date] = {
-              totalAmount: 0,
-              discount: 0,
-              revenue: 0,
-              cost: 0,
+        case "profit": {
+          const dailyData: {
+            [date: string]: {
+              totalAmount: number;
+              discount: number;
+              revenue: number;
+              cost: number;
             };
-          }
+          } = {};
 
-          const subtotal = Number(transaction.subtotal || transaction.total);
-          const total = Number(transaction.total);
-          const discount = subtotal - total;
+          filteredData.forEach((transaction: any) => {
+            const date = new Date(
+              transaction.createdAt || transaction.created_at,
+            ).toLocaleDateString("vi-VN");
+            if (!dailyData[date]) {
+              dailyData[date] = {
+                totalAmount: 0,
+                discount: 0,
+                revenue: 0,
+                cost: 0,
+              };
+            }
 
-          dailyData[date].totalAmount += subtotal;
-          dailyData[date].discount += discount;
-          dailyData[date].revenue += total;
-          dailyData[date].cost += total * 0.6;
-        });
+            const subtotal = Number(transaction.subtotal || transaction.total);
+            const total = Number(transaction.total);
+            const discount = subtotal - total;
 
-        return Object.entries(dailyData).map(([date, data]) => ({
-          name: date,
-          revenue: data.revenue,
-          cost: data.cost,
-          profit: data.revenue - data.cost,
-        }));
+            dailyData[date].totalAmount += subtotal;
+            dailyData[date].discount += discount;
+            dailyData[date].revenue += total;
+            dailyData[date].cost += total * 0.6;
+          });
+
+          return Object.entries(dailyData).map(([date, data]) => ({
+            name: date,
+            revenue: data.revenue,
+            cost: data.cost,
+            profit: data.revenue - data.cost,
+          }));
+        }
+
+        case "employee": {
+          const employeeData: {
+            [cashier: string]: { revenue: number; returnValue: number };
+          } = {};
+
+          filteredData.forEach((transaction: any) => {
+            const cashier = transaction.cashierName || "Unknown";
+            if (!employeeData[cashier]) {
+              employeeData[cashier] = { revenue: 0, returnValue: 0 };
+            }
+
+            const amount = Number(transaction.total);
+            if (amount > 0) {
+              employeeData[cashier].revenue += amount;
+            } else {
+              employeeData[cashier].returnValue += Math.abs(amount);
+            }
+          });
+
+          return Object.entries(employeeData).map(([cashier, data]) => ({
+            name: cashier,
+            revenue: data.revenue,
+            returnValue: data.returnValue,
+            netRevenue: data.revenue - data.returnValue,
+          }));
+        }
+
+        default:
+          return [];
       }
-
-      case "employee": {
-        const employeeData: {
-          [cashier: string]: { revenue: number; returnValue: number };
-        } = {};
-
-        filteredData.forEach((transaction: any) => {
-          const cashier = transaction.cashierName || "Unknown";
-          if (!employeeData[cashier]) {
-            employeeData[cashier] = { revenue: 0, returnValue: 0 };
-          }
-
-          const amount = Number(transaction.total);
-          if (amount > 0) {
-            employeeData[cashier].revenue += amount;
-          } else {
-            employeeData[cashier].returnValue += Math.abs(amount);
-          }
-        });
-
-        return Object.entries(employeeData).map(([cashier, data]) => ({
-          name: cashier,
-          revenue: data.revenue,
-          returnValue: data.returnValue,
-          netRevenue: data.revenue - data.returnValue,
-        }));
+    } else {
+      // For analysis type reports, get chart data from analysis functions
+      switch (analysisType) {
+        case "product": {
+          const data = getProductAnalysisData();
+          return data.slice(0, 10).map((item) => ({
+            name: item.productName,
+            revenue: item.revenue,
+            netRevenue: item.netRevenue,
+            profit: item.profit,
+          }));
+        }
+        
+        case "employee": {
+          const data = getEmployeeAnalysisData();
+          return data.slice(0, 10).map((item) => ({
+            name: item.employee,
+            revenue: item.revenue,
+            netRevenue: item.netRevenue,
+            grossProfit: item.grossProfit,
+          }));
+        }
+        
+        case "customer": {
+          const data = getCustomerAnalysisData();
+          return data.slice(0, 10).map((item) => ({
+            name: item.customer,
+            revenue: item.revenue,
+            netRevenue: item.netRevenue,
+            orders: item.orders,
+          }));
+        }
+        
+        case "channel": {
+          const data = getChannelAnalysisData();
+          return data.map((item) => ({
+            name: item.salesChannel,
+            revenue: item.revenue,
+            netRevenue: item.netRevenue,
+            grossProfit: item.grossProfit,
+            netProfit: item.netProfit,
+          }));
+        }
+        
+        default:
+          return [];
       }
-
-      default:
-        return [];
     }
   };
 
@@ -1365,7 +1478,7 @@ export function SalesChartReport() {
                         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
                       }}
                     />
-                    {concernType === "time" && (
+                    {analysisType === "time" && concernType === "time" && (
                       <>
                         <Bar
                           dataKey="revenue"
@@ -1387,7 +1500,7 @@ export function SalesChartReport() {
                         />
                       </>
                     )}
-                    {concernType === "profit" && (
+                    {analysisType === "time" && concernType === "profit" && (
                       <>
                         <Bar
                           dataKey="revenue"
@@ -1409,7 +1522,7 @@ export function SalesChartReport() {
                         />
                       </>
                     )}
-                    {concernType === "employee" && (
+                    {analysisType === "time" && concernType === "employee" && (
                       <>
                         <Bar
                           dataKey="revenue"
@@ -1426,6 +1539,94 @@ export function SalesChartReport() {
                         <Bar
                           dataKey="netRevenue"
                           fill="#3b82f6"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                      </>
+                    )}
+                    {analysisType === "product" && (
+                      <>
+                        <Bar
+                          dataKey="revenue"
+                          fill="#10b981"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="netRevenue"
+                          fill="#3b82f6"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="profit"
+                          fill="#8b5cf6"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                      </>
+                    )}
+                    {analysisType === "employee" && (
+                      <>
+                        <Bar
+                          dataKey="revenue"
+                          fill="#10b981"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="netRevenue"
+                          fill="#3b82f6"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="grossProfit"
+                          fill="#8b5cf6"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                      </>
+                    )}
+                    {analysisType === "customer" && (
+                      <>
+                        <Bar
+                          dataKey="revenue"
+                          fill="#10b981"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="netRevenue"
+                          fill="#3b82f6"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="orders"
+                          fill="#f59e0b"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                      </>
+                    )}
+                    {analysisType === "channel" && (
+                      <>
+                        <Bar
+                          dataKey="revenue"
+                          fill="#10b981"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="netRevenue"
+                          fill="#3b82f6"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                        <Bar
+                          dataKey="netProfit"
+                          fill="#8b5cf6"
                           radius={[4, 4, 0, 0]}
                           maxBarSize={60}
                         />
