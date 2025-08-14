@@ -142,7 +142,28 @@ export default function SalesOrders() {
         return [];
       }
     },
-    enabled: !!selectedInvoice?.id,
+    enabled: !!selectedInvoice?.id && selectedInvoice?.type === 'invoice',
+    retry: 2,
+  });
+
+  // Query order items for selected order
+  const { data: orderItems = [] } = useQuery({
+    queryKey: ["/api/order-items", selectedInvoice?.id],
+    queryFn: async () => {
+      if (!selectedInvoice?.id) return [];
+      try {
+        const response = await apiRequest("GET", `/api/order-items/${selectedInvoice.id}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching order items:', error);
+        return [];
+      }
+    },
+    enabled: !!selectedInvoice?.id && selectedInvoice?.type === 'order',
     retry: 2,
   });
 
@@ -682,7 +703,7 @@ export default function SalesOrders() {
                       </div>
                     </div>
 
-                    {/* Invoice Items */}
+                    {/* Invoice/Order Items */}
                     <div>
                       <h4 className="font-medium mb-3">Danh sách hàng hóa</h4>
                       <div className="border rounded-lg overflow-hidden">
@@ -696,18 +717,31 @@ export default function SalesOrders() {
                           <div className="col-span-1">Thành tiền</div>
                           <div className="col-span-1">Thuế GTGT</div>
                         </div>
-                        {invoiceItems.map((item: InvoiceItem, index: number) => (
-                          <div key={item.id} className="grid grid-cols-12 gap-2 text-xs p-2 border-t">
-                            <div className="col-span-1">{index + 1}</div>
-                            <div className="col-span-3">SP{String(item.productId).padStart(3, '0')}</div>
-                            <div className="col-span-3">{item.productName}</div>
-                            <div className="col-span-1">Cái</div>
-                            <div className="col-span-1 text-center">{item.quantity}</div>
-                            <div className="col-span-1 text-right">{formatCurrency(item.unitPrice)}</div>
-                            <div className="col-span-1 text-right">{formatCurrency(item.total)}</div>
-                            <div className="col-span-1 text-center">{item.taxRate}%</div>
-                          </div>
-                        ))}
+                        {(() => {
+                          // Use appropriate items based on selected invoice type
+                          const items = selectedInvoice?.type === 'order' ? orderItems : invoiceItems;
+                          
+                          if (!items || items.length === 0) {
+                            return (
+                              <div className="text-center py-4 text-gray-500 border-t">
+                                Không có sản phẩm nào
+                              </div>
+                            );
+                          }
+
+                          return items.map((item: any, index: number) => (
+                            <div key={item.id} className="grid grid-cols-12 gap-2 text-xs p-2 border-t">
+                              <div className="col-span-1">{index + 1}</div>
+                              <div className="col-span-3">SP{String(item.productId).padStart(3, '0')}</div>
+                              <div className="col-span-3">{item.productName}</div>
+                              <div className="col-span-1">Cái</div>
+                              <div className="col-span-1 text-center">{item.quantity}</div>
+                              <div className="col-span-1 text-right">{formatCurrency(item.unitPrice)}</div>
+                              <div className="col-span-1 text-right">{formatCurrency(item.total)}</div>
+                              <div className="col-span-1 text-center">{item.taxRate || 0}%</div>
+                            </div>
+                          ));
+                        })()}
                       </div>
                     </div>
 
