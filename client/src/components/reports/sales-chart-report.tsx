@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
   CardContent,
@@ -52,6 +52,7 @@ import {
 
 export function SalesChartReport() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
 
   const [analysisType, setAnalysisType] = useState("time");
   const [concernType, setConcernType] = useState("time");
@@ -75,27 +76,53 @@ export function SalesChartReport() {
   const [productType, setProductType] = useState("all");
 
   const { data: transactions } = useQuery({
-    queryKey: ["/api/transactions"],
+    queryKey: [
+      "/api/transactions",
+      startDate,
+      endDate,
+      salesMethod,
+      salesChannel,
+      analysisType,
+      concernType,
+    ],
   });
 
   const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const { data: products } = useQuery({
-    queryKey: ["/api/products"],
+    queryKey: [
+      "/api/products",
+      selectedCategory,
+      productSearch,
+      productType,
+    ],
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const { data: categories } = useQuery({
     queryKey: ["/api/categories"],
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const { data: customers } = useQuery({
-    queryKey: ["/api/customers"],
+    queryKey: ["/api/customers", customerSearch],
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const { data: orders } = useQuery({
-    queryKey: ["/api/orders"],
+    queryKey: [
+      "/api/orders",
+      startDate,
+      endDate,
+      selectedEmployee,
+      salesChannel,
+      analysisType,
+      concernType,
+    ],
+    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
   });
 
   // Load previous report settings when analysis type changes
@@ -270,6 +297,30 @@ export function SalesChartReport() {
     }
   };
 
+  // Invalidate queries when critical filters change
+  useEffect(() => {
+    queryClient.invalidateQueries({
+      queryKey: ["/api/transactions"],
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["/api/orders"],
+    });
+  }, [startDate, endDate, salesMethod, salesChannel, analysisType, concernType, queryClient]);
+
+  // Invalidate product-related queries when product filters change
+  useEffect(() => {
+    queryClient.invalidateQueries({
+      queryKey: ["/api/products"],
+    });
+  }, [selectedCategory, productSearch, productType, queryClient]);
+
+  // Invalidate customer queries when customer filter changes
+  useEffect(() => {
+    queryClient.invalidateQueries({
+      queryKey: ["/api/customers"],
+    });
+  }, [customerSearch, queryClient]);
+
   // Save current settings when filters change
   useEffect(() => {
     const saveCurrentSettings = () => {
@@ -314,7 +365,19 @@ export function SalesChartReport() {
   ]);
 
   const getFilteredData = () => {
-    if (!transactions || !Array.isArray(transactions)) return [];
+    // Return empty array if data is not loaded yet
+    if (!transactions || !Array.isArray(transactions)) {
+      console.log("No transactions data available");
+      return [];
+    }
+
+    console.log("Filtering transactions with:", {
+      startDate,
+      endDate,
+      salesMethod,
+      salesChannel,
+      transactionCount: transactions.length,
+    });
 
     const filteredTransactions = transactions.filter((transaction: any) => {
       const transactionDate = new Date(
@@ -326,19 +389,41 @@ export function SalesChartReport() {
 
       const dateMatch = transactionDate >= start && transactionDate <= end;
 
-      // For now, we'll assume all transactions are "no delivery" and "direct"
-      // In a real system, you would filter based on actual delivery and channel data
+      // Enhanced filtering logic based on actual transaction data
       const methodMatch =
         salesMethod === "all" ||
-        (salesMethod === "no_delivery" && true) ||
-        (salesMethod === "delivery" && false);
+        (salesMethod === "no_delivery" && 
+          (!transaction.deliveryMethod || transaction.deliveryMethod === "pickup")) ||
+        (salesMethod === "delivery" && 
+          transaction.deliveryMethod === "delivery");
 
       const channelMatch =
         salesChannel === "all" ||
-        (salesChannel === "direct" && true) ||
-        (salesChannel === "other" && false);
+        (salesChannel === "direct" && 
+          (!transaction.salesChannel || transaction.salesChannel === "direct" || transaction.salesChannel === "pos")) ||
+        (salesChannel === "other" && 
+          transaction.salesChannel && transaction.salesChannel !== "direct" && transaction.salesChannel !== "pos");
 
-      return dateMatch && methodMatch && channelMatch;
+      const result = dateMatch && methodMatch && channelMatch;
+      
+      if (!result) {
+        console.log("Transaction filtered out:", {
+          id: transaction.id,
+          date: transactionDate.toISOString(),
+          dateMatch,
+          methodMatch,
+          channelMatch,
+          deliveryMethod: transaction.deliveryMethod,
+          salesChannel: transaction.salesChannel,
+        });
+      }
+
+      return result;
+    });
+
+    console.log("Filtered results:", {
+      originalCount: transactions.length,
+      filteredCount: filteredTransactions.length,
     });
 
     return filteredTransactions;
