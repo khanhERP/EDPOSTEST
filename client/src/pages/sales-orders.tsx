@@ -11,6 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Calendar, Search, FileText, Package, Printer, Mail, X, Download } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "@/lib/i18n";
+import * as XLSX from 'xlsx';
 
 interface Invoice {
   id: number;
@@ -489,6 +490,149 @@ export default function SalesOrders() {
   const isAllSelected = filteredInvoices.length > 0 && selectedOrderIds.size === filteredInvoices.length;
   const isIndeterminate = selectedOrderIds.size > 0 && selectedOrderIds.size < filteredInvoices.length;
 
+  // Function to export selected orders to Excel
+  const exportSelectedOrdersToExcel = () => {
+    if (selectedOrderIds.size === 0) {
+      alert('Vui lòng chọn ít nhất một đơn hàng để xuất Excel');
+      return;
+    }
+
+    // Get selected orders
+    const selectedOrders = filteredInvoices.filter(item => 
+      selectedOrderIds.has(`${item.type}-${item.id}`)
+    );
+
+    // Prepare data for Excel export
+    const excelData = selectedOrders.map((item, index) => ({
+      'Số đơn hàng': item.displayNumber,
+      'Ngày đơn hàng': formatDate(item.date),
+      'Bàn': item.tableId ? `Bàn ${item.tableId}` : '-',
+      'Mã khách hàng': item.customerTaxCode || '-',
+      'Khách hàng': item.customerName || 'Khách hàng lẻ',
+      'Thành tiền': parseFloat(item.subtotal || '0'),
+      'Giảm giá': 0,
+      'Tiền thuế': parseFloat(item.tax || '0'),
+      'Tổng tiền': parseFloat(item.total || '0'),
+      'Đã thanh toán': parseFloat(item.total || '0'),
+      'Mã nhân viên': item.employeeId || '-',
+      'Tên nhân viên': 'Nhân viên',
+      'Ký hiệu hóa đơn': item.symbol || 'C11DTD',
+      'Số hóa đơn': item.invoiceNumber || String(item.id).padStart(8, '0'),
+      'Trạng thái': item.displayStatus === 1 ? 'Đã hoàn thành' : 
+                   item.displayStatus === 2 ? 'Đang phục vụ' : 'Đã hủy'
+    }));
+
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // Set column widths
+    const colWidths = [
+      { wch: 15 }, // Số đơn hàng
+      { wch: 12 }, // Ngày đơn hàng
+      { wch: 8 },  // Bàn
+      { wch: 12 }, // Mã khách hàng
+      { wch: 20 }, // Khách hàng
+      { wch: 12 }, // Thành tiền
+      { wch: 10 }, // Giảm giá
+      { wch: 10 }, // Tiền thuế
+      { wch: 12 }, // Tổng tiền
+      { wch: 12 }, // Đã thanh toán
+      { wch: 12 }, // Mã nhân viên
+      { wch: 15 }, // Tên nhân viên
+      { wch: 12 }, // Ký hiệu hóa đơn
+      { wch: 10 }, // Số hóa đơn
+      { wch: 12 }  // Trạng thái
+    ];
+    ws['!cols'] = colWidths;
+
+    // Style header row
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (!ws[cellAddress]) continue;
+      ws[cellAddress].s = {
+        font: { bold: true, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: '4CAF50' } },
+        alignment: { horizontal: 'center' }
+      };
+    }
+
+    // Format number columns
+    for (let row = 1; row <= selectedOrders.length; row++) {
+      // Format currency columns
+      const currencyCols = [5, 6, 7, 8, 9]; // Thành tiền, Giảm giá, Tiền thuế, Tổng tiền, Đã thanh toán
+      currencyCols.forEach(col => {
+        const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+        if (ws[cellAddress]) {
+          ws[cellAddress].z = '#,##0';
+        }
+      });
+    }
+
+    // Create workbook and add title
+    const wb = XLSX.utils.book_new();
+    
+    // Add title row
+    XLSX.utils.sheet_add_aoa(ws, [['DANH SÁCH ĐƠN HÀNG BÁN']], { origin: 'A1' });
+    
+    // Merge title cells
+    if (!ws['!merges']) ws['!merges'] = [];
+    ws['!merges'].push({ 
+      s: { r: 0, c: 0 }, 
+      e: { r: 0, c: 14 } 
+    });
+
+    // Style title
+    ws['A1'].s = {
+      font: { bold: true, size: 16, color: { rgb: '000000' } },
+      alignment: { horizontal: 'center' },
+      fill: { fgColor: { rgb: 'E8F5E8' } }
+    };
+
+    // Shift data down by 2 rows for title and spacing
+    const dataRange = XLSX.utils.decode_range(ws['!ref'] || 'A1');
+    const newData = [
+      ['DANH SÁCH ĐƠN HÀNG BÁN'],
+      [],
+      Object.keys(excelData[0] || {}),
+      ...excelData.map(row => Object.values(row))
+    ];
+    
+    const newWs = XLSX.utils.aoa_to_sheet(newData);
+    newWs['!cols'] = colWidths;
+    
+    // Style title and headers
+    newWs['A1'].s = {
+      font: { bold: true, size: 16 },
+      alignment: { horizontal: 'center' },
+      fill: { fgColor: { rgb: 'E8F5E8' } }
+    };
+    
+    if (!newWs['!merges']) newWs['!merges'] = [];
+    newWs['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 14 } });
+
+    // Style header row (row 3)
+    for (let col = 0; col < 15; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 2, c: col });
+      if (newWs[cellAddress]) {
+        newWs[cellAddress].s = {
+          font: { bold: true, color: { rgb: 'FFFFFF' } },
+          fill: { fgColor: { rgb: '4CAF50' } },
+          alignment: { horizontal: 'center' }
+        };
+      }
+    }
+
+    XLSX.utils.book_append_sheet(wb, newWs, 'Danh sách đơn hàng');
+
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const filename = `danh-sach-don-hang-ban_${timestamp}.xlsx`;
+
+    // Save file
+    XLSX.writeFile(wb, filename);
+  };
+
   const totals = calculateTotals();
 
   return (
@@ -595,10 +739,7 @@ export default function SalesOrders() {
                       variant="outline" 
                       className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
                       disabled={selectedOrderIds.size === 0}
-                      onClick={() => {
-                        console.log('Export to excel:', Array.from(selectedOrderIds));
-                        // Handle export to excel logic here
-                      }}
+                      onClick={exportSelectedOrdersToExcel}
                     >
                       <Download className="w-4 h-4" />
                       Xuất excel ({selectedOrderIds.size})
