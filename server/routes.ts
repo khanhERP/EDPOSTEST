@@ -3183,6 +3183,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Database health check
+  app.get("/api/health/db", async (req, res) => {
+    try {
+      // Directly execute a simple query to check DB connection
+      const result = await db.execute(sql`SELECT current_database(), current_user, inet_server_addr(), inet_server_port()`);
+      
+      // Safely access properties of the first row if it exists
+      const dbInfo = result && result.length > 0 ? result[0] : {};
+
+      res.json({ 
+        status: "healthy",
+        database: dbInfo.current_database,
+        user: dbInfo.current_user,
+        host: dbInfo.inet_server_addr,
+        port: dbInfo.inet_server_port,
+        // Avoid logging sensitive information like passwords
+        connectionString: process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@') 
+      });
+    } catch (error) {
+      // Ensure error is an instance of Error to access message property safely
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      res.status(500).json({ 
+        status: "unhealthy", 
+        error: errorMessage,
+        connectionString: process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@')
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -19,6 +19,10 @@ export const pool = new Pool({
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
 });
+
+// Log database connection info
+console.log("🔗 Database connection string:", process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@'));
+
 export const db = drizzle({ client: pool, schema });
 
 // Initialize sample data function

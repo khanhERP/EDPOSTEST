@@ -43,15 +43,33 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     let message = err.message || "Internal Server Error";
 
+    // Handle database connection errors
+    if (message.includes('ECONNREFUSED') || message.includes('connection refused')) {
+      message = "Database connection failed. Please check database server.";
+      console.error("❌ Database connection error:", err);
+    }
+    
     // Handle database lock errors
     if (message.includes('INDEX_LOCKED') || message.includes('database is locked')) {
       message = "Database temporarily unavailable. Please try again.";
       console.log("Database lock detected, retrying...");
     }
 
+    // Handle authentication errors
+    if (message.includes('authentication failed') || message.includes('password authentication failed')) {
+      message = "Database authentication failed. Please check credentials.";
+      console.error("❌ Database auth error:", err);
+    }
+
+    // Handle timeout errors
+    if (message.includes('timeout') || message.includes('connection timeout')) {
+      message = "Database connection timeout. Please try again.";
+      console.error("⏰ Database timeout error:", err);
+    }
+
     res.status(status).json({ message });
     if (status >= 500) {
-      console.error('Server error:', err);
+      console.error('💥 Server error:', err);
     }
   });
 
