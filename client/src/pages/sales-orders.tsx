@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Calendar, Search, FileText, Package, Printer, Mail, X } from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 
@@ -61,6 +62,7 @@ export default function SalesOrders() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editableInvoice, setEditableInvoice] = useState<Invoice | null>(null);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // Query invoices
   const { data: invoices = [], isLoading } = useQuery({
@@ -96,6 +98,28 @@ export default function SalesOrders() {
       // Update selected invoice with new data
       if (editableInvoice) {
         setSelectedInvoice(editableInvoice);
+      }
+    },
+  });
+
+  // Mutation for canceling invoice
+  const cancelInvoiceMutation = useMutation({
+    mutationFn: async (invoiceId: number) => {
+      const response = await apiRequest("PUT", `/api/invoices/${invoiceId}`, { 
+        invoiceStatus: 3 // 3 = Đã hủy
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      // Refresh invoices list
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      setShowCancelDialog(false);
+      // Update selected invoice status
+      if (selectedInvoice) {
+        setSelectedInvoice({
+          ...selectedInvoice,
+          invoiceStatus: 3
+        });
       }
     },
   });
@@ -246,6 +270,12 @@ export default function SalesOrders() {
         ...editableInvoice,
         [field]: value
       });
+    }
+  };
+
+  const handleCancelOrder = () => {
+    if (selectedInvoice) {
+      cancelInvoiceMutation.mutate(selectedInvoice.id);
     }
   };
 
@@ -611,8 +641,13 @@ export default function SalesOrders() {
 
                     {/* Action Buttons */}
                     <div className="flex gap-2 pt-4 border-t">
-                      <Button size="sm" className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white">
-                        <Printer className="w-4 h-4" />
+                      <Button 
+                        size="sm" 
+                        className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+                        onClick={() => setShowCancelDialog(true)}
+                        disabled={selectedInvoice?.invoiceStatus === 3}
+                      >
+                        <X className="w-4 h-4" />
                         Hủy đơn
                       </Button>
                       {!isEditing ? (
@@ -670,6 +705,28 @@ export default function SalesOrders() {
           </div>
         </div>
       </div>
+
+      {/* Cancel Order Confirmation Dialog */}
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hủy đơn hàng bán</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc muốn hủy đơn hàng {selectedInvoice?.tradeNumber || selectedInvoice?.invoiceNumber || `DH${String(selectedInvoice?.id).padStart(8, '0')}`} này không?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Bỏ qua</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleCancelOrder}
+              disabled={cancelInvoiceMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {cancelInvoiceMutation.isPending ? 'Đang hủy...' : 'Đồng ý'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
