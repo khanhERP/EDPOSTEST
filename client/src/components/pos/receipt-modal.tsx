@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { EInvoiceModal } from "./einvoice-modal";
 import { PaymentMethodModal } from "./payment-method-modal";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTranslation } from "@/lib/i18n";
 
 interface ReceiptModalProps {
@@ -43,8 +43,12 @@ export function ReceiptModal({
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
-  const [hasAutoOpened, setHasAutoOpened] = useState(false);
+  const [showPrintDialog, setShowPrintDialog] = useState(false); // State to control print dialog visibility
+  const hasAutoOpenedPrint = useRef(false); // Ref to track if print dialog has auto-opened
   const { t } = useTranslation();
+
+  // Determine if the current receipt is a preview based on paymentMethod
+  const receiptData = receipt; // Use the receipt prop directly
 
   // Debug logging when modal opens and when props change
   console.log("=== RECEIPT MODAL RENDERED ===");
@@ -72,47 +76,51 @@ export function ReceiptModal({
   }
 
   console.log("Receipt Modal receipt:", receipt);
+  console.log("Receipt Modal receiptData?.paymentMethod:", receiptData?.paymentMethod);
 
   // Auto-show print dialog when modal opens with autoShowPrint = true
+  // Effect to auto-open print dialog when needed
   useEffect(() => {
     console.log('🔍 Receipt Modal useEffect triggered with:', {
       isOpen,
       hasReceipt: !!receipt,
-      isPreview,
-      hasAutoOpened,
+      isPreview: receiptData?.paymentMethod === 'preview',
+      hasAutoOpened: hasAutoOpenedPrint.current,
       autoShowPrint
     });
 
-    // Auto-print when modal opens, has receipt data, autoShowPrint is true, and not in preview mode
-    if (isOpen && receipt && autoShowPrint && !hasAutoOpened && !isPreview) {
-      console.log('✅ Auto-showing print dialog for e-invoice receipt');
-      setHasAutoOpened(true);
+    if (
+      isOpen &&
+      receipt &&
+      receiptData?.paymentMethod !== 'preview' &&
+      autoShowPrint &&
+      !hasAutoOpenedPrint.current
+    ) {
+      console.log('✅ Auto-opening print dialog for completed transaction');
 
-      // Small delay to ensure modal is fully rendered
-      setTimeout(() => {
-        console.log('🖨️ Triggering handlePrint for e-invoice receipt');
-        handlePrint();
-      }, 500);
+      // Delay to ensure modal has rendered and is ready
+      const timer = setTimeout(() => {
+        setShowPrintDialog(true);
+        hasAutoOpenedPrint.current = true;
+        console.log('✅ Print dialog auto-opened successfully');
+      }, 800); // Increased delay to ensure UI is fully rendered
+
+      return () => clearTimeout(timer);
     } else {
       console.log('❌ Initial conditions not met for auto-print:', {
         isOpen,
         hasReceipt: !!receipt,
-        isPreview,
-        hasAutoOpened,
-        autoShowPrint,
-        reason: !isOpen ? 'modal not open' : 
-                !receipt ? 'no receipt' : 
-                !autoShowPrint ? 'autoShowPrint false' : 
-                hasAutoOpened ? 'already auto-opened' :
-                isPreview ? 'is preview mode' : 'unknown'
+        isPreview: receiptData?.paymentMethod === 'preview',
+        hasAutoOpened: hasAutoOpenedPrint.current
       });
     }
-  }, [isOpen, receipt, isPreview, autoShowPrint, hasAutoOpened]);
+  }, [isOpen, receipt, autoShowPrint, receiptData?.paymentMethod]);
 
-  // Reset hasAutoOpened when modal closes
+  // Reset hasAutoOpenedPrint when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setHasAutoOpened(false);
+      hasAutoOpenedPrint.current = false;
+      setShowPrintDialog(false); // Also reset the print dialog state
     }
   }, [isOpen]);
 
@@ -128,6 +136,7 @@ export function ReceiptModal({
   if (!receipt) return null;
 
   const handlePrint = () => {
+    console.log("Attempting to handle print...");
     const printContent = document.getElementById("receipt-content");
     if (printContent) {
       // Calculate content height dynamically
@@ -207,7 +216,11 @@ export function ReceiptModal({
         setTimeout(() => {
           clearInterval(checkClosed);
         }, 10000);
+      } else {
+        console.error("Failed to open print window.");
       }
+    } else {
+      console.error("Print content element not found.");
     }
   };
 
@@ -259,9 +272,9 @@ export function ReceiptModal({
             </div>
             <div className="flex justify-between text-xs mb-1">
               <span>Ngày:</span>
-              <span>{new Date(receipt.createdAt).toLocaleString('vi-VN', { 
-                year: 'numeric', 
-                month: '2-digit', 
+              <span>{new Date(receipt.createdAt).toLocaleString('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
                 day: '2-digit',
                 hour: '2-digit',
                 minute: '2-digit',
@@ -311,9 +324,9 @@ export function ReceiptModal({
             <div className="flex justify-between text-xs mt-2">
               <span>Phương thức thanh toán:</span>
               <span className="capitalize">
-                {receipt.paymentMethod === 'einvoice' ? 'E-Invoice' : 
-                 receipt.paymentMethod === 'cash' ? 'Tiền mặt' : 
-                 receipt.paymentMethod === 'preview' ? 'Preview' : 
+                {receipt.paymentMethod === 'einvoice' ? 'E-Invoice' :
+                 receipt.paymentMethod === 'cash' ? 'Tiền mặt' :
+                 receipt.paymentMethod === 'preview' ? 'Preview' :
                  receipt.paymentMethod}
               </span>
             </div>
@@ -336,7 +349,7 @@ export function ReceiptModal({
         </div>
 
         <div className="flex justify-center p-2 border-t">
-          {isPreview ? (
+          {isPreview || receiptData?.paymentMethod === 'preview' ? ( // Conditionally render buttons based on preview status
             <div className="flex space-x-3 w-full">
               <Button onClick={onClose} variant="outline" className="flex-1">
                 {t('pos.cancel')}
@@ -352,7 +365,8 @@ export function ReceiptModal({
             <div className="flex justify-center space-x-3">
               <Button
                 onClick={handlePrint}
-                className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+                disabled={showPrintDialog} // Disable print button when print dialog is shown
+                className={`bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 ${showPrintDialog ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <Printer className="mr-2" size={16} />
                 {t('pos.printReceipt')}
@@ -386,6 +400,9 @@ export function ReceiptModal({
             // Sau khi e-invoice xử lý xong (phát hành ngay hoặc phát hành sau),
             // hiển thị lại receipt modal để in hóa đơn
             console.log('📄 Showing receipt modal after e-invoice processing');
+            // The receipt modal should re-open or re-render to potentially trigger the print dialog again if autoShowPrint is true.
+            // If the initial receipt data was for e-invoice, this might need a refresh or a state update that causes re-render.
+            // For now, we assume the parent component handles re-opening or providing updated receipt data.
           }}
           total={typeof receipt?.total === 'string' ? parseFloat(receipt.total) : (receipt?.total || 0)}
           selectedPaymentMethod={receipt?.paymentMethod || 'cash'}

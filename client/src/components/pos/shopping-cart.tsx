@@ -267,7 +267,7 @@ export function ShoppingCart({
     // Xử lý đặc biệt cho e-invoice
     if (method === 'einvoice' && eInvoiceData) {
       console.log("📧 Processing e-invoice data:", eInvoiceData);
-      
+
       // Xử lý cho cả phát hành sau và phát hành ngay
       if (eInvoiceData.publishLater || eInvoiceData.publishedImmediately) {
         console.log("✅ E-invoice processed - calling handleEInvoiceConfirm directly");
@@ -334,27 +334,30 @@ export function ShoppingCart({
         // Clear cart trước khi hiển thị receipt
         onClearCart();
 
-        // Set autoShowPrint = true để tự động hiển thị dialog in
-        setAutoShowPrint(true);
-
         // Hiển thị receipt modal với dữ liệu e-invoice đã được tạo sẵn
         setCurrentReceipt(eInvoiceData.receipt);
         setShowReceiptModal(true);
 
-        console.log('✅ Receipt modal opened with autoShowPrint = true for e-invoice');
+        // Delay để đảm bảo modal đã render xong rồi mới set autoShowPrint
+        setTimeout(() => {
+          setAutoShowPrint(true);
+          console.log('✅ Auto print dialog will be triggered for e-invoice');
+        }, 500);
+
+        console.log('✅ Receipt modal opened for e-invoice');
 
         toast({
-          title: "Thành công", 
-          description: `Hóa đơn điện tử đã được phát hành thành công! Số HĐ: ${eInvoiceData.invoiceData?.invoiceNo || 'N/A'}`,
+          title: "Thành công",
+          description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${eInvoiceData.invoiceData?.invoiceNo || 'N/A'}`,
         });
 
-        console.log('✅ E-invoice immediate processing completed, receipt modal shown directly');
+        console.log('✅ E-invoice immediate processing completed');
         return;
       }
 
       // Fallback cho các trường hợp khác
       console.log("🔄 E-invoice fallback processing");
-      
+
       // Clear cart
       onClearCart();
 

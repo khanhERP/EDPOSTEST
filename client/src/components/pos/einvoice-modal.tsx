@@ -957,10 +957,6 @@ export function EInvoiceModal({
 
         console.log('📄 Created receipt data for published e-invoice:', receiptData);
 
-        // Set up print dialog data
-        setPrintReceiptData(receiptData);
-        setShowPrintDialog(true);
-
         // Gọi onConfirm để truyền dữ liệu về parent component trước
         onConfirm({
           ...formData,
