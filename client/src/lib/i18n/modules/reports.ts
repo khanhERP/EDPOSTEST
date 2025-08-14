@@ -63,7 +63,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     currentStatus: "현재 상태",
     orderCount: "주문 수",
     peakTime: "피크 시간",
-    timesPerDay: "회/일",
+    timesPerDay: " 회/일",
     hourUnit: " 시간",
     timesUnit: " 회",
     hour: "시",
@@ -917,6 +917,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     employeeAnalysis: "Nhân viên",
     customerAnalysis: "Khách hàng",
     channelAnalysis: "Kênh bán hàng",
+    productSalesAnalysis: "Phân tích theo Bán hàng",
+    employeeSalesAnalysis: "Phân tích theo nhân viên theo hàng bán",
+    customerSalesAnalysis: "Phân tích theo Bán hàng",
+    channelSalesAnalysis: "Phân tích theo Bán hàng",
 
     // Additional report keys  
     topProduct: "Sản phẩm bán chạy nhất",
