@@ -883,7 +883,7 @@ export function EInvoiceModal({
               tax: cartTaxAmount.toFixed(2),
               total: cartTotal.toFixed(2),
               status: 'paid', // Trạng thái đã thanh toán
-              paymentMethod: 'einvoice',
+              paymentMethod: 2, // Sử dụng integer thay vì string - 2 = Chuyển khoản cho e-invoice
               paymentStatus: 'paid',
               einvoiceStatus: 1, // 1 = Đã phát hành
               notes: `E-Invoice: ${result.data?.invoiceNo || 'N/A'} - MST: ${formData.taxCode}, Tên: ${formData.customerName}, SĐT: ${formData.phoneNumber || 'N/A'}`,
@@ -925,6 +925,42 @@ export function EInvoiceModal({
           description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || "N/A"}`,
         });
 
+        // Tạo receipt data ngay sau khi phát hành thành công
+        const receiptData = {
+          transactionId: result.data?.invoiceNo || `TXN-${Date.now()}`,
+          items: cartItems.map(item => {
+            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+            const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+            const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
+            const itemSubtotal = itemPrice * itemQuantity;
+            const itemTax = (itemSubtotal * itemTaxRate) / 100;
+            
+            return {
+              id: item.id,
+              productId: item.id,
+              productName: item.name,
+              price: itemPrice.toFixed(2),
+              quantity: itemQuantity,
+              total: (itemSubtotal + itemTax).toFixed(2),
+              sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+              taxRate: itemTaxRate
+            };
+          }),
+          subtotal: cartSubtotal.toFixed(2),
+          tax: cartTaxAmount.toFixed(2),
+          total: cartTotal.toFixed(2),
+          paymentMethod: 'einvoice',
+          amountReceived: cartTotal.toFixed(2),
+          change: "0.00",
+          cashierName: "System User",
+          createdAt: new Date().toISOString(),
+          invoiceNumber: result.data?.invoiceNo || null,
+          customerName: formData.customerName,
+          customerTaxCode: formData.taxCode
+        };
+
+        console.log('📄 Created receipt data for published e-invoice:', receiptData);
+
         // Đóng modal ngay lập tức trước khi xử lý logic
         onClose();
 
@@ -939,7 +975,9 @@ export function EInvoiceModal({
             total: total,
             paymentMethod: 'einvoice',
             source: 'pos',
-            showReceipt: true // Flag để hiển thị receipt modal
+            showReceipt: true, // Flag để hiển thị receipt modal
+            receipt: receiptData, // Truyền receipt data đã tạo
+            publishedImmediately: true // Flag để phân biệt với phát hành sau
           });
         } else if (source === 'table' && orderId) {
           // Logic cho Table: Tự hoàn tất thanh toán luôn
@@ -955,7 +993,9 @@ export function EInvoiceModal({
             paymentMethod: 'einvoice',
             source: 'table',
             orderId: orderId,
-            showReceipt: true // Flag để hiển thị receipt modal
+            showReceipt: true, // Flag để hiển thị receipt modal
+            receipt: receiptData, // Truyền receipt data đã tạo
+            publishedImmediately: true // Flag để phân biệt với phát hành sau
           });
 
           // Gọi mutation để hoàn tất thanh toán ngay lập tức
@@ -974,7 +1014,9 @@ export function EInvoiceModal({
             total: total,
             paymentMethod: 'einvoice',
             source: source || 'pos',
-            showReceipt: true // Flag để hiển thị receipt modal
+            showReceipt: true, // Flag để hiển thị receipt modal
+            receipt: receiptData, // Truyền receipt data đã tạo
+            publishedImmediately: true // Flag để phân biệt với phát hành sau
           });
         }
       } else {

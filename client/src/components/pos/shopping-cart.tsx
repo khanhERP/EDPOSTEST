@@ -330,7 +330,28 @@ export function ShoppingCart({
         return;
       }
 
-      // Nếu phát hành thành công (có showReceipt flag)
+      // Nếu phát hành thành công ngay lập tức (có publishedImmediately flag)
+      if (eInvoiceData.publishedImmediately && eInvoiceData.showReceipt && eInvoiceData.receipt) {
+        console.log('✅ E-invoice published immediately, showing receipt modal');
+        console.log('📄 Receipt data received:', eInvoiceData.receipt);
+
+        // Hiển thị receipt modal với dữ liệu từ e-invoice
+        setCurrentReceipt(eInvoiceData.receipt);
+        setShowReceiptModal(true);
+
+        // Clear cart sau khi hiển thị receipt
+        onClearCart();
+
+        toast({
+          title: "Thành công",
+          description: `Hóa đơn điện tử đã được phát hành thành công! Số HĐ: ${eInvoiceData.invoiceData?.invoiceNo || 'N/A'}`,
+        });
+
+        console.log('✅ E-invoice immediate processing completed');
+        return;
+      }
+
+      // Nếu có showReceipt flag khác (fallback)
       if (eInvoiceData.showReceipt) {
         console.log(
           "✅ E-invoice published successfully, creating transaction and showing receipt",
