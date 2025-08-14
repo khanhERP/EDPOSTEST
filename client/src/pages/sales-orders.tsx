@@ -45,6 +45,24 @@ interface InvoiceItem {
   taxRate: string;
 }
 
+interface Order {
+  id: number;
+  orderNumber: string;
+  tableId: number;
+  employeeId?: number;
+  status: string;
+  customerName?: string;
+  customerCount: number;
+  subtotal: string;
+  tax: string;
+  total: string;
+  paymentMethod?: string;
+  paymentStatus: string;
+  einvoiceStatus: number;
+  notes?: string;
+  orderedAt: string;
+}
+
 export default function SalesOrders() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -65,13 +83,24 @@ export default function SalesOrders() {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // Query invoices
-  const { data: invoices = [], isLoading } = useQuery({
+  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
     queryKey: ["/api/invoices"],
     queryFn: async () => {
       const response = await apiRequest("GET", "/api/invoices");
       return response.json();
     },
   });
+
+  // Query orders
+  const { data: orders = [], isLoading: ordersLoading } = useQuery({
+    queryKey: ["/api/orders"],
+    queryFn: async () => {
+      const response = await apiRequest("GET", "/api/orders");
+      return response.json();
+    },
+  });
+
+  const isLoading = invoicesLoading || ordersLoading;
 
   // Query invoice items for selected invoice
   const { data: invoiceItems = [] } = useQuery({
@@ -227,20 +256,39 @@ export default function SalesOrders() {
     );
   };
 
-  const filteredInvoices = invoices.filter((invoice: Invoice) => {
-    const invoiceDate = new Date(invoice.invoiceDate);
+  // Combine invoices and orders data
+  const combinedData = [
+    ...invoices.map((invoice: Invoice) => ({
+      ...invoice,
+      type: 'invoice',
+      date: invoice.invoiceDate,
+      displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
+      displayStatus: invoice.invoiceStatus || 1
+    })),
+    ...orders.map((order: Order) => ({
+      ...order,
+      type: 'order',
+      date: order.orderedAt,
+      displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
+      displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : 3,
+      customerName: order.customerName || 'Khách hàng lẻ',
+      invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : 3
+    }))
+  ];
+
+  const filteredInvoices = combinedData.filter((item: any) => {
+    const itemDate = new Date(item.date);
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    const dateMatch = invoiceDate >= start && invoiceDate <= end;
+    const dateMatch = itemDate >= start && itemDate <= end;
     const customerMatch = !customerSearch || 
-      invoice.customerName.toLowerCase().includes(customerSearch.toLowerCase());
+      item.customerName?.toLowerCase().includes(customerSearch.toLowerCase());
     const orderMatch = !orderNumberSearch || 
-      invoice.tradeNumber?.toLowerCase().includes(orderNumberSearch.toLowerCase()) ||
-      invoice.invoiceNumber?.toLowerCase().includes(orderNumberSearch.toLowerCase());
+      item.displayNumber?.toLowerCase().includes(orderNumberSearch.toLowerCase());
     const customerCodeMatch = !customerCodeSearch || 
-      invoice.customerTaxCode?.toLowerCase().includes(customerCodeSearch.toLowerCase());
+      item.customerTaxCode?.toLowerCase().includes(customerCodeSearch.toLowerCase());
 
     return dateMatch && customerMatch && orderMatch && customerCodeMatch;
   });
@@ -288,10 +336,10 @@ export default function SalesOrders() {
   
 
   const calculateTotals = () => {
-    const totals = filteredInvoices.reduce((acc, invoice) => {
-      acc.subtotal += parseFloat(invoice.subtotal);
-      acc.tax += parseFloat(invoice.tax);
-      acc.total += parseFloat(invoice.total);
+    const totals = filteredInvoices.reduce((acc, item) => {
+      acc.subtotal += parseFloat(item.subtotal || '0');
+      acc.tax += parseFloat(item.tax || '0');
+      acc.total += parseFloat(item.total || '0');
       return acc;
     }, { subtotal: 0, tax: 0, total: 0 });
 
@@ -402,24 +450,24 @@ export default function SalesOrders() {
                     </div>
                     {/* Scrollable Content */}
                     <div className="max-h-80 overflow-y-auto space-y-2">
-                      {filteredInvoices.map((invoice) => (
+                      {filteredInvoices.map((item) => (
                         <div
-                          key={invoice.id}
+                          key={`${item.type}-${item.id}`}
                           className={`grid grid-cols-10 gap-2 text-xs p-2 rounded cursor-pointer hover:bg-blue-50 ${
-                            selectedInvoice?.id === invoice.id ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
+                            selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
                           }`}
-                          onClick={() => setSelectedInvoice(invoice)}
+                          onClick={() => setSelectedInvoice(item)}
                         >
                           <div className="col-span-2 font-medium">
-                            {invoice.tradeNumber || invoice.invoiceNumber || `DH${String(invoice.id).padStart(8, '0')}`}
+                            {item.displayNumber}
                           </div>
-                          <div className="col-span-2">{formatDate(invoice.invoiceDate)}</div>
-                          <div className="col-span-3 truncate">{invoice.customerName}</div>
+                          <div className="col-span-2">{formatDate(item.date)}</div>
+                          <div className="col-span-3 truncate">{item.customerName || 'Khách hàng lẻ'}</div>
                           <div className="col-span-2 text-right font-medium">
-                            {formatCurrency(invoice.total)}
+                            {formatCurrency(item.total)}
                           </div>
                           <div className="col-span-1">
-                            {getInvoiceStatusBadge(invoice.invoiceStatus || 1)}
+                            {getInvoiceStatusBadge(item.displayStatus)}
                           </div>
                         </div>
                       ))}
@@ -463,12 +511,12 @@ export default function SalesOrders() {
                           <span className="font-medium">Số đơn bán:</span>
                           {isEditing && editableInvoice ? (
                             <Input 
-                              value={editableInvoice.tradeNumber || editableInvoice.invoiceNumber || ''}
-                              onChange={(e) => updateEditableInvoiceField('tradeNumber', e.target.value)}
+                              value={editableInvoice.tradeNumber || editableInvoice.invoiceNumber || editableInvoice.orderNumber || ''}
+                              onChange={(e) => updateEditableInvoiceField(selectedInvoice.type === 'order' ? 'orderNumber' : 'tradeNumber', e.target.value)}
                               className="mt-1"
                             />
                           ) : (
-                            <div>{selectedInvoice.tradeNumber || selectedInvoice.invoiceNumber}</div>
+                            <div>{selectedInvoice.displayNumber}</div>
                           )}
                         </div>
                         <div>
@@ -476,12 +524,12 @@ export default function SalesOrders() {
                           {isEditing && editableInvoice ? (
                             <Input 
                               type="date"
-                              value={editableInvoice.invoiceDate.split('T')[0]}
-                              onChange={(e) => updateEditableInvoiceField('invoiceDate', e.target.value)}
+                              value={(editableInvoice.invoiceDate || editableInvoice.orderedAt)?.split('T')[0]}
+                              onChange={(e) => updateEditableInvoiceField(selectedInvoice.type === 'order' ? 'orderedAt' : 'invoiceDate', e.target.value)}
                               className="mt-1"
                             />
                           ) : (
-                            <div>{formatDate(selectedInvoice.invoiceDate)}</div>
+                            <div>{formatDate(selectedInvoice.date)}</div>
                           )}
                         </div>
                         <div>
@@ -550,12 +598,20 @@ export default function SalesOrders() {
                         </div>
                         <div>
                           <span className="font-medium">Trạng thái HĐ:</span>
-                          <div>{getEInvoiceStatusBadge(selectedInvoice.einvoiceStatus)}</div>
+                          <div>{getEInvoiceStatusBadge(selectedInvoice.einvoiceStatus || 0)}</div>
                         </div>
                         <div>
                           <span className="font-medium">Trạng thái đơn:</span>
-                          <div>{getInvoiceStatusBadge(selectedInvoice.invoiceStatus || 1)}</div>
+                          <div>{getInvoiceStatusBadge(selectedInvoice.displayStatus)}</div>
                         </div>
+                        {selectedInvoice.type === 'order' && (
+                          <div>
+                            <span className="font-medium">Loại:</span>
+                            <div className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                              Đơn hàng
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
