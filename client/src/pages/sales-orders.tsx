@@ -197,9 +197,10 @@ export default function SalesOrders() {
             status: "cancelled"
           });
         } else {
-          // For invoices, only update invoiceStatus to 3 (Đã hủy)
+          // For invoices, update both invoiceStatus and invoice_status to 3 (Đã hủy)
           response = await apiRequest("PUT", `/api/invoices/${item.id}`, { 
-            invoiceStatus: 3 // 3 = Đã hủy
+            invoiceStatus: 3, // 3 = Đã hủy
+            invoice_status: 3 // 3 = Đã hủy (database column)
           });
         }
         
@@ -246,6 +247,7 @@ export default function SalesOrders() {
         setSelectedInvoice({
           ...selectedInvoice,
           invoiceStatus: 3, // Đã hủy
+          invoice_status: 3, // Đã hủy (database column)
           displayStatus: 3,
           status: item.type === 'order' ? 'cancelled' : selectedInvoice.status
         });
