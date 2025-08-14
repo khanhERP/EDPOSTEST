@@ -83,9 +83,9 @@ export function ReceiptModal({
       autoShowPrint
     });
 
-    // Fix auto-print logic: should trigger when autoShowPrint is true and modal is open with valid receipt
+    // Auto-print when modal opens, has receipt data, autoShowPrint is true, and not in preview mode
     if (isOpen && receipt && autoShowPrint && !hasAutoOpened && !isPreview) {
-      console.log('✅ Auto-showing print dialog for e-invoice receipt (fixed logic)');
+      console.log('✅ Auto-showing print dialog for e-invoice receipt');
       setHasAutoOpened(true);
 
       // Small delay to ensure modal is fully rendered

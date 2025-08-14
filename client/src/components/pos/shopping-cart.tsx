@@ -302,50 +302,29 @@ export function ShoppingCart({
   };
 
   const handleEInvoiceConfirm = async (eInvoiceData: any) => {
-    console.log("📧 E-invoice confirmed:", eInvoiceData);
+    console.log("📧 E-invoice confirmed from shopping cart:", eInvoiceData);
 
     try {
       // Kiểm tra nếu là "phát hành sau" (publishLater)
       if (eInvoiceData.publishLater) {
-        console.log(
-          "📝 E-invoice saved for later publishing, processing receipt display",
-        );
+        console.log("📝 E-invoice saved for later publishing, processing receipt display");
 
-        // Kiểm tra nếu có receipt data từ e-invoice modal
-        if (eInvoiceData.receipt) {
-          console.log(
-            "📄 Displaying receipt for later publishing:",
-            eInvoiceData.receipt,
-          );
+        // Clear cart trước khi hiển thị receipt modal
+        onClearCart();
 
-          // Clear cart trước khi hiển thị receipt modal
-          onClearCart();
+        // Set autoShowPrint = true để tự động hiển thị dialog in
+        setAutoShowPrint(true);
 
-          // Set autoShowPrint = true để tự động hiển thị dialog in
-          setAutoShowPrint(true);
+        // Hiển thị receipt modal với data thực sự từ e-invoice
+        setCurrentReceipt(eInvoiceData.receipt);
+        setShowReceiptModal(true);
 
-          // Hiển thị receipt modal với data thực sự, isPreview = false để có thể in ngay
-          setCurrentReceipt(eInvoiceData.receipt);
-          setShowReceiptModal(true);
+        console.log("✅ Receipt modal opened with autoShowPrint = true for publishLater");
 
-          console.log("✅ Receipt modal opened with autoShowPrint = true for publishLater");
-
-          toast({
-            title: "Thành công",
-            description:
-              "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
-          });
-        } else {
-          console.log("⚠️ No receipt data found for later publishing");
-          // Clear cart
-          onClearCart();
-
-          toast({
-            title: "Thành công",
-            description:
-              "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
-          });
-        }
+        toast({
+          title: "Thành công",
+          description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
+        });
 
         console.log("✅ E-invoice later processing completed");
         return;
@@ -354,145 +333,38 @@ export function ShoppingCart({
       // Nếu phát hành thành công ngay lập tức (có publishedImmediately flag)
       if (eInvoiceData.publishedImmediately) {
         console.log('✅ E-invoice published immediately, preparing receipt display');
-        console.log('📄 E-invoice data received:', eInvoiceData);
 
         // Clear cart trước khi hiển thị receipt
         onClearCart();
 
-        // Tạo receipt data từ thông tin e-invoice
-        const receiptData = eInvoiceData.receipt || {
-          transactionId: eInvoiceData.invoiceData?.invoiceNo || `TXN-${Date.now()}`,
-          items: cartItems.map(item => ({
-            id: item.id,
-            productId: item.id,
-            productName: item.name,
-            price: (typeof item.price === 'string' ? item.price : item.price.toString()),
-            quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-            total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)).toFixed(2),
-            sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
-            taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
-          })),
-          subtotal: eInvoiceData.subtotal || subtotal.toFixed(2),
-          tax: eInvoiceData.tax || tax.toFixed(2),
-          total: eInvoiceData.total || total.toFixed(2),
-          paymentMethod: 'einvoice',
-          amountReceived: eInvoiceData.total || total.toFixed(2),
-          change: "0.00",
-          cashierName: "System User",
-          createdAt: new Date().toISOString(),
-          invoiceNumber: eInvoiceData.invoiceData?.invoiceNo,
-          customerName: eInvoiceData.customerName,
-          customerTaxCode: eInvoiceData.taxCode
-        };
-
         // Set autoShowPrint = true để tự động hiển thị dialog in
         setAutoShowPrint(true);
 
-        // Hiển thị receipt modal với dữ liệu e-invoice
-        setCurrentReceipt(receiptData);
+        // Hiển thị receipt modal với dữ liệu e-invoice đã được tạo sẵn
+        setCurrentReceipt(eInvoiceData.receipt);
         setShowReceiptModal(true);
 
         console.log('✅ Receipt modal opened with autoShowPrint = true for e-invoice');
 
         toast({
-          title: "Thành công",
+          title: "Thành công", 
           description: `Hóa đơn điện tử đã được phát hành thành công! Số HĐ: ${eInvoiceData.invoiceData?.invoiceNo || 'N/A'}`,
         });
 
         console.log('✅ E-invoice immediate processing completed, receipt modal shown directly');
-        // QUAN TRỌNG: Return ngay để không chạy logic cũ bên dưới
         return;
       }
 
-      // Nếu có showReceipt flag khác (fallback)
-      if (eInvoiceData.showReceipt) {
-        console.log(
-          "✅ E-invoice published successfully, creating transaction and showing receipt",
-        );
+      // Fallback cho các trường hợp khác
+      console.log("🔄 E-invoice fallback processing");
+      
+      // Clear cart
+      onClearCart();
 
-        // Tạo transaction với payment method là einvoice
-        const transactionData = {
-          transaction: {
-            transactionId: `TXN-${Date.now()}`,
-            total: total.toFixed(2),
-            subtotal: subtotal.toFixed(2),
-            tax: tax.toFixed(2),
-            paymentMethod: "einvoice",
-            amountReceived: total.toFixed(2),
-            change: "0.00",
-            cashierName: "John Smith",
-          },
-          items: cart.map((item) => ({
-            productId: item.id,
-            productName: item.name,
-            price: parseFloat(item.price),
-            quantity: item.quantity,
-            total: parseFloat(item.total),
-            sku: item.id,
-            taxRate: parseFloat(item.taxRate || "10"),
-          })),
-        };
-
-        console.log(
-          "Creating transaction for published e-invoice:",
-          transactionData,
-        );
-
-        const response = await fetch("/api/transactions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(transactionData),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const receipt = await response.json();
-        console.log("Receipt created for published e-invoice:", receipt);
-
-        // Update product stock
-        for (const item of cart) {
-          try {
-            const stockResponse = await fetch("/api/inventory/update-stock", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                productId: item.id,
-                quantity: item.quantity,
-                type: "subtract",
-                notes: `E-invoice sale - Transaction ${receipt.transactionId} - Invoice ${eInvoiceData.invoiceData?.invoiceNo || "N/A"}`,
-              }),
-            });
-
-            if (stockResponse.ok) {
-              console.log(`✅ Stock updated for product ${item.id}`);
-            }
-          } catch (stockError) {
-            console.error(
-              `Stock update error for product ${item.id}:`,
-              stockError,
-            );
-          }
-        }
-
-        // Show receipt modal
-        setShowReceiptModal(true);
-        setCurrentReceipt(receipt);
-
-        // Clear cart
-        onClearCart();
-        //setSelectedPaymentMethod(null);
-
-        toast({
-          title: "Thành công",
-          description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${eInvoiceData.invoiceData?.invoiceNo || "N/A"}`,
-        });
-      }
+      toast({
+        title: "Thành công",
+        description: "Hóa đơn điện tử đã được xử lý thành công.",
+      });
     } catch (error) {
       console.error("Error processing e-invoice:", error);
       toast({

@@ -429,24 +429,9 @@ export function PaymentMethodModal({
     // Close payment modal first
     onClose();
 
-    // Xử lý cho cả "phát hành ngay" và "phát hành sau"
-    if (eInvoiceData.publishLater) {
-      console.log('⏳ E-Invoice scheduled for later publishing');
-
-      // Cho "phát hành sau", gọi onSelectMethod với method đặc biệt
-      console.log('📄 Calling onSelectMethod with publishLater data');
-      onSelectMethod('einvoice', eInvoiceData);
-      return;
-    } else if (eInvoiceData.publishedImmediately) {
-      console.log('✅ E-Invoice published immediately, calling onSelectMethod with e-invoice data');
-      // Khi phát hành ngay lập tức, truyền toàn bộ eInvoiceData để shopping-cart xử lý
-      onSelectMethod('einvoice', eInvoiceData);
-      return;
-    } else {
-      console.log('🔄 E-Invoice fallback, proceeding with selected payment method');
-      // Fallback cho các trường hợp khác
-      onSelectMethod(selectedPaymentMethod);
-    }
+    // Truyền toàn bộ eInvoiceData về shopping cart để xử lý tiếp
+    console.log('📤 Passing e-invoice data back to shopping cart for processing');
+    onSelectMethod('einvoice', eInvoiceData);
   };
 
   const handleEInvoiceClose = () => {
