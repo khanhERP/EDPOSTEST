@@ -306,8 +306,8 @@ export function ShoppingCart({
           onClearCart();
 
           // Hiển thị receipt modal với data thực sự, isPreview = false để có thể in ngay
-          setCurrentReceipt(eInvoiceData.receipt);
           setShowReceiptModal(true);
+          setCurrentReceipt(eInvoiceData.receipt);
 
           toast({
             title: "Thành công",
@@ -325,7 +325,6 @@ export function ShoppingCart({
               "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
           });
         }
-
         console.log("✅ E-invoice later processing completed");
         return;
       }
@@ -707,21 +706,25 @@ export function ShoppingCart({
         onConfirm={() => setShowReceiptModal(false)}
         isPreview={false} // Không phải preview, có thể in ngay
         autoShowPrint={true} // Tự động hiển thị dialog in
-        cartItems={currentReceipt ? (currentReceipt.items || []).map((item: any) => ({
-          id: item.productId || item.id,
-          name: item.productName || item.name,
-          price: parseFloat(item.price),
-          quantity: item.quantity,
-          sku: `FOOD${String(item.productId || item.id).padStart(5, "0")}`,
-          taxRate: parseFloat(item.taxRate || "10"),
-        })) : cart.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: parseFloat(item.price),
-          quantity: item.quantity,
-          sku: `FOOD${String(item.id).padStart(5, "0")}`,
-          taxRate: parseFloat(item.taxRate || "10"),
-        }))}
+        cartItems={
+          currentReceipt
+            ? (currentReceipt.items || []).map((item: any) => ({
+                id: item.productId || item.id,
+                name: item.productName || item.name,
+                price: parseFloat(item.price),
+                quantity: item.quantity,
+                sku: `FOOD${String(item.productId || item.id).padStart(5, "0")}`,
+                taxRate: parseFloat(item.taxRate || "10"),
+              }))
+            : cart.map((item) => ({
+                id: item.id,
+                name: item.name,
+                price: parseFloat(item.price),
+                quantity: item.quantity,
+                sku: `FOOD${String(item.id).padStart(5, "0")}`,
+                taxRate: parseFloat(item.taxRate || "10"),
+              }))
+        }
       />
 
       {/* E-Invoice Modal (Assuming you have this component) */}
