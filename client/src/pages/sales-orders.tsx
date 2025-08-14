@@ -115,14 +115,10 @@ export default function SalesOrders() {
       // Refresh invoices list
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       setShowCancelDialog(false);
-      // Update selected invoice status
-      if (selectedInvoice) {
-        setSelectedInvoice({
-          ...selectedInvoice,
-          invoiceStatus: 3,
-          status: "cancelled"
-        });
-      }
+      // Hide invoice details section by clearing selected invoice
+      setSelectedInvoice(null);
+      setIsEditing(false);
+      setEditableInvoice(null);
     },
   });
 
