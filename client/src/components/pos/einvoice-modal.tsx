@@ -957,7 +957,10 @@ export function EInvoiceModal({
 
         console.log('📄 Created receipt data for published e-invoice:', receiptData);
 
-        // Gọi onConfirm để truyền dữ liệu về parent component trước
+        // Đóng modal trước khi gọi onConfirm
+        onClose();
+
+        // Gọi onConfirm để truyền dữ liệu về parent component
         onConfirm({
           ...formData,
           invoiceData: result.data,
@@ -971,8 +974,6 @@ export function EInvoiceModal({
           autoShowPrint: true // Tự động hiển thị dialog in
         });
 
-        // Đóng modal sau khi truyền dữ liệu
-        onClose();
       } else {
         throw new Error(
           result.message || "Có lỗi xảy ra khi phát hành hóa đơn",

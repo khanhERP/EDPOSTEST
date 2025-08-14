@@ -368,7 +368,7 @@ export function PaymentMethodModal({
         setQrLoading(false);
       }
     } else {
-      // Show E-invoice modal for other payment methods
+      // Directly proceed with E-invoice for other payment methods
       setShowEInvoice(true);
     }
   };
@@ -426,10 +426,11 @@ export function PaymentMethodModal({
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
     console.log('📧 E-Invoice confirmed from payment modal:', eInvoiceData);
 
-    // Close payment modal first
+    // Close E-invoice modal and payment modal
+    setShowEInvoice(false);
     onClose();
 
-    // Luôn truyền dữ liệu về shopping cart để xử lý
+    // Truyền dữ liệu về shopping cart để xử lý
     console.log('📤 Passing e-invoice data back to shopping cart for processing');
     onSelectMethod('einvoice', eInvoiceData);
   };
