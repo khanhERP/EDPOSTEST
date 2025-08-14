@@ -83,34 +83,67 @@ export default function SalesOrders() {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   // Query invoices
-  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
+  const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError } = useQuery({
     queryKey: ["/api/invoices"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/invoices");
-      return response.json();
+      try {
+        const response = await apiRequest("GET", "/api/invoices");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching invoices:', error);
+        return [];
+      }
     },
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // Query orders
-  const { data: orders = [], isLoading: ordersLoading } = useQuery({
+  const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
     queryKey: ["/api/orders"],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/orders");
-      return response.json();
+      try {
+        const response = await apiRequest("GET", "/api/orders");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        return [];
+      }
     },
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const isLoading = invoicesLoading || ordersLoading;
+  const hasError = invoicesError || ordersError;
 
   // Query invoice items for selected invoice
   const { data: invoiceItems = [] } = useQuery({
     queryKey: ["/api/invoice-items", selectedInvoice?.id],
     queryFn: async () => {
       if (!selectedInvoice?.id) return [];
-      const response = await apiRequest("GET", `/api/invoice-items/${selectedInvoice.id}`);
-      return response.json();
+      try {
+        const response = await apiRequest("GET", `/api/invoice-items/${selectedInvoice.id}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching invoice items:', error);
+        return [];
+      }
     },
     enabled: !!selectedInvoice?.id,
+    retry: 2,
   });
 
   // Mutation for updating invoice
@@ -134,14 +167,22 @@ export default function SalesOrders() {
   // Mutation for canceling invoice
   const cancelInvoiceMutation = useMutation({
     mutationFn: async (invoiceId: number) => {
-      const response = await apiRequest("PUT", `/api/invoices/${invoiceId}`, { 
-        invoiceStatus: 3, // 3 = Đã hủy
-        status: "cancelled" // Also update the status field for consistency
-      });
-      if (!response.ok) {
-        throw new Error('Failed to cancel invoice');
+      try {
+        const response = await apiRequest("PUT", `/api/invoices/${invoiceId}`, { 
+          invoiceStatus: 3, // 3 = Đã hủy
+          status: "cancelled" // Also update the status field for consistency
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.text();
+          throw new Error(`Không thể hủy đơn hàng: ${response.status} - ${errorData}`);
+        }
+        
+        return response.json();
+      } catch (error) {
+        console.error('Cancel invoice error:', error);
+        throw error;
       }
-      return response.json();
     },
     onSuccess: (data, invoiceId) => {
       console.log('Invoice cancelled successfully:', invoiceId);
@@ -151,6 +192,7 @@ export default function SalesOrders() {
       
       // 2. Refresh danh sách hóa đơn
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       
       // 3. Ẩn vùng chi tiết đơn hàng - Clear all related states
       setSelectedInvoice(null);
@@ -162,6 +204,8 @@ export default function SalesOrders() {
     onError: (error) => {
       console.error('Error canceling invoice:', error);
       setShowCancelDialog(false);
+      // Could add toast notification here
+      alert(`Lỗi hủy đơn hàng: ${error.message}`);
     },
   });
 
@@ -256,16 +300,16 @@ export default function SalesOrders() {
     );
   };
 
-  // Combine invoices and orders data
+  // Combine invoices and orders data with safe array checks
   const combinedData = [
-    ...invoices.map((invoice: Invoice) => ({
+    ...(Array.isArray(invoices) ? invoices.map((invoice: Invoice) => ({
       ...invoice,
       type: 'invoice',
       date: invoice.invoiceDate,
       displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
       displayStatus: invoice.invoiceStatus || 1
-    })),
-    ...orders.map((order: Order) => ({
+    })) : []),
+    ...(Array.isArray(orders) ? orders.map((order: Order) => ({
       ...order,
       type: 'order',
       date: order.orderedAt,
@@ -273,25 +317,34 @@ export default function SalesOrders() {
       displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : 3,
       customerName: order.customerName || 'Khách hàng lẻ',
       invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : 3
-    }))
+    })) : [])
   ];
 
-  const filteredInvoices = combinedData.filter((item: any) => {
-    const itemDate = new Date(item.date);
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+  const filteredInvoices = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
+    try {
+      if (!item || !item.date) return false;
+      
+      const itemDate = new Date(item.date);
+      if (isNaN(itemDate.getTime())) return false;
+      
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
 
-    const dateMatch = itemDate >= start && itemDate <= end;
-    const customerMatch = !customerSearch || 
-      item.customerName?.toLowerCase().includes(customerSearch.toLowerCase());
-    const orderMatch = !orderNumberSearch || 
-      item.displayNumber?.toLowerCase().includes(orderNumberSearch.toLowerCase());
-    const customerCodeMatch = !customerCodeSearch || 
-      item.customerTaxCode?.toLowerCase().includes(customerCodeSearch.toLowerCase());
+      const dateMatch = itemDate >= start && itemDate <= end;
+      const customerMatch = !customerSearch || 
+        (item.customerName && item.customerName.toLowerCase().includes(customerSearch.toLowerCase()));
+      const orderMatch = !orderNumberSearch || 
+        (item.displayNumber && item.displayNumber.toLowerCase().includes(orderNumberSearch.toLowerCase()));
+      const customerCodeMatch = !customerCodeSearch || 
+        (item.customerTaxCode && item.customerTaxCode.toLowerCase().includes(customerCodeSearch.toLowerCase()));
 
-    return dateMatch && customerMatch && orderMatch && customerCodeMatch;
-  });
+      return dateMatch && customerMatch && orderMatch && customerCodeMatch;
+    } catch (error) {
+      console.error('Error filtering item:', item, error);
+      return false;
+    }
+  }) : [];
 
   const formatCurrency = (amount: string | number) => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -437,6 +490,20 @@ export default function SalesOrders() {
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
                     <p className="mt-2 text-gray-500">Đang tải...</p>
+                  </div>
+                ) : hasError ? (
+                  <div className="text-center py-8">
+                    <div className="text-red-500 mb-4">
+                      <X className="w-8 h-8 mx-auto mb-2" />
+                      <p className="font-medium">Lỗi kết nối cơ sở dữ liệu</p>
+                    </div>
+                    <p className="text-gray-500 mb-4">Không thể tải dữ liệu đơn hàng. Vui lòng thử lại.</p>
+                    <Button onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                    }}>
+                      Thử lại
+                    </Button>
                   </div>
                 ) : (
                   <div className="space-y-2">
