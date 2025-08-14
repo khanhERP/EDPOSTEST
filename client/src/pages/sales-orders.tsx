@@ -112,10 +112,11 @@ export default function SalesOrders() {
       return response.json();
     },
     onSuccess: () => {
-      // Refresh invoices list
-      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      // 1. Đóng dialog xác nhận
       setShowCancelDialog(false);
-      // Hide invoice details section by clearing selected invoice
+      // 2. Refresh danh sách hóa đơn
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      // 3. Ẩn vùng chi tiết đơn hàng
       setSelectedInvoice(null);
       setIsEditing(false);
       setEditableInvoice(null);
@@ -271,11 +272,7 @@ export default function SalesOrders() {
     }
   };
 
-  const handleCancelOrder = () => {
-    if (selectedInvoice) {
-      cancelInvoiceMutation.mutate(selectedInvoice.id);
-    }
-  };
+  
 
   const calculateTotals = () => {
     const totals = filteredInvoices.reduce((acc, invoice) => {
@@ -716,7 +713,11 @@ export default function SalesOrders() {
           <AlertDialogFooter>
             <AlertDialogCancel>Bỏ qua</AlertDialogCancel>
             <AlertDialogAction 
-              onClick={handleCancelOrder}
+              onClick={() => {
+                if (selectedInvoice) {
+                  cancelInvoiceMutation.mutate(selectedInvoice.id);
+                }
+              }}
               disabled={cancelInvoiceMutation.isPending}
               className="bg-red-600 hover:bg-red-700"
             >
