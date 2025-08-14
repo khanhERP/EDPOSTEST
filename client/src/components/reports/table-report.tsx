@@ -53,11 +53,31 @@ export function TableReport() {
 
     const filteredOrders = (orders as Order[]).filter((order: Order) => {
       const orderDate = new Date(order.orderedAt);
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
 
-      return orderDate >= start && orderDate <= end && order.status === "paid";
+      // Sử dụng format ngày nhất quán như sales-report
+      const orderDateStr = `${orderDate.getFullYear()}-${(orderDate.getMonth() + 1).toString().padStart(2, "0")}-${orderDate.getDate().toString().padStart(2, "0")}`;
+
+      const isInDateRange = orderDateStr >= startDate && orderDateStr <= endDate;
+
+      // Chỉ loại bỏ đơn hàng bị hủy hoặc không có total
+      const isValidOrder = order.status && order.status !== "cancelled" && order.total && Number(order.total) > 0;
+
+      // Debug logging cho hôm nay
+      if (dateRange === "today") {
+        console.log("Table Report Debug:", {
+          orderId: order.id,
+          orderDateStr,
+          startDate,
+          endDate,
+          status: order.status,
+          tableId: order.tableId,
+          total: order.total,
+          isInDateRange,
+          isValidOrder
+        });
+      }
+
+      return isInDateRange && isValidOrder;
     });
 
     // Table performance analysis
@@ -147,6 +167,20 @@ export function TableReport() {
           tableList.length
         : 0;
 
+    // Debug logging
+    console.log("Table Report Stats:", {
+      dateRange,
+      startDate,
+      endDate,
+      totalFilteredOrders: filteredOrders.length,
+      totalRevenue,
+      totalOrders,
+      averageUtilization,
+      tablesCount: tableList.length,
+      sampleOrder: filteredOrders[0] || null,
+      allOrdersCount: orders?.length || 0
+    });
+
     return {
       tableStats: tableList,
       topRevenueTables,
@@ -188,11 +222,11 @@ export function TableReport() {
         const currentDate = new Date();
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
-        
+
         // Tính tháng trước
         const lastMonthYear = month === 0 ? year - 1 : year;
         const lastMonth = month === 0 ? 11 : month - 1;
-        
+
         // Ngày đầu tháng trước
         const lastMonthStart = new Date(lastMonthYear, lastMonth, 1);
         // Ngày cuối tháng trước
