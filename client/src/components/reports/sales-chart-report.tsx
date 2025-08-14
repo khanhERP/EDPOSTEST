@@ -75,7 +75,7 @@ export function SalesChartReport() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [productType, setProductType] = useState("all");
 
-  const { data: transactions } = useQuery({
+  const { data: transactions, refetch: refetchTransactions } = useQuery({
     queryKey: [
       "/api/transactions",
       startDate,
@@ -88,6 +88,8 @@ export function SalesChartReport() {
     ],
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: employees } = useQuery({
@@ -115,7 +117,7 @@ export function SalesChartReport() {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  const { data: orders } = useQuery({
+  const { data: orders, refetch: refetchOrders } = useQuery({
     queryKey: [
       "/api/orders",
       startDate,
@@ -128,6 +130,8 @@ export function SalesChartReport() {
     ],
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   // Load previous report settings when analysis type changes
@@ -302,15 +306,32 @@ export function SalesChartReport() {
     }
   };
 
-  // Invalidate queries when critical filters change
+  // Invalidate and refetch queries when critical filters change
   useEffect(() => {
-    queryClient.invalidateQueries({
-      queryKey: ["/api/transactions"],
-    });
-    queryClient.invalidateQueries({
-      queryKey: ["/api/orders"],
-    });
-  }, [startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee, queryClient]);
+    const invalidateAndRefetch = async () => {
+      // Clear all caches first
+      queryClient.removeQueries({
+        queryKey: ["/api/transactions"],
+      });
+      queryClient.removeQueries({
+        queryKey: ["/api/orders"],
+      });
+      
+      // Then invalidate and refetch
+      await queryClient.invalidateQueries({
+        queryKey: ["/api/transactions"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["/api/orders"],
+      });
+      
+      // Force refetch
+      refetchTransactions();
+      refetchOrders();
+    };
+    
+    invalidateAndRefetch();
+  }, [startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee, queryClient, refetchTransactions, refetchOrders]);
 
   // Invalidate product-related queries when product filters change
   useEffect(() => {
@@ -2376,6 +2397,19 @@ export function SalesChartReport() {
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
               />
+            </div>
+            <div className="flex items-end">
+              <button
+                onClick={() => {
+                  queryClient.clear();
+                  refetchTransactions();
+                  refetchOrders();
+                }}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center gap-2"
+              >
+                <Search className="w-4 h-4" />
+                {t("common.refresh")}
+              </button>
             </div>
           </div>
         </CardContent>
