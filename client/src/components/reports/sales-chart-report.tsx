@@ -24,7 +24,17 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TrendingUp, FileText, Calendar, Package, DollarSign, Users, ShoppingCart, BarChart3, Search } from "lucide-react";
+import {
+  TrendingUp,
+  FileText,
+  Calendar,
+  Package,
+  DollarSign,
+  Users,
+  ShoppingCart,
+  BarChart3,
+  Search,
+} from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import {
   ChartContainer,
@@ -56,7 +66,7 @@ export function SalesChartReport() {
   const [salesChannel, setSalesChannel] = useState("all");
   const [savedSettings, setSavedSettings] = useState<any>(null);
   const [previousReportData, setPreviousReportData] = useState<any>(null);
-  
+
   // Additional filters from legacy reports
   const [selectedEmployee, setSelectedEmployee] = useState("all");
   const [customerSearch, setCustomerSearch] = useState("");
@@ -101,7 +111,9 @@ export function SalesChartReport() {
           channel: "salesChannelReport_settings", // Báo cáo kênh bán hàng
         };
 
-        const storageKey = legacyReportMapping[analysisType] || `salesReport_${analysisType}_${concernType}_settings`;
+        const storageKey =
+          legacyReportMapping[analysisType] ||
+          `salesReport_${analysisType}_${concernType}_settings`;
         const savedConfig = localStorage.getItem(storageKey);
 
         if (savedConfig) {
@@ -156,9 +168,11 @@ export function SalesChartReport() {
       switch (type) {
         case "product":
           // Load inventory report settings and data
-          const inventorySettings = localStorage.getItem("inventoryReport_settings");
+          const inventorySettings = localStorage.getItem(
+            "inventoryReport_settings",
+          );
           const inventoryData = localStorage.getItem("inventoryReport_data");
-          
+
           if (inventorySettings) {
             const settings = JSON.parse(inventorySettings);
             if (settings.dateRange) {
@@ -169,7 +183,7 @@ export function SalesChartReport() {
               setConcernType(settings.concernType);
             }
           }
-          
+
           if (inventoryData) {
             const data = JSON.parse(inventoryData);
             setPreviousReportData(data);
@@ -178,9 +192,11 @@ export function SalesChartReport() {
 
         case "employee":
           // Load employee report settings and data
-          const employeeSettings = localStorage.getItem("employeeReport_settings");
+          const employeeSettings = localStorage.getItem(
+            "employeeReport_settings",
+          );
           const employeeData = localStorage.getItem("employeeReport_data");
-          
+
           if (employeeSettings) {
             const settings = JSON.parse(employeeSettings);
             if (settings.dateRange) {
@@ -191,7 +207,7 @@ export function SalesChartReport() {
               setConcernType(settings.concernType);
             }
           }
-          
+
           if (employeeData) {
             const data = JSON.parse(employeeData);
             setPreviousReportData(data);
@@ -200,9 +216,11 @@ export function SalesChartReport() {
 
         case "customer":
           // Load customer report settings and data
-          const customerSettings = localStorage.getItem("customerReport_settings");
+          const customerSettings = localStorage.getItem(
+            "customerReport_settings",
+          );
           const customerData = localStorage.getItem("customerReport_data");
-          
+
           if (customerSettings) {
             const settings = JSON.parse(customerSettings);
             if (settings.dateRange) {
@@ -213,7 +231,7 @@ export function SalesChartReport() {
               setConcernType(settings.concernType);
             }
           }
-          
+
           if (customerData) {
             const data = JSON.parse(customerData);
             setPreviousReportData(data);
@@ -222,9 +240,11 @@ export function SalesChartReport() {
 
         case "channel":
           // Load sales channel report settings and data
-          const channelSettings = localStorage.getItem("salesChannelReport_settings");
+          const channelSettings = localStorage.getItem(
+            "salesChannelReport_settings",
+          );
           const channelData = localStorage.getItem("salesChannelReport_data");
-          
+
           if (channelSettings) {
             const settings = JSON.parse(channelSettings);
             if (settings.dateRange) {
@@ -235,7 +255,7 @@ export function SalesChartReport() {
               setConcernType(settings.concernType);
             }
           }
-          
+
           if (channelData) {
             const data = JSON.parse(channelData);
             setPreviousReportData(data);
@@ -360,7 +380,8 @@ export function SalesChartReport() {
         },
       };
 
-      const typeReports = reportTitles[analysisType as keyof typeof reportTitles];
+      const typeReports =
+        reportTitles[analysisType as keyof typeof reportTitles];
       if (typeReports && concernType in typeReports) {
         return typeReports[concernType as keyof typeof typeReports];
       }
@@ -648,7 +669,7 @@ export function SalesChartReport() {
   // Product analysis data processing (integrated from inventory-report)
   const getProductAnalysisData = () => {
     // Use inventory report data if available
-    if (previousReportData && previousReportData.type === 'inventory') {
+    if (previousReportData && previousReportData.type === "inventory") {
       return previousReportData.data;
     }
 
@@ -656,16 +677,20 @@ export function SalesChartReport() {
     if (!dataToUse.length) return [];
 
     // Get products data for enhanced processing
-    const filteredProducts = products?.filter((product: any) => {
-      const searchMatch = !productSearch || 
-        product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-        (product.sku && product.sku.toLowerCase().includes(productSearch.toLowerCase()));
-      
-      const categoryMatch = selectedCategory === "all" || 
-        product.categoryId?.toString() === selectedCategory;
-      
-      return searchMatch && categoryMatch;
-    }) || [];
+    const filteredProducts =
+      products?.filter((product: any) => {
+        const searchMatch =
+          !productSearch ||
+          product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+          (product.sku &&
+            product.sku.toLowerCase().includes(productSearch.toLowerCase()));
+
+        const categoryMatch =
+          selectedCategory === "all" ||
+          product.categoryId?.toString() === selectedCategory;
+
+        return searchMatch && categoryMatch;
+      }) || [];
 
     const productData: {
       [productId: string]: {
@@ -687,28 +712,39 @@ export function SalesChartReport() {
     end.setHours(23, 59, 59, 999);
 
     const filteredOrders = dataToUse.filter((order: any) => {
-      const orderDate = new Date(order.orderedAt || order.created_at || order.createdAt);
-      return orderDate >= start && orderDate <= end && order.status === 'paid';
+      const orderDate = new Date(
+        order.orderedAt || order.created_at || order.createdAt,
+      );
+      return orderDate >= start && orderDate <= end && order.status === "paid";
     });
 
-    const productSales: { [productId: string]: { quantity: number; revenue: number; orders: number } } = {};
+    const productSales: {
+      [productId: string]: {
+        quantity: number;
+        revenue: number;
+        orders: number;
+      };
+    } = {};
 
     filteredOrders.forEach((order: any) => {
       const orderTotal = Number(order.total);
-      const availableProducts = filteredProducts.filter(p => p.price > 0);
+      const availableProducts = filteredProducts.filter((p) => p.price > 0);
 
       if (availableProducts.length === 0) return;
 
       const orderProductCount = Math.min(
-        Math.floor(Math.random() * 3) + 1, 
-        availableProducts.length
+        Math.floor(Math.random() * 3) + 1,
+        availableProducts.length,
       );
 
       const selectedProducts = availableProducts
         .sort(() => 0.5 - Math.random())
         .slice(0, orderProductCount);
 
-      const totalSelectedPrice = selectedProducts.reduce((sum, p) => sum + (p.price || 0), 0);
+      const totalSelectedPrice = selectedProducts.reduce(
+        (sum, p) => sum + (p.price || 0),
+        0,
+      );
 
       selectedProducts.forEach((product: any) => {
         const productId = product.id.toString();
@@ -716,9 +752,15 @@ export function SalesChartReport() {
           productSales[productId] = { quantity: 0, revenue: 0, orders: 0 };
         }
 
-        const proportion = totalSelectedPrice > 0 ? (product.price || 0) / totalSelectedPrice : 1 / selectedProducts.length;
+        const proportion =
+          totalSelectedPrice > 0
+            ? (product.price || 0) / totalSelectedPrice
+            : 1 / selectedProducts.length;
         const productRevenue = orderTotal * proportion;
-        const quantity = Math.max(1, Math.floor(productRevenue / (product.price || 1)));
+        const quantity = Math.max(
+          1,
+          Math.floor(productRevenue / (product.price || 1)),
+        );
 
         productSales[productId].quantity += quantity;
         productSales[productId].revenue += productRevenue;
@@ -727,7 +769,11 @@ export function SalesChartReport() {
     });
 
     filteredProducts.forEach((product: any) => {
-      const sales = productSales[product.id.toString()] || { quantity: 0, revenue: 0, orders: 0 };
+      const sales = productSales[product.id.toString()] || {
+        quantity: 0,
+        revenue: 0,
+        orders: 0,
+      };
       if (sales.quantity > 0) {
         const returnRate = 0.02;
         const quantityReturned = Math.floor(sales.quantity * returnRate);
@@ -745,23 +791,25 @@ export function SalesChartReport() {
           returnValue,
           netRevenue: sales.revenue - returnValue,
           totalCost,
-          profit: (sales.revenue - returnValue) - totalCost,
+          profit: sales.revenue - returnValue - totalCost,
         };
       }
     });
 
-    return Object.values(productData).sort((a, b) => b.netRevenue - a.netRevenue);
+    return Object.values(productData).sort(
+      (a, b) => b.netRevenue - a.netRevenue,
+    );
   };
 
   // Employee analysis data processing (integrated from employee-report)
   const getEmployeeAnalysisData = () => {
     // Use employee report data if available
-    if (previousReportData && previousReportData.type === 'employee') {
+    if (previousReportData && previousReportData.type === "employee") {
       return previousReportData.data;
     }
 
     const dataToUse = previousReportData?.data || getFilteredData();
-    
+
     // Enhanced employee analysis using employee report logic
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -769,11 +817,12 @@ export function SalesChartReport() {
 
     const filteredTransactions = dataToUse.filter((transaction: any) => {
       const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at
+        transaction.createdAt || transaction.created_at,
       );
       const dateMatch = transactionDate >= start && transactionDate <= end;
 
-      const employeeMatch = selectedEmployee === "all" ||
+      const employeeMatch =
+        selectedEmployee === "all" ||
         transaction.cashierName === selectedEmployee ||
         transaction.employeeId?.toString() === selectedEmployee ||
         transaction.cashierName?.includes(selectedEmployee);
@@ -797,8 +846,9 @@ export function SalesChartReport() {
     } = {};
 
     filteredTransactions.forEach((transaction: any) => {
-      const cashier = transaction.cashierName || transaction.employeeName || "Unknown";
-      
+      const cashier =
+        transaction.cashierName || transaction.employeeName || "Unknown";
+
       if (!employeeData[cashier]) {
         employeeData[cashier] = {
           employee: cashier,
@@ -834,35 +884,45 @@ export function SalesChartReport() {
     // Calculate derived metrics
     Object.values(employeeData).forEach((data) => {
       data.netRevenue = data.revenue - data.returnValue;
-      data.averageOrderValue = data.orders > 0 ? data.netRevenue / data.orders : 0;
+      data.averageOrderValue =
+        data.orders > 0 ? data.netRevenue / data.orders : 0;
       data.grossProfit = data.netRevenue - data.totalCost;
     });
 
-    return Object.values(employeeData).sort((a, b) => b.netRevenue - a.netRevenue);
+    return Object.values(employeeData).sort(
+      (a, b) => b.netRevenue - a.netRevenue,
+    );
   };
 
   // Customer analysis data processing (integrated from customer-report)
   const getCustomerAnalysisData = () => {
     // Use customer report data if available
-    if (previousReportData && previousReportData.type === 'customer') {
+    if (previousReportData && previousReportData.type === "customer") {
       return previousReportData.data;
     }
 
     const dataToUse = previousReportData?.data || getFilteredData();
-    
+
     // Enhanced customer analysis using customer report logic
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
     const filteredOrders = dataToUse.filter((order: any) => {
-      const orderDate = new Date(order.orderedAt || order.created_at || order.createdAt);
+      const orderDate = new Date(
+        order.orderedAt || order.created_at || order.createdAt,
+      );
       const dateMatch = orderDate >= start && orderDate <= end;
 
-      const customerMatch = !customerSearch ||
-        (order.customerName && order.customerName.toLowerCase().includes(customerSearch.toLowerCase())) ||
+      const customerMatch =
+        !customerSearch ||
+        (order.customerName &&
+          order.customerName
+            .toLowerCase()
+            .includes(customerSearch.toLowerCase())) ||
         (order.customerPhone && order.customerPhone.includes(customerSearch)) ||
-        (order.customerId && order.customerId.toString().includes(customerSearch));
+        (order.customerId &&
+          order.customerId.toString().includes(customerSearch));
 
       return dateMatch && customerMatch && order.status === "paid";
     });
@@ -902,8 +962,9 @@ export function SalesChartReport() {
       }
 
       const orderTotal = Number(order.total);
-      const orderDate = new Date(order.orderedAt || order.created_at || order.createdAt)
-        .toLocaleDateString("vi-VN");
+      const orderDate = new Date(
+        order.orderedAt || order.created_at || order.createdAt,
+      ).toLocaleDateString("vi-VN");
 
       customerData[customerId].orders += 1;
       customerData[customerId].lastOrderDate = orderDate;
@@ -915,35 +976,45 @@ export function SalesChartReport() {
 
     // Calculate derived metrics
     Object.values(customerData).forEach((data) => {
-      data.averageOrderValue = data.orders > 0 ? data.netRevenue / data.orders : 0;
+      data.averageOrderValue =
+        data.orders > 0 ? data.netRevenue / data.orders : 0;
       data.grossProfit = data.netRevenue - data.totalCost;
     });
 
-    return Object.values(customerData).sort((a, b) => b.netRevenue - a.netRevenue);
+    return Object.values(customerData).sort(
+      (a, b) => b.netRevenue - a.netRevenue,
+    );
   };
 
   // Sales channel analysis data processing (integrated from sales-channel-report)
   const getChannelAnalysisData = () => {
     // Use sales channel report data if available
-    if (previousReportData && previousReportData.type === 'salesChannel') {
+    if (previousReportData && previousReportData.type === "salesChannel") {
       return previousReportData.data;
     }
 
     const dataToUse = previousReportData?.data || getFilteredData();
-    
+
     // Enhanced channel analysis using sales channel report logic
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
     const filteredTransactions = dataToUse.filter((transaction: any) => {
-      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
       const dateMatch = transactionDate >= start && transactionDate <= end;
 
-      const channelMatch = salesChannel === "all" ||
-        (transaction.salesChannel === salesChannel) ||
-        (salesChannel === "direct" && (!transaction.salesChannel || transaction.salesChannel === "Direct")) ||
-        (salesChannel === "other" && transaction.salesChannel && transaction.salesChannel !== "Direct");
+      const channelMatch =
+        salesChannel === "all" ||
+        transaction.salesChannel === salesChannel ||
+        (salesChannel === "direct" &&
+          (!transaction.salesChannel ||
+            transaction.salesChannel === "Direct")) ||
+        (salesChannel === "other" &&
+          transaction.salesChannel &&
+          transaction.salesChannel !== "Direct");
 
       return dateMatch && channelMatch;
     });
@@ -965,7 +1036,7 @@ export function SalesChartReport() {
 
     filteredTransactions.forEach((transaction: any) => {
       const channel = transaction.salesChannel || "Direct";
-      
+
       if (!channelData[channel]) {
         channelData[channel] = {
           salesChannel: channel,
@@ -987,7 +1058,7 @@ export function SalesChartReport() {
       if (amount > 0) {
         channelData[channel].revenue += amount;
         channelData[channel].totalCost += amount * 0.6; // 60% cost ratio
-        
+
         // Calculate commission based on channel type
         const commissionRate = channel === "Direct" ? 0 : 0.05; // 5% for other channels
         channelData[channel].commission += amount * commissionRate;
@@ -1009,14 +1080,16 @@ export function SalesChartReport() {
       data.netProfit = data.grossProfit - data.commission;
     });
 
-    return Object.values(channelData).sort((a, b) => b.netRevenue - a.netRevenue);
+    return Object.values(channelData).sort(
+      (a, b) => b.netRevenue - a.netRevenue,
+    );
   };
 
   const renderAnalysisTypeReport = () => {
     switch (analysisType) {
       case "product": {
         const data = getProductAnalysisData();
-        
+
         // Render UI similar to inventory report from legacy reports
         return (
           <>
@@ -1026,7 +1099,9 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalProducts")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalProducts")}
+                      </p>
                       <p className="text-2xl font-bold">{data.length}</p>
                     </div>
                     <Package className="w-8 h-8 text-blue-500" />
@@ -1037,7 +1112,9 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalQuantitySold")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalQuantitySold")}
+                      </p>
                       <p className="text-2xl font-bold">
                         {data.reduce((sum, item) => sum + item.quantitySold, 0)}
                       </p>
@@ -1050,9 +1127,13 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalRevenue")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalRevenue")}
+                      </p>
                       <p className="text-2xl font-bold">
-                        {formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0))}
+                        {formatCurrency(
+                          data.reduce((sum, item) => sum + item.revenue, 0),
+                        )}
                       </p>
                     </div>
                     <DollarSign className="w-8 h-8 text-emerald-500" />
@@ -1063,9 +1144,13 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalProfit")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalProfit")}
+                      </p>
                       <p className="text-2xl font-bold">
-                        {formatCurrency(data.reduce((sum, item) => sum + item.profit, 0))}
+                        {formatCurrency(
+                          data.reduce((sum, item) => sum + item.profit, 0),
+                        )}
                       </p>
                     </div>
                     <TrendingUp className="w-8 h-8 text-purple-500" />
@@ -1139,7 +1224,10 @@ export function SalesChartReport() {
                     ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-gray-500">
+                    <TableCell
+                      colSpan={9}
+                      className="text-center text-gray-500"
+                    >
                       {t("reports.noData")}
                     </TableCell>
                   </TableRow>
@@ -1152,7 +1240,7 @@ export function SalesChartReport() {
 
       case "employee": {
         const data = getEmployeeAnalysisData();
-        
+
         // Render UI similar to employee report from legacy reports
         return (
           <>
@@ -1162,7 +1250,9 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalEmployees")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalEmployees")}
+                      </p>
                       <p className="text-2xl font-bold">{data.length}</p>
                     </div>
                     <Users className="w-8 h-8 text-blue-500" />
@@ -1173,7 +1263,9 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalOrders")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalOrders")}
+                      </p>
                       <p className="text-2xl font-bold">
                         {data.reduce((sum, item) => sum + item.orders, 0)}
                       </p>
@@ -1186,9 +1278,13 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalRevenue")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalRevenue")}
+                      </p>
                       <p className="text-2xl font-bold">
-                        {formatCurrency(data.reduce((sum, item) => sum + item.netRevenue, 0))}
+                        {formatCurrency(
+                          data.reduce((sum, item) => sum + item.netRevenue, 0),
+                        )}
                       </p>
                     </div>
                     <DollarSign className="w-8 h-8 text-emerald-500" />
@@ -1199,12 +1295,17 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.avgOrderValue")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.avgOrderValue")}
+                      </p>
                       <p className="text-2xl font-bold">
                         {formatCurrency(
-                          data.length > 0 
-                            ? data.reduce((sum, item) => sum + item.averageOrderValue, 0) / data.length 
-                            : 0
+                          data.length > 0
+                            ? data.reduce(
+                                (sum, item) => sum + item.averageOrderValue,
+                                0,
+                              ) / data.length
+                            : 0,
                         )}
                       </p>
                     </div>
@@ -1282,7 +1383,10 @@ export function SalesChartReport() {
                     ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-gray-500">
+                    <TableCell
+                      colSpan={9}
+                      className="text-center text-gray-500"
+                    >
                       {t("reports.noData")}
                     </TableCell>
                   </TableRow>
@@ -1295,7 +1399,7 @@ export function SalesChartReport() {
 
       case "customer": {
         const data = getCustomerAnalysisData();
-        
+
         // Render UI similar to customer report from legacy reports
         return (
           <>
@@ -1305,7 +1409,9 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalCustomers")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalCustomers")}
+                      </p>
                       <p className="text-2xl font-bold">{data.length}</p>
                     </div>
                     <Users className="w-8 h-8 text-blue-500" />
@@ -1316,7 +1422,9 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalOrders")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalOrders")}
+                      </p>
                       <p className="text-2xl font-bold">
                         {data.reduce((sum, item) => sum + item.orders, 0)}
                       </p>
@@ -1329,9 +1437,13 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalRevenue")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalRevenue")}
+                      </p>
                       <p className="text-2xl font-bold">
-                        {formatCurrency(data.reduce((sum, item) => sum + item.netRevenue, 0))}
+                        {formatCurrency(
+                          data.reduce((sum, item) => sum + item.netRevenue, 0),
+                        )}
                       </p>
                     </div>
                     <DollarSign className="w-8 h-8 text-emerald-500" />
@@ -1342,12 +1454,17 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.avgOrderValue")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.avgOrderValue")}
+                      </p>
                       <p className="text-2xl font-bold">
                         {formatCurrency(
-                          data.length > 0 
-                            ? data.reduce((sum, item) => sum + item.averageOrderValue, 0) / data.length 
-                            : 0
+                          data.length > 0
+                            ? data.reduce(
+                                (sum, item) => sum + item.averageOrderValue,
+                                0,
+                              ) / data.length
+                            : 0,
                         )}
                       </p>
                     </div>
@@ -1420,7 +1537,10 @@ export function SalesChartReport() {
                     ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center text-gray-500">
+                    <TableCell
+                      colSpan={8}
+                      className="text-center text-gray-500"
+                    >
                       {t("reports.noData")}
                     </TableCell>
                   </TableRow>
@@ -1433,7 +1553,7 @@ export function SalesChartReport() {
 
       case "channel": {
         const data = getChannelAnalysisData();
-        
+
         // Render UI similar to sales channel report from legacy reports
         return (
           <>
@@ -1443,7 +1563,9 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalChannels")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalChannels")}
+                      </p>
                       <p className="text-2xl font-bold">{data.length}</p>
                     </div>
                     <BarChart3 className="w-8 h-8 text-blue-500" />
@@ -1454,7 +1576,9 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalOrders")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalOrders")}
+                      </p>
                       <p className="text-2xl font-bold">
                         {data.reduce((sum, item) => sum + item.orders, 0)}
                       </p>
@@ -1467,9 +1591,13 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalRevenue")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalRevenue")}
+                      </p>
                       <p className="text-2xl font-bold">
-                        {formatCurrency(data.reduce((sum, item) => sum + item.netRevenue, 0))}
+                        {formatCurrency(
+                          data.reduce((sum, item) => sum + item.netRevenue, 0),
+                        )}
                       </p>
                     </div>
                     <DollarSign className="w-8 h-8 text-emerald-500" />
@@ -1480,9 +1608,13 @@ export function SalesChartReport() {
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600">{t("reports.totalProfit")}</p>
+                      <p className="text-sm text-gray-600">
+                        {t("reports.totalProfit")}
+                      </p>
                       <p className="text-2xl font-bold">
-                        {formatCurrency(data.reduce((sum, item) => sum + item.netProfit, 0))}
+                        {formatCurrency(
+                          data.reduce((sum, item) => sum + item.netProfit, 0),
+                        )}
                       </p>
                     </div>
                     <TrendingUp className="w-8 h-8 text-purple-500" />
@@ -1559,7 +1691,10 @@ export function SalesChartReport() {
                     ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-gray-500">
+                    <TableCell
+                      colSpan={9}
+                      className="text-center text-gray-500"
+                    >
                       {t("reports.noData")}
                     </TableCell>
                   </TableRow>
@@ -1643,7 +1778,7 @@ export function SalesChartReport() {
   const getChartData = () => {
     // Use previous report data if available, otherwise calculate from current filtered data
     const dataToUse = previousReportData?.data || getFilteredData();
-    
+
     if (analysisType === "time") {
       switch (concernType) {
         case "time": {
@@ -1939,25 +2074,6 @@ export function SalesChartReport() {
               </Select>
             </div>
 
-            {/* Concern Type Selector - Only show for time analysis */}
-            {analysisType === "time" && (
-              <div>
-                <Label>{t("reports.concernType")}</Label>
-                <Select value={concernType} onValueChange={setConcernType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="time">{t("reports.timeReport")}</SelectItem>
-                    <SelectItem value="profit">{t("reports.profitReport")}</SelectItem>
-                    <SelectItem value="discount">{t("reports.discountReport")}</SelectItem>
-                    <SelectItem value="return">{t("reports.returnReport")}</SelectItem>
-                    <SelectItem value="employee">{t("reports.employeeReport")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
             {/* Sales Method Filter */}
             <div>
               <Label>{t("reports.salesMethod")}</Label>
@@ -1994,23 +2110,30 @@ export function SalesChartReport() {
           </div>
 
           {/* Additional filters based on analysis type */}
-          {(analysisType === "product" || analysisType === "employee" || analysisType === "customer") && (
+          {(analysisType === "product" ||
+            analysisType === "employee" ||
+            analysisType === "customer") && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Employee Filter - for employee analysis */}
               {analysisType === "employee" && (
                 <div>
                   <Label>{t("reports.seller")}</Label>
-                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                  <Select
+                    value={selectedEmployee}
+                    onValueChange={setSelectedEmployee}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder={t("reports.seller")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t("common.all")}</SelectItem>
-                      {employees && Array.isArray(employees) && employees.map((employee: any) => (
-                        <SelectItem key={employee.id} value={employee.name}>
-                          {employee.name}
-                        </SelectItem>
-                      ))}
+                      {employees &&
+                        Array.isArray(employees) &&
+                        employees.map((employee: any) => (
+                          <SelectItem key={employee.id} value={employee.name}>
+                            {employee.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -2058,9 +2181,15 @@ export function SalesChartReport() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t("common.all")}</SelectItem>
-                      <SelectItem value="combo">{t("reports.combo")}</SelectItem>
-                      <SelectItem value="product">{t("reports.product")}</SelectItem>
-                      <SelectItem value="service">{t("reports.service")}</SelectItem>
+                      <SelectItem value="combo">
+                        {t("reports.combo")}
+                      </SelectItem>
+                      <SelectItem value="product">
+                        {t("reports.product")}
+                      </SelectItem>
+                      <SelectItem value="service">
+                        {t("reports.service")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -2070,17 +2199,25 @@ export function SalesChartReport() {
               {analysisType === "product" && (
                 <div>
                   <Label>{t("reports.productGroup")}</Label>
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <Select
+                    value={selectedCategory}
+                    onValueChange={setSelectedCategory}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder={t("reports.productGroup")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t("common.all")}</SelectItem>
-                      {categories && Array.isArray(categories) && categories.map((category: any) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
+                      {categories &&
+                        Array.isArray(categories) &&
+                        categories.map((category: any) => (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id.toString()}
+                          >
+                            {category.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
