@@ -500,8 +500,9 @@ export class DatabaseStorage implements IStorage {
     return { ...transaction, items };
   }
 
-  async getTransactions(): Promise<Transaction[]> {
-    return await db.select().from(transactions).orderBy(transactions.createdAt);
+  async getTransactions(tenantDb?: any): Promise<Transaction[]> {
+    const database = tenantDb || db;
+    return await database.select().from(transactions).orderBy(transactions.createdAt);
   }
 
   // Get next employee ID in sequence
@@ -819,7 +820,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Orders
-  async getOrders(tableId?: number, status?: string): Promise<Order[]> {
+  async getOrders(tableId?: number, status?: string, tenantDb?: any): Promise<Order[]> {
+    const database = tenantDb || db;
     const conditions = [];
 
     if (tableId) {
@@ -830,14 +832,14 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (conditions.length > 0) {
-      return await db
+      return await database
         .select()
         .from(orders)
         .where(and(...conditions))
         .orderBy(orders.orderedAt);
     }
 
-    return await db.select().from(orders).orderBy(orders.orderedAt);
+    return await database.select().from(orders).orderBy(orders.orderedAt);
   }
 
   async getOrder(id: number): Promise<Order | undefined> {

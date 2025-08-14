@@ -2177,6 +2177,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add new API endpoints with proper date filtering for sales chart report
+  app.get(
+    "/api/transactions/:startDate/:endDate/:salesMethod/:salesChannel/:analysisType/:concernType/:selectedEmployee",
+    async (req: TenantRequest, res) => {
+      try {
+        const { startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee } = req.params;
+        const tenantDb = await getTenantDatabase(req);
+
+        console.log("Transactions API called with params:", {
+          startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee
+        });
+
+        const transactions = await storage.getTransactions(tenantDb);
+        
+        const filteredTransactions = transactions.filter((transaction) => {
+          const transactionDate = new Date(transaction.createdAt);
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+
+          const dateMatch = transactionDate >= start && transactionDate <= end;
+
+          // Enhanced filtering logic based on actual transaction data
+          const methodMatch =
+            salesMethod === "all" ||
+            (salesMethod === "no_delivery" && 
+              (!transaction.deliveryMethod || transaction.deliveryMethod === "pickup")) ||
+            (salesMethod === "delivery" && 
+              transaction.deliveryMethod === "delivery");
+
+          const channelMatch =
+            salesChannel === "all" ||
+            (salesChannel === "direct" && 
+              (!transaction.salesChannel || transaction.salesChannel === "direct" || transaction.salesChannel === "pos")) ||
+            (salesChannel === "other" && 
+              transaction.salesChannel && transaction.salesChannel !== "direct" && transaction.salesChannel !== "pos");
+
+          // Employee filter
+          const employeeMatch =
+            selectedEmployee === "all" ||
+            transaction.cashierName === selectedEmployee ||
+            transaction.employeeId?.toString() === selectedEmployee ||
+            (transaction.cashierName && transaction.cashierName.includes(selectedEmployee));
+
+          return dateMatch && methodMatch && channelMatch && employeeMatch;
+        });
+
+        res.json(filteredTransactions);
+      } catch (error) {
+        console.error("Error in transactions API:", error);
+        res.status(500).json({ error: "Failed to fetch transactions data" });
+      }
+    },
+  );
+
+  app.get(
+    "/api/orders/:startDate/:endDate/:selectedEmployee/:salesChannel/:salesMethod/:analysisType/:concernType",
+    async (req: TenantRequest, res) => {
+      try {
+        const { startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType } = req.params;
+        const tenantDb = await getTenantDatabase(req);
+
+        console.log("Orders API called with params:", {
+          startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType
+        });
+
+        const orders = await storage.getOrders(undefined, undefined, tenantDb);
+        
+        const filteredOrders = orders.filter((order) => {
+          const orderDate = new Date(order.orderedAt);
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
+
+          const dateMatch = orderDate >= start && orderDate <= end;
+          const statusMatch = order.status === "paid";
+          
+          const employeeMatch =
+            selectedEmployee === "all" || 
+            order.employeeId?.toString() === selectedEmployee;
+            
+          const channelMatch =
+            salesChannel === "all" ||
+            (salesChannel === "direct" && 
+              (!order.salesChannel || order.salesChannel === "direct")) ||
+            (salesChannel === "other" && 
+              order.salesChannel && order.salesChannel !== "direct");
+
+          const methodMatch =
+            salesMethod === "all" ||
+            (salesMethod === "no_delivery" && 
+              (!order.deliveryMethod || order.deliveryMethod === "pickup")) ||
+            (salesMethod === "delivery" && 
+              order.deliveryMethod === "delivery");
+
+          return dateMatch && statusMatch && employeeMatch && channelMatch && methodMatch;
+        });
+
+        res.json(filteredOrders);
+      } catch (error) {
+        console.error("Error in orders API:", error);
+        res.status(500).json({ error: "Failed to fetch orders data" });
+      }
+    },
+  );
+
   // Sales channel sales data
   // Sales Channel Sales API
   app.get(
