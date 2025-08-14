@@ -167,7 +167,7 @@ export function InvoiceManagementModal({
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="border-b bg-gray-50">
-                      <th className="text-left p-3 font-medium">Số hóa đơn</th>
+                      <th className="text-left p-3 font-medium">Số giao dịch</th>
                       <th className="text-left p-3 font-medium">Khách hàng</th>
                       <th className="text-left p-3 font-medium">Tổng tiền</th>
                       <th className="text-left p-3 font-medium">Thanh toán</th>
