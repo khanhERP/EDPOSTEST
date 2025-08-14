@@ -24,9 +24,11 @@ if (!DATABASE_URL) {
 
 export const pool = new Pool({ 
   connectionString: DATABASE_URL,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  max: 10,
+  idleTimeoutMillis: 60000,
+  connectionTimeoutMillis: 10000,
+  acquireTimeoutMillis: 10000,
+  ssl: DATABASE_URL?.includes('1.55.212.138') ? { rejectUnauthorized: false } : undefined,
 });
 
 // Log database connection info with detailed debugging

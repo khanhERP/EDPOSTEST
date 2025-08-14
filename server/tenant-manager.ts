@@ -76,7 +76,10 @@ class TenantManager {
     const pool = new Pool({ 
       connectionString: tenant.databaseUrl,
       max: 10,
-      idleTimeoutMillis: 30000,
+      idleTimeoutMillis: 60000,
+      connectionTimeoutMillis: 10000,
+      acquireTimeoutMillis: 10000,
+      ssl: tenant.databaseUrl?.includes('1.55.212.138') ? { rejectUnauthorized: false } : undefined,
     });
 
     const db = drizzle({ client: pool, schema });
