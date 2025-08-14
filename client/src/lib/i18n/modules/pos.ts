@@ -48,6 +48,7 @@ export interface POSTranslations {
   payment: string;
   cash: string;
   card: string;
+  debitCard: string;
   amountReceived: string;
   change: string;
   paymentMethod: string;
@@ -187,6 +188,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     payment: '결제',
     cash: '현금',
     card: '카드',
+    debitCard: '직불카드',
     amountReceived: '받은 금액',
     change: '거스름돈',
     paymentMethod: '결제 방법',
@@ -323,6 +325,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     payment: 'Payment',
     cash: 'Cash',
     card: 'Card',
+    debitCard: 'Debit Card',
     amountReceived: 'Amount Received',
     change: 'Change',
     paymentMethod: 'Payment Method',
@@ -460,6 +463,7 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     payment: 'Thanh toán',
     cash: 'Tiền mặt',
     card: 'Thẻ',
+    debitCard: 'Thẻ ghi nợ',
     amountReceived: 'Số tiền nhận',
     change: 'Tiền thối',
     paymentMethod: 'Phương thức thanh toán',
