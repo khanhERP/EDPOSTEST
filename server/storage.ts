@@ -1478,6 +1478,20 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async getActiveInvoiceTemplates(): Promise<any[]> {
+    try {
+      const { invoiceTemplates } = await import("@shared/schema");
+      return await db
+        .select()
+        .from(invoiceTemplates)
+        .where(eq(invoiceTemplates.isActive, true))
+        .orderBy(invoiceTemplates.id);
+    } catch (error) {
+      console.error("Error fetching active invoice templates:", error);
+      return [];
+    }
+  }
+
   async getInvoiceTemplate(id: number): Promise<any> {
     try {
       const { invoiceTemplates } = await import("@shared/schema");

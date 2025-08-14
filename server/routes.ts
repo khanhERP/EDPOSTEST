@@ -1682,7 +1682,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/invoice-templates/active", async (req: TenantRequest, res) => {
     try {
       const tenantDb = await getTenantDatabase(req);
-      const activeTemplates = await storage.getActiveInvoiceTemplates(tenantDb);
+      const activeTemplates = await storage.getActiveInvoiceTemplates();
       res.json(activeTemplates);
     } catch (error) {
       console.error("Error fetching active invoice templates:", error);
