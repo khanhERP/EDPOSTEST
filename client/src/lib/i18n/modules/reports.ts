@@ -43,6 +43,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customers: "고객",
     cash: "현금",
     card: "카드",
+    einvoice: "전자 인보이스",
 
     // Table analysis specific
     customerCount: "고객 수",
@@ -669,6 +670,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cardPayment: "Card",
     transfer: "Bank Transfer",
     wallet: "E-Wallet",
+    einvoice: "E-Invoice",
 
     // Comprehensive sales report
     comprehensiveSalesReport: "Comprehensive Sales Report",
@@ -980,6 +982,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cardPayment: "Thẻ",
     transfer: "Chuyển khoản",
     wallet: "Ví điện tử",
+    einvoice: "Hóa đơn điện tử",
 
     // Comprehensive sales report
     comprehensiveSalesReport: "Báo cáo bán hàng toàn diện",
