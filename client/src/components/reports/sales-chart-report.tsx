@@ -86,6 +86,13 @@ export function SalesChartReport() {
       concernType,
       selectedEmployee,
     ],
+    queryFn: async () => {
+      const response = await fetch(`/api/transactions/${startDate}/${endDate}/${salesMethod}/${salesChannel}/${analysisType}/${concernType}/${selectedEmployee}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
+      return response.json();
+    },
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache
     refetchOnMount: true,
@@ -104,6 +111,13 @@ export function SalesChartReport() {
       productSearch,
       productType,
     ],
+    queryFn: async () => {
+      const response = await fetch(`/api/products/${selectedCategory || 'all'}/${productType || 'all'}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+      return response.json();
+    },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -114,6 +128,13 @@ export function SalesChartReport() {
 
   const { data: customers } = useQuery({
     queryKey: ["/api/customers", customerSearch],
+    queryFn: async () => {
+      const response = await fetch(`/api/customers/${customerSearch || ''}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch customers');
+      }
+      return response.json();
+    },
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
@@ -128,6 +149,13 @@ export function SalesChartReport() {
       analysisType,
       concernType,
     ],
+    queryFn: async () => {
+      const response = await fetch(`/api/orders/${startDate}/${endDate}/${selectedEmployee}/${salesChannel}/${salesMethod}/${analysisType}/${concernType}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+      return response.json();
+    },
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache
     refetchOnMount: true,
