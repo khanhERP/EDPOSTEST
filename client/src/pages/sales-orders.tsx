@@ -241,12 +241,21 @@ export default function SalesOrders() {
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       
-      // 3. Ẩn vùng chi tiết đơn hàng - Clear all related states
-      setSelectedInvoice(null);
-      setIsEditing(false);
-      setEditableInvoice(null);
+      // 3. Cập nhật trạng thái của selectedInvoice nếu đang hiển thị
+      if (selectedInvoice && selectedInvoice.id === item.id && selectedInvoice.type === item.type) {
+        setSelectedInvoice({
+          ...selectedInvoice,
+          invoiceStatus: 3, // Đã hủy
+          displayStatus: 3,
+          status: item.type === 'order' ? 'cancelled' : selectedInvoice.status
+        });
+        
+        // Reset editing states
+        setIsEditing(false);
+        setEditableInvoice(null);
+      }
       
-      console.log('Order/Invoice details section should now be hidden');
+      console.log('Order/Invoice cancelled and status updated');
     },
     onError: (error) => {
       console.error('Error canceling invoice:', error);
