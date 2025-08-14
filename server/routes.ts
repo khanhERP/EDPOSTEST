@@ -81,9 +81,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Categories
-  app.get("/api/categories", async (req, res) => {
+  app.get("/api/categories", async (req: TenantRequest, res) => {
     try {
-      const categories = await storage.getCategories();
+      const tenantDb = await getTenantDatabase(req);
+      const categories = await storage.getCategories(tenantDb);
       res.json(categories);
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -91,9 +92,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/categories", async (req, res) => {
+  app.post("/api/categories", async (req: TenantRequest, res) => {
     try {
       const { name, icon } = req.body;
+      const tenantDb = await getTenantDatabase(req);
 
       if (!name || !name.trim()) {
         return res.status(400).json({ error: "Category name is required" });
@@ -104,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         icon: icon || "fas fa-utensils",
       };
 
-      const category = await storage.createCategory(categoryData);
+      const category = await storage.createCategory(categoryData, tenantDb);
       res.json(category);
     } catch (error) {
       console.error("Error creating category:", error);
@@ -112,10 +114,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/categories/:id", async (req, res) => {
+  app.put("/api/categories/:id", async (req: TenantRequest, res) => {
     try {
       const categoryId = parseInt(req.params.id);
       const { name, icon } = req.body;
+      const tenantDb = await getTenantDatabase(req);
 
       if (!name || !name.trim()) {
         return res.status(400).json({ error: "Category name is required" });
@@ -126,7 +129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         icon: icon || "fas fa-utensils",
       };
 
-      const category = await storage.updateCategory(categoryId, categoryData);
+      const category = await storage.updateCategory(categoryId, categoryData, tenantDb);
       res.json(category);
     } catch (error) {
       console.error("Error updating category:", error);
@@ -134,19 +137,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/categories/:id", async (req, res) => {
+  app.delete("/api/categories/:id", async (req: TenantRequest, res) => {
     try {
       const categoryId = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
 
       // Check if category has products
-      const products = await storage.getProductsByCategory(categoryId);
+      const products = await storage.getProductsByCategory(categoryId, tenantDb);
       if (products.length > 0) {
         return res.status(400).json({
           error: `Không thể xóa danh mục vì còn ${products.length} sản phẩm. Vui lòng xóa hoặc chuyển các sản phẩm sang danh mục khác trước.`,
         });
       }
 
-      await storage.deleteCategory(categoryId);
+      await storage.deleteCategory(categoryId, tenantDb);
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting category:", error);
@@ -199,19 +203,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Endpoint for POS to get only active products
-  app.get("/api/products/active", async (req, res) => {
+  app.get("/api/products/active", async (req: TenantRequest, res) => {
     try {
-      const products = await storage.getActiveProducts();
+      const tenantDb = await getTenantDatabase(req);
+      const products = await storage.getActiveProducts(tenantDb);
       res.json(products);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch active products" });
     }
   });
 
-  app.get("/api/products/:id", async (req, res) => {
+  app.get("/api/products/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const product = await storage.getProduct(id);
+      const tenantDb = await getTenantDatabase(req);
+      const product = await storage.getProduct(id, tenantDb);
 
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
@@ -223,9 +229,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/products", async (req, res) => {
+  app.post("/api/products", async (req: TenantRequest, res) => {
     try {
       console.log("Product creation request body:", req.body);
+      const tenantDb = await getTenantDatabase(req);
 
       // Ensure required fields are present
       if (
@@ -270,7 +277,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const product = await storage.createProduct(validatedData);
+      const product = await storage.createProduct(validatedData, tenantDb);
       console.log("Product created successfully:", product);
       res.status(201).json(product);
     } catch (error) {
@@ -290,11 +297,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/products/:id", async (req, res) => {
+  app.put("/api/products/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertProductSchema.partial().parse(req.body);
-      const product = await storage.updateProduct(id, validatedData);
+      const tenantDb = await getTenantDatabase(req);
+      const product = await storage.updateProduct(id, validatedData, tenantDb);
 
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
@@ -311,10 +319,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/products/:id", async (req, res) => {
+  app.delete("/api/products/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteProduct(id);
+      const tenantDb = await getTenantDatabase(req);
+      const deleted = await storage.deleteProduct(id, tenantDb);
 
       if (!deleted) {
         return res.status(404).json({ message: "Product not found" });
@@ -338,9 +347,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // New endpoint to cleanup inactive products
-  app.delete("/api/products/cleanup/inactive", async (req, res) => {
+  app.delete("/api/products/cleanup/inactive", async (req: TenantRequest, res) => {
     try {
-      const deletedCount = await storage.deleteInactiveProducts();
+      const tenantDb = await getTenantDatabase(req);
+      const deletedCount = await storage.deleteInactiveProducts(tenantDb);
       res.json({
         message: `Successfully deleted ${deletedCount} inactive products`,
         deletedCount,
@@ -350,10 +360,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/products/barcode/:sku", async (req, res) => {
+  app.get("/api/products/barcode/:sku", async (req: TenantRequest, res) => {
     try {
       const sku = req.params.sku;
-      const product = await storage.getProductBySku(sku);
+      const tenantDb = await getTenantDatabase(req);
+      const product = await storage.getProductBySku(sku, tenantDb);
 
       if (!product) {
         return res.status(404).json({ message: "Product not found" });
@@ -366,9 +377,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Transactions
-  app.post("/api/transactions", async (req, res) => {
+  app.post("/api/transactions", async (req: TenantRequest, res) => {
     try {
       const { transaction, items } = req.body;
+      const tenantDb = await getTenantDatabase(req);
 
       console.log(
         "Received transaction data:",
@@ -386,7 +398,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Validate stock availability
       for (const item of validatedItems) {
-        const product = await storage.getProduct(item.productId);
+        const product = await storage.getProduct(item.productId, tenantDb);
         if (!product) {
           return res
             .status(400)
@@ -402,6 +414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const receipt = await storage.createTransaction(
         validatedTransaction,
         validatedItems,
+        tenantDb,
       );
       res.status(201).json(receipt);
     } catch (error) {
@@ -420,20 +433,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/transactions", async (req, res) => {
+  app.get("/api/transactions", async (req: TenantRequest, res) => {
     try {
-      const transactions = await storage.getTransactions();
+      const tenantDb = await getTenantDatabase(req);
+      const transactions = await storage.getTransactions(tenantDb);
       res.json(transactions);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch transactions" });
     }
   });
 
-  app.get("/api/transactions/:transactionId", async (req, res) => {
+  app.get("/api/transactions/:transactionId", async (req: TenantRequest, res) => {
     try {
       const transactionId = req.params.transactionId;
+      const tenantDb = await getTenantDatabase(req);
       const receipt =
-        await storage.getTransactionByTransactionId(transactionId);
+        await storage.getTransactionByTransactionId(transactionId, tenantDb);
 
       if (!receipt) {
         return res.status(404).json({ message: "Transaction not found" });
@@ -446,9 +461,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get next employee ID
-  app.get("/api/employees/next-id", async (req, res) => {
+  app.get("/api/employees/next-id", async (req: TenantRequest, res) => {
     try {
-      const nextId = await storage.getNextEmployeeId();
+      const tenantDb = await getTenantDatabase(req);
+      const nextId = await storage.getNextEmployeeId(tenantDb);
       res.json({ nextId });
     } catch (error) {
       res.status(500).json({ message: "Failed to generate employee ID" });
@@ -456,19 +472,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Employees
-  app.get("/api/employees", async (req, res) => {
+  app.get("/api/employees", async (req: TenantRequest, res) => {
     try {
-      const employees = await storage.getEmployees();
+      const tenantDb = await getTenantDatabase(req);
+      const employees = await storage.getEmployees(tenantDb);
       res.json(employees);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch employees" });
     }
   });
 
-  app.get("/api/employees/:id", async (req, res) => {
+  app.get("/api/employees/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const employee = await storage.getEmployee(id);
+      const tenantDb = await getTenantDatabase(req);
+      const employee = await storage.getEmployee(id, tenantDb);
 
       if (!employee) {
         return res.status(404).json({ message: "Employee not found" });
@@ -480,14 +498,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/employees", async (req, res) => {
+  app.post("/api/employees", async (req: TenantRequest, res) => {
     try {
       const validatedData = insertEmployeeSchema.parse(req.body);
+      const tenantDb = await getTenantDatabase(req);
 
       // Check if email already exists (only if email is provided and not empty)
       if (validatedData.email && validatedData.email.trim() !== "") {
         const existingEmployee = await storage.getEmployeeByEmail(
           validatedData.email,
+          tenantDb,
         );
         if (existingEmployee) {
           return res.status(400).json({
@@ -498,7 +518,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const employee = await storage.createEmployee(validatedData);
+      const employee = await storage.createEmployee(validatedData, tenantDb);
       res.status(201).json(employee);
     } catch (error) {
       console.log("error: ", error);
@@ -511,15 +531,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/employees/:id", async (req, res) => {
+  app.put("/api/employees/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertEmployeeSchema.partial().parse(req.body);
+      const tenantDb = await getTenantDatabase(req);
 
       // Check if email already exists (only if email is provided and not empty, excluding current employee)
       if (validatedData.email && validatedData.email.trim() !== "") {
         const existingEmployee = await storage.getEmployeeByEmail(
           validatedData.email,
+          tenantDb,
         );
         if (existingEmployee && existingEmployee.id !== id) {
           return res.status(409).json({
@@ -530,7 +552,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const employee = await storage.updateEmployee(id, validatedData);
+      const employee = await storage.updateEmployee(id, validatedData, tenantDb);
 
       if (!employee) {
         return res.status(404).json({ message: "Employee not found" });
@@ -547,10 +569,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/employees/:id", async (req, res) => {
+  app.delete("/api/employees/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteEmployee(id);
+      const tenantDb = await getTenantDatabase(req);
+      const deleted = await storage.deleteEmployee(id, tenantDb);
 
       if (!deleted) {
         return res.status(404).json({ message: "Employee not found" });
@@ -563,9 +586,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Attendance routes
-  app.get("/api/attendance", async (req, res) => {
+  app.get("/api/attendance", async (req: TenantRequest, res) => {
     try {
       const { date } = req.query;
+      const tenantDb = await getTenantDatabase(req);
 
       let whereCondition;
       if (date && typeof date === "string") {
@@ -595,30 +619,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/attendance/today/:employeeId", async (req, res) => {
+  app.get("/api/attendance/today/:employeeId", async (req: TenantRequest, res) => {
     try {
       const employeeId = parseInt(req.params.employeeId);
-      const record = await storage.getTodayAttendance(employeeId);
+      const tenantDb = await getTenantDatabase(req);
+      const record = await storage.getTodayAttendance(employeeId, tenantDb);
       res.json(record);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch today's attendance" });
     }
   });
 
-  app.post("/api/attendance/clock-in", async (req, res) => {
+  app.post("/api/attendance/clock-in", async (req: TenantRequest, res) => {
     try {
       const { employeeId, notes } = req.body;
-      const record = await storage.clockIn(employeeId, notes);
+      const tenantDb = await getTenantDatabase(req);
+      const record = await storage.clockIn(employeeId, notes, tenantDb);
       res.status(201).json(record);
     } catch (error) {
       res.status(500).json({ message: "Failed to clock in" });
     }
   });
 
-  app.post("/api/attendance/clock-out/:id", async (req, res) => {
+  app.post("/api/attendance/clock-out/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const record = await storage.clockOut(id);
+      const tenantDb = await getTenantDatabase(req);
+      const record = await storage.clockOut(id, tenantDb);
 
       if (!record) {
         return res.status(404).json({ message: "Attendance record not found" });
@@ -630,10 +657,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/attendance/break-start/:id", async (req, res) => {
+  app.post("/api/attendance/break-start/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const record = await storage.startBreak(id);
+      const tenantDb = await getTenantDatabase(req);
+      const record = await storage.startBreak(id, tenantDb);
 
       if (!record) {
         return res.status(404).json({ message: "Attendance record not found" });
@@ -645,10 +673,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/attendance/break-end/:id", async (req, res) => {
+  app.post("/api/attendance/break-end/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const record = await storage.endBreak(id);
+      const tenantDb = await getTenantDatabase(req);
+      const record = await storage.endBreak(id, tenantDb);
 
       if (!record) {
         return res.status(404).json({ message: "Attendance record not found" });
@@ -660,11 +689,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/attendance/:id/status", async (req, res) => {
+  app.put("/api/attendance/:id/status", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const { status } = req.body;
-      const record = await storage.updateAttendanceStatus(id, status);
+      const tenantDb = await getTenantDatabase(req);
+      const record = await storage.updateAttendanceStatus(id, status, tenantDb);
 
       if (!record) {
         return res.status(404).json({ message: "Attendance record not found" });
@@ -677,19 +707,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Tables
-  app.get("/api/tables", async (req, res) => {
+  app.get("/api/tables", async (req: TenantRequest, res) => {
     try {
-      const tables = await storage.getTables();
+      const tenantDb = await getTenantDatabase(req);
+      const tables = await storage.getTables(tenantDb);
       res.json(tables);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch tables" });
     }
   });
 
-  app.get("/api/tables/:id", async (req, res) => {
+  app.get("/api/tables/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const table = await storage.getTable(id);
+      const tenantDb = await getTenantDatabase(req);
+      const table = await storage.getTable(id, tenantDb);
 
       if (!table) {
         return res.status(404).json({ message: "Table not found" });
@@ -701,21 +733,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/tables", async (req, res) => {
+  app.post("/api/tables", async (req: TenantRequest, res) => {
     try {
       const tableData = insertTableSchema.parse(req.body);
-      const table = await storage.createTable(tableData);
+      const tenantDb = await getTenantDatabase(req);
+      const table = await storage.createTable(tableData, tenantDb);
       res.status(201).json(table);
     } catch (error) {
       res.status(400).json({ message: "Failed to create table" });
     }
   });
 
-  app.put("/api/tables/:id", async (req, res) => {
+  app.put("/api/tables/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const tableData = insertTableSchema.partial().parse(req.body);
-      const table = await storage.updateTable(id, tableData);
+      const tenantDb = await getTenantDatabase(req);
+      const table = await storage.updateTable(id, tableData, tenantDb);
 
       if (!table) {
         return res.status(404).json({ message: "Table not found" });
@@ -727,11 +761,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/tables/:id/status", async (req, res) => {
+  app.put("/api/tables/:id/status", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const { status } = req.body;
-      const table = await storage.updateTableStatus(id, status);
+      const tenantDb = await getTenantDatabase(req);
+      const table = await storage.updateTableStatus(id, status, tenantDb);
 
       if (!table) {
         return res.status(404).json({ message: "Table not found" });
@@ -743,10 +778,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/tables/:id", async (req, res) => {
+  app.delete("/api/tables/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteTable(id);
+      const tenantDb = await getTenantDatabase(req);
+      const deleted = await storage.deleteTable(id, tenantDb);
 
       if (!deleted) {
         return res.status(404).json({ message: "Table not found" });
@@ -759,12 +795,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders
-  app.get("/api/orders", async (req, res) => {
+  app.get("/api/orders", async (req: TenantRequest, res) => {
     try {
       const { tableId, status } = req.query;
+      const tenantDb = await getTenantDatabase(req);
       const orders = await storage.getOrders(
         tableId ? parseInt(tableId as string) : undefined,
         status as string,
+        tenantDb,
       );
       res.json(orders);
     } catch (error) {
@@ -772,25 +810,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/orders/:id", async (req, res) => {
+  app.get("/api/orders/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const order = await storage.getOrder(id);
+      const tenantDb = await getTenantDatabase(req);
+      const order = await storage.getOrder(id, tenantDb);
 
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      const items = await storage.getOrderItems(id);
+      const items = await storage.getOrderItems(id, tenantDb);
       res.json({ ...order, items });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch order" });
     }
   });
 
-  app.post("/api/orders", async (req, res) => {
+  app.post("/api/orders", async (req: TenantRequest, res) => {
     try {
       const { order, items } = req.body;
+      const tenantDb = await getTenantDatabase(req);
       console.log(
         "Received order data:",
         JSON.stringify({ order, items }, null, 2),
@@ -806,10 +846,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         JSON.stringify({ orderData, itemsData }, null, 2),
       );
 
-      const newOrder = await storage.createOrder(orderData, itemsData);
+      const newOrder = await storage.createOrder(orderData, itemsData, tenantDb);
 
       // Verify items were created
-      const createdItems = await storage.getOrderItems(newOrder.id);
+      const createdItems = await storage.getOrderItems(newOrder.id, tenantDb);
       console.log(
         `Created ${createdItems.length} items for order ${newOrder.id}:`,
         createdItems,
@@ -832,11 +872,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/orders/:id/status", async (req, res) => {
+  app.put("/api/orders/:id/status", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const { status } = req.body;
-      const order = await storage.updateOrderStatus(id, status);
+      const tenantDb = await getTenantDatabase(req);
+      const order = await storage.updateOrderStatus(id, status, tenantDb);
 
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
@@ -848,13 +889,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/orders/:id/payment", async (req, res) => {
+  app.post("/api/orders/:id/payment", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const { paymentMethod } = req.body;
+      const tenantDb = await getTenantDatabase(req);
 
       // Update order status to paid
-      const order = await storage.updateOrderStatus(id, "paid");
+      const order = await storage.updateOrderStatus(id, "paid", tenantDb);
 
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
@@ -862,7 +904,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Also update table status to available if the order is linked to a table
       if (order.tableId) {
-        await storage.updateTableStatus(order.tableId, "available");
+        await storage.updateTableStatus(order.tableId, "available", tenantDb);
       }
 
       res.json({ ...order, paymentMethod });
@@ -872,10 +914,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/order-items/:orderId", async (req, res) => {
+  app.get("/api/order-items/:orderId", async (req: TenantRequest, res) => {
     try {
       console.log("=== GET ORDER ITEMS API CALLED ===");
       const orderId = parseInt(req.params.orderId);
+      const tenantDb = await getTenantDatabase(req);
       console.log("Order ID requested:", orderId);
 
       if (isNaN(orderId)) {
@@ -884,7 +927,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log("Fetching order items from storage...");
-      const items = await storage.getOrderItems(orderId);
+      const items = await storage.getOrderItems(orderId, tenantDb);
       console.log(`Found ${items.length} order items:`, items);
 
       res.json(items);
@@ -904,11 +947,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Add order items to existing order
-  app.post("/api/orders/:orderId/items", async (req, res) => {
+  app.post("/api/orders/:orderId/items", async (req: TenantRequest, res) => {
     try {
       console.log("=== ADD ORDER ITEMS API CALLED ===");
       const orderId = parseInt(req.params.orderId);
       const { items } = req.body;
+      const tenantDb = await getTenantDatabase(req);
 
       console.log("Request params:", req.params);
       console.log("Order ID:", orderId);
@@ -1049,9 +1093,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Inventory Management
-  app.post("/api/inventory/update-stock", async (req, res) => {
+  app.post("/api/inventory/update-stock", async (req: TenantRequest, res) => {
     try {
       const { productId, quantity, type, notes, trackInventory } = req.body;
+      const tenantDb = await getTenantDatabase(req);
 
       // Get current product
       const [product] = await db
@@ -1106,19 +1151,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Store Settings
-  app.get("/api/store-settings", async (req, res) => {
+  app.get("/api/store-settings", async (req: TenantRequest, res) => {
     try {
-      const settings = await storage.getStoreSettings();
+      const tenantDb = await getTenantDatabase(req);
+      const settings = await storage.getStoreSettings(tenantDb);
       res.json(settings);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch store settings" });
     }
   });
 
-  app.put("/api/store-settings", async (req, res) => {
+  app.put("/api/store-settings", async (req: TenantRequest, res) => {
     try {
       const validatedData = insertStoreSettingsSchema.partial().parse(req.body);
-      const settings = await storage.updateStoreSettings(validatedData);
+      const tenantDb = await getTenantDatabase(req);
+      const settings = await storage.updateStoreSettings(validatedData, tenantDb);
       res.json(settings);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1132,17 +1179,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Suppliers
-  app.get("/api/suppliers", async (req, res) => {
+  app.get("/api/suppliers", async (req: TenantRequest, res) => {
     try {
       const { status, search } = req.query;
+      const tenantDb = await getTenantDatabase(req);
       let suppliers;
 
       if (search) {
-        suppliers = await storage.searchSuppliers(search as string);
+        suppliers = await storage.searchSuppliers(search as string, tenantDb);
       } else if (status && status !== "all") {
-        suppliers = await storage.getSuppliersByStatus(status as string);
+        suppliers = await storage.getSuppliersByStatus(status as string, tenantDb);
       } else {
-        suppliers = await storage.getSuppliers();
+        suppliers = await storage.getSuppliers(tenantDb);
       }
 
       res.json(suppliers);
@@ -1151,10 +1199,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/suppliers/:id", async (req, res) => {
+  app.get("/api/suppliers/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const supplier = await storage.getSupplier(id);
+      const tenantDb = await getTenantDatabase(req);
+      const supplier = await storage.getSupplier(id, tenantDb);
 
       if (!supplier) {
         return res.status(404).json({ message: "Supplier not found" });
@@ -1166,10 +1215,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/api/suppliers", async (req, res) => {
+  app.post("/api/suppliers", async (req: TenantRequest, res) => {
     try {
       const validatedData = insertSupplierSchema.parse(req.body);
-      const supplier = await storage.createSupplier(validatedData);
+      const tenantDb = await getTenantDatabase(req);
+      const supplier = await storage.createSupplier(validatedData, tenantDb);
       res.status(201).json(supplier);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1181,11 +1231,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/apii/suppliers/:id", async (req, res) => {
+  app.put("/api/suppliers/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const validatedData = insertSupplierSchema.partial().parse(req.body);
-      const supplier = await storage.updateSupplier(id, validatedData);
+      const tenantDb = await getTenantDatabase(req);
+      const supplier = await storage.updateSupplier(id, validatedData, tenantDb);
 
       if (!supplier) {
         return res.status(404).json({ message: "Supplier not found" });
@@ -1202,10 +1253,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/suppliers/:id", async (req, res) => {
+  app.delete("/api/suppliers/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteSupplier(id);
+      const tenantDb = await getTenantDatabase(req);
+      const deleted = await storage.deleteSupplier(id, tenantDb);
 
       if (!deleted) {
         return res.status(404).json({ message: "Supplier not found" });
@@ -1218,19 +1270,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Customer management routes - Added Here
-  app.get("/api/customers", async (req, res) => {
+  app.get("/api/customers", async (req: TenantRequest, res) => {
     try {
-      const customers = await storage.getCustomers();
+      const tenantDb = await getTenantDatabase(req);
+      const customers = await storage.getCustomers(tenantDb);
       res.json(customers);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch customers" });
     }
   });
 
-  app.get("/api/customers/:id", async (req, res) => {
+  app.get("/api/customers/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const customer = await storage.getCustomer(id);
+      const tenantDb = await getTenantDatabase(req);
+      const customer = await storage.getCustomer(id, tenantDb);
       if (!customer) {
         return res.status(404).json({ message: "Customer not found" });
       }
@@ -1240,10 +1294,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/customers", async (req, res) => {
+  app.post("/api/customers", async (req: TenantRequest, res) => {
     try {
       const customerData = req.body;
-      const customer = await storage.createCustomer(customerData);
+      const tenantDb = await getTenantDatabase(req);
+      const customer = await storage.createCustomer(customerData, tenantDb);
       res.status(201).json(customer);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -1255,11 +1310,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/customers/:id", async (req, res) => {
+  app.put("/api/customers/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const customerData = req.body;
-      const customer = await storage.updateCustomer(id, customerData);
+      const tenantDb = await getTenantDatabase(req);
+      const customer = await storage.updateCustomer(id, customerData, tenantDb);
       if (!customer) {
         return res.status(404).json({ message: "Customer not found" });
       }
@@ -1274,10 +1330,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/customers/:id", async (req, res) => {
+  app.delete("/api/customers/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteCustomer(id);
+      const tenantDb = await getTenantDatabase(req);
+      const deleted = await storage.deleteCustomer(id, tenantDb);
       if (!deleted) {
         return res.status(404).json({ message: "Customer not found" });
       }
@@ -1287,12 +1344,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/customers/:id/visit", async (req, res) => {
+  app.post("/api/customers/:id/visit", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const { amount, points } = req.body;
+      const tenantDb = await getTenantDatabase(req);
 
-      const customer = await storage.getCustomer(id);
+      const customer = await storage.getCustomer(id, tenantDb);
       if (!customer) {
         return res.status(404).json({ message: "Customer not found" });
       }
@@ -1301,6 +1359,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         id,
         amount,
         points,
+        tenantDb,
       );
       res.json(updatedCustomer);
     } catch (error) {
@@ -1309,10 +1368,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Point Management API
-  app.get("/api/customers/:id/points", async (req, res) => {
+  app.get("/api/customers/:id/points", async (req: TenantRequest, res) => {
     try {
       const customerId = parseInt(req.params.id);
-      const pointsData = await storage.getCustomerPoints(customerId);
+      const tenantDb = await getTenantDatabase(req);
+      const pointsData = await storage.getCustomerPoints(customerId, tenantDb);
 
       if (!pointsData) {
         return res.status(404).json({ message: "Customer not found" });
@@ -1324,7 +1384,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/customers/:id/points", async (req, res) => {
+  app.post("/api/customers/:id/points", async (req: TenantRequest, res) => {
     try {
       const customerId = parseInt(req.params.id);
       const pointUpdateSchema = z.object({
@@ -1337,6 +1397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { points, description, type, employeeId, orderId } =
         pointUpdateSchema.parse(req.body);
+      const tenantDb = await getTenantDatabase(req);
 
       const pointTransaction = await storage.updateCustomerPoints(
         customerId,
@@ -1345,6 +1406,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type,
         employeeId,
         orderId,
+        tenantDb,
       );
 
       res.status(201).json(pointTransaction);
@@ -1368,12 +1430,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/customers/:id/point-history", async (req, res) => {
+  app.get("/api/customers/:id/point-history", async (req: TenantRequest, res) => {
     try {
       const customerId = parseInt(req.params.id);
       const limit = parseInt(req.query.limit as string) || 50;
+      const tenantDb = await getTenantDatabase(req);
 
-      const pointHistory = await storage.getPointHistory(customerId, limit);
+      const pointHistory = await storage.getPointHistory(customerId, limit, tenantDb);
       res.json(pointHistory);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch point history" });
@@ -1381,7 +1444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // New endpoints for points management modal
-  app.post("/api/customers/adjust-points", async (req, res) => {
+  app.post("/api/customers/adjust-points", async (req: TenantRequest, res) => {
     try {
       const pointUpdateSchema = z.object({
         customerId: z.number().int().min(1),
@@ -1393,12 +1456,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { customerId, points, type, description } = pointUpdateSchema.parse(
         req.body,
       );
+      const tenantDb = await getTenantDatabase(req);
 
       const pointTransaction = await storage.updateCustomerPoints(
         customerId,
         points,
         description,
         type,
+        undefined, // employeeId is optional and not provided here
+        undefined, // orderId is optional and not provided here
+        tenantDb,
       );
 
       res.status(201).json(pointTransaction);
@@ -1422,7 +1489,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/customers/redeem-points", async (req, res) => {
+  app.post("/api/customers/redeem-points", async (req: TenantRequest, res) => {
     try {
       const redeemSchema = z.object({
         customerId: z.number().int().min(1),
@@ -1430,12 +1497,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const { customerId, points } = redeemSchema.parse(req.body);
+      const tenantDb = await getTenantDatabase(req);
 
       const pointTransaction = await storage.updateCustomerPoints(
         customerId,
         -points,
         "포인트 결제 사용",
         "redeemed",
+        undefined, // employeeId is optional
+        undefined, // orderId is optional
+        tenantDb,
       );
 
       res.status(201).json(pointTransaction);
@@ -1459,12 +1530,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/point-transactions", async (req, res) => {
+  app.get("/api/point-transactions", async (req: TenantRequest, res) => {
     try {
       const limit = parseInt(req.query.limit as string) || 100;
+      const tenantDb = await getTenantDatabase(req);
       // For now, get all point transactions across all customers
       // In a real app, you might want to add pagination and filtering
-      const allTransactions = await storage.getAllPointTransactions(limit);
+      const allTransactions = await storage.getAllPointTransactions(limit, tenantDb);
       res.json(allTransactions);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch point transactions" });
@@ -1472,9 +1544,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Membership thresholds management
-  app.get("/api/membership-thresholds", async (req, res) => {
+  app.get("/api/membership-thresholds", async (req: TenantRequest, res) => {
     try {
-      const thresholds = await storage.getMembershipThresholds();
+      const tenantDb = await getTenantDatabase(req);
+      const thresholds = await storage.getMembershipThresholds(tenantDb);
       res.json(thresholds);
     } catch (error) {
       res
@@ -1483,7 +1556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/membership-thresholds", async (req, res) => {
+  app.put("/api/membership-thresholds", async (req: TenantRequest, res) => {
     try {
       const thresholdSchema = z.object({
         GOLD: z.number().min(0),
@@ -1491,8 +1564,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       const validatedData = thresholdSchema.parse(req.body);
+      const tenantDb = await getTenantDatabase(req);
       const thresholds =
-        await storage.updateMembershipThresholds(validatedData);
+        await storage.updateMembershipThresholds(validatedData, tenantDb);
 
       res.json(thresholds);
     } catch (error) {
@@ -1509,9 +1583,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Supplier Reports APIs
-  app.get("/api/supplier-debts", async (req, res) => {
+  app.get("/api/supplier-debts", async (req: TenantRequest, res) => {
     try {
       const { startDate, endDate, supplierId } = req.query;
+      const tenantDb = await getTenantDatabase(req);
 
       // Mock data for supplier debts - replace with actual database queries
       const supplierDebts = [
@@ -1551,9 +1626,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/supplier-purchases", async (req, res) => {
+  app.get("/api/supplier-purchases", async (req: TenantRequest, res) => {
     try {
       const { startDate, endDate, supplierId } = req.query;
+      const tenantDb = await getTenantDatabase(req);
 
       // Mock data for supplier purchases - replace with actual database queries
       const supplierPurchases = [
@@ -1592,9 +1668,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Invoice templates management
-  app.get("/api/invoice-templates", async (req, res) => {
+  app.get("/api/invoice-templates", async (req: TenantRequest, res) => {
     try {
-      const templates = await db.select().from(invoiceTemplates);
+      const tenantDb = await getTenantDatabase(req);
+      const templates = await storage.getInvoiceTemplates(tenantDb);
       res.json(templates);
     } catch (error) {
       console.error("Error fetching invoice templates:", error);
@@ -1602,9 +1679,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/invoice-templates/active", async (req, res) => {
+  app.get("/api/invoice-templates/active", async (req: TenantRequest, res) => {
     try {
-      const activeTemplates = await db.select().from(invoiceTemplates).where(eq(invoiceTemplates.isActive, true));
+      const tenantDb = await getTenantDatabase(req);
+      const activeTemplates = await storage.getActiveInvoiceTemplates(tenantDb);
       res.json(activeTemplates);
     } catch (error) {
       console.error("Error fetching active invoice templates:", error);
@@ -1612,10 +1690,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/invoice-templates", async (req, res) => {
+  app.post("/api/invoice-templates", async (req: TenantRequest, res) => {
     try {
       const templateData = req.body;
-      const template = await storage.createInvoiceTemplate(templateData);
+      const tenantDb = await getTenantDatabase(req);
+      const template = await storage.createInvoiceTemplate(templateData, tenantDb);
       res.status(201).json(template);
     } catch (error) {
       console.error("Invoice template creation error:", error);
@@ -1623,11 +1702,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/invoice-templates/:id", async (req, res) => {
+  app.put("/api/invoice-templates/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const templateData = req.body;
-      const template = await storage.updateInvoiceTemplate(id, templateData);
+      const tenantDb = await getTenantDatabase(req);
+      const template = await storage.updateInvoiceTemplate(id, templateData, tenantDb);
 
       if (!template) {
         return res.status(404).json({ message: "Invoice template not found" });
@@ -1640,10 +1720,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/invoice-templates/:id", async (req, res) => {
+  app.delete("/api/invoice-templates/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteInvoiceTemplate(id);
+      const tenantDb = await getTenantDatabase(req);
+      const deleted = await storage.deleteInvoiceTemplate(id, tenantDb);
 
       if (!deleted) {
         return res.status(404).json({ message: "Invoice template not found" });
@@ -1657,9 +1738,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // E-invoice connections management
-  app.get("/api/einvoice-connections", async (req, res) => {
+  app.get("/api/einvoice-connections", async (req: TenantRequest, res) => {
     try {
-      const connections = await storage.getEInvoiceConnections();
+      const tenantDb = await getTenantDatabase(req);
+      const connections = await storage.getEInvoiceConnections(tenantDb);
       res.json(connections);
     } catch (error) {
       res
@@ -1668,10 +1750,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/einvoice-connections", async (req, res) => {
+  app.post("/api/einvoice-connections", async (req: TenantRequest, res) => {
     try {
       const connectionData = req.body;
-      const connection = await storage.createEInvoiceConnection(connectionData);
+      const tenantDb = await getTenantDatabase(req);
+      const connection = await storage.createEInvoiceConnection(connectionData, tenantDb);
       res.status(201).json(connection);
     } catch (error) {
       console.error("E-invoice connection creation error:", error);
@@ -1681,13 +1764,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/einvoice-connections/:id", async (req, res) => {
+  app.put("/api/einvoice-connections/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
       const connectionData = req.body;
+      const tenantDb = await getTenantDatabase(req);
       const connection = await storage.updateEInvoiceConnection(
         id,
         connectionData,
+        tenantDb,
       );
 
       if (!connection) {
@@ -1705,10 +1790,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/einvoice-connections/:id", async (req, res) => {
+  app.delete("/api/einvoice-connections/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await storage.deleteEInvoiceConnection(id);
+      const tenantDb = await getTenantDatabase(req);
+      const deleted = await storage.deleteEInvoiceConnection(id, tenantDb);
 
       if (!deleted) {
         return res
@@ -1726,9 +1812,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Menu Analysis API
-  app.get("/api/menu-analysis", async (req, res) => {
+  app.get("/api/menu-analysis", async (req: TenantRequest, res) => {
     try {
       const { startDate, endDate, search, categoryId, productType } = req.query;
+      const tenantDb = await getTenantDatabase(req);
 
       // Base query for transaction items with product and category joins
       let query = db
@@ -1770,7 +1857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         conditions.push(eq(products.categoryId, parseInt(categoryId as string)));
       }
 
-      if (productType && productType !== 'all') {
+      if (productType !== "all" && productType) {
         const typeMap = { combo: 3, product: 1, service: 2 };
         const typeValue = typeMap[productType as keyof typeof typeMap];
         if (typeValue) {
@@ -1882,9 +1969,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Customer Reports APIs
-  app.get("/api/customer-debts", async (req, res) => {
+  app.get("/api/customer-debts", async (req: TenantRequest, res) => {
     try {
       const { startDate, endDate, customerId } = req.query;
+      const tenantDb = await getTenantDatabase(req);
 
       // Get customer debts from database
       const customerDebts = await db
@@ -1915,9 +2003,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/customer-sales", async (req, res) => {
+  app.get("/api/customer-sales", async (req: TenantRequest, res) => {
     try {
       const { startDate, endDate, customerId } = req.query;
+      const tenantDb = await getTenantDatabase(req);
 
       // Get customer sales data from database
       const customerSales = await db
@@ -1948,9 +2037,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk create products
-  app.post("/api/products/bulk", async (req, res) => {
+  app.post("/api/products/bulk", async (req: TenantRequest, res) => {
     try {
       const { products: productList } = req.body;
+      const tenantDb = await getTenantDatabase(req);
 
       if (!productList || !Array.isArray(productList)) {
         return res.status(400).json({ error: "Invalid products data" });
@@ -2039,9 +2129,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Employee routes
-  app.get("/api/employees", async (req, res) => {
+  app.get("/api/employees", async (req: TenantRequest, res) => {
     try {
-      const employees = await storage.getEmployees();
+      const tenantDb = await getTenantDatabase(req);
+      const employees = await storage.getEmployees(tenantDb);
       res.json(employees);
     } catch (error) {
       console.error("Error fetching employees:", error);
@@ -2050,9 +2141,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Employee sales report data
-  app.get("/api/employee-sales", async (req, res) => {
+  app.get("/api/employee-sales", async (req: TenantRequest, res) => {
     try {
       const { startDate, endDate, employeeId } = req.query;
+      const tenantDb = await getTenantDatabase(req);
 
       let query = db
         .select({
@@ -2089,12 +2181,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sales Channel Sales API
   app.get(
     "/api/sales-channel-sales/:startDate/:endDate/:seller/:channel",
-    async (req, res) => {
+    async (req: TenantRequest, res) => {
       try {
         const { startDate, endDate, seller, channel } = req.params;
+        const tenantDb = await getTenantDatabase(req);
 
         // Use storage instead of direct db queries
-        const orders = await storage.getOrders();
+        const orders = await storage.getOrders(undefined, undefined, tenantDb);
         const filteredOrders = orders.filter((order) => {
           const orderDate = new Date(order.orderedAt);
           const start = new Date(startDate);
@@ -2139,12 +2232,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sales Channel Profit API
   app.get(
     "/api/sales-channel-profit/:startDate/:endDate/:seller/:channel",
-    async (req, res) => {
+    async (req: TenantRequest, res) => {
       try {
         const { startDate, endDate, seller, channel } = req.params;
+        const tenantDb = await getTenantDatabase(req);
 
         // Use storage instead of direct db queries
-        const orders = await storage.getOrders();
+        const orders = await storage.getOrders(undefined, undefined, tenantDb);
         const filteredOrders = orders.filter((order) => {
           const orderDate = new Date(order.orderedAt);
           const start = new Date(startDate);
@@ -2193,9 +2287,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sales channel sales data
   app.get(
     "/api/sales-channel-sales/:startDate/:endDate/:sellerId/:salesChannel",
-    async (req, res) => {
+    async (req: TenantRequest, res) => {
       try {
         const { startDate, endDate, sellerId, salesChannel } = req.params;
+        const tenantDb = await getTenantDatabase(req);
 
         let query = `
         SELECT 
@@ -2249,9 +2344,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sales channel profit data
   app.get(
     "/api/sales-channel-profit/:startDate/:endDate/:sellerId/:salesChannel",
-    async (req, res) => {
+    async (req: TenantRequest, res) => {
       try {
         const { startDate, endDate, sellerId, salesChannel } = req.params;
+        const tenantDb = await getTenantDatabase(req);
 
         let query = `
         SELECT 
@@ -2313,7 +2409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Sales channel products data
   app.get(
     "/api/sales-channel-products/:startDate/:endDate/:sellerId/:salesChannel/:productSearch/:productType/:categoryId",
-    async (req, res) => {
+    async (req: TenantRequest, res) => {
       try {
         const {
           startDate,
@@ -2324,6 +2420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           productType,
           categoryId,
         } = req.params;
+        const tenantDb = await getTenantDatabase(req);
 
         let query = `
         SELECT 
@@ -2366,12 +2463,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           params.push(`%${productSearch}%`, `%${productSearch}%`);
         }
 
-        if (productType !== "all") {
+        if (productType !== "all" && productType) {
           query += " AND p.type = ?";
           params.push(productType);
         }
 
-        if (categoryId !== "all") {
+        if (categoryId !== "all" && categoryId) {
           query += " AND p.categoryId = ?";
           params.push(categoryId);
         }
@@ -2399,12 +2496,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Financial report endpoints
   app.get(
     "/api/financial-summary/:period/:year/:month?/:quarter?",
-    async (req, res) => {
+    async (req: TenantRequest, res) => {
       try {
         const { period, year, month, quarter } = req.params;
+        const tenantDb = await getTenantDatabase(req);
 
         // Get transactions for financial calculations
-        const transactions = await storage.getTransactions();
+        const transactions = await storage.getTransactions(tenantDb);
 
         let filteredTransactions = transactions.filter((transaction) => {
           const date = new Date(transaction.createdAt);
@@ -2460,11 +2558,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get(
     "/api/income-breakdown/:period/:year/:month?/:quarter?",
-    async (req, res) => {
+    async (req: TenantRequest, res) => {
       try {
         const { period, year, month, quarter } = req.params;
+        const tenantDb = await getTenantDatabase(req);
 
-        const transactions = await storage.getTransactions();
+        const transactions = await storage.getTransactions(tenantDb);
 
         let filteredTransactions = transactions.filter((transaction) => {
           const date = new Date(transaction.createdAt);
@@ -2522,7 +2621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get(
     "/api/expense-breakdown/:period/:year/:month?/:quarter?",
-    async (req, res) => {
+    async (req: TenantRequest, res) => {
       try {
         // Mock expense data since we don't have a dedicated expenses table
         const mockExpenses = [
@@ -2544,11 +2643,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get(
     "/api/cash-flow/:period/:year/:month?/:quarter?",
-    async (req, res) => {
+    async (req: TenantRequest, res) => {
       try {
         const { period, year, month, quarter } = req.params;
+        const tenantDb = await getTenantDatabase(req);
 
-        const transactions = await storage.getTransactions();
+        const transactions = await storage.getTransactions(tenantDb);
 
         let filteredTransactions = transactions.filter((transaction) => {
           const date = new Date(transaction.createdAt);
@@ -2600,9 +2700,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   );
 
   // POS Login API endpoint
-  app.post("/api/pos/login", async (req, res) => {
+  app.post("/api/pos/login", async (req: TenantRequest, res) => {
     try {
       const { clientID, clientSecret, masterId, bankCode } = req.body;
+      const tenantDb = await getTenantDatabase(req);
 
       console.log("POS Login request:", { clientID, clientSecret, masterId, bankCode });
 
@@ -2644,11 +2745,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // QR Payment API proxy endpoint
-  app.post("/api/pos/create-qr", async (req, res) => {
+  app.post("/api/pos/create-qr", async (req: TenantRequest, res) => {
     // Stock update error
     try {
       const { bankCode, clientID } = req.query;
       const body = req.body;
+      const tenantDb = await getTenantDatabase(req);
 
       console.log("CreateQRPos request:", { bankCode, clientID, body });
 
@@ -2693,9 +2795,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Tax code lookup proxy endpoint
-  app.post("/api/tax-code-lookup", async (req, res) => {
+  app.post("/api/tax-code-lookup", async (req: TenantRequest, res) => {
     try {
       const { taxCode } = req.body;
+      const tenantDb = await getTenantDatabase(req);
 
       if (!taxCode) {
         return res.status(400).json({
@@ -2737,9 +2840,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Invoices management
-  app.post("/api/invoices", async (req, res) => {
+  app.post("/api/invoices", async (req: TenantRequest, res) => {
     try {
       const invoiceData = req.body;
+      const tenantDb = await getTenantDatabase(req);
       console.log("Creating invoice record:", JSON.stringify(invoiceData, null, 2));
 
       // Validate required fields
@@ -2853,8 +2957,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/invoices", async (req, res) => {
+  app.get("/api/invoices", async (req: TenantRequest, res) => {
     try {
+      const tenantDb = await getTenantDatabase(req);
       const invoicesList = await db
         .select()
         .from(invoices)
@@ -2867,9 +2972,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/invoice-items/:invoiceId", async (req, res) => {
+  app.get("/api/invoice-items/:invoiceId", async (req: TenantRequest, res) => {
     try {
       const invoiceId = parseInt(req.params.invoiceId);
+      const tenantDb = await getTenantDatabase(req);
 
       if (isNaN(invoiceId)) {
         return res.status(400).json({ error: "Invalid invoice ID" });
@@ -2889,9 +2995,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // E-invoice publish proxy endpoint
-  app.post("/api/einvoice/publish", async (req, res) => {
+  app.post("/api/einvoice/publish", async (req: TenantRequest, res) => {
     try {
       const publishRequest = req.body;
+      const tenantDb = await getTenantDatabase(req);
       console.log("Publishing invoice with data:", JSON.stringify(publishRequest, null, 2));
 
       // Call the real e-invoice API
@@ -2976,10 +3083,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Save invoice as order (for both "Phát hành" and "Phát hành sau" functionality)
-  app.post("/api/invoices/save-as-order", async (req, res) => {
+  app.post("/api/invoices/save-as-order", async (req: TenantRequest, res) => {
     try {
       const invoiceData = req.body;
       const { publishType } = invoiceData; // "publish" hoặc "draft"
+      const tenantDb = await getTenantDatabase(req);
       console.log("Creating order from invoice data:", JSON.stringify(invoiceData, null, 2));
 
       // Validate required fields
@@ -3042,6 +3150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const orderItemsData = invoiceData.items.map((item: any) => ({
           orderId: savedOrder.id,
           productId: item.productId,
+          productName: item.productName,
           quantity: item.quantity,
           unitPrice: item.unitPrice.toString(),
           total: item.total.toString(),

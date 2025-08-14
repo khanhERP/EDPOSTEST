@@ -252,8 +252,9 @@ export class DatabaseStorage implements IStorage {
     await db.delete(categories).where(eq(categories.id, id));
   }
 
-  async getProducts(): Promise<Product[]> {
-    const result = await db
+  async getProducts(tenantDb?: any): Promise<Product[]> {
+    const database = tenantDb || db;
+    const result = await database
       .select()
       .from(products)
       .where(eq(products.isActive, true));
@@ -285,16 +286,18 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async getProduct(id: number): Promise<Product | undefined> {
-    const [product] = await db
+  async getProduct(id: number, tenantDb?: any): Promise<Product | undefined> {
+    const database = tenantDb || db;
+    const [product] = await database
       .select()
       .from(products)
       .where(and(eq(products.id, id), eq(products.isActive, true)));
     return product || undefined;
   }
 
-  async getProductBySku(sku: string): Promise<Product | undefined> {
-    const [product] = await db
+  async getProductBySku(sku: string, tenantDb?: any): Promise<Product | undefined> {
+    const database = tenantDb || db;
+    const [product] = await database
       .select()
       .from(products)
       .where(and(eq(products.sku, sku), eq(products.isActive, true)));
@@ -319,9 +322,10 @@ export class DatabaseStorage implements IStorage {
     return await database.select().from(products).where(whereCondition);
   }
 
-  async createProduct(insertProduct: InsertProduct): Promise<Product> {
+  async createProduct(insertProduct: InsertProduct, tenantDb?: any): Promise<Product> {
     try {
       console.log("Storage: Creating product with data:", insertProduct);
+      const database = tenantDb || db;
 
       const productData = {
         name: insertProduct.name,
@@ -337,7 +341,7 @@ export class DatabaseStorage implements IStorage {
 
       console.log("Storage: Inserting product data:", productData);
 
-      const [product] = await db
+      const [product] = await database
         .insert(products)
         .values(productData)
         .returning();
