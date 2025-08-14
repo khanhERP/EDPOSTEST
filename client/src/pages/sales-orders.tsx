@@ -354,18 +354,17 @@ export default function SalesOrders() {
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-96 overflow-y-auto">
-                    <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded">
+                    <div className="grid grid-cols-10 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded">
                       <div className="col-span-2">Số đơn bán</div>
                       <div className="col-span-2">Ngày đơn bán</div>
                       <div className="col-span-3">Khách hàng</div>
                       <div className="col-span-2">Thành tiền</div>
-                      <div className="col-span-2">Trạng thái</div>
                       <div className="col-span-1">Trạng thái đơn</div>
                     </div>
                     {filteredInvoices.map((invoice) => (
                       <div
                         key={invoice.id}
-                        className={`grid grid-cols-12 gap-2 text-xs p-2 rounded cursor-pointer hover:bg-blue-50 ${
+                        className={`grid grid-cols-10 gap-2 text-xs p-2 rounded cursor-pointer hover:bg-blue-50 ${
                           selectedInvoice?.id === invoice.id ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
                         }`}
                         onClick={() => setSelectedInvoice(invoice)}
@@ -377,9 +376,6 @@ export default function SalesOrders() {
                         <div className="col-span-3 truncate">{invoice.customerName}</div>
                         <div className="col-span-2 text-right font-medium">
                           {formatCurrency(invoice.total)}
-                        </div>
-                        <div className="col-span-2">
-                          {getEInvoiceStatusBadge(invoice.einvoiceStatus)}
                         </div>
                         <div className="col-span-1">
                           {getInvoiceStatusBadge(invoice.invoiceStatus || 1)}
