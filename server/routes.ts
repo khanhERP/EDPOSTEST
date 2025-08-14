@@ -3183,6 +3183,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sales Chart Report API endpoints - Add these new endpoints
+  app.get("/api/transactions/:startDate/:endDate/:salesMethod/:salesChannel/:analysisType/:concernType/:selectedEmployee", async (req: TenantRequest, res) => {
+    try {
+      const { startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee } = req.params;
+      const tenantDb = await getTenantDatabase(req);
+      
+      console.log("Transactions API called with params:", { startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee });
+      
+      // Get transactions data
+      const transactions = await storage.getTransactions(tenantDb);
+      
+      // Filter transactions based on parameters
+      const filteredTransactions = transactions.filter((transaction: any) => {
+        const transactionDate = new Date(transaction.createdAt);
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        
+        const dateMatch = transactionDate >= start && transactionDate <= end;
+        const salesMethodMatch = salesMethod === 'all' || transaction.paymentMethod === salesMethod;
+        const salesChannelMatch = salesChannel === 'all' || transaction.salesChannel === salesChannel;
+        const employeeMatch = selectedEmployee === 'all' || transaction.cashierName === selectedEmployee;
+        
+        return dateMatch && salesMethodMatch && salesChannelMatch && employeeMatch;
+      });
+      
+      console.log(`Found ${filteredTransactions.length} filtered transactions`);
+      res.json(filteredTransactions);
+    } catch (error) {
+      console.error("Error in transactions API:", error);
+      res.status(500).json({ error: "Failed to fetch transactions data" });
+    }
+  });
+
+  app.get("/api/orders/:startDate/:endDate/:selectedEmployee/:salesChannel/:salesMethod/:analysisType/:concernType", async (req: TenantRequest, res) => {
+    try {
+      const { startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType } = req.params;
+      const tenantDb = await getTenantDatabase(req);
+      
+      console.log("Orders API called with params:", { startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType });
+      
+      // Get orders data
+      const orders = await storage.getOrders(undefined, undefined, tenantDb);
+      
+      // Filter orders based on parameters
+      const filteredOrders = orders.filter((order: any) => {
+        const orderDate = new Date(order.orderedAt || order.createdAt);
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        
+        const dateMatch = orderDate >= start && orderDate <= end;
+        const employeeMatch = selectedEmployee === 'all' || order.employeeId?.toString() === selectedEmployee;
+        const salesChannelMatch = salesChannel === 'all' || order.salesChannel === salesChannel;
+        const salesMethodMatch = salesMethod === 'all' || order.paymentMethod === salesMethod;
+        
+        return dateMatch && employeeMatch && salesChannelMatch && salesMethodMatch;
+      });
+      
+      console.log(`Found ${filteredOrders.length} filtered orders`);
+      res.json(filteredOrders);
+    } catch (error) {
+      console.error("Error in orders API:", error);
+      res.status(500).json({ error: "Failed to fetch orders data" });
+    }
+  });
+
+  app.get("/api/products/:selectedCategory/:productType", async (req: TenantRequest, res) => {
+    try {
+      const { selectedCategory, productType } = req.params;
+      const tenantDb = await getTenantDatabase(req);
+      
+      console.log("Products API called with params:", { selectedCategory, productType });
+      
+      let products;
+      
+      if (selectedCategory && selectedCategory !== 'all') {
+        products = await storage.getProductsByCategory(parseInt(selectedCategory), true, tenantDb);
+      } else {
+        products = await storage.getAllProducts(true, tenantDb);
+      }
+      
+      // Filter by product type if specified
+      if (productType && productType !== 'all') {
+        const typeMap = { combo: 3, product: 1, service: 2 };
+        const typeValue = typeMap[productType as keyof typeof typeMap];
+        if (typeValue) {
+          products = products.filter((product: any) => product.productType === typeValue);
+        }
+      }
+      
+      console.log(`Found ${products.length} filtered products`);
+      res.json(products);
+    } catch (error) {
+      console.error("Error in products API:", error);
+      res.status(500).json({ error: "Failed to fetch products data" });
+    }
+  });
+
+  app.get("/api/customers/:customerSearch?", async (req: TenantRequest, res) => {
+    try {
+      const { customerSearch } = req.params;
+      const tenantDb = await getTenantDatabase(req);
+      
+      console.log("Customers API called with search:", customerSearch);
+      
+      let customers = await storage.getCustomers(tenantDb);
+      
+      // Filter by search if provided
+      if (customerSearch && customerSearch !== '' && customerSearch !== 'undefined') {
+        customers = customers.filter((customer: any) => 
+          customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+          customer.phone?.includes(customerSearch) ||
+          customer.customerId?.toLowerCase().includes(customerSearch.toLowerCase())
+        );
+      }
+      
+      console.log(`Found ${customers.length} customers`);
+      res.json(customers);
+    } catch (error) {
+      console.error("Error in customers API:", error);
+      res.status(500).json({ error: "Failed to fetch customers data" });
+    }
+  });
+
   // Database health check
   app.get("/api/health/db", async (req, res) => {
     try {
