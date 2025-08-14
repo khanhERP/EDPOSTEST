@@ -101,9 +101,7 @@ export function SalesChartReport() {
           channel: "salesChannelReport_settings", // Báo cáo kênh bán hàng
         };
 
-        const storageKey =
-          legacyReportMapping[analysisType] ||
-          `salesReport_${analysisType}_${concernType}_settings`;
+        const storageKey = legacyReportMapping[analysisType] || `salesReport_${analysisType}_${concernType}_settings`;
         const savedConfig = localStorage.getItem(storageKey);
 
         if (savedConfig) {
