@@ -102,6 +102,32 @@ export async function initializeSampleData() {
       console.log("TemplateCode migration failed or column already exists:", error);
     }
 
+    // Add trade_number column to invoices table and migrate data
+    try {
+      await db.execute(sql`
+        ALTER TABLE invoices ADD COLUMN IF NOT EXISTS trade_number VARCHAR(50)
+      `);
+      
+      // Copy data from invoice_number to trade_number
+      await db.execute(sql`
+        UPDATE invoices SET trade_number = invoice_number WHERE trade_number IS NULL OR trade_number = ''
+      `);
+      
+      // Clear invoice_number column
+      await db.execute(sql`
+        UPDATE invoices SET invoice_number = NULL
+      `);
+      
+      // Create index for trade_number
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_invoices_trade_number ON invoices(trade_number)
+      `);
+      
+      console.log("Migration for trade_number column completed successfully.");
+    } catch (error) {
+      console.log("Trade number migration failed or already applied:", error);
+    }
+
     // Run migration for email constraint in employees table
     try {
       await db.execute(sql`

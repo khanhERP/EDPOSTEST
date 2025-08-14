@@ -2738,12 +2738,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Generate invoice number
-      const invoiceNumber = `INV-${Date.now()}`;
+      // Generate trade number
+      const tradeNumber = `INV-${Date.now()}`;
 
       // Validate and prepare invoice data with proper type conversion
       const validatedInvoice = {
-        invoiceNumber,
+        invoiceNumber: null,
+        tradeNumber,
         customerId: invoiceData.customerId || null,
         customerName: invoiceData.customerName || "Khách hàng",
         customerTaxCode: invoiceData.customerTaxCode || null,

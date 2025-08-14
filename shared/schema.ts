@@ -365,7 +365,8 @@ export const inventoryTransactions = pgTable("inventory_transactions", {
 
 export const invoices = pgTable("invoices", {
   id: serial("id").primaryKey(),
-  invoiceNumber: varchar("invoice_number", { length: 50 }).unique().notNull(),
+  invoiceNumber: varchar("invoice_number", { length: 50 }),
+  tradeNumber: varchar("trade_number", { length: 50 }).unique(),
   customerId: integer("customer_id").references(() => customers.id),
   customerName: varchar("customer_name", { length: 100 }).notNull(),
   customerTaxCode: varchar("customer_tax_code", { length: 20 }),
