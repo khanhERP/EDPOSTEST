@@ -260,11 +260,26 @@ export function ShoppingCart({
     setShowPaymentMethodModal(true);
   };
 
-  const handlePaymentMethodSelect = (method: string) => {
-    console.log("🎯 Payment method selected:", method);
+  const handlePaymentMethodSelect = (method: string, eInvoiceData?: any) => {
+    console.log("🎯 Payment method selected:", method, "with data:", eInvoiceData);
     setShowPaymentMethodModal(false);
 
-    // Complete the payment with the selected method
+    // Xử lý đặc biệt cho e-invoice
+    if (method === 'einvoice' && eInvoiceData) {
+      console.log("📧 Processing e-invoice data:", eInvoiceData);
+      
+      if (eInvoiceData.publishLater) {
+        console.log("⏳ E-invoice publish later - calling handleEInvoiceConfirm");
+        handleEInvoiceConfirm(eInvoiceData);
+        return;
+      } else if (eInvoiceData.publishedImmediately) {
+        console.log("✅ E-invoice published immediately - calling handleEInvoiceConfirm");
+        handleEInvoiceConfirm(eInvoiceData);
+        return;
+      }
+    }
+
+    // Complete the payment with the selected method (cho các payment methods khác)
     const paymentData = {
       paymentMethod: method,
       amountReceived: total,
@@ -338,7 +353,7 @@ export function ShoppingCart({
 
       // Nếu phát hành thành công ngay lập tức (có publishedImmediately flag)
       if (eInvoiceData.publishedImmediately && eInvoiceData.showReceipt && eInvoiceData.receipt) {
-        console.log('✅ E-invoice published immediately, showing receipt modal');
+        console.log('✅ E-invoice published immediately, showing receipt modal directly');
         console.log('📄 Receipt data received:', eInvoiceData.receipt);
 
         // Clear cart trước khi hiển thị receipt
@@ -358,7 +373,8 @@ export function ShoppingCart({
           description: `Hóa đơn điện tử đã được phát hành thành công! Số HĐ: ${eInvoiceData.invoiceData?.invoiceNo || 'N/A'}`,
         });
 
-        console.log('✅ E-invoice immediate processing completed, receipt modal shown');
+        console.log('✅ E-invoice immediate processing completed, receipt modal shown directly');
+        // QUAN TRỌNG: Return ngay để không chạy logic cũ bên dưới
         return;
       }
 
