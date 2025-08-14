@@ -272,7 +272,7 @@ export default function SalesOrders() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {/* Invoices List */}
             <Card>
               <CardHeader>
@@ -336,13 +336,14 @@ export default function SalesOrders() {
               </CardContent>
             </Card>
 
-            {/* Invoice Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Chi tiết đơn hàng</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {selectedInvoice ? (
+            {/* Invoice Details - Only show when an invoice is selected */}
+            {selectedInvoice && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Chi tiết đơn hàng</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedInvoice ? (
                   <div className="space-y-4">
                     {/* Invoice Info */}
                     <div className="bg-gray-50 p-4 rounded-lg">
@@ -485,14 +486,10 @@ export default function SalesOrders() {
                       </Button>
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center py-12 text-gray-500">
-                    <Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                    <p>Chọn một hóa đơn để xem chi tiết</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                ) : null}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
