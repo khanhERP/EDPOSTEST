@@ -236,12 +236,12 @@ export function SalesChartReport() {
   };
 
   const renderTimeReport = () => {
-    const filteredData = getFilteredData();
+    const dataToUse = previousReportData?.data || getFilteredData();
     const dailyData: {
       [date: string]: { revenue: number; returnValue: number };
     } = {};
 
-    filteredData.forEach((transaction: any) => {
+    dataToUse.forEach((transaction: any) => {
       const date = new Date(
         transaction.createdAt || transaction.created_at,
       ).toLocaleDateString("vi-VN");
@@ -284,7 +284,7 @@ export function SalesChartReport() {
   };
 
   const renderProfitReport = () => {
-    const filteredData = getFilteredData();
+    const dataToUse = previousReportData?.data || getFilteredData();
     const dailyData: {
       [date: string]: {
         totalAmount: number;
@@ -294,7 +294,7 @@ export function SalesChartReport() {
       };
     } = {};
 
-    filteredData.forEach((transaction: any) => {
+    dataToUse.forEach((transaction: any) => {
       const date = new Date(
         transaction.createdAt || transaction.created_at,
       ).toLocaleDateString("vi-VN");
@@ -341,7 +341,7 @@ export function SalesChartReport() {
   };
 
   const renderDiscountReport = () => {
-    const filteredData = getFilteredData();
+    const dataToUse = previousReportData?.data || getFilteredData();
     const dailyData: {
       [date: string]: {
         invoiceCount: number;
@@ -350,7 +350,7 @@ export function SalesChartReport() {
       };
     } = {};
 
-    filteredData.forEach((transaction: any) => {
+    dataToUse.forEach((transaction: any) => {
       const date = new Date(
         transaction.createdAt || transaction.created_at,
       ).toLocaleDateString("vi-VN");
@@ -392,12 +392,12 @@ export function SalesChartReport() {
   };
 
   const renderReturnReport = () => {
-    const filteredData = getFilteredData();
+    const dataToUse = previousReportData?.data || getFilteredData();
     const dailyData: {
       [date: string]: { returnCount: number; returnValue: number };
     } = {};
 
-    filteredData.forEach((transaction: any) => {
+    dataToUse.forEach((transaction: any) => {
       const date = new Date(
         transaction.createdAt || transaction.created_at,
       ).toLocaleDateString("vi-VN");
@@ -444,12 +444,12 @@ export function SalesChartReport() {
   };
 
   const renderEmployeeReport = () => {
-    const filteredData = getFilteredData();
+    const dataToUse = previousReportData?.data || getFilteredData();
     const employeeData: {
       [cashier: string]: { revenue: number; returnValue: number };
     } = {};
 
-    filteredData.forEach((transaction: any) => {
+    dataToUse.forEach((transaction: any) => {
       const cashier = transaction.cashierName || "Unknown";
       if (!employeeData[cashier]) {
         employeeData[cashier] = { revenue: 0, returnValue: 0 };
@@ -491,8 +491,8 @@ export function SalesChartReport() {
 
   // Product analysis data processing (from inventory-report)
   const getProductAnalysisData = () => {
-    const filteredData = getFilteredData();
-    if (!filteredData.length) return [];
+    const dataToUse = previousReportData?.data || getFilteredData();
+    if (!dataToUse.length) return [];
 
     const productData: {
       [productId: string]: {
@@ -509,7 +509,7 @@ export function SalesChartReport() {
     } = {};
 
     // Process transactions to build product sales data
-    filteredData.forEach((transaction: any) => {
+    dataToUse.forEach((transaction: any) => {
       const items = transaction.items || [];
 
       // If no items, create a synthetic item from transaction data
@@ -587,7 +587,7 @@ export function SalesChartReport() {
 
   // Employee analysis data processing (from employee-report)
   const getEmployeeAnalysisData = () => {
-    const filteredData = getFilteredData();
+    const dataToUse = previousReportData?.data || getFilteredData();
     const employeeData: {
       [cashier: string]: {
         employee: string;
@@ -603,7 +603,7 @@ export function SalesChartReport() {
       };
     } = {};
 
-    filteredData.forEach((transaction: any) => {
+    dataToUse.forEach((transaction: any) => {
       const cashier =
         transaction.cashierName || transaction.employeeName || "Unknown";
       if (!employeeData[cashier]) {
@@ -651,7 +651,7 @@ export function SalesChartReport() {
 
   // Customer analysis data processing (from customer-report)
   const getCustomerAnalysisData = () => {
-    const filteredData = getFilteredData();
+    const dataToUse = previousReportData?.data || getFilteredData();
     const customerData: {
       [customerId: string]: {
         customer: string;
@@ -667,7 +667,7 @@ export function SalesChartReport() {
       };
     } = {};
 
-    filteredData.forEach((transaction: any) => {
+    dataToUse.forEach((transaction: any) => {
       const customer =
         transaction.customerName ||
         transaction.customerPhone ||
@@ -724,7 +724,7 @@ export function SalesChartReport() {
 
   // Sales channel analysis data processing (from sales-channel-report)
   const getChannelAnalysisData = () => {
-    const filteredData = getFilteredData();
+    const dataToUse = previousReportData?.data || getFilteredData();
     const channelData: {
       [channel: string]: {
         salesChannel: string;
@@ -740,7 +740,7 @@ export function SalesChartReport() {
       };
     } = {};
 
-    filteredData.forEach((transaction: any) => {
+    dataToUse.forEach((transaction: any) => {
       const channel = transaction.salesChannel || "Direct";
       if (!channelData[channel]) {
         channelData[channel] = {
@@ -1174,16 +1174,17 @@ export function SalesChartReport() {
   };
 
   const getChartData = () => {
+    // Use previous report data if available, otherwise calculate from current filtered data
+    const dataToUse = previousReportData?.data || getFilteredData();
+    
     if (analysisType === "time") {
-      const filteredData = getFilteredData();
-
       switch (concernType) {
         case "time": {
           const dailyData: {
             [date: string]: { revenue: number; returnValue: number };
           } = {};
 
-          filteredData.forEach((transaction: any) => {
+          dataToUse.forEach((transaction: any) => {
             const date = new Date(
               transaction.createdAt || transaction.created_at,
             ).toLocaleDateString("vi-VN");
@@ -1217,7 +1218,7 @@ export function SalesChartReport() {
             };
           } = {};
 
-          filteredData.forEach((transaction: any) => {
+          dataToUse.forEach((transaction: any) => {
             const date = new Date(
               transaction.createdAt || transaction.created_at,
             ).toLocaleDateString("vi-VN");
@@ -1253,7 +1254,7 @@ export function SalesChartReport() {
             [cashier: string]: { revenue: number; returnValue: number };
           } = {};
 
-          filteredData.forEach((transaction: any) => {
+          dataToUse.forEach((transaction: any) => {
             const cashier = transaction.cashierName || "Unknown";
             if (!employeeData[cashier]) {
               employeeData[cashier] = { revenue: 0, returnValue: 0 };
