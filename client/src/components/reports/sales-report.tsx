@@ -52,20 +52,14 @@ export function SalesReport() {
         transaction.createdAt || transaction.created_at,
       );
 
-      // Đặt múi giờ về UTC để tránh vấn đề timezone
-      const transactionDateOnly = new Date(
-        transactionDate.getFullYear(),
-        transactionDate.getMonth(),
-        transactionDate.getDate(),
-      );
+      // Chuyển về ngày local để so sánh chính xác
+      const transactionDateStr = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, "0")}-${transactionDate.getDate().toString().padStart(2, "0")}`;
+      
+      console.log("Transaction date string:", transactionDateStr);
+      console.log("Start date:", startDate);
+      console.log("End date:", endDate);
 
-      const start = new Date(startDate + "T00:00:00");
-      const end = new Date(endDate + "T23:59:59");
-      console.log("start", start);
-      console.log("end", end);
-
-      const isInRange =
-        transactionDateOnly >= start && transactionDateOnly <= end;
+      const isInRange = transactionDateStr >= startDate && transactionDateStr <= endDate;
 
       return isInRange;
     });
@@ -179,19 +173,24 @@ export function SalesReport() {
       case "month":
         // Tháng trước: từ ngày 1 tháng trước đến ngày cuối tháng trước
         const currentDate = new Date();
-        const lastMonthStart = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() - 1,
-          1,
-        );
-        const lastMonthEnd = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth(),
-          0,
-        );
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        
+        // Tính tháng trước
+        const lastMonthYear = month === 0 ? year - 1 : year;
+        const lastMonth = month === 0 ? 11 : month - 1;
+        
+        // Ngày đầu tháng trước
+        const lastMonthStart = new Date(lastMonthYear, lastMonth, 1);
+        // Ngày cuối tháng trước
+        const lastMonthEnd = new Date(lastMonthYear, lastMonth + 1, 0);
 
-        setStartDate(lastMonthStart.toISOString().split("T")[0]);
-        setEndDate(lastMonthEnd.toISOString().split("T")[0]);
+        // Format thành YYYY-MM-DD
+        const startDateStr = `${lastMonthStart.getFullYear()}-${(lastMonthStart.getMonth() + 1).toString().padStart(2, "0")}-${lastMonthStart.getDate().toString().padStart(2, "0")}`;
+        const endDateStr = `${lastMonthEnd.getFullYear()}-${(lastMonthEnd.getMonth() + 1).toString().padStart(2, "0")}-${lastMonthEnd.getDate().toString().padStart(2, "0")}`;
+
+        setStartDate(startDateStr);
+        setEndDate(endDateStr);
         break;
       case "custom":
         setStartDate(today.toISOString().split("T")[0]);
