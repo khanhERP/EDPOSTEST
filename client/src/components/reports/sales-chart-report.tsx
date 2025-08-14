@@ -43,6 +43,7 @@ import {
 export function SalesChartReport() {
   const { t } = useTranslation();
 
+  const [analysisType, setAnalysisType] = useState("time");
   const [concernType, setConcernType] = useState("time");
   const today = new Date(); // Define today once
   const [startDate, setStartDate] = useState<string>(
@@ -94,17 +95,30 @@ export function SalesChartReport() {
   };
 
   const getReportTitle = () => {
-    const concernTypes = {
-      time: t("reports.timeSalesReport"),
-      profit: t("reports.profitByInvoiceReport"),
-      discount: t("reports.invoiceDiscountReport"),
-      return: t("reports.returnByInvoiceReport"),
-      employee: t("reports.employeeSalesReport"),
-    };
-    return (
-      concernTypes[concernType as keyof typeof concernTypes] ||
-      t("reports.comprehensiveSalesReport")
-    );
+    if (analysisType === "time") {
+      const concernTypes = {
+        time: t("reports.timeSalesReport"),
+        profit: t("reports.profitByInvoiceReport"),
+        discount: t("reports.invoiceDiscountReport"),
+        return: t("reports.returnByInvoiceReport"),
+        employee: t("reports.employeeSalesReport"),
+      };
+      return (
+        concernTypes[concernType as keyof typeof concernTypes] ||
+        t("reports.comprehensiveSalesReport")
+      );
+    } else {
+      const analysisTypes = {
+        product: t("reports.productSalesReport"),
+        employee: t("reports.employeeSalesReport"),
+        customer: t("reports.customerSalesReport"),
+        channel: t("reports.channelSalesReport"),
+      };
+      return (
+        analysisTypes[analysisType as keyof typeof analysisTypes] ||
+        t("reports.comprehensiveSalesReport")
+      );
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -371,25 +385,228 @@ export function SalesChartReport() {
     );
   };
 
-  const renderReportTable = () => {
-    switch (concernType) {
-      case "time":
-        return renderTimeReport();
-      case "profit":
-        return renderProfitReport();
-      case "discount":
-        return renderDiscountReport();
-      case "return":
-        return renderReturnReport();
-      case "employee":
-        return renderEmployeeReport();
+  const renderAnalysisTypeReport = () => {
+    const filteredData = getFilteredData();
+
+    switch (analysisType) {
+      case "product": {
+        const productData: {
+          [productName: string]: { revenue: number; quantity: number };
+        } = {};
+
+        filteredData.forEach((transaction: any) => {
+          const items = transaction.items || [];
+          items.forEach((item: any) => {
+            const productName = item.productName || item.name || "Unknown Product";
+            if (!productData[productName]) {
+              productData[productName] = { revenue: 0, quantity: 0 };
+            }
+            productData[productName].revenue += Number(item.total || item.price * item.quantity);
+            productData[productName].quantity += Number(item.quantity || 1);
+          });
+        });
+
+        return (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("reports.productName")}</TableHead>
+                <TableHead>{t("reports.quantity")}</TableHead>
+                <TableHead>{t("reports.revenue")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.entries(productData).map(([productName, data]) => (
+                <TableRow key={productName}>
+                  <TableCell>{productName}</TableCell>
+                  <TableCell>{data.quantity}</TableCell>
+                  <TableCell>{formatCurrency(data.revenue)}</TableCell>
+                </TableRow>
+              ))}
+              {Object.keys(productData).length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-gray-500">
+                    {t("reports.noData")}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        );
+      }
+
+      case "employee": {
+        const employeeData: {
+          [cashier: string]: { revenue: number; returnValue: number };
+        } = {};
+
+        filteredData.forEach((transaction: any) => {
+          const cashier = transaction.cashierName || "Unknown";
+          if (!employeeData[cashier]) {
+            employeeData[cashier] = { revenue: 0, returnValue: 0 };
+          }
+
+          const amount = Number(transaction.total);
+          if (amount > 0) {
+            employeeData[cashier].revenue += amount;
+          } else {
+            employeeData[cashier].returnValue += Math.abs(amount);
+          }
+        });
+
+        return (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("reports.seller")}</TableHead>
+                <TableHead>{t("reports.totalRevenue")}</TableHead>
+                <TableHead>{t("reports.returnValue")}</TableHead>
+                <TableHead>{t("reports.netRevenue")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.entries(employeeData).map(([cashier, data]) => (
+                <TableRow key={cashier}>
+                  <TableCell>{cashier}</TableCell>
+                  <TableCell>{formatCurrency(data.revenue)}</TableCell>
+                  <TableCell>{formatCurrency(data.returnValue)}</TableCell>
+                  <TableCell>
+                    {formatCurrency(data.revenue - data.returnValue)}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {Object.keys(employeeData).length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-gray-500">
+                    {t("reports.noData")}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        );
+      }
+
+      case "customer": {
+        const customerData: {
+          [customer: string]: { revenue: number; orders: number };
+        } = {};
+
+        filteredData.forEach((transaction: any) => {
+          const customer = transaction.customerName || transaction.customerPhone || "Walk-in Customer";
+          if (!customerData[customer]) {
+            customerData[customer] = { revenue: 0, orders: 0 };
+          }
+
+          customerData[customer].revenue += Number(transaction.total);
+          customerData[customer].orders += 1;
+        });
+
+        return (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("reports.customer")}</TableHead>
+                <TableHead>{t("reports.orders")}</TableHead>
+                <TableHead>{t("reports.revenue")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.entries(customerData).map(([customer, data]) => (
+                <TableRow key={customer}>
+                  <TableCell>{customer}</TableCell>
+                  <TableCell>{data.orders}</TableCell>
+                  <TableCell>{formatCurrency(data.revenue)}</TableCell>
+                </TableRow>
+              ))}
+              {Object.keys(customerData).length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-gray-500">
+                    {t("reports.noData")}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        );
+      }
+
+      case "channel": {
+        const channelData: {
+          [channel: string]: { revenue: number; orders: number };
+        } = {};
+
+        filteredData.forEach((transaction: any) => {
+          const channel = transaction.salesChannel || "Direct";
+          if (!channelData[channel]) {
+            channelData[channel] = { revenue: 0, orders: 0 };
+          }
+
+          channelData[channel].revenue += Number(transaction.total);
+          channelData[channel].orders += 1;
+        });
+
+        return (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("reports.salesChannel")}</TableHead>
+                <TableHead>{t("reports.orders")}</TableHead>
+                <TableHead>{t("reports.revenue")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.entries(channelData).map(([channel, data]) => (
+                <TableRow key={channel}>
+                  <TableCell>{channel}</TableCell>
+                  <TableCell>{data.orders}</TableCell>
+                  <TableCell>{formatCurrency(data.revenue)}</TableCell>
+                </TableRow>
+              ))}
+              {Object.keys(channelData).length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-gray-500">
+                    {t("reports.noData")}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        );
+      }
+
       default:
         return renderTimeReport();
     }
   };
 
+  const renderReportTable = () => {
+    if (analysisType === "time") {
+      switch (concernType) {
+        case "time":
+          return renderTimeReport();
+        case "profit":
+          return renderProfitReport();
+        case "discount":
+          return renderDiscountReport();
+        case "return":
+          return renderReturnReport();
+        case "employee":
+          return renderEmployeeReport();
+        default:
+          return renderTimeReport();
+      }
+    } else {
+      return renderAnalysisTypeReport();
+    }
+  };
+
   const shouldShowChart = () => {
-    return ["time", "profit", "employee"].includes(concernType);
+    if (analysisType === "time") {
+      return ["time", "profit", "employee"].includes(concernType);
+    } else {
+      return ["product", "employee", "customer", "channel"].includes(analysisType);
+    }
   };
 
   const getChartData = () => {
@@ -582,7 +799,7 @@ export function SalesChartReport() {
             {/* Analysis Type Selector */}
             <div>
               <Label>{t("reports.analyzeBy")}</Label>
-              <Select value="time" onValueChange={() => {}}>
+              <Select value={analysisType} onValueChange={setAnalysisType}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -596,32 +813,34 @@ export function SalesChartReport() {
               </Select>
             </div>
 
-            {/* Concerns Filter */}
-            <div>
-              <Label>{t("reports.concernType")}</Label>
-              <Select value={concernType} onValueChange={setConcernType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="time">
-                    {t("reports.timeReport")}
-                  </SelectItem>
-                  <SelectItem value="profit">
-                    {t("reports.profitReport")}
-                  </SelectItem>
-                  <SelectItem value="discount">
-                    {t("reports.discountReport")}
-                  </SelectItem>
-                  <SelectItem value="return">
-                    {t("reports.returnReport")}
-                  </SelectItem>
-                  <SelectItem value="employee">
-                    {t("reports.employeeReport")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            {/* Concerns Filter - Only show for time analysis */}
+            {analysisType === "time" && (
+              <div>
+                <Label>{t("reports.concernType")}</Label>
+                <Select value={concernType} onValueChange={setConcernType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="time">
+                      {t("reports.timeReport")}
+                    </SelectItem>
+                    <SelectItem value="profit">
+                      {t("reports.profitReport")}
+                    </SelectItem>
+                    <SelectItem value="discount">
+                      {t("reports.discountReport")}
+                    </SelectItem>
+                    <SelectItem value="return">
+                      {t("reports.returnReport")}
+                    </SelectItem>
+                    <SelectItem value="employee">
+                      {t("reports.employeeReport")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Sales Method Filter */}
             <div>
