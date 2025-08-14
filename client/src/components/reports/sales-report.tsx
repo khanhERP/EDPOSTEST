@@ -62,10 +62,28 @@ export function SalesReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      return transactionDate >= start && transactionDate <= end;
+      const isInRange = transactionDate >= start && transactionDate <= end;
+      
+      // Debug log để kiểm tra dữ liệu
+      if (!isInRange) {
+        console.log("Transaction filtered out:", {
+          transactionDate: transactionDate.toISOString(),
+          startDate: start.toISOString(),
+          endDate: end.toISOString(),
+          transactionId: transaction.id
+        });
+      }
+
+      return isInRange;
     });
 
-    console.log("Filtered Transactions:", filteredTransactions.length);
+    console.log("Filtered Transactions:", {
+      count: filteredTransactions.length,
+      dateRange: `${startDate} to ${endDate}`,
+      filteredTransactionDates: filteredTransactions.map(t => 
+        new Date(t.createdAt || t.created_at).toISOString().split('T')[0]
+      )
+    });
 
     // Daily sales breakdown
     const dailySales: {
@@ -185,11 +203,12 @@ export function SalesReport() {
   };
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
+    const date = new Date(dateStr);
+    // Đảm bảo ngày tháng được hiển thị đúng timezone
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const getPaymentMethodLabel = (method: string) => {
