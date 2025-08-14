@@ -420,7 +420,15 @@ export function SalesReport() {
       card: t("reports.card"),
       creditCard: t("reports.credit_card"),
       credit_card: t("reports.credit_card"),
+      debitCard: t("pos.debitCard"),
+      debit_card: t("pos.debitCard"),
       einvoice: t("reports.einvoice"),
+      momo: t("pos.momo"),
+      zalopay: t("pos.zalopay"),
+      vnpay: t("pos.vnpay"),
+      qrCode: t("pos.qrCode"),
+      shopeepay: t("pos.shopeepay"),
+      grabpay: t("pos.grabpay"),
       mobile: "Mobile",
     };
     return labels[method as keyof typeof labels] || method;
