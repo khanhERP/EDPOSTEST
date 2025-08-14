@@ -21,6 +21,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import VirtualKeyboard from "@/components/ui/virtual-keyboard";
+import { PrintDialog } from "./print-dialog";
 
 // E-invoice software providers mapping
 const EINVOICE_PROVIDERS = [
@@ -86,6 +87,8 @@ export function EInvoiceModal({
   const [isPublishing, setIsPublishing] = useState(false);
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
   const [activeInputField, setActiveInputField] = useState<string | null>(null);
+  const [showPrintDialog, setShowPrintDialog] = useState(false);
+  const [printReceiptData, setPrintReceiptData] = useState<any>(null);
 
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -954,6 +957,10 @@ export function EInvoiceModal({
 
         console.log('📄 Created receipt data for published e-invoice:', receiptData);
 
+        // Set up print dialog data
+        setPrintReceiptData(receiptData);
+        setShowPrintDialog(true);
+
         // Gọi onConfirm để truyền dữ liệu về parent component trước
         onConfirm({
           ...formData,
@@ -1230,6 +1237,15 @@ export function EInvoiceModal({
           </div>
         </div>
       </DialogContent>
+
+      {/* Print Dialog */}
+      {showPrintDialog && printReceiptData && (
+        <PrintDialog
+          isOpen={showPrintDialog}
+          onClose={() => setShowPrintDialog(false)}
+          receiptData={printReceiptData}
+        />
+      )}
     </Dialog>
   );
 }
