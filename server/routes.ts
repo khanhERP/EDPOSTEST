@@ -52,10 +52,10 @@ import {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Register tenant management routes
   registerTenantRoutes(app);
-  
+
   // Apply tenant middleware to all API routes
   app.use('/api', tenantMiddleware);
-  
+
   // Initialize sample data
   await initializeSampleData();
 
@@ -1799,8 +1799,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           (sum, item) => sum + parseFloat(item.revenue || "0"),
           0,
         );
+        // Fix totalQuantity calculation to return proper number instead of concatenated string
         totalQuantity = productStats.reduce(
-          (sum, item) => sum + (item.quantity || 0),
+          (sum, item) => sum + parseInt(item.quantity.toString()),
           0,
         );
 
@@ -2869,7 +2870,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/invoice-items/:invoiceId", async (req, res) => {
     try {
       const invoiceId = parseInt(req.params.invoiceId);
-      
+
       if (isNaN(invoiceId)) {
         return res.status(400).json({ error: "Invalid invoice ID" });
       }
@@ -2973,7 +2974,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   } catch (error) {
     console.log("einvoiceStatus column already exists in orders table or addition failed:", error);
   }
-  
+
   // Save invoice as order (for both "Phát hành" and "Phát hành sau" functionality)
   app.post("/api/invoices/save-as-order", async (req, res) => {
     try {
