@@ -422,6 +422,7 @@ export function SalesReport() {
       credit_card: t("reports.credit_card"),
       debitCard: t("pos.debitCard"),
       debit_card: t("pos.debitCard"),
+      transfer: t("common.transfer"),
       einvoice: t("reports.einvoice"),
       momo: t("pos.momo"),
       zalopay: t("pos.zalopay"),
