@@ -83,8 +83,9 @@ export function ReceiptModal({
       autoShowPrint
     });
 
-    if (isOpen && receipt && !isPreview && !hasAutoOpened && autoShowPrint) {
-      console.log('✅ Auto-showing print dialog for publishLater');
+    // Fix auto-print logic: should trigger when autoShowPrint is true and modal is open with valid receipt
+    if (isOpen && receipt && autoShowPrint && !hasAutoOpened) {
+      console.log('✅ Auto-showing print dialog for publishLater (fixed logic)');
       setHasAutoOpened(true);
 
       // Small delay to ensure modal is fully rendered
@@ -97,7 +98,8 @@ export function ReceiptModal({
         isOpen,
         hasReceipt: !!receipt,
         isPreview,
-        hasAutoOpened
+        hasAutoOpened,
+        autoShowPrint
       });
     }
   }, [isOpen, receipt, isPreview, autoShowPrint, hasAutoOpened]);
