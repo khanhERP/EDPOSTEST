@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Calendar, Search, FileText, Package, Printer, Mail, X, Download } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "@/lib/i18n";
 
 interface Invoice {
@@ -81,6 +82,7 @@ export default function SalesOrders() {
   const [isEditing, setIsEditing] = useState(false);
   const [editableInvoice, setEditableInvoice] = useState<Invoice | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
 
   // Query invoices
   const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError } = useQuery({
@@ -457,6 +459,36 @@ export default function SalesOrders() {
     return totals;
   };
 
+  // Helper functions for checkbox selection
+  const handleSelectOrder = (orderId: number, orderType: string, checked: boolean) => {
+    const orderKey = `${orderType}-${orderId}`;
+    const newSelectedIds = new Set(selectedOrderIds);
+    
+    if (checked) {
+      newSelectedIds.add(orderKey);
+    } else {
+      newSelectedIds.delete(orderKey);
+    }
+    
+    setSelectedOrderIds(newSelectedIds);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allOrderKeys = filteredInvoices.map(item => `${item.type}-${item.id}`);
+      setSelectedOrderIds(new Set(allOrderKeys));
+    } else {
+      setSelectedOrderIds(new Set());
+    }
+  };
+
+  const isOrderSelected = (orderId: number, orderType: string) => {
+    return selectedOrderIds.has(`${orderType}-${orderId}`);
+  };
+
+  const isAllSelected = filteredInvoices.length > 0 && selectedOrderIds.size === filteredInvoices.length;
+  const isIndeterminate = selectedOrderIds.size > 0 && selectedOrderIds.size < filteredInvoices.length;
+
   const totals = calculateTotals();
 
   return (
@@ -549,25 +581,27 @@ export default function SalesOrders() {
                       size="sm" 
                       variant="outline" 
                       className="flex items-center gap-2 border-red-500 text-red-600 hover:bg-red-50"
+                      disabled={selectedOrderIds.size === 0}
                       onClick={() => {
-                        // Handle bulk cancel orders
-                        console.log('Bulk cancel orders');
+                        console.log('Bulk cancel orders:', Array.from(selectedOrderIds));
+                        // Handle bulk cancel orders logic here
                       }}
                     >
                       <X className="w-4 h-4" />
-                      Hủy đơn
+                      Hủy đơn ({selectedOrderIds.size})
                     </Button>
                     <Button 
                       size="sm" 
                       variant="outline" 
                       className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
+                      disabled={selectedOrderIds.size === 0}
                       onClick={() => {
-                        // Handle export to excel
-                        console.log('Export to excel');
+                        console.log('Export to excel:', Array.from(selectedOrderIds));
+                        // Handle export to excel logic here
                       }}
                     >
                       <Download className="w-4 h-4" />
-                      Xuất excel
+                      Xuất excel ({selectedOrderIds.size})
                     </Button>
                   </div>
                 </div>
@@ -595,7 +629,16 @@ export default function SalesOrders() {
                 ) : (
                   <div className="space-y-2">
                     {/* Fixed Header */}
-                    <div className="grid grid-cols-10 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded sticky top-0 z-10">
+                    <div className="grid grid-cols-11 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded sticky top-0 z-10">
+                      <div className="col-span-1 flex items-center">
+                        <Checkbox
+                          checked={isAllSelected}
+                          ref={(el) => {
+                            if (el) el.indeterminate = isIndeterminate;
+                          }}
+                          onCheckedChange={handleSelectAll}
+                        />
+                      </div>
                       <div className="col-span-2">Số đơn bán</div>
                       <div className="col-span-2">Ngày đơn bán</div>
                       <div className="col-span-3">Khách hàng</div>
@@ -607,20 +650,45 @@ export default function SalesOrders() {
                       {filteredInvoices.map((item) => (
                         <div
                           key={`${item.type}-${item.id}`}
-                          className={`grid grid-cols-10 gap-2 text-xs p-2 rounded cursor-pointer hover:bg-blue-50 ${
+                          className={`grid grid-cols-11 gap-2 text-xs p-2 rounded hover:bg-blue-50 ${
                             selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
                           }`}
-                          onClick={() => setSelectedInvoice(item)}
                         >
-                          <div className="col-span-2 font-medium">
+                          <div className="col-span-1 flex items-center">
+                            <Checkbox
+                              checked={isOrderSelected(item.id, item.type)}
+                              onCheckedChange={(checked) => handleSelectOrder(item.id, item.type, checked as boolean)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                          <div 
+                            className="col-span-2 font-medium cursor-pointer"
+                            onClick={() => setSelectedInvoice(item)}
+                          >
                             {item.displayNumber}
                           </div>
-                          <div className="col-span-2">{formatDate(item.date)}</div>
-                          <div className="col-span-3 truncate">{item.customerName || 'Khách hàng lẻ'}</div>
-                          <div className="col-span-2 text-right font-medium">
+                          <div 
+                            className="col-span-2 cursor-pointer"
+                            onClick={() => setSelectedInvoice(item)}
+                          >
+                            {formatDate(item.date)}
+                          </div>
+                          <div 
+                            className="col-span-3 truncate cursor-pointer"
+                            onClick={() => setSelectedInvoice(item)}
+                          >
+                            {item.customerName || 'Khách hàng lẻ'}
+                          </div>
+                          <div 
+                            className="col-span-2 text-right font-medium cursor-pointer"
+                            onClick={() => setSelectedInvoice(item)}
+                          >
                             {formatCurrency(item.total)}
                           </div>
-                          <div className="col-span-1">
+                          <div 
+                            className="col-span-1 cursor-pointer"
+                            onClick={() => setSelectedInvoice(item)}
+                          >
                             {getInvoiceStatusBadge(item.displayStatus)}
                           </div>
                         </div>
