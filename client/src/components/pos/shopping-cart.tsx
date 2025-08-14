@@ -306,8 +306,8 @@ export function ShoppingCart({
           onClearCart();
 
           // Hiển thị receipt modal với data thực sự, isPreview = false để có thể in ngay
-          setShowReceiptModal(true);
           setCurrentReceipt(eInvoiceData.receipt);
+          setShowReceiptModal(true);
 
           toast({
             title: "Thành công",
@@ -325,6 +325,7 @@ export function ShoppingCart({
               "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
           });
         }
+
         console.log("✅ E-invoice later processing completed");
         return;
       }
