@@ -375,7 +375,7 @@ export function MenuReport() {
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-green-500 h-2 rounded-full transition-all"
-                        style={{ width: `${revenuePercentage}%` }}
+                        style={{ width: `${Math.min(Math.max(revenuePercentage, 0), 100)}%` }}
                       ></div>
                     </div>
 
@@ -386,7 +386,7 @@ export function MenuReport() {
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-blue-500 h-2 rounded-full transition-all"
-                        style={{ width: `${quantityPercentage}%` }}
+                        style={{ width: `${Math.min(Math.max(quantityPercentage, 0), 100)}%` }}
                       ></div>
                     </div>
                   </div>
