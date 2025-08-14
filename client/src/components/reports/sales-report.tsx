@@ -217,6 +217,7 @@ export function SalesReport() {
     const labels = {
       cash: t("reports.cash"),
       card: t("reports.card"),
+      creditCard: t("reports.credit_card"),
       credit_card: t("reports.credit_card"),
       mobile: "Mobile",
     };

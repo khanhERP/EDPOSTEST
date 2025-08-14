@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { tenantMiddleware, getTenantDatabase, TenantRequest } from "./tenant-middleware";
 import {
   insertProductSchema,
   insertTransactionSchema,
@@ -22,6 +23,7 @@ import {
   invoiceItems,
 } from "@shared/schema";
 import { initializeSampleData, db } from "./db";
+import { registerTenantRoutes } from "./tenant-routes";
 import { z } from "zod";
 import {
   eq,
@@ -48,6 +50,12 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Register tenant management routes
+  registerTenantRoutes(app);
+  
+  // Apply tenant middleware to all API routes
+  app.use('/api', tenantMiddleware);
+  
   // Initialize sample data
   await initializeSampleData();
 
@@ -159,29 +167,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Products
-  app.get("/api/products", async (req, res) => {
+  app.get("/api/products", async (req: TenantRequest, res) => {
     try {
       const { category, search, includeInactive } = req.query;
       let products;
 
       const shouldIncludeInactive = includeInactive === "true";
+      const tenantDb = await getTenantDatabase(req);
 
       if (search) {
         products = await storage.searchProducts(
           search as string,
           shouldIncludeInactive,
+          tenantDb,
         );
       } else if (category && category !== "all") {
         products = await storage.getProductsByCategory(
           parseInt(category as string),
           shouldIncludeInactive,
+          tenantDb,
         );
       } else {
-        products = await storage.getAllProducts(shouldIncludeInactive);
+        products = await storage.getAllProducts(shouldIncludeInactive, tenantDb);
       }
 
       res.json(products);
     } catch (error) {
+      console.error('Products API error:', error);
       res.status(500).json({ message: "Failed to fetch products" });
     }
   });

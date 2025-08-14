@@ -1419,11 +1419,12 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async getAllProducts(includeInactive: boolean = false): Promise<Product[]> {
+  async getAllProducts(includeInactive: boolean = false, tenantDb?: any): Promise<Product[]> {
+    const database = tenantDb || db;
     if (includeInactive) {
-      return await db.select().from(products).orderBy(products.name);
+      return await database.select().from(products).orderBy(products.name);
     } else {
-      return await db
+      return await database
         .select()
         .from(products)
         .where(eq(products.isActive, true))
