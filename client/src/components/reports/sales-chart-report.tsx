@@ -71,11 +71,11 @@ export function SalesChartReport() {
       try {
         const storageKey = `salesReport_${analysisType}_${concernType}_settings`;
         const savedConfig = localStorage.getItem(storageKey);
-        
+
         if (savedConfig) {
           const parsedConfig = JSON.parse(savedConfig);
           setSavedSettings(parsedConfig);
-          
+
           // Apply saved settings if they exist
           if (parsedConfig.dateRange) {
             setStartDate(parsedConfig.dateRange.startDate || startDate);
@@ -113,8 +113,8 @@ export function SalesChartReport() {
           analysisType,
           concernType
         };
-        
-        localStorage.setItem(storageKey, JSON.stringify(currentSettings));
+
+        localStorage.setItem(storageKey, JSON.JSON.stringify(currentSettings));
       } catch (error) {
         console.warn("Failed to save current settings:", error);
       }
@@ -470,12 +470,12 @@ export function SalesChartReport() {
     // Process transactions to build product sales data
     filteredData.forEach((transaction: any) => {
       const items = transaction.items || [];
-      
+
       // If no items, create a synthetic item from transaction data
       if (items.length === 0) {
         const productName = "General Sale";
         const productId = "general";
-        
+
         if (!productData[productId]) {
           productData[productId] = {
             productCode: "GEN001",
@@ -504,7 +504,7 @@ export function SalesChartReport() {
           const productId = item.id || item.productId || "unknown";
           const productName = item.productName || item.name || "Unknown Product";
           const productCode = item.sku || item.productCode || productId;
-          
+
           if (!productData[productId]) {
             productData[productId] = {
               productCode,
@@ -626,7 +626,7 @@ export function SalesChartReport() {
     filteredData.forEach((transaction: any) => {
       const customer = transaction.customerName || transaction.customerPhone || "Walk-in Customer";
       const customerId = transaction.customerId || customer;
-      
+
       if (!customerData[customerId]) {
         customerData[customerId] = {
           customer,
@@ -988,7 +988,7 @@ export function SalesChartReport() {
           concernType
         }
       };
-      
+
       localStorage.setItem(dataKey, JSON.stringify(reportData));
     } catch (error) {
       console.warn("Failed to save report data:", error);
@@ -997,7 +997,7 @@ export function SalesChartReport() {
 
   const renderReportTable = () => {
     let reportContent;
-    
+
     if (analysisType === "time") {
       switch (concernType) {
         case "time":
@@ -1156,7 +1156,7 @@ export function SalesChartReport() {
             profit: item.profit,
           }));
         }
-        
+
         case "employee": {
           const data = getEmployeeAnalysisData();
           return data.slice(0, 10).map((item) => ({
@@ -1166,7 +1166,7 @@ export function SalesChartReport() {
             grossProfit: item.grossProfit,
           }));
         }
-        
+
         case "customer": {
           const data = getCustomerAnalysisData();
           return data.slice(0, 10).map((item) => ({
@@ -1176,7 +1176,7 @@ export function SalesChartReport() {
             orders: item.orders,
           }));
         }
-        
+
         case "channel": {
           const data = getChannelAnalysisData();
           return data.map((item) => ({
@@ -1187,7 +1187,7 @@ export function SalesChartReport() {
             netProfit: item.netProfit,
           }));
         }
-        
+
         default:
           return [];
       }
@@ -1271,7 +1271,7 @@ export function SalesChartReport() {
         </CardHeader>
       </Card>
 
-      
+
 
       {/* Filters */}
       <Card>
