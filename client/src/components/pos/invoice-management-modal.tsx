@@ -171,7 +171,6 @@ export function InvoiceManagementModal({
                     <tr className="border-b bg-gray-50">
                       <th className="text-left p-3 font-medium">Số giao dịch</th>
                       <th className="text-left p-3 font-medium">Số hóa đơn</th>
-                      <th className="text-left p-3 font-medium">Mẫu số hóa đơn</th>
                       <th className="text-left p-3 font-medium">Khách hàng</th>
                       <th className="text-left p-3 font-medium">Tổng tiền</th>
                       <th className="text-left p-3 font-medium">Thanh toán</th>
@@ -188,9 +187,9 @@ export function InvoiceManagementModal({
                         </td>
                         <td className="p-3">
                           <div className="font-mono text-sm">{invoice.invoiceNumber || "Chưa có"}</div>
-                        </td>
-                        <td className="p-3">
-                          <div className="font-mono text-sm">{invoice.templateNumber || "Chưa có"}</div>
+                          {invoice.templateNumber && (
+                            <div className="text-sm text-gray-500">Mẫu: {invoice.templateNumber}</div>
+                          )}
                         </td>
                         <td className="p-3">
                           <div className="font-medium">{invoice.customerName}</div>
