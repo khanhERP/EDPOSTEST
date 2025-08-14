@@ -128,6 +128,22 @@ export async function initializeSampleData() {
       console.log("Trade number migration failed or already applied:", error);
     }
 
+    // Add invoice_status column to invoices table
+    try {
+      await db.execute(sql`
+        ALTER TABLE invoices ADD COLUMN IF NOT EXISTS invoice_status INTEGER NOT NULL DEFAULT 1
+      `);
+      
+      // Create index for invoice_status
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_invoices_invoice_status ON invoices(invoice_status)
+      `);
+      
+      console.log("Migration for invoice_status column completed successfully.");
+    } catch (error) {
+      console.log("Invoice status migration failed or already applied:", error);
+    }
+
     // Run migration for email constraint in employees table
     try {
       await db.execute(sql`

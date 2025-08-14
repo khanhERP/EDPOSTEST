@@ -28,6 +28,7 @@ interface Invoice {
   invoiceDate: string;
   status: string;
   einvoiceStatus: number;
+  invoiceStatus: number;
   notes: string;
   createdAt: string;
 }
@@ -166,6 +167,26 @@ export default function SalesOrders() {
     return (
       <Badge className={statusColors[status as keyof typeof statusColors] || statusColors[0]}>
         {statusLabels[status as keyof typeof statusLabels] || "Không xác định"}
+      </Badge>
+    );
+  };
+
+  const getInvoiceStatusBadge = (status: number) => {
+    const statusLabels = {
+      1: "Hoàn thành",
+      2: "Đang phục vụ", 
+      3: "Đã hủy",
+    };
+
+    const statusColors = {
+      1: "bg-green-100 text-green-800",
+      2: "bg-blue-100 text-blue-800",
+      3: "bg-red-100 text-red-800",
+    };
+
+    return (
+      <Badge className={statusColors[status as keyof typeof statusColors] || statusColors[1]}>
+        {statusLabels[status as keyof typeof statusLabels] || "Hoàn thành"}
       </Badge>
     );
   };
@@ -334,11 +355,12 @@ export default function SalesOrders() {
                 ) : (
                   <div className="space-y-2 max-h-96 overflow-y-auto">
                     <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded">
-                      <div className="col-span-3">Số đơn bán</div>
+                      <div className="col-span-2">Số đơn bán</div>
                       <div className="col-span-2">Ngày đơn bán</div>
                       <div className="col-span-3">Khách hàng</div>
                       <div className="col-span-2">Thành tiền</div>
                       <div className="col-span-2">Trạng thái</div>
+                      <div className="col-span-1">Trạng thái đơn</div>
                     </div>
                     {filteredInvoices.map((invoice) => (
                       <div
@@ -348,7 +370,7 @@ export default function SalesOrders() {
                         }`}
                         onClick={() => setSelectedInvoice(invoice)}
                       >
-                        <div className="col-span-3 font-medium">
+                        <div className="col-span-2 font-medium">
                           {invoice.tradeNumber || invoice.invoiceNumber || `DH${String(invoice.id).padStart(8, '0')}`}
                         </div>
                         <div className="col-span-2">{formatDate(invoice.invoiceDate)}</div>
@@ -358,6 +380,9 @@ export default function SalesOrders() {
                         </div>
                         <div className="col-span-2">
                           {getEInvoiceStatusBadge(invoice.einvoiceStatus)}
+                        </div>
+                        <div className="col-span-1">
+                          {getInvoiceStatusBadge(invoice.invoiceStatus || 1)}
                         </div>
                       </div>
                     ))}
@@ -486,8 +511,12 @@ export default function SalesOrders() {
                           )}
                         </div>
                         <div>
-                          <span className="font-medium">Trạng thái:</span>
+                          <span className="font-medium">Trạng thái HĐ:</span>
                           <div>{getEInvoiceStatusBadge(selectedInvoice.einvoiceStatus)}</div>
+                        </div>
+                        <div>
+                          <span className="font-medium">Trạng thái đơn:</span>
+                          <div>{getInvoiceStatusBadge(selectedInvoice.invoiceStatus || 1)}</div>
                         </div>
                       </div>
                     </div>
