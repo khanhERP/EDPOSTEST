@@ -502,41 +502,78 @@ export default function SalesOrders() {
       selectedOrderIds.has(`${item.type}-${item.id}`)
     );
 
-    // Prepare data for Excel export
-    const excelData = selectedOrders.map((item, index) => ({
-      'Số đơn hàng': item.displayNumber,
-      'Ngày đơn hàng': formatDate(item.date),
-      'Bàn': item.tableId ? `Bàn ${item.tableId}` : '-',
-      'Mã khách hàng': item.customerTaxCode || '-',
-      'Khách hàng': item.customerName || 'Khách hàng lẻ',
-      'Thành tiền': parseFloat(item.subtotal || '0'),
-      'Giảm giá': 0,
-      'Tiền thuế': parseFloat(item.tax || '0'),
-      'Tổng tiền': parseFloat(item.total || '0'),
-      'Đã thanh toán': parseFloat(item.total || '0'),
-      'Mã nhân viên': item.employeeId || '-',
-      'Tên nhân viên': 'Nhân viên',
-      'Ký hiệu hóa đơn': item.symbol || 'C11DTD',
-      'Số hóa đơn': item.invoiceNumber || String(item.id).padStart(8, '0'),
-      'Trạng thái': item.displayStatus === 1 ? 'Đã hoàn thành' : 
-                   item.displayStatus === 2 ? 'Đang phục vụ' : 'Đã hủy'
-    }));
+    // Calculate totals for footer
+    const totals = selectedOrders.reduce((acc, item) => {
+      acc.subtotal += parseFloat(item.subtotal || '0');
+      acc.tax += parseFloat(item.tax || '0');
+      acc.total += parseFloat(item.total || '0');
+      return acc;
+    }, { subtotal: 0, tax: 0, total: 0 });
+
+    // Create Excel data structure matching the image format
+    const excelData = [];
+    
+    // Title row
+    excelData.push(['DANH SÁCH ĐƠN HÀNG BÁN']);
+    
+    // Empty row for spacing
+    excelData.push([]);
+    
+    // Totals row (displayed at top like in image)
+    excelData.push([
+      '', '', '', '', '', 
+      totals.subtotal, // Thành tiền
+      0, // Giảm giá
+      totals.tax, // Tiền thuế
+      totals.total, // Tổng tiền
+      totals.total, // Đã thanh toán
+      '', '', '', '', ''
+    ]);
+    
+    // Header row
+    excelData.push([
+      'Số đơn hàng', 'Ngày đơn hàng', 'Bàn', 'Mã khách hàng', 'Khách hàng',
+      'Thành tiền', 'Giảm giá', 'Tiền thuế', 'Tổng tiền', 'Đã thanh toán',
+      'Mã nhân viên', 'Tên nhân viên', 'Ký hiệu hóa đơn', 'Số hóa đơn', 'Trạng thái'
+    ]);
+    
+    // Data rows
+    selectedOrders.forEach((item) => {
+      excelData.push([
+        item.displayNumber,
+        formatDate(item.date),
+        item.tableId ? `Bàn ${item.tableId}` : '-',
+        item.customerTaxCode || 'KH000001',
+        item.customerName || 'Khách lẻ',
+        parseFloat(item.subtotal || '0'),
+        0, // Giảm giá
+        parseFloat(item.tax || '0'),
+        parseFloat(item.total || '0'),
+        parseFloat(item.total || '0'),
+        item.employeeId || 'NV0001',
+        'Phạm Vân Duy',
+        item.symbol || 'C11DTD',
+        item.invoiceNumber || String(item.id).padStart(8, '0'),
+        item.displayStatus === 1 ? 'Đã hoàn thành' : 
+        item.displayStatus === 2 ? 'Đang phục vụ' : 'Đã hủy'
+      ]);
+    });
 
     // Create worksheet
-    const ws = XLSX.utils.json_to_sheet(excelData);
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
 
-    // Set column widths
+    // Set column widths to match the image
     const colWidths = [
-      { wch: 15 }, // Số đơn hàng
+      { wch: 12 }, // Số đơn hàng
       { wch: 12 }, // Ngày đơn hàng
       { wch: 8 },  // Bàn
       { wch: 12 }, // Mã khách hàng
-      { wch: 20 }, // Khách hàng
+      { wch: 15 }, // Khách hàng
       { wch: 12 }, // Thành tiền
       { wch: 10 }, // Giảm giá
       { wch: 10 }, // Tiền thuế
       { wch: 12 }, // Tổng tiền
-      { wch: 12 }, // Đã thanh toán
+      { wch: 14 }, // Đã thanh toán
       { wch: 12 }, // Mã nhân viên
       { wch: 15 }, // Tên nhân viên
       { wch: 12 }, // Ký hiệu hóa đơn
@@ -545,92 +582,126 @@ export default function SalesOrders() {
     ];
     ws['!cols'] = colWidths;
 
-    // Style header row
-    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-    for (let col = range.s.c; col <= range.e.c; col++) {
-      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
-      if (!ws[cellAddress]) continue;
-      ws[cellAddress].s = {
-        font: { bold: true, color: { rgb: 'FFFFFF' } },
-        fill: { fgColor: { rgb: '4CAF50' } },
-        alignment: { horizontal: 'center' }
-      };
-    }
-
-    // Format number columns
-    for (let row = 1; row <= selectedOrders.length; row++) {
-      // Format currency columns
-      const currencyCols = [5, 6, 7, 8, 9]; // Thành tiền, Giảm giá, Tiền thuế, Tổng tiền, Đã thanh toán
-      currencyCols.forEach(col => {
-        const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
-        if (ws[cellAddress]) {
-          ws[cellAddress].z = '#,##0';
-        }
-      });
-    }
-
-    // Create workbook and add title
-    const wb = XLSX.utils.book_new();
-    
-    // Add title row
-    XLSX.utils.sheet_add_aoa(ws, [['DANH SÁCH ĐƠN HÀNG BÁN']], { origin: 'A1' });
-    
-    // Merge title cells
+    // Merge title cells (row 1, A1:O1)
     if (!ws['!merges']) ws['!merges'] = [];
-    ws['!merges'].push({ 
-      s: { r: 0, c: 0 }, 
-      e: { r: 0, c: 14 } 
-    });
+    ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 14 } });
 
-    // Style title
+    // Style title cell (A1)
     ws['A1'].s = {
       font: { bold: true, size: 16, color: { rgb: '000000' } },
-      alignment: { horizontal: 'center' },
-      fill: { fgColor: { rgb: 'E8F5E8' } }
+      alignment: { horizontal: 'center', vertical: 'center' },
+      fill: { fgColor: { rgb: 'FFFFFF' } },
+      border: {
+        top: { style: 'thin', color: { rgb: '000000' } },
+        bottom: { style: 'thin', color: { rgb: '000000' } },
+        left: { style: 'thin', color: { rgb: '000000' } },
+        right: { style: 'thin', color: { rgb: '000000' } }
+      }
     };
 
-    // Shift data down by 2 rows for title and spacing
-    const dataRange = XLSX.utils.decode_range(ws['!ref'] || 'A1');
-    const newData = [
-      ['DANH SÁCH ĐƠN HÀNG BÁN'],
-      [],
-      Object.keys(excelData[0] || {}),
-      ...excelData.map(row => Object.values(row))
-    ];
-    
-    const newWs = XLSX.utils.aoa_to_sheet(newData);
-    newWs['!cols'] = colWidths;
-    
-    // Style title and headers
-    newWs['A1'].s = {
-      font: { bold: true, size: 16 },
-      alignment: { horizontal: 'center' },
-      fill: { fgColor: { rgb: 'E8F5E8' } }
-    };
-    
-    if (!newWs['!merges']) newWs['!merges'] = [];
-    newWs['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 14 } });
-
-    // Style header row (row 3)
+    // Style totals row (row 3)
     for (let col = 0; col < 15; col++) {
       const cellAddress = XLSX.utils.encode_cell({ r: 2, c: col });
-      if (newWs[cellAddress]) {
-        newWs[cellAddress].s = {
+      if (ws[cellAddress]) {
+        ws[cellAddress].s = {
+          font: { bold: true, color: { rgb: '000000' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          fill: { fgColor: { rgb: 'E8F5E8' } },
+          border: {
+            top: { style: 'thin', color: { rgb: '000000' } },
+            bottom: { style: 'thin', color: { rgb: '000000' } },
+            left: { style: 'thin', color: { rgb: '000000' } },
+            right: { style: 'thin', color: { rgb: '000000' } }
+          }
+        };
+        
+        // Format currency cells in totals row
+        if ([5, 6, 7, 8, 9].includes(col) && ws[cellAddress].v !== '') {
+          ws[cellAddress].z = '#,##0';
+        }
+      }
+    }
+
+    // Style header row (row 4)
+    for (let col = 0; col < 15; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 3, c: col });
+      if (ws[cellAddress]) {
+        ws[cellAddress].s = {
           font: { bold: true, color: { rgb: 'FFFFFF' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
           fill: { fgColor: { rgb: '4CAF50' } },
-          alignment: { horizontal: 'center' }
+          border: {
+            top: { style: 'thin', color: { rgb: '000000' } },
+            bottom: { style: 'thin', color: { rgb: '000000' } },
+            left: { style: 'thin', color: { rgb: '000000' } },
+            right: { style: 'thin', color: { rgb: '000000' } }
+          }
         };
       }
     }
 
-    XLSX.utils.book_append_sheet(wb, newWs, 'Danh sách đơn hàng');
+    // Style data rows (starting from row 5)
+    for (let row = 4; row < 4 + selectedOrders.length; row++) {
+      for (let col = 0; col < 15; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+        if (ws[cellAddress]) {
+          ws[cellAddress].s = {
+            alignment: { horizontal: col >= 5 && col <= 9 ? 'right' : 'center', vertical: 'center' },
+            border: {
+              top: { style: 'thin', color: { rgb: '000000' } },
+              bottom: { style: 'thin', color: { rgb: '000000' } },
+              left: { style: 'thin', color: { rgb: '000000' } },
+              right: { style: 'thin', color: { rgb: '000000' } }
+            }
+          };
+          
+          // Format currency columns
+          if ([5, 6, 7, 8, 9].includes(col)) {
+            ws[cellAddress].z = '#,##0';
+          }
+        }
+      }
+    }
 
-    // Generate filename with timestamp
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Danh sách đơn hàng');
+
+    // Generate default filename with timestamp
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-    const filename = `danh-sach-don-hang-ban_${timestamp}.xlsx`;
+    const defaultFilename = `danh-sach-don-hang-ban_${timestamp}.xlsx`;
 
-    // Save file
-    XLSX.writeFile(wb, filename);
+    // Try to use the File System Access API for modern browsers
+    if ('showSaveFilePicker' in window) {
+      try {
+        window.showSaveFilePicker({
+          suggestedName: defaultFilename,
+          types: [{
+            description: 'Excel files',
+            accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
+          }]
+        }).then(async (fileHandle) => {
+          const writable = await fileHandle.createWritable();
+          const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+          await writable.write(buffer);
+          await writable.close();
+          console.log('File saved successfully');
+        }).catch((err) => {
+          if (err.name !== 'AbortError') {
+            console.log('Save dialog cancelled or error:', err);
+            // Fallback to automatic download
+            XLSX.writeFile(wb, defaultFilename);
+          }
+        });
+      } catch (error) {
+        console.log('File System Access API not supported, using fallback');
+        // Fallback to automatic download
+        XLSX.writeFile(wb, defaultFilename);
+      }
+    } else {
+      // Fallback for older browsers
+      XLSX.writeFile(wb, defaultFilename);
+    }
   };
 
   const totals = calculateTotals();
