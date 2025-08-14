@@ -429,16 +429,9 @@ export function PaymentMethodModal({
     // Close payment modal first
     onClose();
 
-    // Kiểm tra nếu là phát hành thành công hoặc phát hành sau
-    if (eInvoiceData.publishedImmediately || eInvoiceData.publishLater) {
-      console.log('✅ E-invoice processed successfully, passing data to shopping cart for receipt display');
-      
-      // Truyền toàn bộ eInvoiceData về shopping cart để xử lý tiếp
-      onSelectMethod('einvoice', eInvoiceData);
-    } else {
-      console.log('📤 Passing e-invoice data back to shopping cart for processing');
-      onSelectMethod('einvoice', eInvoiceData);
-    }
+    // Luôn truyền dữ liệu về shopping cart để xử lý
+    console.log('📤 Passing e-invoice data back to shopping cart for processing');
+    onSelectMethod('einvoice', eInvoiceData);
   };
 
   const handleEInvoiceClose = () => {

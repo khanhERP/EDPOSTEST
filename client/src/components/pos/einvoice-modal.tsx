@@ -414,7 +414,7 @@ export function EInvoiceModal({
           const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
           const itemSubtotal = itemPrice * itemQuantity;
           const itemTax = (itemSubtotal * itemTaxRate) / 100;
-          
+
           return {
             productId: item.id,
             productName: item.name,
@@ -499,18 +499,11 @@ export function EInvoiceModal({
         description: 'Thông tin hóa đơn điện tử đã được lưu vào database để phát hành sau.',
       });
 
-      // Đóng modal e-invoice ngay lập tức để receipt modal có thể hiển thị
-      console.log('🔒 Closing e-invoice modal immediately for receipt display');
+      // Đóng modal e-invoice sau khi truyền dữ liệu
       onClose();
 
-      // Gọi onConfirm để hiển thị receipt modal với flag để in hóa đơn
-      console.log('✅ Calling onConfirm to show print dialog directly');
-      onConfirm({
-        ...invoiceData,
-        publishLater: true,
-        showPrintDialog: true, // Flag để hiển thị print dialog trực tiếp
-        receipt: receiptData // Đảm bảo receipt data được truyền
-      });
+      console.log('✅ Calling onConfirm with e-invoice data for later publishing');
+      onConfirm(invoiceData);
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
@@ -839,7 +832,7 @@ export function EInvoiceModal({
               const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
               const itemSubtotal = itemPrice * itemQuantity;
               const itemTax = (itemSubtotal * itemTaxRate) / 100;
-              
+
               return {
                 productId: item.id,
                 productName: item.name,
@@ -883,7 +876,7 @@ export function EInvoiceModal({
               tax: cartTaxAmount.toFixed(2),
               total: cartTotal.toFixed(2),
               status: 'paid', // Trạng thái đã thanh toán
-              paymentMethod: paymentMethodCode, // Sử dụng mã số integer thay vì string
+              paymentMethod: getPaymentMethodCode(selectedPaymentMethod), // Sử dụng mã số integer thay vì string
               paymentStatus: 'paid',
               einvoiceStatus: 1, // 1 = Đã phát hành
               notes: `E-Invoice: ${result.data?.invoiceNo || 'N/A'} - MST: ${formData.taxCode}, Tên: ${formData.customerName}, SĐT: ${formData.phoneNumber || 'N/A'}`,
@@ -934,7 +927,7 @@ export function EInvoiceModal({
             const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
             const itemSubtotal = itemPrice * itemQuantity;
             const itemTax = (itemSubtotal * itemTaxRate) / 100;
-            
+
             return {
               id: item.id,
               productId: item.id,
@@ -961,70 +954,22 @@ export function EInvoiceModal({
 
         console.log('📄 Created receipt data for published e-invoice:', receiptData);
 
-        // Đóng modal e-invoice trước khi xử lý tiếp
+        // Gọi onConfirm để truyền dữ liệu về parent component trước
+        onConfirm({
+          ...formData,
+          invoiceData: result.data,
+          cartItems: cartItems,
+          total: cartTotal,
+          paymentMethod: 'einvoice',
+          source: source || 'pos',
+          showReceipt: true, // Flag để hiển thị receipt modal
+          receipt: receiptData, // Truyền receipt data đã tạo
+          publishedImmediately: true, // Flag để phân biệt với phát hành sau
+          autoShowPrint: true // Tự động hiển thị dialog in
+        });
+
+        // Đóng modal sau khi truyền dữ liệu
         onClose();
-
-        // Xử lý logic khác nhau theo nguồn gọi
-        if (source === 'pos') {
-          // Logic cho POS: hiển thị receipt modal với auto-print
-          console.log('🏪 POS E-Invoice: Processing payment completion and showing receipt');
-          
-          // Gọi onConfirm để hiển thị receipt modal với auto-print
-          onConfirm({
-            ...formData,
-            invoiceData: result.data,
-            cartItems: cartItems,
-            total: cartTotal,
-            paymentMethod: 'einvoice',
-            source: 'pos',
-            showReceipt: true, // Flag để hiển thị receipt modal
-            receipt: receiptData, // Truyền receipt data đã tạo
-            publishedImmediately: true, // Flag để phân biệt với phát hành sau
-            autoShowPrint: true // Tự động hiển thị dialog in
-          });
-        } else if (source === 'table' && orderId) {
-          // Logic cho Table: Tự hoàn tất thanh toán luôn
-          console.log('🍽️ Table E-Invoice: Completing payment directly for order:', orderId);
-          console.log('🍽️ Invoice data received:', result.data);
-
-          // Gọi onConfirm để parent component biết về việc phát hành thành công
-          onConfirm({
-            ...formData,
-            invoiceData: result.data,
-            cartItems: cartItems,
-            total: cartTotal,
-            paymentMethod: 'einvoice',
-            source: 'table',
-            orderId: orderId,
-            showReceipt: true, // Flag để hiển thị receipt modal
-            receipt: receiptData, // Truyền receipt data đã tạo
-            publishedImmediately: true, // Flag để phân biệt với phát hành sau
-            autoShowPrint: true // Tự động hiển thị dialog in
-          });
-
-          // Gọi mutation để hoàn tất thanh toán ngay lập tức
-          console.log('🍽️ Executing payment completion for order:', orderId);
-          completePaymentMutation.mutate({
-            orderId: orderId,
-            paymentMethod: 'einvoice'
-          });
-        } else {
-          // Fallback: trả về data cho parent component xử lý
-          console.log('🔄 Fallback: Returning data to parent');
-          
-          onConfirm({
-            ...formData,
-            invoiceData: result.data,
-            cartItems: cartItems,
-            total: cartTotal,
-            paymentMethod: 'einvoice',
-            source: source || 'pos',
-            showReceipt: true, // Flag để hiển thị receipt modal
-            receipt: receiptData, // Truyền receipt data đã tạo
-            publishedImmediately: true, // Flag để phân biệt với phát hành sau
-            autoShowPrint: true // Tự động hiển thị dialog in
-          });
-        }
       } else {
         throw new Error(
           result.message || "Có lỗi xảy ra khi phát hành hóa đơn",

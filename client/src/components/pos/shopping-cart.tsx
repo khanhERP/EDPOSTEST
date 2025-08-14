@@ -270,7 +270,7 @@ export function ShoppingCart({
       
       // Xử lý cho cả phát hành sau và phát hành ngay
       if (eInvoiceData.publishLater || eInvoiceData.publishedImmediately) {
-        console.log("✅ E-invoice processed - calling handleEInvoiceConfirm");
+        console.log("✅ E-invoice processed - calling handleEInvoiceConfirm directly");
         handleEInvoiceConfirm(eInvoiceData);
         return;
       }
