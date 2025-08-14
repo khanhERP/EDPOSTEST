@@ -45,7 +45,6 @@ export function SalesChartReport() {
 
   const [analysisType, setAnalysisType] = useState("time");
   const [concernType, setConcernType] = useState("time");
-  const [dateRange, setDateRange] = useState("today");
   const today = new Date(); // Define today once
   const [startDate, setStartDate] = useState<string>(
     today.toISOString().split("T")[0],
@@ -64,61 +63,6 @@ export function SalesChartReport() {
     queryKey: ["/api/employees"],
   });
 
-  const handleDateRangeChange = (range: string) => {
-    setDateRange(range);
-    const today = new Date();
-
-    switch (range) {
-      case "today":
-        setStartDate(today.toISOString().split("T")[0]);
-        setEndDate(today.toISOString().split("T")[0]);
-        break;
-      case "week":
-        // Tuần trước: từ thứ 2 tuần trước đến chủ nhật tuần trước
-        const currentDayOfWeek = today.getDay(); // 0 = Chủ nhật, 1 = Thứ 2, ...
-        const daysToLastMonday =
-          currentDayOfWeek === 0 ? 13 : currentDayOfWeek + 6; // Nếu hôm nay là CN thì lùi 13 ngày, không thì lùi (ngày hiện tại + 6)
-        const lastWeekMonday = new Date(
-          today.getTime() - daysToLastMonday * 24 * 60 * 60 * 1000,
-        );
-        const lastWeekSunday = new Date(
-          lastWeekMonday.getTime() + 6 * 24 * 60 * 60 * 1000,
-        );
-
-        setStartDate(lastWeekMonday.toISOString().split("T")[0]);
-        setEndDate(lastWeekSunday.toISOString().split("T")[0]);
-        break;
-      case "month":
-        // Tháng trước: từ ngày 1 tháng trước đến ngày cuối tháng trước
-        const currentDate = new Date();
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
-        
-        // Tính tháng trước
-        const lastMonthYear = month === 0 ? year - 1 : year;
-        const lastMonth = month === 0 ? 11 : month - 1;
-        
-        // Ngày đầu tháng trước
-        const lastMonthStart = new Date(lastMonthYear, lastMonth, 1);
-        // Ngày cuối tháng trước
-        const lastMonthEnd = new Date(lastMonthYear, lastMonth + 1, 0);
-
-        // Format thành YYYY-MM-DD
-        const startDateStr = `${lastMonthStart.getFullYear()}-${(lastMonthStart.getMonth() + 1).toString().padStart(2, "0")}-${lastMonthStart.getDate().toString().padStart(2, "0")}`;
-        const endDateStr = `${lastMonthEnd.getFullYear()}-${(lastMonthEnd.getMonth() + 1).toString().padStart(2, "0")}-${lastMonthEnd.getDate().toString().padStart(2, "0")}`;
-
-        setStartDate(startDateStr);
-        setEndDate(endDateStr);
-        break;
-      case "custom":
-        // Luôn set ngày hiện tại khi chọn tùy chỉnh
-        const customCurrentDate = new Date().toISOString().split("T")[0];
-        setStartDate(customCurrentDate);
-        setEndDate(customCurrentDate);
-        break;
-    }
-  };
-
   const getFilteredData = () => {
     if (!transactions || !Array.isArray(transactions)) return [];
 
@@ -126,11 +70,11 @@ export function SalesChartReport() {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
 
-      // Chuyển về ngày local để so sánh chính xác
-      const transactionDateStr = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, "0")}-${transactionDate.getDate().toString().padStart(2, "0")}`;
-      
-      const isInRange = transactionDateStr >= startDate && transactionDateStr <= endDate;
+      const dateMatch = transactionDate >= start && transactionDate <= end;
 
       // For now, we'll assume all transactions are "no delivery" and "direct"
       // In a real system, you would filter based on actual delivery and channel data
@@ -144,7 +88,7 @@ export function SalesChartReport() {
         (salesChannel === "direct" && true) ||
         (salesChannel === "other" && false);
 
-      return isInRange && methodMatch && channelMatch;
+      return dateMatch && methodMatch && channelMatch;
     });
 
     return filteredTransactions;
@@ -1056,7 +1000,7 @@ export function SalesChartReport() {
       {/* Filters */}
       <Card>
         <CardContent className="space-y-4 pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4">
             {/* Analysis Type Selector */}
             <div>
               <Label>{t("reports.analyzeBy")}: </Label>
@@ -1070,22 +1014,6 @@ export function SalesChartReport() {
                   <SelectItem value="employee">{t("reports.employeeAnalysis")}</SelectItem>
                   <SelectItem value="customer">{t("reports.customerAnalysis")}</SelectItem>
                   <SelectItem value="channel">{t("reports.channelAnalysis")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Date Range Selector */}
-            <div>
-              <Label>{t("reports.dateRange")}</Label>
-              <Select value={dateRange} onValueChange={handleDateRangeChange}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">{t("reports.toDay")}</SelectItem>
-                  <SelectItem value="week">{t("reports.lastWeek")}</SelectItem>
-                  <SelectItem value="month">{t("reports.lastMonth")}</SelectItem>
-                  <SelectItem value="custom">{t("reports.custom")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1154,27 +1082,25 @@ export function SalesChartReport() {
             </div>
           </div>
 
-          {/* Custom Date Range - Only show when custom is selected */}
-          {dateRange === "custom" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>{t("reports.startDate")}</Label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <Label>{t("reports.endDate")}</Label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
+          {/* Date Range */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+              <Label>{t("reports.startDate")}</Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
             </div>
-          )}
+            <div>
+              <Label>{t("reports.endDate")}</Label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
 
