@@ -61,6 +61,7 @@ export function ShoppingCart({
   // New states for Receipt Modal management
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [currentReceipt, setCurrentReceipt] = useState<any>(null);
+  const [autoShowPrint, setAutoShowPrint] = useState(false); // State to control auto-show print
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
@@ -723,11 +724,13 @@ export function ShoppingCart({
       {/* Receipt Modal */}
       <ReceiptModal
         isOpen={showReceiptModal}
-        onClose={() => setShowReceiptModal(false)}
+        onClose={() => {
+          console.log('🔴 Closing receipt modal from shopping cart');
+          setShowReceiptModal(false);
+          setCurrentReceipt(null);
+          setAutoShowPrint(false); // Reset auto-print flag
+        }}
         receipt={currentReceipt}
-        onConfirm={() => setShowReceiptModal(false)}
-        isPreview={false} // Không phải preview, có thể in ngay
-        autoShowPrint={true} // Tự động hiển thị dialog in cho tất cả các trường hợp
         cartItems={
           currentReceipt
             ? (currentReceipt.items || []).map((item: any) => ({
@@ -747,6 +750,7 @@ export function ShoppingCart({
                 taxRate: parseFloat(item.taxRate || "10"),
               }))
         }
+        autoShowPrint={autoShowPrint} // Truyền flag auto-print
       />
 
       {/* E-Invoice Modal (Assuming you have this component) */}
