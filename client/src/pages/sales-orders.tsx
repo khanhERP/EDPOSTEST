@@ -276,7 +276,6 @@ export default function SalesOrders() {
             {/* Invoices List */}
             <Card>
               <CardHeader>
-                <CardTitle>Danh sách hóa đơn ({filteredInvoices.length})</CardTitle>
               </CardHeader>
               <CardContent>
                 {isLoading ? (
