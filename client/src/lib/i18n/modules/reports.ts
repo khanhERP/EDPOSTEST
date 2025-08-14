@@ -43,6 +43,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customers: "고객",
     cash: "현금",
     card: "카드",
+    credit_card: "신용카드",
+    qrbanking: "QR 코드",
     einvoice: "전자 인보이스",
 
     // Table analysis specific
@@ -521,6 +523,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customers: "Customers",
     cash: "Cash",
     card: "Card",
+    qrbanking: "QR Code",
 
     // Table analysis specific
     customerCount: "Customer Count",
@@ -840,6 +843,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cash: "Tiền mặt",
     card: "Thẻ",
     credit_card: "Thẻ tín dụng",
+    qrbanking: "Mã QR",
 
     // Table analysis specific
     customerCount: "Số khách hàng",

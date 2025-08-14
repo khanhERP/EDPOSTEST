@@ -426,7 +426,7 @@ export function SalesReport() {
       momo: t("pos.momo"),
       zalopay: t("pos.zalopay"),
       vnpay: t("pos.vnpay"),
-      qrCode: t("pos.qrCode"),
+      qrCode: t("reports.qrbanking"),
       shopeepay: t("pos.shopeepay"),
       grabpay: t("pos.grabpay"),
       mobile: "Mobile",
