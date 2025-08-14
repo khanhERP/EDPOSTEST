@@ -586,9 +586,9 @@ export default function SalesOrders() {
     if (!ws['!merges']) ws['!merges'] = [];
     ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 14 } });
 
-    // Style title cell (A1)
+    // Style title cell (A1) - căn giữa in hoa và in đậm text size 14, font Times New Roman
     ws['A1'].s = {
-      font: { bold: true, size: 16, color: { rgb: '000000' } },
+      font: { bold: true, size: 14, color: { rgb: '000000' }, name: 'Times New Roman' },
       alignment: { horizontal: 'center', vertical: 'center' },
       fill: { fgColor: { rgb: 'FFFFFF' } },
       border: {
@@ -604,7 +604,7 @@ export default function SalesOrders() {
       const cellAddress = XLSX.utils.encode_cell({ r: 2, c: col });
       if (ws[cellAddress]) {
         ws[cellAddress].s = {
-          font: { bold: true, color: { rgb: '000000' } },
+          font: { bold: true, size: 10, color: { rgb: '000000' }, name: 'Times New Roman' },
           alignment: { horizontal: 'center', vertical: 'center' },
           fill: { fgColor: { rgb: 'E8F5E8' } },
           border: {
@@ -622,12 +622,12 @@ export default function SalesOrders() {
       }
     }
 
-    // Style header row (row 4)
+    // Style header row (row 4) - tiêu đề cột màu xanh lá in đậm căn giữa text size 10, font Times New Roman
     for (let col = 0; col < 15; col++) {
       const cellAddress = XLSX.utils.encode_cell({ r: 3, c: col });
       if (ws[cellAddress]) {
         ws[cellAddress].s = {
-          font: { bold: true, color: { rgb: 'FFFFFF' } },
+          font: { bold: true, size: 10, color: { rgb: 'FFFFFF' }, name: 'Times New Roman' },
           alignment: { horizontal: 'center', vertical: 'center' },
           fill: { fgColor: { rgb: '4CAF50' } },
           border: {
@@ -640,12 +640,13 @@ export default function SalesOrders() {
       }
     }
 
-    // Style data rows (starting from row 5)
+    // Style data rows (starting from row 5) - text size 10, font Times New Roman
     for (let row = 4; row < 4 + selectedOrders.length; row++) {
       for (let col = 0; col < 15; col++) {
         const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
         if (ws[cellAddress]) {
           ws[cellAddress].s = {
+            font: { size: 10, name: 'Times New Roman' },
             alignment: { horizontal: col >= 5 && col <= 9 ? 'right' : 'center', vertical: 'center' },
             border: {
               top: { style: 'thin', color: { rgb: '000000' } },
