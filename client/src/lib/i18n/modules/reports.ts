@@ -1262,11 +1262,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     directSales: "Bán trực tiếp",
     otherSales: "Khác",
     salesChannelChart: "Biểu đồ kênh bán hàng",
+    channelSalesReport: "Báo cáo kênh bán hàng",
 
     // Financial report
     financialReport: "Báo cáo tài chính",
     financialReportTab: "Báo cáo tài chính",
-    financialReportDescription: "Phân tích lợi nhuận và hiệu suất tài chính",
+    financialReportDescription:
+      "Phân tích lợi nhuận và hiệu suất tài chính",
     periodFilter: "Bộ lọc khoảng thời gian",
     monthlyFilter: "Theo tháng",
     quarterlyFilter: "Theo quý",
