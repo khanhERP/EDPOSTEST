@@ -475,12 +475,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cashFlowType: "현금흐름 유형",
 
     // Analysis types
+    analysisType: "분석 유형",
     analyzeBy: "Phân tích theo",
     timeAnalysis: "Phân tích theo thời gian", 
     productAnalysis: "Phân tích theo mặt hàng",
     employeeAnalysis: "Phân tích theo nhân viên theo hàng bán",
     customerAnalysis: "Phân tích theo khách hàng", 
-    channelAnalysis: "Phân tích theo kênh bán",
+    channelAnalysis: "Phân tích theo kênh bán hàng",
 
     // Common report keys
     chartView: "차트 보기",
@@ -920,11 +921,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Analysis types
     analysisType: "Phân tích theo",
     analyzeBy: "Phân tích theo",
-    timeAnalysis: "Thời gian",
-    productAnalysis: "Hàng hóa",
-    employeeAnalysis: "Nhân viên",
-    customerAnalysis: "Khách hàng",
-    channelAnalysis: "Kênh bán hàng",
+    timeAnalysis: "Phân tích theo thời gian",
+    productAnalysis: "Phân tích theo mặt hàng",
+    employeeAnalysis: "Phân tích theo nhân viên theo hàng bán",
+    customerAnalysis: "Phân tích theo khách hàng",
+    channelAnalysis: "Phân tích theo kênh bán hàng",
     productSalesAnalysis: "Phân tích theo Bán hàng",
     employeeSalesAnalysis: "Phân tích theo nhân viên theo hàng bán",
     customerSalesAnalysis: "Phân tích theo Bán hàng",
