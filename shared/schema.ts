@@ -378,7 +378,7 @@ export const invoices = pgTable("invoices", {
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  paymentMethod: varchar("payment_method", { length: 50 }).notNull(),
+  paymentMethod: integer("payment_method").notNull().default(1), // 1=Tiền mặt,2=Chuyển khoản,3=TM/CK,4=Đối trừ công nợ
   invoiceDate: timestamp("invoice_date").notNull(),
   status: varchar("status", { length: 20 }).notNull().default("draft"), // 'draft', 'published', 'cancelled'
   einvoiceStatus: integer("einvoice_status").notNull().default(0), // 0=Chưa phát hành, 1=Đã phát hành, 2=Tạo nháp, 3=Đã duyệt, 4=Đã bị thay thế (hủy), 5=Thay thế tạm, 6=Thay thế, 7=Đã bị điều chỉnh, 8=Điều chỉnh tạm, 9=Điều chỉnh, 10=Đã hủy

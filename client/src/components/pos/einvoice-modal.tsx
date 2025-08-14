@@ -50,6 +50,7 @@ interface EInvoiceModalProps {
   }>;
   source?: 'pos' | 'table'; // Thêm prop để phân biệt nguồn gọi
   orderId?: number; // Thêm orderId để tự xử lý cập nhật trạng thái
+  selectedPaymentMethod?: string; // Thêm prop để nhận phương thức thanh toán
 }
 
 export function EInvoiceModal({
@@ -60,6 +61,7 @@ export function EInvoiceModal({
   cartItems = [],
   source = 'pos', // Default là 'pos' để tương thích ngược
   orderId, // Thêm orderId prop
+  selectedPaymentMethod = '', // Thêm selectedPaymentMethod prop
 }: EInvoiceModalProps) {
   // Debug log to track cart items data flow
   console.log("🔍 EInvoiceModal Props Analysis:");
@@ -90,6 +92,23 @@ export function EInvoiceModal({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
+
+  // Helper function để map phương thức thanh toán
+  const getPaymentMethodCode = (paymentMethod: string): number => {
+    switch (paymentMethod) {
+      case 'cash':
+        return 1; // Tiền mặt
+      case 'creditCard':
+      case 'debitCard':
+      case 'momo':
+      case 'zalopay':
+      case 'vnpay':
+      case 'qrCode':
+        return 2; // Chuyển khoản
+      default:
+        return 2; // Default: Chuyển khoản
+    }
+  };
 
   // Mutation để hoàn tất thanh toán và cập nhật trạng thái
   const completePaymentMutation = useMutation({
@@ -366,9 +385,16 @@ export function EInvoiceModal({
 
       console.log(`💰 Total calculations: Subtotal: ${calculatedSubtotal}, Tax: ${calculatedTax}, Total: ${total}`);
 
+      // Lấy thông tin mẫu số hóa đơn được chọn
+      const selectedTemplate = invoiceTemplates.find(
+        (template) => template.id.toString() === formData.selectedTemplateId
+      );
+
       // Chuẩn bị thông tin hóa đơn để lưu vào bảng invoices và invoice_items
       const invoicePayload = {
-        invoiceNumber: `DRAFT-${Date.now()}`,
+        invoiceNumber: null, // Chưa có số hóa đơn vì chưa phát hành
+        templateNumber: selectedTemplate?.templateNumber || null, // Mẫu số hóa đơn
+        symbol: selectedTemplate?.symbol || null, // Ký hiệu hóa đơn
         customerName: formData.customerName || "Khách hàng",
         customerTaxCode: formData.taxCode || null,
         customerAddress: formData.address || null,
@@ -377,11 +403,11 @@ export function EInvoiceModal({
         subtotal: calculatedSubtotal.toFixed(2),
         tax: calculatedTax.toFixed(2),
         total: (typeof total === 'number' && !isNaN(total) ? total : calculatedSubtotal + calculatedTax).toFixed(2),
-        paymentMethod: 'einvoice',
+        paymentMethod: 2, // Default: Chuyển khoản cho e-invoice
         invoiceDate: new Date(),
         status: 'draft',
         einvoiceStatus: 0, // 0 = Chưa phát hành
-        notes: `E-Invoice draft - MST: ${formData.taxCode || 'N/A'}, Đợi phát hành sau`,
+        notes: `E-Invoice draft - MST: ${formData.taxCode || 'N/A'}, Template: ${selectedTemplate?.name || 'N/A'}, Đợi phát hành sau`,
         items: cartItems.map(item => {
           const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
           const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
@@ -785,10 +811,15 @@ export function EInvoiceModal({
       if (result.success) {
         console.log('✅ E-invoice published successfully, now saving invoice and order to database');
 
-        // Lưu thông tin hóa đơn vào bảng invoices
+        // Lưu thông tin hóa đơn vào bảng invoices với mapping phương thức thanh toán
         try {
+          // Map phương thức thanh toán theo yêu cầu
+          const paymentMethodCode = getPaymentMethodCode(selectedPaymentMethod);
+
           const invoicePayload = {
-            invoiceNumber: result.data?.invoiceNo || `INV-${Date.now()}`,
+            invoiceNumber: result.data?.invoiceNo || null, // Số hóa đơn từ API response
+            templateNumber: selectedTemplate.templateNumber || null, // Mẫu số hóa đơn
+            symbol: selectedTemplate.symbol || null, // Ký hiệu hóa đơn
             customerName: formData.customerName || "Khách hàng",
             customerTaxCode: formData.taxCode || null,
             customerAddress: formData.address || null,
@@ -797,11 +828,11 @@ export function EInvoiceModal({
             subtotal: cartSubtotal.toFixed(2),
             tax: cartTaxAmount.toFixed(2),
             total: cartTotal.toFixed(2),
-            paymentMethod: 'einvoice',
+            paymentMethod: paymentMethodCode, // Sử dụng mã số thay vì text
             invoiceDate: new Date(),
             status: 'published',
             einvoiceStatus: 1, // 1 = Đã phát hành
-            notes: `E-Invoice published - Transaction ID: ${publishRequest.transactionID}, Template: ${selectedTemplate.name}`,
+            notes: `E-Invoice published - Transaction ID: ${publishRequest.transactionID}, Invoice No: ${result.data?.invoiceNo || 'N/A'}`,
             items: cartItems.map(item => {
               const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
               const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;

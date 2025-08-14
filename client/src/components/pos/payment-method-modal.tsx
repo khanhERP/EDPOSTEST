@@ -835,14 +835,40 @@ export function PaymentMethodModal({
         </div>
       </DialogContent>
 
-      <EInvoiceModal
-        isOpen={showEInvoice}
-        onClose={handleEInvoiceClose}
-        onConfirm={handleEInvoiceConfirm}
-        total={total}
-        cartItems={cartItems}
-        source="pos"
-      />
+      {/* E-Invoice Modal */}
+      {showEInvoice && (
+        <EInvoiceModal
+          isOpen={showEInvoice}
+          onClose={handleEInvoiceClose}
+          onConfirm={handleEInvoiceConfirm}
+          total={typeof total === 'number' && !isNaN(total) ? total : (cartItems?.reduce((sum, item) => sum + (typeof item.price === 'number' ? item.price : parseFloat(item.price || "0")) * (typeof item.quantity === 'number' ? item.quantity : parseInt(item.quantity?.toString() || "1")), 0) || 0)}
+          selectedPaymentMethod={selectedPaymentMethod}
+          cartItems={(() => {
+            console.log("🔄 Payment Modal - Preparing cartItems for EInvoice:");
+            console.log("- cartItems prop:", cartItems);
+            console.log("- cartItems length:", cartItems?.length || 0);
+
+            // Always prefer cartItems prop since it has the most accurate data
+            if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
+              console.log("✅ Using cartItems prop for e-invoice (most accurate data)");
+              // Ensure all cartItems have proper structure
+              const processedCartItems = cartItems.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
+                quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
+                sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
+              }));
+              console.log("🔧 Processed cartItems for e-invoice:", processedCartItems);
+              return processedCartItems;
+            } else {
+              console.error("❌ No valid cart items found for e-invoice");
+              return [];
+            }
+          })()}
+        />
+      )}
     </Dialog>
   );
 }

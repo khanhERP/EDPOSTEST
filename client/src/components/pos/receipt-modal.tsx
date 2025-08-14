@@ -374,6 +374,7 @@ export function ReceiptModal({
             console.log('📄 Showing receipt modal after e-invoice processing');
           }}
           total={typeof receipt?.total === 'string' ? parseFloat(receipt.total) : (receipt?.total || 0)}
+          selectedPaymentMethod={receipt?.paymentMethod || 'cash'}
           cartItems={(() => {
             console.log("🔄 Receipt Modal - Preparing cartItems for EInvoice:");
             console.log("- cartItems prop:", cartItems);
