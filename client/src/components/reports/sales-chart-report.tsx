@@ -392,9 +392,9 @@ export function SalesChartReport() {
       case "product": {
         // Product sales analysis with comprehensive data
         const productData: {
-          [productName: string]: { 
-            revenue: number; 
-            quantity: number; 
+          [productName: string]: {
+            revenue: number;
+            quantity: number;
             cost: number;
             returnQuantity: number;
             returnValue: number;
@@ -406,18 +406,18 @@ export function SalesChartReport() {
           items.forEach((item: any) => {
             const productName = item.productName || item.name || "Unknown Product";
             if (!productData[productName]) {
-              productData[productName] = { 
-                revenue: 0, 
-                quantity: 0, 
+              productData[productName] = {
+                revenue: 0,
+                quantity: 0,
                 cost: 0,
                 returnQuantity: 0,
                 returnValue: 0
               };
             }
-            
+
             const itemTotal = Number(item.total || item.price * item.quantity);
             const itemQuantity = Number(item.quantity || 1);
-            
+
             if (itemTotal > 0) {
               productData[productName].revenue += itemTotal;
               productData[productName].quantity += itemQuantity;
@@ -475,8 +475,8 @@ export function SalesChartReport() {
       case "employee": {
         // Employee performance analysis with product sales breakdown
         const employeeData: {
-          [cashier: string]: { 
-            revenue: number; 
+          [cashier: string]: {
+            revenue: number;
             returnValue: number;
             orders: number;
             productsSold: { [product: string]: number };
@@ -488,9 +488,9 @@ export function SalesChartReport() {
         filteredData.forEach((transaction: any) => {
           const cashier = transaction.cashierName || "Unknown";
           if (!employeeData[cashier]) {
-            employeeData[cashier] = { 
-              revenue: 0, 
-              returnValue: 0, 
+            employeeData[cashier] = {
+              revenue: 0,
+              returnValue: 0,
               orders: 0,
               productsSold: {},
               topProduct: "",
@@ -512,7 +512,7 @@ export function SalesChartReport() {
           items.forEach((item: any) => {
             const productName = item.productName || item.name || "Unknown Product";
             const quantity = Number(item.quantity || 1);
-            
+
             if (!employeeData[cashier].productsSold[productName]) {
               employeeData[cashier].productsSold[productName] = 0;
             }
@@ -525,14 +525,14 @@ export function SalesChartReport() {
         Object.entries(employeeData).forEach(([cashier, data]) => {
           let maxQuantity = 0;
           let topProduct = "";
-          
+
           Object.entries(data.productsSold).forEach(([product, quantity]) => {
             if (quantity > maxQuantity) {
               maxQuantity = quantity;
               topProduct = product;
             }
           });
-          
+
           data.topProduct = topProduct || "N/A";
         });
 
@@ -556,7 +556,7 @@ export function SalesChartReport() {
                 .map(([cashier, data]) => {
                   const netRevenue = data.revenue - data.returnValue;
                   const avgOrderValue = data.orders > 0 ? netRevenue / data.orders : 0;
-                  
+
                   return (
                     <TableRow key={cashier}>
                       <TableCell className="font-medium">{cashier}</TableCell>
@@ -585,8 +585,8 @@ export function SalesChartReport() {
       case "customer": {
         // Customer analysis with detailed purchase behavior
         const customerData: {
-          [customer: string]: { 
-            revenue: number; 
+          [customer: string]: {
+            revenue: number;
             orders: number;
             returnValue: number;
             totalProducts: number;
@@ -599,8 +599,8 @@ export function SalesChartReport() {
         filteredData.forEach((transaction: any) => {
           const customer = transaction.customerName || transaction.customerPhone || "Walk-in Customer";
           if (!customerData[customer]) {
-            customerData[customer] = { 
-              revenue: 0, 
+            customerData[customer] = {
+              revenue: 0,
               orders: 0,
               returnValue: 0,
               totalProducts: 0,
@@ -612,7 +612,7 @@ export function SalesChartReport() {
 
           const amount = Number(transaction.total);
           const orderDate = new Date(transaction.createdAt || transaction.created_at).toLocaleDateString("vi-VN");
-          
+
           customerData[customer].orders += 1;
           customerData[customer].lastOrderDate = orderDate;
 
@@ -655,7 +655,7 @@ export function SalesChartReport() {
                 .sort(([,a], [,b]) => (b.revenue - b.returnValue) - (a.revenue - a.returnValue))
                 .map(([customer, data]) => {
                   const netRevenue = data.revenue - data.returnValue;
-                  
+
                   return (
                     <TableRow key={customer}>
                       <TableCell className="font-medium">{customer}</TableCell>
@@ -684,8 +684,8 @@ export function SalesChartReport() {
       case "channel": {
         // Sales channel analysis with comprehensive metrics
         const channelData: {
-          [channel: string]: { 
-            revenue: number; 
+          [channel: string]: {
+            revenue: number;
             orders: number;
             returnValue: number;
             totalProducts: number;
@@ -698,8 +698,8 @@ export function SalesChartReport() {
         filteredData.forEach((transaction: any) => {
           const channel = transaction.salesChannel || "Direct";
           if (!channelData[channel]) {
-            channelData[channel] = { 
-              revenue: 0, 
+            channelData[channel] = {
+              revenue: 0,
               orders: 0,
               returnValue: 0,
               totalProducts: 0,
@@ -754,7 +754,7 @@ export function SalesChartReport() {
                 .sort(([,a], [,b]) => (b.revenue - b.returnValue) - (a.revenue - a.returnValue))
                 .map(([channel, data]) => {
                   const netRevenue = data.revenue - data.returnValue;
-                  
+
                   return (
                     <TableRow key={channel}>
                       <TableCell className="font-medium">{channel}</TableCell>

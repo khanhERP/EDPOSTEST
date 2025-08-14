@@ -334,12 +334,12 @@ export function MenuReport() {
           <div className="space-y-4">
             {displayData.categoryStats.map((category: any) => {
               const revenuePercentage =
-                displayData.totalRevenue > 0
-                  ? (category.revenue / displayData.totalRevenue) * 100
+                (displayData.totalRevenue || 0) > 0
+                  ? (category.revenue / (displayData.totalRevenue || 1)) * 100
                   : 0;
               const quantityPercentage =
-                Number(displayData.totalQuantity) > 0
-                  ? (category.quantity / Number(displayData.totalQuantity)) * 100
+                Number(displayData.totalQuantity || 0) > 0
+                  ? (category.quantity / Number(displayData.totalQuantity || 1)) * 100
                   : 0;
 
               return (
@@ -370,7 +370,7 @@ export function MenuReport() {
                   <div className="space-y-1">
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>{t("reports.revenueShare")}</span>
-                      <span>{revenuePercentage.toFixed(1)}%</span>
+                      <span>{isFinite(revenuePercentage) ? revenuePercentage.toFixed(1) : '0.0'}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
@@ -381,7 +381,7 @@ export function MenuReport() {
 
                     <div className="flex justify-between text-xs text-gray-500">
                       <span>{t("reports.salesShare")}</span>
-                      <span>{quantityPercentage.toFixed(1)}%</span>
+                      <span>{isFinite(quantityPercentage) ? quantityPercentage.toFixed(1) : '0.0'}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div

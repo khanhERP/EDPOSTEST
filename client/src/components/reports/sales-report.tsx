@@ -406,7 +406,7 @@ export function SalesReport() {
               {salesData?.paymentMethods.map((payment) => {
                 const percentage =
                   (salesData?.totalRevenue || 0) > 0
-                    ? (payment.revenue / (salesData?.totalRevenue || 1)) * 100
+                    ? (Number(payment.revenue) / Number(salesData?.totalRevenue || 1)) * 100
                     : 0;
 
                 return (
@@ -425,7 +425,7 @@ export function SalesReport() {
                           {formatCurrency(payment.revenue)}
                         </div>
                         <div className="text-xs text-gray-500">
-                          {percentage.toFixed(1)}%
+                          {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
                         </div>
                       </div>
                     </div>
