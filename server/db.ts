@@ -15,8 +15,8 @@ import path from 'path';
 config({ path: path.resolve('.env.local') });
 config({ path: path.resolve('.env') });
 
-// Use DATABASE_URL first, then fallback to CUSTOM_DATABASE_URL
-const DATABASE_URL = process.env.DATABASE_URL || process.env.CUSTOM_DATABASE_URL;
+// Use EXTERNAL_DB_URL first, then fallback to DATABASE_URL or CUSTOM_DATABASE_URL
+const DATABASE_URL = process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL || process.env.CUSTOM_DATABASE_URL;
 
 if (!DATABASE_URL) {
   throw new Error(
