@@ -961,29 +961,28 @@ export function EInvoiceModal({
 
         console.log('📄 Created receipt data for published e-invoice:', receiptData);
 
-        // Xử lý logic khác nhau theo nguồn gọi trước khi đóng modal
+        // Đóng modal e-invoice trước khi xử lý tiếp
+        onClose();
+
+        // Xử lý logic khác nhau theo nguồn gọi
         if (source === 'pos') {
-          // Logic cho POS: hiển thị receipt modal
+          // Logic cho POS: hiển thị receipt modal với auto-print
           console.log('🏪 POS E-Invoice: Processing payment completion and showing receipt');
           
-          // Đóng modal e-invoice ngay lập tức
-          onClose();
-          
-          // Gọi onConfirm để hiển thị receipt modal
+          // Gọi onConfirm để hiển thị receipt modal với auto-print
           onConfirm({
             ...formData,
             invoiceData: result.data,
             cartItems: cartItems,
-            total: total,
+            total: cartTotal,
             paymentMethod: 'einvoice',
             source: 'pos',
             showReceipt: true, // Flag để hiển thị receipt modal
             receipt: receiptData, // Truyền receipt data đã tạo
-            publishedImmediately: true // Flag để phân biệt với phát hành sau
+            publishedImmediately: true, // Flag để phân biệt với phát hành sau
+            autoShowPrint: true // Tự động hiển thị dialog in
           });
         } else if (source === 'table' && orderId) {
-          // Đóng modal e-invoice trước
-          onClose();
           // Logic cho Table: Tự hoàn tất thanh toán luôn
           console.log('🍽️ Table E-Invoice: Completing payment directly for order:', orderId);
           console.log('🍽️ Invoice data received:', result.data);
@@ -993,13 +992,14 @@ export function EInvoiceModal({
             ...formData,
             invoiceData: result.data,
             cartItems: cartItems,
-            total: total,
+            total: cartTotal,
             paymentMethod: 'einvoice',
             source: 'table',
             orderId: orderId,
             showReceipt: true, // Flag để hiển thị receipt modal
             receipt: receiptData, // Truyền receipt data đã tạo
-            publishedImmediately: true // Flag để phân biệt với phát hành sau
+            publishedImmediately: true, // Flag để phân biệt với phát hành sau
+            autoShowPrint: true // Tự động hiển thị dialog in
           });
 
           // Gọi mutation để hoàn tất thanh toán ngay lập tức
@@ -1012,19 +1012,17 @@ export function EInvoiceModal({
           // Fallback: trả về data cho parent component xử lý
           console.log('🔄 Fallback: Returning data to parent');
           
-          // Đóng modal e-invoice trước
-          onClose();
-          
           onConfirm({
             ...formData,
             invoiceData: result.data,
             cartItems: cartItems,
-            total: total,
+            total: cartTotal,
             paymentMethod: 'einvoice',
             source: source || 'pos',
             showReceipt: true, // Flag để hiển thị receipt modal
             receipt: receiptData, // Truyền receipt data đã tạo
-            publishedImmediately: true // Flag để phân biệt với phát hành sau
+            publishedImmediately: true, // Flag để phân biệt với phát hành sau
+            autoShowPrint: true // Tự động hiển thị dialog in
           });
         }
       } else {

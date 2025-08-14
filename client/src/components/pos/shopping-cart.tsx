@@ -344,14 +344,14 @@ export function ShoppingCart({
         // Clear cart trước khi hiển thị receipt
         onClearCart();
 
-        // Set autoShowPrint = true để tự động hiển thị dialog in
-        setAutoShowPrint(true);
+        // Set autoShowPrint từ eInvoiceData hoặc default true
+        setAutoShowPrint(eInvoiceData.autoShowPrint !== undefined ? eInvoiceData.autoShowPrint : true);
 
-        // Hiển thị receipt modal với dữ liệu từ e-invoice
+        // Hiển thị receipt modal với dữ liệu e-invoice
         setCurrentReceipt(eInvoiceData.receipt);
         setShowReceiptModal(true);
 
-        console.log('✅ Receipt modal opened with autoShowPrint = true for publishedImmediately');
+        console.log('✅ Receipt modal opened with autoShowPrint =', eInvoiceData.autoShowPrint !== undefined ? eInvoiceData.autoShowPrint : true, 'for publishedImmediately');
 
         toast({
           title: "Thành công",

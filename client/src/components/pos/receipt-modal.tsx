@@ -84,13 +84,13 @@ export function ReceiptModal({
     });
 
     // Fix auto-print logic: should trigger when autoShowPrint is true and modal is open with valid receipt
-    if (isOpen && receipt && autoShowPrint && !hasAutoOpened) {
-      console.log('✅ Auto-showing print dialog for publishLater (fixed logic)');
+    if (isOpen && receipt && autoShowPrint && !hasAutoOpened && !isPreview) {
+      console.log('✅ Auto-showing print dialog for e-invoice receipt (fixed logic)');
       setHasAutoOpened(true);
 
       // Small delay to ensure modal is fully rendered
       setTimeout(() => {
-        console.log('🖨️ Triggering handlePrint for publishLater receipt');
+        console.log('🖨️ Triggering handlePrint for e-invoice receipt');
         handlePrint();
       }, 500);
     } else {
@@ -99,7 +99,12 @@ export function ReceiptModal({
         hasReceipt: !!receipt,
         isPreview,
         hasAutoOpened,
-        autoShowPrint
+        autoShowPrint,
+        reason: !isOpen ? 'modal not open' : 
+                !receipt ? 'no receipt' : 
+                !autoShowPrint ? 'autoShowPrint false' : 
+                hasAutoOpened ? 'already auto-opened' :
+                isPreview ? 'is preview mode' : 'unknown'
       });
     }
   }, [isOpen, receipt, isPreview, autoShowPrint, hasAutoOpened]);
