@@ -474,6 +474,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cashFlowDetails: "현금흐름 상세",
     cashFlowType: "현금흐름 유형",
 
+    // Analysis types
+    analyzeBy: "Phân tích theo",
+    timeAnalysis: "Phân tích theo thời gian", 
+    productAnalysis: "Phân tích theo mặt hàng",
+    employeeAnalysis: "Phân tích theo nhân viên",
+    customerAnalysis: "Phân tích theo khách hàng", 
+    channelAnalysis: "Phân tích theo kênh bán",
+
     // Common report keys
     chartView: "차트 보기",
     visualRepresentation: "데이터의 시각적 표현",

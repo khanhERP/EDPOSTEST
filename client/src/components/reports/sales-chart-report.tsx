@@ -69,7 +69,16 @@ export function SalesChartReport() {
   useEffect(() => {
     const loadPreviousSettings = () => {
       try {
-        const storageKey = `salesReport_${analysisType}_${concernType}_settings`;
+        // Define mapping from analysis type to legacy report storage keys
+        const legacyReportMapping = {
+          time: `salesReport_time_${concernType}_settings`,
+          product: 'inventoryReport_settings', // Báo cáo Hàng hóa
+          employee: 'employeeReport_settings', // Báo cáo nhân viên  
+          customer: 'customerReport_settings', // Báo cáo khách hàng
+          channel: 'salesChannelReport_settings' // Báo cáo kênh bán hàng
+        };
+
+        const storageKey = legacyReportMapping[analysisType] || `salesReport_${analysisType}_${concernType}_settings`;
         const savedConfig = localStorage.getItem(storageKey);
 
         if (savedConfig) {
@@ -88,7 +97,15 @@ export function SalesChartReport() {
         }
 
         // Load previous report data for comparison
-        const dataKey = `salesReport_${analysisType}_${concernType}_data`;
+        const legacyDataMapping = {
+          time: `salesReport_time_${concernType}_data`,
+          product: 'inventoryReport_data',
+          employee: 'employeeReport_data',
+          customer: 'customerReport_data', 
+          channel: 'salesChannelReport_data'
+        };
+
+        const dataKey = legacyDataMapping[analysisType] || `salesReport_${analysisType}_${concernType}_data`;
         const savedData = localStorage.getItem(dataKey);
         if (savedData) {
           setPreviousReportData(JSON.parse(savedData));
@@ -1277,7 +1294,38 @@ export function SalesChartReport() {
       <Card>
         <CardContent className="space-y-4 pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4">
-            
+            {/* Analysis Type Selector */}
+            <div>
+              <Label>{t("reports.analyzeBy")}</Label>
+              <Select value={analysisType} onValueChange={(value) => {
+                setAnalysisType(value);
+                // Reset concern type when analysis type changes
+                if (value !== "time") {
+                  setConcernType("time");
+                }
+              }}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="time">
+                    {t("reports.timeAnalysis")}
+                  </SelectItem>
+                  <SelectItem value="product">
+                    {t("reports.productAnalysis")}
+                  </SelectItem>
+                  <SelectItem value="employee">
+                    {t("reports.employeeAnalysis")}
+                  </SelectItem>
+                  <SelectItem value="customer">
+                    {t("reports.customerAnalysis")}
+                  </SelectItem>
+                  <SelectItem value="channel">
+                    {t("reports.channelAnalysis")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {/* Concern Type - Only show for time analysis */}
             {analysisType === "time" && (
