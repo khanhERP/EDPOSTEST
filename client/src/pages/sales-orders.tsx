@@ -198,13 +198,10 @@ export default function SalesOrders() {
           });
         } else {
           // For invoices, update both invoiceStatus and invoice_status to 3 (Đã hủy)
-          const updatePayload = { 
+          response = await apiRequest("PUT", `/api/invoices/${item.id}`, { 
             invoiceStatus: 3, // 3 = Đã hủy
-            invoice_status: 3, // 3 = Đã hủy (database column)
-            status: 'cancelled' // Also update status field
-          };
-          console.log('Sending invoice update payload:', updatePayload);
-          response = await apiRequest("PUT", `/api/invoices/${item.id}`, updatePayload);
+            invoice_status: 3 // 3 = Đã hủy (database column)
+          });
         }
         
         if (!response.ok) {
@@ -245,36 +242,15 @@ export default function SalesOrders() {
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       
-      // 3. Refresh selectedInvoice data from server if currently displayed
+      // 3. Cập nhật trạng thái của selectedInvoice nếu đang hiển thị
       if (selectedInvoice && selectedInvoice.id === item.id && selectedInvoice.type === item.type) {
-        try {
-          // Fetch updated invoice data from server to ensure UI shows correct status
-          if (item.type === 'invoice') {
-            const updatedInvoiceResponse = await apiRequest("GET", `/api/invoices`);
-            const updatedInvoices = await updatedInvoiceResponse.json();
-            const updatedInvoice = updatedInvoices.find((inv: any) => inv.id === item.id);
-            
-            if (updatedInvoice) {
-              setSelectedInvoice({
-                ...updatedInvoice,
-                type: 'invoice',
-                date: updatedInvoice.invoiceDate,
-                displayNumber: updatedInvoice.tradeNumber || updatedInvoice.invoiceNumber || `INV-${String(updatedInvoice.id).padStart(13, '0')}`,
-                displayStatus: updatedInvoice.invoiceStatus || updatedInvoice.invoice_status || 3
-              });
-            }
-          }
-        } catch (fetchError) {
-          console.error('Error refreshing invoice data:', fetchError);
-          // Fallback to local state update
-          setSelectedInvoice({
-            ...selectedInvoice,
-            invoiceStatus: 3,
-            invoice_status: 3,
-            displayStatus: 3,
-            status: 'cancelled'
-          });
-        }
+        setSelectedInvoice({
+          ...selectedInvoice,
+          invoiceStatus: 3, // Đã hủy
+          invoice_status: 3, // Đã hủy (database column)
+          displayStatus: 3,
+          status: item.type === 'order' ? 'cancelled' : selectedInvoice.status
+        });
         
         // Reset editing states
         setIsEditing(false);
