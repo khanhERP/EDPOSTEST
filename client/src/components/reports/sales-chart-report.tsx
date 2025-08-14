@@ -2292,10 +2292,8 @@ export function SalesChartReport() {
             </div>
           </div>
 
-          {/* Additional filters based on analysis type */}
-          {(analysisType === "product" ||
-            analysisType === "employee" ||
-            analysisType === "customer") && (
+          {/* Additional filters based on analysis type - only show for non-time analysis */}
+          {analysisType !== "time" && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Employee Filter - for employee analysis */}
               {analysisType === "employee" && (
