@@ -1132,21 +1132,6 @@ export function SalesReport() {
               <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
             </div>
             <div className="flex items-center gap-4">
-              {/* Analysis Type Selector */}
-              <div className="flex items-center gap-2">
-                <Select value={analysisType} onValueChange={setAnalysisType}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="time">{t("reports.timeAnalysis")}</SelectItem>
-                    <SelectItem value="product">{t("reports.productAnalysis")}</SelectItem>
-                    <SelectItem value="employee">{t("reports.employeeAnalysis")}</SelectItem>
-                    <SelectItem value="customer">{t("reports.customerAnalysis")}</SelectItem>
-                    <SelectItem value="channel">{t("reports.channelAnalysis")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
 
               {analysisType === "time" && (
                 <>
