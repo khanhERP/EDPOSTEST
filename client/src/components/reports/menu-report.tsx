@@ -32,7 +32,7 @@ export function MenuReport() {
   const { t } = useTranslation();
   const [dateRange, setDateRange] = useState("today");
   const [startDate, setStartDate] = useState<string>(
-    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    new Date().toISOString().split("T")[0],
   );
   const [endDate, setEndDate] = useState<string>(
     new Date().toISOString().split("T")[0],
@@ -182,9 +182,6 @@ export function MenuReport() {
                   <SelectItem value="today">{t("reports.toDay")}</SelectItem>
                   <SelectItem value="week">{t("reports.lastWeek")}</SelectItem>
                   <SelectItem value="month">
-                    {t("reports.lastMonth")}
-                  </SelectItem>
-                  <SelectItem value="lastmonth">
                     {t("reports.lastMonth")}
                   </SelectItem>
                   <SelectItem value="custom">{t("reports.custom")}</SelectItem>
