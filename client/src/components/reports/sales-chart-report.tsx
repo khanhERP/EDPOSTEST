@@ -1303,39 +1303,6 @@ export function SalesChartReport() {
       <Card>
         <CardContent className="space-y-4 pt-6">
           <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4 gap-4">
-            {/* Analysis Type Selector */}
-            <div>
-              <Label>{t("reports.analyzeBy")}</Label>
-              <Select value={analysisType} onValueChange={(value) => {
-                setAnalysisType(value);
-                // Reset concern type when analysis type changes
-                if (value !== "time") {
-                  setConcernType("time");
-                }
-              }}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="time">
-                    {t("reports.timeAnalysis")}
-                  </SelectItem>
-                  <SelectItem value="product">
-                    {t("reports.productAnalysis")}
-                  </SelectItem>
-                  <SelectItem value="employee">
-                    {t("reports.employeeAnalysis")}
-                  </SelectItem>
-                  <SelectItem value="customer">
-                    {t("reports.customerAnalysis")}
-                  </SelectItem>
-                  <SelectItem value="channel">
-                    {t("reports.channelAnalysis")}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Concern Type - Only show for time analysis */}
             {analysisType === "time" && (
               <div>
