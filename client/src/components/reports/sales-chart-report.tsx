@@ -1335,43 +1335,43 @@ export function SalesChartReport() {
                     className="text-center border-r bg-green-50 min-w-[120px]"
                     rowSpan={2}
                   >
-                    Mã nhân viên
+                    {t("employees.employeeCode")}
                   </TableHead>
                   <TableHead
                     className="text-center border-r bg-green-50 min-w-[150px]"
                     rowSpan={2}
                   >
-                    Người bán
+                    {t("reports.seller")}
                   </TableHead>
                   <TableHead
                     className="text-center border-r min-w-[100px]"
                     rowSpan={2}
                   >
-                    Số đơn bán
+                    {t("reports.orders")}
                   </TableHead>
                   <TableHead
                     className="text-right border-r min-w-[140px]"
                     rowSpan={2}
                   >
-                    Doanh thu
+                    {t("reports.revenue")}
                   </TableHead>
                   <TableHead
                     className="text-right border-r min-w-[120px]"
                     rowSpan={2}
                   >
-                    Thuế
+                    {t("reports.tax")}
                   </TableHead>
                   <TableHead
                     className="text-right border-r min-w-[140px]"
                     rowSpan={2}
                   >
-                    Tổng tiền
+                    {t("reports.total")}
                   </TableHead>
                   <TableHead
                     className="text-center border-r bg-blue-50 min-w-[200px]"
                     colSpan={paymentMethodsArray.length + 1}
                   >
-                    Khách thanh toán
+                    {t("reports.totalCustomerPayment")}
                   </TableHead>
                 </TableRow>
                 <TableRow>
@@ -1381,7 +1381,7 @@ export function SalesChartReport() {
                     </TableHead>
                   ))}
                   <TableHead className="text-center bg-blue-50 min-w-[150px]">
-                    Tổng
+                    {t("common.total")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -1435,7 +1435,7 @@ export function SalesChartReport() {
                       {t("common.total")}
                     </TableCell>
                     <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4">
-                      {data.length} nhân viên
+                      {data.length} {t("reports.employee")}
                     </TableCell>
                     <TableCell className="text-center border-r min-w-[100px] px-4">
                       {data.reduce((sum, item) => sum + item.orderCount, 0).toLocaleString()}
