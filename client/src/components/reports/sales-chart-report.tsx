@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, lazy, Suspense } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
@@ -50,12 +50,20 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+// Lazy load các component báo cáo cũ
+const InventoryReport = lazy(() => import("./inventory-report").then(module => ({ default: module.InventoryReport })));
+const EmployeeReport = lazy(() => import("./employee-report").then(module => ({ default: module.EmployeeReport })));
+const CustomerReport = lazy(() => import("./customer-report").then(module => ({ default: module.CustomerReport })));
+const SalesChannelReport = lazy(() => import("./sales-channel-report").then(module => ({ default: module.SalesChannelReport })));
+const SalesReport = lazy(() => import("./sales-report").then(module => ({ default: module.SalesReport })));
+
 export function SalesChartReport() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   const [analysisType, setAnalysisType] = useState("time");
   const [concernType, setConcernType] = useState("time");
+  const [useOldComponent, setUseOldComponent] = useState(false);
 
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0],
@@ -1336,6 +1344,45 @@ export function SalesChartReport() {
     );
   };
 
+  // Render component theo loại phân tích được chọn
+  const renderLegacyComponent = () => {
+    console.log('🔄 Loading legacy component for analysisType:', analysisType);
+    
+    switch (analysisType) {
+      case "product":
+        return (
+          <Suspense fallback={<div className="flex justify-center py-8"><div className="text-gray-500">{t("reports.loading")}...</div></div>}>
+            <InventoryReport />
+          </Suspense>
+        );
+      case "employee":
+        return (
+          <Suspense fallback={<div className="flex justify-center py-8"><div className="text-gray-500">{t("reports.loading")}...</div></div>}>
+            <EmployeeReport />
+          </Suspense>
+        );
+      case "customer":
+        return (
+          <Suspense fallback={<div className="flex justify-center py-8"><div className="text-gray-500">{t("reports.loading")}...</div></div>}>
+            <CustomerReport />
+          </Suspense>
+        );
+      case "channel":
+        return (
+          <Suspense fallback={<div className="flex justify-center py-8"><div className="text-gray-500">{t("reports.loading")}...</div></div>}>
+            <SalesChannelReport />
+          </Suspense>
+        );
+      case "time":
+      default:
+        return (
+          <Suspense fallback={<div className="flex justify-center py-8"><div className="text-gray-500">{t("reports.loading")}...</div></div>}>
+            <SalesReport />
+          </Suspense>
+        );
+    }
+  };
+
   // Add useMemo for better performance and ensure re-renders when analysisType changes
   const renderAnalysisTypeReport = useMemo(() => {
     console.log('🔄 renderAnalysisTypeReport called with analysisType:', analysisType);
@@ -2338,6 +2385,23 @@ export function SalesChartReport() {
               </Select>
             </div>
 
+            {/* Component Type Toggle */}
+            <div>
+              <Label>{t("reports.componentType")}</Label>
+              <Select
+                value={useOldComponent ? "old" : "new"}
+                onValueChange={(value) => setUseOldComponent(value === "old")}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">Component mới</SelectItem>
+                  <SelectItem value="old">Component cũ</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Only show Sales Method and Sales Channel for non-time analysis */}
             {analysisType !== "time" && (
               <>
@@ -2906,41 +2970,60 @@ export function SalesChartReport() {
         </Card>
       )}
 
-      {/* Report Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            {getReportTitle()}
-            {(transactionsLoading || ordersLoading || transactionsFetching || ordersFetching) && (
-              <div className="ml-2 w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      {/* Report Content - Conditional rendering based on component type */}
+      {useOldComponent ? (
+        // Render component cũ
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="w-5 h-5" />
+                {getReportTitle()} - Component cũ
+              </CardTitle>
+              <CardDescription>
+                Đang sử dụng component báo cáo cũ
+              </CardDescription>
+            </CardHeader>
+          </Card>
+          {renderLegacyComponent()}
+        </div>
+      ) : (
+        // Render component mới (logic hiện tại)
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              {getReportTitle()}
+              {(transactionsLoading || ordersLoading || transactionsFetching || ordersFetching) && (
+                <div className="ml-2 w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              )}
+            </CardTitle>
+            <CardDescription>
+              {t("reports.dataFrom")} {formatDate(startDate)} {t("reports.to")}{" "}
+              {formatDate(endDate)}
+              {transactions && (
+                <span className="ml-2 text-green-600">
+                  • {transactions.length} transactions
+                </span>
+              )}
+              {orders && (
+                <span className="ml-2 text-blue-600">
+                  • {orders.length} orders
+                </span>
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {(transactionsLoading || ordersLoading) ? (
+              <div className="flex justify-center py-8">
+                <div className="text-gray-500">{t("reports.loading")}...</div>
+              </div>
+            ) : (
+              renderReportTable()
             )}
-          </CardTitle>
-          <CardDescription>
-            {t("reports.dataFrom")} {formatDate(startDate)} {t("reports.to")}{" "}
-            {formatDate(endDate)}
-            {transactions && (
-              <span className="ml-2 text-green-600">
-                • {transactions.length} transactions
-              </span>
-            )}
-            {orders && (
-              <span className="ml-2 text-blue-600">
-                • {orders.length} orders
-              </span>
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {(transactionsLoading || ordersLoading) ? (
-            <div className="flex justify-center py-8">
-              <div className="text-gray-500">{t("reports.loading")}...</div>
-            </div>
-          ) : (
-            renderReportTable()
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
