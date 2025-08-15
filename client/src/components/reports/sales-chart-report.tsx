@@ -174,6 +174,10 @@ export function SalesChartReport() {
   // State for expandable rows
   const [expandedRows, setExpandedRows] = useState<{[key: string]: boolean}>({});
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(15);
+
   // Legacy Sales Report Component Logic
   const renderSalesReport = () => {
     if (!transactions || !Array.isArray(transactions)) {
@@ -345,7 +349,14 @@ export function SalesChartReport() {
                 </TableHeader>
                 <TableBody>
                   {Object.entries(dailySales).length > 0 ? (
-                    Object.entries(dailySales).map(([date, data]) => {
+                    (() => {
+                      const sortedEntries = Object.entries(dailySales).sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime());
+                      const totalPages = Math.ceil(sortedEntries.length / pageSize);
+                      const startIndex = (currentPage - 1) * pageSize;
+                      const endIndex = startIndex + pageSize;
+                      const paginatedEntries = sortedEntries.slice(startIndex, endIndex);
+                      
+                      return paginatedEntries.map(([date, data]) => {
                       const paymentAmount = data.revenue * 1.05; // Thành tiền (bao gồm thuế và phí)
                       const discount = data.revenue * 0.05; // Giảm giá (5% trung bình)
                       const actualRevenue = paymentAmount - discount; // Doanh thu = Thành tiền - Giảm giá
@@ -442,7 +453,8 @@ export function SalesChartReport() {
                           )}
                         </>
                       );
-                    })
+                      });
+                    })()
                   ) : (
                     <TableRow>
                       <TableCell
@@ -489,6 +501,70 @@ export function SalesChartReport() {
                 </TableBody>
               </Table>
             </div>
+            
+            {/* Pagination Controls */}
+            {Object.entries(dailySales).length > 0 && (
+              <div className="flex items-center justify-between space-x-6 py-4">
+                <div className="flex items-center space-x-2">
+                  <p className="text-sm font-medium">Hiển thị</p>
+                  <Select
+                    value={pageSize.toString()}
+                    onValueChange={(value) => {
+                      setPageSize(Number(value));
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      <SelectItem value="15">15</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="30">30</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm font-medium">dòng</p>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <p className="text-sm font-medium">
+                    Trang {currentPage} / {Math.ceil(Object.entries(dailySales).length / pageSize)}
+                  </p>
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={() => setCurrentPage(1)}
+                      disabled={currentPage === 1}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    >
+                      «
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(Object.entries(dailySales).length / pageSize)))}
+                      disabled={currentPage === Math.ceil(Object.entries(dailySales).length / pageSize)}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    >
+                      ›
+                    </button>
+                    <button
+                      onClick={() => setCurrentPage(Math.ceil(Object.entries(dailySales).length / pageSize))}
+                      disabled={currentPage === Math.ceil(Object.entries(dailySales).length / pageSize)}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    >
+                      »
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </>
