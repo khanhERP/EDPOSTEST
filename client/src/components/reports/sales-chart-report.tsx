@@ -1624,16 +1624,15 @@ export function SalesChartReport() {
 
     const customerData: {
       [customerId: string]: {
-        customer: string;
-        revenue: number;
-        returnValue: number;
-        netRevenue: number;
+        customerId: string;
+        customerName: string;
+        customerGroup: string;
         orders: number;
-        totalProducts: number;
-        averageOrderValue: number;
-        lastOrderDate: string;
-        totalCost: number;
-        grossProfit: number;
+        totalAmount: number;
+        discount: number;
+        revenue: number;
+        status: string;
+        orderDetails: any[];
       };
     } = {};
 
@@ -1643,40 +1642,38 @@ export function SalesChartReport() {
 
       if (!customerData[customerId]) {
         customerData[customerId] = {
-          customer: customerName,
-          revenue: 0,
-          returnValue: 0,
-          netRevenue: 0,
+          customerId: customerId === "guest" ? "KL-001" : customerId,
+          customerName: customerName,
+          customerGroup: "Khách hàng thường", // Default group
           orders: 0,
-          totalProducts: 0,
-          averageOrderValue: 0,
-          lastOrderDate: "",
-          totalCost: 0,
-          grossProfit: 0,
+          totalAmount: 0,
+          discount: 0,
+          revenue: 0,
+          status: "Hoạt động",
+          orderDetails: [],
         };
       }
 
       const orderTotal = Number(order.total);
-      const orderDate = new Date(
-        order.orderedAt || order.created_at || order.createdAt,
-      ).toLocaleDateString("vi-VN");
+      const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
+      const orderDiscount = orderSubtotal - orderTotal;
 
       customerData[customerId].orders += 1;
-      customerData[customerId].lastOrderDate = orderDate;
+      customerData[customerId].totalAmount += orderSubtotal;
+      customerData[customerId].discount += orderDiscount;
       customerData[customerId].revenue += orderTotal;
-      customerData[customerId].netRevenue += orderTotal;
-      customerData[customerId].totalCost += orderTotal * 0.6;
-      customerData[customerId].totalProducts += order.customerCount || 1;
-    });
+      customerData[customerId].orderDetails.push(order);
 
-    Object.values(customerData).forEach((data) => {
-      data.averageOrderValue =
-        data.orders > 0 ? data.netRevenue / data.orders : 0;
-      data.grossProfit = data.netRevenue - data.totalCost;
+      // Determine customer group based on total spending
+      if (customerData[customerId].revenue >= 1000000) {
+        customerData[customerId].customerGroup = "VIP";
+      } else if (customerData[customerId].revenue >= 500000) {
+        customerData[customerId].customerGroup = "Khách hàng vàng";
+      }
     });
 
     const data = Object.values(customerData).sort(
-      (a, b) => b.netRevenue - a.netRevenue,
+      (a, b) => b.revenue - a.revenue,
     );
 
     return (
@@ -1695,63 +1692,145 @@ export function SalesChartReport() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("reports.customer")}</TableHead>
-                <TableHead className="text-center">
-                  {t("reports.orders")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.totalProducts")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.revenue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.returnValue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.netRevenue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.averageOrderValue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.lastOrder")}
-                </TableHead>
+                <TableHead
+                  className="text-center border-r bg-green-50 w-12"
+                  rowSpan={1}
+                ></TableHead>
+                <TableHead className="text-center">Mã khách hàng</TableHead>
+                <TableHead className="text-center">Tên khách hàng</TableHead>
+                <TableHead className="text-center">Số đơn bán</TableHead>
+                <TableHead className="text-center">Nhóm khách hàng</TableHead>
+                <TableHead className="text-right">Thành tiền</TableHead>
+                <TableHead className="text-right">Giảm giá</TableHead>
+                <TableHead className="text-right">Doanh thu</TableHead>
+                <TableHead className="text-center">Trạng thái</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.length > 0 ? (
-                data.slice(0, 20).map((item, index) => (
-                  <TableRow key={`${item.customer}-${index}`}>
-                    <TableCell className="font-medium">
-                      {item.customer}
-                    </TableCell>
-                    <TableCell className="text-center">{item.orders}</TableCell>
-                    <TableCell className="text-center">
-                      {item.totalProducts}
-                    </TableCell>
-                    <TableCell className="text-right text-green-600">
-                      {formatCurrency(item.revenue)}
-                    </TableCell>
-                    <TableCell className="text-right text-red-600">
-                      {formatCurrency(item.returnValue)}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(item.netRevenue)}
-                    </TableCell>
-                    <TableCell className="text-right text-blue-600">
-                      {formatCurrency(item.averageOrderValue)}
-                    </TableCell>
-                    <TableCell className="text-right text-sm">
-                      {item.lastOrderDate}
-                    </TableCell>
-                  </TableRow>
-                ))
+                data.slice(0, 20).map((item, index) => {
+                  const isExpanded = expandedRows[item.customerId] || false;
+
+                  return (
+                    <>
+                      <TableRow key={`${item.customerId}-${index}`} className="hover:bg-gray-50">
+                        <TableCell className="text-center border-r w-12">
+                          <button
+                            onClick={() =>
+                              setExpandedRows((prev) => ({
+                                ...prev,
+                                [item.customerId]: !prev[item.customerId],
+                              }))
+                            }
+                            className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded text-sm"
+                          >
+                            {isExpanded ? "−" : "+"}
+                          </button>
+                        </TableCell>
+                        <TableCell className="text-center font-medium">
+                          {item.customerId}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {item.customerName}
+                        </TableCell>
+                        <TableCell className="text-center">{item.orders}</TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={item.customerGroup === "VIP" ? "default" : "secondary"}>
+                            {item.customerGroup}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {formatCurrency(item.totalAmount)}
+                        </TableCell>
+                        <TableCell className="text-right text-red-600">
+                          {formatCurrency(item.discount)}
+                        </TableCell>
+                        <TableCell className="text-right text-green-600 font-medium">
+                          {formatCurrency(item.revenue)}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Badge variant={item.status === "Hoạt động" ? "default" : "secondary"}>
+                            {item.status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+
+                      {/* Expanded order details */}
+                      {isExpanded &&
+                        item.orderDetails.length > 0 &&
+                        item.orderDetails.map((order: any, orderIndex: number) => (
+                          <TableRow
+                            key={`${item.customerId}-order-${order.id || orderIndex}`}
+                            className="bg-blue-50/50 border-l-4 border-l-blue-400"
+                          >
+                            <TableCell className="text-center border-r bg-blue-50 w-12">
+                              <div className="w-8 h-6 flex items-center justify-center text-blue-600 text-xs">
+                                └
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-center text-blue-600 text-sm">
+                              {order.orderNumber || `ORD-${order.id}`}
+                            </TableCell>
+                            <TableCell className="text-center text-sm">
+                              {new Date(order.orderedAt || order.created_at).toLocaleDateString("vi-VN")}
+                            </TableCell>
+                            <TableCell className="text-center text-sm">1</TableCell>
+                            <TableCell className="text-center text-sm">
+                              {order.paymentMethod === "cash" ? "Tiền mặt" : 
+                               order.paymentMethod === "card" ? "Thẻ" : 
+                               order.paymentMethod || "Khác"}
+                            </TableCell>
+                            <TableCell className="text-right text-sm">
+                              {formatCurrency(Number(order.subtotal || Number(order.total) * 1.1))}
+                            </TableCell>
+                            <TableCell className="text-right text-red-600 text-sm">
+                              {formatCurrency((Number(order.subtotal || Number(order.total) * 1.1) - Number(order.total)))}
+                            </TableCell>
+                            <TableCell className="text-right text-green-600 font-medium text-sm">
+                              {formatCurrency(Number(order.total))}
+                            </TableCell>
+                            <TableCell className="text-center text-sm">
+                              <Badge variant={order.status === "paid" ? "default" : "secondary"} className="text-xs">
+                                {order.status === "paid" ? "Đã thanh toán" : order.status}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                    </>
+                  );
+                })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-gray-500">
+                  <TableCell colSpan={9} className="text-center text-gray-500">
                     {t("reports.noDataDescription")}
                   </TableCell>
+                </TableRow>
+              )}
+
+              {/* Summary Row */}
+              {data.length > 0 && (
+                <TableRow className="bg-gray-100 font-bold border-t-2">
+                  <TableCell className="text-center border-r w-12"></TableCell>
+                  <TableCell className="text-center bg-green-100">
+                    {t("common.total")}
+                  </TableCell>
+                  <TableCell className="text-center bg-green-100">
+                    {data.length} khách hàng
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {data.reduce((sum, item) => sum + item.orders, 0).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-center"></TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(data.reduce((sum, item) => sum + item.totalAmount, 0))}
+                  </TableCell>
+                  <TableCell className="text-right text-red-600">
+                    {formatCurrency(data.reduce((sum, item) => sum + item.discount, 0))}
+                  </TableCell>
+                  <TableCell className="text-right text-green-600">
+                    {formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0))}
+                  </TableCell>
+                  <TableCell className="text-center"></TableCell>
                 </TableRow>
               )}
             </TableBody>
