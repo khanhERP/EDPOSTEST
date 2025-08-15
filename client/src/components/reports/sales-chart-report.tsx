@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
@@ -1336,14 +1336,18 @@ export function SalesChartReport() {
     );
   };
 
-  const renderAnalysisTypeReport = () => {
+  // Add useMemo for better performance and ensure re-renders when analysisType changes
+  const renderAnalysisTypeReport = useMemo(() => {
+    console.log('🔄 renderAnalysisTypeReport called with analysisType:', analysisType);
+    
     switch (analysisType) {
       case "product": {
         const data = getProductAnalysisData();
+        console.log('📦 Product analysis data:', data.length, 'items');
 
         // Render UI similar to inventory report from legacy reports
         return (
-          <>
+          <div key={`product-${startDate}-${endDate}-${Date.now()}`}>
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card>
@@ -1445,7 +1449,7 @@ export function SalesChartReport() {
                     .sort((a, b) => b.netRevenue - a.netRevenue)
                     .slice(0, 20)
                     .map((item, index) => (
-                      <TableRow key={index}>
+                      <TableRow key={`${item.productCode}-${index}`}>
                         <TableCell className="font-medium">
                           {item.productCode}
                         </TableCell>
@@ -1485,16 +1489,17 @@ export function SalesChartReport() {
                 )}
               </TableBody>
             </Table>
-          </>
+          </div>
         );
       }
 
       case "employee": {
         const data = getEmployeeAnalysisData();
+        console.log('👥 Employee analysis data:', data.length, 'items');
 
         // Render UI similar to employee report from legacy reports
         return (
-          <>
+          <div key={`employee-${startDate}-${endDate}-${Date.now()}`}>
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card>
@@ -1602,7 +1607,7 @@ export function SalesChartReport() {
                   data
                     .sort((a, b) => b.netRevenue - a.netRevenue)
                     .map((item, index) => (
-                      <TableRow key={index}>
+                      <TableRow key={`${item.employee}-${index}`}>
                         <TableCell className="font-medium">
                           {item.employee}
                         </TableCell>
@@ -1644,16 +1649,17 @@ export function SalesChartReport() {
                 )}
               </TableBody>
             </Table>
-          </>
+          </div>
         );
       }
 
       case "customer": {
         const data = getCustomerAnalysisData();
+        console.log('👤 Customer analysis data:', data.length, 'items');
 
         // Render UI similar to customer report from legacy reports
         return (
-          <>
+          <div key={`customer-${startDate}-${endDate}-${Date.now()}`}>
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card>
@@ -1759,7 +1765,7 @@ export function SalesChartReport() {
                     .sort((a, b) => b.netRevenue - a.netRevenue)
                     .slice(0, 20)
                     .map((item, index) => (
-                      <TableRow key={index}>
+                      <TableRow key={`${item.customer}-${index}`}>
                         <TableCell className="font-medium">
                           {item.customer}
                         </TableCell>
@@ -1798,16 +1804,17 @@ export function SalesChartReport() {
                 )}
               </TableBody>
             </Table>
-          </>
+          </div>
         );
       }
 
       case "channel": {
         const data = getChannelAnalysisData();
+        console.log('📺 Channel analysis data:', data.length, 'items');
 
         // Render UI similar to sales channel report from legacy reports
         return (
-          <>
+          <div key={`channel-${startDate}-${endDate}-${Date.now()}`}>
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card>
@@ -1910,7 +1917,7 @@ export function SalesChartReport() {
                   data
                     .sort((a, b) => b.netRevenue - a.netRevenue)
                     .map((item, index) => (
-                      <TableRow key={index}>
+                      <TableRow key={`${item.salesChannel}-${index}`}>
                         <TableCell className="font-medium">
                           {item.salesChannel}
                         </TableCell>
@@ -1952,14 +1959,15 @@ export function SalesChartReport() {
                 )}
               </TableBody>
             </Table>
-          </>
+          </div>
         );
       }
 
       default:
+        console.log('🔄 Falling back to time report');
         return renderTimeReport();
     }
-  };
+  }, [analysisType, concernType, startDate, endDate, transactions, orders, products, employees, customers, categories, salesMethod, salesChannel, selectedEmployee, customerSearch, productSearch, selectedCategory, productType]);
 
   // Save current report data for future comparison
   const saveCurrentReportData = (data: any) => {
@@ -1983,6 +1991,8 @@ export function SalesChartReport() {
   };
 
   const renderReportTable = () => {
+    console.log('🔄 renderReportTable called with analysisType:', analysisType, 'concernType:', concernType);
+    
     let reportContent;
 
     if (analysisType === "time") {
@@ -2006,7 +2016,8 @@ export function SalesChartReport() {
           reportContent = renderTimeReport();
       }
     } else {
-      reportContent = renderAnalysisTypeReport();
+      // Use the memoized function for analysis type reports
+      reportContent = renderAnalysisTypeReport;
     }
 
     // Save current data for future reference
