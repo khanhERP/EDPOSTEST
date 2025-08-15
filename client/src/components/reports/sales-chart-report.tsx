@@ -725,68 +725,87 @@ export function SalesChartReport() {
 
     const getSalesData = () => {
       const filteredProducts = getFilteredProducts();
-      if (!filteredProducts.length || !orders || !Array.isArray(orders)) return [];
+      if (!filteredProducts.length || !transactions || !Array.isArray(transactions)) return [];
 
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      const filteredOrders = orders.filter((order: any) => {
-        const orderDate = new Date(order.orderedAt || order.created_at);
-        return orderDate >= start && orderDate <= end && order.status === 'paid';
+      const filteredTransactions = transactions.filter((transaction: any) => {
+        const transactionDate = new Date(transaction.createdAt || transaction.created_at);
+        const transactionDateOnly = new Date(transactionDate);
+        transactionDateOnly.setHours(0, 0, 0, 0);
+        return transactionDateOnly >= start && transactionDateOnly <= end;
       });
 
-      const productSales: { [productId: string]: { quantity: number; revenue: number; orders: number } } = {};
+      const productSales: { [productId: string]: { 
+        quantity: number; 
+        totalAmount: number; 
+        discount: number; 
+        revenue: number; 
+      } } = {};
 
-      filteredOrders.forEach((order: any) => {
-        const orderTotal = Number(order.total);
-        const availableProducts = filteredProducts.filter(p => Number(p.price) > 0);
+      // Process transaction items to get real sales data
+      filteredTransactions.forEach((transaction: any) => {
+        if (transaction.items && Array.isArray(transaction.items)) {
+          transaction.items.forEach((item: any) => {
+            const productId = item.productId?.toString();
+            if (!productId) return;
 
-        if (availableProducts.length === 0) return;
+            // Check if this product is in our filtered products list
+            const product = filteredProducts.find(p => p.id.toString() === productId);
+            if (!product) return;
 
-        const orderProductCount = Math.min(
-          Math.floor(Math.random() * 3) + 1,
-          availableProducts.length
-        );
+            if (!productSales[productId]) {
+              productSales[productId] = { 
+                quantity: 0, 
+                totalAmount: 0, 
+                discount: 0, 
+                revenue: 0 
+              };
+            }
 
-        const selectedProducts = availableProducts
-          .sort(() => 0.5 - Math.random())
-          .slice(0, orderProductCount);
-
-        const totalSelectedPrice = selectedProducts.reduce((sum, p) => sum + Number(p.price || 0), 0);
-
-        selectedProducts.forEach((product: any) => {
-          const productId = product.id.toString();
-          if (!productSales[productId]) {
-            productSales[productId] = { quantity: 0, revenue: 0, orders: 0 };
-          }
-
-          const proportion = totalSelectedPrice > 0 ? Number(product.price || 0) / totalSelectedPrice : 1 / selectedProducts.length;
-          const productRevenue = orderTotal * proportion;
-          const quantity = Math.max(1, Math.floor(productRevenue / Number(product.price || 1)));
-
-          productSales[productId].quantity += quantity;
-          productSales[productId].revenue += productRevenue;
-          productSales[productId].orders += 1;
-        });
+            const quantity = Number(item.quantity || 0);
+            const total = Number(item.total || 0);
+            const unitPrice = Number(item.price || 0);
+            const totalAmount = quantity * unitPrice;
+            const discount = totalAmount - total; // Giảm giá = Thành tiền - Tổng tiền thực tế
+            
+            productSales[productId].quantity += quantity;
+            productSales[productId].totalAmount += totalAmount;
+            productSales[productId].discount += discount;
+            productSales[productId].revenue += total; // Doanh thu = tổng tiền thực tế
+          });
+        }
       });
 
       return filteredProducts.map((product: any) => {
-        const sales = productSales[product.id.toString()] || { quantity: 0, revenue: 0, orders: 0 };
-        const returnRate = 0.02;
-        const quantityReturned = Math.floor(sales.quantity * returnRate);
-        const returnValue = sales.revenue * returnRate;
+        const sales = productSales[product.id.toString()] || { 
+          quantity: 0, 
+          totalAmount: 0, 
+          discount: 0, 
+          revenue: 0 
+        };
+
+        // Chỉ hiển thị sản phẩm có dữ liệu bán hàng
+        if (sales.quantity === 0) return null;
+
+        // Tìm category name
+        const categoryName = categories && Array.isArray(categories) 
+          ? categories.find(cat => cat.id === product.categoryId)?.name || ''
+          : '';
 
         return {
-          productCode: product.sku || product.id,
-          productName: product.name,
+          productCode: product.sku || '',
+          productName: product.name || '',
+          unit: '', // Đơn vị tính - để trống vì không có trong database
           quantitySold: sales.quantity,
-          revenue: sales.revenue,
-          quantityReturned,
-          returnValue,
-          netRevenue: sales.revenue - returnValue,
+          totalAmount: sales.totalAmount,
+          discount: sales.discount,
+          revenue: sales.revenue, // Doanh thu = Thành tiền - Giảm giá
+          categoryName: categoryName,
         };
-      }).filter(item => item.quantitySold > 0);
+      }).filter(item => item !== null);
     };
 
     const data = getSalesData();
@@ -807,23 +826,14 @@ export function SalesChartReport() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("reports.productCode")}</TableHead>
-                <TableHead>{t("reports.productName")}</TableHead>
-                <TableHead className="text-center">
-                  {t("reports.quantitySold")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.revenue")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.returnQuantity")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.returnValue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.netRevenue")}
-                </TableHead>
+                <TableHead>Mã hàng</TableHead>
+                <TableHead>Tên sản phẩm</TableHead>
+                <TableHead>Đơn vị tính</TableHead>
+                <TableHead className="text-center">Số lượng bán</TableHead>
+                <TableHead className="text-right">Thành tiền</TableHead>
+                <TableHead className="text-right">Giảm giá</TableHead>
+                <TableHead className="text-right">Doanh thu</TableHead>
+                <TableHead>Nhóm hàng</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -834,27 +844,26 @@ export function SalesChartReport() {
                       {item.productCode}
                     </TableCell>
                     <TableCell>{item.productName}</TableCell>
+                    <TableCell>{item.unit}</TableCell>
                     <TableCell className="text-center">
                       {item.quantitySold}
                     </TableCell>
-                    <TableCell className="text-right text-green-600">
-                      {formatCurrency(item.revenue)}
-                    </TableCell>
-                    <TableCell className="text-center">
-                      {item.quantityReturned}
+                    <TableCell className="text-right">
+                      {formatCurrency(item.totalAmount)}
                     </TableCell>
                     <TableCell className="text-right text-red-600">
-                      {formatCurrency(item.returnValue)}
+                      {formatCurrency(item.discount)}
                     </TableCell>
-                    <TableCell className="text-right text-blue-600">
-                      {formatCurrency(item.netRevenue)}
+                    <TableCell className="text-right text-green-600 font-medium">
+                      {formatCurrency(item.revenue)}
                     </TableCell>
+                    <TableCell>{item.categoryName}</TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={7}
+                    colSpan={8}
                     className="text-center text-gray-500 italic"
                   >
                     {t("reports.noDataDescription")}
