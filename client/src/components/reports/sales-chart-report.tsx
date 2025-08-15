@@ -342,23 +342,46 @@ export function SalesChartReport() {
                     <TableHead className="text-center border-r" rowSpan={2}>
                       Tổng tiền
                     </TableHead>
-                    <TableHead className="text-center border-r bg-blue-50" colSpan={4}>
+                    <TableHead className="text-center border-r bg-blue-50" colSpan={(() => {
+                      // Get all unique payment methods from transactions
+                      const allPaymentMethods = new Set();
+                      if (filteredTransactions && Array.isArray(filteredTransactions)) {
+                        filteredTransactions.forEach((transaction: any) => {
+                          const method = transaction.paymentMethod || 'cash';
+                          allPaymentMethods.add(method);
+                        });
+                      }
+                      return allPaymentMethods.size + 1; // +1 for total column
+                    })()}>
                       Khách thanh toán
                     </TableHead>
                   </TableRow>
                   <TableRow>
-                    <TableHead className="text-center border-r bg-blue-50">
-                      Tiền mặt
-                    </TableHead>
-                    <TableHead className="text-center border-r bg-blue-50">
-                      Chuyển khoản
-                    </TableHead>
-                    <TableHead className="text-center border-r bg-blue-50">
-                      QR Code InCMS
-                    </TableHead>
-                    <TableHead className="text-center bg-blue-50">
-                      Tổng KH thanh toán
-                    </TableHead>
+                    {(() => {
+                      // Get all unique payment methods from transactions
+                      const allPaymentMethods = new Set();
+                      if (filteredTransactions && Array.isArray(filteredTransactions)) {
+                        filteredTransactions.forEach((transaction: any) => {
+                          const method = transaction.paymentMethod || 'cash';
+                          allPaymentMethods.add(method);
+                        });
+                      }
+                      
+                      const paymentMethodsArray = Array.from(allPaymentMethods).sort();
+                      
+                      return (
+                        <>
+                          {paymentMethodsArray.map((method: any) => (
+                            <TableHead key={method} className="text-center border-r bg-blue-50">
+                              {getPaymentMethodLabel(method)}
+                            </TableHead>
+                          ))}
+                          <TableHead className="text-center bg-blue-50">
+                            Tổng KH thanh toán
+                          </TableHead>
+                        </>
+                      );
+                    })()}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -429,22 +452,28 @@ export function SalesChartReport() {
                                 paymentMethods[method] = (paymentMethods[method] || 0) + Number(transaction.total);
                               });
                               
-                              const cashAmount = paymentMethods['cash'] || 0;
-                              const cardAmount = (paymentMethods['card'] || 0) + (paymentMethods['creditCard'] || 0) + (paymentMethods['debitCard'] || 0);
-                              const qrAmount = (paymentMethods['qrCode'] || 0) + (paymentMethods['mobile'] || 0) + (paymentMethods['momo'] || 0) + (paymentMethods['zalopay'] || 0) + (paymentMethods['vnpay'] || 0);
-                              const totalCustomerPayment = cashAmount + cardAmount + qrAmount;
+                              // Get all unique payment methods from all transactions
+                              const allPaymentMethods = new Set();
+                              if (filteredTransactions && Array.isArray(filteredTransactions)) {
+                                filteredTransactions.forEach((transaction: any) => {
+                                  const method = transaction.paymentMethod || 'cash';
+                                  allPaymentMethods.add(method);
+                                });
+                              }
+                              
+                              const paymentMethodsArray = Array.from(allPaymentMethods).sort();
+                              const totalCustomerPayment = Object.values(paymentMethods).reduce((sum: number, amount: number) => sum + amount, 0);
                               
                               return (
                                 <>
-                                  <TableCell className="text-right border-r font-medium">
-                                    {cashAmount > 0 ? formatCurrency(cashAmount) : '-'}
-                                  </TableCell>
-                                  <TableCell className="text-right border-r font-medium">
-                                    {cardAmount > 0 ? formatCurrency(cardAmount) : '-'}
-                                  </TableCell>
-                                  <TableCell className="text-right border-r font-medium">
-                                    {qrAmount > 0 ? formatCurrency(qrAmount) : '-'}
-                                  </TableCell>
+                                  {paymentMethodsArray.map((method: any) => {
+                                    const amount = paymentMethods[method] || 0;
+                                    return (
+                                      <TableCell key={method} className="text-right border-r font-medium">
+                                        {amount > 0 ? formatCurrency(amount) : '-'}
+                                      </TableCell>
+                                    );
+                                  })}
                                   <TableCell className="text-right font-bold text-green-600">
                                     {formatCurrency(totalCustomerPayment)}
                                   </TableCell>
@@ -487,23 +516,27 @@ export function SalesChartReport() {
                                   {formatCurrency(Number(transaction.total))}
                                 </TableCell>
                                 {(() => {
-                                  const method = transaction.paymentMethod || 'cash';
+                                  const transactionMethod = transaction.paymentMethod || 'cash';
                                   const amount = Number(transaction.total);
-                                  const isCash = method === 'cash';
-                                  const isCard = ['card', 'creditCard', 'debitCard'].includes(method);
-                                  const isQR = ['qrCode', 'mobile', 'momo', 'zalopay', 'vnpay'].includes(method);
+                                  
+                                  // Get all unique payment methods from all transactions
+                                  const allPaymentMethods = new Set();
+                                  if (filteredTransactions && Array.isArray(filteredTransactions)) {
+                                    filteredTransactions.forEach((transaction: any) => {
+                                      const method = transaction.paymentMethod || 'cash';
+                                      allPaymentMethods.add(method);
+                                    });
+                                  }
+                                  
+                                  const paymentMethodsArray = Array.from(allPaymentMethods).sort();
                                   
                                   return (
                                     <>
-                                      <TableCell className="text-right border-r text-sm">
-                                        {isCash ? formatCurrency(amount) : '-'}
-                                      </TableCell>
-                                      <TableCell className="text-right border-r text-sm">
-                                        {isCard ? formatCurrency(amount) : '-'}
-                                      </TableCell>
-                                      <TableCell className="text-right border-r text-sm">
-                                        {isQR ? formatCurrency(amount) : '-'}
-                                      </TableCell>
+                                      {paymentMethodsArray.map((method: any) => (
+                                        <TableCell key={method} className="text-right border-r text-sm">
+                                          {transactionMethod === method ? formatCurrency(amount) : '-'}
+                                        </TableCell>
+                                      ))}
                                       <TableCell className="text-right font-bold text-green-600 text-sm">
                                         {formatCurrency(amount)}
                                       </TableCell>
@@ -563,22 +596,26 @@ export function SalesChartReport() {
                           totalPaymentMethods[method] = (totalPaymentMethods[method] || 0) + Number(transaction.total);
                         });
                         
-                        const totalCash = totalPaymentMethods['cash'] || 0;
-                        const totalCard = (totalPaymentMethods['card'] || 0) + (totalPaymentMethods['creditCard'] || 0) + (totalPaymentMethods['debitCard'] || 0);
-                        const totalQR = (totalPaymentMethods['qrCode'] || 0) + (totalPaymentMethods['mobile'] || 0) + (totalPaymentMethods['momo'] || 0) + (totalPaymentMethods['zalopay'] || 0) + (totalPaymentMethods['vnpay'] || 0);
-                        const grandTotal = totalCash + totalCard + totalQR;
+                        // Get all unique payment methods from all transactions
+                        const allPaymentMethods = new Set();
+                        filteredTransactions.forEach((transaction: any) => {
+                          const method = transaction.paymentMethod || 'cash';
+                          allPaymentMethods.add(method);
+                        });
+                        
+                        const paymentMethodsArray = Array.from(allPaymentMethods).sort();
+                        const grandTotal = Object.values(totalPaymentMethods).reduce((sum: number, amount: number) => sum + amount, 0);
                         
                         return (
                           <>
-                            <TableCell className="text-right border-r font-bold text-green-600">
-                              {totalCash > 0 ? formatCurrency(totalCash) : '-'}
-                            </TableCell>
-                            <TableCell className="text-right border-r font-bold text-green-600">
-                              {totalCard > 0 ? formatCurrency(totalCard) : '-'}
-                            </TableCell>
-                            <TableCell className="text-right border-r font-bold text-green-600">
-                              {totalQR > 0 ? formatCurrency(totalQR) : '-'}
-                            </TableCell>
+                            {paymentMethodsArray.map((method: any) => {
+                              const total = totalPaymentMethods[method] || 0;
+                              return (
+                                <TableCell key={method} className="text-right border-r font-bold text-green-600">
+                                  {total > 0 ? formatCurrency(total) : '-'}
+                                </TableCell>
+                              );
+                            })}
                             <TableCell className="text-right font-bold text-green-600 text-xl">
                               {formatCurrency(grandTotal)}
                             </TableCell>
