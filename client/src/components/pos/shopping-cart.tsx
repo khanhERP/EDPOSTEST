@@ -326,7 +326,7 @@ export function ShoppingCart({
                 price: parseFloat(item.price).toFixed(2),
                 quantity: item.quantity,
                 total: (parseFloat(item.price) * item.quantity).toFixed(2),
-                sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+                sku: item.id || `FOOD${String(item.id).padStart(5, '0')}`,
                 taxRate: parseFloat(item.taxRate || "10")
               })),
               subtotal: calculateSubtotal().toFixed(2),
