@@ -989,8 +989,8 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            )}
           </CardContent>
+            )}
         </Card>
       </>
     );
