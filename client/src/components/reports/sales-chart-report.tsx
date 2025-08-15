@@ -451,17 +451,19 @@ export function SalesChartReport() {
       analysisType,
       concernType,
       transactionCount: transactions.length,
+      sampleTransaction: transactions[0]
     });
 
     const filteredTransactions = transactions.filter((transaction: any) => {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-
-      const dateMatch = transactionDate >= start && transactionDate <= end;
+      
+      // Convert dates to local date strings for comparison
+      const transactionDateStr = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, "0")}-${transactionDate.getDate().toString().padStart(2, "0")}`;
+      
+      // More flexible date matching - check if transaction date is within range
+      const dateMatch = transactionDateStr >= startDate && transactionDateStr <= endDate;
 
       // Enhanced filtering logic based on actual transaction data
       const methodMatch =
@@ -493,19 +495,18 @@ export function SalesChartReport() {
 
       const result = dateMatch && methodMatch && channelMatch && employeeMatch;
 
-      if (!result) {
-        console.log("Transaction filtered out:", {
-          id: transaction.id,
-          date: transactionDate.toISOString(),
-          dateMatch,
-          methodMatch,
-          channelMatch,
-          employeeMatch,
-          deliveryMethod: transaction.deliveryMethod,
-          salesChannel: transaction.salesChannel,
-          cashierName: transaction.cashierName,
-        });
-      }
+      console.log("Transaction filtering:", {
+        id: transaction.id,
+        transactionDateStr,
+        startDate,
+        endDate,
+        dateMatch,
+        methodMatch,
+        channelMatch,
+        employeeMatch,
+        result,
+        cashierName: transaction.cashierName,
+      });
 
       return result;
     });
