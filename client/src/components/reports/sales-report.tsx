@@ -57,7 +57,8 @@ export function SalesReport() {
   
 
   const { data: transactions } = useQuery({
-    queryKey: ["/api/transactions"],
+    queryKey: ["/api/transactions", startDate, endDate],
+    staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 
   
@@ -71,12 +72,18 @@ export function SalesReport() {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
-
-      // Chuyển về ngày local để so sánh chính xác
-      const transactionDateStr = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, "0")}-${transactionDate.getDate().toString().padStart(2, "0")}`;
       
-      const isInRange = transactionDateStr >= startDate && transactionDateStr <= endDate;
-
+      // Tạo date objects để so sánh chính xác
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      // Set end date to end of day
+      end.setHours(23, 59, 59, 999);
+      
+      // Reset transaction date to start of day for comparison
+      const transactionDateOnly = new Date(transactionDate);
+      transactionDateOnly.setHours(0, 0, 0, 0);
+      
+      const isInRange = transactionDateOnly >= start && transactionDateOnly <= end;
       return isInRange;
     });
 
@@ -89,14 +96,18 @@ export function SalesReport() {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
-      // Sử dụng format ngày nhất quán
-      const date = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, "0")}-${transactionDate.getDate().toString().padStart(2, "0")}`;
+      
+      // Đảm bảo format ngày nhất quán - luôn sử dụng UTC để tránh timezone issues
+      const year = transactionDate.getFullYear();
+      const month = (transactionDate.getMonth() + 1).toString().padStart(2, "0");
+      const day = transactionDate.getDate().toString().padStart(2, "0");
+      const date = `${year}-${month}-${day}`;
 
       if (!dailySales[date]) {
         dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
       }
 
-      dailySales[date].revenue += Number(transaction.total);
+      dailySales[date].revenue += Number(transaction.total || 0);
       dailySales[date].orders += 1;
       dailySales[date].customers += 1; // Each transaction represents one customer
     });
@@ -188,38 +199,33 @@ export function SalesReport() {
         setEndDate(today.toISOString().split("T")[0]);
         break;
       case "week":
-        // Tuần trước: từ thứ 2 tuần trước đến chủ nhật tuần trước
+        // Tuần hiện tại: từ thứ 2 đến chủ nhật
         const currentDayOfWeek = today.getDay(); // 0 = Chủ nhật, 1 = Thứ 2, ...
-        const daysToLastMonday =
-          currentDayOfWeek === 0 ? 13 : currentDayOfWeek + 6; // Nếu hôm nay là CN thì lùi 13 ngày, không thì lùi (ngày hiện tại + 6)
-        const lastWeekMonday = new Date(
-          today.getTime() - daysToLastMonday * 24 * 60 * 60 * 1000,
-        );
-        const lastWeekSunday = new Date(
-          lastWeekMonday.getTime() + 6 * 24 * 60 * 60 * 1000,
-        );
+        const daysToMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1; // Tính số ngày từ thứ 2
+        
+        const thisWeekMonday = new Date(today);
+        thisWeekMonday.setDate(today.getDate() - daysToMonday);
+        
+        const thisWeekSunday = new Date(thisWeekMonday);
+        thisWeekSunday.setDate(thisWeekMonday.getDate() + 6);
 
-        setStartDate(lastWeekMonday.toISOString().split("T")[0]);
-        setEndDate(lastWeekSunday.toISOString().split("T")[0]);
+        setStartDate(thisWeekMonday.toISOString().split("T")[0]);
+        setEndDate(thisWeekSunday.toISOString().split("T")[0]);
         break;
       case "month":
-        // Tháng trước: từ ngày 1 tháng trước đến ngày cuối tháng trước
+        // Tháng hiện tại: từ ngày 1 đến ngày cuối tháng
         const currentDate = new Date();
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
         
-        // Tính tháng trước
-        const lastMonthYear = month === 0 ? year - 1 : year;
-        const lastMonth = month === 0 ? 11 : month - 1;
-        
-        // Ngày đầu tháng trước
-        const lastMonthStart = new Date(lastMonthYear, lastMonth, 1);
-        // Ngày cuối tháng trước
-        const lastMonthEnd = new Date(lastMonthYear, lastMonth + 1, 0);
+        // Ngày đầu tháng hiện tại
+        const monthStart = new Date(year, month, 1);
+        // Ngày cuối tháng hiện tại
+        const monthEnd = new Date(year, month + 1, 0);
 
         // Format thành YYYY-MM-DD
-        const startDateStr = `${lastMonthStart.getFullYear()}-${(lastMonthStart.getMonth() + 1).toString().padStart(2, "0")}-${lastMonthStart.getDate().toString().padStart(2, "0")}`;
-        const endDateStr = `${lastMonthEnd.getFullYear()}-${(lastMonthEnd.getMonth() + 1).toString().padStart(2, "0")}-${lastMonthEnd.getDate().toString().padStart(2, "0")}`;
+        const startDateStr = `${monthStart.getFullYear()}-${(monthStart.getMonth() + 1).toString().padStart(2, "0")}-${monthStart.getDate().toString().padStart(2, "0")}`;
+        const endDateStr = `${monthEnd.getFullYear()}-${(monthEnd.getMonth() + 1).toString().padStart(2, "0")}-${monthEnd.getDate().toString().padStart(2, "0")}`;
 
         setStartDate(startDateStr);
         setEndDate(endDateStr);
@@ -271,10 +277,18 @@ export function SalesReport() {
 
   const salesData = getSalesData();
 
-  if (!salesData) {
+  if (!transactions) {
     return (
       <div className="flex justify-center py-8">
         <div className="text-gray-500">{t("reports.loading")}</div>
+      </div>
+    );
+  }
+
+  if (!salesData) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="text-gray-500">{t("reports.noDataDescription")}</div>
       </div>
     );
   }
