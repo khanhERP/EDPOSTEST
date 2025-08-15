@@ -506,7 +506,9 @@ export function EInvoiceModal({
         publishLater: true,
         showReceiptModal: true, // Flag để hiển thị receipt modal
         autoShowPrint: true, // Flag để tự động hiển thị print dialog
-        receipt: receiptData // Đảm bảo receipt data được truyền
+        receipt: receiptData, // Đảm bảo receipt data được truyền
+        customerName: formData.customerName,
+        taxCode: formData.taxCode
       });
 
       // Đóng modal e-invoice sau khi gọi onConfirm
