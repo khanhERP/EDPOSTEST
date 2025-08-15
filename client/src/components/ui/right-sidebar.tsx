@@ -157,12 +157,12 @@ export function RightSidebar() {
                 <Button
                   variant={isActive ? "secondary" : "ghost"}
                   className={cn(
-                    "w-[calc(100%-16px)] justify-start mb-2 mx-2 h-12 rounded-lg font-semibold text-gray-700 transition-all duration-300 group relative border border-transparent overflow-hidden",
+                    "w-[calc(100%-16px)] justify-start mb-2 mx-2 h-12 rounded-lg font-semibold text-gray-700 transition-all duration-300 relative border border-transparent overflow-hidden",
                     "bg-gradient-to-r from-gray-50 to-white hover:from-green-50 hover:to-green-100 hover:border-green-200 hover:text-green-700 hover:shadow-xl",
                     "focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:outline-none",
                     showText ? "px-4" : "px-3",
                     isActive && "bg-gradient-to-r from-green-100 to-green-50 text-green-800 border-green-300 shadow-lg font-bold",
-                    isNavCollapsed && !showText && "hover:w-64"
+                    isNavCollapsed && !showText && "hover:w-64 group"
                   )}
                 >
                   <Icon className={cn("w-6 h-6 flex-shrink-0", showText && "mr-4", isActive && "text-green-700")} />
