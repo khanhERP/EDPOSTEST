@@ -75,7 +75,7 @@ export function SalesChartReport() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [productType, setProductType] = useState("all");
 
-  const { data: transactions, refetch: refetchTransactions } = useQuery({
+  const { data: transactions, refetch: refetchTransactions, isLoading: transactionsLoading, isFetching: transactionsFetching } = useQuery({
     queryKey: [
       "/api/transactions",
       startDate,
@@ -100,7 +100,9 @@ export function SalesChartReport() {
       if (!response.ok) {
         throw new Error("Failed to fetch transactions");
       }
-      return response.json();
+      const data = await response.json();
+      console.log('🔄 Transactions data fetched:', data.length, 'items');
+      return data;
     },
     enabled: !!startDate && !!endDate,
     staleTime: 0,
@@ -150,7 +152,7 @@ export function SalesChartReport() {
     gcTime: 0,
   });
 
-  const { data: orders, refetch: refetchOrders } = useQuery({
+  const { data: orders, refetch: refetchOrders, isLoading: ordersLoading, isFetching: ordersFetching } = useQuery({
     queryKey: [
       "/api/orders",
       startDate,
@@ -175,7 +177,9 @@ export function SalesChartReport() {
       if (!response.ok) {
         throw new Error("Failed to fetch orders");
       }
-      return response.json();
+      const data = await response.json();
+      console.log('🔄 Orders data fetched:', data.length, 'items');
+      return data;
     },
     enabled: !!startDate && !!endDate,
     staleTime: 0,
@@ -400,27 +404,55 @@ export function SalesChartReport() {
   // Refetch data when key parameters change (immediate for date changes)
   useEffect(() => {
     if (startDate && endDate) {
-      // Remove all cached data first
-      queryClient.removeQueries({
-        queryKey: ["/api/transactions"],
-      });
-      queryClient.removeQueries({
-        queryKey: ["/api/orders"],
-      });
+      // Force component to re-render with fresh data
+      const forceRefresh = async () => {
+        // Remove all cached data first
+        queryClient.removeQueries({
+          queryKey: ["/api/transactions"],
+        });
+        queryClient.removeQueries({
+          queryKey: ["/api/orders"],
+        });
 
-      // Invalidate queries
-      queryClient.invalidateQueries({
-        queryKey: ["/api/transactions"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/orders"],
-      });
+        // Clear specific queries with current params
+        queryClient.removeQueries({
+          queryKey: [
+            "/api/transactions",
+            startDate,
+            endDate,
+            salesMethod,
+            salesChannel,
+            analysisType,
+            concernType,
+            selectedEmployee,
+          ],
+        });
+        queryClient.removeQueries({
+          queryKey: [
+            "/api/orders",
+            startDate,
+            endDate,
+            selectedEmployee,
+            salesChannel,
+            salesMethod,
+            analysisType,
+            concernType,
+          ],
+        });
 
-      // Force immediate refetch with a small delay to ensure cache is cleared
-      setTimeout(() => {
-        refetchTransactions();
-        refetchOrders();
-      }, 50);
+        // Invalidate queries
+        queryClient.invalidateQueries({
+          queryKey: ["/api/transactions"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["/api/orders"],
+        });
+
+        // Force immediate refetch
+        await Promise.all([refetchTransactions(), refetchOrders()]);
+      };
+
+      forceRefresh();
     }
   }, [startDate, endDate, queryClient, refetchTransactions, refetchOrders]);
 
@@ -503,7 +535,10 @@ export function SalesChartReport() {
   ]);
 
   const getFilteredData = () => {
+    console.log('📊 getFilteredData called with transactions:', transactions?.length || 0, 'items');
+    
     if (!transactions || !Array.isArray(transactions)) {
+      console.log('❌ No transactions data available');
       return [];
     }
 
@@ -546,8 +581,19 @@ export function SalesChartReport() {
       return dateMatch && methodMatch && channelMatch && employeeMatch;
     });
 
+    console.log('✅ Filtered transactions:', filteredTransactions.length, 'items');
     return filteredTransactions;
   };
+
+  // Add data change detection
+  useEffect(() => {
+    if (transactions) {
+      console.log('🔄 Transactions data changed:', transactions.length, 'items');
+    }
+    if (orders) {
+      console.log('🔄 Orders data changed:', orders.length, 'items');
+    }
+  }, [transactions, orders]);
 
   const getReportTitle = () => {
     if (analysisType === "time") {
@@ -2855,13 +2901,34 @@ export function SalesChartReport() {
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
             {getReportTitle()}
+            {(transactionsLoading || ordersLoading || transactionsFetching || ordersFetching) && (
+              <div className="ml-2 w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            )}
           </CardTitle>
           <CardDescription>
             {t("reports.dataFrom")} {formatDate(startDate)} {t("reports.to")}{" "}
             {formatDate(endDate)}
+            {transactions && (
+              <span className="ml-2 text-green-600">
+                • {transactions.length} transactions
+              </span>
+            )}
+            {orders && (
+              <span className="ml-2 text-blue-600">
+                • {orders.length} orders
+              </span>
+            )}
           </CardDescription>
         </CardHeader>
-        <CardContent>{renderReportTable()}</CardContent>
+        <CardContent>
+          {(transactionsLoading || ordersLoading) ? (
+            <div className="flex justify-center py-8">
+              <div className="text-gray-500">{t("reports.loading")}...</div>
+            </div>
+          ) : (
+            renderReportTable()
+          )}
+        </CardContent>
       </Card>
     </div>
   );
