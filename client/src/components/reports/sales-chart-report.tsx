@@ -2401,37 +2401,35 @@ export function SalesChartReport() {
             </div>
           )}
 
-          {/* Date Range Filters - Only for time analysis */}
-          {analysisType === "time" && (
-            <div className="grid grid-cols-4 gap-4">
-              <div>
-                <Label className="text-blue-700 font-medium text-sm">
-                  {t("reports.startDate")}
-                </Label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                  }}
-                  className="border-blue-300 focus:border-blue-500 focus:ring-blue-200 mt-1"
-                />
-              </div>
-              <div>
-                <Label className="text-blue-700 font-medium text-sm">
-                  {t("reports.endDate")}
-                </Label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => {
-                    setEndDate(e.target.value);
-                  }}
-                  className="border-blue-300 focus:border-blue-500 focus:ring-blue-200 mt-1"
-                />
-              </div>
+          {/* Date Range Filters - Show for all analysis types */}
+          <div className="grid grid-cols-4 gap-4">
+            <div>
+              <Label className="text-blue-700 font-medium text-sm">
+                {t("reports.startDate")}
+              </Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                }}
+                className="border-blue-300 focus:border-blue-500 focus:ring-blue-200 mt-1"
+              />
             </div>
-          )}
+            <div>
+              <Label className="text-blue-700 font-medium text-sm">
+                {t("reports.endDate")}
+              </Label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                }}
+                className="border-blue-300 focus:border-blue-500 focus:ring-blue-200 mt-1"
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
 
