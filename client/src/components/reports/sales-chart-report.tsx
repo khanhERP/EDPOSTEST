@@ -56,13 +56,18 @@ export function SalesChartReport() {
 
   const [analysisType, setAnalysisType] = useState("time");
   const [concernType, setConcernType] = useState("time");
-  const today = new Date(); // Define today once
-  const [startDate, setStartDate] = useState<string>(
-    today.toISOString().split("T")[0],
-  );
-  const [endDate, setEndDate] = useState<string>(
-    today.toISOString().split("T")[0],
-  );
+  
+  // Get current date in YYYY-MM-DD format
+  const getCurrentDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  
+  const [startDate, setStartDate] = useState<string>(getCurrentDate());
+  const [endDate, setEndDate] = useState<string>(getCurrentDate());
   const [salesMethod, setSalesMethod] = useState("all");
   const [salesChannel, setSalesChannel] = useState("all");
   const [savedSettings, setSavedSettings] = useState<any>(null);
