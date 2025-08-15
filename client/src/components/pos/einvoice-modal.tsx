@@ -499,21 +499,23 @@ export function EInvoiceModal({
         description: 'Thông tin hóa đơn điện tử đã được lưu vào database để phát hành sau.',
       });
 
-      // Gọi onConfirm trước khi đóng modal để đảm bảo parent component nhận được data
-      console.log('✅ Calling onConfirm with publishLater data');
-      onConfirm({
-        ...invoiceData,
-        publishLater: true,
-        showReceiptModal: true, // Flag để hiển thị receipt modal
-        autoShowPrint: true, // Flag để tự động hiển thị print dialog
-        receipt: receiptData, // Đảm bảo receipt data được truyền
-        customerName: formData.customerName,
-        taxCode: formData.taxCode
-      });
-
-      // Đóng modal e-invoice sau khi gọi onConfirm
-      console.log('🔒 Closing e-invoice modal after calling onConfirm');
+      // Đóng modal e-invoice TRƯỚC KHI gọi onConfirm để tránh conflict
+      console.log('🔒 Closing e-invoice modal before calling onConfirm');
       onClose();
+
+      // Gọi onConfirm sau khi đóng modal để đảm bảo parent component nhận được data
+      console.log('✅ Calling onConfirm with publishLater data');
+      setTimeout(() => {
+        onConfirm({
+          ...invoiceData,
+          publishLater: true,
+          showReceiptModal: true, // Flag để hiển thị receipt modal
+          autoShowPrint: true, // Flag để tự động hiển thị print dialog
+          receipt: receiptData, // Đảm bảo receipt data được truyền
+          customerName: formData.customerName,
+          taxCode: formData.taxCode
+        });
+      }, 100);
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
