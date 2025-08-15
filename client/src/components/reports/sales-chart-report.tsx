@@ -300,107 +300,52 @@ export function SalesChartReport() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Daily Sales */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("reports.dailySales")}</CardTitle>
-              <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("common.date")}</TableHead>
-                    <TableHead>{t("reports.revenue")}</TableHead>
-                    <TableHead>{t("reports.orders")}</TableHead>
-                    <TableHead>{t("reports.customers")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Object.entries(dailySales).length > 0 ? (
-                    Object.entries(dailySales).map(([date, data]) => (
-                      <TableRow key={date}>
-                        <TableCell>{formatDate(date)}</TableCell>
-                        <TableCell className="font-medium">
-                          {formatCurrency(data.revenue)}
-                        </TableCell>
-                        <TableCell>
-                          {data.orders} {t("reports.count")}
-                        </TableCell>
-                        <TableCell>
-                          {data.customers} {t("reports.count")}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={4}
-                        className="text-center text-gray-500"
-                      >
-                        {t("reports.noDataDescription")}
+        {/* Daily Sales */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("reports.dailySales")}</CardTitle>
+            <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t("common.date")}</TableHead>
+                  <TableHead>{t("reports.revenue")}</TableHead>
+                  <TableHead>{t("reports.orders")}</TableHead>
+                  <TableHead>{t("reports.customers")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Object.entries(dailySales).length > 0 ? (
+                  Object.entries(dailySales).map(([date, data]) => (
+                    <TableRow key={date}>
+                      <TableCell>{formatDate(date)}</TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(data.revenue)}
+                      </TableCell>
+                      <TableCell>
+                        {data.orders} {t("reports.count")}
+                      </TableCell>
+                      <TableCell>
+                        {data.customers} {t("reports.count")}
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          {/* Payment Methods */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("reports.paymentMethods")}</CardTitle>
-              <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {Object.entries(paymentMethods).map(([method, payment]) => {
-                  const percentage =
-                    totalRevenue > 0
-                      ? (Number(payment.revenue) / Number(totalRevenue)) * 100
-                      : 0;
-
-                  return (
-                    <div key={method} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline">
-                            {getPaymentMethodLabel(method)}
-                          </Badge>
-                          <span className="text-sm text-gray-600">
-                            {payment.count} {t("reports.count")}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-medium">
-                            {formatCurrency(payment.revenue)}
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
-                          </div>
-                        </div>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-500 h-2 rounded-full transition-all"
-                          style={{ width: `${percentage}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {Object.entries(paymentMethods).length === 0 && (
-                  <div className="text-center text-gray-500 py-4">
-                    {t("reports.noDataDescription")}
-                  </div>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="text-center text-gray-500"
+                    >
+                      {t("reports.noDataDescription")}
+                    </TableCell>
+                  </TableRow>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </>
     );
   };
