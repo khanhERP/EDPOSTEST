@@ -395,10 +395,10 @@ export function SalesChartReport() {
         refetchTransactions();
         refetchOrders();
       }
-    }, 500);
+    }, 300);
 
     return () => clearTimeout(timer);
-  }, [startDate, endDate, analysisType, concernType, queryClient, refetchTransactions, refetchOrders]);
+  }, [startDate, endDate, salesMethod, salesChannel, selectedEmployee, analysisType, concernType, queryClient, refetchTransactions, refetchOrders]);
 
   // Save current settings when filters change (debounced)
   useEffect(() => {
