@@ -267,8 +267,17 @@ export function ShoppingCart({
   };
 
   const handleReceiptConfirm = () => {
+    console.log('📄 Receipt confirmed, checking payment method');
     setShowReceiptPreview(false);
-    setShowPaymentMethodModal(true);
+    
+    // Chỉ hiển thị payment method modal nếu chưa có thanh toán nào được xử lý
+    // Tránh hiển thị lại sau khi e-invoice đã xử lý xong
+    if (!previewReceipt?.paymentMethod || previewReceipt?.paymentMethod === "preview") {
+      console.log('💳 Showing payment method modal for new transaction');
+      setShowPaymentMethodModal(true);
+    } else {
+      console.log('✅ Payment already processed, not showing payment method modal');
+    }
   };
 
   const handlePaymentMethodSelect = (method: string, eInvoiceData?: any) => {
