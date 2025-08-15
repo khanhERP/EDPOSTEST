@@ -125,20 +125,20 @@ export function SalesChartReport() {
 
   const getPaymentMethodLabel = (method: string) => {
     const labels = {
-      cash: t("reports.cash"),
-      card: t("reports.card"),
-      creditCard: t("reports.credit_card"),
-      credit_card: t("reports.credit_card"),
-      debitCard: t("pos.debitCard"),
-      debit_card: t("pos.debitCard"),
+      cash: t("common.cash"),
+      card: t("common.creditCard"),
+      creditCard: t("common.creditCard"),
+      credit_card: t("common.creditCard"),
+      debitCard: t("common.debitCard"),
+      debit_card: t("common.debitCard"),
       transfer: t("common.transfer"),
       einvoice: t("reports.einvoice"),
-      momo: t("pos.momo"),
-      zalopay: t("pos.zalopay"),
-      vnpay: t("pos.vnpay"),
-      qrCode: t("reports.qrbanking"),
-      shopeepay: t("pos.shopeepay"),
-      grabpay: t("pos.grabpay"),
+      momo: t("common.momo"),
+      zalopay: t("common.zalopay"),
+      vnpay: t("common.vnpay"),
+      qrCode: t("common.qrCode"),
+      shopeepay: t("common.shopeepay"),
+      grabpay: t("common.grabpay"),
       mobile: "Mobile",
     };
     return labels[method as keyof typeof labels] || method;
