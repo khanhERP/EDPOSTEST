@@ -318,31 +318,31 @@ export function SalesChartReport() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-center border-r bg-green-50 w-8" rowSpan={2}>
+                    <TableHead className="text-center border-r bg-green-50 w-12" rowSpan={2}>
 
                     </TableHead>
-                    <TableHead className="text-center border-r bg-green-50" rowSpan={2}>
+                    <TableHead className="text-center border-r bg-green-50 min-w-[120px]" rowSpan={2}>
                       Ngày
                     </TableHead>
-                    <TableHead className="text-center border-r" rowSpan={2}>
+                    <TableHead className="text-center border-r min-w-[100px]" rowSpan={2}>
                       Số đơn bán
                     </TableHead>
-                    <TableHead className="text-center border-r" rowSpan={2}>
+                    <TableHead className="text-center border-r min-w-[140px]" rowSpan={2}>
                       Thành tiền
                     </TableHead>
-                    <TableHead className="text-center border-r" rowSpan={2}>
+                    <TableHead className="text-center border-r min-w-[120px]" rowSpan={2}>
                       Giảm giá
                     </TableHead>
-                    <TableHead className="text-center border-r" rowSpan={2}>
+                    <TableHead className="text-center border-r min-w-[140px]" rowSpan={2}>
                       Doanh thu
                     </TableHead>
-                    <TableHead className="text-center border-r" rowSpan={2}>
+                    <TableHead className="text-center border-r min-w-[120px]" rowSpan={2}>
                       Thuế
                     </TableHead>
-                    <TableHead className="text-center border-r" rowSpan={2}>
+                    <TableHead className="text-center border-r min-w-[140px]" rowSpan={2}>
                       Tổng tiền
                     </TableHead>
-                    <TableHead className="text-center border-r bg-blue-50" colSpan={(() => {
+                    <TableHead className="text-center border-r bg-blue-50 min-w-[200px]" colSpan={(() => {
                       // Get all unique payment methods from transactions
                       const allPaymentMethods = new Set();
                       if (filteredTransactions && Array.isArray(filteredTransactions)) {
@@ -372,11 +372,11 @@ export function SalesChartReport() {
                       return (
                         <>
                           {paymentMethodsArray.map((method: any) => (
-                            <TableHead key={method} className="text-center border-r bg-blue-50">
+                            <TableHead key={method} className="text-center border-r bg-blue-50 min-w-[130px]">
                               {getPaymentMethodLabel(method)}
                             </TableHead>
                           ))}
-                          <TableHead className="text-center bg-blue-50">
+                          <TableHead className="text-center bg-blue-50 min-w-[150px]">
                             Tổng KH thanh toán
                           </TableHead>
                         </>
@@ -415,33 +415,33 @@ export function SalesChartReport() {
                       return (
                         <>
                           <TableRow key={date} className="hover:bg-gray-50">
-                            <TableCell className="text-center border-r">
+                            <TableCell className="text-center border-r w-12">
                               <button
                                 onClick={() => setExpandedRows(prev => ({ ...prev, [date]: !prev[date] }))}
-                                className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm"
+                                className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded text-sm"
                               >
                                 {isExpanded ? '−' : '+'}
                               </button>
                             </TableCell>
-                            <TableCell className="font-medium text-center border-r bg-green-50">
+                            <TableCell className="font-medium text-center border-r bg-green-50 min-w-[120px] px-4">
                               {formatDate(date)}
                             </TableCell>
-                            <TableCell className="text-center border-r">
+                            <TableCell className="text-center border-r min-w-[100px] px-4">
                               {data.orders.toLocaleString()}
                             </TableCell>
-                            <TableCell className="text-right border-r">
+                            <TableCell className="text-right border-r min-w-[140px] px-4">
                               {formatCurrency(paymentAmount)}
                             </TableCell>
-                            <TableCell className="text-right border-r text-red-600">
+                            <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
                               {formatCurrency(discount)}
                             </TableCell>
-                            <TableCell className="text-right border-r text-green-600 font-medium">
+                            <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
                               {formatCurrency(actualRevenue)}
                             </TableCell>
-                            <TableCell className="text-right border-r">
+                            <TableCell className="text-right border-r min-w-[120px] px-4">
                               {formatCurrency(tax)}
                             </TableCell>
-                            <TableCell className="text-right border-r font-bold text-blue-600">
+                            <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
                               {formatCurrency(actualRevenue)}
                             </TableCell>
                             {(() => {
@@ -469,12 +469,12 @@ export function SalesChartReport() {
                                   {paymentMethodsArray.map((method: any) => {
                                     const amount = paymentMethods[method] || 0;
                                     return (
-                                      <TableCell key={method} className="text-right border-r font-medium">
+                                      <TableCell key={method} className="text-right border-r font-medium min-w-[130px] px-4">
                                         {amount > 0 ? formatCurrency(amount) : '-'}
                                       </TableCell>
                                     );
                                   })}
-                                  <TableCell className="text-right font-bold text-green-600">
+                                  <TableCell className="text-right font-bold text-green-600 min-w-[150px] px-4">
                                     {formatCurrency(totalCustomerPayment)}
                                   </TableCell>
                                 </>
@@ -486,33 +486,33 @@ export function SalesChartReport() {
                           {isExpanded && dateTransactions.length > 0 && (
                             dateTransactions.map((transaction: any, index: number) => (
                               <TableRow key={`${date}-${transaction.id || index}`} className="bg-blue-50/50 border-l-4 border-l-blue-400">
-                                <TableCell className="text-center border-r bg-blue-50">
-                                  <div className="w-6 h-6 flex items-center justify-center text-blue-600 text-xs">
+                                <TableCell className="text-center border-r bg-blue-50 w-12">
+                                  <div className="w-8 h-6 flex items-center justify-center text-blue-600 text-xs">
                                     └
                                   </div>
                                 </TableCell>
-                                <TableCell className="font-medium text-center border-r bg-blue-50 text-blue-600 text-sm">
+                                <TableCell className="font-medium text-center border-r bg-blue-50 text-blue-600 text-sm min-w-[120px] px-4">
                                   {new Date(transaction.createdAt || transaction.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                                   <div className="text-xs text-gray-500 font-normal">
                                     {getPaymentMethodLabel(transaction.paymentMethod)}
                                   </div>
                                 </TableCell>
-                                <TableCell className="text-center border-r text-sm">
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
                                   #{transaction.transactionId || `TXN-${index + 1}`}
                                 </TableCell>
-                                <TableCell className="text-right border-r text-sm">
+                                <TableCell className="text-right border-r text-sm min-w-[140px] px-4">
                                   {formatCurrency(Number(transaction.total) * 1.05)}
                                 </TableCell>
-                                <TableCell className="text-right border-r text-red-600 text-sm">
+                                <TableCell className="text-right border-r text-red-600 text-sm min-w-[120px] px-4">
                                   {formatCurrency(Number(transaction.total) * 1.05 * 0.05)}
                                 </TableCell>
-                                <TableCell className="text-right border-r text-green-600 font-medium text-sm">
+                                <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
                                   {formatCurrency(Number(transaction.total))}
                                 </TableCell>
-                                <TableCell className="text-right border-r text-sm">
+                                <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
                                   {formatCurrency(Number(transaction.total) * 0.1)}
                                 </TableCell>
-                                <TableCell className="text-right border-r font-bold text-blue-600 text-sm">
+                                <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
                                   {formatCurrency(Number(transaction.total))}
                                 </TableCell>
                                 {(() => {
@@ -533,11 +533,11 @@ export function SalesChartReport() {
                                   return (
                                     <>
                                       {paymentMethodsArray.map((method: any) => (
-                                        <TableCell key={method} className="text-right border-r text-sm">
+                                        <TableCell key={method} className="text-right border-r text-sm min-w-[130px] px-4">
                                           {transactionMethod === method ? formatCurrency(amount) : '-'}
                                         </TableCell>
                                       ))}
-                                      <TableCell className="text-right font-bold text-green-600 text-sm">
+                                      <TableCell className="text-right font-bold text-green-600 text-sm min-w-[150px] px-4">
                                         {formatCurrency(amount)}
                                       </TableCell>
                                     </>
@@ -564,28 +564,28 @@ export function SalesChartReport() {
                   {/* Summary Row */}
                   {Object.entries(dailySales).length > 0 && (
                     <TableRow className="bg-gray-100 font-bold border-t-2">
-                      <TableCell className="text-center border-r">
+                      <TableCell className="text-center border-r w-12">
 
                       </TableCell>
-                      <TableCell className="text-center border-r bg-green-100">
+                      <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
                         {t("reports.total")}
                       </TableCell>
-                      <TableCell className="text-center border-r">
+                      <TableCell className="text-center border-r min-w-[100px] px-4">
                         {Object.values(dailySales).reduce((sum, data) => sum + data.orders, 0).toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-right border-r">
+                      <TableCell className="text-right border-r min-w-[140px] px-4">
                         {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 1.05), 0))}
                       </TableCell>
-                      <TableCell className="text-right border-r text-red-600">
+                      <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
                         {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 1.05 * 0.05), 0))}
                       </TableCell>
-                      <TableCell className="text-right border-r text-green-600">
+                      <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
                         {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0))}
                       </TableCell>
-                      <TableCell className="text-right border-r">
+                      <TableCell className="text-right border-r min-w-[120px] px-4">
                         {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.1), 0))}
                       </TableCell>
-                      <TableCell className="text-right border-r text-blue-600">
+                      <TableCell className="text-right border-r text-blue-600 min-w-[140px] px-4">
                         {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0))}
                       </TableCell>
                       {(() => {
@@ -611,12 +611,12 @@ export function SalesChartReport() {
                             {paymentMethodsArray.map((method: any) => {
                               const total = totalPaymentMethods[method] || 0;
                               return (
-                                <TableCell key={method} className="text-right border-r font-bold text-green-600">
+                                <TableCell key={method} className="text-right border-r font-bold text-green-600 min-w-[130px] px-4">
                                   {total > 0 ? formatCurrency(total) : '-'}
                                 </TableCell>
                               );
                             })}
-                            <TableCell className="text-right font-bold text-green-600 text-xl">
+                            <TableCell className="text-right font-bold text-green-600 text-xl min-w-[150px] px-4">
                               {formatCurrency(grandTotal)}
                             </TableCell>
                           </>
