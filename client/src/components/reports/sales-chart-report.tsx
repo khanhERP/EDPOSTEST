@@ -713,7 +713,13 @@ export function SalesChartReport() {
           selectedCategory === "all" ||
           product.categoryId?.toString() === selectedCategory;
 
-        return searchMatch && categoryMatch;
+        const typeMatch =
+          productType === "all" ||
+          (productType === "combo" && product.productType === 3) ||
+          (productType === "product" && product.productType === 1) ||
+          (productType === "service" && product.productType === 2);
+
+        return searchMatch && categoryMatch && typeMatch;
       });
     };
 
@@ -734,7 +740,7 @@ export function SalesChartReport() {
 
       filteredOrders.forEach((order: any) => {
         const orderTotal = Number(order.total);
-        const availableProducts = filteredProducts.filter(p => p.price > 0);
+        const availableProducts = filteredProducts.filter(p => Number(p.price) > 0);
 
         if (availableProducts.length === 0) return;
 
@@ -747,7 +753,7 @@ export function SalesChartReport() {
           .sort(() => 0.5 - Math.random())
           .slice(0, orderProductCount);
 
-        const totalSelectedPrice = selectedProducts.reduce((sum, p) => sum + (p.price || 0), 0);
+        const totalSelectedPrice = selectedProducts.reduce((sum, p) => sum + Number(p.price || 0), 0);
 
         selectedProducts.forEach((product: any) => {
           const productId = product.id.toString();
@@ -755,9 +761,9 @@ export function SalesChartReport() {
             productSales[productId] = { quantity: 0, revenue: 0, orders: 0 };
           }
 
-          const proportion = totalSelectedPrice > 0 ? (product.price || 0) / totalSelectedPrice : 1 / selectedProducts.length;
+          const proportion = totalSelectedPrice > 0 ? Number(product.price || 0) / totalSelectedPrice : 1 / selectedProducts.length;
           const productRevenue = orderTotal * proportion;
-          const quantity = Math.max(1, Math.floor(productRevenue / (product.price || 1)));
+          const quantity = Math.max(1, Math.floor(productRevenue / Number(product.price || 1)));
 
           productSales[productId].quantity += quantity;
           productSales[productId].revenue += productRevenue;
