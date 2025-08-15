@@ -1845,7 +1845,7 @@ export function SalesChartReport() {
                       {t("common.total")}
                     </TableCell>
                     <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4">
-                      {data.length} {t("common.customers")}
+                      {data.length} khách hàng
                     </TableCell>
                     <TableCell className="text-center border-r min-w-[100px] px-4">
                       {data.reduce((sum, item) => sum + item.orders, 0).toLocaleString()}
