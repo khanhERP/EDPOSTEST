@@ -343,7 +343,13 @@ export function SalesChartReport() {
                       Tổng tiền
                     </TableHead>
                     <TableHead className="text-center">
-                      Khách thanh toán
+                      <div className="flex flex-col">
+                        <span className="font-medium mb-1">Khách thanh toán</span>
+                        <div className="text-xs text-gray-500 grid grid-cols-2 gap-1">
+                          <span>Phương thức</span>
+                          <span>Số tiền</span>
+                        </div>
+                      </div>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -409,10 +415,10 @@ export function SalesChartReport() {
                             </TableCell>
                             <TableCell className="text-right font-bold text-green-600">
                               <div className="flex flex-col items-end">
-                                <div className="font-bold mb-2">
+                                <div className="font-bold mb-3 text-lg border-b pb-1">
                                   {formatCurrency(customerPayment)}
                                 </div>
-                                <div className="text-xs space-y-1">
+                                <div className="text-xs space-y-1 w-full">
                                   {(() => {
                                     // Group transactions by payment method for this date
                                     const paymentMethods: { [method: string]: number } = {};
@@ -422,13 +428,17 @@ export function SalesChartReport() {
                                     });
                                     
                                     return Object.entries(paymentMethods).map(([method, amount]) => (
-                                      <div key={method} className="flex items-center justify-between bg-white/60 px-2 py-1 rounded-md border min-w-[120px]">
-                                        <span className="text-gray-700 font-medium">
-                                          {getPaymentMethodLabel(method)}
-                                        </span>
-                                        <span className="font-semibold">
-                                          {formatCurrency(amount)}
-                                        </span>
+                                      <div key={method} className="grid grid-cols-2 gap-2 bg-blue-50/80 px-3 py-2 rounded-md border border-blue-200 min-w-[160px]">
+                                        <div className="text-left">
+                                          <span className="text-gray-700 font-medium text-xs">
+                                            {getPaymentMethodLabel(method)}
+                                          </span>
+                                        </div>
+                                        <div className="text-right">
+                                          <span className="font-semibold text-blue-700">
+                                            {formatCurrency(amount)}
+                                          </span>
+                                        </div>
                                       </div>
                                     ));
                                   })()}
@@ -472,12 +482,17 @@ export function SalesChartReport() {
                                 </TableCell>
                                 <TableCell className="text-right font-bold text-green-600 text-sm">
                                   <div className="flex flex-col items-end">
-                                    <div className="font-bold">
+                                    <div className="font-bold mb-2 text-base">
                                       {formatCurrency(Number(transaction.total))}
                                     </div>
-                                    <div className="text-xs text-gray-600 mt-1">
-                                      <div className="bg-white/60 px-2 py-1 rounded-md border">
-                                        {getPaymentMethodLabel(transaction.paymentMethod)}
+                                    <div className="text-xs w-full">
+                                      <div className="grid grid-cols-2 gap-1 bg-white/80 px-2 py-1 rounded-md border border-gray-300">
+                                        <div className="text-left text-gray-600">
+                                          PT:
+                                        </div>
+                                        <div className="text-right font-medium text-gray-800">
+                                          {getPaymentMethodLabel(transaction.paymentMethod)}
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -529,10 +544,11 @@ export function SalesChartReport() {
                       </TableCell>
                       <TableCell className="text-right text-green-600">
                         <div className="flex flex-col items-end">
-                          <div className="font-bold mb-2">
+                          <div className="font-bold mb-3 text-xl border-b-2 border-green-300 pb-2">
                             {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0))}
                           </div>
-                          <div className="text-xs space-y-1">
+                          <div className="text-xs space-y-2 w-full">
+                            <div className="text-center text-gray-600 font-medium mb-2">Chi tiết theo phương thức:</div>
                             {(() => {
                               // Calculate total payment methods across all dates
                               const totalPaymentMethods: { [method: string]: number } = {};
@@ -542,13 +558,17 @@ export function SalesChartReport() {
                               });
                               
                               return Object.entries(totalPaymentMethods).map(([method, amount]) => (
-                                <div key={method} className="flex items-center justify-between bg-white/80 px-2 py-1 rounded-md border min-w-[120px] font-semibold">
-                                  <span className="text-gray-800">
-                                    {getPaymentMethodLabel(method)}
-                                  </span>
-                                  <span className="text-green-700">
-                                    {formatCurrency(amount)}
-                                  </span>
+                                <div key={method} className="grid grid-cols-2 gap-2 bg-green-50/90 px-3 py-2 rounded-md border-2 border-green-300 min-w-[160px] font-bold">
+                                  <div className="text-left">
+                                    <span className="text-gray-800 text-sm">
+                                      {getPaymentMethodLabel(method)}
+                                    </span>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className="text-green-800 font-bold">
+                                      {formatCurrency(amount)}
+                                    </span>
+                                  </div>
                                 </div>
                               ));
                             })()}
