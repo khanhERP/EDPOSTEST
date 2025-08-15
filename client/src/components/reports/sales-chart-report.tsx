@@ -195,7 +195,7 @@ export function SalesChartReport() {
       }
 
       dailySales[date].revenue += Number(transaction.total || 0);
-      dailySales[client].orders += 1;
+      dailySales[date].orders += 1;
       dailySales[date].customers += 1;
     });
 
@@ -1460,7 +1460,11 @@ export function SalesChartReport() {
   const renderReportContent = () => {
     switch (analysisType) {
       case "time":
-        return renderSalesReport();
+        return (
+          <div className="space-y-6">
+            {renderSalesReport()}
+          </div>
+        );
       case "product":
         return renderInventoryReport();
       case "employee":
