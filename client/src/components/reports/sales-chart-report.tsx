@@ -2415,7 +2415,7 @@ export function SalesChartReport() {
 
           {/* Date Range Filters - Only for time analysis */}
           {analysisType === "time" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label className="text-blue-700 font-medium text-sm">
                   {t("reports.startDate")}
@@ -2437,19 +2437,6 @@ export function SalesChartReport() {
                   onChange={(e) => setEndDate(e.target.value)}
                   className="border-blue-300 focus:border-blue-500 focus:ring-blue-200 mt-1"
                 />
-              </div>
-              <div className="flex items-end">
-                <button
-                  onClick={() => {
-                    queryClient.clear();
-                    refetchTransactions();
-                    refetchOrders();
-                  }}
-                  className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors flex items-center justify-center gap-2 font-medium"
-                >
-                  <Search className="w-4 h-4" />
-                  {t("common.refresh")}
-                </button>
               </div>
             </div>
           )}
