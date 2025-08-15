@@ -246,6 +246,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscount: "송장 할인",
     returnTicketCount: "반품 표 수량",
     seller: "판매자",
+    employeeCode: "직원 코드",
 
     // Table headers for reports
     salesDetailsHeader: "판매 세부사항",
@@ -590,6 +591,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscount: "Invoice Discount",
     returnTicketCount: "Return Ticket Count",
     seller: "Seller",
+    employeeCode: "Employee Code",
 
     // Table headers for reports
     salesDetailsHeader: "Sales Details",
@@ -1002,6 +1004,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscount: "Giảm giá hóa đơn",
     returnTicketCount: "Số lượng phiếu trả",
     seller: "Người bán",
+    employeeCode: "Mã nhân viên",
 
     // Table headers for reports
     salesDetailsHeader: "Chi tiết bán hàng",
