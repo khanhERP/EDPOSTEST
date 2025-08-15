@@ -160,9 +160,8 @@ export function RightSidebar() {
                     "w-[calc(100%-16px)] justify-start mb-2 mx-2 h-12 rounded-lg font-semibold text-gray-700 transition-all duration-300 group relative border border-transparent",
                     "bg-gradient-to-r from-gray-50 to-white hover:from-green-50 hover:to-green-100 hover:border-green-200 hover:text-green-700 hover:shadow-xl",
                     "focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:outline-none",
-                    showText ? "px-4" : "px-3",
-                    isActive && "bg-gradient-to-r from-green-100 to-green-50 text-green-800 border-green-300 shadow-lg font-bold",
-                    isNavCollapsed && "hover:w-[calc(256px-16px)]"
+                    showText ? "px-4" : "px-0 justify-center",
+                    isActive && "bg-gradient-to-r from-green-100 to-green-50 text-green-800 border-green-300 shadow-lg font-bold"
                   )}
                 >
                   <Icon className={cn("w-6 h-6 flex-shrink-0", showText && "mr-4", isActive && "text-green-700")} />
@@ -172,8 +171,9 @@ export function RightSidebar() {
                     </span>
                   )}
                   {isNavCollapsed && (
-                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap">
+                    <div className="fixed left-16 top-1/2 -translate-y-1/2 px-3 py-2 bg-gray-800 text-white text-sm rounded-md shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none z-[9999] whitespace-nowrap border border-gray-600">
                       {item.label}
+                      <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-gray-800"></div>
                     </div>
                   )}
                   {showText && item.badge && (
