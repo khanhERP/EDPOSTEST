@@ -1993,8 +1993,8 @@ export function SalesChartReport() {
               />
             </div>
 
-            {/* Conditional Filters - Hide sales method and channel for product analysis */}
-            {analysisType !== "time" && analysisType !== "product" && (
+            {/* Conditional Filters - Hide sales method and channel for product and employee analysis */}
+            {analysisType !== "time" && analysisType !== "product" && analysisType !== "employee" && (
               <div>
                 <Label className="text-xs font-medium text-gray-600 mb-1 block">
                   {t("reports.salesMethod")}
@@ -2037,21 +2037,17 @@ export function SalesChartReport() {
               {analysisType === "employee" && (
                 <div>
                   <Label className="text-xs font-medium text-gray-600 mb-1 block">
-                    {t("reports.seller")}
+                    Tìm kiếm nhân viên
                   </Label>
-                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                    <SelectTrigger className="h-8 text-sm">
-                      <SelectValue placeholder={t("reports.seller")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("common.all")}</SelectItem>
-                      {employees && Array.isArray(employees) && employees.map((employee: any) => (
-                        <SelectItem key={employee.id} value={employee.name}>
-                          {employee.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                    <Input
+                      placeholder="Tìm theo tên nhân viên"
+                      value={selectedEmployee === "all" ? "" : selectedEmployee}
+                      onChange={(e) => setSelectedEmployee(e.target.value || "all")}
+                      className="pl-7 h-8 text-sm"
+                    />
+                  </div>
                 </div>
               )}
 
