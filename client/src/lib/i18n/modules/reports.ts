@@ -1344,10 +1344,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Chart specific keys
     value: "Giá trị",
     chartData: "Dữ liệu biểu đồ",
-    xAxis: "Trục X",
-    yAxis: "Trục Y",
-    legend: "Chú thích",
-    dataPoints: "Điểm dữ liệu",
+    xAxis: "X축",
+    yAxis: "Y축",
+    legend: "범례",
+    dataPoints: "데이터 포인트",
     avgOrderValue: "Giá trị đơn hàng trung bình",
     productSalesReport: "Báo cáo bán hàng theo sản phẩm",
     productProfitReport: "Báo cáo lợi nhuận theo sản phẩm",
@@ -1875,5 +1875,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     discount: "Giảm giá",
     orderCount: "Số đơn hàng",
     customerPaymentDetails: "Chi tiết thanh toán khách hàng",
+    total: "Tổng cộng",
   },
 };
