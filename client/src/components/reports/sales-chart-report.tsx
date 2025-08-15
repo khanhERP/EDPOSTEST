@@ -1117,14 +1117,14 @@ export function SalesChartReport() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Mã hàng</TableHead>
-                <TableHead>Tên sản phẩm</TableHead>
-                <TableHead>Đơn vị tính</TableHead>
-                <TableHead className="text-center">Số lượng bán</TableHead>
-                <TableHead className="text-right">Thành tiền</TableHead>
-                <TableHead className="text-right">Giảm giá</TableHead>
-                <TableHead className="text-right">Doanh thu</TableHead>
-                <TableHead>Nhóm hàng</TableHead>
+                <TableHead>{t("reports.productCode")}</TableHead>
+                <TableHead>{t("reports.productName")}</TableHead>
+                <TableHead>{t("reports.unit")}</TableHead>
+                <TableHead className="text-center">{t("reports.quantitySold")}</TableHead>
+                <TableHead className="text-right">{t("reports.totalAmount")}</TableHead>
+                <TableHead className="text-right">{t("reports.discount")}</TableHead>
+                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
+                <TableHead>{t("reports.categoryName")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
