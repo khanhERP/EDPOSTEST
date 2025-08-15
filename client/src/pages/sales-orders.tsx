@@ -207,12 +207,14 @@ export default function SalesOrders() {
             // For invoices, update both invoiceStatus and invoice_status to 3 (Đã hủy)
             response = await apiRequest("PUT", `/api/invoices/${id}`, { 
               invoiceStatus: 3, // 3 = Đã hủy
-              invoice_status: 3 // 3 = Đã hủy (database column)
+              invoice_status: 3, // 3 = Đã hủy (database column)
+              status: 'cancelled' // Also update general status
             });
           }
           
           if (!response.ok) {
-            throw new Error(`Failed to cancel ${type} ${id}`);
+            const errorText = await response.text();
+            throw new Error(`Failed to cancel ${type} ${id}: ${errorText}`);
           }
           
           results.push({ orderKey, success: true });
@@ -286,7 +288,8 @@ export default function SalesOrders() {
           // For invoices, update both invoiceStatus and invoice_status to 3 (Đã hủy)
           response = await apiRequest("PUT", `/api/invoices/${item.id}`, { 
             invoiceStatus: 3, // 3 = Đã hủy
-            invoice_status: 3 // 3 = Đã hủy (database column)
+            invoice_status: 3, // 3 = Đã hủy (database column)
+            status: 'cancelled' // Also update general status
           });
         }
         

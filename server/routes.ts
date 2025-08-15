@@ -3100,6 +3100,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update invoice (including status fields)
+  app.put("/api/invoices/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = req.body;
+      const tenantDb = await getTenantDatabase(req);
+
+      console.log("Updating invoice:", id, "with data:", updateData);
+
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid invoice ID" });
+      }
+
+      // Ensure both invoiceStatus and invoice_status are updated if provided
+      const fieldsToUpdate: any = {};
+      
+      if (updateData.invoiceStatus !== undefined) {
+        fieldsToUpdate.invoiceStatus = updateData.invoiceStatus;
+      }
+      
+      if (updateData.invoice_status !== undefined) {
+        fieldsToUpdate.invoiceStatus = updateData.invoice_status; // Map to the correct database field
+      }
+      
+      if (updateData.status !== undefined) {
+        fieldsToUpdate.status = updateData.status;
+      }
+
+      // Add other fields from updateData
+      Object.keys(updateData).forEach(key => {
+        if (key !== 'invoiceStatus' && key !== 'invoice_status') {
+          fieldsToUpdate[key] = updateData[key];
+        }
+      });
+
+      fieldsToUpdate.updatedAt = new Date();
+
+      const [updatedInvoice] = await db
+        .update(invoices)
+        .set(fieldsToUpdate)
+        .where(eq(invoices.id, id))
+        .returning();
+
+      if (!updatedInvoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+
+      console.log("Invoice updated successfully:", updatedInvoice);
+      res.json(updatedInvoice);
+    } catch (error) {
+      console.error("Error updating invoice:", error);
+      res.status(500).json({ 
+        error: "Failed to update invoice",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // E-invoice publish proxy endpoint
   app.post("/api/einvoice/publish", async (req: TenantRequest, res) => {
     try {
