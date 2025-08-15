@@ -417,7 +417,7 @@ export function SalesChartReport() {
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm">
-                                  1
+                                  #{transaction.transactionId || `TXN-${index + 1}`}
                                 </TableCell>
                                 <TableCell className="text-right border-r text-sm">
                                   {formatCurrency(Number(transaction.total) * 1.05)}
