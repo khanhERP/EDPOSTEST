@@ -123,6 +123,27 @@ export function SalesChartReport() {
     });
   };
 
+  const getPaymentMethodLabel = (method: string) => {
+    const labels = {
+      cash: t("reports.cash"),
+      card: t("reports.card"),
+      creditCard: t("reports.credit_card"),
+      credit_card: t("reports.credit_card"),
+      debitCard: t("pos.debitCard"),
+      debit_card: t("pos.debitCard"),
+      transfer: t("common.transfer"),
+      einvoice: t("reports.einvoice"),
+      momo: t("pos.momo"),
+      zalopay: t("pos.zalopay"),
+      vnpay: t("pos.vnpay"),
+      qrCode: t("reports.qrbanking"),
+      shopeepay: t("pos.shopeepay"),
+      grabpay: t("pos.grabpay"),
+      mobile: "Mobile",
+    };
+    return labels[method as keyof typeof labels] || method;
+  };
+
   const getReportTitle = () => {
     switch (analysisType) {
       case "time":
@@ -346,7 +367,7 @@ export function SalesChartReport() {
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <Badge variant="outline">
-                            {method}
+                            {getPaymentMethodLabel(method)}
                           </Badge>
                           <span className="text-sm text-gray-600">
                             {payment.count} {t("reports.count")}
