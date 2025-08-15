@@ -247,6 +247,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     returnTicketCount: "반품 표 수량",
     seller: "판매자",
     employeeCode: "직원 코드",
+    status: "상태",
+    active: "활성",
+    inactive: "비활성",
+    vip: "VIP",
+    newCustomer: "신규 고객",
 
     // Table headers for reports
     salesDetailsHeader: "판매 세부사항",
@@ -592,6 +597,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     returnTicketCount: "Return Ticket Count",
     seller: "Seller",
     employeeCode: "Employee Code",
+    status: "Status",
+    active: "Active",
+    inactive: "Inactive",
+    vip: "VIP",
+    newCustomer: "New Customer",
 
     // Table headers for reports
     salesDetailsHeader: "Sales Details",
@@ -1005,6 +1015,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     returnTicketCount: "Số lượng phiếu trả",
     seller: "Người bán",
     employeeCode: "Mã nhân viên",
+    status: "Trạng thái",
+    active: "Hoạt động",
+    inactive: "Không hoạt động",
+    vip: "VIP",
+    newCustomer: "Khách hàng mới",
 
     // Table headers for reports
     salesDetailsHeader: "Chi tiết bán hàng",

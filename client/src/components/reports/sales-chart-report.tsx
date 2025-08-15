@@ -73,6 +73,7 @@ export function SalesChartReport() {
   const [productSearch, setProductSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [productType, setProductType] = useState("all");
+  const [customerStatus, setCustomerStatus] = useState("all");
 
   // Pagination state for product report
   const [productCurrentPage, setProductCurrentPage] = useState(1);
@@ -1564,7 +1565,39 @@ export function SalesChartReport() {
         (order.customerId &&
           order.customerId.toString().includes(customerSearch));
 
-      return dateMatch && customerMatch && order.status === "paid";
+      // Status filter logic
+      let statusMatch = true;
+      if (customerStatus !== "all") {
+        const orderTotal = Number(order.total || 0);
+        const customerId = order.customerId;
+        
+        switch (customerStatus) {
+          case "active":
+            // Customer has recent orders (within last 30 days)
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            statusMatch = orderDate >= thirtyDaysAgo;
+            break;
+          case "inactive":
+            // Customer hasn't ordered in last 30 days
+            const thirtyDaysAgoInactive = new Date();
+            thirtyDaysAgoInactive.setDate(thirtyDaysAgoInactive.getDate() - 30);
+            statusMatch = orderDate < thirtyDaysAgoInactive;
+            break;
+          case "vip":
+            // VIP customers with orders > 500,000 VND
+            statusMatch = orderTotal >= 500000;
+            break;
+          case "new":
+            // New customers (first order within date range)
+            statusMatch = customerId && customerId !== "guest";
+            break;
+          default:
+            statusMatch = true;
+        }
+      }
+
+      return dateMatch && customerMatch && statusMatch && order.status === "paid";
     });
 
     const customerData: {
@@ -2485,7 +2518,7 @@ export function SalesChartReport() {
           )}
 
           {analysisType === "customer" && (
-            <div className="grid grid-cols-1 gap-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
                   {t("reports.customerFilter")}
@@ -2499,6 +2532,23 @@ export function SalesChartReport() {
                     className="pl-10 h-9 text-sm"
                   />
                 </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  {t("reports.status")}
+                </Label>
+                <Select value={customerStatus} onValueChange={setCustomerStatus}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("common.all")}</SelectItem>
+                    <SelectItem value="active">{t("reports.active")}</SelectItem>
+                    <SelectItem value="inactive">{t("reports.inactive")}</SelectItem>
+                    <SelectItem value="vip">{t("reports.vip")}</SelectItem>
+                    <SelectItem value="new">{t("reports.newCustomer")}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           )}
