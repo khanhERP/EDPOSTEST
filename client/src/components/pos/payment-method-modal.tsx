@@ -426,18 +426,27 @@ export function PaymentMethodModal({
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
     console.log('📧 E-Invoice confirmed from payment modal:', eInvoiceData);
 
-    // Truyền dữ liệu về shopping cart để xử lý trước
-    console.log('📤 Passing e-invoice data back to shopping cart for processing');
-    onSelectMethod('einvoice', eInvoiceData);
-
-    // Close E-invoice modal and payment modal sau
+    // Đóng E-invoice modal ngay lập tức
     setShowEInvoice(false);
+    
+    // Đóng Payment modal ngay lập tức
     onClose();
+
+    // Truyền dữ liệu về shopping cart để xử lý sau khi đã đóng modal
+    console.log('📤 Passing e-invoice data back to shopping cart for processing');
+    setTimeout(() => {
+      onSelectMethod('einvoice', eInvoiceData);
+    }, 100);
   };
 
   const handleEInvoiceClose = () => {
     setShowEInvoice(false);
-    setSelectedPaymentMethod("");
+    // Không reset selectedPaymentMethod để giữ trạng thái
+    // setSelectedPaymentMethod("");
+    
+    // Nếu người dùng đóng e-invoice modal mà không hoàn tất, 
+    // có thể quay lại payment method selection
+    console.log('🔙 E-invoice modal closed without completion');
   };
 
   // Virtual keyboard handlers
@@ -562,7 +571,8 @@ export function PaymentMethodModal({
       // Send close message after a small delay to ensure modal is fully closed
       setTimeout(sendCloseMessage, 50);
 
-      // Reset all states
+      // Reset all states when modal completely closes
+      console.log('🔄 Payment Modal: Resetting all states on modal close');
       setShowQRCode(false);
       setQrCodeUrl("");
       setShowEInvoice(false);
