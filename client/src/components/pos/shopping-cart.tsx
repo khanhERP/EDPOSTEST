@@ -368,21 +368,25 @@ export function ShoppingCart({
       }
 
       // Nếu phát hành thành công ngay lập tức (có publishedImmediately flag)
-      if (eInvoiceData.publishedImmediately && eInvoiceData.showReceipt && eInvoiceData.receipt) {
-        console.log('✅ E-invoice published immediately, showing receipt modal');
+      if (eInvoiceData.publishedImmediately && eInvoiceData.receipt) {
+        console.log('✅ E-invoice published immediately, processing receipt modal');
         console.log('📄 Receipt data received:', eInvoiceData.receipt);
+        console.log('🎯 Auto show print flag:', eInvoiceData.autoShowPrint);
+        console.log('📋 Show receipt modal flag:', eInvoiceData.showReceiptModal);
 
-        // Clear cart trước khi hiển thị receipt
-        onClearCart();
-
-        // Set autoShowPrint = true để tự động hiển thị dialog in
-        setAutoShowPrint(true);
+        // Set autoShowPrint từ eInvoiceData hoặc mặc định = true
+        setAutoShowPrint(eInvoiceData.autoShowPrint !== undefined ? eInvoiceData.autoShowPrint : true);
 
         // Hiển thị receipt modal với dữ liệu từ e-invoice
         setCurrentReceipt(eInvoiceData.receipt);
         setShowReceiptModal(true);
 
-        console.log('✅ Receipt modal opened with autoShowPrint = true for publishedImmediately');
+        console.log('✅ Receipt modal opened with autoShowPrint for publishedImmediately');
+
+        // Clear cart SAU KHI hiển thị receipt modal để tránh xung đột
+        setTimeout(() => {
+          onClearCart();
+        }, 100);
 
         toast({
           title: "Thành công",
@@ -393,11 +397,12 @@ export function ShoppingCart({
         return;
       }
 
-      // Nếu có showReceipt flag khác (fallback)
-      if (eInvoiceData.showReceipt) {
+      // Nếu có showReceipt flag hoặc receipt data (fallback cho mọi trường hợp thành công)
+      if (eInvoiceData.showReceipt || eInvoiceData.receipt) {
         console.log(
-          "✅ E-invoice published successfully, creating transaction and showing receipt",
+          "✅ E-invoice published successfully, processing fallback receipt display",
         );
+        console.log("📄 Fallback receipt data:", eInvoiceData.receipt);
 
         // Tạo transaction với payment method là einvoice
         const transactionData = {
