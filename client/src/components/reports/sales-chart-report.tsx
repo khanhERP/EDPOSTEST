@@ -1503,11 +1503,14 @@ export function SalesChartReport() {
     <div className="space-y-6">
       {/* Filters */}
       <Card>
-        <CardContent className="space-y-4 pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Analysis Type Selector */}
+        <CardContent className="pt-4">
+          {/* Main Filter Row */}
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-3">
+            {/* Analysis Type */}
             <div>
-              <Label>{t("reports.analyzeBy")}</Label>
+              <Label className="text-xs font-medium text-gray-600 mb-1 block">
+                {t("reports.analyzeBy")}
+              </Label>
               <Select
                 value={analysisType}
                 onValueChange={(value) => {
@@ -1519,211 +1522,176 @@ export function SalesChartReport() {
                   }
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="time">
-                    {t("reports.timeAnalysis")}
-                  </SelectItem>
-                  <SelectItem value="product">
-                    {t("reports.productAnalysis")}
-                  </SelectItem>
-                  <SelectItem value="employee">
-                    {t("reports.employeeAnalysis")}
-                  </SelectItem>
-                  <SelectItem value="customer">
-                    {t("reports.customerAnalysis")}
-                  </SelectItem>
-                  <SelectItem value="channel">
-                    {t("reports.channelAnalysis")}
-                  </SelectItem>
+                  <SelectItem value="time">{t("reports.timeAnalysis")}</SelectItem>
+                  <SelectItem value="product">{t("reports.productAnalysis")}</SelectItem>
+                  <SelectItem value="employee">{t("reports.employeeAnalysis")}</SelectItem>
+                  <SelectItem value="customer">{t("reports.customerAnalysis")}</SelectItem>
+                  <SelectItem value="channel">{t("reports.channelAnalysis")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Sales Method Filter */}
-            {analysisType !== "time" && (
-              <div>
-                <Label>{t("reports.salesMethod")}</Label>
-                <Select value={salesMethod} onValueChange={setSalesMethod}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("common.all")}</SelectItem>
-                    <SelectItem value="no_delivery">
-                      {t("reports.noDelivery")}
-                    </SelectItem>
-                    <SelectItem value="delivery">
-                      {t("reports.delivery")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Sales Channel Filter */}
-            {(analysisType === "channel" || (analysisType !== "time" && analysisType !== "employee")) && (
-              <div>
-                <Label>{t("reports.salesChannel")}</Label>
-                <Select value={salesChannel} onValueChange={setSalesChannel}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("common.all")}</SelectItem>
-                    <SelectItem value="direct">
-                      {t("reports.direct")}
-                    </SelectItem>
-                    <SelectItem value="other">
-                      {t("reports.other")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-
-          {/* Additional filters based on analysis type */}
-          {(analysisType !== "time") && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Employee Filter */}
-              {(analysisType === "employee") && (
-                <div>
-                  <Label>{t("reports.seller")}</Label>
-                  <Select
-                    value={selectedEmployee}
-                    onValueChange={setSelectedEmployee}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("reports.seller")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("common.all")}</SelectItem>
-                      {employees &&
-                        Array.isArray(employees) &&
-                        employees.map((employee: any) => (
-                          <SelectItem key={employee.id} value={employee.name}>
-                            {employee.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Customer Search */}
-              {analysisType === "customer" && (
-                <div>
-                  <Label>{t("reports.customerFilter")}</Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      placeholder={t("reports.customerFilterPlaceholder")}
-                      value={customerSearch}
-                      onChange={(e) => setCustomerSearch(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Product Search */}
-              {analysisType === "product" && (
-                <div>
-                  <Label>{t("reports.productFilter")}</Label>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input
-                      placeholder={t("reports.productFilterPlaceholder")}
-                      value={productSearch}
-                      onChange={(e) => setProductSearch(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Product Type */}
-              {analysisType === "product" && (
-                <div>
-                  <Label>{t("reports.productType")}</Label>
-                  <Select value={productType} onValueChange={setProductType}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("common.all")}</SelectItem>
-                      <SelectItem value="combo">
-                        {t("reports.combo")}
-                      </SelectItem>
-                      <SelectItem value="product">
-                        {t("reports.product")}
-                      </SelectItem>
-                      <SelectItem value="service">
-                        {t("reports.service")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Category Filter */}
-              {analysisType === "product" && (
-                <div>
-                  <Label>{t("reports.productGroup")}</Label>
-                  <Select
-                    value={selectedCategory}
-                    onValueChange={setSelectedCategory}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t("reports.productGroup")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("common.all")}</SelectItem>
-                      {categories &&
-                        Array.isArray(categories) &&
-                        categories.map((category: any) => (
-                          <SelectItem
-                            key={category.id}
-                            value={category.id.toString()}
-                          >
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Date Range Filters */}
-          <div className="grid grid-cols-4 gap-4">
+            {/* Date Range */}
             <div>
-              <Label className="text-blue-700 font-medium text-sm">
+              <Label className="text-xs font-medium text-gray-600 mb-1 block">
                 {t("reports.startDate")}
               </Label>
               <Input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="border-blue-300 focus:border-blue-500 focus:ring-blue-200 mt-1"
+                className="h-8 text-sm"
               />
             </div>
             <div>
-              <Label className="text-blue-700 font-medium text-sm">
+              <Label className="text-xs font-medium text-gray-600 mb-1 block">
                 {t("reports.endDate")}
               </Label>
               <Input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="border-blue-300 focus:border-blue-500 focus:ring-blue-200 mt-1"
+                className="h-8 text-sm"
               />
             </div>
+
+            {/* Conditional Filters */}
+            {analysisType !== "time" && (
+              <div>
+                <Label className="text-xs font-medium text-gray-600 mb-1 block">
+                  {t("reports.salesMethod")}
+                </Label>
+                <Select value={salesMethod} onValueChange={setSalesMethod}>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("common.all")}</SelectItem>
+                    <SelectItem value="no_delivery">{t("reports.noDelivery")}</SelectItem>
+                    <SelectItem value="delivery">{t("reports.delivery")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {(analysisType === "channel" || (analysisType !== "time" && analysisType !== "employee")) && (
+              <div>
+                <Label className="text-xs font-medium text-gray-600 mb-1 block">
+                  {t("reports.salesChannel")}
+                </Label>
+                <Select value={salesChannel} onValueChange={setSalesChannel}>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("common.all")}</SelectItem>
+                    <SelectItem value="direct">{t("reports.direct")}</SelectItem>
+                    <SelectItem value="other">{t("reports.other")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
+
+          {/* Secondary Filter Row - Only show when needed */}
+          {analysisType !== "time" && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {analysisType === "employee" && (
+                <div>
+                  <Label className="text-xs font-medium text-gray-600 mb-1 block">
+                    {t("reports.seller")}
+                  </Label>
+                  <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue placeholder={t("reports.seller")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
+                      {employees && Array.isArray(employees) && employees.map((employee: any) => (
+                        <SelectItem key={employee.id} value={employee.name}>
+                          {employee.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {analysisType === "customer" && (
+                <div>
+                  <Label className="text-xs font-medium text-gray-600 mb-1 block">
+                    {t("reports.customerFilter")}
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                    <Input
+                      placeholder={t("reports.customerFilterPlaceholder")}
+                      value={customerSearch}
+                      onChange={(e) => setCustomerSearch(e.target.value)}
+                      className="pl-7 h-8 text-sm"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {analysisType === "product" && (
+                <>
+                  <div>
+                    <Label className="text-xs font-medium text-gray-600 mb-1 block">
+                      {t("reports.productFilter")}
+                    </Label>
+                    <div className="relative">
+                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
+                      <Input
+                        placeholder={t("reports.productFilterPlaceholder")}
+                        value={productSearch}
+                        onChange={(e) => setProductSearch(e.target.value)}
+                        className="pl-7 h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs font-medium text-gray-600 mb-1 block">
+                      {t("reports.productType")}
+                    </Label>
+                    <Select value={productType} onValueChange={setProductType}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        <SelectItem value="combo">{t("reports.combo")}</SelectItem>
+                        <SelectItem value="product">{t("reports.product")}</SelectItem>
+                        <SelectItem value="service">{t("reports.service")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs font-medium text-gray-600 mb-1 block">
+                      {t("reports.productGroup")}
+                    </Label>
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder={t("reports.productGroup")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        {categories && Array.isArray(categories) && categories.map((category: any) => (
+                          <SelectItem key={category.id} value={category.id.toString()}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
