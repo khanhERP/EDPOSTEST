@@ -336,7 +336,6 @@ export default function SalesOrders() {
         setSelectedInvoice({
           ...selectedInvoice,
           invoiceStatus: 3, // Đã hủy
-          invoice_status: 3, // Đã hủy (database column)
           displayStatus: 3,
           status: item.type === 'order' ? 'cancelled' : selectedInvoice.status
         });
@@ -742,36 +741,47 @@ export default function SalesOrders() {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const defaultFilename = `danh-sach-don-hang-ban_${timestamp}.xlsx`;
 
-    // Try to use the File System Access API for modern browsers
+    // Always try to use the File System Access API for save dialog
     if ('showSaveFilePicker' in window) {
       try {
-        window.showSaveFilePicker({
+        const fileHandle = await window.showSaveFilePicker({
           suggestedName: defaultFilename,
           types: [{
             description: 'Excel files',
             accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
           }]
-        }).then(async (fileHandle) => {
-          const writable = await fileHandle.createWritable();
-          const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-          await writable.write(buffer);
-          await writable.close();
-          console.log('File saved successfully');
-        }).catch((err) => {
-          if (err.name !== 'AbortError') {
-            console.log('Save dialog cancelled or error:', err);
-            // Fallback to automatic download
-            XLSX.writeFile(wb, defaultFilename);
-          }
         });
-      } catch (error) {
-        console.log('File System Access API not supported, using fallback');
-        // Fallback to automatic download
-        XLSX.writeFile(wb, defaultFilename);
+        
+        const writable = await fileHandle.createWritable();
+        const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        await writable.write(buffer);
+        await writable.close();
+        
+        alert(`Xuất file Excel thành công! File đã được lưu tại vị trí đã chọn.`);
+        console.log('File saved successfully to user-chosen location');
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          console.log('User cancelled save dialog');
+          return; // User cancelled, don't show fallback
+        } else {
+          console.log('Save dialog error, using fallback download:', err);
+          // Only fallback on actual errors, not user cancellation
+          XLSX.writeFile(wb, defaultFilename);
+          alert(`Xuất file Excel thành công! File "${defaultFilename}" đã được tải về thư mục Downloads.`);
+        }
       }
     } else {
-      // Fallback for older browsers
-      XLSX.writeFile(wb, defaultFilename);
+      // Fallback for older browsers - show a prompt for filename
+      const userFilename = prompt('Nhập tên file Excel (không cần phần mở rộng):', `danh-sach-don-hang-ban_${new Date().toISOString().slice(0, 10)}`);
+      
+      if (userFilename) {
+        const finalFilename = userFilename.endsWith('.xlsx') ? userFilename : `${userFilename}.xlsx`;
+        XLSX.writeFile(wb, finalFilename);
+        alert(`Xuất file Excel thành công! File "${finalFilename}" đã được tải về thư mục Downloads.`);
+      } else {
+        console.log('User cancelled filename input');
+        return;
+      }
     }
   };
 
