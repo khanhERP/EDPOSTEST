@@ -319,7 +319,7 @@ export function SalesChartReport() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="text-center border-r bg-green-50 w-8">
-                      
+
                     </TableHead>
                     <TableHead className="text-center border-r bg-green-50">
                       Ngày
@@ -355,7 +355,7 @@ export function SalesChartReport() {
                       const startIndex = (currentPage - 1) * pageSize;
                       const endIndex = startIndex + pageSize;
                       const paginatedEntries = sortedEntries.slice(startIndex, endIndex);
-                      
+
                       return paginatedEntries.map(([date, data]) => {
                       const paymentAmount = data.revenue * 1.05; // Thành tiền (bao gồm thuế và phí)
                       const discount = data.revenue * 0.05; // Giảm giá (5% trung bình)
@@ -411,7 +411,7 @@ export function SalesChartReport() {
                               {formatCurrency(customerPayment)}
                             </TableCell>
                           </TableRow>
-                          
+
                           {/* Expanded order details */}
                           {isExpanded && dateTransactions.length > 0 && (
                             dateTransactions.map((transaction: any, index: number) => (
@@ -465,12 +465,12 @@ export function SalesChartReport() {
                       </TableCell>
                     </TableRow>
                   )}
-                  
+
                   {/* Summary Row */}
                   {Object.entries(dailySales).length > 0 && (
                     <TableRow className="bg-gray-100 font-bold border-t-2">
                       <TableCell className="text-center border-r">
-                        
+
                       </TableCell>
                       <TableCell className="text-center border-r bg-green-100">
                         {t("reports.total")}
@@ -501,7 +501,7 @@ export function SalesChartReport() {
                 </TableBody>
               </Table>
             </div>
-            
+
             {/* Pagination Controls */}
             {Object.entries(dailySales).length > 0 && (
               <div className="flex items-center justify-between space-x-6 py-4">
@@ -527,7 +527,7 @@ export function SalesChartReport() {
                   </Select>
                   <p className="text-sm font-medium">dòng</p>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <p className="text-sm font-medium">
                     Trang {currentPage} / {Math.ceil(Object.entries(dailySales).length / pageSize)}
@@ -1311,7 +1311,7 @@ export function SalesChartReport() {
     switch (analysisType) {
       case "time":
         if (!transactions || !Array.isArray(transactions)) return [];
-        
+
         const filteredTransactions = transactions.filter((transaction: any) => {
           const transactionDate = new Date(transaction.createdAt || transaction.created_at);
           const start = new Date(startDate);
@@ -1323,7 +1323,7 @@ export function SalesChartReport() {
         });
 
         const dailySales: { [date: string]: { revenue: number; orders: number } } = {};
-        
+
         filteredTransactions.forEach((transaction: any) => {
           const transactionDate = new Date(transaction.createdAt || transaction.created_at);
           const year = transactionDate.getFullYear();
@@ -1348,7 +1348,7 @@ export function SalesChartReport() {
 
       case "product":
         if (!products || !Array.isArray(products) || !orders || !Array.isArray(orders)) return [];
-        
+
         const start = new Date(startDate);
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
@@ -1363,7 +1363,7 @@ export function SalesChartReport() {
         filteredOrders.forEach((order: any) => {
           const orderTotal = Number(order.total);
           const availableProducts = products.filter(p => p.price > 0);
-          
+
           if (availableProducts.length === 0) return;
 
           const orderProductCount = Math.min(Math.floor(Math.random() * 3) + 1, availableProducts.length);
@@ -1400,7 +1400,7 @@ export function SalesChartReport() {
 
       case "employee":
         if (!transactions || !Array.isArray(transactions)) return [];
-        
+
         const empStart = new Date(startDate);
         const empEnd = new Date(endDate);
         empEnd.setHours(23, 59, 59, 999);
@@ -1417,7 +1417,7 @@ export function SalesChartReport() {
           if (!employeeData[cashier]) {
             employeeData[cashier] = { revenue: 0, orders: 0 };
           }
-          
+
           const amount = Number(transaction.total);
           if (amount > 0) {
             employeeData[cashier].revenue += amount;
@@ -1436,7 +1436,7 @@ export function SalesChartReport() {
 
       case "customer":
         if (!orders || !Array.isArray(orders)) return [];
-        
+
         const custStart = new Date(startDate);
         const custEnd = new Date(endDate);
         custEnd.setHours(23, 59, 59, 999);
@@ -1472,7 +1472,7 @@ export function SalesChartReport() {
 
       case "channel":
         if (!transactions || !Array.isArray(transactions)) return [];
-        
+
         const channelStart = new Date(startDate);
         const channelEnd = new Date(endDate);
         channelEnd.setHours(23, 59, 59, 999);
@@ -1486,7 +1486,7 @@ export function SalesChartReport() {
 
         channelFilteredTransactions.forEach((transaction: any) => {
           const channel = transaction.salesChannel || "Direct";
-          
+
           if (!channelData[channel]) {
             channelData[channel] = { revenue: 0, orders: 0 };
           }
@@ -1514,7 +1514,7 @@ export function SalesChartReport() {
   // Chart rendering component
   const renderChart = () => {
     const chartData = getChartData();
-    
+
     if (!chartData || chartData.length === 0) {
       return (
         <div className="flex justify-center py-8">
@@ -1567,9 +1567,9 @@ export function SalesChartReport() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.5} />
-                  <XAxis 
-                    dataKey="name" 
-                    stroke="#6b7280" 
+                  <XAxis
+                    dataKey="name"
+                    stroke="#6b7280"
                     fontSize={12}
                     angle={-45}
                     textAnchor="end"
@@ -1586,7 +1586,7 @@ export function SalesChartReport() {
                             {payload.map((entry, index) => (
                               <p key={index} className="text-sm" style={{ color: entry.color }}>
                                 {entry.name}: {
-                                  entry.dataKey === 'revenue' || entry.dataKey === 'netRevenue' 
+                                  entry.dataKey === 'revenue' || entry.dataKey === 'netRevenue'
                                     ? formatCurrency(Number(entry.value))
                                     : entry.value
                                 }
@@ -1598,38 +1598,38 @@ export function SalesChartReport() {
                       return null;
                     }}
                   />
-                  
+
                   {/* Revenue bar - always show */}
-                  <Bar 
-                    dataKey="revenue" 
-                    fill="url(#revenueGradient)" 
+                  <Bar
+                    dataKey="revenue"
+                    fill="url(#revenueGradient)"
                     radius={[4, 4, 0, 0]}
                     maxBarSize={60}
                   />
-                  
+
                   {/* Additional bars based on analysis type */}
                   {analysisType === "time" && (
-                    <Bar 
-                      dataKey="orders" 
-                      fill="url(#ordersGradient)" 
+                    <Bar
+                      dataKey="orders"
+                      fill="url(#ordersGradient)"
                       radius={[4, 4, 0, 0]}
                       maxBarSize={60}
                     />
                   )}
-                  
+
                   {analysisType === "product" && (
-                    <Bar 
-                      dataKey="quantity" 
-                      fill="url(#quantityGradient)" 
+                    <Bar
+                      dataKey="quantity"
+                      fill="url(#quantityGradient)"
                       radius={[4, 4, 0, 0]}
                       maxBarSize={60}
                     />
                   )}
-                  
+
                   {(analysisType === "employee" || analysisType === "customer" || analysisType === "channel") && (
-                    <Bar 
-                      dataKey="orders" 
-                      fill="url(#ordersGradient)" 
+                    <Bar
+                      dataKey="orders"
+                      fill="url(#ordersGradient)"
                       radius={[4, 4, 0, 0]}
                       maxBarSize={60}
                     />
@@ -1874,7 +1874,7 @@ export function SalesChartReport() {
             </CardDescription>
           </CardHeader>
         </Card>
-        
+
         {(transactionsLoading || ordersLoading) ? (
           <div className="flex justify-center py-8">
             <div className="text-gray-500">{t("reports.loading")}...</div>
@@ -1883,7 +1883,7 @@ export function SalesChartReport() {
           <>
             {/* Chart Display */}
             {renderChart()}
-            
+
             {/* Data Tables */}
             {renderReportContent()}
           </>
