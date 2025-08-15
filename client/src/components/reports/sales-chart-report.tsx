@@ -1863,8 +1863,8 @@ export function SalesChartReport() {
               />
             </div>
 
-            {/* Conditional Filters */}
-            {analysisType !== "time" && (
+            {/* Conditional Filters - Hide sales method and channel for product analysis */}
+            {analysisType !== "time" && analysisType !== "product" && (
               <div>
                 <Label className="text-xs font-medium text-gray-600 mb-1 block">
                   {t("reports.salesMethod")}
@@ -1882,7 +1882,7 @@ export function SalesChartReport() {
               </div>
             )}
 
-            {(analysisType === "channel" || (analysisType !== "time" && analysisType !== "employee")) && (
+            {(analysisType === "channel" || (analysisType !== "time" && analysisType !== "employee" && analysisType !== "product")) && (
               <div>
                 <Label className="text-xs font-medium text-gray-600 mb-1 block">
                   {t("reports.salesChannel")}
