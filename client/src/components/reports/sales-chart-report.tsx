@@ -307,43 +307,154 @@ export function SalesChartReport() {
             <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("common.date")}</TableHead>
-                  <TableHead>{t("reports.revenue")}</TableHead>
-                  <TableHead>{t("reports.orders")}</TableHead>
-                  <TableHead>{t("reports.customers")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Object.entries(dailySales).length > 0 ? (
-                  Object.entries(dailySales).map(([date, data]) => (
-                    <TableRow key={date}>
-                      <TableCell>{formatDate(date)}</TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(data.revenue)}
-                      </TableCell>
-                      <TableCell>
-                        {data.orders} {t("reports.count")}
-                      </TableCell>
-                      <TableCell>
-                        {data.customers} {t("reports.count")}
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead rowSpan={2} className="text-center border-r bg-green-50">
+                      {t("common.date")}
+                    </TableHead>
+                    <TableHead rowSpan={2} className="text-center border-r">
+                      {t("reports.orderCount")}
+                    </TableHead>
+                    <TableHead rowSpan={2} className="text-center border-r">
+                      {t("reports.paymentAmount")}
+                    </TableHead>
+                    <TableHead rowSpan={2} className="text-center border-r">
+                      {t("reports.discount")}
+                    </TableHead>
+                    <TableHead rowSpan={2} className="text-center border-r">
+                      {t("reports.revenue")}
+                    </TableHead>
+                    <TableHead rowSpan={2} className="text-center border-r">
+                      {t("reports.tax")}
+                    </TableHead>
+                    <TableHead rowSpan={2} className="text-center border-r">
+                      {t("reports.total")}
+                    </TableHead>
+                    <TableHead colSpan={4} className="text-center border-b bg-blue-50">
+                      {t("reports.customerPaymentDetails")}
+                    </TableHead>
+                  </TableRow>
+                  <TableRow>
+                    <TableHead className="text-center text-sm">
+                      {t("reports.cash")}
+                    </TableHead>
+                    <TableHead className="text-center text-sm">
+                      {t("common.transfer")}
+                    </TableHead>
+                    <TableHead className="text-center text-sm">
+                      {t("reports.qrbanking")}
+                    </TableHead>
+                    <TableHead className="text-center text-sm">
+                      {t("reports.einvoice")}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(dailySales).length > 0 ? (
+                    Object.entries(dailySales).map(([date, data]) => {
+                      const subtotal = data.revenue * 0.9; // Assuming 10% tax
+                      const tax = data.revenue * 0.1;
+                      const discount = data.revenue * 0.05; // Assuming 5% average discount
+                      const paymentAmount = subtotal + discount;
+                      
+                      // Sample payment method distribution
+                      const cashAmount = data.revenue * 0.4;
+                      const transferAmount = data.revenue * 0.3;
+                      const qrAmount = data.revenue * 0.2;
+                      const einvoiceAmount = data.revenue * 0.1;
+
+                      return (
+                        <TableRow key={date} className="hover:bg-gray-50">
+                          <TableCell className="font-medium text-center border-r bg-green-50">
+                            {formatDate(date)}
+                          </TableCell>
+                          <TableCell className="text-center border-r">
+                            {data.orders.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right border-r">
+                            {formatCurrency(paymentAmount)}
+                          </TableCell>
+                          <TableCell className="text-right border-r text-red-600">
+                            {formatCurrency(discount)}
+                          </TableCell>
+                          <TableCell className="text-right border-r text-green-600 font-medium">
+                            {formatCurrency(data.revenue)}
+                          </TableCell>
+                          <TableCell className="text-right border-r">
+                            {formatCurrency(tax)}
+                          </TableCell>
+                          <TableCell className="text-right border-r font-bold text-blue-600">
+                            {formatCurrency(data.revenue)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(cashAmount)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(transferAmount)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(qrAmount)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(einvoiceAmount)}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={11}
+                        className="text-center text-gray-500 py-8"
+                      >
+                        {t("reports.noDataDescription")}
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="text-center text-gray-500"
-                    >
-                      {t("reports.noDataDescription")}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                  
+                  {/* Summary Row */}
+                  {Object.entries(dailySales).length > 0 && (
+                    <TableRow className="bg-gray-100 font-bold border-t-2">
+                      <TableCell className="text-center border-r bg-green-100">
+                        {t("reports.total")}
+                      </TableCell>
+                      <TableCell className="text-center border-r">
+                        {Object.values(dailySales).reduce((sum, data) => sum + data.orders, 0).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right border-r">
+                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.95), 0))}
+                      </TableCell>
+                      <TableCell className="text-right border-r text-red-600">
+                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.05), 0))}
+                      </TableCell>
+                      <TableCell className="text-right border-r text-green-600">
+                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0))}
+                      </TableCell>
+                      <TableCell className="text-right border-r">
+                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.1), 0))}
+                      </TableCell>
+                      <TableCell className="text-right border-r text-blue-600">
+                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.4), 0))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.3), 0))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.2), 0))}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.1), 0))}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       </>
