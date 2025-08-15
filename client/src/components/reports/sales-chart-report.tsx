@@ -2386,55 +2386,73 @@ export function SalesChartReport() {
 
             
 
-            {/* Only show Sales Method and Sales Channel for non-time analysis */}
-            {analysisType !== "time" && (
-              <>
-                {/* Sales Method Filter */}
-                <div>
-                  <Label>{t("reports.salesMethod")}</Label>
-                  <Select value={salesMethod} onValueChange={setSalesMethod}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("common.all")}</SelectItem>
-                      <SelectItem value="no_delivery">
-                        {t("reports.noDelivery")}
-                      </SelectItem>
-                      <SelectItem value="delivery">
-                        {t("reports.delivery")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            {/* Concern Type - Only for time analysis */}
+            {analysisType === "time" && (
+              <div>
+                <Label>{t("reports.concernType")}</Label>
+                <Select value={concernType} onValueChange={setConcernType}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="time">{t("reports.timeSalesReport")}</SelectItem>
+                    <SelectItem value="profit">{t("reports.profitByInvoiceReport")}</SelectItem>
+                    <SelectItem value="discount">{t("reports.invoiceDiscountReport")}</SelectItem>
+                    <SelectItem value="return">{t("reports.returnByInvoiceReport")}</SelectItem>
+                    <SelectItem value="employee">{t("reports.employeeSalesReport")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-                {/* Sales Channel Filter */}
-                <div>
-                  <Label>{t("reports.salesChannel")}</Label>
-                  <Select value={salesChannel} onValueChange={setSalesChannel}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">{t("common.all")}</SelectItem>
-                      <SelectItem value="direct">
-                        {t("reports.direct")}
-                      </SelectItem>
-                      <SelectItem value="other">
-                        {t("reports.other")}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
+            {/* Sales Method Filter - Only for non-time analysis */}
+            {analysisType !== "time" && (
+              <div>
+                <Label>{t("reports.salesMethod")}</Label>
+                <Select value={salesMethod} onValueChange={setSalesMethod}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("common.all")}</SelectItem>
+                    <SelectItem value="no_delivery">
+                      {t("reports.noDelivery")}
+                    </SelectItem>
+                    <SelectItem value="delivery">
+                      {t("reports.delivery")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Sales Channel Filter - Show for channel analysis and other non-time analysis */}
+            {(analysisType === "channel" || (analysisType !== "time" && analysisType !== "employee")) && (
+              <div>
+                <Label>{t("reports.salesChannel")}</Label>
+                <Select value={salesChannel} onValueChange={setSalesChannel}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("common.all")}</SelectItem>
+                    <SelectItem value="direct">
+                      {t("reports.direct")}
+                    </SelectItem>
+                    <SelectItem value="other">
+                      {t("reports.other")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </div>
 
-          {/* Additional filters based on analysis type - only show for non-time analysis */}
-          {analysisType !== "time" && (
+          {/* Additional filters based on analysis type */}
+          {(analysisType !== "time") && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Employee Filter - for employee analysis */}
-              {analysisType === "employee" && (
+              {/* Employee Filter - for employee analysis and time analysis with employee concern */}
+              {(analysisType === "employee" || (analysisType === "time" && concernType === "employee")) && (
                 <div>
                   <Label>{t("reports.seller")}</Label>
                   <Select
