@@ -385,6 +385,7 @@ export function SalesChartReport() {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (startDate && endDate) {
+        // Invalidate all related queries to force refetch
         queryClient.invalidateQueries({
           queryKey: ["/api/transactions"],
         });
@@ -392,6 +393,7 @@ export function SalesChartReport() {
           queryKey: ["/api/orders"],
         });
 
+        // Force refetch the current queries
         refetchTransactions();
         refetchOrders();
       }
@@ -399,6 +401,23 @@ export function SalesChartReport() {
 
     return () => clearTimeout(timer);
   }, [startDate, endDate, salesMethod, salesChannel, selectedEmployee, analysisType, concernType, queryClient, refetchTransactions, refetchOrders]);
+
+  // Additional effect to handle date changes specifically
+  useEffect(() => {
+    if (startDate && endDate) {
+      const timer = setTimeout(() => {
+        queryClient.removeQueries({
+          queryKey: ["/api/transactions"],
+        });
+        queryClient.removeQueries({
+          queryKey: ["/api/orders"],
+        });
+        refetchTransactions();
+        refetchOrders();
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [startDate, endDate, queryClient, refetchTransactions, refetchOrders]);
 
   // Save current settings when filters change (debounced)
   useEffect(() => {
