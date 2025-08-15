@@ -735,11 +735,11 @@ export function SalesChartReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      const productSales: { [productId: string]: { 
-        quantity: number; 
-        totalAmount: number; 
-        discount: number; 
-        revenue: number; 
+      const productSales: { [productId: string]: {
+        quantity: number;
+        totalAmount: number;
+        discount: number;
+        revenue: number;
       } } = {};
 
       // Process transaction items from transactions
@@ -762,11 +762,11 @@ export function SalesChartReport() {
               if (!product) return;
 
               if (!productSales[productId]) {
-                productSales[productId] = { 
-                  quantity: 0, 
-                  totalAmount: 0, 
-                  discount: 0, 
-                  revenue: 0 
+                productSales[productId] = {
+                  quantity: 0,
+                  totalAmount: 0,
+                  discount: 0,
+                  revenue: 0
                 };
               }
 
@@ -805,11 +805,11 @@ export function SalesChartReport() {
               if (!product) return;
 
               if (!productSales[productId]) {
-                productSales[productId] = { 
-                  quantity: 0, 
-                  totalAmount: 0, 
-                  discount: 0, 
-                  revenue: 0 
+                productSales[productId] = {
+                  quantity: 0,
+                  totalAmount: 0,
+                  discount: 0,
+                  revenue: 0
                 };
               }
 
@@ -829,11 +829,11 @@ export function SalesChartReport() {
       }
 
       return filteredProducts.map((product: any) => {
-        const sales = productSales[product.id.toString()] || { 
-          quantity: 0, 
-          totalAmount: 0, 
-          discount: 0, 
-          revenue: 0 
+        const sales = productSales[product.id.toString()] || {
+          quantity: 0,
+          totalAmount: 0,
+          discount: 0,
+          revenue: 0
         };
 
         // Chỉ hiển thị sản phẩm có dữ liệu bán hàng hoặc hiển thị tất cả nếu không có bộ lọc tìm kiếm
@@ -842,7 +842,7 @@ export function SalesChartReport() {
         }
 
         // Tìm category name
-        const categoryName = categories && Array.isArray(categories) 
+        const categoryName = categories && Array.isArray(categories)
           ? categories.find(cat => cat.id === product.categoryId)?.name || ''
           : '';
 
