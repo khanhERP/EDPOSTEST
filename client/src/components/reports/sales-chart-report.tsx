@@ -79,15 +79,27 @@ export function SalesChartReport() {
   const [productCurrentPage, setProductCurrentPage] = useState(1);
   const [productPageSize, setProductPageSize] = useState(15);
 
-  // Data queries
+  // Data queries with dynamic filtering
   const { data: transactions, isLoading: transactionsLoading } = useQuery({
-    queryKey: ["/api/transactions"],
+    queryKey: ["/api/transactions", startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee],
+    queryFn: async () => {
+      const response = await fetch(`/api/transactions/${startDate}/${endDate}/${salesMethod}/${salesChannel}/${analysisType}/${concernType}/${selectedEmployee}`);
+      if (!response.ok) throw new Error('Failed to fetch transactions');
+      return response.json();
+    },
     staleTime: 5 * 60 * 1000,
+    enabled: !!(startDate && endDate), // Only fetch when dates are available
   });
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
-    queryKey: ["/api/orders"],
+    queryKey: ["/api/orders", startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType],
+    queryFn: async () => {
+      const response = await fetch(`/api/orders/${startDate}/${endDate}/${selectedEmployee}/${salesChannel}/${salesMethod}/${analysisType}/${concernType}`);
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      return response.json();
+    },
     staleTime: 5 * 60 * 1000,
+    enabled: !!(startDate && endDate), // Only fetch when dates are available
   });
 
   const { data: employees } = useQuery({
@@ -96,7 +108,12 @@ export function SalesChartReport() {
   });
 
   const { data: products } = useQuery({
-    queryKey: ["/api/products"],
+    queryKey: ["/api/products", selectedCategory, productType, productSearch],
+    queryFn: async () => {
+      const response = await fetch(`/api/products/${selectedCategory}/${productType}/${productSearch || ''}`);
+      if (!response.ok) throw new Error('Failed to fetch products');
+      return response.json();
+    },
     staleTime: 5 * 60 * 1000,
   });
 
@@ -106,7 +123,12 @@ export function SalesChartReport() {
   });
 
   const { data: customers } = useQuery({
-    queryKey: ["/api/customers"],
+    queryKey: ["/api/customers", customerSearch, customerStatus],
+    queryFn: async () => {
+      const response = await fetch(`/api/customers/${customerSearch || ''}/${customerStatus || 'all'}`);
+      if (!response.ok) throw new Error('Failed to fetch customers');
+      return response.json();
+    },
     staleTime: 5 * 60 * 1000,
   });
 

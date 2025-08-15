@@ -3347,7 +3347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Sales Chart Report API endpoints - Add these new endpoints
+  // Sales Chart Report API endpoints - Updated with proper filtering
   app.get("/api/transactions/:startDate/:endDate/:salesMethod/:salesChannel/:analysisType/:concernType/:selectedEmployee", async (req: TenantRequest, res) => {
     try {
       const { startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee } = req.params;
@@ -3366,14 +3366,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
         end.setHours(23, 59, 59, 999);
         
         const dateMatch = transactionDate >= start && transactionDate <= end;
-        const salesMethodMatch = salesMethod === 'all' || transaction.paymentMethod === salesMethod;
-        const salesChannelMatch = salesChannel === 'all' || transaction.salesChannel === salesChannel;
-        const employeeMatch = selectedEmployee === 'all' || transaction.cashierName === selectedEmployee;
+        
+        // Enhanced sales method filtering
+        let salesMethodMatch = true;
+        if (salesMethod !== 'all') {
+          const paymentMethod = transaction.paymentMethod || 'cash';
+          switch (salesMethod) {
+            case 'no_delivery':
+              salesMethodMatch = !transaction.deliveryMethod || transaction.deliveryMethod === 'pickup' || transaction.deliveryMethod === 'takeaway';
+              break;
+            case 'delivery':
+              salesMethodMatch = transaction.deliveryMethod === 'delivery';
+              break;
+            default:
+              salesMethodMatch = paymentMethod.toLowerCase() === salesMethod.toLowerCase();
+          }
+        }
+        
+        // Enhanced sales channel filtering
+        let salesChannelMatch = true;
+        if (salesChannel !== 'all') {
+          const channel = transaction.salesChannel || 'direct';
+          switch (salesChannel) {
+            case 'direct':
+              salesChannelMatch = !transaction.salesChannel || transaction.salesChannel === 'direct' || transaction.salesChannel === 'pos';
+              break;
+            case 'other':
+              salesChannelMatch = transaction.salesChannel && transaction.salesChannel !== 'direct' && transaction.salesChannel !== 'pos';
+              break;
+            default:
+              salesChannelMatch = channel.toLowerCase() === salesChannel.toLowerCase();
+          }
+        }
+        
+        // Enhanced employee filtering
+        let employeeMatch = true;
+        if (selectedEmployee !== 'all') {
+          employeeMatch = 
+            transaction.cashierName === selectedEmployee ||
+            transaction.employeeId?.toString() === selectedEmployee ||
+            (transaction.cashierName && transaction.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
+        }
         
         return dateMatch && salesMethodMatch && salesChannelMatch && employeeMatch;
       });
       
-      console.log(`Found ${filteredTransactions.length} filtered transactions`);
+      console.log(`Found ${filteredTransactions.length} filtered transactions out of ${transactions.length} total`);
       res.json(filteredTransactions);
     } catch (error) {
       console.error("Error in transactions API:", error);
@@ -3391,7 +3429,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get orders data
       const orders = await storage.getOrders(undefined, undefined, tenantDb);
       
-      // Filter orders based on parameters
+      // Filter orders based on parameters with enhanced logic
       const filteredOrders = orders.filter((order: any) => {
         const orderDate = new Date(order.orderedAt || order.createdAt);
         const start = new Date(startDate);
@@ -3399,14 +3437,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
         end.setHours(23, 59, 59, 999);
         
         const dateMatch = orderDate >= start && orderDate <= end;
-        const employeeMatch = selectedEmployee === 'all' || order.employeeId?.toString() === selectedEmployee;
-        const salesChannelMatch = salesChannel === 'all' || order.salesChannel === salesChannel;
-        const salesMethodMatch = salesMethod === 'all' || order.paymentMethod === salesMethod;
         
-        return dateMatch && employeeMatch && salesChannelMatch && salesMethodMatch;
+        // Enhanced employee filtering
+        let employeeMatch = true;
+        if (selectedEmployee !== 'all') {
+          employeeMatch = 
+            order.employeeId?.toString() === selectedEmployee ||
+            (order.employeeName && order.employeeName.toLowerCase().includes(selectedEmployee.toLowerCase()));
+        }
+        
+        // Enhanced sales channel filtering
+        let salesChannelMatch = true;
+        if (salesChannel !== 'all') {
+          const channel = order.salesChannel || 'direct';
+          switch (salesChannel) {
+            case 'direct':
+              salesChannelMatch = !order.salesChannel || order.salesChannel === 'direct' || order.salesChannel === 'pos';
+              break;
+            case 'other':
+              salesChannelMatch = order.salesChannel && order.salesChannel !== 'direct' && order.salesChannel !== 'pos';
+              break;
+            default:
+              salesChannelMatch = channel.toLowerCase() === salesChannel.toLowerCase();
+          }
+        }
+        
+        // Enhanced sales method filtering
+        let salesMethodMatch = true;
+        if (salesMethod !== 'all') {
+          switch (salesMethod) {
+            case 'no_delivery':
+              salesMethodMatch = !order.deliveryMethod || order.deliveryMethod === 'pickup' || order.deliveryMethod === 'takeaway';
+              break;
+            case 'delivery':
+              salesMethodMatch = order.deliveryMethod === 'delivery';
+              break;
+            default:
+              const paymentMethod = order.paymentMethod || 'cash';
+              salesMethodMatch = paymentMethod.toLowerCase() === salesMethod.toLowerCase();
+          }
+        }
+        
+        // Only include paid orders for analysis
+        const statusMatch = order.status === 'paid';
+        
+        return dateMatch && employeeMatch && salesChannelMatch && salesMethodMatch && statusMatch;
       });
       
-      console.log(`Found ${filteredOrders.length} filtered orders`);
+      console.log(`Found ${filteredOrders.length} filtered orders out of ${orders.length} total`);
       res.json(filteredOrders);
     } catch (error) {
       console.error("Error in orders API:", error);
@@ -3414,28 +3492,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/products/:selectedCategory/:productType", async (req: TenantRequest, res) => {
+  app.get("/api/products/:selectedCategory/:productType/:productSearch?", async (req: TenantRequest, res) => {
     try {
-      const { selectedCategory, productType } = req.params;
+      const { selectedCategory, productType, productSearch } = req.params;
       const tenantDb = await getTenantDatabase(req);
       
-      console.log("Products API called with params:", { selectedCategory, productType });
+      console.log("Products API called with params:", { selectedCategory, productType, productSearch });
       
       let products;
       
-      if (selectedCategory && selectedCategory !== 'all') {
-        products = await storage.getProductsByCategory(parseInt(selectedCategory), true, tenantDb);
+      // Get products by category or all products
+      if (selectedCategory && selectedCategory !== 'all' && selectedCategory !== 'undefined') {
+        const categoryId = parseInt(selectedCategory);
+        if (!isNaN(categoryId)) {
+          products = await storage.getProductsByCategory(categoryId, true, tenantDb);
+        } else {
+          products = await storage.getAllProducts(true, tenantDb);
+        }
       } else {
         products = await storage.getAllProducts(true, tenantDb);
       }
       
       // Filter by product type if specified
-      if (productType && productType !== 'all') {
-        const typeMap = { combo: 3, product: 1, service: 2 };
-        const typeValue = typeMap[productType as keyof typeof typeMap];
+      if (productType && productType !== 'all' && productType !== 'undefined') {
+        const typeMap = { 
+          combo: 3, 
+          'combo-dongoi': 3,
+          product: 1, 
+          'hang-hoa': 1,
+          service: 2,
+          'dich-vu': 2
+        };
+        const typeValue = typeMap[productType.toLowerCase() as keyof typeof typeMap];
         if (typeValue) {
           products = products.filter((product: any) => product.productType === typeValue);
         }
+      }
+      
+      // Filter by product search if provided
+      if (productSearch && productSearch !== '' && productSearch !== 'undefined' && productSearch !== 'all') {
+        const searchTerm = productSearch.toLowerCase();
+        products = products.filter((product: any) => 
+          product.name?.toLowerCase().includes(searchTerm) ||
+          product.sku?.toLowerCase().includes(searchTerm) ||
+          product.description?.toLowerCase().includes(searchTerm)
+        );
       }
       
       console.log(`Found ${products.length} filtered products`);
@@ -3446,25 +3547,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/customers/:customerSearch?", async (req: TenantRequest, res) => {
+  app.get("/api/customers/:customerSearch?/:customerStatus?", async (req: TenantRequest, res) => {
     try {
-      const { customerSearch } = req.params;
+      const { customerSearch, customerStatus } = req.params;
       const tenantDb = await getTenantDatabase(req);
       
-      console.log("Customers API called with search:", customerSearch);
+      console.log("Customers API called with search:", customerSearch, "status:", customerStatus);
       
       let customers = await storage.getCustomers(tenantDb);
       
       // Filter by search if provided
-      if (customerSearch && customerSearch !== '' && customerSearch !== 'undefined') {
+      if (customerSearch && customerSearch !== '' && customerSearch !== 'undefined' && customerSearch !== 'all') {
+        const searchTerm = customerSearch.toLowerCase();
         customers = customers.filter((customer: any) => 
-          customer.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
+          customer.name?.toLowerCase().includes(searchTerm) ||
           customer.phone?.includes(customerSearch) ||
-          customer.customerId?.toLowerCase().includes(customerSearch.toLowerCase())
+          customer.email?.toLowerCase().includes(searchTerm) ||
+          customer.customerId?.toLowerCase().includes(searchTerm) ||
+          customer.address?.toLowerCase().includes(searchTerm)
         );
       }
       
-      console.log(`Found ${customers.length} customers`);
+      // Filter by status if provided
+      if (customerStatus && customerStatus !== 'all' && customerStatus !== 'undefined') {
+        const now = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        customers = customers.filter((customer: any) => {
+          const totalSpent = Number(customer.totalSpent || 0);
+          const lastVisit = customer.lastVisit ? new Date(customer.lastVisit) : null;
+          
+          switch (customerStatus) {
+            case 'active':
+              return lastVisit && lastVisit >= thirtyDaysAgo;
+            case 'inactive':
+              return !lastVisit || lastVisit < thirtyDaysAgo;
+            case 'vip':
+              return totalSpent >= 500000; // VIP customers with total spent >= 500k VND
+            case 'new':
+              const joinDate = customer.createdAt ? new Date(customer.createdAt) : null;
+              return joinDate && joinDate >= thirtyDaysAgo;
+            default:
+              return true;
+          }
+        });
+      }
+      
+      console.log(`Found ${customers.length} customers after filtering`);
       res.json(customers);
     } catch (error) {
       console.error("Error in customers API:", error);

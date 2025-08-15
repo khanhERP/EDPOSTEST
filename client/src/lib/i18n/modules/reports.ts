@@ -845,14 +845,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     analysisType: "Phân tích theo",
     analyzeBy: "Phân tích theo",
     timeAnalysis: "Phân tích theo thời gian",
-    productAnalysis: "Phân tích theo mặt hàng",
-    employeeAnalysis: "Phân tích theo nhân viên theo hàng bán",
+    productAnalysis: "Phân tích theo sản phẩm", 
+    employeeAnalysis: "Phân tích theo nhân viên",
     customerAnalysis: "Phân tích theo khách hàng",
     channelAnalysis: "Phân tích theo kênh bán hàng",
-    productSalesAnalysis: "Phân tích theo Bán hàng",
-    employeeSalesAnalysis: "Phân tích theo nhân viên theo hàng bán",
-    customerSalesAnalysis: "Phân tích theo Bán hàng",
-    channelSalesAnalysis: "Phân tích theo Bán hàng",
 
     // Time analysis specific
     dateRangeFilter: "Lọc theo khoảng thời gian",
@@ -1312,10 +1308,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     visualRepresentation: "Biểu diễn trực quan",
 
     // Filter labels
-    startDate: "Từ ngày",
+    startDate: "Từ ngày", 
     endDate: "Đến ngày",
     salesMethod: "Phương thức bán hàng",
-    salesChannel: "Kênh bán hàng",
+    salesChannel: "Kênh bán hàng", 
     productFilter: "Sản phẩm",
     productFilterPlaceholder: "Tìm theo mã, tên",
     customerFilter: "Khách hàng",
@@ -1324,7 +1320,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Sales chart table columns
     date: "Ngày",
     orderNumber: "Số đơn bán",
-    subtotal: "Thành tiền",
+    subtotal: "Thành tiền", 
     discount: "Giảm giá",
     revenue: "Doanh thu",
     tax: "Thuế",
@@ -1337,7 +1333,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     unit: "Đơn vị",
     quantitySold: "Số lượng bán",
     totalAmount: "Tổng số tiền",
-    totalDiscount: "Giảm giá",
+    totalDiscount: "Giảm giá", 
     totalRevenue: "Doanh thu",
     categoryName: "Danh mục",
 
@@ -1345,7 +1341,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     timeSalesReport: "Báo cáo bán hàng theo thời gian",
     inventoryReport: "Báo cáo hàng hóa",
     salesReportByProduct: "Báo cáo bán hàng theo sản phẩm",
-    profitByInvoiceReport: "Báo cáo lợi nhuận theo hóa đơn",
+    profitByInvoiceReport: "Báo cáo lợi nhuận theo hóa đơn", 
     invoiceDiscountReport: "Báo cáo giảm giá hóa đơn",
     returnByInvoiceReport: "Báo cáo trả hàng theo hóa đơn",
   },
