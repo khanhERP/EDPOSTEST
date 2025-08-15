@@ -95,16 +95,17 @@ export function SalesChartReport() {
       }
       return response.json();
     },
-    enabled: !!startDate && !!endDate, // Only run query when dates are set
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Don't cache
+    enabled: !!startDate && !!endDate,
+    staleTime: 0,
+    gcTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
 
   const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: products } = useQuery({
@@ -118,12 +119,14 @@ export function SalesChartReport() {
       }
       return response.json();
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: categories } = useQuery({
     queryKey: ["/api/categories"],
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: customers } = useQuery({
@@ -135,7 +138,8 @@ export function SalesChartReport() {
       }
       return response.json();
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: orders, refetch: refetchOrders } = useQuery({
@@ -158,9 +162,9 @@ export function SalesChartReport() {
       }
       return response.json();
     },
-    enabled: !!startDate && !!endDate, // Only run query when dates are set
-    staleTime: 0, // Always fetch fresh data
-    gcTime: 0, // Don't cache
+    enabled: !!startDate && !!endDate,
+    staleTime: 0,
+    gcTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
@@ -364,8 +368,6 @@ export function SalesChartReport() {
   // Refetch data when dates change
   useEffect(() => {
     if (startDate && endDate) {
-      console.log("Date changed, refetching data:", { startDate, endDate });
-      // Invalidate and refetch transactions
       queryClient.invalidateQueries({
         queryKey: ["/api/transactions"],
       });
@@ -373,7 +375,6 @@ export function SalesChartReport() {
         queryKey: ["/api/orders"],
       });
       
-      // Force refetch with new dates
       refetchTransactions();
       refetchOrders();
     }
@@ -436,36 +437,19 @@ export function SalesChartReport() {
   ]);
 
   const getFilteredData = () => {
-    // Return empty array if data is not loaded yet
     if (!transactions || !Array.isArray(transactions)) {
-      console.log("No transactions data available");
       return [];
     }
-
-    console.log("Filtering transactions with:", {
-      startDate,
-      endDate,
-      salesMethod,
-      salesChannel,
-      selectedEmployee,
-      analysisType,
-      concernType,
-      transactionCount: transactions.length,
-      sampleTransaction: transactions[0]
-    });
 
     const filteredTransactions = transactions.filter((transaction: any) => {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
       
-      // Convert dates to local date strings for comparison
       const transactionDateStr = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, "0")}-${transactionDate.getDate().toString().padStart(2, "0")}`;
       
-      // More flexible date matching - check if transaction date is within range
       const dateMatch = transactionDateStr >= startDate && transactionDateStr <= endDate;
 
-      // Enhanced filtering logic based on actual transaction data
       const methodMatch =
         salesMethod === "all" ||
         (salesMethod === "no_delivery" &&
@@ -485,7 +469,6 @@ export function SalesChartReport() {
           transaction.salesChannel !== "direct" &&
           transaction.salesChannel !== "pos");
 
-      // Employee filter for all analysis types
       const employeeMatch =
         selectedEmployee === "all" ||
         transaction.cashierName === selectedEmployee ||
@@ -493,36 +476,7 @@ export function SalesChartReport() {
         (transaction.cashierName &&
           transaction.cashierName.includes(selectedEmployee));
 
-      const result = dateMatch && methodMatch && channelMatch && employeeMatch;
-
-      console.log("Transaction filtering:", {
-        id: transaction.id,
-        transactionDateStr,
-        startDate,
-        endDate,
-        dateMatch,
-        methodMatch,
-        channelMatch,
-        employeeMatch,
-        result,
-        cashierName: transaction.cashierName,
-      });
-
-      return result;
-    });
-
-    console.log("Filtered results:", {
-      originalCount: transactions.length,
-      filteredCount: filteredTransactions.length,
-      filters: {
-        startDate,
-        endDate,
-        salesMethod,
-        salesChannel,
-        selectedEmployee,
-        analysisType,
-        concernType,
-      },
+      return dateMatch && methodMatch && channelMatch && employeeMatch;
     });
 
     return filteredTransactions;
