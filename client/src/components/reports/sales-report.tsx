@@ -68,27 +68,23 @@ export function SalesReport() {
   const getSalesData = () => {
     if (!transactions || !Array.isArray(transactions)) return null;
 
-    // Parse dates một lần và cố định timezone
-    const startDateObj = new Date(startDate + 'T00:00:00');
-    const endDateObj = new Date(endDate + 'T23:59:59');
-
     const filteredTransactions = transactions.filter((transaction: any) => {
-      try {
-        const transactionDate = new Date(
-          transaction.createdAt || transaction.created_at,
-        );
-
-        // Kiểm tra date hợp lệ
-        if (isNaN(transactionDate.getTime())) {
-          return false;
-        }
-
-        // So sánh trực tiếp với timestamp để tránh timezone issues
-        return transactionDate >= startDateObj && transactionDate <= endDateObj;
-      } catch (error) {
-        console.warn("Error filtering transaction by date:", error);
-        return false;
-      }
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
+      
+      // Tạo date objects để so sánh chính xác
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      // Set end date to end of day
+      end.setHours(23, 59, 59, 999);
+      
+      // Reset transaction date to start of day for comparison
+      const transactionDateOnly = new Date(transactionDate);
+      transactionDateOnly.setHours(0, 0, 0, 0);
+      
+      const isInRange = transactionDateOnly >= start && transactionDateOnly <= end;
+      return isInRange;
     });
 
     // Daily sales breakdown
@@ -97,24 +93,23 @@ export function SalesReport() {
     } = {};
 
     filteredTransactions.forEach((transaction: any) => {
-      try {
-        const transactionDate = new Date(
-          transaction.createdAt || transaction.created_at,
-        );
-        
-        // Cố định format ngày bằng cách sử dụng toLocaleDateString với options cụ thể
-        const date = transactionDate.toLocaleDateString("sv-SE"); // YYYY-MM-DD format
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
+      
+      // Đảm bảo format ngày nhất quán - luôn sử dụng UTC để tránh timezone issues
+      const year = transactionDate.getFullYear();
+      const month = (transactionDate.getMonth() + 1).toString().padStart(2, "0");
+      const day = transactionDate.getDate().toString().padStart(2, "0");
+      const date = `${year}-${month}-${day}`;
 
-        if (!dailySales[date]) {
-          dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
-        }
-
-        dailySales[date].revenue += Number(transaction.total || 0);
-        dailySales[date].orders += 1;
-        dailySales[date].customers += 1; // Each transaction represents one customer
-      } catch (error) {
-        console.warn("Error processing transaction date:", error);
+      if (!dailySales[date]) {
+        dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
       }
+
+      dailySales[date].revenue += Number(transaction.total || 0);
+      dailySales[date].orders += 1;
+      dailySales[date].customers += 1; // Each transaction represents one customer
     });
 
     // Payment method breakdown
@@ -196,62 +191,50 @@ export function SalesReport() {
 
   const handleDateRangeChange = (range: string) => {
     setDateRange(range);
-    
-    // Lấy ngày hiện tại ở múi giờ local và format chuẩn
     const today = new Date();
-    const todayStr = today.getFullYear() + '-' + 
-      (today.getMonth() + 1).toString().padStart(2, "0") + '-' + 
-      today.getDate().toString().padStart(2, "0");
 
     switch (range) {
       case "today":
-        setStartDate(todayStr);
-        setEndDate(todayStr);
+        setStartDate(today.toISOString().split("T")[0]);
+        setEndDate(today.toISOString().split("T")[0]);
         break;
       case "week":
         // Tuần hiện tại: từ thứ 2 đến chủ nhật
         const currentDayOfWeek = today.getDay(); // 0 = Chủ nhật, 1 = Thứ 2, ...
-        const daysToMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
+        const daysToMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1; // Tính số ngày từ thứ 2
         
-        const mondayDate = new Date(today);
-        mondayDate.setDate(today.getDate() - daysToMonday);
+        const thisWeekMonday = new Date(today);
+        thisWeekMonday.setDate(today.getDate() - daysToMonday);
         
-        const sundayDate = new Date(mondayDate);
-        sundayDate.setDate(mondayDate.getDate() + 6);
+        const thisWeekSunday = new Date(thisWeekMonday);
+        thisWeekSunday.setDate(thisWeekMonday.getDate() + 6);
 
-        const mondayStr = mondayDate.getFullYear() + '-' + 
-          (mondayDate.getMonth() + 1).toString().padStart(2, "0") + '-' + 
-          mondayDate.getDate().toString().padStart(2, "0");
-        
-        const sundayStr = sundayDate.getFullYear() + '-' + 
-          (sundayDate.getMonth() + 1).toString().padStart(2, "0") + '-' + 
-          sundayDate.getDate().toString().padStart(2, "0");
-
-        setStartDate(mondayStr);
-        setEndDate(sundayStr);
+        setStartDate(thisWeekMonday.toISOString().split("T")[0]);
+        setEndDate(thisWeekSunday.toISOString().split("T")[0]);
         break;
       case "month":
         // Tháng hiện tại: từ ngày 1 đến ngày cuối tháng
-        const year = today.getFullYear();
-        const month = today.getMonth();
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
         
+        // Ngày đầu tháng hiện tại
         const monthStart = new Date(year, month, 1);
+        // Ngày cuối tháng hiện tại
         const monthEnd = new Date(year, month + 1, 0);
 
-        const startStr = monthStart.getFullYear() + '-' + 
-          (monthStart.getMonth() + 1).toString().padStart(2, "0") + '-' + 
-          monthStart.getDate().toString().padStart(2, "0");
-        
-        const endStr = monthEnd.getFullYear() + '-' + 
-          (monthEnd.getMonth() + 1).toString().padStart(2, "0") + '-' + 
-          monthEnd.getDate().toString().padStart(2, "0");
+        // Format thành YYYY-MM-DD
+        const startDateStr = `${monthStart.getFullYear()}-${(monthStart.getMonth() + 1).toString().padStart(2, "0")}-${monthStart.getDate().toString().padStart(2, "0")}`;
+        const endDateStr = `${monthEnd.getFullYear()}-${(monthEnd.getMonth() + 1).toString().padStart(2, "0")}-${monthEnd.getDate().toString().padStart(2, "0")}`;
 
-        setStartDate(startStr);
-        setEndDate(endStr);
+        setStartDate(startDateStr);
+        setEndDate(endDateStr);
         break;
       case "custom":
-        setStartDate(todayStr);
-        setEndDate(todayStr);
+        // Luôn set ngày hiện tại khi chọn tùy chỉnh
+        const customCurrentDate = new Date().toISOString().split("T")[0];
+        setStartDate(customCurrentDate);
+        setEndDate(customCurrentDate);
         break;
     }
   };
@@ -261,23 +244,12 @@ export function SalesReport() {
   };
 
   const formatDate = (dateStr: string) => {
-    try {
-      // Xử lý date string bằng cách parse trực tiếp từ YYYY-MM-DD format
-      if (dateStr.includes('-')) {
-        const [year, month, day] = dateStr.split('-');
-        return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
-      }
-      
-      // Fallback cho các format khác
-      const date = new Date(dateStr + 'T12:00:00'); // Thêm time để tránh timezone shift
-      const day = date.getDate().toString().padStart(2, "0");
-      const month = (date.getMonth() + 1).toString().padStart(2, "0");
-      const year = date.getFullYear();
-      return `${day}/${month}/${year}`;
-    } catch (error) {
-      console.warn("Error formatting date:", error);
-      return dateStr;
-    }
+    const date = new Date(dateStr);
+    // Đảm bảo ngày tháng được hiển thị đúng timezone
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const getPaymentMethodLabel = (method: string) => {
