@@ -346,11 +346,11 @@ export function SalesChartReport() {
                 <TableBody>
                   {Object.entries(dailySales).length > 0 ? (
                     Object.entries(dailySales).map(([date, data]) => {
-                      const subtotal = data.revenue * 0.9; // Assuming 10% tax
-                      const tax = data.revenue * 0.1;
-                      const discount = data.revenue * 0.05; // Assuming 5% average discount
-                      const paymentAmount = data.revenue * 1.05; // Include discount
-                      const customerPayment = data.revenue; // Final amount customer pays
+                      const paymentAmount = data.revenue * 1.05; // Thành tiền (bao gồm thuế và phí)
+                      const discount = data.revenue * 0.05; // Giảm giá (5% trung bình)
+                      const actualRevenue = paymentAmount - discount; // Doanh thu = Thành tiền - Giảm giá
+                      const tax = actualRevenue * 0.1; // Thuế tính trên doanh thu
+                      const customerPayment = actualRevenue; // Khách thanh toán = doanh thu
 
                       // Get transactions for this date
                       const dateTransactions = filteredTransactions.filter((transaction: any) => {
@@ -388,13 +388,13 @@ export function SalesChartReport() {
                               {formatCurrency(discount)}
                             </TableCell>
                             <TableCell className="text-right border-r text-green-600 font-medium">
-                              {formatCurrency(data.revenue)}
+                              {formatCurrency(actualRevenue)}
                             </TableCell>
                             <TableCell className="text-right border-r">
                               {formatCurrency(tax)}
                             </TableCell>
                             <TableCell className="text-right border-r font-bold text-blue-600">
-                              {formatCurrency(data.revenue)}
+                              {formatCurrency(actualRevenue)}
                             </TableCell>
                             <TableCell className="text-right font-bold text-green-600">
                               {formatCurrency(customerPayment)}
@@ -423,7 +423,7 @@ export function SalesChartReport() {
                                   {formatCurrency(Number(transaction.total) * 1.05)}
                                 </TableCell>
                                 <TableCell className="text-right border-r text-red-600 text-sm">
-                                  {formatCurrency(Number(transaction.total) * 0.05)}
+                                  {formatCurrency(Number(transaction.total) * 1.05 * 0.05)}
                                 </TableCell>
                                 <TableCell className="text-right border-r text-green-600 font-medium text-sm">
                                   {formatCurrency(Number(transaction.total))}
@@ -470,7 +470,7 @@ export function SalesChartReport() {
                         {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 1.05), 0))}
                       </TableCell>
                       <TableCell className="text-right border-r text-red-600">
-                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.05), 0))}
+                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 1.05 * 0.05), 0))}
                       </TableCell>
                       <TableCell className="text-right border-r text-green-600">
                         {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0))}
