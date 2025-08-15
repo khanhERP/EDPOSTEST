@@ -408,7 +408,32 @@ export function SalesChartReport() {
                               {formatCurrency(actualRevenue)}
                             </TableCell>
                             <TableCell className="text-right font-bold text-green-600">
-                              {formatCurrency(customerPayment)}
+                              <div className="flex flex-col items-end">
+                                <div className="font-bold mb-2">
+                                  {formatCurrency(customerPayment)}
+                                </div>
+                                <div className="text-xs space-y-1">
+                                  {(() => {
+                                    // Group transactions by payment method for this date
+                                    const paymentMethods: { [method: string]: number } = {};
+                                    dateTransactions.forEach((transaction: any) => {
+                                      const method = transaction.paymentMethod || 'cash';
+                                      paymentMethods[method] = (paymentMethods[method] || 0) + Number(transaction.total);
+                                    });
+                                    
+                                    return Object.entries(paymentMethods).map(([method, amount]) => (
+                                      <div key={method} className="flex items-center justify-between bg-white/60 px-2 py-1 rounded-md border min-w-[120px]">
+                                        <span className="text-gray-700 font-medium">
+                                          {getPaymentMethodLabel(method)}
+                                        </span>
+                                        <span className="font-semibold">
+                                          {formatCurrency(amount)}
+                                        </span>
+                                      </div>
+                                    ));
+                                  })()}
+                                </div>
+                              </div>
                             </TableCell>
                           </TableRow>
 
@@ -446,7 +471,16 @@ export function SalesChartReport() {
                                   {formatCurrency(Number(transaction.total))}
                                 </TableCell>
                                 <TableCell className="text-right font-bold text-green-600 text-sm">
-                                  {formatCurrency(Number(transaction.total))}
+                                  <div className="flex flex-col items-end">
+                                    <div className="font-bold">
+                                      {formatCurrency(Number(transaction.total))}
+                                    </div>
+                                    <div className="text-xs text-gray-600 mt-1">
+                                      <div className="bg-white/60 px-2 py-1 rounded-md border">
+                                        {getPaymentMethodLabel(transaction.paymentMethod)}
+                                      </div>
+                                    </div>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             ))
@@ -494,7 +528,32 @@ export function SalesChartReport() {
                         {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0))}
                       </TableCell>
                       <TableCell className="text-right text-green-600">
-                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0))}
+                        <div className="flex flex-col items-end">
+                          <div className="font-bold mb-2">
+                            {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0))}
+                          </div>
+                          <div className="text-xs space-y-1">
+                            {(() => {
+                              // Calculate total payment methods across all dates
+                              const totalPaymentMethods: { [method: string]: number } = {};
+                              filteredTransactions.forEach((transaction: any) => {
+                                const method = transaction.paymentMethod || 'cash';
+                                totalPaymentMethods[method] = (totalPaymentMethods[method] || 0) + Number(transaction.total);
+                              });
+                              
+                              return Object.entries(totalPaymentMethods).map(([method, amount]) => (
+                                <div key={method} className="flex items-center justify-between bg-white/80 px-2 py-1 rounded-md border min-w-[120px] font-semibold">
+                                  <span className="text-gray-800">
+                                    {getPaymentMethodLabel(method)}
+                                  </span>
+                                  <span className="text-green-700">
+                                    {formatCurrency(amount)}
+                                  </span>
+                                </div>
+                              ));
+                            })()}
+                          </div>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
