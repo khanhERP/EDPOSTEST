@@ -74,6 +74,10 @@ export function SalesChartReport() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [productType, setProductType] = useState("all");
 
+  // Pagination state for product report
+  const [productCurrentPage, setProductCurrentPage] = useState(1);
+  const [productPageSize, setProductPageSize] = useState(15);
+
   // Data queries
   const { data: transactions, isLoading: transactionsLoading } = useQuery({
     queryKey: ["/api/transactions"],
@@ -174,7 +178,7 @@ export function SalesChartReport() {
   // State for expandable rows
   const [expandedRows, setExpandedRows] = useState<{[key: string]: boolean}>({});
 
-  // Pagination state
+  // Pagination state for sales report
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
 
@@ -366,9 +370,9 @@ export function SalesChartReport() {
                           allPaymentMethods.add(method);
                         });
                       }
-                      
+
                       const paymentMethodsArray = Array.from(allPaymentMethods).sort();
-                      
+
                       return (
                         <>
                           {paymentMethodsArray.map((method: any) => (
@@ -451,7 +455,7 @@ export function SalesChartReport() {
                                 const method = transaction.paymentMethod || 'cash';
                                 paymentMethods[method] = (paymentMethods[method] || 0) + Number(transaction.total);
                               });
-                              
+
                               // Get all unique payment methods from all transactions
                               const allPaymentMethods = new Set();
                               if (filteredTransactions && Array.isArray(filteredTransactions)) {
@@ -460,10 +464,10 @@ export function SalesChartReport() {
                                   allPaymentMethods.add(method);
                                 });
                               }
-                              
+
                               const paymentMethodsArray = Array.from(allPaymentMethods).sort();
                               const totalCustomerPayment = Object.values(paymentMethods).reduce((sum: number, amount: number) => sum + amount, 0);
-                              
+
                               return (
                                 <>
                                   {paymentMethodsArray.map((method: any) => {
@@ -518,7 +522,7 @@ export function SalesChartReport() {
                                 {(() => {
                                   const transactionMethod = transaction.paymentMethod || 'cash';
                                   const amount = Number(transaction.total);
-                                  
+
                                   // Get all unique payment methods from all transactions
                                   const allPaymentMethods = new Set();
                                   if (filteredTransactions && Array.isArray(filteredTransactions)) {
@@ -527,9 +531,9 @@ export function SalesChartReport() {
                                       allPaymentMethods.add(method);
                                     });
                                   }
-                                  
+
                                   const paymentMethodsArray = Array.from(allPaymentMethods).sort();
-                                  
+
                                   return (
                                     <>
                                       {paymentMethodsArray.map((method: any) => (
@@ -595,17 +599,17 @@ export function SalesChartReport() {
                           const method = transaction.paymentMethod || 'cash';
                           totalPaymentMethods[method] = (totalPaymentMethods[method] || 0) + Number(transaction.total);
                         });
-                        
+
                         // Get all unique payment methods from all transactions
                         const allPaymentMethods = new Set();
                         filteredTransactions.forEach((transaction: any) => {
                           const method = transaction.paymentMethod || 'cash';
                           allPaymentMethods.add(method);
                         });
-                        
+
                         const paymentMethodsArray = Array.from(allPaymentMethods).sort();
                         const grandTotal = Object.values(totalPaymentMethods).reduce((sum: number, amount: number) => sum + amount, 0);
-                        
+
                         return (
                           <>
                             {paymentMethodsArray.map((method: any) => {
@@ -771,7 +775,7 @@ export function SalesChartReport() {
               const unitPrice = Number(item.price || 0);
               const totalAmount = quantity * unitPrice;
               const discount = totalAmount - total;
-              
+
               productSales[productId].quantity += quantity;
               productSales[productId].totalAmount += totalAmount;
               productSales[productId].discount += discount;
@@ -814,7 +818,7 @@ export function SalesChartReport() {
               const unitPrice = Number(item.unitPrice || 0);
               const totalAmount = quantity * unitPrice;
               const discount = totalAmount - total;
-              
+
               productSales[productId].quantity += quantity;
               productSales[productId].totalAmount += totalAmount;
               productSales[productId].discount += discount;
@@ -856,6 +860,10 @@ export function SalesChartReport() {
     };
 
     const data = getSalesData();
+    const totalPages = Math.ceil(data.length / productPageSize);
+    const startIndex = (productCurrentPage - 1) * productPageSize;
+    const endIndex = startIndex + productPageSize;
+    const paginatedData = data.slice(startIndex, endIndex);
 
     return (
       <Card>
@@ -884,8 +892,8 @@ export function SalesChartReport() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {data.length > 0 ? (
-                data.slice(0, 20).map((item, index) => (
+              {paginatedData.length > 0 ? (
+                paginatedData.map((item, index) => (
                   <TableRow key={index}>
                     <TableCell className="font-medium">
                       {item.productCode}
@@ -919,8 +927,72 @@ export function SalesChartReport() {
               )}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
+
+          {/* Pagination Controls for Product Report */}
+          {data.length > 0 && (
+            <div className="flex items-center justify-between space-x-6 py-4">
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">{t("common.show")}</p>
+                <Select
+                  value={productPageSize.toString()}
+                  onValueChange={(value) => {
+                    setProductPageSize(Number(value));
+                    setProductCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    <SelectItem value="15">15</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="30">30</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm font-medium">{t("common.rows")}</p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">
+                  {t("common.page")} {productCurrentPage} / {totalPages}
+                </p>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => setProductCurrentPage(1)}
+                    disabled={productCurrentPage === 1}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    «
+                  </button>
+                  <button
+                    onClick={() => setProductCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={productCurrentPage === 1}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={() => setProductCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={productCurrentPage === totalPages}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    ›
+                  </button>
+                  <button
+                    onClick={() => setProductCurrentPage(totalPages)}
+                    disabled={productCurrentPage === totalPages}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    »
+                  </button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </>
     );
   };
 
