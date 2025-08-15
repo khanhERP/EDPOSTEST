@@ -935,6 +935,16 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerSalesAnalysis: "Phân tích theo Bán hàng",
     channelSalesAnalysis: "Phân tích theo Bán hàng",
 
+    // Time analysis specific
+    dateRangeFilter: "Lọc theo khoảng thời gian",
+    selectAnalysisPeriod: "Chọn khoảng thời gian để phân tích dữ liệu bán hàng",
+    concernType: "Loại phân tích",
+    timeSales: "Doanh thu theo thời gian",
+    profitByInvoice: "Lợi nhuận theo hóa đơn",
+    invoiceDiscount: "Chiết khấu hóa đơn",
+    returnByInvoice: "Trả hàng theo hóa đơn",
+    employeeSales: "Doanh thu theo nhân viên",
+
     // Additional report keys
     topProduct: "Sản phẩm bán chạy nhất",
     totalProducts: "Tổng sản phẩm",

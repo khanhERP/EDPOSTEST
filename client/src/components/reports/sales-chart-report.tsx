@@ -543,7 +543,7 @@ export function SalesChartReport() {
 
   const getFilteredData = () => {
     console.log('📊 getFilteredData called with transactions:', transactions?.length || 0, 'items');
-    
+
     if (!transactions || !Array.isArray(transactions)) {
       console.log('❌ No transactions data available');
       return [];
@@ -703,16 +703,27 @@ export function SalesChartReport() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {Object.entries(dailyData).map(([date, data]) => (
-            <TableRow key={date}>
-              <TableCell>{date}</TableCell>
-              <TableCell>{formatCurrency(data.revenue)}</TableCell>
-              <TableCell>{formatCurrency(data.returnValue)}</TableCell>
-              <TableCell>
-                {formatCurrency(data.revenue - data.returnValue)}
+          {Object.entries(dailyData).length > 0 ? (
+            Object.entries(dailyData).map(([date, data]) => (
+              <TableRow key={date}>
+                <TableCell>{date}</TableCell>
+                <TableCell>{formatCurrency(data.revenue)}</TableCell>
+                <TableCell>{formatCurrency(data.returnValue)}</TableCell>
+                <TableCell>
+                  {formatCurrency(data.revenue - data.returnValue)}
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={4}
+                className="text-center text-gray-500 py-8"
+              >
+                {t("reports.noDataDescription")}
               </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
     );
@@ -760,16 +771,27 @@ export function SalesChartReport() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {Object.entries(dailyData).map(([date, data]) => (
-            <TableRow key={date}>
-              <TableCell>{date}</TableCell>
-              <TableCell>{formatCurrency(data.totalAmount)}</TableCell>
-              <TableCell>{formatCurrency(data.discount)}</TableCell>
-              <TableCell>{formatCurrency(data.revenue)}</TableCell>
-              <TableCell>{formatCurrency(data.cost)}</TableCell>
-              <TableCell>{formatCurrency(data.revenue - data.cost)}</TableCell>
+          {Object.entries(dailyData).length > 0 ? (
+            Object.entries(dailyData).map(([date, data]) => (
+              <TableRow key={date}>
+                <TableCell>{date}</TableCell>
+                <TableCell>{formatCurrency(data.totalAmount)}</TableCell>
+                <TableCell>{formatCurrency(data.discount)}</TableCell>
+                <TableCell>{formatCurrency(data.revenue)}</TableCell>
+                <TableCell>{formatCurrency(data.cost)}</TableCell>
+                <TableCell>{formatCurrency(data.revenue - data.cost)}</TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={6}
+                className="text-center text-gray-500 py-8"
+              >
+                {t("reports.noDataDescription")}
+              </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
     );
@@ -813,14 +835,25 @@ export function SalesChartReport() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {Object.entries(dailyData).map(([date, data]) => (
-            <TableRow key={date}>
-              <TableCell>{date}</TableCell>
-              <TableCell>{data.invoiceCount}</TableCell>
-              <TableCell>{formatCurrency(data.invoiceValue)}</TableCell>
-              <TableCell>{formatCurrency(data.discount)}</TableCell>
+          {Object.entries(dailyData).length > 0 ? (
+            Object.entries(dailyData).map(([date, data]) => (
+              <TableRow key={date}>
+                <TableCell>{date}</TableCell>
+                <TableCell>{data.invoiceCount}</TableCell>
+                <TableCell>{formatCurrency(data.invoiceValue)}</TableCell>
+                <TableCell>{formatCurrency(data.discount)}</TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={4}
+                className="text-center text-gray-500 py-8"
+              >
+                {t("reports.noDataDescription")}
+              </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
     );
@@ -868,8 +901,11 @@ export function SalesChartReport() {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={3} className="text-center text-gray-500">
-                {t("reports.noData")}
+              <TableCell
+                colSpan={3}
+                className="text-center text-gray-500 py-8"
+              >
+                {t("reports.noDataDescription")}
               </TableCell>
             </TableRow>
           )}
@@ -909,16 +945,27 @@ export function SalesChartReport() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {Object.entries(employeeData).map(([cashier, data]) => (
-            <TableRow key={cashier}>
-              <TableCell>{cashier}</TableCell>
-              <TableCell>{formatCurrency(data.revenue)}</TableCell>
-              <TableCell>{formatCurrency(data.returnValue)}</TableCell>
-              <TableCell>
-                {formatCurrency(data.revenue - data.returnValue)}
+          {Object.entries(employeeData).length > 0 ? (
+            Object.entries(employeeData).map(([cashier, data]) => (
+              <TableRow key={cashier}>
+                <TableCell>{cashier}</TableCell>
+                <TableCell>{formatCurrency(data.revenue)}</TableCell>
+                <TableCell>{formatCurrency(data.returnValue)}</TableCell>
+                <TableCell>
+                  {formatCurrency(data.revenue - data.returnValue)}
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell
+                colSpan={4}
+                className="text-center text-gray-500 py-8"
+              >
+                {t("reports.noDataDescription")}
               </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
     );
@@ -1346,7 +1393,7 @@ export function SalesChartReport() {
   // Render component theo loại phân tích được chọn
   const renderLegacyComponent = () => {
     console.log('🔄 Loading legacy component for analysisType:', analysisType);
-    
+
     switch (analysisType) {
       case "product":
         return (
@@ -1385,7 +1432,7 @@ export function SalesChartReport() {
   // Add useMemo for better performance and ensure re-renders when analysisType changes
   const renderAnalysisTypeReport = useMemo(() => {
     console.log('🔄 renderAnalysisTypeReport called with analysisType:', analysisType);
-    
+
     switch (analysisType) {
       case "product": {
         const data = getProductAnalysisData();
@@ -1527,9 +1574,9 @@ export function SalesChartReport() {
                   <TableRow>
                     <TableCell
                       colSpan={9}
-                      className="text-center text-gray-500"
+                      className="text-center text-gray-500 py-8"
                     >
-                      {t("reports.noData")}
+                      {t("reports.noDataDescription")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -1687,9 +1734,9 @@ export function SalesChartReport() {
                   <TableRow>
                     <TableCell
                       colSpan={9}
-                      className="text-center text-gray-500"
+                      className="text-center text-gray-500 py-8"
                     >
-                      {t("reports.noData")}
+                      {t("reports.noDataDescription")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -1842,9 +1889,9 @@ export function SalesChartReport() {
                   <TableRow>
                     <TableCell
                       colSpan={8}
-                      className="text-center text-gray-500"
+                      className="text-center text-gray-500 py-8"
                     >
-                      {t("reports.noData")}
+                      {t("reports.noDataDescription")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -1997,9 +2044,9 @@ export function SalesChartReport() {
                   <TableRow>
                     <TableCell
                       colSpan={9}
-                      className="text-center text-gray-500"
+                      className="text-center text-gray-500 py-8"
                     >
-                      {t("reports.noData")}
+                      {t("reports.noDataDescription")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -2038,7 +2085,7 @@ export function SalesChartReport() {
 
   const renderReportTable = () => {
     console.log('🔄 renderReportTable called with analysisType:', analysisType, 'concernType:', concernType);
-    
+
     let reportContent;
 
     if (analysisType === "time") {
@@ -2345,7 +2392,7 @@ export function SalesChartReport() {
       {/* Filters */}
       <Card>
         <CardContent className="space-y-4 pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Analysis Type Selector */}
             <div>
               <Label>{t("reports.analyzeBy")}</Label>
@@ -2383,8 +2430,6 @@ export function SalesChartReport() {
                 </SelectContent>
               </Select>
             </div>
-
-            
 
             {/* Concern Type - Only for time analysis */}
             {analysisType === "time" && (
