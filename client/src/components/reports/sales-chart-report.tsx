@@ -930,67 +930,69 @@ export function SalesChartReport() {
 
           {/* Pagination Controls for Product Report */}
           {data.length > 0 && (
-            <div className="flex items-center justify-between space-x-6 py-4">
-              <div className="flex items-center space-x-2">
-                <p className="text-sm font-medium">{t("common.show")}</p>
-                <Select
-                  value={productPageSize.toString()}
-                  onValueChange={(value) => {
-                    setProductPageSize(Number(value));
-                    setProductCurrentPage(1);
-                  }}
-                >
-                  <SelectTrigger className="h-8 w-[70px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent side="top">
-                    <SelectItem value="15">15</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
-                    <SelectItem value="30">30</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-sm font-medium">{t("common.rows")}</p>
-              </div>
+            <>
+              <div className="flex items-center justify-between space-x-6 py-4">
+                <div className="flex items-center space-x-2">
+                  <p className="text-sm font-medium">{t("common.show")}</p>
+                  <Select
+                    value={productPageSize.toString()}
+                    onValueChange={(value) => {
+                      setProductPageSize(Number(value));
+                      setProductCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      <SelectItem value="15">15</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="30">30</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm font-medium">{t("common.rows")}</p>
+                </div>
 
-              <div className="flex items-center space-x-2">
-                <p className="text-sm font-medium">
-                  {t("common.page")} {productCurrentPage} / {totalPages}
-                </p>
-                <div className="flex items-center space-x-1">
-                  <button
-                    onClick={() => setProductCurrentPage(1)}
-                    disabled={productCurrentPage === 1}
-                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
-                  >
-                    «
-                  </button>
-                  <button
-                    onClick={() => setProductCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={productCurrentPage === 1}
-                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    onClick={() => setProductCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={productCurrentPage === totalPages}
-                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
-                  >
-                    ›
-                  </button>
-                  <button
-                    onClick={() => setProductCurrentPage(totalPages)}
-                    disabled={productCurrentPage === totalPages}
-                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
-                  >
-                    »
-                  </button>
+                <div className="flex items-center space-x-2">
+                  <p className="text-sm font-medium">
+                    {t("common.page")} {productCurrentPage} / {totalPages}
+                  </p>
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={() => setProductCurrentPage(1)}
+                      disabled={productCurrentPage === 1}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    >
+                      «
+                    </button>
+                    <button
+                      onClick={() => setProductCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={productCurrentPage === 1}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      onClick={() => setProductCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={productCurrentPage === totalPages}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    >
+                      ›
+                    </button>
+                    <button
+                      onClick={() => setProductCurrentPage(totalPages)}
+                      disabled={productCurrentPage === totalPages}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    >
+                      »
+                    </button>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
+            </>
+          )}
         </CardContent>
       </Card>
     );
