@@ -990,9 +990,8 @@ export function SalesChartReport() {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
-      </>
+        </CardContent>
+      </Card>
     );
   };
 
