@@ -496,6 +496,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     employeePerformanceReport: "Báo cáo hiệu suất nhân viên",
     customerLoyaltyReport: "Báo cáo khách hàng thân thiết",
     channelProductsReport: "Báo cáo sản phẩm theo kênh",
+    paymentAmount: "Payment Amount",
+    discount: "Discount",
+    orderCount: "Order Count",
+    customerPaymentDetails: "Customer Payment Details",
   },
   en: {
     title: "Reports",
@@ -833,6 +837,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     employeePerformanceReport: "Employee Performance Report",
     customerLoyaltyReport: "Customer Loyalty Report",
     channelProductsReport: "Channel Products Report",
+    paymentAmount: "Payment Amount",
+    discount: "Discount",
+    orderCount: "Order Count",
+    customerPaymentDetails: "Customer Payment Details",
   },
   vi: {
     title: "Báo cáo",
@@ -1346,6 +1354,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     employeePerformanceReport: "Báo cáo hiệu suất nhân viên",
     customerLoyaltyReport: "Báo cáo khách hàng thân thiết",
     channelProductsReport: "Báo cáo sản phẩm theo kênh",
+    paymentAmount: "Số tiền thanh toán",
+    discount: "Giảm giá",
+    orderCount: "Số đơn hàng",
+    customerPaymentDetails: "Chi tiết thanh toán khách hàng",
   },
   vi: {
     title: "Báo cáo",
@@ -1859,5 +1871,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     employeePerformanceReport: "Báo cáo hiệu suất nhân viên",
     customerLoyaltyReport: "Báo cáo khách hàng thân thiết",
     channelProductsReport: "Báo cáo sản phẩm theo kênh",
+    paymentAmount: "Số tiền thanh toán",
+    discount: "Giảm giá",
+    orderCount: "Số đơn hàng",
+    customerPaymentDetails: "Chi tiết thanh toán khách hàng",
   },
 };
