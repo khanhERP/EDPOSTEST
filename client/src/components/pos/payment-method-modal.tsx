@@ -442,10 +442,10 @@ export function PaymentMethodModal({
   const handleEInvoiceClose = () => {
     setShowEInvoice(false);
     
-    // Đóng cả Payment Modal khi E-invoice Modal đóng
-    // Vì thường E-invoice Modal đóng nghĩa là đã xử lý xong
-    console.log('🔙 E-invoice modal closed, closing payment modal as well');
-    onClose();
+    // Chỉ reset trạng thái, không đóng Payment Modal tự động
+    // Để Shopping Cart tự xử lý việc đóng modal
+    console.log('🔙 E-invoice modal closed, resetting payment method selection');
+    setSelectedPaymentMethod("");
   };
 
   // Virtual keyboard handlers
