@@ -171,6 +171,9 @@ export function SalesChartReport() {
     }
   };
 
+  // State for expandable rows
+  const [expandedRows, setExpandedRows] = useState<{[key: string]: boolean}>({});
+
   // Legacy Sales Report Component Logic
   const renderSalesReport = () => {
     if (!transactions || !Array.isArray(transactions)) {
@@ -311,43 +314,32 @@ export function SalesChartReport() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead rowSpan={2} className="text-center border-r bg-green-50">
-                      {t("common.date")}
+                    <TableHead className="text-center border-r bg-green-50 w-8">
+                      
                     </TableHead>
-                    <TableHead rowSpan={2} className="text-center border-r">
-                      {t("reports.orderCount")}
+                    <TableHead className="text-center border-r bg-green-50">
+                      Ngày
                     </TableHead>
-                    <TableHead rowSpan={2} className="text-center border-r">
-                      {t("reports.paymentAmount")}
+                    <TableHead className="text-center border-r">
+                      Số đơn bán
                     </TableHead>
-                    <TableHead rowSpan={2} className="text-center border-r">
-                      {t("reports.discount")}
+                    <TableHead className="text-center border-r">
+                      Thành tiền
                     </TableHead>
-                    <TableHead rowSpan={2} className="text-center border-r">
-                      {t("reports.revenue")}
+                    <TableHead className="text-center border-r">
+                      Giảm giá
                     </TableHead>
-                    <TableHead rowSpan={2} className="text-center border-r">
-                      {t("reports.tax")}
+                    <TableHead className="text-center border-r">
+                      Doanh thu
                     </TableHead>
-                    <TableHead rowSpan={2} className="text-center border-r">
-                      {t("reports.total")}
+                    <TableHead className="text-center border-r">
+                      Thuế
                     </TableHead>
-                    <TableHead colSpan={4} className="text-center border-b bg-blue-50">
-                      {t("reports.customerPaymentDetails")}
+                    <TableHead className="text-center border-r">
+                      Tổng tiền
                     </TableHead>
-                  </TableRow>
-                  <TableRow>
-                    <TableHead className="text-center text-sm">
-                      {t("reports.cash")}
-                    </TableHead>
-                    <TableHead className="text-center text-sm">
-                      {t("common.transfer")}
-                    </TableHead>
-                    <TableHead className="text-center text-sm">
-                      {t("reports.qrbanking")}
-                    </TableHead>
-                    <TableHead className="text-center text-sm">
-                      {t("reports.einvoice")}
+                    <TableHead className="text-center">
+                      Khách thanh toán
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -357,56 +349,93 @@ export function SalesChartReport() {
                       const subtotal = data.revenue * 0.9; // Assuming 10% tax
                       const tax = data.revenue * 0.1;
                       const discount = data.revenue * 0.05; // Assuming 5% average discount
-                      const paymentAmount = subtotal + discount;
-                      
-                      // Sample payment method distribution
-                      const cashAmount = data.revenue * 0.4;
-                      const transferAmount = data.revenue * 0.3;
-                      const qrAmount = data.revenue * 0.2;
-                      const einvoiceAmount = data.revenue * 0.1;
+                      const paymentAmount = data.revenue * 1.05; // Include discount
+                      const customerPayment = data.revenue; // Final amount customer pays
+
+                      // Get transactions for this date
+                      const dateTransactions = filteredTransactions.filter((transaction: any) => {
+                        const transactionDate = new Date(transaction.createdAt || transaction.created_at);
+                        const year = transactionDate.getFullYear();
+                        const month = (transactionDate.getMonth() + 1).toString().padStart(2, "0");
+                        const day = transactionDate.getDate().toString().padStart(2, "0");
+                        const transactionDateStr = `${year}-${month}-${day}`;
+                        return transactionDateStr === date;
+                      });
+
+                      const isExpanded = expandedRows[date] || false;
 
                       return (
-                        <TableRow key={date} className="hover:bg-gray-50">
-                          <TableCell className="font-medium text-center border-r bg-green-50">
-                            {formatDate(date)}
-                          </TableCell>
-                          <TableCell className="text-center border-r">
-                            {data.orders.toLocaleString()}
-                          </TableCell>
-                          <TableCell className="text-right border-r">
-                            {formatCurrency(paymentAmount)}
-                          </TableCell>
-                          <TableCell className="text-right border-r text-red-600">
-                            {formatCurrency(discount)}
-                          </TableCell>
-                          <TableCell className="text-right border-r text-green-600 font-medium">
-                            {formatCurrency(data.revenue)}
-                          </TableCell>
-                          <TableCell className="text-right border-r">
-                            {formatCurrency(tax)}
-                          </TableCell>
-                          <TableCell className="text-right border-r font-bold text-blue-600">
-                            {formatCurrency(data.revenue)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(cashAmount)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(transferAmount)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(qrAmount)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency(einvoiceAmount)}
-                          </TableCell>
-                        </TableRow>
+                        <>
+                          <TableRow key={date} className="hover:bg-gray-50">
+                            <TableCell className="text-center border-r">
+                              <button
+                                onClick={() => setExpandedRows(prev => ({ ...prev, [date]: !prev[date] }))}
+                                className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded text-sm"
+                              >
+                                {isExpanded ? '−' : '+'}
+                              </button>
+                            </TableCell>
+                            <TableCell className="font-medium text-center border-r bg-green-50">
+                              {formatDate(date)}
+                            </TableCell>
+                            <TableCell className="text-center border-r">
+                              {data.orders.toLocaleString()}
+                            </TableCell>
+                            <TableCell className="text-right border-r">
+                              {formatCurrency(paymentAmount)}
+                            </TableCell>
+                            <TableCell className="text-right border-r text-red-600">
+                              {formatCurrency(discount)}
+                            </TableCell>
+                            <TableCell className="text-right border-r text-green-600 font-medium">
+                              {formatCurrency(data.revenue)}
+                            </TableCell>
+                            <TableCell className="text-right border-r">
+                              {formatCurrency(tax)}
+                            </TableCell>
+                            <TableCell className="text-right border-r font-bold text-blue-600">
+                              {formatCurrency(data.revenue)}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-green-600">
+                              {formatCurrency(customerPayment)}
+                            </TableCell>
+                          </TableRow>
+                          
+                          {/* Expanded order details */}
+                          {isExpanded && (
+                            <TableRow className="bg-blue-50/30">
+                              <TableCell colSpan={9} className="p-0">
+                                <div className="pl-12 pr-4 py-3">
+                                  <div className="text-sm font-semibold text-gray-700 mb-2">Chi tiết đơn hàng:</div>
+                                  <div className="space-y-1">
+                                    {dateTransactions.length > 0 ? (
+                                      dateTransactions.map((transaction: any, index: number) => (
+                                        <div key={transaction.id || index} className="flex justify-between items-center py-1 px-3 bg-white rounded text-sm">
+                                          <div className="flex gap-4">
+                                            <span className="text-gray-600">#{transaction.transactionId || `TXN-${index + 1}`}</span>
+                                            <span className="text-gray-600">{new Date(transaction.createdAt || transaction.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+                                            <span className="text-blue-600">{getPaymentMethodLabel(transaction.paymentMethod)}</span>
+                                          </div>
+                                          <div className="font-medium text-green-600">
+                                            {formatCurrency(Number(transaction.total))}
+                                          </div>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <div className="text-gray-500 italic">Không có chi tiết đơn hàng</div>
+                                    )}
+                                  </div>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
                       );
                     })
                   ) : (
                     <TableRow>
                       <TableCell
-                        colSpan={11}
+                        colSpan={9}
                         className="text-center text-gray-500 py-8"
                       >
                         {t("reports.noDataDescription")}
@@ -417,6 +446,9 @@ export function SalesChartReport() {
                   {/* Summary Row */}
                   {Object.entries(dailySales).length > 0 && (
                     <TableRow className="bg-gray-100 font-bold border-t-2">
+                      <TableCell className="text-center border-r">
+                        
+                      </TableCell>
                       <TableCell className="text-center border-r bg-green-100">
                         {t("reports.total")}
                       </TableCell>
@@ -424,7 +456,7 @@ export function SalesChartReport() {
                         {Object.values(dailySales).reduce((sum, data) => sum + data.orders, 0).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right border-r">
-                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.95), 0))}
+                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 1.05), 0))}
                       </TableCell>
                       <TableCell className="text-right border-r text-red-600">
                         {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.05), 0))}
@@ -438,17 +470,8 @@ export function SalesChartReport() {
                       <TableCell className="text-right border-r text-blue-600">
                         {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0))}
                       </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.4), 0))}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.3), 0))}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.2), 0))}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + (data.revenue * 0.1), 0))}
+                      <TableCell className="text-right text-green-600">
+                        {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0))}
                       </TableCell>
                     </TableRow>
                   )}
