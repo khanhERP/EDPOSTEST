@@ -342,14 +342,17 @@ export function SalesChartReport() {
                     <TableHead className="text-center border-r">
                       Tổng tiền
                     </TableHead>
+                    <TableHead className="text-center border-r">
+                      Tiền mặt
+                    </TableHead>
+                    <TableHead className="text-center border-r">
+                      Chuyển khoản
+                    </TableHead>
+                    <TableHead className="text-center border-r">
+                      QR Code InCMS
+                    </TableHead>
                     <TableHead className="text-center">
-                      <div className="flex flex-col">
-                        <span className="font-medium mb-1">Khách thanh toán</span>
-                        <div className="text-xs text-gray-500 grid grid-cols-2 gap-1">
-                          <span>Phương thức</span>
-                          <span>Số tiền</span>
-                        </div>
-                      </div>
+                      Tổng KH thanh toán
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -413,38 +416,36 @@ export function SalesChartReport() {
                             <TableCell className="text-right border-r font-bold text-blue-600">
                               {formatCurrency(actualRevenue)}
                             </TableCell>
-                            <TableCell className="text-right font-bold text-green-600">
-                              <div className="flex flex-col items-end">
-                                <div className="font-bold mb-3 text-lg border-b pb-1">
-                                  {formatCurrency(customerPayment)}
-                                </div>
-                                <div className="text-xs space-y-1 w-full">
-                                  {(() => {
-                                    // Group transactions by payment method for this date
-                                    const paymentMethods: { [method: string]: number } = {};
-                                    dateTransactions.forEach((transaction: any) => {
-                                      const method = transaction.paymentMethod || 'cash';
-                                      paymentMethods[method] = (paymentMethods[method] || 0) + Number(transaction.total);
-                                    });
-                                    
-                                    return Object.entries(paymentMethods).map(([method, amount]) => (
-                                      <div key={method} className="grid grid-cols-2 gap-2 bg-blue-50/80 px-3 py-2 rounded-md border border-blue-200 min-w-[160px]">
-                                        <div className="text-left">
-                                          <span className="text-gray-700 font-medium text-xs">
-                                            {getPaymentMethodLabel(method)}
-                                          </span>
-                                        </div>
-                                        <div className="text-right">
-                                          <span className="font-semibold text-blue-700">
-                                            {formatCurrency(amount)}
-                                          </span>
-                                        </div>
-                                      </div>
-                                    ));
-                                  })()}
-                                </div>
-                              </div>
-                            </TableCell>
+                            {(() => {
+                              // Group transactions by payment method for this date
+                              const paymentMethods: { [method: string]: number } = {};
+                              dateTransactions.forEach((transaction: any) => {
+                                const method = transaction.paymentMethod || 'cash';
+                                paymentMethods[method] = (paymentMethods[method] || 0) + Number(transaction.total);
+                              });
+                              
+                              const cashAmount = paymentMethods['cash'] || 0;
+                              const cardAmount = (paymentMethods['card'] || 0) + (paymentMethods['creditCard'] || 0) + (paymentMethods['debitCard'] || 0);
+                              const qrAmount = (paymentMethods['qrCode'] || 0) + (paymentMethods['mobile'] || 0) + (paymentMethods['momo'] || 0) + (paymentMethods['zalopay'] || 0) + (paymentMethods['vnpay'] || 0);
+                              const totalCustomerPayment = cashAmount + cardAmount + qrAmount;
+                              
+                              return (
+                                <>
+                                  <TableCell className="text-right border-r font-medium">
+                                    {cashAmount > 0 ? formatCurrency(cashAmount) : '-'}
+                                  </TableCell>
+                                  <TableCell className="text-right border-r font-medium">
+                                    {cardAmount > 0 ? formatCurrency(cardAmount) : '-'}
+                                  </TableCell>
+                                  <TableCell className="text-right border-r font-medium">
+                                    {qrAmount > 0 ? formatCurrency(qrAmount) : '-'}
+                                  </TableCell>
+                                  <TableCell className="text-right font-bold text-green-600">
+                                    {formatCurrency(totalCustomerPayment)}
+                                  </TableCell>
+                                </>
+                              );
+                            })()}
                           </TableRow>
 
                           {/* Expanded order details */}
@@ -480,23 +481,30 @@ export function SalesChartReport() {
                                 <TableCell className="text-right border-r font-bold text-blue-600 text-sm">
                                   {formatCurrency(Number(transaction.total))}
                                 </TableCell>
-                                <TableCell className="text-right font-bold text-green-600 text-sm">
-                                  <div className="flex flex-col items-end">
-                                    <div className="font-bold mb-2 text-base">
-                                      {formatCurrency(Number(transaction.total))}
-                                    </div>
-                                    <div className="text-xs w-full">
-                                      <div className="grid grid-cols-2 gap-1 bg-white/80 px-2 py-1 rounded-md border border-gray-300">
-                                        <div className="text-left text-gray-600">
-                                          PT:
-                                        </div>
-                                        <div className="text-right font-medium text-gray-800">
-                                          {getPaymentMethodLabel(transaction.paymentMethod)}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </TableCell>
+                                {(() => {
+                                  const method = transaction.paymentMethod || 'cash';
+                                  const amount = Number(transaction.total);
+                                  const isCash = method === 'cash';
+                                  const isCard = ['card', 'creditCard', 'debitCard'].includes(method);
+                                  const isQR = ['qrCode', 'mobile', 'momo', 'zalopay', 'vnpay'].includes(method);
+                                  
+                                  return (
+                                    <>
+                                      <TableCell className="text-right border-r text-sm">
+                                        {isCash ? formatCurrency(amount) : '-'}
+                                      </TableCell>
+                                      <TableCell className="text-right border-r text-sm">
+                                        {isCard ? formatCurrency(amount) : '-'}
+                                      </TableCell>
+                                      <TableCell className="text-right border-r text-sm">
+                                        {isQR ? formatCurrency(amount) : '-'}
+                                      </TableCell>
+                                      <TableCell className="text-right font-bold text-green-600 text-sm">
+                                        {formatCurrency(amount)}
+                                      </TableCell>
+                                    </>
+                                  );
+                                })()}
                               </TableRow>
                             ))
                           )}
@@ -542,39 +550,36 @@ export function SalesChartReport() {
                       <TableCell className="text-right border-r text-blue-600">
                         {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0))}
                       </TableCell>
-                      <TableCell className="text-right text-green-600">
-                        <div className="flex flex-col items-end">
-                          <div className="font-bold mb-3 text-xl border-b-2 border-green-300 pb-2">
-                            {formatCurrency(Object.values(dailySales).reduce((sum, data) => sum + data.revenue, 0))}
-                          </div>
-                          <div className="text-xs space-y-2 w-full">
-                            <div className="text-center text-gray-600 font-medium mb-2">Chi tiết theo phương thức:</div>
-                            {(() => {
-                              // Calculate total payment methods across all dates
-                              const totalPaymentMethods: { [method: string]: number } = {};
-                              filteredTransactions.forEach((transaction: any) => {
-                                const method = transaction.paymentMethod || 'cash';
-                                totalPaymentMethods[method] = (totalPaymentMethods[method] || 0) + Number(transaction.total);
-                              });
-                              
-                              return Object.entries(totalPaymentMethods).map(([method, amount]) => (
-                                <div key={method} className="grid grid-cols-2 gap-2 bg-green-50/90 px-3 py-2 rounded-md border-2 border-green-300 min-w-[160px] font-bold">
-                                  <div className="text-left">
-                                    <span className="text-gray-800 text-sm">
-                                      {getPaymentMethodLabel(method)}
-                                    </span>
-                                  </div>
-                                  <div className="text-right">
-                                    <span className="text-green-800 font-bold">
-                                      {formatCurrency(amount)}
-                                    </span>
-                                  </div>
-                                </div>
-                              ));
-                            })()}
-                          </div>
-                        </div>
-                      </TableCell>
+                      {(() => {
+                        // Calculate total payment methods across all dates
+                        const totalPaymentMethods: { [method: string]: number } = {};
+                        filteredTransactions.forEach((transaction: any) => {
+                          const method = transaction.paymentMethod || 'cash';
+                          totalPaymentMethods[method] = (totalPaymentMethods[method] || 0) + Number(transaction.total);
+                        });
+                        
+                        const totalCash = totalPaymentMethods['cash'] || 0;
+                        const totalCard = (totalPaymentMethods['card'] || 0) + (totalPaymentMethods['creditCard'] || 0) + (totalPaymentMethods['debitCard'] || 0);
+                        const totalQR = (totalPaymentMethods['qrCode'] || 0) + (totalPaymentMethods['mobile'] || 0) + (totalPaymentMethods['momo'] || 0) + (totalPaymentMethods['zalopay'] || 0) + (totalPaymentMethods['vnpay'] || 0);
+                        const grandTotal = totalCash + totalCard + totalQR;
+                        
+                        return (
+                          <>
+                            <TableCell className="text-right border-r font-bold text-green-600">
+                              {totalCash > 0 ? formatCurrency(totalCash) : '-'}
+                            </TableCell>
+                            <TableCell className="text-right border-r font-bold text-green-600">
+                              {totalCard > 0 ? formatCurrency(totalCard) : '-'}
+                            </TableCell>
+                            <TableCell className="text-right border-r font-bold text-green-600">
+                              {totalQR > 0 ? formatCurrency(totalQR) : '-'}
+                            </TableCell>
+                            <TableCell className="text-right font-bold text-green-600 text-xl">
+                              {formatCurrency(grandTotal)}
+                            </TableCell>
+                          </>
+                        );
+                      })()}
                     </TableRow>
                   )}
                 </TableBody>
