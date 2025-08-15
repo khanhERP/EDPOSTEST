@@ -318,40 +318,45 @@ export function SalesChartReport() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-center border-r bg-green-50 w-8">
+                    <TableHead className="text-center border-r bg-green-50 w-8" rowSpan={2}>
 
                     </TableHead>
-                    <TableHead className="text-center border-r bg-green-50">
+                    <TableHead className="text-center border-r bg-green-50" rowSpan={2}>
                       Ngày
                     </TableHead>
-                    <TableHead className="text-center border-r">
+                    <TableHead className="text-center border-r" rowSpan={2}>
                       Số đơn bán
                     </TableHead>
-                    <TableHead className="text-center border-r">
+                    <TableHead className="text-center border-r" rowSpan={2}>
                       Thành tiền
                     </TableHead>
-                    <TableHead className="text-center border-r">
+                    <TableHead className="text-center border-r" rowSpan={2}>
                       Giảm giá
                     </TableHead>
-                    <TableHead className="text-center border-r">
+                    <TableHead className="text-center border-r" rowSpan={2}>
                       Doanh thu
                     </TableHead>
-                    <TableHead className="text-center border-r">
+                    <TableHead className="text-center border-r" rowSpan={2}>
                       Thuế
                     </TableHead>
-                    <TableHead className="text-center border-r">
+                    <TableHead className="text-center border-r" rowSpan={2}>
                       Tổng tiền
                     </TableHead>
-                    <TableHead className="text-center border-r">
+                    <TableHead className="text-center border-r bg-blue-50" colSpan={4}>
+                      Khách thanh toán
+                    </TableHead>
+                  </TableRow>
+                  <TableRow>
+                    <TableHead className="text-center border-r bg-blue-50">
                       Tiền mặt
                     </TableHead>
-                    <TableHead className="text-center border-r">
+                    <TableHead className="text-center border-r bg-blue-50">
                       Chuyển khoản
                     </TableHead>
-                    <TableHead className="text-center border-r">
+                    <TableHead className="text-center border-r bg-blue-50">
                       QR Code InCMS
                     </TableHead>
-                    <TableHead className="text-center">
+                    <TableHead className="text-center bg-blue-50">
                       Tổng KH thanh toán
                     </TableHead>
                   </TableRow>
