@@ -191,17 +191,31 @@ export function SalesChartReport() {
           const parsedConfig = JSON.parse(savedConfig);
           setSavedSettings(parsedConfig);
 
-          // Apply saved settings if they exist
+          // Only apply saved settings if they are different from current values
           if (parsedConfig.dateRange) {
-            setStartDate(parsedConfig.dateRange.startDate || startDate);
-            setEndDate(parsedConfig.dateRange.endDate || endDate);
+            const savedStartDate = parsedConfig.dateRange.startDate;
+            const savedEndDate = parsedConfig.dateRange.endDate;
+            
+            if (savedStartDate && savedStartDate !== startDate) {
+              setStartDate(savedStartDate);
+            }
+            if (savedEndDate && savedEndDate !== endDate) {
+              setEndDate(savedEndDate);
+            }
           }
           if (parsedConfig.filters) {
-            setSalesMethod(parsedConfig.filters.salesMethod || "all");
-            setSalesChannel(parsedConfig.filters.salesChannel || "all");
+            const savedSalesMethod = parsedConfig.filters.salesMethod || "all";
+            const savedSalesChannel = parsedConfig.filters.salesChannel || "all";
+            
+            if (savedSalesMethod !== salesMethod) {
+              setSalesMethod(savedSalesMethod);
+            }
+            if (savedSalesChannel !== salesChannel) {
+              setSalesChannel(savedSalesChannel);
+            }
           }
           // Apply concern type from legacy report
-          if (parsedConfig.concernType) {
+          if (parsedConfig.concernType && parsedConfig.concernType !== concernType) {
             setConcernType(parsedConfig.concernType);
           }
         }
@@ -231,7 +245,7 @@ export function SalesChartReport() {
     };
 
     loadPreviousSettings();
-  }, [startDate, endDate, analysisType, concernType]);
+  }, [analysisType, concernType]); // Removed startDate, endDate to prevent infinite loop
 
   // Function to load legacy report data and configurations
   const loadLegacyReportData = (type: string) => {
@@ -341,94 +355,97 @@ export function SalesChartReport() {
     }
   };
 
-  // Invalidate product-related queries when product filters change
+  // Debounced query invalidation to prevent excessive API calls
   useEffect(() => {
-    queryClient.invalidateQueries({
-      queryKey: ["/api/products"],
-    });
-  }, [
-    startDate,
-    endDate,
-    selectedCategory,
-    productSearch,
-    productType,
-    queryClient,
-  ]);
-
-  // Invalidate customer queries when customer filter changes
-  useEffect(() => {
-    queryClient.invalidateQueries({
-      queryKey: ["/api/customers"],
-    });
-  }, [startDate, endDate, customerSearch, queryClient]);
-
-  // Force refetch when analysis type changes
-  useEffect(() => {
-    queryClient.refetchQueries({
-      queryKey: ["/api/transactions"],
-    });
-    queryClient.refetchQueries({
-      queryKey: ["/api/orders"],
-    });
-  }, [startDate, endDate, analysisType, concernType, queryClient]);
-
-  // Refetch data when dates change
-  useEffect(() => {
-    if (startDate && endDate) {
-      queryClient.invalidateQueries({
-        queryKey: ["/api/transactions"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/orders"],
-      });
-
-      refetchTransactions();
-      refetchOrders();
-    }
-  }, [startDate, endDate, queryClient, refetchTransactions, refetchOrders]);
-
-  // Save current settings when filters change
-  useEffect(() => {
-    const saveCurrentSettings = () => {
-      try {
-        // Save to both current format and legacy format for compatibility
-        const legacyReportMapping = {
-          time: `salesReport_time_${concernType}_settings`,
-          product: "inventoryReport_settings",
-          employee: "employeeReport_settings",
-          customer: "customerReport_settings",
-          channel: "salesChannelReport_settings",
-        };
-
-        const storageKey =
-          legacyReportMapping[analysisType] ||
-          `salesReport_${analysisType}_${concernType}_settings`;
-        const currentSettings = {
-          dateRange: { startDate, endDate },
-          filters: {
-            salesMethod,
-            salesChannel,
-            selectedEmployee,
-            customerSearch,
-            productSearch,
-            selectedCategory,
-            productType,
-          },
-          lastUpdated: new Date().toISOString(),
-          analysisType,
-          concernType,
-        };
-
-        localStorage.setItem(storageKey, JSON.stringify(currentSettings));
-      } catch (error) {
-        console.warn("Failed to save current settings:", error);
+    const timer = setTimeout(() => {
+      if (analysisType === "product") {
+        queryClient.invalidateQueries({
+          queryKey: ["/api/products"],
+        });
       }
-    };
+    }, 300);
 
-    // Only save if we have meaningful data
-    if (startDate && endDate) {
-      saveCurrentSettings();
-    }
+    return () => clearTimeout(timer);
+  }, [selectedCategory, productSearch, productType, queryClient, analysisType]);
+
+  // Invalidate customer queries when customer filter changes (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (analysisType === "customer") {
+        queryClient.invalidateQueries({
+          queryKey: ["/api/customers"],
+        });
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [customerSearch, queryClient, analysisType]);
+
+  // Refetch data when key parameters change (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (startDate && endDate) {
+        queryClient.invalidateQueries({
+          queryKey: ["/api/transactions"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["/api/orders"],
+        });
+
+        refetchTransactions();
+        refetchOrders();
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [startDate, endDate, analysisType, concernType, queryClient, refetchTransactions, refetchOrders]);
+
+  // Save current settings when filters change (debounced)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const saveCurrentSettings = () => {
+        try {
+          // Save to both current format and legacy format for compatibility
+          const legacyReportMapping = {
+            time: `salesReport_time_${concernType}_settings`,
+            product: "inventoryReport_settings",
+            employee: "employeeReport_settings",
+            customer: "customerReport_settings",
+            channel: "salesChannelReport_settings",
+          };
+
+          const storageKey =
+            legacyReportMapping[analysisType] ||
+            `salesReport_${analysisType}_${concernType}_settings`;
+          const currentSettings = {
+            dateRange: { startDate, endDate },
+            filters: {
+              salesMethod,
+              salesChannel,
+              selectedEmployee,
+              customerSearch,
+              productSearch,
+              selectedCategory,
+              productType,
+            },
+            lastUpdated: new Date().toISOString(),
+            analysisType,
+            concernType,
+          };
+
+          localStorage.setItem(storageKey, JSON.stringify(currentSettings));
+        } catch (error) {
+          console.warn("Failed to save current settings:", error);
+        }
+      };
+
+      // Only save if we have meaningful data
+      if (startDate && endDate) {
+        saveCurrentSettings();
+      }
+    }, 1000); // Debounce for 1 second
+
+    return () => clearTimeout(timer);
   }, [
     startDate,
     endDate,
