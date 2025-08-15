@@ -322,7 +322,7 @@ export function SalesChartReport() {
 
                     </TableHead>
                     <TableHead className="text-center border-r bg-green-50 min-w-[120px]" rowSpan={2}>
-                      {t("reports.orderDate")}
+                      {t("reports.date")}
                     </TableHead>
                     <TableHead className="text-center border-r min-w-[100px]" rowSpan={2}>
                       {t("reports.orderNumber")}
@@ -331,16 +331,16 @@ export function SalesChartReport() {
                       {t("reports.totalAmount")}
                     </TableHead>
                     <TableHead className="text-center border-r min-w-[120px]" rowSpan={2}>
-                      {t("reports.totalDiscount")}
+                      {t("reports.discount")}
                     </TableHead>
                     <TableHead className="text-center border-r min-w-[140px]" rowSpan={2}>
-                      {t("reports.totalRevenue")}
+                      {t("reports.revenue")}
                     </TableHead>
                     <TableHead className="text-center border-r min-w-[120px]" rowSpan={2}>
-                      {t("reports.totalTax")}
+                      {t("reports.tax")}
                     </TableHead>
                     <TableHead className="text-center border-r min-w-[140px]" rowSpan={2}>
-                      {t("reports.finalTotal")}
+                      {t("reports.total")}
                     </TableHead>
                     <TableHead className="text-center border-r bg-blue-50 min-w-[200px]" colSpan={(() => {
                       // Get all unique payment methods from transactions
@@ -1709,15 +1709,21 @@ export function SalesChartReport() {
                         return (
                           <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-lg">
                             <p className="font-semibold text-gray-800 mb-2">{label}</p>
-                            {payload.map((entry, index) => (
-                              <p key={index} className="text-sm" style={{ color: entry.color }}>
-                                {entry.name}: {
-                                  entry.dataKey === 'revenue' || entry.dataKey === 'netRevenue'
-                                    ? formatCurrency(Number(entry.value))
-                                    : entry.value
-                                }
-                              </p>
-                            ))}
+                            {payload.map((entry, index) => {
+                              const translatedName = entry.dataKey === 'revenue' ? t("reports.revenue") :
+                                                   entry.dataKey === 'orders' ? t("reports.orders") :
+                                                   entry.dataKey === 'quantity' ? t("reports.quantity") :
+                                                   entry.name;
+                              return (
+                                <p key={index} className="text-sm" style={{ color: entry.color }}>
+                                  {translatedName}: {
+                                    entry.dataKey === 'revenue' || entry.dataKey === 'netRevenue'
+                                      ? formatCurrency(Number(entry.value))
+                                      : entry.value
+                                  }
+                                </p>
+                              );
+                            })}
                           </div>
                         );
                       }
