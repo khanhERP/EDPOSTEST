@@ -725,18 +725,11 @@ export function SalesChartReport() {
 
     const getSalesData = () => {
       const filteredProducts = getFilteredProducts();
-      if (!filteredProducts.length || !transactions || !Array.isArray(transactions)) return [];
+      if (!filteredProducts.length) return [];
 
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
-
-      const filteredTransactions = transactions.filter((transaction: any) => {
-        const transactionDate = new Date(transaction.createdAt || transaction.created_at);
-        const transactionDateOnly = new Date(transactionDate);
-        transactionDateOnly.setHours(0, 0, 0, 0);
-        return transactionDateOnly >= start && transactionDateOnly <= end;
-      });
 
       const productSales: { [productId: string]: { 
         quantity: number; 
@@ -745,39 +738,91 @@ export function SalesChartReport() {
         revenue: number; 
       } } = {};
 
-      // Process transaction items to get real sales data
-      filteredTransactions.forEach((transaction: any) => {
-        if (transaction.items && Array.isArray(transaction.items)) {
-          transaction.items.forEach((item: any) => {
-            const productId = item.productId?.toString();
-            if (!productId) return;
+      // Process transaction items from transactions
+      if (transactions && Array.isArray(transactions)) {
+        const filteredTransactions = transactions.filter((transaction: any) => {
+          const transactionDate = new Date(transaction.createdAt || transaction.created_at);
+          const transactionDateOnly = new Date(transactionDate);
+          transactionDateOnly.setHours(0, 0, 0, 0);
+          return transactionDateOnly >= start && transactionDateOnly <= end;
+        });
 
-            // Check if this product is in our filtered products list
-            const product = filteredProducts.find(p => p.id.toString() === productId);
-            if (!product) return;
+        filteredTransactions.forEach((transaction: any) => {
+          if (transaction.items && Array.isArray(transaction.items)) {
+            transaction.items.forEach((item: any) => {
+              const productId = item.productId?.toString();
+              if (!productId) return;
 
-            if (!productSales[productId]) {
-              productSales[productId] = { 
-                quantity: 0, 
-                totalAmount: 0, 
-                discount: 0, 
-                revenue: 0 
-              };
-            }
+              // Check if this product is in our filtered products list
+              const product = filteredProducts.find(p => p.id.toString() === productId);
+              if (!product) return;
 
-            const quantity = Number(item.quantity || 0);
-            const total = Number(item.total || 0);
-            const unitPrice = Number(item.price || 0);
-            const totalAmount = quantity * unitPrice;
-            const discount = totalAmount - total; // Giảm giá = Thành tiền - Tổng tiền thực tế
-            
-            productSales[productId].quantity += quantity;
-            productSales[productId].totalAmount += totalAmount;
-            productSales[productId].discount += discount;
-            productSales[productId].revenue += total; // Doanh thu = tổng tiền thực tế
-          });
-        }
-      });
+              if (!productSales[productId]) {
+                productSales[productId] = { 
+                  quantity: 0, 
+                  totalAmount: 0, 
+                  discount: 0, 
+                  revenue: 0 
+                };
+              }
+
+              const quantity = Number(item.quantity || 0);
+              const total = Number(item.total || 0);
+              const unitPrice = Number(item.price || 0);
+              const totalAmount = quantity * unitPrice;
+              const discount = totalAmount - total;
+              
+              productSales[productId].quantity += quantity;
+              productSales[productId].totalAmount += totalAmount;
+              productSales[productId].discount += discount;
+              productSales[productId].revenue += total;
+            });
+          }
+        });
+      }
+
+      // Process order items from orders
+      if (orders && Array.isArray(orders)) {
+        const filteredOrders = orders.filter((order: any) => {
+          const orderDate = new Date(order.orderedAt || order.created_at || order.createdAt);
+          const orderDateOnly = new Date(orderDate);
+          orderDateOnly.setHours(0, 0, 0, 0);
+          return orderDateOnly >= start && orderDateOnly <= end && order.status === 'paid';
+        });
+
+        filteredOrders.forEach((order: any) => {
+          if (order.items && Array.isArray(order.items)) {
+            order.items.forEach((item: any) => {
+              const productId = item.productId?.toString();
+              if (!productId) return;
+
+              // Check if this product is in our filtered products list
+              const product = filteredProducts.find(p => p.id.toString() === productId);
+              if (!product) return;
+
+              if (!productSales[productId]) {
+                productSales[productId] = { 
+                  quantity: 0, 
+                  totalAmount: 0, 
+                  discount: 0, 
+                  revenue: 0 
+                };
+              }
+
+              const quantity = Number(item.quantity || 0);
+              const total = Number(item.total || 0);
+              const unitPrice = Number(item.unitPrice || 0);
+              const totalAmount = quantity * unitPrice;
+              const discount = totalAmount - total;
+              
+              productSales[productId].quantity += quantity;
+              productSales[productId].totalAmount += totalAmount;
+              productSales[productId].discount += discount;
+              productSales[productId].revenue += total;
+            });
+          }
+        });
+      }
 
       return filteredProducts.map((product: any) => {
         const sales = productSales[product.id.toString()] || { 
@@ -787,8 +832,10 @@ export function SalesChartReport() {
           revenue: 0 
         };
 
-        // Chỉ hiển thị sản phẩm có dữ liệu bán hàng
-        if (sales.quantity === 0) return null;
+        // Chỉ hiển thị sản phẩm có dữ liệu bán hàng hoặc hiển thị tất cả nếu không có bộ lọc tìm kiếm
+        if (sales.quantity === 0 && (productSearch || selectedCategory !== "all" || productType !== "all")) {
+          return null;
+        }
 
         // Tìm category name
         const categoryName = categories && Array.isArray(categories) 
@@ -802,7 +849,7 @@ export function SalesChartReport() {
           quantitySold: sales.quantity,
           totalAmount: sales.totalAmount,
           discount: sales.discount,
-          revenue: sales.revenue, // Doanh thu = Thành tiền - Giảm giá
+          revenue: sales.revenue,
           categoryName: categoryName,
         };
       }).filter(item => item !== null);
