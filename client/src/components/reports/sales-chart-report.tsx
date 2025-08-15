@@ -63,7 +63,6 @@ export function SalesChartReport() {
 
   const [analysisType, setAnalysisType] = useState("time");
   const [concernType, setConcernType] = useState("time");
-  const [useOldComponent, setUseOldComponent] = useState(false);
 
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0],
@@ -2385,22 +2384,7 @@ export function SalesChartReport() {
               </Select>
             </div>
 
-            {/* Component Type Toggle */}
-            <div>
-              <Label>{t("reports.componentType")}</Label>
-              <Select
-                value={useOldComponent ? "old" : "new"}
-                onValueChange={(value) => setUseOldComponent(value === "old")}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="new">Component mới</SelectItem>
-                  <SelectItem value="old">Component cũ</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            
 
             {/* Only show Sales Method and Sales Channel for non-time analysis */}
             {analysisType !== "time" && (
@@ -2970,60 +2954,21 @@ export function SalesChartReport() {
         </Card>
       )}
 
-      {/* Report Content - Conditional rendering based on component type */}
-      {useOldComponent ? (
-        // Render component cũ
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                {getReportTitle()} - Component cũ
-              </CardTitle>
-              <CardDescription>
-                Đang sử dụng component báo cáo cũ
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          {renderLegacyComponent()}
-        </div>
-      ) : (
-        // Render component mới (logic hiện tại)
+      {/* Report Content - Using legacy components */}
+      <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5" />
               {getReportTitle()}
-              {(transactionsLoading || ordersLoading || transactionsFetching || ordersFetching) && (
-                <div className="ml-2 w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              )}
             </CardTitle>
             <CardDescription>
-              {t("reports.dataFrom")} {formatDate(startDate)} {t("reports.to")}{" "}
-              {formatDate(endDate)}
-              {transactions && (
-                <span className="ml-2 text-green-600">
-                  • {transactions.length} transactions
-                </span>
-              )}
-              {orders && (
-                <span className="ml-2 text-blue-600">
-                  • {orders.length} orders
-                </span>
-              )}
+              Component báo cáo theo loại phân tích
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            {(transactionsLoading || ordersLoading) ? (
-              <div className="flex justify-center py-8">
-                <div className="text-gray-500">{t("reports.loading")}...</div>
-              </div>
-            ) : (
-              renderReportTable()
-            )}
-          </CardContent>
         </Card>
-      )}
+        {renderLegacyComponent()}
+      </div>
     </div>
   );
 }
