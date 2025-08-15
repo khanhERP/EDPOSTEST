@@ -87,9 +87,11 @@ export function SalesChartReport() {
       selectedEmployee,
     ],
     queryFn: async () => {
-      const response = await fetch(`/api/transactions/${startDate}/${endDate}/${salesMethod}/${salesChannel}/${analysisType}/${concernType}/${selectedEmployee}`);
+      const response = await fetch(
+        `/api/transactions/${startDate}/${endDate}/${salesMethod}/${salesChannel}/${analysisType}/${concernType}/${selectedEmployee}`,
+      );
       if (!response.ok) {
-        throw new Error('Failed to fetch transactions');
+        throw new Error("Failed to fetch transactions");
       }
       return response.json();
     },
@@ -105,16 +107,13 @@ export function SalesChartReport() {
   });
 
   const { data: products } = useQuery({
-    queryKey: [
-      "/api/products",
-      selectedCategory,
-      productSearch,
-      productType,
-    ],
+    queryKey: ["/api/products", selectedCategory, productSearch, productType],
     queryFn: async () => {
-      const response = await fetch(`/api/products/${selectedCategory || 'all'}/${productType || 'all'}`);
+      const response = await fetch(
+        `/api/products/${selectedCategory || "all"}/${productType || "all"}`,
+      );
       if (!response.ok) {
-        throw new Error('Failed to fetch products');
+        throw new Error("Failed to fetch products");
       }
       return response.json();
     },
@@ -129,9 +128,9 @@ export function SalesChartReport() {
   const { data: customers } = useQuery({
     queryKey: ["/api/customers", customerSearch],
     queryFn: async () => {
-      const response = await fetch(`/api/customers/${customerSearch || ''}`);
+      const response = await fetch(`/api/customers/${customerSearch || ""}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch customers');
+        throw new Error("Failed to fetch customers");
       }
       return response.json();
     },
@@ -150,9 +149,11 @@ export function SalesChartReport() {
       concernType,
     ],
     queryFn: async () => {
-      const response = await fetch(`/api/orders/${startDate}/${endDate}/${selectedEmployee}/${salesChannel}/${salesMethod}/${analysisType}/${concernType}`);
+      const response = await fetch(
+        `/api/orders/${startDate}/${endDate}/${selectedEmployee}/${salesChannel}/${salesMethod}/${analysisType}/${concernType}`,
+      );
       if (!response.ok) {
-        throw new Error('Failed to fetch orders');
+        throw new Error("Failed to fetch orders");
       }
       return response.json();
     },
@@ -359,7 +360,18 @@ export function SalesChartReport() {
     };
 
     invalidateAndRefetch();
-  }, [startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee, queryClient, refetchTransactions, refetchOrders]);
+  }, [
+    startDate,
+    endDate,
+    salesMethod,
+    salesChannel,
+    analysisType,
+    concernType,
+    selectedEmployee,
+    queryClient,
+    refetchTransactions,
+    refetchOrders,
+  ]);
 
   // Invalidate product-related queries when product filters change
   useEffect(() => {
@@ -403,14 +415,14 @@ export function SalesChartReport() {
           `salesReport_${analysisType}_${concernType}_settings`;
         const currentSettings = {
           dateRange: { startDate, endDate },
-          filters: { 
-            salesMethod, 
+          filters: {
+            salesMethod,
             salesChannel,
             selectedEmployee,
             customerSearch,
             productSearch,
             selectedCategory,
-            productType
+            productType,
           },
           lastUpdated: new Date().toISOString(),
           analysisType,
@@ -472,24 +484,30 @@ export function SalesChartReport() {
       // Enhanced filtering logic based on actual transaction data
       const methodMatch =
         salesMethod === "all" ||
-        (salesMethod === "no_delivery" && 
-          (!transaction.deliveryMethod || transaction.deliveryMethod === "pickup")) ||
-        (salesMethod === "delivery" && 
+        (salesMethod === "no_delivery" &&
+          (!transaction.deliveryMethod ||
+            transaction.deliveryMethod === "pickup")) ||
+        (salesMethod === "delivery" &&
           transaction.deliveryMethod === "delivery");
 
       const channelMatch =
         salesChannel === "all" ||
-        (salesChannel === "direct" && 
-          (!transaction.salesChannel || transaction.salesChannel === "direct" || transaction.salesChannel === "pos")) ||
-        (salesChannel === "other" && 
-          transaction.salesChannel && transaction.salesChannel !== "direct" && transaction.salesChannel !== "pos");
+        (salesChannel === "direct" &&
+          (!transaction.salesChannel ||
+            transaction.salesChannel === "direct" ||
+            transaction.salesChannel === "pos")) ||
+        (salesChannel === "other" &&
+          transaction.salesChannel &&
+          transaction.salesChannel !== "direct" &&
+          transaction.salesChannel !== "pos");
 
       // Employee filter for all analysis types
       const employeeMatch =
         selectedEmployee === "all" ||
         transaction.cashierName === selectedEmployee ||
         transaction.employeeId?.toString() === selectedEmployee ||
-        (transaction.cashierName && transaction.cashierName.includes(selectedEmployee));
+        (transaction.cashierName &&
+          transaction.cashierName.includes(selectedEmployee));
 
       const result = dateMatch && methodMatch && channelMatch && employeeMatch;
 
@@ -2290,8 +2308,12 @@ export function SalesChartReport() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">{t("common.all")}</SelectItem>
-                      <SelectItem value="direct">{t("reports.direct")}</SelectItem>
-                      <SelectItem value="other">{t("reports.other")}</SelectItem>
+                      <SelectItem value="direct">
+                        {t("reports.direct")}
+                      </SelectItem>
+                      <SelectItem value="other">
+                        {t("reports.other")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -2415,7 +2437,7 @@ export function SalesChartReport() {
 
           {/* Date Range Filters - Only for time analysis */}
           {analysisType === "time" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div>
                 <Label className="text-blue-700 font-medium text-sm">
                   {t("reports.startDate")}

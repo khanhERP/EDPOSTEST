@@ -12,7 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { EInvoiceModal } from "./einvoice-modal";
 import { PaymentMethodModal } from "./payment-method-modal";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/i18n";
 
 interface ReceiptModalProps {
@@ -43,12 +43,8 @@ export function ReceiptModal({
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
-  const [showPrintDialog, setShowPrintDialog] = useState(false); // State to control print dialog visibility
-  const hasAutoOpenedPrint = useRef(false); // Ref to track if print dialog has auto-opened
+  const [hasAutoOpened, setHasAutoOpened] = useState(false);
   const { t } = useTranslation();
-
-  // Determine if the current receipt is a preview based on paymentMethod
-  const receiptData = receipt; // Use the receipt prop directly
 
   // Debug logging when modal opens and when props change
   console.log("=== RECEIPT MODAL RENDERED ===");
@@ -76,51 +72,42 @@ export function ReceiptModal({
   }
 
   console.log("Receipt Modal receipt:", receipt);
-  console.log("Receipt Modal receiptData?.paymentMethod:", receiptData?.paymentMethod);
 
   // Auto-show print dialog when modal opens with autoShowPrint = true
-  // Effect to auto-open print dialog when needed
   useEffect(() => {
     console.log('🔍 Receipt Modal useEffect triggered with:', {
       isOpen,
       hasReceipt: !!receipt,
-      isPreview: receiptData?.paymentMethod === 'preview',
-      hasAutoOpened: hasAutoOpenedPrint.current,
+      isPreview,
+      hasAutoOpened,
       autoShowPrint
     });
 
-    if (
-      isOpen &&
-      receipt &&
-      receiptData?.paymentMethod !== 'preview' &&
-      autoShowPrint &&
-      !hasAutoOpenedPrint.current
-    ) {
-      console.log('✅ Auto-opening print dialog for completed transaction');
+    // Fix auto-print logic: should trigger when autoShowPrint is true and modal is open with valid receipt
+    if (isOpen && receipt && autoShowPrint && !hasAutoOpened) {
+      console.log('✅ Auto-showing print dialog for publishLater (fixed logic)');
+      setHasAutoOpened(true);
 
-      // Delay to ensure modal has rendered and is ready
-      const timer = setTimeout(() => {
-        setShowPrintDialog(true);
-        hasAutoOpenedPrint.current = true;
-        console.log('✅ Print dialog auto-opened successfully');
-      }, 800); // Increased delay to ensure UI is fully rendered
-
-      return () => clearTimeout(timer);
+      // Small delay to ensure modal is fully rendered
+      setTimeout(() => {
+        console.log('🖨️ Triggering handlePrint for publishLater receipt');
+        handlePrint();
+      }, 500);
     } else {
       console.log('❌ Initial conditions not met for auto-print:', {
         isOpen,
         hasReceipt: !!receipt,
-        isPreview: receiptData?.paymentMethod === 'preview',
-        hasAutoOpened: hasAutoOpenedPrint.current
+        isPreview,
+        hasAutoOpened,
+        autoShowPrint
       });
     }
-  }, [isOpen, receipt, autoShowPrint, receiptData?.paymentMethod]);
+  }, [isOpen, receipt, isPreview, autoShowPrint, hasAutoOpened]);
 
-  // Reset hasAutoOpenedPrint when modal closes
+  // Reset hasAutoOpened when modal closes
   useEffect(() => {
     if (!isOpen) {
-      hasAutoOpenedPrint.current = false;
-      setShowPrintDialog(false); // Also reset the print dialog state
+      setHasAutoOpened(false);
     }
   }, [isOpen]);
 
@@ -136,7 +123,6 @@ export function ReceiptModal({
   if (!receipt) return null;
 
   const handlePrint = () => {
-    console.log("Attempting to handle print...");
     const printContent = document.getElementById("receipt-content");
     if (printContent) {
       // Calculate content height dynamically
@@ -151,7 +137,7 @@ export function ReceiptModal({
       if (printWindow) {
         printWindow.document.write("<html><head><title>Receipt</title>");
         printWindow.document.write(
-          "<style>body { font-family: monospace; font-size: 11px; margin: 0; padding: 16px; min-height: auto; line-height: 1.4; } .text-center { text-align: center; } .text-right { text-align: right; } .border-t { border-top: 1px dashed #000; } .border-b { border-bottom: 1px dashed #000; } .py-2 { padding: 4px 0; } .mb-4 { margin-bottom: 8px; } .mb-3 { margin-bottom: 6px; } .mb-2 { margin-bottom: 4px; } .mb-1 { margin-bottom: 2px; } .mt-4 { margin-top: 8px; } .mt-2 { margin-top: 4px; } .pt-2 { padding-top: 4px; } .space-y-1 > * + * { margin-top: 2px; } .flex { display: flex; } .flex-1 { flex: 1; } .justify-between { justify-content: space-between; } .text-sm { font-size: 12px; } .text-xs { font-size: 10px; } .font-bold { font-weight: bold; } .font-medium { font-weight: 500; } .text-gray-600 { color: #666; } @media print { body { min-height: auto !important; height: auto !important; } } @page { margin: 10mm; size: auto; }</style>",
+          "<style>body { font-family: monospace; font-size: 12px; margin: 0; padding: 16px; min-height: auto; } .text-center { text-align: center; } .text-right { text-align: right; } .border-t { border-top: 1px solid #000; } .border-b { border-bottom: 1px solid #000; } .py-2 { padding: 4px 0; } .mb-4 { margin-bottom: 8px; } .mb-2 { margin-bottom: 4px; } .mt-4 { margin-top: 8px; } .mt-2 { margin-top: 4px; } .space-y-1 > * + * { margin-top: 2px; } .flex { display: flex; } .justify-between { justify-content: space-between; } .text-sm { font-size: 11px; } .text-xs { font-size: 10px; } .font-bold { font-weight: bold; } @media print { body { min-height: auto !important; height: auto !important; } } @page { margin: 10mm; size: auto; }</style>",
         );
         printWindow.document.write("</head><body>");
         printWindow.document.write(printContent.innerHTML);
@@ -216,11 +202,7 @@ export function ReceiptModal({
         setTimeout(() => {
           clearInterval(checkClosed);
         }, 10000);
-      } else {
-        console.error("Failed to open print window.");
       }
-    } else {
-      console.error("Print content element not found.");
     }
   };
 
@@ -252,104 +234,97 @@ export function ReceiptModal({
         <div
           id="receipt-content"
           className="receipt-print bg-white"
-          style={{ padding: "16px", fontFamily: "monospace", fontSize: "11px", lineHeight: "1.4" }}
+          style={{ padding: "16px" }}
         >
           <div className="text-center mb-4">
-            <p className="font-bold text-sm mb-1">
-              {storeSettings?.storeName || "IDMC"}
+            <p className="text-xs font-semibold mb-1">
+              {storeSettings?.storeName || "Easy Digital Point Of Sale Service"}
             </p>
-            <p className="text-xs mb-0.5">Vì trí của hàng chính</p>
-            <p className="text-xs mb-0.5">서울시 강남구 테헤란로 123</p>
+            <p className="text-xs mb-0.5">{t('pos.mainStoreLocation')}</p>
+            <p className="text-xs mb-0.5">
+              {storeSettings?.address || "123 Commerce St, City, State 12345"}
+            </p>
             <p className="text-xs mb-2">
-              Điện thoại: {storeSettings?.phone || "02-1234-5678"}
+              {t('pos.phone')} {storeSettings?.phone || "(555) 123-4567"}
             </p>
+            <div className="flex items-center justify-center">
+              <img src={logoPath} alt="EDPOS Logo" className="h-6" />
+            </div>
           </div>
 
-          <div className="py-2 mb-2" style={{ borderTop: "1px dashed #000", borderBottom: "1px dashed #000" }}>
-            <div className="flex justify-between text-xs mb-1">
-              <span>Số giao dịch:</span>
+          <div className="border-t border-b border-gray-300 py-3 mb-3">
+            <div className="flex justify-between text-sm">
+              <span>{t('pos.transactionNumber')}</span>
               <span>{receipt.transactionId}</span>
             </div>
-            <div className="flex justify-between text-xs mb-1">
-              <span>Ngày:</span>
-              <span>{new Date(receipt.createdAt).toLocaleString('vi-VN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true
-              })}</span>
+            <div className="flex justify-between text-sm">
+              <span>{t('pos.date')}</span>
+              <span>{new Date(receipt.createdAt).toLocaleString()}</span>
             </div>
-            <div className="flex justify-between text-xs">
-              <span>Thu ngân:</span>
+            <div className="flex justify-between text-sm">
+              <span>{t('pos.cashier')}</span>
               <span>{receipt.cashierName}</span>
             </div>
           </div>
 
-          <div className="mb-3">
-            {receipt.items.map((item, index) => (
-              <div key={item.id} className="mb-2">
-                <div className="flex justify-between text-xs">
+          <div className="space-y-2 mb-3">
+            {receipt.items.map((item) => (
+              <div key={item.id}>
+                <div className="flex justify-between text-sm">
                   <div className="flex-1">
-                    <div className="font-medium">{item.productName}</div>
-                    <div className="text-gray-600">
-                      SKU: {`FOOD${String(item.productId || item.id).padStart(6, '0')}`}
+                    <div>{item.productName}</div>
+                    <div className="text-xs text-gray-600">
+                      SKU: {`FOOD${String(item.productId || item.id).padStart(5, '0')}`}
                     </div>
-                    <div className="text-gray-600">
-                      {item.quantity} x {parseFloat(item.price).toLocaleString('vi-VN')} ₫
+                    <div className="text-xs text-gray-600">
+                      {item.quantity} x {item.price} ₫
                     </div>
                   </div>
-                  <div className="text-right font-medium">
-                    {parseFloat(item.total).toLocaleString('vi-VN')} ₫
-                  </div>
+                  <div>{item.total} ₫</div>
                 </div>
               </div>
             ))}
           </div>
 
-          <div style={{ borderTop: "1px dashed #000" }} className="pt-2 space-y-1">
-            <div className="flex justify-between text-xs">
-              <span>Tạm tính:</span>
-              <span>{parseFloat(receipt.subtotal).toLocaleString('vi-VN')} ₫</span>
+          <div className="border-t border-gray-300 pt-3 space-y-1">
+            <div className="flex justify-between text-sm">
+              <span>{t('pos.subtotal')}</span>
+              <span>{receipt.subtotal} ₫</span>
             </div>
-            <div className="flex justify-between text-xs">
-              <span>Thuế (8.25%):</span>
-              <span>{parseFloat(receipt.tax).toLocaleString('vi-VN')} ₫</span>
+            <div className="flex justify-between text-sm">
+              <span>{t('pos.tax')}</span>
+              <span>{receipt.tax} ₫</span>
             </div>
-            <div className="flex justify-between font-bold text-sm">
-              <span>Tổng cộng:</span>
-              <span>{parseFloat(receipt.total).toLocaleString('vi-VN')} ₫</span>
+            <div className="flex justify-between font-bold">
+              <span>{t('pos.total')}</span>
+              <span>{receipt.total} ₫</span>
             </div>
-            <div className="flex justify-between text-xs mt-2">
-              <span>Phương thức thanh toán:</span>
-              <span className="capitalize">
-                {receipt.paymentMethod === 'einvoice' ? 'E-Invoice' :
-                 receipt.paymentMethod === 'cash' ? 'Tiền mặt' :
-                 receipt.paymentMethod === 'preview' ? 'Preview' :
-                 receipt.paymentMethod}
-              </span>
+            <div className="flex justify-between text-sm mt-2">
+              <span>{t('pos.paymentMethod')}</span>
+              <span className="capitalize">{receipt.paymentMethod}</span>
             </div>
-            <div className="flex justify-between text-xs">
-              <span>Số tiền nhận:</span>
-              <span>{parseFloat(receipt.amountReceived || receipt.total).toLocaleString('vi-VN')} ₫</span>
-            </div>
+            {receipt.amountReceived && (
+              <div className="flex justify-between text-sm">
+                <span>{t('pos.amountReceived')}</span>
+                <span>{receipt.amountReceived} ₫</span>
+              </div>
+            )}
             {receipt.change && parseFloat(receipt.change) > 0 && (
-              <div className="flex justify-between text-xs">
-                <span>Tiền thừa:</span>
-                <span>{parseFloat(receipt.change).toLocaleString('vi-VN')} ₫</span>
+              <div className="flex justify-between text-sm">
+                <span>Change:</span>
+                <span>{receipt.change} ₫</span>
               </div>
             )}
           </div>
 
-          <div className="text-center mt-4 text-xs">
-            <p>Cảm ơn bạn đã mua hàng!</p>
-            <p>Vui lòng giữ hóa đơn để làm bằng chứng</p>
+          <div className="text-center mt-4 text-xs text-gray-600">
+            <p>{t('pos.thankYouBusiness')}</p>
+            <p>{t('pos.keepReceiptRecords')}</p>
           </div>
         </div>
 
         <div className="flex justify-center p-2 border-t">
-          {isPreview || receiptData?.paymentMethod === 'preview' ? ( // Conditionally render buttons based on preview status
+          {isPreview ? (
             <div className="flex space-x-3 w-full">
               <Button onClick={onClose} variant="outline" className="flex-1">
                 {t('pos.cancel')}
@@ -365,8 +340,7 @@ export function ReceiptModal({
             <div className="flex justify-center space-x-3">
               <Button
                 onClick={handlePrint}
-                disabled={showPrintDialog} // Disable print button when print dialog is shown
-                className={`bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 ${showPrintDialog ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
               >
                 <Printer className="mr-2" size={16} />
                 {t('pos.printReceipt')}
@@ -400,9 +374,6 @@ export function ReceiptModal({
             // Sau khi e-invoice xử lý xong (phát hành ngay hoặc phát hành sau),
             // hiển thị lại receipt modal để in hóa đơn
             console.log('📄 Showing receipt modal after e-invoice processing');
-            // The receipt modal should re-open or re-render to potentially trigger the print dialog again if autoShowPrint is true.
-            // If the initial receipt data was for e-invoice, this might need a refresh or a state update that causes re-render.
-            // For now, we assume the parent component handles re-opening or providing updated receipt data.
           }}
           total={typeof receipt?.total === 'string' ? parseFloat(receipt.total) : (receipt?.total || 0)}
           selectedPaymentMethod={receipt?.paymentMethod || 'cash'}
