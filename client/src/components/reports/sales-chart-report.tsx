@@ -1215,6 +1215,10 @@ export function SalesChartReport() {
     );
   };
 
+  // Employee Report with Pagination State
+  const [employeeCurrentPage, setEmployeeCurrentPage] = useState(1);
+  const [employeePageSize, setEmployeePageSize] = useState(15);
+
   // Legacy Employee Report Component Logic
   const renderEmployeeReport = () => {
     if (!transactions || !Array.isArray(transactions)) {
@@ -1244,64 +1248,71 @@ export function SalesChartReport() {
       return dateMatch && employeeMatch;
     });
 
+    // Group transactions by employee and extract payment methods
     const employeeData: {
-      [cashier: string]: {
-        employee: string;
+      [employeeKey: string]: {
+        employeeCode: string;
+        employeeName: string;
+        orderCount: number;
         revenue: number;
-        returnValue: number;
-        netRevenue: number;
-        orders: number;
-        totalProducts: number;
-        averageOrderValue: number;
-        totalCost: number;
-        grossProfit: number;
+        tax: number;
+        total: number;
+        paymentMethods: { [method: string]: number };
       };
     } = {};
 
+    // Get all unique payment methods from filtered transactions
+    const allPaymentMethods = new Set<string>();
     filteredTransactions.forEach((transaction: any) => {
-      const cashier =
-        transaction.cashierName || transaction.employeeName || "Unknown";
+      const method = transaction.paymentMethod || "cash";
+      allPaymentMethods.add(method);
+    });
 
-      if (!employeeData[cashier]) {
-        employeeData[cashier] = {
-          employee: cashier,
+    filteredTransactions.forEach((transaction: any) => {
+      const employeeCode = transaction.employeeId || "EMP-000";
+      const employeeName = transaction.cashierName || transaction.employeeName || "Unknown";
+      const employeeKey = `${employeeCode}-${employeeName}`;
+
+      if (!employeeData[employeeKey]) {
+        employeeData[employeeKey] = {
+          employeeCode,
+          employeeName,
+          orderCount: 0,
           revenue: 0,
-          returnValue: 0,
-          netRevenue: 0,
-          orders: 0,
-          totalProducts: 0,
-          averageOrderValue: 0,
-          totalCost: 0,
-          grossProfit: 0,
+          tax: 0,
+          total: 0,
+          paymentMethods: {},
         };
+        
+        // Initialize payment methods for each employee
+        allPaymentMethods.forEach(method => {
+          employeeData[employeeKey].paymentMethods[method] = 0;
+        });
       }
 
-      const amount = Number(transaction.total);
-      employeeData[cashier].orders += 1;
+      const transactionTotal = Number(transaction.total || 0);
+      const transactionTax = transactionTotal * 0.1; // 10% tax
+      const transactionRevenue = transactionTotal - transactionTax;
 
-      if (amount > 0) {
-        employeeData[cashier].revenue += amount;
-        employeeData[cashier].totalCost += amount * 0.6;
-      } else {
-        employeeData[cashier].returnValue += Math.abs(amount);
-      }
+      employeeData[employeeKey].orderCount += 1;
+      employeeData[employeeKey].revenue += transactionRevenue;
+      employeeData[employeeKey].tax += transactionTax;
+      employeeData[employeeKey].total += transactionTotal;
 
-      const items = transaction.items || [];
-      items.forEach((item: any) => {
-        employeeData[cashier].totalProducts += Number(item.quantity || 1);
-      });
+      // Add to payment method total
+      const paymentMethod = transaction.paymentMethod || "cash";
+      employeeData[employeeKey].paymentMethods[paymentMethod] += transactionTotal;
     });
 
-    Object.values(employeeData).forEach((data) => {
-      data.netRevenue = data.revenue - data.returnValue;
-      data.averageOrderValue =
-        data.orders > 0 ? data.netRevenue / data.orders : 0;
-      data.grossProfit = data.netRevenue - data.totalCost;
-    });
+    const data = Object.values(employeeData).sort((a, b) => b.total - a.total);
+    
+    // Pagination logic
+    const totalPages = Math.ceil(data.length / employeePageSize);
+    const startIndex = (employeeCurrentPage - 1) * employeePageSize;
+    const endIndex = startIndex + employeePageSize;
+    const paginatedData = data.slice(startIndex, endIndex);
 
-    const data = Object.values(employeeData).sort(
-      (a, b) => b.netRevenue - a.netRevenue,
-    );
+    const paymentMethodsArray = Array.from(allPaymentMethods).sort();
 
     return (
       <Card>
@@ -1316,76 +1327,193 @@ export function SalesChartReport() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("reports.seller")}</TableHead>
-                <TableHead className="text-center">
-                  {t("reports.orders")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.totalProducts")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.totalRevenue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.returnValue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.netRevenue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.averageOrderValue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.totalCost")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.grossProfit")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.length > 0 ? (
-                data.map((item, index) => (
-                  <TableRow key={`${item.employee}-${index}`}>
-                    <TableCell className="font-medium">
-                      {item.employee}
-                    </TableCell>
-                    <TableCell className="text-center">{item.orders}</TableCell>
-                    <TableCell className="text-center">
-                      {item.totalProducts}
-                    </TableCell>
-                    <TableCell className="text-right text-green-600">
-                      {formatCurrency(item.revenue)}
-                    </TableCell>
-                    <TableCell className="text-right text-red-600">
-                      {formatCurrency(item.returnValue)}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(item.netRevenue)}
-                    </TableCell>
-                    <TableCell className="text-right text-blue-600">
-                      {formatCurrency(item.averageOrderValue)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatCurrency(item.totalCost)}
-                    </TableCell>
-                    <TableCell className="text-right text-purple-600">
-                      {formatCurrency(item.grossProfit)}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-center border-r bg-green-50 min-w-[120px]">
+                    Mã nhân viên
+                  </TableHead>
+                  <TableHead className="text-center border-r bg-green-50 min-w-[150px]">
+                    Người bán
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[100px]">
+                    Số đơn bán
+                  </TableHead>
+                  <TableHead className="text-right border-r min-w-[140px]">
+                    Doanh thu
+                  </TableHead>
+                  <TableHead className="text-right border-r min-w-[120px]">
+                    Thuế
+                  </TableHead>
+                  <TableHead className="text-right border-r min-w-[140px]">
+                    Tổng tiền
+                  </TableHead>
+                  <TableHead className="text-center border-r bg-blue-50 min-w-[200px]" colSpan={paymentMethodsArray.length + 1}>
+                    Khách thanh toán
+                  </TableHead>
+                </TableRow>
+                <TableRow>
+                  <TableHead className="border-r bg-green-50"></TableHead>
+                  <TableHead className="border-r bg-green-50"></TableHead>
+                  <TableHead className="border-r"></TableHead>
+                  <TableHead className="border-r"></TableHead>
+                  <TableHead className="border-r"></TableHead>
+                  <TableHead className="border-r"></TableHead>
+                  {paymentMethodsArray.map((method) => (
+                    <TableHead key={method} className="text-center border-r bg-blue-50 min-w-[130px]">
+                      {getPaymentMethodLabel(method)}
+                    </TableHead>
+                  ))}
+                  <TableHead className="text-center bg-blue-50 min-w-[150px]">
+                    Tổng
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((item, index) => (
+                    <TableRow key={`${item.employeeCode}-${index}`} className="hover:bg-gray-50">
+                      <TableCell className="text-center border-r bg-green-50 font-medium min-w-[120px] px-4">
+                        {item.employeeCode}
+                      </TableCell>
+                      <TableCell className="text-center border-r bg-green-50 font-medium min-w-[150px] px-4">
+                        {item.employeeName}
+                      </TableCell>
+                      <TableCell className="text-center border-r min-w-[100px] px-4">
+                        {item.orderCount.toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
+                        {formatCurrency(item.revenue)}
+                      </TableCell>
+                      <TableCell className="text-right border-r min-w-[120px] px-4">
+                        {formatCurrency(item.tax)}
+                      </TableCell>
+                      <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
+                        {formatCurrency(item.total)}
+                      </TableCell>
+                      {paymentMethodsArray.map((method) => {
+                        const amount = item.paymentMethods[method] || 0;
+                        return (
+                          <TableCell key={method} className="text-right border-r font-medium min-w-[130px] px-4">
+                            {amount > 0 ? formatCurrency(amount) : "-"}
+                          </TableCell>
+                        );
+                      })}
+                      <TableCell className="text-right font-bold text-green-600 min-w-[150px] px-4">
+                        {formatCurrency(item.total)}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7 + paymentMethodsArray.length} className="text-center text-gray-500 py-8">
+                      {t("reports.noDataDescription")}
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center text-gray-500">
-                    {t("reports.noDataDescription")}
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                )}
+
+                {/* Summary Row */}
+                {data.length > 0 && (
+                  <TableRow className="bg-gray-100 font-bold border-t-2">
+                    <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
+                      {t("common.total")}
+                    </TableCell>
+                    <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4">
+                      {data.length} nhân viên
+                    </TableCell>
+                    <TableCell className="text-center border-r min-w-[100px] px-4">
+                      {data.reduce((sum, item) => sum + item.orderCount, 0).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
+                      {formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0))}
+                    </TableCell>
+                    <TableCell className="text-right border-r min-w-[120px] px-4">
+                      {formatCurrency(data.reduce((sum, item) => sum + item.tax, 0))}
+                    </TableCell>
+                    <TableCell className="text-right border-r text-blue-600 min-w-[140px] px-4">
+                      {formatCurrency(data.reduce((sum, item) => sum + item.total, 0))}
+                    </TableCell>
+                    {paymentMethodsArray.map((method) => {
+                      const total = data.reduce((sum, item) => sum + (item.paymentMethods[method] || 0), 0);
+                      return (
+                        <TableCell key={method} className="text-right border-r font-bold text-green-600 min-w-[130px] px-4">
+                          {total > 0 ? formatCurrency(total) : "-"}
+                        </TableCell>
+                      );
+                    })}
+                    <TableCell className="text-right font-bold text-green-600 text-xl min-w-[150px] px-4">
+                      {formatCurrency(data.reduce((sum, item) => sum + item.total, 0))}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Pagination Controls for Employee Report */}
+          {data.length > 0 && (
+            <div className="flex items-center justify-between space-x-6 py-4">
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">{t("common.show")}</p>
+                <Select
+                  value={employeePageSize.toString()}
+                  onValueChange={(value) => {
+                    setEmployeePageSize(Number(value));
+                    setEmployeeCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    <SelectItem value="15">15</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="30">30</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm font-medium">{t("common.rows")}</p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">
+                  {t("common.page")} {employeeCurrentPage} / {totalPages}
+                </p>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => setEmployeeCurrentPage(1)}
+                    disabled={employeeCurrentPage === 1}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    «
+                  </button>
+                  <button
+                    onClick={() => setEmployeeCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={employeeCurrentPage === 1}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={() => setEmployeeCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={employeeCurrentPage === totalPages}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    ›
+                  </button>
+                  <button
+                    onClick={() => setEmployeeCurrentPage(totalPages)}
+                    disabled={employeeCurrentPage === totalPages}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    »
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
