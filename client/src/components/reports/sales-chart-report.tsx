@@ -1939,10 +1939,10 @@ export function SalesChartReport() {
       <Card>
         <CardContent className="pt-4">
           {/* Main Filter Row */}
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             {/* Analysis Type */}
             <div>
-              <Label className="text-xs font-medium text-gray-600 mb-1 block">
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">
                 {t("reports.analyzeBy")}
               </Label>
               <Select
@@ -1956,7 +1956,7 @@ export function SalesChartReport() {
                   }
                 }}
               >
-                <SelectTrigger className="h-8 text-sm">
+                <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1971,36 +1971,132 @@ export function SalesChartReport() {
 
             {/* Date Range */}
             <div>
-              <Label className="text-xs font-medium text-gray-600 mb-1 block">
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">
                 {t("reports.startDate")}
               </Label>
               <Input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="h-8 text-sm"
+                className="h-9 text-sm"
               />
             </div>
+            
             <div>
-              <Label className="text-xs font-medium text-gray-600 mb-1 block">
+              <Label className="text-sm font-medium text-gray-700 mb-2 block">
                 {t("reports.endDate")}
               </Label>
               <Input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="h-8 text-sm"
+                className="h-9 text-sm"
               />
             </div>
+          </div>
 
-            {/* Conditional Filters - Hide sales method and channel for product and employee analysis */}
-            {analysisType !== "time" && analysisType !== "product" && analysisType !== "employee" && (
+          {/* Secondary Filter Row - Show based on analysis type */}
+          {analysisType === "employee" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
               <div>
-                <Label className="text-xs font-medium text-gray-600 mb-1 block">
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Tìm kiếm nhân viên
+                </Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Tìm theo tên nhân viên"
+                    value={selectedEmployee === "all" ? "" : selectedEmployee}
+                    onChange={(e) => setSelectedEmployee(e.target.value || "all")}
+                    className="pl-10 h-9 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {analysisType === "customer" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  {t("reports.customerFilter")}
+                </Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder={t("reports.customerFilterPlaceholder")}
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                    className="pl-10 h-9 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {analysisType === "product" && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  {t("reports.productFilter")}
+                </Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Tìm theo tên hoặc mã"
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="pl-10 h-9 text-sm"
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Loại hàng
+                </Label>
+                <Select value={productType} onValueChange={setProductType}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="combo">Combo-Đóng gói</SelectItem>
+                    <SelectItem value="product">Hàng hóa</SelectItem>
+                    <SelectItem value="service">Dịch vụ</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  Nhóm hàng
+                </Label>
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Nhóm hàng" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tất cả</SelectItem>
+                    {categories && Array.isArray(categories) && categories.map((category: any) => (
+                      <SelectItem key={category.id} value={category.id.toString()}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {(analysisType === "channel" || analysisType === "customer") && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
                   {t("reports.salesMethod")}
                 </Label>
                 <Select value={salesMethod} onValueChange={setSalesMethod}>
-                  <SelectTrigger className="h-8 text-sm">
+                  <SelectTrigger className="h-9 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -2010,15 +2106,13 @@ export function SalesChartReport() {
                   </SelectContent>
                 </Select>
               </div>
-            )}
 
-            {(analysisType === "channel" || (analysisType !== "time" && analysisType !== "employee" && analysisType !== "product")) && (
               <div>
-                <Label className="text-xs font-medium text-gray-600 mb-1 block">
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
                   {t("reports.salesChannel")}
                 </Label>
                 <Select value={salesChannel} onValueChange={setSalesChannel}>
-                  <SelectTrigger className="h-8 text-sm">
+                  <SelectTrigger className="h-9 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -2028,98 +2122,6 @@ export function SalesChartReport() {
                   </SelectContent>
                 </Select>
               </div>
-            )}
-          </div>
-
-          {/* Secondary Filter Row - Only show when needed */}
-          {analysisType !== "time" && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {analysisType === "employee" && (
-                <div>
-                  <Label className="text-xs font-medium text-gray-600 mb-1 block">
-                    Tìm kiếm nhân viên
-                  </Label>
-                  <div className="relative">
-                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
-                    <Input
-                      placeholder="Tìm theo tên nhân viên"
-                      value={selectedEmployee === "all" ? "" : selectedEmployee}
-                      onChange={(e) => setSelectedEmployee(e.target.value || "all")}
-                      className="pl-7 h-8 text-sm"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {analysisType === "customer" && (
-                <div>
-                  <Label className="text-xs font-medium text-gray-600 mb-1 block">
-                    {t("reports.customerFilter")}
-                  </Label>
-                  <div className="relative">
-                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
-                    <Input
-                      placeholder={t("reports.customerFilterPlaceholder")}
-                      value={customerSearch}
-                      onChange={(e) => setCustomerSearch(e.target.value)}
-                      className="pl-7 h-8 text-sm"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {analysisType === "product" && (
-                <>
-                  <div>
-                    <Label className="text-xs font-medium text-gray-600 mb-1 block">
-                      {t("reports.productFilter")}
-                    </Label>
-                    <div className="relative">
-                      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
-                      <Input
-                        placeholder="Tìm theo tên hoặc mã"
-                        value={productSearch}
-                        onChange={(e) => setProductSearch(e.target.value)}
-                        className="pl-7 h-8 text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-xs font-medium text-gray-600 mb-1 block">
-                      Loại hàng
-                    </Label>
-                    <Select value={productType} onValueChange={setProductType}>
-                      <SelectTrigger className="h-8 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tất cả</SelectItem>
-                        <SelectItem value="combo">Combo-Đóng gói</SelectItem>
-                        <SelectItem value="product">Hàng hóa</SelectItem>
-                        <SelectItem value="service">Dịch vụ</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs font-medium text-gray-600 mb-1 block">
-                      Nhóm hàng
-                    </Label>
-                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                      <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder="Nhóm hàng" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tất cả</SelectItem>
-                        {categories && Array.isArray(categories) && categories.map((category: any) => (
-                          <SelectItem key={category.id} value={category.id.toString()}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              )}
             </div>
           )}
         </CardContent>
