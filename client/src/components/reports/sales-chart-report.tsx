@@ -88,7 +88,7 @@ export function SalesChartReport() {
     ],
     queryFn: async () => {
       const response = await fetch(
-        `/api/transactions/${startDate}/${endDate}/${salesMethod}/${salesChannel}/${analysisType}/${concernType}/${selectedEmployee}?t=${Date.now()}`,
+        `/api/transactions/${startDate}/${endDate}/${salesMethod}/${salesChannel}/${analysisType}/${concernType}/${selectedEmployee}`,
       );
       if (!response.ok) {
         throw new Error("Failed to fetch transactions");
@@ -100,7 +100,6 @@ export function SalesChartReport() {
     gcTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    retry: 0,
   });
 
   const { data: employees } = useQuery({
@@ -156,7 +155,7 @@ export function SalesChartReport() {
     ],
     queryFn: async () => {
       const response = await fetch(
-        `/api/orders/${startDate}/${endDate}/${selectedEmployee}/${salesChannel}/${salesMethod}/${analysisType}/${concernType}?t=${Date.now()}`,
+        `/api/orders/${startDate}/${endDate}/${selectedEmployee}/${salesChannel}/${salesMethod}/${analysisType}/${concernType}`,
       );
       if (!response.ok) {
         throw new Error("Failed to fetch orders");
@@ -168,7 +167,6 @@ export function SalesChartReport() {
     gcTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,
-    retry: 0,
   });
 
   // Load previous report settings when analysis type changes
@@ -383,48 +381,43 @@ export function SalesChartReport() {
     return () => clearTimeout(timer);
   }, [customerSearch, queryClient, analysisType]);
 
-  // Refetch data when key parameters change (immediate for date changes)
-  useEffect(() => {
-    if (startDate && endDate) {
-      // Remove all cached data first
-      queryClient.removeQueries({
-        queryKey: ["/api/transactions"],
-      });
-      queryClient.removeQueries({
-        queryKey: ["/api/orders"],
-      });
-      
-      // Invalidate queries
-      queryClient.invalidateQueries({
-        queryKey: ["/api/transactions"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["/api/orders"],
-      });
-
-      // Force immediate refetch
-      refetchTransactions();
-      refetchOrders();
-    }
-  }, [startDate, endDate, queryClient, refetchTransactions, refetchOrders]);
-
-  // Refetch for other filters (debounced)
+  // Refetch data when key parameters change (debounced)
   useEffect(() => {
     const timer = setTimeout(() => {
       if (startDate && endDate) {
+        // Invalidate all related queries to force refetch
         queryClient.invalidateQueries({
           queryKey: ["/api/transactions"],
         });
         queryClient.invalidateQueries({
           queryKey: ["/api/orders"],
         });
+
+        // Force refetch the current queries
         refetchTransactions();
         refetchOrders();
       }
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [salesMethod, salesChannel, selectedEmployee, analysisType, concernType, queryClient, refetchTransactions, refetchOrders]);
+  }, [startDate, endDate, salesMethod, salesChannel, selectedEmployee, analysisType, concernType, queryClient, refetchTransactions, refetchOrders]);
+
+  // Additional effect to handle date changes specifically
+  useEffect(() => {
+    if (startDate && endDate) {
+      const timer = setTimeout(() => {
+        queryClient.removeQueries({
+          queryKey: ["/api/transactions"],
+        });
+        queryClient.removeQueries({
+          queryKey: ["/api/orders"],
+        });
+        refetchTransactions();
+        refetchOrders();
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [startDate, endDate, queryClient, refetchTransactions, refetchOrders]);
 
   // Save current settings when filters change (debounced)
   useEffect(() => {
