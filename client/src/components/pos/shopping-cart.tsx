@@ -387,13 +387,9 @@ export function ShoppingCart({
         return;
       }
 
-      // Fallback case - chỉ hiển thị lại payment method modal nếu thực sự cần thiết
-      if (!eInvoiceData.publishLater && !eInvoiceData.publishedImmediately && !eInvoiceData.showReceiptModal) {
-        console.log('⚠️ Fallback case: Showing payment method modal again');
-        setShowPaymentMethodModal(true);
-      } else {
-        console.log('✅ E-invoice processing handled, not showing payment method modal');
-      }
+      // Không hiển thị lại payment method modal cho bất kỳ trường hợp e-invoice nào
+      // vì tất cả đều đã được xử lý và chuyển sang receipt modal
+      console.log('✅ E-invoice processing completed, payment method modal remains closed');
     }
 
     // Existing payment method logic for non-e-invoice methods
@@ -443,6 +439,9 @@ export function ShoppingCart({
     console.log("📧 E-invoice confirmed:", eInvoiceData);
 
     try {
+      // Đảm bảo payment method modal được đóng
+      setShowPaymentMethodModal(false);
+
       // Đơn giản hóa logic: chỉ cần kiểm tra có receipt data không
       if (eInvoiceData.receipt) {
         console.log("📄 E-invoice has receipt data, showing receipt modal");
