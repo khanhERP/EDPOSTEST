@@ -1951,7 +1951,7 @@ export function SalesChartReport() {
                     <div className="relative">
                       <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-gray-400" />
                       <Input
-                        placeholder={t("reports.productFilterPlaceholder")}
+                        placeholder="Tìm theo tên hoặc mã"
                         value={productSearch}
                         onChange={(e) => setProductSearch(e.target.value)}
                         className="pl-7 h-8 text-sm"
@@ -1960,30 +1960,30 @@ export function SalesChartReport() {
                   </div>
                   <div>
                     <Label className="text-xs font-medium text-gray-600 mb-1 block">
-                      {t("reports.productType")}
+                      Loại hàng
                     </Label>
                     <Select value={productType} onValueChange={setProductType}>
                       <SelectTrigger className="h-8 text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">{t("common.all")}</SelectItem>
-                        <SelectItem value="combo">{t("reports.combo")}</SelectItem>
-                        <SelectItem value="product">{t("reports.product")}</SelectItem>
-                        <SelectItem value="service">{t("reports.service")}</SelectItem>
+                        <SelectItem value="all">Tất cả</SelectItem>
+                        <SelectItem value="combo">Combo-Đóng gói</SelectItem>
+                        <SelectItem value="product">Hàng hóa</SelectItem>
+                        <SelectItem value="service">Dịch vụ</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label className="text-xs font-medium text-gray-600 mb-1 block">
-                      {t("reports.productGroup")}
+                      Nhóm hàng
                     </Label>
                     <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                       <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder={t("reports.productGroup")} />
+                        <SelectValue placeholder="Nhóm hàng" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        <SelectItem value="all">Tất cả</SelectItem>
                         {categories && Array.isArray(categories) && categories.map((category: any) => (
                           <SelectItem key={category.id} value={category.id.toString()}>
                             {category.name}
