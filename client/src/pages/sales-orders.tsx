@@ -65,6 +65,14 @@ interface Order {
   orderedAt: string;
 }
 
+// Helper function to safely determine item type
+  const getItemType = (item: any): 'invoice' | 'order' => {
+    if (item?.type) return item.type;
+    if (item?.orderNumber) return 'order';
+    if (item?.invoiceNumber || item?.tradeNumber) return 'invoice';
+    return 'invoice'; // default fallback
+  };
+
 export default function SalesOrders() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -146,7 +154,7 @@ export default function SalesOrders() {
         return [];
       }
     },
-    enabled: !!selectedInvoice?.id && selectedInvoice?.type === 'invoice',
+    enabled: !!selectedInvoice?.id && (selectedInvoice?.type === 'invoice' || !selectedInvoice?.type),
     retry: 2,
   });
 
@@ -451,19 +459,35 @@ export default function SalesOrders() {
   const combinedData = [
     ...(Array.isArray(invoices) ? invoices.map((invoice: Invoice) => ({
       ...invoice,
-      type: 'invoice',
+      type: 'invoice' as const,
       date: invoice.invoiceDate,
       displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
-      displayStatus: invoice.invoiceStatus || 1
+      displayStatus: invoice.invoiceStatus || 1,
+      // Ensure all required fields are present
+      customerName: invoice.customerName || 'Khách hàng lẻ',
+      customerPhone: invoice.customerPhone || '',
+      customerAddress: invoice.customerAddress || '',
+      customerTaxCode: invoice.customerTaxCode || '',
+      symbol: invoice.symbol || 'C11DTD',
+      einvoiceStatus: invoice.einvoiceStatus || 0
     })) : []),
     ...(Array.isArray(orders) ? orders.map((order: Order) => ({
       ...order,
-      type: 'order',
+      type: 'order' as const,
       date: order.orderedAt,
       displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
-      displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : 3,
+      displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
       customerName: order.customerName || 'Khách hàng lẻ',
-      invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : 3
+      invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+      // Map order fields to invoice-like fields for consistency
+      customerPhone: '',
+      customerAddress: '',
+      customerTaxCode: '',
+      symbol: 'C11DTD',
+      invoiceNumber: order.orderNumber || `ORD-${String(order.id).padStart(8, '0')}`,
+      tradeNumber: order.orderNumber || '',
+      invoiceDate: order.orderedAt,
+      einvoiceStatus: order.einvoiceStatus || 0
     })) : [])
   ];
 
@@ -943,7 +967,14 @@ export default function SalesOrders() {
                           </div>
                           <div 
                             className="col-span-2 font-medium cursor-pointer"
-                            onClick={() => setSelectedInvoice(item)}
+                            onClick={() => {
+                              // Ensure type is properly set when selecting
+                              const itemWithType = {
+                                ...item,
+                                type: item.type || (item.orderNumber ? 'order' : 'invoice')
+                              };
+                              setSelectedInvoice(itemWithType);
+                            }}
                           >
                             {item.displayNumber}
                           </div>
