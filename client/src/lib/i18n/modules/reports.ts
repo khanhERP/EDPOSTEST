@@ -252,6 +252,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inactive: "비활성",
     vip: "VIP",
     newCustomer: "신규 고객",
+    customerId: "고객 ID",
+    customerName: "고객명",
 
     // Table headers for reports
     salesDetailsHeader: "판매 세부사항",
@@ -602,6 +604,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inactive: "Inactive",
     vip: "VIP",
     newCustomer: "New Customer",
+    customerId: "Customer ID",
+    customerName: "Customer Name",
 
     // Table headers for reports
     salesDetailsHeader: "Sales Details",
@@ -1016,6 +1020,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inactive: "Không hoạt động",
     vip: "VIP",
     newCustomer: "Khách hàng mới",
+    customerId: "Mã khách hàng",
+    customerName: "Tên khách hàng",
 
     // Table headers for reports
     salesDetailsHeader: "Chi tiết bán hàng",
