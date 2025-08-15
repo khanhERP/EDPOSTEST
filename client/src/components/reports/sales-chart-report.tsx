@@ -322,25 +322,25 @@ export function SalesChartReport() {
 
                     </TableHead>
                     <TableHead className="text-center border-r bg-green-50 min-w-[120px]" rowSpan={2}>
-                      Ngày
+                      {t("reports.orderDate")}
                     </TableHead>
                     <TableHead className="text-center border-r min-w-[100px]" rowSpan={2}>
-                      Số đơn bán
+                      {t("reports.orderNumber")}
                     </TableHead>
                     <TableHead className="text-center border-r min-w-[140px]" rowSpan={2}>
-                      Thành tiền
+                      {t("reports.totalAmount")}
                     </TableHead>
                     <TableHead className="text-center border-r min-w-[120px]" rowSpan={2}>
-                      Giảm giá
+                      {t("reports.totalDiscount")}
                     </TableHead>
                     <TableHead className="text-center border-r min-w-[140px]" rowSpan={2}>
-                      Doanh thu
+                      {t("reports.totalRevenue")}
                     </TableHead>
                     <TableHead className="text-center border-r min-w-[120px]" rowSpan={2}>
-                      Thuế
+                      {t("reports.totalTax")}
                     </TableHead>
                     <TableHead className="text-center border-r min-w-[140px]" rowSpan={2}>
-                      Tổng tiền
+                      {t("reports.finalTotal")}
                     </TableHead>
                     <TableHead className="text-center border-r bg-blue-50 min-w-[200px]" colSpan={(() => {
                       // Get all unique payment methods from transactions
@@ -353,7 +353,7 @@ export function SalesChartReport() {
                       }
                       return allPaymentMethods.size + 1; // +1 for total column
                     })()}>
-                      Khách thanh toán
+                      {t("reports.totalCustomerPayment")}
                     </TableHead>
                   </TableRow>
                   <TableRow>
@@ -377,7 +377,7 @@ export function SalesChartReport() {
                             </TableHead>
                           ))}
                           <TableHead className="text-center bg-blue-50 min-w-[150px]">
-                            Tổng KH thanh toán
+                            {t("reports.totalCustomerPayment")}
                           </TableHead>
                         </>
                       );
@@ -568,7 +568,7 @@ export function SalesChartReport() {
 
                       </TableCell>
                       <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
-                        {t("reports.total")}
+                        {t("common.total")}
                       </TableCell>
                       <TableCell className="text-center border-r min-w-[100px] px-4">
                         {Object.values(dailySales).reduce((sum, data) => sum + data.orders, 0).toLocaleString()}
@@ -632,7 +632,7 @@ export function SalesChartReport() {
             {Object.entries(dailySales).length > 0 && (
               <div className="flex items-center justify-between space-x-6 py-4">
                 <div className="flex items-center space-x-2">
-                  <p className="text-sm font-medium">Hiển thị</p>
+                  <p className="text-sm font-medium">{t("common.show")}</p>
                   <Select
                     value={pageSize.toString()}
                     onValueChange={(value) => {
@@ -651,12 +651,12 @@ export function SalesChartReport() {
                       <SelectItem value="100">100</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-sm font-medium">dòng</p>
+                  <p className="text-sm font-medium">{t("common.rows")}</p>
                 </div>
 
                 <div className="flex items-center space-x-2">
                   <p className="text-sm font-medium">
-                    Trang {currentPage} / {Math.ceil(Object.entries(dailySales).length / pageSize)}
+                    {t("common.page")} {currentPage} / {Math.ceil(Object.entries(dailySales).length / pageSize)}
                   </p>
                   <div className="flex items-center space-x-1">
                     <button
@@ -1996,7 +1996,7 @@ export function SalesChartReport() {
               {getReportTitle()}
             </CardTitle>
             <CardDescription>
-              Component báo cáo theo loại phân tích
+              {t("reports.salesChartDescription")}
             </CardDescription>
           </CardHeader>
         </Card>

@@ -302,6 +302,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     showing: "Showing",
     for: "for",
     noData: "No data",
+    show: "Show",
+    rows: "rows",
+    page: "Page",
+    total: "Total",
 
     // Payment method modal
     selectPaymentMethod: "Select Payment Method",
@@ -440,6 +444,10 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     showing: "Hiển thị",
     for: "cho",
     noData: "Không có dữ liệu",
+    show: "Hiển thị",
+    rows: "dòng",
+    page: "Trang",
+    total: "Tổng",
 
     // Payment method modal translations (already exist above)
     selectPaymentMethod: "Chọn phương thức thanh toán",
