@@ -361,6 +361,24 @@ export function SalesChartReport() {
     });
   }, [analysisType, concernType, queryClient]);
 
+  // Refetch data when dates change
+  useEffect(() => {
+    if (startDate && endDate) {
+      console.log("Date changed, refetching data:", { startDate, endDate });
+      // Invalidate and refetch transactions
+      queryClient.invalidateQueries({
+        queryKey: ["/api/transactions"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/orders"],
+      });
+      
+      // Force refetch with new dates
+      refetchTransactions();
+      refetchOrders();
+    }
+  }, [startDate, endDate, queryClient, refetchTransactions, refetchOrders]);
+
   // Save current settings when filters change
   useEffect(() => {
     const saveCurrentSettings = () => {
