@@ -2447,11 +2447,18 @@ export function SalesChartReport() {
                   value={startDate}
                   onChange={(e) => {
                     setStartDate(e.target.value);
-                    // Clear cache and force refetch when date changes
+                    // Clear cache and force immediate refetch when date changes
                     queryClient.removeQueries({
                       queryKey: ["/api/transactions"],
                     });
                     queryClient.removeQueries({
+                      queryKey: ["/api/orders"],
+                    });
+                    // Invalidate queries to trigger automatic refetch
+                    queryClient.invalidateQueries({
+                      queryKey: ["/api/transactions"],
+                    });
+                    queryClient.invalidateQueries({
                       queryKey: ["/api/orders"],
                     });
                   }}
@@ -2467,11 +2474,18 @@ export function SalesChartReport() {
                   value={endDate}
                   onChange={(e) => {
                     setEndDate(e.target.value);
-                    // Clear cache and force refetch when date changes
+                    // Clear cache and force immediate refetch when date changes
                     queryClient.removeQueries({
                       queryKey: ["/api/transactions"],
                     });
                     queryClient.removeQueries({
+                      queryKey: ["/api/orders"],
+                    });
+                    // Invalidate queries to trigger automatic refetch
+                    queryClient.invalidateQueries({
+                      queryKey: ["/api/transactions"],
+                    });
+                    queryClient.invalidateQueries({
                       queryKey: ["/api/orders"],
                     });
                   }}
