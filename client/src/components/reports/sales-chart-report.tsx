@@ -231,7 +231,7 @@ export function SalesChartReport() {
     };
 
     loadPreviousSettings();
-  }, [analysisType, concernType]);
+  }, [startDate, endDate, analysisType, concernType]);
 
   // Function to load legacy report data and configurations
   const loadLegacyReportData = (type: string) => {
@@ -346,14 +346,21 @@ export function SalesChartReport() {
     queryClient.invalidateQueries({
       queryKey: ["/api/products"],
     });
-  }, [selectedCategory, productSearch, productType, queryClient]);
+  }, [
+    startDate,
+    endDate,
+    selectedCategory,
+    productSearch,
+    productType,
+    queryClient,
+  ]);
 
   // Invalidate customer queries when customer filter changes
   useEffect(() => {
     queryClient.invalidateQueries({
       queryKey: ["/api/customers"],
     });
-  }, [customerSearch, queryClient]);
+  }, [startDate, endDate, customerSearch, queryClient]);
 
   // Force refetch when analysis type changes
   useEffect(() => {
@@ -363,7 +370,7 @@ export function SalesChartReport() {
     queryClient.refetchQueries({
       queryKey: ["/api/orders"],
     });
-  }, [analysisType, concernType, queryClient]);
+  }, [startDate, endDate, analysisType, concernType, queryClient]);
 
   // Refetch data when dates change
   useEffect(() => {
@@ -374,7 +381,7 @@ export function SalesChartReport() {
       queryClient.invalidateQueries({
         queryKey: ["/api/orders"],
       });
-      
+
       refetchTransactions();
       refetchOrders();
     }
@@ -445,10 +452,11 @@ export function SalesChartReport() {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
-      
+
       const transactionDateStr = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, "0")}-${transactionDate.getDate().toString().padStart(2, "0")}`;
-      
-      const dateMatch = transactionDateStr >= startDate && transactionDateStr <= endDate;
+
+      const dateMatch =
+        transactionDateStr >= startDate && transactionDateStr <= endDate;
 
       const methodMatch =
         salesMethod === "all" ||
