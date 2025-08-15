@@ -2485,7 +2485,7 @@ export function SalesChartReport() {
           )}
 
           {analysisType === "customer" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 gap-4 pt-4 border-t border-gray-200">
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
                   {t("reports.customerFilter")}
@@ -2566,7 +2566,7 @@ export function SalesChartReport() {
             </div>
           )}
 
-          {(analysisType === "channel" || analysisType === "customer") && (
+          {analysisType === "channel" && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
