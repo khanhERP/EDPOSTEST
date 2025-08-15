@@ -164,6 +164,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     showing: "표시",
     for: "~에 대한",
     noData: "데이터가 없습니다",
+    regularCustomer: "일반고객",
+    goldCustomer: "골드고객",
+    customerGroup: "고객 그룹",
 
     // Payment method modal
     selectPaymentMethod: "결제 방법 선택",
@@ -306,6 +309,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     rows: "rows",
     page: "Page",
     total: "Total",
+    regularCustomer: "Regular Customer",
+    goldCustomer: "Gold Customer",
+    customerGroup: "Customer Group",
 
     // Payment method modal
     selectPaymentMethod: "Select Payment Method",
@@ -448,6 +454,9 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     rows: "dòng",
     page: "Trang",
     total: "Tổng",
+    regularCustomer: "Khách hàng thường",
+    goldCustomer: "Khách hàng vàng",
+    customerGroup: "Nhóm khách hàng",
 
     // Payment method modal translations (already exist above)
     selectPaymentMethod: "Chọn phương thức thanh toán",
