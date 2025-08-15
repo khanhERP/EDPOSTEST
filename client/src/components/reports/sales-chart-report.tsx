@@ -406,23 +406,51 @@ export function SalesChartReport() {
                             <TableRow className="bg-blue-50/30">
                               <TableCell colSpan={9} className="p-0">
                                 <div className="pl-12 pr-4 py-3">
-                                  <div className="text-sm font-semibold text-gray-700 mb-2">Chi tiết đơn hàng:</div>
-                                  <div className="space-y-1">
+                                  <div className="text-sm font-semibold text-gray-700 mb-3">Chi tiết đơn hàng:</div>
+                                  <div className="space-y-2">
                                     {dateTransactions.length > 0 ? (
                                       dateTransactions.map((transaction: any, index: number) => (
-                                        <div key={transaction.id || index} className="flex justify-between items-center py-1 px-3 bg-white rounded text-sm">
-                                          <div className="flex gap-4">
-                                            <span className="text-gray-600">#{transaction.transactionId || `TXN-${index + 1}`}</span>
-                                            <span className="text-gray-600">{new Date(transaction.createdAt || transaction.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
-                                            <span className="text-blue-600">{getPaymentMethodLabel(transaction.paymentMethod)}</span>
+                                        <div key={transaction.id || index} className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                                          <div className="grid grid-cols-9 gap-3 px-4 py-2 text-sm">
+                                            <div className="col-span-1"></div>
+                                            <div className="col-span-1 text-center font-medium text-blue-600">
+                                              #{transaction.transactionId || `TXN-${index + 1}`}
+                                            </div>
+                                            <div className="col-span-1 text-center text-gray-600">
+                                              {new Date(transaction.createdAt || transaction.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                            <div className="col-span-1 text-right">
+                                              {formatCurrency(Number(transaction.total) * 1.05)}
+                                            </div>
+                                            <div className="col-span-1 text-right text-red-600">
+                                              {formatCurrency(Number(transaction.total) * 0.05)}
+                                            </div>
+                                            <div className="col-span-1 text-right text-green-600 font-medium">
+                                              {formatCurrency(Number(transaction.total))}
+                                            </div>
+                                            <div className="col-span-1 text-right">
+                                              {formatCurrency(Number(transaction.total) * 0.1)}
+                                            </div>
+                                            <div className="col-span-1 text-right font-bold text-blue-600">
+                                              {formatCurrency(Number(transaction.total))}
+                                            </div>
+                                            <div className="col-span-1 text-right font-bold text-green-600">
+                                              {formatCurrency(Number(transaction.total))}
+                                            </div>
                                           </div>
-                                          <div className="font-medium text-green-600">
-                                            {formatCurrency(Number(transaction.total))}
+                                          <div className="px-4 pb-2">
+                                            <div className="flex items-center gap-2 text-xs text-gray-600">
+                                              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                                                {getPaymentMethodLabel(transaction.paymentMethod)}
+                                              </span>
+                                              <span>•</span>
+                                              <span>Mã GD: {transaction.transactionId || `TXN-${index + 1}`}</span>
+                                            </div>
                                           </div>
                                         </div>
                                       ))
                                     ) : (
-                                      <div className="text-gray-500 italic">Không có chi tiết đơn hàng</div>
+                                      <div className="text-gray-500 italic text-center py-4">Không có chi tiết đơn hàng</div>
                                     )}
                                   </div>
                                 </div>
