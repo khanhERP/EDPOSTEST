@@ -95,6 +95,7 @@ export function SalesChartReport() {
       }
       return response.json();
     },
+    enabled: !!startDate && !!endDate, // Only run query when dates are set
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache
     refetchOnMount: true,
@@ -157,6 +158,7 @@ export function SalesChartReport() {
       }
       return response.json();
     },
+    enabled: !!startDate && !!endDate, // Only run query when dates are set
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Don't cache
     refetchOnMount: true,
@@ -335,43 +337,7 @@ export function SalesChartReport() {
     }
   };
 
-  // Invalidate and refetch queries when critical filters change
-  useEffect(() => {
-    const invalidateAndRefetch = async () => {
-      // Clear all caches first
-      queryClient.removeQueries({
-        queryKey: ["/api/transactions"],
-      });
-      queryClient.removeQueries({
-        queryKey: ["/api/orders"],
-      });
-
-      // Then invalidate and refetch
-      await queryClient.invalidateQueries({
-        queryKey: ["/api/transactions"],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["/api/orders"],
-      });
-
-      // Force refetch
-      refetchTransactions();
-      refetchOrders();
-    };
-
-    invalidateAndRefetch();
-  }, [
-    startDate,
-    endDate,
-    salesMethod,
-    salesChannel,
-    analysisType,
-    concernType,
-    selectedEmployee,
-    queryClient,
-    refetchTransactions,
-    refetchOrders,
-  ]);
+  
 
   // Invalidate product-related queries when product filters change
   useEffect(() => {
@@ -2447,20 +2413,6 @@ export function SalesChartReport() {
                   value={startDate}
                   onChange={(e) => {
                     setStartDate(e.target.value);
-                    // Clear cache and force immediate refetch when date changes
-                    queryClient.removeQueries({
-                      queryKey: ["/api/transactions"],
-                    });
-                    queryClient.removeQueries({
-                      queryKey: ["/api/orders"],
-                    });
-                    // Invalidate queries to trigger automatic refetch
-                    queryClient.invalidateQueries({
-                      queryKey: ["/api/transactions"],
-                    });
-                    queryClient.invalidateQueries({
-                      queryKey: ["/api/orders"],
-                    });
                   }}
                   className="border-blue-300 focus:border-blue-500 focus:ring-blue-200 mt-1"
                 />
@@ -2474,20 +2426,6 @@ export function SalesChartReport() {
                   value={endDate}
                   onChange={(e) => {
                     setEndDate(e.target.value);
-                    // Clear cache and force immediate refetch when date changes
-                    queryClient.removeQueries({
-                      queryKey: ["/api/transactions"],
-                    });
-                    queryClient.removeQueries({
-                      queryKey: ["/api/orders"],
-                    });
-                    // Invalidate queries to trigger automatic refetch
-                    queryClient.invalidateQueries({
-                      queryKey: ["/api/transactions"],
-                    });
-                    queryClient.invalidateQueries({
-                      queryKey: ["/api/orders"],
-                    });
                   }}
                   className="border-blue-300 focus:border-blue-500 focus:ring-blue-200 mt-1"
                 />
