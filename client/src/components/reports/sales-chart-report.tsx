@@ -56,18 +56,13 @@ export function SalesChartReport() {
 
   const [analysisType, setAnalysisType] = useState("time");
   const [concernType, setConcernType] = useState("time");
-  
-  // Get current date in YYYY-MM-DD format
-  const getCurrentDate = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-  
-  const [startDate, setStartDate] = useState<string>(getCurrentDate());
-  const [endDate, setEndDate] = useState<string>(getCurrentDate());
+
+  const [startDate, setStartDate] = useState<string>(
+    new Date().toISOString().split("T")[0],
+  );
+  const [endDate, setEndDate] = useState<string>(
+    new Date().toISOString().split("T")[0],
+  );
   const [salesMethod, setSalesMethod] = useState("all");
   const [salesChannel, setSalesChannel] = useState("all");
   const [savedSettings, setSavedSettings] = useState<any>(null);
@@ -341,8 +336,6 @@ export function SalesChartReport() {
       console.warn(`Failed to load legacy report data for ${type}:`, error);
     }
   };
-
-  
 
   // Invalidate product-related queries when product filters change
   useEffect(() => {
