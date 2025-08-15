@@ -84,6 +84,7 @@ export default function SalesOrders() {
   const [editableInvoice, setEditableInvoice] = useState<Invoice | null>(null);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
+  const [showBulkCancelDialog, setShowBulkCancelDialog] = useState(false);
 
   // Query invoices
   const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError } = useQuery({
@@ -185,6 +186,88 @@ export default function SalesOrders() {
       if (editableInvoice) {
         setSelectedInvoice(editableInvoice);
       }
+    },
+  });
+
+  // Mutation for bulk canceling orders
+  const bulkCancelOrdersMutation = useMutation({
+    mutationFn: async (orderKeys: string[]) => {
+      const results = [];
+      for (const orderKey of orderKeys) {
+        const [type, id] = orderKey.split('-');
+        try {
+          let response;
+          
+          if (type === 'order') {
+            // For orders, update status to 'cancelled'
+            response = await apiRequest("PUT", `/api/orders/${id}/status`, { 
+              status: "cancelled"
+            });
+          } else {
+            // For invoices, update both invoiceStatus and invoice_status to 3 (Đã hủy)
+            response = await apiRequest("PUT", `/api/invoices/${id}`, { 
+              invoiceStatus: 3, // 3 = Đã hủy
+              invoice_status: 3 // 3 = Đã hủy (database column)
+            });
+          }
+          
+          if (!response.ok) {
+            throw new Error(`Failed to cancel ${type} ${id}`);
+          }
+          
+          results.push({ orderKey, success: true });
+        } catch (error) {
+          console.error(`Error canceling ${type} ${id}:`, error);
+          results.push({ orderKey, success: false, error: error.message });
+        }
+      }
+      return results;
+    },
+    onSuccess: (results) => {
+      console.log('Bulk cancel results:', results);
+      
+      // Count successful cancellations
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.length - successCount;
+      
+      // Close dialog
+      setShowBulkCancelDialog(false);
+      
+      // Clear selections
+      setSelectedOrderIds(new Set());
+      
+      // Refresh data
+      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      
+      // Update selected invoice if it was cancelled
+      if (selectedInvoice) {
+        const selectedOrderKey = `${selectedInvoice.type}-${selectedInvoice.id}`;
+        const wasCancelled = results.find(r => r.orderKey === selectedOrderKey && r.success);
+        if (wasCancelled) {
+          setSelectedInvoice({
+            ...selectedInvoice,
+            invoiceStatus: 3,
+            invoice_status: 3,
+            displayStatus: 3,
+            status: selectedInvoice.type === 'order' ? 'cancelled' : selectedInvoice.status
+          });
+          setIsEditing(false);
+          setEditableInvoice(null);
+        }
+      }
+      
+      // Show success message
+      if (successCount > 0) {
+        alert(`Đã hủy thành công ${successCount} đơn hàng${failCount > 0 ? `, ${failCount} đơn thất bại` : ''}`);
+      } else {
+        alert(`Không thể hủy đơn hàng nào`);
+      }
+    },
+    onError: (error) => {
+      console.error('Bulk cancel error:', error);
+      setShowBulkCancelDialog(false);
+      alert(`Lỗi hủy đơn hàng: ${error.message}`);
     },
   });
 
@@ -798,10 +881,7 @@ export default function SalesOrders() {
                       variant="outline" 
                       className="flex items-center gap-2 border-red-500 text-red-600 hover:bg-red-50"
                       disabled={selectedOrderIds.size === 0}
-                      onClick={() => {
-                        console.log('Bulk cancel orders:', Array.from(selectedOrderIds));
-                        // Handle bulk cancel orders logic here
-                      }}
+                      onClick={() => setShowBulkCancelDialog(true)}
                     >
                       <X className="w-4 h-4" />
                       Hủy đơn ({selectedOrderIds.size})
@@ -1221,6 +1301,31 @@ export default function SalesOrders() {
           </div>
         </div>
       </div>
+
+      {/* Bulk Cancel Orders Confirmation Dialog */}
+      <AlertDialog open={showBulkCancelDialog} onOpenChange={setShowBulkCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hủy đơn hàng bán</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc muốn hủy {selectedOrderIds.size} đơn hàng đã chọn không? Hành động này không thể hoàn tác.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Bỏ qua</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                const orderKeys = Array.from(selectedOrderIds);
+                bulkCancelOrdersMutation.mutate(orderKeys);
+              }}
+              disabled={bulkCancelOrdersMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {bulkCancelOrdersMutation.isPending ? 'Đang hủy...' : `Hủy ${selectedOrderIds.size} đơn`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Cancel Order Confirmation Dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
