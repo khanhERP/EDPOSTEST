@@ -1331,35 +1331,50 @@ export function SalesChartReport() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="text-center border-r bg-green-50 min-w-[120px]">
+                  <TableHead
+                    className="text-center border-r bg-green-50 min-w-[120px]"
+                    rowSpan={2}
+                  >
                     Mã nhân viên
                   </TableHead>
-                  <TableHead className="text-center border-r bg-green-50 min-w-[150px]">
+                  <TableHead
+                    className="text-center border-r bg-green-50 min-w-[150px]"
+                    rowSpan={2}
+                  >
                     Người bán
                   </TableHead>
-                  <TableHead className="text-center border-r min-w-[100px]">
+                  <TableHead
+                    className="text-center border-r min-w-[100px]"
+                    rowSpan={2}
+                  >
                     Số đơn bán
                   </TableHead>
-                  <TableHead className="text-right border-r min-w-[140px]">
+                  <TableHead
+                    className="text-right border-r min-w-[140px]"
+                    rowSpan={2}
+                  >
                     Doanh thu
                   </TableHead>
-                  <TableHead className="text-right border-r min-w-[120px]">
+                  <TableHead
+                    className="text-right border-r min-w-[120px]"
+                    rowSpan={2}
+                  >
                     Thuế
                   </TableHead>
-                  <TableHead className="text-right border-r min-w-[140px]">
+                  <TableHead
+                    className="text-right border-r min-w-[140px]"
+                    rowSpan={2}
+                  >
                     Tổng tiền
                   </TableHead>
-                  <TableHead className="text-center border-r bg-blue-50 min-w-[200px]" colSpan={paymentMethodsArray.length + 1}>
+                  <TableHead
+                    className="text-center border-r bg-blue-50 min-w-[200px]"
+                    colSpan={paymentMethodsArray.length + 1}
+                  >
                     Khách thanh toán
                   </TableHead>
                 </TableRow>
                 <TableRow>
-                  <TableHead className="border-r bg-green-50"></TableHead>
-                  <TableHead className="border-r bg-green-50"></TableHead>
-                  <TableHead className="border-r"></TableHead>
-                  <TableHead className="border-r"></TableHead>
-                  <TableHead className="border-r"></TableHead>
-                  <TableHead className="border-r"></TableHead>
                   {paymentMethodsArray.map((method) => (
                     <TableHead key={method} className="text-center border-r bg-blue-50 min-w-[130px]">
                       {getPaymentMethodLabel(method)}
