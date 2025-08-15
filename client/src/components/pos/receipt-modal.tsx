@@ -73,7 +73,7 @@ export function ReceiptModal({
 
   console.log("Receipt Modal receipt:", receipt);
 
-  // Auto-show print dialog when modal opens with autoShowPrint = true
+  // Auto-show print dialog when receipt modal opens (only once per modal session)
   useEffect(() => {
     console.log('🔍 Receipt Modal useEffect triggered with:', {
       isOpen,
@@ -83,16 +83,17 @@ export function ReceiptModal({
       autoShowPrint
     });
 
-    // Fix auto-print logic: should trigger when autoShowPrint is true and modal is open with valid receipt
-    if (isOpen && receipt && autoShowPrint && !hasAutoOpened) {
-      console.log('✅ Auto-showing print dialog for publishLater (fixed logic)');
+    if (isOpen && receipt && !isPreview && !hasAutoOpened && autoShowPrint) {
+      console.log('🎯 Auto-opening print dialog for receipt');
       setHasAutoOpened(true);
 
       // Small delay to ensure modal is fully rendered
       setTimeout(() => {
-        console.log('🖨️ Triggering handlePrint for publishLater receipt');
+        console.log('🖨️ Executing handlePrint for autoShowPrint');
         handlePrint();
-      }, 500);
+      }, 300); // Reduced delay for better UX
+    } else if (isOpen && receipt && !isPreview && autoShowPrint && hasAutoOpened) {
+      console.log('⚠️ Print dialog already auto-opened once for this session');
     } else {
       console.log('❌ Initial conditions not met for auto-print:', {
         isOpen,
@@ -102,7 +103,7 @@ export function ReceiptModal({
         autoShowPrint
       });
     }
-  }, [isOpen, receipt, isPreview, autoShowPrint, hasAutoOpened]);
+  }, [isOpen, receipt, isPreview, hasAutoOpened, autoShowPrint]);
 
   // Reset hasAutoOpened when modal closes
   useEffect(() => {

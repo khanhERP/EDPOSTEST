@@ -499,18 +499,19 @@ export function EInvoiceModal({
         description: 'Thông tin hóa đơn điện tử đã được lưu vào database để phát hành sau.',
       });
 
-      // Đóng modal e-invoice ngay lập tức để receipt modal có thể hiển thị
-      console.log('🔒 Closing e-invoice modal immediately for receipt display');
-      onClose();
-
-      // Gọi onConfirm để hiển thị receipt modal với flag để in hóa đơn
-      console.log('✅ Calling onConfirm to show print dialog directly');
+      // Gọi onConfirm trước khi đóng modal để đảm bảo parent component nhận được data
+      console.log('✅ Calling onConfirm with publishLater data');
       onConfirm({
         ...invoiceData,
         publishLater: true,
-        showPrintDialog: true, // Flag để hiển thị print dialog trực tiếp
+        showReceiptModal: true, // Flag để hiển thị receipt modal
+        autoShowPrint: true, // Flag để tự động hiển thị print dialog
         receipt: receiptData // Đảm bảo receipt data được truyền
       });
+
+      // Đóng modal e-invoice sau khi gọi onConfirm
+      console.log('🔒 Closing e-invoice modal after calling onConfirm');
+      onClose();
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);

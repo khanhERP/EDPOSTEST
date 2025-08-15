@@ -290,45 +290,51 @@ export function ShoppingCart({
     console.log("📧 E-invoice confirmed:", eInvoiceData);
 
     try {
-      // Kiểm tra nếu là "phát hành sau" (publishLater)
+      // Xử lý trường hợp "Phát hành sau" (publishLater = true)
       if (eInvoiceData.publishLater) {
-        console.log(
-          "📝 E-invoice saved for later publishing, processing receipt display",
-        );
+        console.log("⏳ E-invoice publishLater = true, processing...");
+        console.log("📄 Receipt data for later:", eInvoiceData.receipt);
 
-        // Kiểm tra nếu có receipt data từ e-invoice modal
-        if (eInvoiceData.receipt) {
-          console.log(
-            "📄 Displaying receipt for later publishing:",
-            eInvoiceData.receipt,
-          );
+        // Clear cart trước
+        onClearCart();
 
-          // Clear cart trước khi hiển thị receipt modal
-          onClearCart();
+        // Kiểm tra các flag từ einvoice modal
+        if (eInvoiceData.showReceiptModal && eInvoiceData.receipt) {
+          console.log("🎯 PublishLater: Opening receipt modal with print dialog");
 
-          // Set autoShowPrint = true để tự động hiển thị dialog in
-          setAutoShowPrint(true);
+          // Set autoShowPrint từ flag của einvoice modal
+          setAutoShowPrint(eInvoiceData.autoShowPrint || true);
 
-          // Hiển thị receipt modal với data thực sự, isPreview = false để có thể in ngay
+          // Hiển thị receipt modal với dữ liệu e-invoice
           setCurrentReceipt(eInvoiceData.receipt);
           setShowReceiptModal(true);
 
-          console.log("✅ Receipt modal opened with autoShowPrint = true for publishLater");
+          console.log("✅ Receipt modal opened with autoShowPrint for publishLater");
 
           toast({
             title: "Thành công",
-            description:
-              "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
+            description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
+          });
+        } else if (eInvoiceData.receipt) {
+          console.log("🎯 PublishLater: Opening receipt modal (fallback)");
+
+          // Fallback: hiển thị receipt modal ngay cả khi không có flag
+          setAutoShowPrint(true);
+          setCurrentReceipt(eInvoiceData.receipt);
+          setShowReceiptModal(true);
+
+          console.log("✅ Receipt modal opened (fallback) for publishLater");
+
+          toast({
+            title: "Thành công",
+            description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
           });
         } else {
           console.log("⚠️ No receipt data found for later publishing");
-          // Clear cart
-          onClearCart();
 
           toast({
             title: "Thành công",
-            description:
-              "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
+            description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
           });
         }
 
