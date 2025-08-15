@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import {
   TrendingUp,
   FileText,
@@ -50,13 +51,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// Lazy load các component báo cáo cũ
-const InventoryReport = lazy(() => import("./inventory-report").then(module => ({ default: module.InventoryReport })));
-const EmployeeReport = lazy(() => import("./employee-report").then(module => ({ default: module.EmployeeReport })));
-const CustomerReport = lazy(() => import("./customer-report").then(module => ({ default: module.CustomerReport })));
-const SalesChannelReport = lazy(() => import("./sales-channel-report").then(module => ({ default: module.SalesChannelReport })));
-const SalesReport = lazy(() => import("./sales-report").then(module => ({ default: module.SalesReport })));
-
 export function SalesChartReport() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -72,8 +66,6 @@ export function SalesChartReport() {
   );
   const [salesMethod, setSalesMethod] = useState("all");
   const [salesChannel, setSalesChannel] = useState("all");
-  const [savedSettings, setSavedSettings] = useState<any>(null);
-  const [previousReportData, setPreviousReportData] = useState<any>(null);
 
   // Additional filters from legacy reports
   const [selectedEmployee, setSelectedEmployee] = useState("all");
@@ -82,582 +74,43 @@ export function SalesChartReport() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [productType, setProductType] = useState("all");
 
-  const { data: transactions, refetch: refetchTransactions, isLoading: transactionsLoading, isFetching: transactionsFetching } = useQuery({
-    queryKey: [
-      "/api/transactions",
-      startDate,
-      endDate,
-      salesMethod,
-      salesChannel,
-      analysisType,
-      concernType,
-      selectedEmployee,
-    ],
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/transactions/${startDate}/${endDate}/${salesMethod}/${salesChannel}/${analysisType}/${concernType}/${selectedEmployee}?t=${Date.now()}`,
-        {
-          cache: 'no-cache',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch transactions");
-      }
-      const data = await response.json();
-      console.log('🔄 Transactions data fetched:', data.length, 'items');
-      return data;
-    },
-    enabled: !!startDate && !!endDate,
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    retry: 0,
+  // Data queries
+  const { data: transactions, isLoading: transactionsLoading } = useQuery({
+    queryKey: ["/api/transactions"],
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: orders, isLoading: ordersLoading } = useQuery({
+    queryKey: ["/api/orders"],
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: products } = useQuery({
-    queryKey: ["/api/products", selectedCategory, productSearch, productType],
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/products/${selectedCategory || "all"}/${productType || "all"}`,
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch products");
-      }
-      return response.json();
-    },
-    staleTime: 0,
-    gcTime: 0,
+    queryKey: ["/api/products"],
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: categories } = useQuery({
     queryKey: ["/api/categories"],
-    staleTime: 0,
-    gcTime: 0,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: customers } = useQuery({
-    queryKey: ["/api/customers", customerSearch],
-    queryFn: async () => {
-      const response = await fetch(`/api/customers/${customerSearch || ""}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch customers");
-      }
-      return response.json();
-    },
-    staleTime: 0,
-    gcTime: 0,
+    queryKey: ["/api/customers"],
+    staleTime: 5 * 60 * 1000,
   });
 
-  const { data: orders, refetch: refetchOrders, isLoading: ordersLoading, isFetching: ordersFetching } = useQuery({
-    queryKey: [
-      "/api/orders",
-      startDate,
-      endDate,
-      selectedEmployee,
-      salesChannel,
-      salesMethod,
-      analysisType,
-      concernType,
-    ],
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/orders/${startDate}/${endDate}/${selectedEmployee}/${salesChannel}/${salesMethod}/${analysisType}/${concernType}?t=${Date.now()}`,
-        {
-          cache: 'no-cache',
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          }
-        }
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch orders");
-      }
-      const data = await response.json();
-      console.log('🔄 Orders data fetched:', data.length, 'items');
-      return data;
-    },
-    enabled: !!startDate && !!endDate,
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-    retry: 0,
+  const { data: suppliers } = useQuery({
+    queryKey: ["/api/suppliers"],
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Load previous report settings when analysis type changes
-  useEffect(() => {
-    const loadPreviousSettings = () => {
-      try {
-        // Define mapping from analysis type to legacy report storage keys
-        const legacyReportMapping = {
-          time: `salesReport_time_${concernType}_settings`,
-          product: "inventoryReport_settings", // Báo cáo Hàng hóa
-          employee: "employeeReport_settings", // Báo cáo nhân viên
-          customer: "customerReport_settings", // Báo cáo khách hàng
-          channel: "salesChannelReport_settings", // Báo cáo kênh bán hàng
-        };
-
-        const storageKey =
-          legacyReportMapping[analysisType] ||
-          `salesReport_${analysisType}_${concernType}_settings`;
-        const savedConfig = localStorage.getItem(storageKey);
-
-        if (savedConfig) {
-          const parsedConfig = JSON.parse(savedConfig);
-          setSavedSettings(parsedConfig);
-
-          // Only apply saved settings if they are different from current values
-          if (parsedConfig.dateRange) {
-            const savedStartDate = parsedConfig.dateRange.startDate;
-            const savedEndDate = parsedConfig.dateRange.endDate;
-
-            if (savedStartDate && savedStartDate !== startDate) {
-              setStartDate(savedStartDate);
-            }
-            if (savedEndDate && savedEndDate !== endDate) {
-              setEndDate(savedEndDate);
-            }
-          }
-          if (parsedConfig.filters) {
-            const savedSalesMethod = parsedConfig.filters.salesMethod || "all";
-            const savedSalesChannel = parsedConfig.filters.salesChannel || "all";
-
-            if (savedSalesMethod !== salesMethod) {
-              setSalesMethod(savedSalesMethod);
-            }
-            if (savedSalesChannel !== salesChannel) {
-              setSalesChannel(savedSalesChannel);
-            }
-          }
-          // Apply concern type from legacy report
-          if (parsedConfig.concernType && parsedConfig.concernType !== concernType) {
-            setConcernType(parsedConfig.concernType);
-          }
-        }
-
-        // Load previous report data for comparison
-        const legacyDataMapping = {
-          time: `salesReport_time_${concernType}_data`,
-          product: "inventoryReport_data",
-          employee: "employeeReport_data",
-          customer: "customerReport_data",
-          channel: "salesChannelReport_data",
-        };
-
-        const dataKey =
-          legacyDataMapping[analysisType] ||
-          `salesReport_${analysisType}_${concernType}_data`;
-        const savedData = localStorage.getItem(dataKey);
-        if (savedData) {
-          setPreviousReportData(JSON.parse(savedData));
-        }
-
-        // Load legacy report configurations and data based on analysis type
-        loadLegacyReportData(analysisType);
-      } catch (error) {
-        console.warn("Failed to load previous report settings:", error);
-      }
-    };
-
-    loadPreviousSettings();
-  }, [analysisType, concernType]); // Removed startDate, endDate to prevent infinite loop
-
-  // Function to load legacy report data and configurations
-  const loadLegacyReportData = (type: string) => {
-    try {
-      switch (type) {
-        case "product":
-          // Load inventory report settings and data
-          const inventorySettings = localStorage.getItem(
-            "inventoryReport_settings",
-          );
-          const inventoryData = localStorage.getItem("inventoryReport_data");
-
-          if (inventorySettings) {
-            const settings = JSON.parse(inventorySettings);
-            if (settings.dateRange) {
-              setStartDate(settings.dateRange.startDate || startDate);
-              setEndDate(settings.dateRange.endDate || endDate);
-            }
-            if (settings.concernType) {
-              setConcernType(settings.concernType);
-            }
-          }
-
-          if (inventoryData) {
-            const data = JSON.parse(inventoryData);
-            setPreviousReportData(data);
-          }
-          break;
-
-        case "employee":
-          // Load employee report settings and data
-          const employeeSettings = localStorage.getItem(
-            "employeeReport_settings",
-          );
-          const employeeData = localStorage.getItem("employeeReport_data");
-
-          if (employeeSettings) {
-            const settings = JSON.parse(employeeSettings);
-            if (settings.dateRange) {
-              setStartDate(settings.dateRange.startDate || startDate);
-              setEndDate(settings.dateRange.endDate || endDate);
-            }
-            if (settings.concernType) {
-              setConcernType(settings.concernType);
-            }
-          }
-
-          if (employeeData) {
-            const data = JSON.parse(employeeData);
-            setPreviousReportData(data);
-          }
-          break;
-
-        case "customer":
-          // Load customer report settings and data
-          const customerSettings = localStorage.getItem(
-            "customerReport_settings",
-          );
-          const customerData = localStorage.getItem("customerReport_data");
-
-          if (customerSettings) {
-            const settings = JSON.parse(customerSettings);
-            if (settings.dateRange) {
-              setStartDate(settings.dateRange.startDate || startDate);
-              setEndDate(settings.dateRange.endDate || endDate);
-            }
-            if (settings.concernType) {
-              setConcernType(settings.concernType);
-            }
-          }
-
-          if (customerData) {
-            const data = JSON.parse(customerData);
-            setPreviousReportData(data);
-          }
-          break;
-
-        case "channel":
-          // Load sales channel report settings and data
-          const channelSettings = localStorage.getItem(
-            "salesChannelReport_settings",
-          );
-          const channelData = localStorage.getItem("salesChannelReport_data");
-
-          if (channelSettings) {
-            const settings = JSON.parse(channelSettings);
-            if (settings.dateRange) {
-              setStartDate(settings.dateRange.startDate || startDate);
-              setEndDate(settings.dateRange.endDate || endDate);
-            }
-            if (settings.concernType) {
-              setConcernType(settings.concernType);
-            }
-          }
-
-          if (channelData) {
-            const data = JSON.parse(channelData);
-            setPreviousReportData(data);
-          }
-          break;
-
-        default:
-          break;
-      }
-    } catch (error) {
-      console.warn(`Failed to load legacy report data for ${type}:`, error);
-    }
-  };
-
-  // Debounced query invalidation to prevent excessive API calls
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (analysisType === "product") {
-        queryClient.invalidateQueries({
-          queryKey: ["/api/products"],
-        });
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [selectedCategory, productSearch, productType, queryClient, analysisType]);
-
-  // Invalidate customer queries when customer filter changes (debounced)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (analysisType === "customer") {
-        queryClient.invalidateQueries({
-          queryKey: ["/api/customers"],
-        });
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [customerSearch, queryClient, analysisType]);
-
-  // Refetch data when key parameters change (immediate for date changes)
-  useEffect(() => {
-    if (startDate && endDate) {
-      // Force component to re-render with fresh data
-      const forceRefresh = async () => {
-        // Remove all cached data first
-        queryClient.removeQueries({
-          queryKey: ["/api/transactions"],
-        });
-        queryClient.removeQueries({
-          queryKey: ["/api/orders"],
-        });
-
-        // Clear specific queries with current params
-        queryClient.removeQueries({
-          queryKey: [
-            "/api/transactions",
-            startDate,
-            endDate,
-            salesMethod,
-            salesChannel,
-            analysisType,
-            concernType,
-            selectedEmployee,
-          ],
-        });
-        queryClient.removeQueries({
-          queryKey: [
-            "/api/orders",
-            startDate,
-            endDate,
-            selectedEmployee,
-            salesChannel,
-            salesMethod,
-            analysisType,
-            concernType,
-          ],
-        });
-
-        // Invalidate queries
-        queryClient.invalidateQueries({
-          queryKey: ["/api/transactions"],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["/api/orders"],
-        });
-
-        // Force immediate refetch
-        await Promise.all([refetchTransactions(), refetchOrders()]);
-      };
-
-      forceRefresh();
-    }
-  }, [startDate, endDate, queryClient, refetchTransactions, refetchOrders]);
-
-  // Refetch for other filters (debounced)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (startDate && endDate) {
-        queryClient.invalidateQueries({
-          queryKey: ["/api/transactions"],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["/api/orders"],
-        });
-        refetchTransactions();
-        refetchOrders();
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [salesMethod, salesChannel, selectedEmployee, analysisType, concernType, queryClient, refetchTransactions, refetchOrders]);
-
-  // Save current settings when filters change (debounced)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const saveCurrentSettings = () => {
-        try {
-          // Save to both current format and legacy format for compatibility
-          const legacyReportMapping = {
-            time: `salesReport_time_${concernType}_settings`,
-            product: "inventoryReport_settings",
-            employee: "employeeReport_settings",
-            customer: "customerReport_settings",
-            channel: "salesChannelReport_settings",
-          };
-
-          const storageKey =
-            legacyReportMapping[analysisType] ||
-            `salesReport_${analysisType}_${concernType}_settings`;
-          const currentSettings = {
-            dateRange: { startDate, endDate },
-            filters: {
-              salesMethod,
-              salesChannel,
-              selectedEmployee,
-              customerSearch,
-              productSearch,
-              selectedCategory,
-              productType,
-            },
-            lastUpdated: new Date().toISOString(),
-            analysisType,
-            concernType,
-          };
-
-          localStorage.setItem(storageKey, JSON.stringify(currentSettings));
-        } catch (error) {
-          console.warn("Failed to save current settings:", error);
-        }
-      };
-
-      // Only save if we have meaningful data
-      if (startDate && endDate) {
-        saveCurrentSettings();
-      }
-    }, 1000); // Debounce for 1 second
-
-    return () => clearTimeout(timer);
-  }, [
-    startDate,
-    endDate,
-    salesMethod,
-    salesChannel,
-    selectedEmployee,
-    customerSearch,
-    productSearch,
-    selectedCategory,
-    productType,
-    analysisType,
-    concernType,
-  ]);
-
-  const getFilteredData = () => {
-    console.log('📊 getFilteredData called with transactions:', transactions?.length || 0, 'items');
-
-    if (!transactions || !Array.isArray(transactions)) {
-      console.log('❌ No transactions data available');
-      return [];
-    }
-
-    const filteredTransactions = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at,
-      );
-
-      const transactionDateStr = `${transactionDate.getFullYear()}-${(transactionDate.getMonth() + 1).toString().padStart(2, "0")}-${transactionDate.getDate().toString().padStart(2, "0")}`;
-
-      const dateMatch =
-        transactionDateStr >= startDate && transactionDateStr <= endDate;
-
-      const methodMatch =
-        salesMethod === "all" ||
-        (salesMethod === "no_delivery" &&
-          (!transaction.deliveryMethod ||
-            transaction.deliveryMethod === "pickup")) ||
-        (salesMethod === "delivery" &&
-          transaction.deliveryMethod === "delivery");
-
-      const channelMatch =
-        salesChannel === "all" ||
-        (salesChannel === "direct" &&
-          (!transaction.salesChannel ||
-            transaction.salesChannel === "direct" ||
-            transaction.salesChannel === "pos")) ||
-        (salesChannel === "other" &&
-          transaction.salesChannel &&
-          transaction.salesChannel !== "direct" &&
-          transaction.salesChannel !== "pos");
-
-      const employeeMatch =
-        selectedEmployee === "all" ||
-        transaction.cashierName === selectedEmployee ||
-        transaction.employeeId?.toString() === selectedEmployee ||
-        (transaction.cashierName &&
-          transaction.cashierName.includes(selectedEmployee));
-
-      return dateMatch && methodMatch && channelMatch && employeeMatch;
-    });
-
-    console.log('✅ Filtered transactions:', filteredTransactions.length, 'items');
-    return filteredTransactions;
-  };
-
-  // Add data change detection
-  useEffect(() => {
-    if (transactions) {
-      console.log('🔄 Transactions data changed:', transactions.length, 'items');
-    }
-    if (orders) {
-      console.log('🔄 Orders data changed:', orders.length, 'items');
-    }
-  }, [transactions, orders]);
-
-  const getReportTitle = () => {
-    if (analysisType === "time") {
-      const concernTypes = {
-        time: t("reports.timeSalesReport"),
-        profit: t("reports.profitByInvoiceReport"),
-        discount: t("reports.invoiceDiscountReport"),
-        return: t("reports.returnByInvoiceReport"),
-        employee: t("reports.employeeSalesReport"),
-      };
-      return (
-        concernTypes[concernType as keyof typeof concernTypes] ||
-        t("reports.comprehensiveSalesReport")
-      );
-    } else {
-      // Handle different concern types for each analysis type
-      const reportTitles = {
-        product: {
-          sales: t("reports.productSalesReport"),
-          inventory: t("reports.inventoryReport"),
-          profit: t("reports.productProfitReport"),
-        },
-        employee: {
-          sales: t("reports.employeeSalesReport"),
-          performance: t("reports.employeePerformanceReport"),
-        },
-        customer: {
-          sales: t("reports.customerSalesReport"),
-          loyalty: t("reports.customerLoyaltyReport"),
-        },
-        channel: {
-          sales: t("reports.channelSalesReport"),
-          profit: t("reports.channelProfitReport"),
-          products: t("reports.channelProductsReport"),
-        },
-      };
-
-      const typeReports =
-        reportTitles[analysisType as keyof typeof reportTitles];
-      if (typeReports && concernType in typeReports) {
-        return typeReports[concernType as keyof typeof typeReports];
-      }
-
-      // Fallback to basic analysis type names
-      const analysisTypes = {
-        product: t("reports.productSalesReport"),
-        employee: t("reports.employeeSalesReport"),
-        customer: t("reports.customerSalesReport"),
-        channel: t("reports.channelSalesReport"),
-      };
-      return (
-        analysisTypes[analysisType as keyof typeof analysisTypes] ||
-        t("reports.comprehensiveSalesReport")
-      );
-    }
-  };
-
+  // Utility functions
   const formatCurrency = (amount: number) => {
     return `${amount.toLocaleString()} ₫`;
   };
@@ -670,320 +123,273 @@ export function SalesChartReport() {
     });
   };
 
-  const renderTimeReport = () => {
-    const dataToUse = previousReportData?.data || getFilteredData();
-    const dailyData: {
-      [date: string]: { revenue: number; returnValue: number };
-    } = {};
-
-    dataToUse.forEach((transaction: any) => {
-      const date = new Date(
-        transaction.createdAt || transaction.created_at,
-      ).toLocaleDateString("vi-VN");
-      if (!dailyData[date]) {
-        dailyData[date] = { revenue: 0, returnValue: 0 };
-      }
-
-      const amount = Number(transaction.total);
-      if (amount > 0) {
-        dailyData[date].revenue += amount;
-      } else {
-        dailyData[date].returnValue += Math.abs(amount);
-      }
-    });
-
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t("reports.time")}</TableHead>
-            <TableHead>{t("reports.totalRevenue")}</TableHead>
-            <TableHead>{t("reports.returnValue")}</TableHead>
-            <TableHead>{t("reports.netRevenue")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Object.entries(dailyData).length > 0 ? (
-            Object.entries(dailyData).map(([date, data]) => (
-              <TableRow key={date}>
-                <TableCell>{date}</TableCell>
-                <TableCell>{formatCurrency(data.revenue)}</TableCell>
-                <TableCell>{formatCurrency(data.returnValue)}</TableCell>
-                <TableCell>
-                  {formatCurrency(data.revenue - data.returnValue)}
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={4}
-                className="text-center text-gray-500 py-8"
-              >
-                {t("reports.noDataDescription")}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    );
+  const getReportTitle = () => {
+    switch (analysisType) {
+      case "time":
+        const concernTypes = {
+          time: t("reports.timeSalesReport"),
+          profit: t("reports.profitByInvoiceReport"),
+          discount: t("reports.invoiceDiscountReport"),
+          return: t("reports.returnByInvoiceReport"),
+          employee: t("reports.employeeSalesReport"),
+        };
+        return (
+          concernTypes[concernType as keyof typeof concernTypes] ||
+          t("reports.salesReport")
+        );
+      case "product":
+        return t("reports.inventoryReport");
+      case "employee":
+        return t("reports.employeeSalesReport");
+      case "customer":
+        return t("reports.customerSalesReport");
+      case "channel":
+        return t("reports.channelSalesReport");
+      default:
+        return t("reports.salesReport");
+    }
   };
 
-  const renderProfitReport = () => {
-    const dataToUse = previousReportData?.data || getFilteredData();
-    const dailyData: {
-      [date: string]: {
-        totalAmount: number;
-        discount: number;
-        revenue: number;
-        cost: number;
-      };
-    } = {};
-
-    dataToUse.forEach((transaction: any) => {
-      const date = new Date(
-        transaction.createdAt || transaction.created_at,
-      ).toLocaleDateString("vi-VN");
-      if (!dailyData[date]) {
-        dailyData[date] = { totalAmount: 0, discount: 0, revenue: 0, cost: 0 };
-      }
-
-      const subtotal = Number(transaction.subtotal || transaction.total);
-      const total = Number(transaction.total);
-      const discount = subtotal - total;
-
-      dailyData[date].totalAmount += subtotal;
-      dailyData[date].discount += discount;
-      dailyData[date].revenue += total;
-      dailyData[date].cost += total * 0.6; // Assume 60% cost ratio
-    });
-
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t("reports.time")}</TableHead>
-            <TableHead>{t("reports.totalAmount")}</TableHead>
-            <TableHead>{t("reports.discount")}</TableHead>
-            <TableHead>{t("reports.revenue")}</TableHead>
-            <TableHead>{t("reports.totalCost")}</TableHead>
-            <TableHead>{t("reports.grossProfit")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Object.entries(dailyData).length > 0 ? (
-            Object.entries(dailyData).map(([date, data]) => (
-              <TableRow key={date}>
-                <TableCell>{date}</TableCell>
-                <TableCell>{formatCurrency(data.totalAmount)}</TableCell>
-                <TableCell>{formatCurrency(data.discount)}</TableCell>
-                <TableCell>{formatCurrency(data.revenue)}</TableCell>
-                <TableCell>{formatCurrency(data.cost)}</TableCell>
-                <TableCell>{formatCurrency(data.revenue - data.cost)}</TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={6}
-                className="text-center text-gray-500 py-8"
-              >
-                {t("reports.noDataDescription")}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    );
-  };
-
-  const renderDiscountReport = () => {
-    const dataToUse = previousReportData?.data || getFilteredData();
-    const dailyData: {
-      [date: string]: {
-        invoiceCount: number;
-        invoiceValue: number;
-        discount: number;
-      };
-    } = {};
-
-    dataToUse.forEach((transaction: any) => {
-      const date = new Date(
-        transaction.createdAt || transaction.created_at,
-      ).toLocaleDateString("vi-VN");
-      if (!dailyData[date]) {
-        dailyData[date] = { invoiceCount: 0, invoiceValue: 0, discount: 0 };
-      }
-
-      const subtotal = Number(transaction.subtotal || transaction.total);
-      const total = Number(transaction.total);
-      const discount = subtotal - total;
-
-      dailyData[date].invoiceCount += 1;
-      dailyData[date].invoiceValue += subtotal;
-      dailyData[date].discount += discount;
-    });
-
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t("reports.time")}</TableHead>
-            <TableHead>{t("reports.totalInvoices")}</TableHead>
-            <TableHead>{t("reports.invoiceValue")}</TableHead>
-            <TableHead>{t("reports.invoiceDiscount")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Object.entries(dailyData).length > 0 ? (
-            Object.entries(dailyData).map(([date, data]) => (
-              <TableRow key={date}>
-                <TableCell>{date}</TableCell>
-                <TableCell>{data.invoiceCount}</TableCell>
-                <TableCell>{formatCurrency(data.invoiceValue)}</TableCell>
-                <TableCell>{formatCurrency(data.discount)}</TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={4}
-                className="text-center text-gray-500 py-8"
-              >
-                {t("reports.noDataDescription")}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    );
-  };
-
-  const renderReturnReport = () => {
-    const dataToUse = previousReportData?.data || getFilteredData();
-    const dailyData: {
-      [date: string]: { returnCount: number; returnValue: number };
-    } = {};
-
-    dataToUse.forEach((transaction: any) => {
-      const date = new Date(
-        transaction.createdAt || transaction.created_at,
-      ).toLocaleDateString("vi-VN");
-      const amount = Number(transaction.total);
-
-      if (amount < 0) {
-        // Return transactions
-        if (!dailyData[date]) {
-          dailyData[date] = { returnCount: 0, returnValue: 0 };
-        }
-        dailyData[date].returnCount += 1;
-        dailyData[date].returnValue += Math.abs(amount);
-      }
-    });
-
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t("reports.time")}</TableHead>
-            <TableHead>{t("reports.returnTicketCount")}</TableHead>
-            <TableHead>{t("reports.returnValue")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Object.entries(dailyData).length > 0 ? (
-            Object.entries(dailyData).map(([date, data]) => (
-              <TableRow key={date}>
-                <TableCell>{date}</TableCell>
-                <TableCell>{data.returnCount}</TableCell>
-                <TableCell>{formatCurrency(data.returnValue)}</TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={3}
-                className="text-center text-gray-500 py-8"
-              >
-                {t("reports.noDataDescription")}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    );
-  };
-
-  const renderEmployeeReport = () => {
-    const dataToUse = previousReportData?.data || getFilteredData();
-    const employeeData: {
-      [cashier: string]: { revenue: number; returnValue: number };
-    } = {};
-
-    dataToUse.forEach((transaction: any) => {
-      const cashier = transaction.cashierName || "Unknown";
-      if (!employeeData[cashier]) {
-        employeeData[cashier] = { revenue: 0, returnValue: 0 };
-      }
-
-      const amount = Number(transaction.total);
-      if (amount > 0) {
-        employeeData[cashier].revenue += amount;
-      } else {
-        employeeData[cashier].returnValue += Math.abs(amount);
-      }
-    });
-
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t("reports.seller")}</TableHead>
-            <TableHead>{t("reports.totalRevenue")}</TableHead>
-            <TableHead>{t("reports.returnValue")}</TableHead>
-            <TableHead>{t("reports.netRevenue")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {Object.entries(employeeData).length > 0 ? (
-            Object.entries(employeeData).map(([cashier, data]) => (
-              <TableRow key={cashier}>
-                <TableCell>{cashier}</TableCell>
-                <TableCell>{formatCurrency(data.revenue)}</TableCell>
-                <TableCell>{formatCurrency(data.returnValue)}</TableCell>
-                <TableCell>
-                  {formatCurrency(data.revenue - data.returnValue)}
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell
-                colSpan={4}
-                className="text-center text-gray-500 py-8"
-              >
-                {t("reports.noDataDescription")}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    );
-  };
-
-  // Product analysis data processing (integrated from inventory-report)
-  const getProductAnalysisData = () => {
-    // Use inventory report data if available
-    if (previousReportData && previousReportData.type === "inventory") {
-      return previousReportData.data;
+  // Legacy Sales Report Component Logic
+  const renderSalesReport = () => {
+    if (!transactions || !Array.isArray(transactions)) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
     }
 
-    const dataToUse = previousReportData?.data || getFilteredData();
-    if (!dataToUse.length) return [];
+    const filteredTransactions = transactions.filter((transaction: any) => {
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
 
-    // Get products data for enhanced processing
-    const filteredProducts =
-      products?.filter((product: any) => {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      const transactionDateOnly = new Date(transactionDate);
+      transactionDateOnly.setHours(0, 0, 0, 0);
+
+      const isInRange = transactionDateOnly >= start && transactionDateOnly <= end;
+      return isInRange;
+    });
+
+    const dailySales: {
+      [date: string]: { revenue: number; orders: number; customers: number };
+    } = {};
+
+    filteredTransactions.forEach((transaction: any) => {
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
+
+      const year = transactionDate.getFullYear();
+      const month = (transactionDate.getMonth() + 1).toString().padStart(2, "0");
+      const day = transactionDate.getDate().toString().padStart(2, "0");
+      const date = `${year}-${month}-${day}`;
+
+      if (!dailySales[date]) {
+        dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
+      }
+
+      dailySales[date].revenue += Number(transaction.total || 0);
+      dailySales[client].orders += 1;
+      dailySales[date].customers += 1;
+    });
+
+    const paymentMethods: {
+      [method: string]: { count: number; revenue: number };
+    } = {};
+
+    filteredTransactions.forEach((transaction: any) => {
+      const method = transaction.paymentMethod || "cash";
+      if (!paymentMethods[method]) {
+        paymentMethods[method] = { count: 0, revenue: 0 };
+      }
+      paymentMethods[method].count += 1;
+      paymentMethods[method].revenue += Number(transaction.total);
+    });
+
+    const totalRevenue = filteredTransactions.reduce(
+      (sum: number, transaction: any) => sum + Number(transaction.total),
+      0,
+    );
+    const totalOrders = filteredTransactions.length;
+    const totalCustomers = filteredTransactions.length;
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    return (
+      <>
+        {/* Summary Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    {t("reports.totalRevenue")}
+                  </p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {formatCurrency(totalRevenue)}
+                  </p>
+                </div>
+                <DollarSign className="w-8 h-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    {t("reports.totalOrders")}
+                  </p>
+                  <p className="text-2xl font-bold">{totalOrders}</p>
+                </div>
+                <Calendar className="w-8 h-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.averageOrderValue")}
+                </p>
+                <p className="text-2xl font-bold">
+                  {formatCurrency(averageOrderValue)}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-6">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.totalCustomers")}
+                </p>
+                <p className="text-2xl font-bold">{totalCustomers}</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Daily Sales */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("reports.dailySales")}</CardTitle>
+              <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("common.date")}</TableHead>
+                    <TableHead>{t("reports.revenue")}</TableHead>
+                    <TableHead>{t("reports.orders")}</TableHead>
+                    <TableHead>{t("reports.customers")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(dailySales).length > 0 ? (
+                    Object.entries(dailySales).map(([date, data]) => (
+                      <TableRow key={date}>
+                        <TableCell>{formatDate(date)}</TableCell>
+                        <TableCell className="font-medium">
+                          {formatCurrency(data.revenue)}
+                        </TableCell>
+                        <TableCell>
+                          {data.orders} {t("reports.count")}
+                        </TableCell>
+                        <TableCell>
+                          {data.customers} {t("reports.count")}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={4}
+                        className="text-center text-gray-500"
+                      >
+                        {t("reports.noDataDescription")}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Payment Methods */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t("reports.paymentMethods")}</CardTitle>
+              <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {Object.entries(paymentMethods).map(([method, payment]) => {
+                  const percentage =
+                    totalRevenue > 0
+                      ? (Number(payment.revenue) / Number(totalRevenue)) * 100
+                      : 0;
+
+                  return (
+                    <div key={method} className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline">
+                            {method}
+                          </Badge>
+                          <span className="text-sm text-gray-600">
+                            {payment.count} {t("reports.count")}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">
+                            {formatCurrency(payment.revenue)}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
+                          </div>
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-500 h-2 rounded-full transition-all"
+                          style={{ width: `${percentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {Object.entries(paymentMethods).length === 0 && (
+                  <div className="text-center text-gray-500 py-4">
+                    {t("reports.noDataDescription")}
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </>
+    );
+  };
+
+  // Legacy Inventory Report Component Logic
+  const renderInventoryReport = () => {
+    const getFilteredProducts = () => {
+      if (!products || !Array.isArray(products)) return [];
+
+      return products.filter((product: any) => {
         const searchMatch =
           !productSearch ||
           product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
@@ -995,99 +401,64 @@ export function SalesChartReport() {
           product.categoryId?.toString() === selectedCategory;
 
         return searchMatch && categoryMatch;
-      }) || [];
+      });
+    };
 
-    const productData: {
-      [productId: string]: {
-        productCode: string;
-        productName: string;
-        quantitySold: number;
-        revenue: number;
-        quantityReturned: number;
-        returnValue: number;
-        netRevenue: number;
-        totalCost: number;
-        profit: number;
-      };
-    } = {};
+    const getSalesData = () => {
+      const filteredProducts = getFilteredProducts();
+      if (!filteredProducts.length || !orders || !Array.isArray(orders)) return [];
 
-    // Enhanced product sales calculation using inventory report logic
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
 
-    const filteredOrders = dataToUse.filter((order: any) => {
-      const orderDate = new Date(
-        order.orderedAt || order.created_at || order.createdAt,
-      );
-      return orderDate >= start && orderDate <= end && order.status === "paid";
-    });
+      const filteredOrders = orders.filter((order: any) => {
+        const orderDate = new Date(order.orderedAt || order.created_at);
+        return orderDate >= start && orderDate <= end && order.status === 'paid';
+      });
 
-    const productSales: {
-      [productId: string]: {
-        quantity: number;
-        revenue: number;
-        orders: number;
-      };
-    } = {};
+      const productSales: { [productId: string]: { quantity: number; revenue: number; orders: number } } = {};
 
-    filteredOrders.forEach((order: any) => {
-      const orderTotal = Number(order.total);
-      const availableProducts = filteredProducts.filter((p) => p.price > 0);
+      filteredOrders.forEach((order: any) => {
+        const orderTotal = Number(order.total);
+        const availableProducts = filteredProducts.filter(p => p.price > 0);
 
-      if (availableProducts.length === 0) return;
+        if (availableProducts.length === 0) return;
 
-      const orderProductCount = Math.min(
-        Math.floor(Math.random() * 3) + 1,
-        availableProducts.length,
-      );
-
-      const selectedProducts = availableProducts
-        .sort(() => 0.5 - Math.random())
-        .slice(0, orderProductCount);
-
-      const totalSelectedPrice = selectedProducts.reduce(
-        (sum, p) => sum + (p.price || 0),
-        0,
-      );
-
-      selectedProducts.forEach((product: any) => {
-        const productId = product.id.toString();
-        if (!productSales[productId]) {
-          productSales[productId] = { quantity: 0, revenue: 0, orders: 0 };
-        }
-
-        const proportion =
-          totalSelectedPrice > 0
-            ? (product.price || 0) / totalSelectedPrice
-            : 1 / selectedProducts.length;
-        const productRevenue = orderTotal * proportion;
-        const quantity = Math.max(
-          1,
-          Math.floor(productRevenue / (product.price || 1)),
+        const orderProductCount = Math.min(
+          Math.floor(Math.random() * 3) + 1,
+          availableProducts.length
         );
 
-        productSales[productId].quantity += quantity;
-        productSales[productId].revenue += productRevenue;
-        productSales[productId].orders += 1;
-      });
-    });
+        const selectedProducts = availableProducts
+          .sort(() => 0.5 - Math.random())
+          .slice(0, orderProductCount);
 
-    filteredProducts.forEach((product: any) => {
-      const sales = productSales[product.id.toString()] || {
-        quantity: 0,
-        revenue: 0,
-        orders: 0,
-      };
-      if (sales.quantity > 0) {
+        const totalSelectedPrice = selectedProducts.reduce((sum, p) => sum + (p.price || 0), 0);
+
+        selectedProducts.forEach((product: any) => {
+          const productId = product.id.toString();
+          if (!productSales[productId]) {
+            productSales[productId] = { quantity: 0, revenue: 0, orders: 0 };
+          }
+
+          const proportion = totalSelectedPrice > 0 ? (product.price || 0) / totalSelectedPrice : 1 / selectedProducts.length;
+          const productRevenue = orderTotal * proportion;
+          const quantity = Math.max(1, Math.floor(productRevenue / (product.price || 1)));
+
+          productSales[productId].quantity += quantity;
+          productSales[productId].revenue += productRevenue;
+          productSales[productId].orders += 1;
+        });
+      });
+
+      return filteredProducts.map((product: any) => {
+        const sales = productSales[product.id.toString()] || { quantity: 0, revenue: 0, orders: 0 };
         const returnRate = 0.02;
         const quantityReturned = Math.floor(sales.quantity * returnRate);
         const returnValue = sales.revenue * returnRate;
-        const costRatio = 0.6;
-        const unitCost = (product.price || 0) * costRatio;
-        const totalCost = sales.quantity * unitCost;
 
-        productData[product.id] = {
+        return {
           productCode: product.sku || product.id,
           productName: product.name,
           quantitySold: sales.quantity,
@@ -1095,32 +466,104 @@ export function SalesChartReport() {
           quantityReturned,
           returnValue,
           netRevenue: sales.revenue - returnValue,
-          totalCost,
-          profit: sales.revenue - returnValue - totalCost,
         };
-      }
-    });
+      }).filter(item => item.quantitySold > 0);
+    };
 
-    return Object.values(productData).sort(
-      (a, b) => b.netRevenue - a.netRevenue,
+    const data = getSalesData();
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Package className="w-5 h-5" />
+            {t("reports.salesReportByProduct")}
+          </CardTitle>
+          <CardDescription>
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("reports.productCode")}</TableHead>
+                <TableHead>{t("reports.productName")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.quantitySold")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.returnQuantity")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.length > 0 ? (
+                data.slice(0, 20).map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">
+                      {item.productCode}
+                    </TableCell>
+                    <TableCell>{item.productName}</TableCell>
+                    <TableCell className="text-center">
+                      {item.quantitySold}
+                    </TableCell>
+                    <TableCell className="text-right text-green-600">
+                      {formatCurrency(item.revenue)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.quantityReturned}
+                    </TableCell>
+                    <TableCell className="text-right text-red-600">
+                      {formatCurrency(item.returnValue)}
+                    </TableCell>
+                    <TableCell className="text-right text-blue-600">
+                      {formatCurrency(item.netRevenue)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="text-center text-gray-500 italic"
+                  >
+                    {t("reports.noDataDescription")}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     );
   };
 
-  // Employee analysis data processing (integrated from employee-report)
-  const getEmployeeAnalysisData = () => {
-    // Use employee report data if available
-    if (previousReportData && previousReportData.type === "employee") {
-      return previousReportData.data;
+  // Legacy Employee Report Component Logic
+  const renderEmployeeReport = () => {
+    if (!transactions || !Array.isArray(transactions)) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
     }
 
-    const dataToUse = previousReportData?.data || getFilteredData();
-
-    // Enhanced employee analysis using employee report logic
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    const filteredTransactions = dataToUse.filter((transaction: any) => {
+    const filteredTransactions = transactions.filter((transaction: any) => {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
@@ -1143,7 +586,6 @@ export function SalesChartReport() {
         netRevenue: number;
         orders: number;
         totalProducts: number;
-        topProduct: string;
         averageOrderValue: number;
         totalCost: number;
         grossProfit: number;
@@ -1162,7 +604,6 @@ export function SalesChartReport() {
           netRevenue: 0,
           orders: 0,
           totalProducts: 0,
-          topProduct: "N/A",
           averageOrderValue: 0,
           totalCost: 0,
           grossProfit: 0,
@@ -1174,19 +615,17 @@ export function SalesChartReport() {
 
       if (amount > 0) {
         employeeData[cashier].revenue += amount;
-        employeeData[cashier].totalCost += amount * 0.6; // 60% cost ratio
+        employeeData[cashier].totalCost += amount * 0.6;
       } else {
         employeeData[cashier].returnValue += Math.abs(amount);
       }
 
-      // Count products from transaction items
       const items = transaction.items || [];
       items.forEach((item: any) => {
         employeeData[cashier].totalProducts += Number(item.quantity || 1);
       });
     });
 
-    // Calculate derived metrics
     Object.values(employeeData).forEach((data) => {
       data.netRevenue = data.revenue - data.returnValue;
       data.averageOrderValue =
@@ -1194,26 +633,118 @@ export function SalesChartReport() {
       data.grossProfit = data.netRevenue - data.totalCost;
     });
 
-    return Object.values(employeeData).sort(
+    const data = Object.values(employeeData).sort(
       (a, b) => b.netRevenue - a.netRevenue,
+    );
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            {t("reports.employeeSalesReport")}
+          </CardTitle>
+          <CardDescription>
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("reports.seller")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.orders")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.totalProducts")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.totalRevenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.averageOrderValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.totalCost")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.grossProfit")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.length > 0 ? (
+                data.map((item, index) => (
+                  <TableRow key={`${item.employee}-${index}`}>
+                    <TableCell className="font-medium">
+                      {item.employee}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.orders}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.totalProducts}
+                    </TableCell>
+                    <TableCell className="text-right text-green-600">
+                      {formatCurrency(item.revenue)}
+                    </TableCell>
+                    <TableCell className="text-right text-red-600">
+                      {formatCurrency(item.returnValue)}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatCurrency(item.netRevenue)}
+                    </TableCell>
+                    <TableCell className="text-right text-blue-600">
+                      {formatCurrency(item.averageOrderValue)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.totalCost)}
+                    </TableCell>
+                    <TableCell className="text-right text-purple-600">
+                      {formatCurrency(item.grossProfit)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={9}
+                    className="text-center text-gray-500"
+                  >
+                    {t("reports.noDataDescription")}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     );
   };
 
-  // Customer analysis data processing (integrated from customer-report)
-  const getCustomerAnalysisData = () => {
-    // Use customer report data if available
-    if (previousReportData && previousReportData.type === "customer") {
-      return previousReportData.data;
+  // Legacy Customer Report Component Logic
+  const renderCustomerReport = () => {
+    if (!orders || !Array.isArray(orders)) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
     }
 
-    const dataToUse = previousReportData?.data || getFilteredData();
-
-    // Enhanced customer analysis using customer report logic
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    const filteredOrders = dataToUse.filter((order: any) => {
+    const filteredOrders = orders.filter((order: any) => {
       const orderDate = new Date(
         order.orderedAt || order.created_at || order.createdAt,
       );
@@ -1274,38 +805,123 @@ export function SalesChartReport() {
       customerData[customerId].orders += 1;
       customerData[customerId].lastOrderDate = orderDate;
       customerData[customerId].revenue += orderTotal;
-      customerData[customerId].netRevenue += orderTotal; // Assuming no returns for now
-      customerData[customerId].totalCost += orderTotal * 0.6; // 60% cost assumption
+      customerData[customerId].netRevenue += orderTotal;
+      customerData[customerId].totalCost += orderTotal * 0.6;
       customerData[customerId].totalProducts += order.customerCount || 1;
     });
 
-    // Calculate derived metrics
     Object.values(customerData).forEach((data) => {
       data.averageOrderValue =
         data.orders > 0 ? data.netRevenue / data.orders : 0;
       data.grossProfit = data.netRevenue - data.totalCost;
     });
 
-    return Object.values(customerData).sort(
+    const data = Object.values(customerData).sort(
       (a, b) => b.netRevenue - a.netRevenue,
+    );
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            {t("reports.customerSalesReport")}
+          </CardTitle>
+          <CardDescription>
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("reports.customer")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.orders")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.totalProducts")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.averageOrderValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.lastOrder")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.length > 0 ? (
+                data.slice(0, 20).map((item, index) => (
+                  <TableRow key={`${item.customer}-${index}`}>
+                    <TableCell className="font-medium">
+                      {item.customer}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.orders}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.totalProducts}
+                    </TableCell>
+                    <TableCell className="text-right text-green-600">
+                      {formatCurrency(item.revenue)}
+                    </TableCell>
+                    <TableCell className="text-right text-red-600">
+                      {formatCurrency(item.returnValue)}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatCurrency(item.netRevenue)}
+                    </TableCell>
+                    <TableCell className="text-right text-blue-600">
+                      {formatCurrency(item.averageOrderValue)}
+                    </TableCell>
+                    <TableCell className="text-right text-sm">
+                      {item.lastOrderDate}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={8}
+                    className="text-center text-gray-500"
+                  >
+                    {t("reports.noDataDescription")}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     );
   };
 
-  // Sales channel analysis data processing (integrated from sales-channel-report)
-  const getChannelAnalysisData = () => {
-    // Use sales channel report data if available
-    if (previousReportData && previousReportData.type === "salesChannel") {
-      return previousReportData.data;
+  // Legacy Sales Channel Report Component Logic
+  const renderSalesChannelReport = () => {
+    if (!transactions || !Array.isArray(transactions)) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
     }
 
-    const dataToUse = previousReportData?.data || getFilteredData();
-
-    // Enhanced channel analysis using sales channel report logic
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    const filteredTransactions = dataToUse.filter((transaction: any) => {
+    const filteredTransactions = transactions.filter((transaction: any) => {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
@@ -1362,1033 +978,143 @@ export function SalesChartReport() {
 
       if (amount > 0) {
         channelData[channel].revenue += amount;
-        channelData[channel].totalCost += amount * 0.6; // 60% cost ratio
+        channelData[channel].totalCost += amount * 0.6;
 
-        // Calculate commission based on channel type
-        const commissionRate = channel === "Direct" ? 0 : 0.05; // 5% for other channels
+        const commissionRate = channel === "Direct" ? 0 : 0.05;
         channelData[channel].commission += amount * commissionRate;
       } else {
         channelData[channel].returnValue += Math.abs(amount);
       }
 
-      // Count products from transaction items
       const items = transaction.items || [];
       items.forEach((item: any) => {
         channelData[channel].totalProducts += Number(item.quantity || 1);
       });
     });
 
-    // Calculate derived metrics
     Object.values(channelData).forEach((data) => {
       data.netRevenue = data.revenue - data.returnValue;
       data.grossProfit = data.netRevenue - data.totalCost;
       data.netProfit = data.grossProfit - data.commission;
     });
 
-    return Object.values(channelData).sort(
+    const data = Object.values(channelData).sort(
       (a, b) => b.netRevenue - a.netRevenue,
+    );
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" />
+            {t("reports.channelSalesReport")}
+          </CardTitle>
+          <CardDescription>
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("reports.salesChannel")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.orders")}
+                </TableHead>
+                <TableHead className="text-center">
+                  {t("reports.totalProducts")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.returnValue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netRevenue")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.commission")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.grossProfit")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.netProfit")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.length > 0 ? (
+                data.map((item, index) => (
+                  <TableRow key={`${item.salesChannel}-${index}`}>
+                    <TableCell className="font-medium">
+                      {item.salesChannel}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.orders}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {item.totalProducts}
+                    </TableCell>
+                    <TableCell className="text-right text-green-600">
+                      {formatCurrency(item.revenue)}
+                    </TableCell>
+                    <TableCell className="text-right text-red-600">
+                      {formatCurrency(item.returnValue)}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatCurrency(item.netRevenue)}
+                    </TableCell>
+                    <TableCell className="text-right text-orange-600">
+                      {formatCurrency(item.commission)}
+                    </TableCell>
+                    <TableCell className="text-right text-purple-600">
+                      {formatCurrency(item.grossProfit)}
+                    </TableCell>
+                    <TableCell className="text-right text-blue-600">
+                      {formatCurrency(item.netProfit)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={9}
+                    className="text-center text-gray-500"
+                  >
+                    {t("reports.noDataDescription")}
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     );
   };
 
-  // Render component theo loại phân tích được chọn
-  const renderLegacyComponent = () => {
-    console.log('🔄 Loading legacy component for analysisType:', analysisType);
-
+  // Main render component function
+  const renderReportContent = () => {
     switch (analysisType) {
-      case "product":
-        return (
-          <Suspense fallback={<div className="flex justify-center py-8"><div className="text-gray-500">{t("reports.loading")}...</div></div>}>
-            <InventoryReport />
-          </Suspense>
-        );
-      case "employee":
-        return (
-          <Suspense fallback={<div className="flex justify-center py-8"><div className="text-gray-500">{t("reports.loading")}...</div></div>}>
-            <EmployeeReport />
-          </Suspense>
-        );
-      case "customer":
-        return (
-          <Suspense fallback={<div className="flex justify-center py-8"><div className="text-gray-500">{t("reports.loading")}...</div></div>}>
-            <CustomerReport />
-          </Suspense>
-        );
-      case "channel":
-        return (
-          <Suspense fallback={<div className="flex justify-center py-8"><div className="text-gray-500">{t("reports.loading")}...</div></div>}>
-            <SalesChannelReport />
-          </Suspense>
-        );
       case "time":
+        return renderSalesReport();
+      case "product":
+        return renderInventoryReport();
+      case "employee":
+        return renderEmployeeReport();
+      case "customer":
+        return renderCustomerReport();
+      case "channel":
+        return renderSalesChannelReport();
       default:
-        return (
-          <Suspense fallback={<div className="flex justify-center py-8"><div className="text-gray-500">{t("reports.loading")}...</div></div>}>
-            <SalesReport />
-          </Suspense>
-        );
+        return renderSalesReport();
     }
-  };
-
-  // Add useMemo for better performance and ensure re-renders when analysisType changes
-  const renderAnalysisTypeReport = useMemo(() => {
-    console.log('🔄 renderAnalysisTypeReport called with analysisType:', analysisType);
-
-    switch (analysisType) {
-      case "product": {
-        const data = getProductAnalysisData();
-        console.log('📦 Product analysis data:', data.length, 'items');
-
-        // Render UI similar to inventory report from legacy reports
-        return (
-          <div key={`product-${startDate}-${endDate}-${Date.now()}`}>
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalProducts")}
-                      </p>
-                      <p className="text-2xl font-bold">{data.length}</p>
-                    </div>
-                    <Package className="w-8 h-8 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalQuantitySold")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {data.reduce((sum, item) => sum + item.quantitySold, 0)}
-                      </p>
-                    </div>
-                    <TrendingUp className="w-8 h-8 text-green-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalRevenue")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(
-                          data.reduce((sum, item) => sum + item.revenue, 0),
-                        )}
-                      </p>
-                    </div>
-                    <DollarSign className="w-8 h-8 text-emerald-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalProfit")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(
-                          data.reduce((sum, item) => sum + item.profit, 0),
-                        )}
-                      </p>
-                    </div>
-                    <TrendingUp className="w-8 h-8 text-purple-500" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Data Table */}
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("reports.productCode")}</TableHead>
-                  <TableHead>{t("reports.productName")}</TableHead>
-                  <TableHead className="text-center">
-                    {t("reports.quantitySold")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.revenue")}
-                  </TableHead>
-                  <TableHead className="text-center">
-                    {t("reports.returnQuantity")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.returnValue")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.netRevenue")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.totalCost")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.grossProfit")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.length > 0 ? (
-                  data
-                    .sort((a, b) => b.netRevenue - a.netRevenue)
-                    .slice(0, 20)
-                    .map((item, index) => (
-                      <TableRow key={`${item.productCode}-${index}`}>
-                        <TableCell className="font-medium">
-                          {item.productCode}
-                        </TableCell>
-                        <TableCell>{item.productName}</TableCell>
-                        <TableCell className="text-center">
-                          {item.quantitySold}
-                        </TableCell>
-                        <TableCell className="text-right text-green-600">
-                          {formatCurrency(item.revenue)}
-                        </TableCell>
-                        <TableCell className="text-center text-red-600">
-                          {item.quantityReturned}
-                        </TableCell>
-                        <TableCell className="text-right text-red-600">
-                          {formatCurrency(item.returnValue)}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(item.netRevenue)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(item.totalCost)}
-                        </TableCell>
-                        <TableCell className="text-right text-blue-600">
-                          {formatCurrency(item.profit)}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={9}
-                      className="text-center text-gray-500 py-8"
-                    >
-                      {t("reports.noDataDescription")}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        );
-      }
-
-      case "employee": {
-        const data = getEmployeeAnalysisData();
-        console.log('👥 Employee analysis data:', data.length, 'items');
-
-        // Render UI similar to employee report from legacy reports
-        return (
-          <div key={`employee-${startDate}-${endDate}-${Date.now()}`}>
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalEmployees")}
-                      </p>
-                      <p className="text-2xl font-bold">{data.length}</p>
-                    </div>
-                    <Users className="w-8 h-8 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalOrders")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {data.reduce((sum, item) => sum + item.orders, 0)}
-                      </p>
-                    </div>
-                    <ShoppingCart className="w-8 h-8 text-green-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalRevenue")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(
-                          data.reduce((sum, item) => sum + item.netRevenue, 0),
-                        )}
-                      </p>
-                    </div>
-                    <DollarSign className="w-8 h-8 text-emerald-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.avgOrderValue")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(
-                          data.length > 0
-                            ? data.reduce(
-                                (sum, item) => sum + item.averageOrderValue,
-                                0,
-                              ) / data.length
-                            : 0,
-                        )}
-                      </p>
-                    </div>
-                    <TrendingUp className="w-8 h-8 text-purple-500" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Data Table */}
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("reports.seller")}</TableHead>
-                  <TableHead className="text-center">
-                    {t("reports.orders")}
-                  </TableHead>
-                  <TableHead className="text-center">
-                    {t("reports.totalProducts")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.totalRevenue")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.returnValue")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.netRevenue")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.averageOrderValue")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.totalCost")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.grossProfit")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.length > 0 ? (
-                  data
-                    .sort((a, b) => b.netRevenue - a.netRevenue)
-                    .map((item, index) => (
-                      <TableRow key={`${item.employee}-${index}`}>
-                        <TableCell className="font-medium">
-                          {item.employee}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {item.orders}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {item.totalProducts}
-                        </TableCell>
-                        <TableCell className="text-right text-green-600">
-                          {formatCurrency(item.revenue)}
-                        </TableCell>
-                        <TableCell className="text-right text-red-600">
-                          {formatCurrency(item.returnValue)}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(item.netRevenue)}
-                        </TableCell>
-                        <TableCell className="text-right text-blue-600">
-                          {formatCurrency(item.averageOrderValue)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(item.totalCost)}
-                        </TableCell>
-                        <TableCell className="text-right text-purple-600">
-                          {formatCurrency(item.grossProfit)}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={9}
-                      className="text-center text-gray-500 py-8"
-                    >
-                      {t("reports.noDataDescription")}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        );
-      }
-
-      case "customer": {
-        const data = getCustomerAnalysisData();
-        console.log('👤 Customer analysis data:', data.length, 'items');
-
-        // Render UI similar to customer report from legacy reports
-        return (
-          <div key={`customer-${startDate}-${endDate}-${Date.now()}`}>
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalCustomers")}
-                      </p>
-                      <p className="text-2xl font-bold">{data.length}</p>
-                    </div>
-                    <Users className="w-8 h-8 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalOrders")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {data.reduce((sum, item) => sum + item.orders, 0)}
-                      </p>
-                    </div>
-                    <ShoppingCart className="w-8 h-8 text-green-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalRevenue")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(
-                          data.reduce((sum, item) => sum + item.netRevenue, 0),
-                        )}
-                      </p>
-                    </div>
-                    <DollarSign className="w-8 h-8 text-emerald-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.avgOrderValue")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(
-                          data.length > 0
-                            ? data.reduce(
-                                (sum, item) => sum + item.averageOrderValue,
-                                0,
-                              ) / data.length
-                            : 0,
-                        )}
-                      </p>
-                    </div>
-                    <TrendingUp className="w-8 h-8 text-purple-500" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Data Table */}
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("reports.customer")}</TableHead>
-                  <TableHead className="text-center">
-                    {t("reports.orders")}
-                  </TableHead>
-                  <TableHead className="text-center">
-                    {t("reports.totalProducts")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.revenue")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.returnValue")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.netRevenue")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.averageOrderValue")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.lastOrder")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.length > 0 ? (
-                  data
-                    .sort((a, b) => b.netRevenue - a.netRevenue)
-                    .slice(0, 20)
-                    .map((item, index) => (
-                      <TableRow key={`${item.customer}-${index}`}>
-                        <TableCell className="font-medium">
-                          {item.customer}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {item.orders}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {item.totalProducts}
-                        </TableCell>
-                        <TableCell className="text-right text-green-600">
-                          {formatCurrency(item.revenue)}
-                        </TableCell>
-                        <TableCell className="text-right text-red-600">
-                          {formatCurrency(item.returnValue)}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(item.netRevenue)}
-                        </TableCell>
-                        <TableCell className="text-right text-blue-600">
-                          {formatCurrency(item.averageOrderValue)}
-                        </TableCell>
-                        <TableCell className="text-right text-sm">
-                          {item.lastOrderDate}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={8}
-                      className="text-center text-gray-500 py-8"
-                    >
-                      {t("reports.noDataDescription")}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        );
-      }
-
-      case "channel": {
-        const data = getChannelAnalysisData();
-        console.log('📺 Channel analysis data:', data.length, 'items');
-
-        // Render UI similar to sales channel report from legacy reports
-        return (
-          <div key={`channel-${startDate}-${endDate}-${Date.now()}`}>
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalChannels")}
-                      </p>
-                      <p className="text-2xl font-bold">{data.length}</p>
-                    </div>
-                    <BarChart3 className="w-8 h-8 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalOrders")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {data.reduce((sum, item) => sum + item.orders, 0)}
-                      </p>
-                    </div>
-                    <ShoppingCart className="w-8 h-8 text-green-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalRevenue")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(
-                          data.reduce((sum, item) => sum + item.netRevenue, 0),
-                        )}
-                      </p>
-                    </div>
-                    <DollarSign className="w-8 h-8 text-emerald-500" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">
-                        {t("reports.totalProfit")}
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {formatCurrency(
-                          data.reduce((sum, item) => sum + item.netProfit, 0),
-                        )}
-                      </p>
-                    </div>
-                    <TrendingUp className="w-8 h-8 text-purple-500" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Data Table */}
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("reports.salesChannel")}</TableHead>
-                  <TableHead className="text-center">
-                    {t("reports.orders")}
-                  </TableHead>
-                  <TableHead className="text-center">
-                    {t("reports.totalProducts")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.revenue")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.returnValue")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.netRevenue")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.commission")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.grossProfit")}
-                  </TableHead>
-                  <TableHead className="text-right">
-                    {t("reports.netProfit")}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.length > 0 ? (
-                  data
-                    .sort((a, b) => b.netRevenue - a.netRevenue)
-                    .map((item, index) => (
-                      <TableRow key={`${item.salesChannel}-${index}`}>
-                        <TableCell className="font-medium">
-                          {item.salesChannel}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {item.orders}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {item.totalProducts}
-                        </TableCell>
-                        <TableCell className="text-right text-green-600">
-                          {formatCurrency(item.revenue)}
-                        </TableCell>
-                        <TableCell className="text-right text-red-600">
-                          {formatCurrency(item.returnValue)}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatCurrency(item.netRevenue)}
-                        </TableCell>
-                        <TableCell className="text-right text-orange-600">
-                          {formatCurrency(item.commission)}
-                        </TableCell>
-                        <TableCell className="text-right text-purple-600">
-                          {formatCurrency(item.grossProfit)}
-                        </TableCell>
-                        <TableCell className="text-right text-blue-600">
-                          {formatCurrency(item.netProfit)}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={9}
-                      className="text-center text-gray-500 py-8"
-                    >
-                      {t("reports.noDataDescription")}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        );
-      }
-
-      default:
-        console.log('🔄 Falling back to time report');
-        return renderTimeReport();
-    }
-  }, [analysisType, concernType, startDate, endDate, transactions, orders, products, employees, customers, categories, salesMethod, salesChannel, selectedEmployee, customerSearch, productSearch, selectedCategory, productType]);
-
-  // Save current report data for future comparison
-  const saveCurrentReportData = (data: any) => {
-    try {
-      const dataKey = `salesReport_${analysisType}_${concernType}_data`;
-      const reportData = {
-        data,
-        generatedAt: new Date().toISOString(),
-        settings: {
-          dateRange: { startDate, endDate },
-          filters: { salesMethod, salesChannel },
-          analysisType,
-          concernType,
-        },
-      };
-
-      localStorage.setItem(dataKey, JSON.stringify(reportData));
-    } catch (error) {
-      console.warn("Failed to save report data:", error);
-    }
-  };
-
-  const renderReportTable = () => {
-    console.log('🔄 renderReportTable called with analysisType:', analysisType, 'concernType:', concernType);
-
-    let reportContent;
-
-    if (analysisType === "time") {
-      switch (concernType) {
-        case "time":
-          reportContent = renderTimeReport();
-          break;
-        case "profit":
-          reportContent = renderProfitReport();
-          break;
-        case "discount":
-          reportContent = renderDiscountReport();
-          break;
-        case "return":
-          reportContent = renderReturnReport();
-          break;
-        case "employee":
-          reportContent = renderEmployeeReport();
-          break;
-        default:
-          reportContent = renderTimeReport();
-      }
-    } else {
-      // Use the memoized function for analysis type reports
-      reportContent = renderAnalysisTypeReport;
-    }
-
-    // Save current data for future reference
-    const currentData = getFilteredData();
-    if (currentData && currentData.length > 0) {
-      saveCurrentReportData(currentData);
-    }
-
-    return reportContent;
-  };
-
-  const shouldShowChart = () => {
-    if (analysisType === "time") {
-      return ["time", "profit", "employee"].includes(concernType);
-    } else {
-      return true; // Always show chart for non-time analysis types
-    }
-  };
-
-  const getChartData = () => {
-    // Use previous report data if available, otherwise calculate from current filtered data
-    const dataToUse = previousReportData?.data || getFilteredData();
-
-    if (analysisType === "time") {
-      switch (concernType) {
-        case "time": {
-          const dailyData: {
-            [date: string]: { revenue: number; returnValue: number };
-          } = {};
-
-          dataToUse.forEach((transaction: any) => {
-            const date = new Date(
-              transaction.createdAt || transaction.created_at,
-            ).toLocaleDateString("vi-VN");
-            if (!dailyData[date]) {
-              dailyData[date] = { revenue: 0, returnValue: 0 };
-            }
-
-            const amount = Number(transaction.total);
-            if (amount > 0) {
-              dailyData[date].revenue += amount;
-            } else {
-              dailyData[date].returnValue += Math.abs(amount);
-            }
-          });
-
-          return Object.entries(dailyData).map(([date, data]) => ({
-            name: date,
-            revenue: data.revenue,
-            returnValue: data.returnValue,
-            netRevenue: data.revenue - data.returnValue,
-          }));
-        }
-
-        case "profit": {
-          const dailyData: {
-            [date: string]: {
-              totalAmount: number;
-              discount: number;
-              revenue: number;
-              cost: number;
-            };
-          } = {};
-
-          dataToUse.forEach((transaction: any) => {
-            const date = new Date(
-              transaction.createdAt || transaction.created_at,
-            ).toLocaleDateString("vi-VN");
-            if (!dailyData[date]) {
-              dailyData[date] = {
-                totalAmount: 0,
-                discount: 0,
-                revenue: 0,
-                cost: 0,
-              };
-            }
-
-            const subtotal = Number(transaction.subtotal || transaction.total);
-            const total = Number(transaction.total);
-            const discount = subtotal - total;
-
-            dailyData[date].totalAmount += subtotal;
-            dailyData[date].discount += discount;
-            dailyData[date].revenue += total;
-            dailyData[date].cost += total * 0.6;
-          });
-
-          return Object.entries(dailyData).map(([date, data]) => ({
-            name: date,
-            revenue: data.revenue,
-            cost: data.cost,
-            profit: data.revenue - data.cost,
-          }));
-        }
-
-        case "employee": {
-          const employeeData: {
-            [cashier: string]: { revenue: number; returnValue: number };
-          } = {};
-
-          dataToUse.forEach((transaction: any) => {
-            const cashier = transaction.cashierName || "Unknown";
-            if (!employeeData[cashier]) {
-              employeeData[cashier] = { revenue: 0, returnValue: 0 };
-            }
-
-            const amount = Number(transaction.total);
-            if (amount > 0) {
-              employeeData[cashier].revenue += amount;
-            } else {
-              employeeData[cashier].returnValue += Math.abs(amount);
-            }
-          });
-
-          return Object.entries(employeeData).map(([cashier, data]) => ({
-            name: cashier,
-            revenue: data.revenue,
-            returnValue: data.returnValue,
-            netRevenue: data.revenue - data.returnValue,
-          }));
-        }
-
-        default:
-          return [];
-      }
-    } else {
-      // For analysis type reports, get chart data from analysis functions
-      switch (analysisType) {
-        case "product": {
-          const data = getProductAnalysisData();
-          return data.slice(0, 10).map((item) => ({
-            name: item.productName,
-            revenue: item.revenue,
-            netRevenue: item.netRevenue,
-            profit: item.profit,
-          }));
-        }
-
-        case "employee": {
-          const data = getEmployeeAnalysisData();
-          return data.slice(0, 10).map((item) => ({
-            name: item.employee,
-            revenue: item.revenue,
-            netRevenue: item.netRevenue,
-            grossProfit: item.grossProfit,
-          }));
-        }
-
-        case "customer": {
-          const data = getCustomerAnalysisData();
-          return data.slice(0, 10).map((item) => ({
-            name: item.customer,
-            revenue: item.revenue,
-            netRevenue: item.netRevenue,
-            orders: item.orders,
-          }));
-        }
-
-        case "channel": {
-          const data = getChannelAnalysisData();
-          return data.map((item) => ({
-            name: item.salesChannel,
-            revenue: item.revenue,
-            netRevenue: item.netRevenue,
-            grossProfit: item.grossProfit,
-            netProfit: item.netProfit,
-          }));
-        }
-
-        default:
-          return [];
-      }
-    }
-  };
-
-  const getChartConfig = () => {
-    if (analysisType === "time") {
-      switch (concernType) {
-        case "time":
-          return {
-            revenue: {
-              label: t("reports.totalRevenue"),
-              color: "#10b981",
-            },
-            returnValue: {
-              label: t("reports.returnValue"),
-              color: "#ef4444",
-            },
-            netRevenue: {
-              label: t("reports.netRevenue"),
-              color: "#3b82f6",
-            },
-          };
-        case "profit":
-          return {
-            revenue: {
-              label: t("reports.revenue"),
-              color: "#10b981",
-            },
-            cost: {
-              label: t("reports.totalCost"),
-              color: "#f59e0b",
-            },
-            profit: {
-              label: t("reports.grossProfit"),
-              color: "#3b82f6",
-            },
-          };
-        case "employee":
-          return {
-            revenue: {
-              label: t("reports.totalRevenue"),
-              color: "#10b981",
-            },
-            returnValue: {
-              label: t("reports.returnValue"),
-              color: "#ef4444",
-            },
-            netRevenue: {
-              label: t("reports.netRevenue"),
-              color: "#3b82f6",
-            },
-          };
-        default:
-          return {};
-      }
-    } else {
-      // Config for non-time analysis types
-      return {
-        revenue: {
-          label: t("reports.revenue"),
-          color: "#10b981",
-        },
-        netRevenue: {
-          label: t("reports.netRevenue"),
-          color: "#3b82f6",
-        },
-        profit: {
-          label: t("reports.profit"),
-          color: "#8b5cf6",
-        },
-        grossProfit: {
-          label: t("reports.grossProfit"),
-          color: "#8b5cf6",
-        },
-        netProfit: {
-          label: t("reports.netProfit"),
-          color: "#8b5cf6",
-        },
-        orders: {
-          label: t("reports.orders"),
-          color: "#f59e0b",
-        },
-      };
-    }
-  };
-
-  const getTooltipLabel = (value: number, name: string) => {
-    const chartConfig = getChartConfig();
-    const config = chartConfig[name as keyof typeof chartConfig] as {
-      label: string;
-    };
-    return [`${value.toLocaleString()} ₫`, config?.label || name];
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
-            {t("reports.salesReport")}
-          </CardTitle>
-          <CardDescription>{getReportTitle()}</CardDescription>
-        </CardHeader>
-      </Card>
-
       {/* Filters */}
       <Card>
         <CardContent className="space-y-4 pt-6">
@@ -2400,7 +1126,6 @@ export function SalesChartReport() {
                 value={analysisType}
                 onValueChange={(value) => {
                   setAnalysisType(value);
-                  // Reset concern type when analysis type changes
                   if (value !== "time") {
                     setConcernType("sales");
                   } else {
@@ -2431,26 +1156,7 @@ export function SalesChartReport() {
               </Select>
             </div>
 
-            {/* Concern Type - Only for time analysis */}
-            {analysisType === "time" && (
-              <div>
-                <Label>{t("reports.concernType")}</Label>
-                <Select value={concernType} onValueChange={setConcernType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="time">{t("reports.timeSalesReport")}</SelectItem>
-                    <SelectItem value="profit">{t("reports.profitByInvoiceReport")}</SelectItem>
-                    <SelectItem value="discount">{t("reports.invoiceDiscountReport")}</SelectItem>
-                    <SelectItem value="return">{t("reports.returnByInvoiceReport")}</SelectItem>
-                    <SelectItem value="employee">{t("reports.employeeSalesReport")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Sales Method Filter - Only for non-time analysis */}
+            {/* Sales Method Filter */}
             {analysisType !== "time" && (
               <div>
                 <Label>{t("reports.salesMethod")}</Label>
@@ -2471,7 +1177,7 @@ export function SalesChartReport() {
               </div>
             )}
 
-            {/* Sales Channel Filter - Show for channel analysis and other non-time analysis */}
+            {/* Sales Channel Filter */}
             {(analysisType === "channel" || (analysisType !== "time" && analysisType !== "employee")) && (
               <div>
                 <Label>{t("reports.salesChannel")}</Label>
@@ -2496,8 +1202,8 @@ export function SalesChartReport() {
           {/* Additional filters based on analysis type */}
           {(analysisType !== "time") && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Employee Filter - for employee analysis and time analysis with employee concern */}
-              {(analysisType === "employee" || (analysisType === "time" && concernType === "employee")) && (
+              {/* Employee Filter */}
+              {(analysisType === "employee") && (
                 <div>
                   <Label>{t("reports.seller")}</Label>
                   <Select
@@ -2521,7 +1227,7 @@ export function SalesChartReport() {
                 </div>
               )}
 
-              {/* Customer Search - for customer analysis */}
+              {/* Customer Search */}
               {analysisType === "customer" && (
                 <div>
                   <Label>{t("reports.customerFilter")}</Label>
@@ -2537,7 +1243,7 @@ export function SalesChartReport() {
                 </div>
               )}
 
-              {/* Product Search - for product analysis */}
+              {/* Product Search */}
               {analysisType === "product" && (
                 <div>
                   <Label>{t("reports.productFilter")}</Label>
@@ -2553,7 +1259,7 @@ export function SalesChartReport() {
                 </div>
               )}
 
-              {/* Product Type - for product analysis */}
+              {/* Product Type */}
               {analysisType === "product" && (
                 <div>
                   <Label>{t("reports.productType")}</Label>
@@ -2577,7 +1283,7 @@ export function SalesChartReport() {
                 </div>
               )}
 
-              {/* Category Filter - for product analysis */}
+              {/* Category Filter */}
               {analysisType === "product" && (
                 <div>
                   <Label>{t("reports.productGroup")}</Label>
@@ -2607,7 +1313,7 @@ export function SalesChartReport() {
             </div>
           )}
 
-          {/* Date Range Filters - Show for all analysis types */}
+          {/* Date Range Filters */}
           <div className="grid grid-cols-4 gap-4">
             <div>
               <Label className="text-blue-700 font-medium text-sm">
@@ -2616,9 +1322,7 @@ export function SalesChartReport() {
               <Input
                 type="date"
                 value={startDate}
-                onChange={(e) => {
-                  setStartDate(e.target.value);
-                }}
+                onChange={(e) => setStartDate(e.target.value)}
                 className="border-blue-300 focus:border-blue-500 focus:ring-blue-200 mt-1"
               />
             </div>
@@ -2629,9 +1333,7 @@ export function SalesChartReport() {
               <Input
                 type="date"
                 value={endDate}
-                onChange={(e) => {
-                  setEndDate(e.target.value);
-                }}
+                onChange={(e) => setEndDate(e.target.value)}
                 className="border-blue-300 focus:border-blue-500 focus:ring-blue-200 mt-1"
               />
             </div>
@@ -2639,385 +1341,7 @@ export function SalesChartReport() {
         </CardContent>
       </Card>
 
-      {/* Chart Display - Only for Time, Profit, and Employee */}
-      {shouldShowChart() && (
-        <Card className="shadow-lg border-green-100">
-          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100">
-            <CardTitle className="flex items-center gap-2 text-green-800">
-              <TrendingUp className="w-5 h-5 text-green-600" />
-              {t("reports.chartView")} - {getReportTitle()}
-            </CardTitle>
-            <CardDescription className="text-green-600">
-              {t("reports.visualRepresentation")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-6">
-            <div className="h-96 w-full bg-white rounded-lg border border-green-100 p-4">
-              <ChartContainer config={getChartConfig()}>
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={getChartData()}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
-                    barCategoryGap="20%"
-                  >
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      stroke="#e5e7eb"
-                      opacity={0.6}
-                    />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 11, fill: "#374151" }}
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
-                      interval={0}
-                      tickMargin={10}
-                    />
-                    <YAxis
-                      tick={{ fontSize: 11, fill: "#374151" }}
-                      tickFormatter={(value) => {
-                        if (value >= 1000000) {
-                          return `${(value / 1000000).toFixed(1)}M`;
-                        } else if (value >= 1000) {
-                          return `${(value / 1000).toFixed(0)}K`;
-                        }
-                        return value.toString();
-                      }}
-                      width={60}
-                    />
-                    <ChartTooltip
-                      content={<ChartTooltipContent />}
-                      formatter={getTooltipLabel}
-                      labelStyle={{ color: "#374151", fontWeight: 600 }}
-                      contentStyle={{
-                        backgroundColor: "white",
-                        border: "1px solid #d1d5db",
-                        borderRadius: "8px",
-                        boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-                      }}
-                    />
-                    {analysisType === "time" && concernType === "time" && (
-                      <>
-                        <Bar
-                          dataKey="revenue"
-                          fill="#10b981"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="returnValue"
-                          fill="#ef4444"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="netRevenue"
-                          fill="#3b82f6"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                      </>
-                    )}
-                    {analysisType === "time" && concernType === "profit" && (
-                      <>
-                        <Bar
-                          dataKey="revenue"
-                          fill="#10b981"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="cost"
-                          fill="#f59e0b"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="profit"
-                          fill="#3b82f6"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                      </>
-                    )}
-                    {analysisType === "time" && concernType === "employee" && (
-                      <>
-                        <Bar
-                          dataKey="revenue"
-                          fill="#10b981"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="returnValue"
-                          fill="#ef4444"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="netRevenue"
-                          fill="#3b82f6"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                      </>
-                    )}
-                    {analysisType === "product" && (
-                      <>
-                        <Bar
-                          dataKey="revenue"
-                          fill="#10b981"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="netRevenue"
-                          fill="#3b82f6"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="profit"
-                          fill="#8b5cf6"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                      </>
-                    )}
-                    {analysisType === "employee" && (
-                      <>
-                        <Bar
-                          dataKey="revenue"
-                          fill="#10b981"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="netRevenue"
-                          fill="#3b82f6"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="grossProfit"
-                          fill="#8b5cf6"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                      </>
-                    )}
-                    {analysisType === "customer" && (
-                      <>
-                        <Bar
-                          dataKey="revenue"
-                          fill="#10b981"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="netRevenue"
-                          fill="#3b82f6"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="orders"
-                          fill="#f59e0b"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                      </>
-                    )}
-                    {analysisType === "channel" && (
-                      <>
-                        <Bar
-                          dataKey="revenue"
-                          fill="#10b981"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="netRevenue"
-                          fill="#3b82f6"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                        <Bar
-                          dataKey="netProfit"
-                          fill="#8b5cf6"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-                      </>
-                    )}
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </div>
-
-            {/* Chart Legend */}
-            <div className="mt-4 flex flex-wrap justify-center gap-4">
-              {analysisType === "time" && concernType === "time" && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.totalRevenue")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-red-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.returnValue")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-blue-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.netRevenue")}
-                    </span>
-                  </div>
-                </>
-              )}
-              {analysisType === "time" && concernType === "profit" && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.revenue")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-amber-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.totalCost")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-blue-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.grossProfit")}
-                    </span>
-                  </div>
-                </>
-              )}
-              {analysisType === "time" && concernType === "employee" && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.totalRevenue")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-red-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.returnValue")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-blue-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.netRevenue")}
-                    </span>
-                  </div>
-                </>
-              )}
-              {analysisType === "product" && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.revenue")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-blue-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.netRevenue")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-purple-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.profit")}
-                    </span>
-                  </div>
-                </>
-              )}
-              {analysisType === "employee" && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.revenue")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-blue-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.netRevenue")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-purple-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.grossProfit")}
-                    </span>
-                  </div>
-                </>
-              )}
-              {analysisType === "customer" && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.revenue")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-blue-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.netRevenue")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-amber-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.orders")}
-                    </span>
-                  </div>
-                </>
-              )}
-              {analysisType === "channel" && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-emerald-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.revenue")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-blue-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.netRevenue")}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded bg-purple-500"></div>
-                    <span className="text-sm text-gray-600">
-                      {t("reports.netProfit")}
-                    </span>
-                  </div>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Report Content - Using legacy components */}
+      {/* Report Content */}
       <div className="space-y-6">
         <Card>
           <CardHeader>
@@ -3030,7 +1354,13 @@ export function SalesChartReport() {
             </CardDescription>
           </CardHeader>
         </Card>
-        {renderLegacyComponent()}
+        {(transactionsLoading || ordersLoading) ? (
+          <div className="flex justify-center py-8">
+            <div className="text-gray-500">{t("reports.loading")}...</div>
+          </div>
+        ) : (
+          renderReportContent()
+        )}
       </div>
     </div>
   );
