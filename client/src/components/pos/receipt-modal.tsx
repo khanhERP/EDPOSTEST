@@ -21,7 +21,6 @@ interface ReceiptModalProps {
   receipt: Receipt | null;
   onConfirm?: () => void;
   isPreview?: boolean;
-  autoShowPrint?: boolean;
   cartItems?: Array<{
     id: number;
     name: string;
@@ -38,7 +37,6 @@ export function ReceiptModal({
   receipt,
   onConfirm,
   isPreview = false,
-  autoShowPrint = false,
   cartItems = [],
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
@@ -79,31 +77,27 @@ export function ReceiptModal({
       isOpen,
       hasReceipt: !!receipt,
       isPreview,
-      hasAutoOpened,
-      autoShowPrint
+      hasAutoOpened
     });
 
-    if (isOpen && receipt && !isPreview && !hasAutoOpened && autoShowPrint) {
+    if (isOpen && receipt && !isPreview && !hasAutoOpened) {
       console.log('🎯 Auto-opening print dialog for receipt');
       setHasAutoOpened(true);
 
       // Small delay to ensure modal is fully rendered
       setTimeout(() => {
-        console.log('🖨️ Executing handlePrint for autoShowPrint');
+        console.log('🖨️ Executing handlePrint for non-preview receipt');
         handlePrint();
       }, 300); // Reduced delay for better UX
-    } else if (isOpen && receipt && !isPreview && autoShowPrint && hasAutoOpened) {
-      console.log('⚠️ Print dialog already auto-opened once for this session');
     } else {
       console.log('❌ Initial conditions not met for auto-print:', {
         isOpen,
         hasReceipt: !!receipt,
         isPreview,
-        hasAutoOpened,
-        autoShowPrint
+        hasAutoOpened
       });
     }
-  }, [isOpen, receipt, isPreview, hasAutoOpened, autoShowPrint]);
+  }, [isOpen, receipt, isPreview, hasAutoOpened]);
 
   // Reset hasAutoOpened when modal closes
   useEffect(() => {

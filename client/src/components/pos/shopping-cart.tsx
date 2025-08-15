@@ -58,8 +58,7 @@ export function ShoppingCart({
   const [onSelectMethod, setOnSelectMethod] = useState(() => () => {}); // Placeholder for the selection function
   const [onShowEInvoice, setOnShowEInvoice] = useState(() => () => {}); // Placeholder for triggering the receipt modal after E-invoice
 
-  // State for auto-show print functionality
-  const [autoShowPrint, setAutoShowPrint] = useState(false); // State to control auto-show print
+  
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
@@ -298,8 +297,6 @@ export function ShoppingCart({
         setTimeout(() => {
           if (eInvoiceData.receipt) {
             console.log('✅ Using receipt data from publish later');
-            // Set autoShowPrint = true để tự động hiển thị dialog in
-            setAutoShowPrint(true);
             setPreviewReceipt(eInvoiceData.receipt);
             setShowReceiptPreview(true);
 
@@ -341,8 +338,6 @@ export function ShoppingCart({
 
             console.log("📄 Created fallback receipt:", fallbackReceipt);
 
-            // Set autoShowPrint = true để tự động hiển thị dialog in
-            setAutoShowPrint(true);
             setPreviewReceipt(fallbackReceipt);
             setShowReceiptPreview(true);
 
@@ -368,8 +363,6 @@ export function ShoppingCart({
         
         setTimeout(() => {
           if (eInvoiceData.receipt) {
-            // Set autoShowPrint từ eInvoiceData
-            setAutoShowPrint(eInvoiceData.autoShowPrint || false);
             setPreviewReceipt(eInvoiceData.receipt);
             setShowReceiptPreview(true);
 
@@ -446,10 +439,6 @@ export function ShoppingCart({
       if (eInvoiceData.receipt) {
         console.log("📄 E-invoice has receipt data, showing receipt modal");
         
-        // Set autoShowPrint based on eInvoiceData or default to true for publishLater
-        const autoShowPrint = eInvoiceData.publishLater === true ? true : (eInvoiceData.autoShowPrint || false);
-        
-        setAutoShowPrint(autoShowPrint);
         setPreviewReceipt(eInvoiceData.receipt);
         setShowReceiptPreview(true);
 
@@ -502,8 +491,6 @@ export function ShoppingCart({
 
         console.log("📄 Created fallback receipt:", fallbackReceipt);
 
-        // Set autoShowPrint = true cho fallback case
-        setAutoShowPrint(true);
         setPreviewReceipt(fallbackReceipt);
         setShowReceiptPreview(true);
 
@@ -773,12 +760,10 @@ export function ShoppingCart({
           console.log('🔴 Closing receipt modal from shopping cart');
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
-          setAutoShowPrint(false); // Reset auto-print flag
         }}
         receipt={previewReceipt}
         onConfirm={handleReceiptConfirm}
-        isPreview={!autoShowPrint} // If autoShowPrint is true, it's not preview mode
-        autoShowPrint={autoShowPrint} // Pass auto-print flag
+        isPreview={previewReceipt?.paymentMethod === "preview"} // Only preview mode for preview receipts
         cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,
