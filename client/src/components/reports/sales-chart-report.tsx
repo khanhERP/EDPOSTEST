@@ -328,7 +328,7 @@ export function SalesChartReport() {
                       {t("reports.orderNumber")}
                     </TableHead>
                     <TableHead className="text-center border-r min-w-[140px]" rowSpan={2}>
-                      {t("reports.totalAmount")}
+                      {t("reports.subtotal")}
                     </TableHead>
                     <TableHead className="text-center border-r min-w-[120px]" rowSpan={2}>
                       {t("reports.discount")}

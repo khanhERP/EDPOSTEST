@@ -882,6 +882,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalTax: "Total Tax",
     finalTotal: "Final Total",
     totalCustomerPayment: "Total Customer Payment",
+    subtotal: "Subtotal",
+    grossAmount: "Gross Amount",
   },
   vi: {
     title: "Báo cáo",
@@ -1431,5 +1433,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalTax: "Thuế",
     finalTotal: "Tổng tiền",
     totalCustomerPayment: "Tổng KH thanh toán",
+    subtotal: "Thành tiền",
+    grossAmount: "Thành tiền",
   },
 };
