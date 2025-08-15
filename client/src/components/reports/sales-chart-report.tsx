@@ -2437,7 +2437,7 @@ export function SalesChartReport() {
 
           {/* Date Range Filters - Only for time analysis */}
           {analysisType === "time" && (
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label className="text-blue-700 font-medium text-sm">
                   {t("reports.startDate")}
@@ -2445,7 +2445,16 @@ export function SalesChartReport() {
                 <Input
                   type="date"
                   value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    // Clear cache and force refetch when date changes
+                    queryClient.removeQueries({
+                      queryKey: ["/api/transactions"],
+                    });
+                    queryClient.removeQueries({
+                      queryKey: ["/api/orders"],
+                    });
+                  }}
                   className="border-blue-300 focus:border-blue-500 focus:ring-blue-200 mt-1"
                 />
               </div>
@@ -2456,7 +2465,16 @@ export function SalesChartReport() {
                 <Input
                   type="date"
                   value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    // Clear cache and force refetch when date changes
+                    queryClient.removeQueries({
+                      queryKey: ["/api/transactions"],
+                    });
+                    queryClient.removeQueries({
+                      queryKey: ["/api/orders"],
+                    });
+                  }}
                   className="border-blue-300 focus:border-blue-500 focus:ring-blue-200 mt-1"
                 />
               </div>
