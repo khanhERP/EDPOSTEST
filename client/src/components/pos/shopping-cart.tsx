@@ -58,9 +58,7 @@ export function ShoppingCart({
   const [onSelectMethod, setOnSelectMethod] = useState(() => () => {}); // Placeholder for the selection function
   const [onShowEInvoice, setOnShowEInvoice] = useState(() => () => {}); // Placeholder for triggering the receipt modal after E-invoice
 
-  // New states for Receipt Modal management
-  const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [currentReceipt, setCurrentReceipt] = useState<any>(null);
+  // State for auto-show print functionality
   const [autoShowPrint, setAutoShowPrint] = useState(false); // State to control auto-show print
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
@@ -302,8 +300,8 @@ export function ShoppingCart({
             console.log('✅ Using receipt data from publish later');
             // Set autoShowPrint = true để tự động hiển thị dialog in
             setAutoShowPrint(true);
-            setCurrentReceipt(eInvoiceData.receipt);
-            setShowReceiptModal(true);
+            setPreviewReceipt(eInvoiceData.receipt);
+            setShowReceiptPreview(true);
 
             // Clear cart sau khi hiển thị receipt modal
             setTimeout(() => {
@@ -345,8 +343,8 @@ export function ShoppingCart({
 
             // Set autoShowPrint = true để tự động hiển thị dialog in
             setAutoShowPrint(true);
-            setCurrentReceipt(fallbackReceipt);
-            setShowReceiptModal(true);
+            setPreviewReceipt(fallbackReceipt);
+            setShowReceiptPreview(true);
 
             // Clear cart sau khi hiển thị receipt modal
             setTimeout(() => {
@@ -372,8 +370,8 @@ export function ShoppingCart({
           if (eInvoiceData.receipt) {
             // Set autoShowPrint từ eInvoiceData
             setAutoShowPrint(eInvoiceData.autoShowPrint || false);
-            setCurrentReceipt(eInvoiceData.receipt);
-            setShowReceiptModal(true);
+            setPreviewReceipt(eInvoiceData.receipt);
+            setShowReceiptPreview(true);
 
             // Clear cart sau khi hiển thị receipt modal
             setTimeout(() => {
@@ -452,8 +450,8 @@ export function ShoppingCart({
         const autoShowPrint = eInvoiceData.publishLater === true ? true : (eInvoiceData.autoShowPrint || false);
         
         setAutoShowPrint(autoShowPrint);
-        setCurrentReceipt(eInvoiceData.receipt);
-        setShowReceiptModal(true);
+        setPreviewReceipt(eInvoiceData.receipt);
+        setShowReceiptPreview(true);
 
         // Clear cart sau khi hiển thị receipt modal
         setTimeout(() => {
@@ -506,8 +504,8 @@ export function ShoppingCart({
 
         // Set autoShowPrint = true cho fallback case
         setAutoShowPrint(true);
-        setCurrentReceipt(fallbackReceipt);
-        setShowReceiptModal(true);
+        setPreviewReceipt(fallbackReceipt);
+        setShowReceiptPreview(true);
 
         // Clear cart sau khi hiển thị receipt modal
         setTimeout(() => {
@@ -768,13 +766,19 @@ export function ShoppingCart({
         </div>
       )}
 
-      {/* Receipt Preview Modal for Card Payments */}
+      {/* Receipt Modal - handles both preview and final receipt */}
       <ReceiptModal
         isOpen={showReceiptPreview}
-        onClose={() => setShowReceiptPreview(false)}
+        onClose={() => {
+          console.log('🔴 Closing receipt modal from shopping cart');
+          setShowReceiptPreview(false);
+          setPreviewReceipt(null);
+          setAutoShowPrint(false); // Reset auto-print flag
+        }}
         receipt={previewReceipt}
         onConfirm={handleReceiptConfirm}
-        isPreview={true}
+        isPreview={!autoShowPrint} // If autoShowPrint is true, it's not preview mode
+        autoShowPrint={autoShowPrint} // Pass auto-print flag
         cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,
@@ -807,37 +811,7 @@ export function ShoppingCart({
         }))}
       />
 
-      {/* Receipt Modal */}
-      <ReceiptModal
-        isOpen={showReceiptModal}
-        onClose={() => {
-          console.log('🔴 Closing receipt modal from shopping cart');
-          setShowReceiptModal(false);
-          setCurrentReceipt(null);
-          setAutoShowPrint(false); // Reset auto-print flag
-        }}
-        receipt={currentReceipt}
-        cartItems={
-          currentReceipt
-            ? (currentReceipt.items || []).map((item: any) => ({
-                id: item.productId || item.id,
-                name: item.productName || item.name,
-                price: parseFloat(item.price),
-                quantity: item.quantity,
-                sku: `FOOD${String(item.productId || item.id).padStart(5, "0")}`,
-                taxRate: parseFloat(item.taxRate || "10"),
-              }))
-            : cart.map((item) => ({
-                id: item.id,
-                name: item.name,
-                price: parseFloat(item.price),
-                quantity: item.quantity,
-                sku: `FOOD${String(item.id).padStart(5, "0")}`,
-                taxRate: parseFloat(item.taxRate || "10"),
-              }))
-        }
-        autoShowPrint={autoShowPrint} // Truyền flag auto-print
-      />
+      
 
       {/* E-Invoice Modal (Assuming you have this component) */}
       {/* You would need to pass the correct props like onClose, onSelectMethod, onShowEInvoice, etc. */}
