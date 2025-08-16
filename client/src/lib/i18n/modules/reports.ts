@@ -352,6 +352,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Status
     status: "Trạng thái",
+    active: "Hoạt động",
+    inactive: "Không hoạt động",
 
     // Additional report sections
     detailedAnalysis: "Phân tích chi tiết",
@@ -756,6 +758,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Status
     status: "상태",
+    active: "활성",
+    inactive: "비활성",
 
     // Additional report sections
     detailedAnalysis: "상세 분석",
@@ -1157,6 +1161,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Status
     status: "Status",
+    active: "Active",
+    inactive: "Inactive",
 
     // Additional report sections
     detailedAnalysis: "Detailed Analysis",
