@@ -425,9 +425,12 @@ export function TableReport() {
       {/* Detailed Table Performance */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("reports.tableAnalysis")}</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Utensils className="w-5 h-5" />
+            {t("reports.tableAnalysis")}
+          </CardTitle>
           <CardDescription>
-            {t("reports.detailedTablePerformanceDesc")}
+            {t("reports.analyzeRevenue")}
           </CardDescription>
         </CardHeader>
         <CardContent>

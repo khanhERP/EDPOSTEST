@@ -41,6 +41,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
 } from "recharts";
+import { Button } from "@/components/ui/button";
 
 export function SalesReport() {
   const { t } = useTranslation();
@@ -272,6 +273,11 @@ export function SalesReport() {
     return labels[method as keyof typeof labels] || method;
   };
 
+  const handleRefresh = () => {
+    // Refresh logic would go here, e.g., refetching data
+    // For now, we can just log it or perhaps reset state if needed
+    console.log("Refresh button clicked");
+  };
 
 
   const salesData = getSalesData();
@@ -488,8 +494,12 @@ export function SalesReport() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>{t('reports.salesReport')}</CardTitle>
-              <CardDescription>{t("reports.salesReportDescription")}</CardDescription>
+              <CardTitle className="text-lg font-semibold">
+                {t('reports.salesReportTitle')}
+              </CardTitle>
+              <CardDescription>
+                {t('reports.salesReportDescription')}
+              </CardDescription>
             </div>
             <div className="flex items-center gap-4">
 
@@ -510,8 +520,9 @@ export function SalesReport() {
               {dateRange === "custom" && (
                 <>
                   <div className="flex items-center gap-2">
-                    <Label>{t("reports.startDate")}:</Label>
+                    <Label htmlFor="startDate">{t('reports.startDate')}:</Label>
                     <Input
+                      id="startDate"
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
@@ -519,8 +530,9 @@ export function SalesReport() {
                     />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Label>{t("reports.endDate")}:</Label>
+                    <Label htmlFor="endDate">{t('reports.endDate')}:</Label>
                     <Input
+                      id="endDate"
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}

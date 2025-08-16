@@ -190,7 +190,7 @@ export function DashboardOverview() {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle className="text-lg font-semibold text-gray-900">
-                {t('reports.dashboard')}
+                {t('reports.dashboardTab')}
               </CardTitle>
               <CardDescription>
                 {t("reports.dashboardDescription")}

@@ -675,10 +675,10 @@ export function CustomerReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            {t("reports.customerReport")}
+            {t('reports.customerReport')}
           </CardTitle>
           <CardDescription>
-            {t("reports.customerReportDescription")}
+            {t('reports.customerMetrics')}
           </CardDescription>
         </CardHeader>
       </Card>

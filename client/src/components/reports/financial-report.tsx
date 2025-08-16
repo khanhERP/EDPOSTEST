@@ -63,18 +63,18 @@ export function FinancialReport() {
 
   // Month options
   const monthOptions = [
-    { value: "1", label: "Tháng 1" },
-    { value: "2", label: "Tháng 2" },
-    { value: "3", label: "Tháng 3" },
-    { value: "4", label: "Tháng 4" },
-    { value: "5", label: "Tháng 5" },
-    { value: "6", label: "Tháng 6" },
-    { value: "7", label: "Tháng 7" },
-    { value: "8", label: "Tháng 8" },
-    { value: "9", label: "Tháng 9" },
-    { value: "10", label: "Tháng 10" },
-    { value: "11", label: "Tháng 11" },
-    { value: "12", label: "Tháng 12" },
+    { value: "1", label: t("reports.month1") },
+    { value: "2", label: t("reports.month2") },
+    { value: "3", label: t("reports.month3") },
+    { value: "4", label: t("reports.month4") },
+    { value: "5", label: t("reports.month5") },
+    { value: "6", label: t("reports.month6") },
+    { value: "7", label: t("reports.month7") },
+    { value: "8", label: t("reports.month8") },
+    { value: "9", label: t("reports.month9") },
+    { value: "10", label: t("reports.month10") },
+    { value: "11", label: t("reports.month11") },
+    { value: "12", label: t("reports.month12") },
   ];
 
   // API queries

@@ -401,7 +401,7 @@ export function OrderReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            {t("reports.orderReport")}
+            {t("reports.purchaseTab")}
           </CardTitle>
           <CardDescription>
             {t("reports.orderReportDescription")}
@@ -541,7 +541,7 @@ export function OrderReport() {
 
       {/* Chart Display */}
       <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
-        <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+        <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-lg">
           <CardTitle className="flex items-center gap-3 text-lg font-semibold">
             <div className="p-2 bg-white/20 rounded-lg">
               <TrendingUp className="w-6 h-6" />
@@ -624,8 +624,8 @@ export function OrderReport() {
                     />
                     <ChartTooltip
                       content={<ChartTooltipContent />}
-                      labelStyle={{ 
-                        color: "#1e293b", 
+                      labelStyle={{
+                        color: "#1e293b",
                         fontWeight: 600,
                         fontSize: 13,
                         marginBottom: 4

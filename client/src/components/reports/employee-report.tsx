@@ -531,7 +531,7 @@ export function EmployeeReport() {
             {t("reports.employeeReport")}
           </CardTitle>
           <CardDescription>
-            {t("reports.employeeAnalysisDescription")}
+            {t("reports.employeeAnalysis")}
           </CardDescription>
         </CardHeader>
       </Card>
