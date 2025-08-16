@@ -143,6 +143,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Sales chart report
     salesChart: "Biểu đồ bán hàng",
     salesChartDescription: "Báo cáo chi tiết về doanh số và phân tích theo thời gian",
+    salesReport: "Báo cáo bán hàng",
 
     // Comprehensive sales report
     comprehensiveSalesReport: "Báo cáo bán hàng toàn diện",
@@ -483,6 +484,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Sales chart report
     salesChart: "매출 차트",
     salesChartDescription: "매출 세부 분석 및 시간별 분석",
+    salesReport: "매출 보고서",
 
     // Comprehensive sales report
     comprehensiveSalesReport: "종합 매출 보고서",
@@ -823,6 +825,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Sales chart report
     salesChart: "Sales Chart",
     salesChartDescription: "Detailed sales analysis and time-based breakdown",
+    salesReport: "Sales Report",
 
     // Comprehensive sales report
     comprehensiveSalesReport: "Comprehensive Sales Report",
