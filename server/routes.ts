@@ -1298,53 +1298,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const customerData = req.body;
       const tenantDb = await getTenantDatabase(req);
-      
-      console.log("Creating customer with data:", customerData);
-      
-      // Validate required fields
-      if (!customerData.name || customerData.name.trim() === '') {
-        return res.status(400).json({ 
-          message: "Customer name is required",
-          field: "name"
-        });
-      }
-
-      // Validate email format if provided
-      if (customerData.email && customerData.email.trim() !== '') {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(customerData.email)) {
-          return res.status(400).json({
-            message: "Invalid email format",
-            field: "email"
-          });
-        }
-      }
-
       const customer = await storage.createCustomer(customerData, tenantDb);
-      console.log("Customer created successfully:", customer);
       res.status(201).json(customer);
     } catch (error) {
-      console.error("Customer creation error:", error);
-      
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          message: "Invalid customer data", 
-          errors: error.errors 
-        });
+        return res
+          .status(400)
+          .json({ message: "Invalid customer data", errors: error.errors });
       }
-      
-      // Handle specific database errors
-      if (error.message && error.message.includes('UNIQUE constraint failed')) {
-        return res.status(409).json({
-          message: "Customer with this information already exists",
-          code: "DUPLICATE_CUSTOMER"
-        });
-      }
-      
-      res.status(500).json({ 
-        message: "Failed to create customer",
-        details: error.message || "Unknown error"
-      });
+      res.status(500).json({ message: "Failed to create customer" });
     }
   });
 
