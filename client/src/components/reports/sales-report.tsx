@@ -66,7 +66,17 @@ export function SalesReport() {
 
 
   const getSalesData = () => {
-    if (!transactions || !Array.isArray(transactions)) return null;
+    if (!transactions || !Array.isArray(transactions)) {
+      return {
+        dailySales: [],
+        paymentMethods: [],
+        hourlySales: {},
+        totalRevenue: 0,
+        totalOrders: 0,
+        totalCustomers: 0,
+        averageOrderValue: 0,
+      };
+    }
 
     const filteredTransactions = transactions.filter((transaction: any) => {
       const transactionDate = new Date(
@@ -415,10 +425,10 @@ export function SalesReport() {
                           {formatCurrency(day.revenue)}
                         </TableCell>
                         <TableCell>
-                          {day.orders} {t("reports.count")}
+                          {day.orders} {t("common.items")}
                         </TableCell>
                         <TableCell>
-                          {day.customers} {t("reports.count")}
+                          {day.customers} {t("common.items")}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -428,7 +438,7 @@ export function SalesReport() {
                           colSpan={4}
                           className="text-center text-gray-500"
                         >
-                          {t("reports.noDataDescription")}
+                          {t("common.noData")}
                         </TableCell>
                       </TableRow>
                     )}
@@ -482,7 +492,7 @@ export function SalesReport() {
                               {getPaymentMethodLabel(payment.method)}
                             </Badge>
                             <span className="text-sm text-gray-600">
-                              {payment.count} {t("reports.count")}
+                              {payment.count} {t("common.items")}
                             </span>
                           </div>
                           <div className="text-right">
@@ -506,7 +516,7 @@ export function SalesReport() {
 
                   {(!salesData?.paymentMethods || salesData.paymentMethods.length === 0) && (
                     <div className="text-center text-gray-500 py-4">
-                      {t("reports.noPaymentData")}
+                      {t("common.noData")}
                     </div>
                   )}
                 </>
@@ -543,10 +553,10 @@ export function SalesReport() {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle className="text-lg font-semibold">
-                {t('reports.salesReportTitle')}
+                {t('reports.salesReport')}
               </CardTitle>
               <CardDescription>
-                {t('reports.salesReportDescription')}
+                {t('reports.analyzeRevenue')}
               </CardDescription>
             </div>
             <div className="flex items-center gap-4">
