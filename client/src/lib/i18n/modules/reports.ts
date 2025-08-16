@@ -324,21 +324,16 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     lowStockAlert: "Cảnh báo tồn kho thấp",
 
     // Additional menu items
-    warehouseReport: "Báo cáo kho hàng",
-    warehouseReportDescription: "Báo cáo chi tiết về hoạt động kho hàng",
-
-    // Additional report specific translations
-    productPerformance: "Hiệu suất sản phẩm",
-    categoryPerformance: "Hiệu suất danh mục",
-    detailedTablePerformanceDesc: "Hiệu suất và sử dụng bàn chi tiết",
-    channelAnalysis: "Phân tích kênh bán hàng",
+    warehouseReport: "Báo cáo kho",
+    warehouseReportDescription: "Báo cáo chi tiết hoạt động kho",
+    orderReport: "Báo cáo đơn hàng",
+    salesChart: "Biểu đồ bán hàng",
 
     // Chart and filter labels
     selectDateRange: "Chọn khoảng thời gian",
     applyFilter: "Áp dụng bộ lọc",
     clearFilter: "Xóa bộ lọc",
     exportData: "Xuất dữ liệu",
-    printReport: "In báo cáo",
 
     // Data display
     noDataAvailable: "Không có dữ liệu",
@@ -671,6 +666,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Additional menu items
     warehouseReport: "창고 보고서",
     warehouseReportDescription: "창고 활동에 대한 상세 보고서",
+    orderReport: "주문 보고서",
+    salesChart: "매출 차트",
 
     // Chart and filter labels
     selectDateRange: "날짜 범위 선택",
@@ -1009,6 +1006,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Additional menu items
     warehouseReport: "Warehouse Report",
     warehouseReportDescription: "Detailed warehouse activity report",
+    orderReport: "Order Report",
+    salesChart: "Sales Chart",
 
     // Chart and filter labels
     selectDateRange: "Select Date Range",
