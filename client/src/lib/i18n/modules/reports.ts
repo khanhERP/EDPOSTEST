@@ -54,13 +54,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     paymentMethodDetails: "Chi tiết phương thức thanh toán và phân tích doanh số hàng ngày",
 
     // Tab names for reports
-    salesAnalysisTab: "Phân tích bán hàng",
-    menuAnalysisTab: "Phân tích menu",
-    tableAnalysisTab: "Phân tích bàn", 
-    salesChartTab: "Biểu đồ bán hàng",
+    salesAnalysisTab: "Báo cáo phân tích bán hàng",
+    menuAnalysisTab: "Báo cáo phân tích menu",
+    tableAnalysisTab: "Báo cáo phân tích bàn", 
+    salesChartTab: "Báo cáo biểu đồ bán hàng",
     purchaseTab: "Báo cáo mua hàng",
-    warehouseTab: "Báo cáo kho",
-    dashboardTab: "Bảng điều khiển",
+    warehouseTab: "Báo cáo kho hàng",
+    dashboardTab: "Báo cáo bảng điều khiển",
 
     // Analysis types
     analysisType: "Loại phân tích",
@@ -242,7 +242,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     times: "lần",
 
     // Warehouse Report
-    warehouseReportTab: "Báo cáo kho",
+    warehouseReportTab: "Báo cáo kho hàng",
     warehouseReportDescription: "Báo cáo chi tiết về hoạt động kho hàng",
     
     // Additional missing keys
@@ -424,13 +424,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     paymentMethodDetails: "결제 방법별 세부 분석 및 일일 매출 분석",
 
     // Tab names for reports
-    salesAnalysisTab: "매출 분석",
-    menuAnalysisTab: "메뉴 분석",
-    tableAnalysisTab: "테이블 분석", 
-    salesChartTab: "매출 차트",
+    salesAnalysisTab: "매출 분석 보고서",
+    menuAnalysisTab: "메뉴 분석 보고서",
+    tableAnalysisTab: "테이블 분석 보고서", 
+    salesChartTab: "매출 차트 보고서",
     purchaseTab: "구매 보고서",
     warehouseTab: "창고 보고서",
-    dashboardTab: "대시보드",
+    dashboardTab: "대시보드 보고서",
 
     // Analysis types
     analysisType: "분석 유형",
@@ -612,7 +612,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     times: "회",
 
     // Warehouse Report
-    warehouseReportTab: "창고 보고서",
+    warehouseReportTab: "창고 활동 보고서",
     warehouseReportDescription: "창고 활동에 대한 상세 보고서",
     
     // Additional missing keys
@@ -795,13 +795,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     paymentMethodDetails: "Payment method detailed analysis and daily sales breakdown",
 
     // Tab names for reports
-    salesAnalysisTab: "Sales Analysis",
-    menuAnalysisTab: "Menu Analysis", 
-    tableAnalysisTab: "Table Analysis",
-    salesChartTab: "Sales Chart",
+    salesAnalysisTab: "Sales Analysis Report",
+    menuAnalysisTab: "Menu Analysis Report", 
+    tableAnalysisTab: "Table Analysis Report",
+    salesChartTab: "Sales Chart Report",
     purchaseTab: "Purchase Report",
     warehouseTab: "Warehouse Report",
-    dashboardTab: "Dashboard",
+    dashboardTab: "Dashboard Report",
 
     // Analysis types
     analysisType: "Analysis Type",
@@ -983,7 +983,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     times: "times",
 
     // Warehouse Report
-    warehouseReportTab: "Warehouse Report",
+    warehouseReportTab: "Warehouse Activity Report",
     warehouseReportDescription: "Detailed warehouse activity report",
     
     // Additional missing keys
