@@ -428,7 +428,7 @@ export function PaymentMethodModal({
 
     // Đóng E-invoice modal ngay lập tức
     setShowEInvoice(false);
-    
+
     // Đóng Payment modal ngay lập tức
     onClose();
 
@@ -441,7 +441,7 @@ export function PaymentMethodModal({
 
   const handleEInvoiceClose = () => {
     setShowEInvoice(false);
-    
+
     // Đóng luôn Payment Modal khi E-invoice modal được đóng
     console.log('🔙 E-invoice modal closed, closing payment method modal');
     setSelectedPaymentMethod("");
@@ -645,7 +645,32 @@ export function PaymentMethodModal({
                 })}
               </div>
 
-              <Button variant="outline" onClick={onClose} className="w-full">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  // Send clear message to customer display before closing
+                  try {
+                    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    const wsUrl = `${protocol}//${window.location.host}/ws`;
+                    const ws = new WebSocket(wsUrl);
+
+                    ws.onopen = () => {
+                      console.log('Payment Modal: Sending clear message from cancel button');
+                      ws.send(JSON.stringify({
+                        type: 'restore_cart_display',
+                        timestamp: new Date().toISOString(),
+                        reason: 'payment_cancel_button'
+                      }));
+                      ws.close();
+                    };
+                  } catch (error) {
+                    console.error('Failed to send clear message to customer display:', error);
+                  }
+
+                  onClose();
+                }}
+                className="w-full"
+              >
                 {t("common.cancel")}
               </Button>
             </>
