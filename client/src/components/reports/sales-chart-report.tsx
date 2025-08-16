@@ -3062,51 +3062,28 @@ export function SalesChartReport() {
           )}
 
           {analysisType === "channel" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
-              {/* Date Range */}
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  {t("reports.startDate")}
-                </Label>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="h-9 text-sm"
-                />
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  {t("reports.endDate")}
-                </Label>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="h-9 text-sm"
-                />
-              </div>
-
-              {/* Sales Method */}
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  {t("reports.salesMethod")}
-                </Label>
-                <Select value={salesMethod} onValueChange={setSalesMethod}>
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("common.all")}</SelectItem>
-                    <SelectItem value="no_delivery">
-                      {t("reports.noDelivery")}
-                    </SelectItem>
-                    <SelectItem value="delivery">
-                      {t("reports.delivery")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+            <div className="pt-4 border-t border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Sales Method */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700">
+                    {t("reports.salesMethod")}
+                  </Label>
+                  <Select value={salesMethod} onValueChange={setSalesMethod}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
+                      <SelectItem value="no_delivery">
+                        Không giao hàng
+                      </SelectItem>
+                      <SelectItem value="delivery">
+                        Có giao hàng
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           )}
