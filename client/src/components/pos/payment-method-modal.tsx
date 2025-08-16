@@ -756,13 +756,69 @@ export function PaymentMethodModal({
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  onClick={handleBack}
+                  onClick={() => {
+                    // Send clear message to customer display before going back
+                    try {
+                      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                      const wsUrl = `${protocol}//${window.location.host}/ws`;
+                      const ws = new WebSocket(wsUrl);
+
+                      ws.onopen = () => {
+                        console.log('Payment Modal: Sending clear message from back button');
+                        ws.send(JSON.stringify({
+                          type: 'qr_payment_cancelled',
+                          timestamp: new Date().toISOString()
+                        }));
+                        // Wait a bit then send cart restore message
+                        setTimeout(() => {
+                          ws.send(JSON.stringify({
+                            type: 'restore_cart_display',
+                            timestamp: new Date().toISOString(),
+                            reason: 'payment_back_button'
+                          }));
+                          ws.close();
+                        }, 100);
+                      };
+                    } catch (error) {
+                      console.error('Failed to send clear message from back button:', error);
+                    }
+
+                    handleBack();
+                  }}
                   className="flex-1"
                 >
                   {t("common.goBack")}
                 </Button>
                 <Button
-                  onClick={handleQRComplete}
+                  onClick={() => {
+                    // Send clear message to customer display before completing
+                    try {
+                      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                      const wsUrl = `${protocol}//${window.location.host}/ws`;
+                      const ws = new WebSocket(wsUrl);
+
+                      ws.onopen = () => {
+                        console.log('Payment Modal: Sending clear message from complete button');
+                        ws.send(JSON.stringify({
+                          type: 'qr_payment_cancelled',
+                          timestamp: new Date().toISOString()
+                        }));
+                        // Wait a bit then send cart restore message
+                        setTimeout(() => {
+                          ws.send(JSON.stringify({
+                            type: 'restore_cart_display',
+                            timestamp: new Date().toISOString(),
+                            reason: 'payment_complete_button'
+                          }));
+                          ws.close();
+                        }, 100);
+                      };
+                    } catch (error) {
+                      console.error('Failed to send clear message from complete button:', error);
+                    }
+
+                    handleQRComplete();
+                  }}
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
                 >
                   {t("common.complete")}
@@ -878,13 +934,55 @@ export function PaymentMethodModal({
               <div className="flex gap-3">
                 <Button
                   variant="outline"
-                  onClick={handleBack}
+                  onClick={() => {
+                    // Send clear message to customer display before going back from cash payment
+                    try {
+                      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                      const wsUrl = `${protocol}//${window.location.host}/ws`;
+                      const ws = new WebSocket(wsUrl);
+
+                      ws.onopen = () => {
+                        console.log('Payment Modal: Sending clear message from cash payment back button');
+                        ws.send(JSON.stringify({
+                          type: 'restore_cart_display',
+                          timestamp: new Date().toISOString(),
+                          reason: 'cash_payment_back_button'
+                        }));
+                        ws.close();
+                      };
+                    } catch (error) {
+                      console.error('Failed to send clear message from cash payment back button:', error);
+                    }
+
+                    handleBack();
+                  }}
                   className="flex-1"
                 >
                   {t("common.goBack")}
                 </Button>
                 <Button
-                  onClick={handleCashPaymentComplete}
+                  onClick={() => {
+                    // Send clear message to customer display before completing cash payment
+                    try {
+                      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                      const wsUrl = `${protocol}//${window.location.host}/ws`;
+                      const ws = new WebSocket(wsUrl);
+
+                      ws.onopen = () => {
+                        console.log('Payment Modal: Sending clear message from cash payment complete button');
+                        ws.send(JSON.stringify({
+                          type: 'restore_cart_display',
+                          timestamp: new Date().toISOString(),
+                          reason: 'cash_payment_complete_button'
+                        }));
+                        ws.close();
+                      };
+                    } catch (error) {
+                      console.error('Failed to send clear message from cash payment complete button:', error);
+                    }
+
+                    handleCashPaymentComplete();
+                  }}
                   disabled={
                     !amountReceived || parseFloat(amountReceived) < total
                   }
