@@ -56,7 +56,7 @@ export function ShoppingCart({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(""); // To store the selected payment method for E-invoice
   const [onClose, setOnClose] = useState(() => () => {}); // Placeholder for the close function of the E-invoice modal
   const [onSelectMethod, setOnSelectMethod] = useState(() => () => {}); // Placeholder for the selection function
-  const [onShowEInvoice, setOnShowEInvoice] = useState(() => () => {}); // Placeholder for triggering the receipt modal after E-invoice
+  const [onShowEInvoice, setOnShowEInvoice] = useState(() => () => {}); // Placeholder for triggering the receipt modal after e-invoice
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
@@ -324,6 +324,7 @@ export function ShoppingCart({
     console.log("🔒 Closing payment modal immediately");
     setShowPaymentMethodModal(false);
 
+    // Kiểm tra nếu đây là e-invoice và có data
     if (method === "einvoice" && eInvoiceData) {
       console.log("📧 Processing e-invoice data in shopping cart");
       console.log("🔍 E-invoice data type check:", {
@@ -333,17 +334,20 @@ export function ShoppingCart({
         autoShowPrint: eInvoiceData.autoShowPrint,
       });
 
-      // Xử lý "Phát hành sau" trước (priority cao hơn)
-      if (eInvoiceData.publishLater || eInvoiceData.showReceiptModal) {
-        console.log("📧 Processing publish later case with receipt modal");
-        console.log("📄 E-invoice data for later:", eInvoiceData);
+      // Ngăn không cho payment method modal hiển thị lại
+      console.log("🚫 Preventing payment method modal from reopening");
 
-        // Đóng tất cả modal trước khi hiển thị receipt
+      // Xử lý tất cả trường hợp e-invoice (phát hành sau hoặc phát hành ngay)
+      if (eInvoiceData.publishLater || eInvoiceData.publishedImmediately || eInvoiceData.showReceiptModal) {
+        console.log("📧 Processing e-invoice case - showing receipt modal");
+        console.log("📄 E-invoice data:", eInvoiceData);
+
+        // Đảm bảo payment modal đã đóng hoàn toàn
         setShowPaymentMethodModal(false);
 
         // Hiển thị receipt modal ngay lập tức
         if (eInvoiceData.receipt) {
-          console.log("📄 Displaying receipt modal for saved draft invoice");
+          console.log("📄 Displaying receipt modal with e-invoice data");
           setPreviewReceipt(eInvoiceData.receipt);
           setShowReceiptPreview(true);
 
@@ -352,12 +356,22 @@ export function ShoppingCart({
             onClearCart();
           }, 100);
 
-          console.log("✅ Receipt modal displayed for draft invoice");
+          // Hiển thị thông báo phù hợp
+          const successMessage = eInvoiceData.publishLater
+            ? "Thông tin hóa đơn điện tử đã được lưu để phát hành sau."
+            : eInvoiceData.publishedImmediately
+              ? `Hóa đơn điện tử đã được phát hành thành công! Số HĐ: ${eInvoiceData.invoiceNumber || "N/A"}`
+              : "Hóa đơn điện tử đã được xử lý thành công.";
+
+          toast({
+            title: "Thành công",
+            description: successMessage,
+          });
+
+          console.log("✅ Receipt modal displayed for e-invoice");
         } else {
           // Fallback nếu không có receipt data từ e-invoice
-          console.log(
-            "⚠️ No receipt data from e-invoice, creating fallback receipt",
-          );
+          console.log("⚠️ No receipt data from e-invoice, creating fallback receipt");
 
           // Tạo fallback receipt từ cart data
           const fallbackReceipt = {
@@ -380,7 +394,7 @@ export function ShoppingCart({
             change: "0.00",
             cashierName: "System User",
             createdAt: new Date().toISOString(),
-            customerName: eInvoiceData.customerName,
+            customerName: eInvoiceData.customerName || "Khách hàng lẻ",
             customerTaxCode: eInvoiceData.taxCode,
           };
 
@@ -396,52 +410,17 @@ export function ShoppingCart({
 
           toast({
             title: "Thành công",
-            description:
-              "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
+            description: "Thông tin hóa đơn điện tử đã được xử lý.",
           });
         }
 
-        console.log("✅ E-invoice later processing scheduled");
-        return;
+        console.log("✅ E-invoice processing completed, returning early");
+        return; // Ngăn không cho logic payment khác chạy
       }
 
-      // Xử lý phát hành ngay lập tức
-      if (eInvoiceData.publishedImmediately || eInvoiceData.showReceiptModal) {
-        console.log(
-          "📄 Processing published immediately or show receipt modal case",
-        );
-
-        // Đóng tất cả modal trước khi hiển thị receipt
-        setShowPaymentMethodModal(false);
-
-        setTimeout(() => {
-          if (eInvoiceData.receipt) {
-            setPreviewReceipt(eInvoiceData.receipt);
-            setShowReceiptPreview(true);
-
-            // Clear cart sau khi hiển thị receipt modal
-            setTimeout(() => {
-              onClearCart();
-            }, 100);
-
-            toast({
-              title: "Thành công",
-              description: eInvoiceData.publishedImmediately
-                ? `Hóa đơn điện tử đã được phát hành thành công! Số hóa đơn: ${eInvoiceData.invoiceNumber || "N/A"}`
-                : "Hóa đơn điện tử đã được lưu để phát hành sau.",
-            });
-          }
-        }, 200); // Đợi payment modal đóng hoàn toàn
-
-        console.log("✅ E-invoice processing completed");
-        return;
-      }
-
-      // Không hiển thị lại payment method modal cho bất kỳ trường hợp e-invoice nào
-      // vì tất cả đều đã được xử lý và chuyển sang receipt modal
-      console.log(
-        "✅ E-invoice processing completed, payment method modal remains closed",
-      );
+      // Nếu không có showReceiptModal, vẫn không hiển thị payment method modal
+      console.log("✅ E-invoice processing completed, payment method modal remains closed");
+      return; // Thêm return để tránh chạy logic payment khác
     }
 
     // Existing payment method logic for non-e-invoice methods
