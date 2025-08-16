@@ -1385,32 +1385,10 @@ export function SalesChartReport() {
                     {t("reports.revenue")}
                   </TableHead>
                   <TableHead
-                    className="text-right border-r min-w-[120px]"
+                    className="text-center border-r min-w-[100px]"
                     rowSpan={2}
                   >
-                    {t("reports.tax")}
-                  </TableHead>
-                  <TableHead
-                    className="text-right border-r min-w-[140px]"
-                    rowSpan={2}
-                  >
-                    {t("reports.total")}
-                  </TableHead>
-                  <TableHead
-                    className="text-center border-r bg-blue-50 min-w-[200px]"
-                    colSpan={paymentMethodsArray.length + 1}
-                  >
-                    {t("reports.totalCustomerPayment")}
-                  </TableHead>
-                </TableRow>
-                <TableRow>
-                  {paymentMethodsArray.map((method) => (
-                    <TableHead key={method} className="text-center border-r bg-blue-50 min-w-[130px]">
-                      {getPaymentMethodLabel(method)}
-                    </TableHead>
-                  ))}
-                  <TableHead className="text-center bg-blue-50 min-w-[150px]">
-                    {t("common.total")}
+                    {t("reports.status")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -1453,22 +1431,10 @@ export function SalesChartReport() {
                           <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
                             {formatCurrency(item.revenue)}
                           </TableCell>
-                          <TableCell className="text-right border-r min-w-[120px] px-4">
-                            {formatCurrency(item.tax)}
-                          </TableCell>
-                          <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
-                            {formatCurrency(item.total)}
-                          </TableCell>
-                          {paymentMethodsArray.map((method) => {
-                            const amount = item.paymentMethods[method] || 0;
-                            return (
-                              <TableCell key={method} className="text-right border-r font-medium min-w-[130px] px-4">
-                                {amount > 0 ? formatCurrency(amount) : "-"}
-                              </TableCell>
-                            );
-                          })}
-                          <TableCell className="text-right font-bold text-green-600 min-w-[150px] px-4">
-                            {formatCurrency(item.total)}
+                          <TableCell className="text-center border-r min-w-[100px] px-4">
+                            <Badge variant="default" className="bg-green-500 text-white">
+                              {t("reports.active")}
+                            </Badge>
                           </TableCell>
                         </TableRow>
 
@@ -1498,25 +1464,12 @@ export function SalesChartReport() {
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[100px] px-4">1</TableCell>
                                 <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
-                                  {formatCurrency(Number(transaction.total) - Number(transaction.total) * 0.1)}
-                                </TableCell>
-                                <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
-                                  {formatCurrency(Number(transaction.total) * 0.1)}
-                                </TableCell>
-                                <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
                                   {formatCurrency(Number(transaction.total))}
                                 </TableCell>
-                                {paymentMethodsArray.map((method) => {
-                                  const transactionMethod = transaction.paymentMethod || "cash";
-                                  const amount = transactionMethod === method ? Number(transaction.total) : 0;
-                                  return (
-                                    <TableCell key={method} className="text-right border-r text-sm min-w-[130px] px-4">
-                                      {amount > 0 ? formatCurrency(amount) : "-"}
-                                    </TableCell>
-                                  );
-                                })}
-                                <TableCell className="text-right font-bold text-green-600 text-sm min-w-[150px] px-4">
-                                  {formatCurrency(Number(transaction.total))}
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  <Badge variant="secondary" className="text-xs">
+                                    {t("common.completed")}
+                                  </Badge>
                                 </TableCell>
                               </TableRow>
                             ),
@@ -1526,7 +1479,7 @@ export function SalesChartReport() {
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7 + paymentMethodsArray.length} className="text-center text-gray-500 py-8">
+                    <TableCell colSpan={8} className="text-center text-gray-500 py-8">
                       {t("reports.noDataDescription")}
                     </TableCell>
                   </TableRow>
@@ -1548,23 +1501,7 @@ export function SalesChartReport() {
                     <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
                       {formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0))}
                     </TableCell>
-                    <TableCell className="text-right border-r min-w-[120px] px-4">
-                      {formatCurrency(data.reduce((sum, item) => sum + item.tax, 0))}
-                    </TableCell>
-                    <TableCell className="text-right border-r text-blue-600 min-w-[140px] px-4">
-                      {formatCurrency(data.reduce((sum, item) => sum + item.total, 0))}
-                    </TableCell>
-                    {paymentMethodsArray.map((method) => {
-                      const total = data.reduce((sum, item) => sum + (item.paymentMethods[method] || 0), 0);
-                      return (
-                        <TableCell key={method} className="text-right border-r font-bold text-green-600 min-w-[130px] px-4">
-                          {total > 0 ? formatCurrency(total) : "-"}
-                        </TableCell>
-                      );
-                    })}
-                    <TableCell className="text-right font-bold text-green-600 text-xl min-w-[150px] px-4">
-                      {formatCurrency(data.reduce((sum, item) => sum + item.total, 0))}
-                    </TableCell>
+                    <TableCell className="text-center border-r min-w-[100px] px-4"></TableCell>
                   </TableRow>
                 )}
               </TableBody>
