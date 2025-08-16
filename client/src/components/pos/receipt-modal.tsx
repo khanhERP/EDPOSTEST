@@ -180,37 +180,45 @@ export function ReceiptModal({
 
         // Auto close modals after printing
         printWindow.onafterprint = () => {
-          console.log("🖨️ Print completed, auto-closing print window and receipt modal");
+          console.log("🖨️ Print completed, auto-closing all popups");
           printWindow.close();
 
-          // Auto close receipt modal after a short delay to ensure print dialog closes first
+          // Auto close receipt modal and complete payment flow immediately after print
           setTimeout(() => {
-            console.log("🔄 Auto-closing receipt modal after print completion");
+            console.log("🔄 Auto-closing receipt modal and completing payment after print");
             if (onConfirm) {
-              // If there's a confirmation callback, call it to complete the payment flow
+              // Complete the payment flow first
               onConfirm();
             }
             // Close the receipt modal
             onClose();
-          }, 500);
+            
+            // Close any other modals that might be open
+            setShowEInvoiceModal(false);
+            setShowPaymentMethodModal(false);
+          }, 200);
         };
 
         // Handle manual close of print window
         const checkClosed = setInterval(() => {
           if (printWindow.closed) {
-            console.log("🖨️ Print window closed manually, auto-closing receipt modal");
+            console.log("🖨️ Print window closed manually, auto-closing all popups");
             clearInterval(checkClosed);
 
-            // Auto close receipt modal when print window is closed manually
+            // Auto close receipt modal and complete payment when print window is closed manually
             setTimeout(() => {
-              console.log("🔄 Auto-closing receipt modal after manual print window close");
+              console.log("🔄 Auto-closing receipt modal and completing payment after manual print window close");
               if (onConfirm) {
-                // If there's a confirmation callback, call it to complete the payment flow
+                // Complete the payment flow first
                 onConfirm();
               }
               // Close the receipt modal
               onClose();
-            }, 300);
+              
+              // Close any other modals that might be open
+              setShowEInvoiceModal(false);
+              setShowPaymentMethodModal(false);
+            }, 200);
           }
         }, 500);
 
@@ -382,14 +390,6 @@ export function ReceiptModal({
                 <Printer className="mr-2" size={16} />
                 {t('pos.printReceipt')}
               </Button>
-              {onConfirm && (
-                <Button
-                  onClick={onConfirm}
-                  className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
-                >
-                  {t('pos.complete')}
-                </Button>
-              )}
             </div>
           )}
         </div>
