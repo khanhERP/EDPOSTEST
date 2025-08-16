@@ -3024,7 +3024,7 @@ export function SalesChartReport() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
-                    placeholder="Tìm theo tên hoặc mã"
+                    placeholder={t("reports.productFilterPlaceholder")}
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
                     className="pl-10 h-9 text-sm"
@@ -3034,34 +3034,34 @@ export function SalesChartReport() {
 
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Loại hàng
+                  {t("reports.productType")}
                 </Label>
                 <Select value={productType} onValueChange={setProductType}>
                   <SelectTrigger className="h-9 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
-                    <SelectItem value="combo">Combo-Đóng gói</SelectItem>
-                    <SelectItem value="product">Hàng hóa</SelectItem>
-                    <SelectItem value="service">Dịch vụ</SelectItem>
+                    <SelectItem value="all">{t("common.all")}</SelectItem>
+                    <SelectItem value="combo">{t("reports.combo")}</SelectItem>
+                    <SelectItem value="product">{t("reports.product")}</SelectItem>
+                    <SelectItem value="service">{t("reports.service")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Nhóm hàng
+                  {t("reports.productGroup")}
                 </Label>
                 <Select
                   value={selectedCategory}
                   onValueChange={setSelectedCategory}
                 >
                   <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Nhóm hàng" />
+                    <SelectValue placeholder={t("reports.productGroup")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tất cả</SelectItem>
+                    <SelectItem value="all">{t("common.all")}</SelectItem>
                     {categories &&
                       Array.isArray(categories) &&
                       categories.map((category: any) => (

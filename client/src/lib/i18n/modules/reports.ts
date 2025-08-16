@@ -84,13 +84,19 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Sales chart table columns
     date: "Ngày",
-    orderNumber: "Số đơn bán",
-    subtotal: "Thành tiền",
+    orderNumber: "Số đơn hàng",
+    subtotal: "Tạm tính",
     discount: "Giảm giá",
     revenue: "Doanh thu",
     tax: "Thuế",
-    total: "Tổng tiền",
-    totalCustomerPayment: "Tổng khách hàng thanh toán",
+    total: "Tổng cộng",
+    totalCustomerPayment: "Tổng thanh toán khách hàng",
+    productType: "Loại hàng",
+    productGroup: "Nhóm hàng",
+    combo: "Combo",
+    product: "Hàng hóa",
+    service: "Dịch vụ",
+    productFilterPlaceholder: "Tìm theo tên hoặc mã",
 
     // Product report columns
     productCode: "Mã hàng",
