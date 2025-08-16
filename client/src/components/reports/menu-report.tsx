@@ -162,7 +162,7 @@ export function MenuReport() {
             <PieChart className="w-5 h-5" />
             {t("reports.menuAnalysis")}
           </CardTitle>
-          <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+          <CardDescription>{t("reports.menuAnalysisDescription")}</CardDescription>
         </CardHeader>
       </Card>
 
