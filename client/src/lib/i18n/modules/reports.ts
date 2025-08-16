@@ -672,18 +672,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     warehouseReport: "창고 보고서",
     warehouseReportDescription: "창고 활동에 대한 상세 보고서",
 
-    // Additional report specific translations
-    productPerformance: "상품 성과",
-    categoryPerformance: "카테고리 성과",
-    detailedTablePerformanceDesc: "테이블 성과 및 사용량 세부사항",
-    channelAnalysis: "판매 채널 분석",
-
     // Chart and filter labels
     selectDateRange: "날짜 범위 선택",
     applyFilter: "필터 적용",
     clearFilter: "필터 지우기",
     exportData: "데이터 내보내기",
-    printReport: "보고서 인쇄",
 
     // Data display
     noDataAvailable: "데이터 없음",
@@ -1017,18 +1010,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     warehouseReport: "Warehouse Report",
     warehouseReportDescription: "Detailed warehouse activity report",
 
-    // Additional report specific translations
-    productPerformance: "Product Performance",
-    categoryPerformance: "Category Performance",
-    detailedTablePerformanceDesc: "Table performance and utilization details",
-    channelAnalysis: "Sales Channel Analysis",
-
     // Chart and filter labels
     selectDateRange: "Select Date Range",
     applyFilter: "Apply Filter",
     clearFilter: "Clear Filter",
     exportData: "Export Data",
-    printReport: "Print Report",
 
     // Data display
     noDataAvailable: "No Data Available",

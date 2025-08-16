@@ -5,6 +5,7 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
   ko: {
     pos: 'POS',
     tables: '테이블',
+    salesOrders: '주문 목록',
     inventory: '재고',
     reports: '보고서',
     employees: '직원',
