@@ -81,6 +81,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productFilterPlaceholder: "Tìm theo mã, tên",
     customerFilter: "Khách hàng",
     customerFilterPlaceholder: "Tìm theo tên, số điện thoại hoặc mã",
+    employeeFilter: "Tìm kiếm nhân viên",
+    employeeFilterPlaceholder: "Tìm theo tên nhân viên",
 
     // Sales chart table columns
     date: "Ngày",
@@ -508,6 +510,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productFilterPlaceholder: "코드, 이름으로 검색",
     customerFilter: "고객",
     customerFilterPlaceholder: "이름, 전화번호 또는 코드로 검색",
+    employeeFilter: "직원 검색",
+    employeeFilterPlaceholder: "직원 이름으로 검색",
 
     // Sales chart table columns
     date: "날짜",
@@ -518,6 +522,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     tax: "세금",
     total: "합계",
     totalCustomerPayment: "총 고객 결제",
+    productType: "상품 유형",
+    productGroup: "상품 그룹",
+    combo: "콤보",
+    product: "상품",
+    service: "서비스",
+    productFilterPlaceholder: "코드, 이름으로 검색",
 
     // Product report columns
     productCode: "상품 코드",
@@ -926,6 +936,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productFilterPlaceholder: "Search by code, name",
     customerFilter: "Customer",
     customerFilterPlaceholder: "Search by name, phone or code",
+    employeeFilter: "Employee Search",
+    employeeFilterPlaceholder: "Search by employee name",
 
     // Sales chart table columns
     date: "Date",

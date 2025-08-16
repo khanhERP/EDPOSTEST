@@ -2962,12 +2962,12 @@ export function SalesChartReport() {
             <div className="grid grid-cols-1 md:grid-cols-1 gap-4 pt-4 border-t border-gray-200">
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  Tìm kiếm nhân viên
+                  {t("reports.employeeFilter")}
                 </Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <Input
-                    placeholder="Tìm theo tên nhân viên"
+                    placeholder={t("reports.employeeFilterPlaceholder")}
                     value={selectedEmployee === "all" ? "" : selectedEmployee}
                     onChange={(e) =>
                       setSelectedEmployee(e.target.value || "all")
