@@ -414,7 +414,7 @@ export function EInvoiceModal({
           const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
           const itemSubtotal = itemPrice * itemQuantity;
           const itemTax = (itemSubtotal * itemTaxRate) / 100;
-          
+
           return {
             productId: item.id,
             productName: item.name,
@@ -842,7 +842,7 @@ export function EInvoiceModal({
               const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
               const itemSubtotal = itemPrice * itemQuantity;
               const itemTax = (itemSubtotal * itemTaxRate) / 100;
-              
+
               return {
                 productId: item.id,
                 productName: item.name,
@@ -877,40 +877,38 @@ export function EInvoiceModal({
 
         // Lưu đơn hàng vào bảng orders với trạng thái "đã phát hành"
         try {
-          const orderPayload = {
-            order: {
-              orderNumber: `ORD-${Date.now()}`,
-              tableId: null, // No table for POS orders
-              customerName: formData.customerName || "Khách hàng",
-              subtotal: cartSubtotal.toFixed(2),
-              tax: cartTaxAmount.toFixed(2),
-              total: cartTotal.toFixed(2),
-              status: 'paid', // Trạng thái đã thanh toán
-              paymentMethod: 'einvoice', // Sử dụng string theo schema định nghĩa
-              paymentStatus: 'paid',
-              einvoiceStatus: 1, // 1 = Đã phát hành
-              notes: `E-Invoice: ${result.data?.invoiceNo || 'N/A'} - MST: ${formData.taxCode}, Tên: ${formData.customerName}, SĐT: ${formData.phoneNumber || 'N/A'}`,
-              orderedAt: new Date(),
-              employeeId: null,
-              salesChannel: 'pos'
-            },
-            items: cartItems.map(item => ({
-              productId: item.id,
-              quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-              unitPrice: (typeof item.price === 'string' ? parseFloat(item.price) : item.price).toFixed(2),
-              total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)).toFixed(2),
-              notes: `Tax Rate: ${typeof item.taxRate === 'string' ? item.taxRate : (item.taxRate || 10)}%`
-            }))
+          const orderStatus = 'paid';
+          const publishType = 'publish'; // Indicate that this is a direct publish
+          const einvoiceStatus = 1; // 1 = Đã phát hành
+
+          // Create order data
+          const orderData = {
+            orderNumber: `ORD-${Date.now()}`,
+            tableId: null, // No table for POS orders
+            customerName: formData.customerName,
+            customerPhone: formData.phoneNumber || null,
+            customerEmail: formData.email || null,
+            subtotal: cartSubtotal.toFixed(2),
+            tax: cartTaxAmount.toFixed(2),
+            total: cartTotal.toFixed(2),
+            status: orderStatus,
+            paymentMethod: publishType === "publish" ? 'cash' : null, // Use 'cash' for published, null for draft
+            paymentStatus: publishType === "publish" ? 'paid' : 'pending',
+            einvoiceStatus: einvoiceStatus,
+            notes: `E-Invoice Info - Tax Code: ${formData.taxCode || 'N/A'}, Address: ${formData.address || 'N/A'}`,
+            orderedAt: new Date(),
+            employeeId: null, // Can be set if employee info is available
+            salesChannel: 'pos'
           };
 
-          console.log('💾 Saving published order to database:', orderPayload);
+          console.log('💾 Saving published order to database:', orderData);
 
           const saveResponse = await fetch('/api/orders', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(orderPayload)
+            body: JSON.stringify(orderData)
           });
 
           if (saveResponse.ok) {
@@ -937,7 +935,7 @@ export function EInvoiceModal({
             const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
             const itemSubtotal = itemPrice * itemQuantity;
             const itemTax = (itemSubtotal * itemTaxRate) / 100;
-            
+
             return {
               id: item.id,
               productId: item.id,
@@ -989,7 +987,7 @@ export function EInvoiceModal({
         if (source === 'pos') {
           // Logic cho POS: hiển thị receipt modal
           console.log('🏪 POS E-Invoice: Processing payment completion and showing receipt');
-          
+
           // Gọi onConfirm để hiển thị receipt modal
           onConfirm(invoiceResult);
         } else if (source === 'table' && orderId) {
@@ -1009,7 +1007,7 @@ export function EInvoiceModal({
         } else {
           // Fallback: trả về data cho parent component xử lý
           console.log('🔄 Fallback: Returning data to parent');
-          
+
           onConfirm(invoiceResult);
         }
       } else {
