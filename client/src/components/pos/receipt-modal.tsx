@@ -41,7 +41,6 @@ export function ReceiptModal({
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
-  const [hasAutoOpened, setHasAutoOpened] = useState(false);
   const { t } = useTranslation();
 
   // Debug logging when modal opens and when props change
@@ -70,13 +69,6 @@ export function ReceiptModal({
   }
 
   console.log("Receipt Modal receipt:", receipt);
-
-  // Reset hasAutoOpened when modal closes (keeping for potential future use)
-  useEffect(() => {
-    if (!isOpen) {
-      setHasAutoOpened(false);
-    }
-  }, [isOpen]);
 
   // Query store settings to get dynamic address
   const { data: storeSettings } = useQuery({
