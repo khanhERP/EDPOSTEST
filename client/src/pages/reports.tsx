@@ -99,7 +99,7 @@ export default function ReportsPage() {
                 >
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('navigation.salesChart')}</span>
-                  <span className="sm:hidden">Biểu đồ</span>
+                  <span className="sm:hidden">{t('navigation.salesChart')}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="order"
