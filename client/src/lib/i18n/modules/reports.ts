@@ -26,7 +26,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalRevenue: "Tổng doanh thu",
     totalOrders: "Tổng đơn hàng",
     totalQuantitySold: "Tổng số lượng bán",
-    averageOrderValue: "Giá trị đơn hàng TB",
+    averageOrderValue: "Giá trị đơn hàng trung bình",
 
     // Filter options
     filterByDate: "Lọc theo ngày",
@@ -80,7 +80,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     revenue: "Doanh thu",
     tax: "Thuế",
     total: "Tổng tiền",
-    totalCustomerPayment: "Tổng KH thanh toán",
+    totalCustomerPayment: "Tổng khách hàng thanh toán",
 
     // Product report columns
     productCode: "Mã hàng",
@@ -88,7 +88,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     unit: "Đơn vị",
     quantitySold: "Số lượng bán",
     totalAmount: "Tổng số tiền",
-    totalDiscount: "Giảm giá",
+    totalDiscount: "Tổng giảm giá",
     categoryName: "Danh mục",
 
     // Report titles
@@ -99,7 +99,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscountReport: "Báo cáo giảm giá hóa đơn",
     returnByInvoiceReport: "Báo cáo trả hàng theo hóa đơn",
 
-    // Additional comprehensive keys
+    // End of day report
     endOfDayReport: "Báo cáo cuối ngày",
     endOfDayReportTab: "Báo cáo cuối ngày",
     revenueExpense: "Thu chi",
@@ -214,7 +214,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     topTurnoverTables: "Bàn luân chuyển cao nhất",
     topUtilizationTables: "Bàn sử dụng cao nhất",
     averageUtilization: "Sử dụng trung bình",
-    averageOrdersPerTable: "Số đơn hàng TB mỗi bàn",
+    averageOrdersPerTable: "Số đơn hàng trung bình mỗi bàn",
     allTables: "Tất cả bàn",
     cumulativeVisitors: "Khách tích lũy",
     totalByTable: "Tổng theo bàn",
@@ -426,7 +426,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscountReport: "송장 할인 보고서",
     returnByInvoiceReport: "송장별 반품 보고서",
 
-    // Additional comprehensive keys
+    // End of day report
     endOfDayReport: "마감 보고서",
     endOfDayReportTab: "마감 보고서",
     revenueExpense: "수입 지출",
@@ -753,7 +753,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscountReport: "Invoice Discount Report",
     returnByInvoiceReport: "Return by Invoice Report",
 
-    // Additional comprehensive keys
+    // End of day report
     endOfDayReport: "End of Day Report",
     endOfDayReportTab: "End of Day Report",
     revenueExpense: "Revenue Expense",
