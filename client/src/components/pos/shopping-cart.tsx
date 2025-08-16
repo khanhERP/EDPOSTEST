@@ -338,7 +338,11 @@ export function ShoppingCart({
       console.log("🚫 Preventing payment method modal from reopening");
 
       // Xử lý tất cả trường hợp e-invoice (phát hành sau hoặc phát hành ngay)
-      if (eInvoiceData.publishLater || eInvoiceData.publishedImmediately || eInvoiceData.showReceiptModal) {
+      if (
+        eInvoiceData.publishLater ||
+        eInvoiceData.publishedImmediately ||
+        eInvoiceData.showReceiptModal
+      ) {
         console.log("📧 Processing e-invoice case - showing receipt modal");
         console.log("📄 E-invoice data:", eInvoiceData);
 
@@ -371,7 +375,9 @@ export function ShoppingCart({
           console.log("✅ Receipt modal displayed for e-invoice");
         } else {
           // Fallback nếu không có receipt data từ e-invoice
-          console.log("⚠️ No receipt data from e-invoice, creating fallback receipt");
+          console.log(
+            "⚠️ No receipt data from e-invoice, creating fallback receipt",
+          );
 
           // Tạo fallback receipt từ cart data
           const fallbackReceipt = {
@@ -419,7 +425,9 @@ export function ShoppingCart({
       }
 
       // Nếu không có showReceiptModal, vẫn không hiển thị payment method modal
-      console.log("✅ E-invoice processing completed, payment method modal remains closed");
+      console.log(
+        "✅ E-invoice processing completed, payment method modal remains closed",
+      );
       return; // Thêm return để tránh chạy logic payment khác
     }
 
