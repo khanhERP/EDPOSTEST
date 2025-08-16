@@ -27,7 +27,7 @@ export default function ReportsPage() {
   useEffect(() => {
     const params = new URLSearchParams(search);
     const tab = params.get('tab');
-    if (tab && ['overview', 'sales', 'menu', 'table', 'saleschart', 'order', 'inventory', 'customer', 'employee', 'financial'].includes(tab)) {
+    if (tab && ['overview', 'sales', 'menu', 'table', 'saleschart', 'order', 'inventory'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [search]);
@@ -110,27 +110,7 @@ export default function ReportsPage() {
                   <Package className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span>{t('reports.warehouseReport')}</span>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="customer"
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
-                >
-                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{t('reports.customerReport')}</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="employee"
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
-                >
-                  <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{t('reports.employeeReport')}</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="financial"
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
-                >
-                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{t('reports.financialReport')}</span>
-                </TabsTrigger>
+                
               </TabsList>
             </div>
 
@@ -162,17 +142,7 @@ export default function ReportsPage() {
               <InventoryReport />
             </TabsContent>
 
-            <TabsContent value="customer">
-              <CustomerReport />
-            </TabsContent>
-
-            <TabsContent value="employee">
-              <EmployeeReport />
-            </TabsContent>
-
-            <TabsContent value="financial">
-              <FinancialReport />
-            </TabsContent>
+            
           </Tabs>
         </div>
       </div>
