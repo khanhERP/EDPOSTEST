@@ -183,7 +183,12 @@ export function PrintDialog({
             <span>${parseFloat(receiptData.subtotal).toLocaleString('vi-VN')} đ</span>
           </div>
           <div class="total-row">
-            <span>Thuế (${((parseFloat(receiptData.tax) / parseFloat(receiptData.subtotal)) * 100).toFixed(1)}%):</span>
+            <span>Thuế (${(() => {
+              const subtotal = parseFloat(receiptData.subtotal) || 0;
+              const tax = parseFloat(receiptData.tax) || 0;
+              if (subtotal === 0) return "10.0";
+              return ((tax / subtotal) * 100).toFixed(1);
+            })()}%):</span>
             <span>${parseFloat(receiptData.tax).toLocaleString('vi-VN')} đ</span>
           </div>
           <div class="total-row" style="font-size: 14px; border-top: 1px solid #000; padding-top: 5px;">
@@ -307,7 +312,12 @@ export function PrintDialog({
               <span>{parseFloat(receiptData.subtotal).toLocaleString('vi-VN')} đ</span>
             </div>
             <div className="flex justify-between text-xs">
-              <span>Thuế ({((parseFloat(receiptData.tax) / parseFloat(receiptData.subtotal)) * 100).toFixed(1)}%):</span>
+              <span>Thuế ({(() => {
+                const subtotal = parseFloat(receiptData.subtotal) || 0;
+                const tax = parseFloat(receiptData.tax) || 0;
+                if (subtotal === 0) return "10.0";
+                return ((tax / subtotal) * 100).toFixed(1);
+              })()}%):</span>
               <span>{parseFloat(receiptData.tax).toLocaleString('vi-VN')} đ</span>
             </div>
             <div className="flex justify-between font-bold border-t border-gray-400 pt-1">
