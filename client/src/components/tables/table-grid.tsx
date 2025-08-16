@@ -1104,54 +1104,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
               {/* Tax and Total Summary */}
               <div className="space-y-2">
-                {(() => {
-                  // Calculate total tax from all items
-                  let totalTax = 0;
-                  if (Array.isArray(orderItems) && Array.isArray(products)) {
-                    orderItems.forEach((item: any) => {
-                      const product = products.find((p: any) => p.id === item.productId);
-                      const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
-                      if (taxRate > 0) {
-                        totalTax += (Number(item.unitPrice || 0) * taxRate / 100 * item.quantity);
-                      }
-                    });
-                  }
-
-                  return totalTax > 0 ? (
-                    <div className="flex justify-between text-sm text-orange-600">
-                      <span>{t('orders.tax')} {t('orders.totalAmount').toLowerCase()}:</span>
-                      <span>{totalTax.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
-                    </div>
-                  ) : null;
-                })()}
                 <div className="flex justify-between text-lg font-bold">
                   <span>{t('orders.totalAmount')}:</span>
-                  <span className="text-green-600">{(() => {
-                    // Calculate total from order items instead of using order.total
-                    let itemsTotal = 0;
-                    let itemsTax = 0;
-
-                    if (Array.isArray(orderItems) && Array.isArray(products)) {
-                      orderItems.forEach((item: any) => {
-                        const itemSubtotal = Number(item.total || 0);
-                        itemsTotal += itemSubtotal;
-
-                        const product = products.find((p: any) => p.id === item.productId);
-                        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
-                        itemsTax += (itemSubtotal * taxRate) / 100;
-                      });
-                    }
-
-                    const finalTotal = itemsTotal + itemsTax;
-                    console.log('🧮 Total calculation:', {
-                      itemsTotal,
-                      itemsTax, 
-                      finalTotal,
-                      orderTotal: selectedOrder.total
-                    });
-
-                    return finalTotal.toLocaleString('vi-VN');
-                  })()} ₫</span>
+                  <span className="text-green-600">{Number(selectedOrder.total).toLocaleString('vi-VN')} ₫</span>
                 </div>
               </div>
 
