@@ -2030,7 +2030,7 @@ export function SalesChartReport() {
                           </TableCell>
                           <TableCell className="text-center min-w-[100px] px-4">
                             <Badge variant={item.status === t("reports.active") ? "default" : "secondary"}>
-                              {item.status}
+                              {t("reports.active")}
                             </Badge>
                           </TableCell>
                         </TableRow>
