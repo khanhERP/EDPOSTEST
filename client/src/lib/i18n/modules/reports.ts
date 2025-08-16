@@ -5,7 +5,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
   vi: {
     title: "Báo cáo",
     description: "Xem báo cáo bán hàng và vận hành",
-    dashboard: "Tổng quan",
+    dashboard: "Bảng điều khiển",
     dashboardDescription: "Tổng quan về doanh số và trạng thái hoạt động",
     salesAnalysis: "Phân tích bán hàng",
     menuAnalysis: "Phân tích menu",
@@ -60,7 +60,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesChartTab: "Biểu đồ bán hàng",
     purchaseTab: "Báo cáo mua hàng",
     warehouseTab: "Báo cáo kho",
-    dashboardTab: "Tổng quan",
+    dashboardTab: "Bảng điều khiển",
 
     // Analysis types
     analysisType: "Loại phân tích",

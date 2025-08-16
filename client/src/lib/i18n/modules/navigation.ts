@@ -65,7 +65,7 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     profitReports: 'Báo cáo lợi nhuận',
     tablesSales: 'Bán hàng tại bàn',
     directSales: 'Bán hàng trực tiếp',
-    dashboard: 'Tổng quan',
+    dashboard: 'Bảng điều khiển',
     salesAnalysis: 'Phân tích bán hàng',
     menuAnalysis: 'Phân tích menu',
     tableAnalysis: 'Phân tích bàn',
