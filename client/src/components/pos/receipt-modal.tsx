@@ -43,32 +43,7 @@ export function ReceiptModal({
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const { t } = useTranslation();
 
-  // Debug logging when modal opens and when props change
-  console.log("=== RECEIPT MODAL RENDERED ===");
-  console.log("Receipt Modal isOpen:", isOpen);
-  console.log("Receipt Modal cartItems received:", cartItems);
-  console.log("Receipt Modal cartItems length:", cartItems?.length || 0);
-  console.log("Receipt Modal cartItems type:", typeof cartItems);
-  console.log("Receipt Modal cartItems is array:", Array.isArray(cartItems));
-  console.log("Receipt Modal total:", receipt?.total);
-  console.log("Receipt Modal cartItems content:");
-
-  if (Array.isArray(cartItems)) {
-    cartItems.forEach((item, index) => {
-      console.log(`  Item ${index + 1}:`, {
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        priceType: typeof item.price,
-        quantity: item.quantity,
-        quantityType: typeof item.quantity,
-        sku: item.sku,
-        taxRate: item.taxRate
-      });
-    });
-  }
-
-  console.log("Receipt Modal receipt:", receipt);
+  console.log("Receipt Modal opened with:", { isOpen, hasReceipt: !!receipt });
 
   // Query store settings to get dynamic address
   const { data: storeSettings } = useQuery({

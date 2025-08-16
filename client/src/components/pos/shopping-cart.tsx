@@ -299,8 +299,10 @@ export function ShoppingCart({
 
   const handleReceiptConfirm = () => {
     console.log("📄 Receipt confirmed, checking payment method");
-    setShowReceiptPreview(false);
-
+    
+    // Keep receipt modal open - only close if user explicitly closes it
+    // Do not auto-close receipt modal
+    
     // Kiểm tra xem có phải là receipt từ e-invoice không
     const isEInvoiceReceipt = previewReceipt?.paymentMethod === "einvoice" ||
                              previewReceipt?.isEInvoiceReceipt ||
