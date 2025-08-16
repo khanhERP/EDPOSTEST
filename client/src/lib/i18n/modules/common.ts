@@ -165,6 +165,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     for: "~에 대한",
     noData: "데이터가 없습니다",
     show: "표시",
+    rows: "행",
     regularCustomer: "일반고객",
     goldCustomer: "골드고객",
     customerGroup: "고객 그룹",
