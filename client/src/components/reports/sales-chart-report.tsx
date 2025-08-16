@@ -2218,7 +2218,7 @@ export function SalesChartReport() {
       return dateMatch && methodMatch;
     });
 
-    // Group data by sales method (Ăn tại chỗ vs Mang về)
+    // Group data by sales method (Dine In vs Takeaway)
     const salesMethodData: {
       [method: string]: {
         completedOrders: number;
@@ -2229,7 +2229,7 @@ export function SalesChartReport() {
         totalRevenue: number;
       };
     } = {
-      "Ăn tại chỗ": {
+      [t("reports.dineIn")]: {
         completedOrders: 0,
         cancelledOrders: 0,
         totalOrders: 0,
@@ -2237,7 +2237,7 @@ export function SalesChartReport() {
         cancelledRevenue: 0,
         totalRevenue: 0,
       },
-      "Mang về": {
+      [t("reports.takeaway")]: {
         completedOrders: 0,
         cancelledOrders: 0,
         totalOrders: 0,
@@ -2248,8 +2248,8 @@ export function SalesChartReport() {
     };
 
     filteredTransactions.forEach((transaction: any) => {
-      // Xác định phương thức bán hàng dựa trên deliveryMethod hoặc salesChannel
-      let method = "Ăn tại chỗ"; // Mặc định
+      // Determine sales method based on deliveryMethod or salesChannel
+      let method = t("reports.dineIn"); // Default
 
       if (transaction.deliveryMethod === "delivery" || 
           transaction.deliveryMethod === "takeout" || 
@@ -2257,12 +2257,12 @@ export function SalesChartReport() {
           transaction.isDelivery === true ||
           transaction.salesChannel === "delivery" ||
           transaction.salesChannel === "takeout") {
-        method = "Mang về";
+        method = t("reports.takeaway");
       } else if (transaction.deliveryMethod === "dine_in" || 
                  transaction.deliveryMethod === "dinein" ||
                  transaction.salesChannel === "dine_in" ||
                  transaction.tableId) {
-        method = "Ăn tại chỗ";
+        method = t("reports.dineIn");
       }
 
       const amount = Number(transaction.total || 0);
