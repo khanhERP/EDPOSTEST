@@ -178,7 +178,7 @@ export function SalesChannelReport() {
     };
     return (
       concernTypes[concernType as keyof typeof concernTypes] ||
-      t("reports.salesChannelReport")
+      t("reports.channelSalesReport")
     );
   };
 
@@ -499,7 +499,7 @@ export function SalesChannelReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5" />
-            {t("reports.salesChannelReport")}
+            {t("reports.channelSalesReport")}
           </CardTitle>
           <CardDescription>
             {t("reports.salesChannelReportDescription")}

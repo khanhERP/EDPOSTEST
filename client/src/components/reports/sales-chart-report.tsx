@@ -3113,7 +3113,7 @@ export function SalesChartReport() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5" />
-              {getReportTitle()}
+              {t("reports.salesChart")}
             </CardTitle>
             <CardDescription>
               {t("reports.salesChartDescription")}

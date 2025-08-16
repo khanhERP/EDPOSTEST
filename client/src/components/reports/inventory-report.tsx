@@ -1250,11 +1250,9 @@ export function InventoryReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="w-5 h-5" />
-            {t('reports.warehouseReport')}
+            {t("reports.inventoryReport")}
           </CardTitle>
-          <CardDescription>
-            {t('reports.warehouseReportDescription')}
-          </CardDescription>
+          <CardDescription>{t("reports.inventoryReportDescription")}</CardDescription>
         </CardHeader>
       </Card>
 

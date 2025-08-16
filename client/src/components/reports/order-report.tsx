@@ -317,10 +317,10 @@ export function OrderReport() {
                 </TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
                 <TableHead className="text-center">
-                  {t("reports.orderQuantity")}
+                  {t("reports.quantity")}
                 </TableHead>
                 <TableHead className="text-center">
-                  {t("reports.orderValue")}
+                  {t("reports.totalAmount")}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -358,11 +358,11 @@ export function OrderReport() {
       color: "#10b981",
     },
     value: {
-      label: t("reports.orderValue"),
+      label: t("reports.totalAmount"),
       color: "#3b82f6",
     },
     quantity: {
-      label: t("reports.orderQuantity"),
+      label: t("reports.quantity"),
       color: "#f59e0b",
     },
   };
@@ -433,7 +433,7 @@ export function OrderReport() {
 
             {/* Order Status */}
             <div>
-              <Label>{t("reports.orderStatus")}</Label>
+              <Label>{t("reports.status")}</Label>
               <Select value={orderStatus} onValueChange={setOrderStatus}>
                 <SelectTrigger>
                   <SelectValue />
@@ -688,7 +688,7 @@ export function OrderReport() {
                 <div className="flex items-center gap-3 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
                   <div className="w-4 h-4 rounded bg-gradient-to-b from-blue-400 to-blue-600 shadow-sm"></div>
                   <span className="text-sm font-medium text-blue-800">
-                    {t("reports.orderValue")}
+                    {t("reports.totalAmount")}
                   </span>
                 </div>
               </>
@@ -696,7 +696,7 @@ export function OrderReport() {
               <div className="flex items-center gap-3 px-4 py-2 bg-amber-50 rounded-lg border border-amber-200">
                 <div className="w-4 h-4 rounded bg-gradient-to-b from-amber-400 to-amber-600 shadow-sm"></div>
                 <span className="text-sm font-medium text-amber-800">
-                  {t("reports.orderQuantity")}
+                  {t("reports.quantity")}
                 </span>
               </div>
             )}

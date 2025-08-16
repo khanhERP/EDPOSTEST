@@ -489,9 +489,7 @@ export function SalesReport() {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>{t('reports.salesReport')}</CardTitle>
-              <CardDescription>
-                {t('reports.salesReportDescription')}
-              </CardDescription>
+              <CardDescription>{t("reports.salesReportDescription")}</CardDescription>
             </div>
             <div className="flex items-center gap-4">
 
