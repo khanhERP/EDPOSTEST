@@ -64,6 +64,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Analysis types
     analysisType: "Loại phân tích",
     analyzeBy: "Phân tích theo",
+    analyzeRevenue: "Phân tích doanh thu và hiệu suất",
     timeAnalysis: "Thời gian",
     productAnalysis: "Sản phẩm",
     employeeAnalysis: "Nhân viên",
@@ -501,6 +502,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Analysis types
     analysisType: "분석 유형",
     analyzeBy: "분석 기준",
+    analyzeRevenue: "매출 및 성과 분석",
     timeAnalysis: "시간",
     productAnalysis: "상품",
     employeeAnalysis: "직원",
@@ -935,6 +937,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Analysis types
     analysisType: "Analysis Type",
     analyzeBy: "Analyze By",
+    analyzeRevenue: "Analyze revenue and performance",
     timeAnalysis: "Time",
     productAnalysis: "Product",
     employeeAnalysis: "Employee",
