@@ -351,7 +351,13 @@ export function ReceiptModal({
               <span>{receipt.subtotal} ₫</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>{t('pos.tax')}</span>
+              <span>{t('pos.tax')} ({(() => {
+                if (!receipt.items || receipt.items.length === 0) return "10";
+                const totalTaxableAmount = receipt.items.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+                if (totalTaxableAmount === 0) return "10";
+                const avgTaxRate = (parseFloat(receipt.tax) / totalTaxableAmount * 100).toFixed(1);
+                return avgTaxRate;
+              })()}%)</span>
               <span>{receipt.tax} ₫</span>
             </div>
             <div className="flex justify-between font-bold">
