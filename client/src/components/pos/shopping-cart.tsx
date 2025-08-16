@@ -301,6 +301,29 @@ export function ShoppingCart({
     console.log("📄 Receipt confirmed, checking payment method");
     setShowReceiptPreview(false);
 
+    // Kiểm tra xem có phải là receipt từ e-invoice không
+    const isEInvoiceReceipt = previewReceipt?.paymentMethod === "einvoice" || 
+                             previewReceipt?.isEInvoiceReceipt ||
+                             previewReceipt?.publishLater ||
+                             previewReceipt?.publishedImmediately;
+
+    console.log("🔍 Receipt analysis:", {
+      paymentMethod: previewReceipt?.paymentMethod,
+      isEInvoiceReceipt: previewReceipt?.isEInvoiceReceipt,
+      publishLater: previewReceipt?.publishLater,
+      publishedImmediately: previewReceipt?.publishedImmediately,
+      customerTaxCode: previewReceipt?.customerTaxCode,
+      customerName: previewReceipt?.customerName,
+      finalIsEInvoiceReceipt: isEInvoiceReceipt
+    });
+
+    // Nếu đây là receipt từ e-invoice (đã xử lý xong), không hiển thị payment method modal
+    if (isEInvoiceReceipt) {
+      console.log("✅ E-invoice receipt confirmed, transaction completed - not showing payment method modal");
+      console.log("🎯 E-invoice process completed, receipt confirmed successfully");
+      return; // Kết thúc luôn, không hiển thị payment method modal
+    }
+
     // Chỉ hiển thị payment method modal nếu chưa có thanh toán nào được xử lý
     // Tránh hiển thị lại sau khi e-invoice đã xử lý xong
     if (
