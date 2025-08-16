@@ -24,7 +24,7 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     salesChart: '매출 차트',
     purchaseReport: '구매 보고서',
     warehouseReport: '창고 보고서',
-    orderReport: '구매 보고서',
+    orderReport: '구매 주문 보고서',
   },
   en: {
     pos: 'POS',
@@ -48,7 +48,7 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     salesChart: 'Sales Chart',
     purchaseReport: 'Purchase Report',
     warehouseReport: 'Warehouse Report',
-    orderReport: 'Purchase Report',
+    orderReport: 'Purchase Order Report',
   },
   vi: {
     pos: 'Bán hàng',

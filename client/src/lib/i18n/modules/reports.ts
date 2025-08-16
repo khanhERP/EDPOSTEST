@@ -241,6 +241,28 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     hour: "giờ",
     times: "lần",
 
+    // Warehouse Report
+    warehouseReportTab: "Báo cáo kho",
+    warehouseReportDescription: "Báo cáo chi tiết về hoạt động kho hàng",
+    
+    // Additional missing keys
+    period: "Kỳ",
+    noDataDescription: "Không có dữ liệu để hiển thị",
+    monthAccumulated: "Tháng tích lũy",
+    peakHour: "Giờ cao điểm",
+    filters: "Bộ lọc",
+    applyFilters: "Áp dụng bộ lọc",
+    resetFilters: "Đặt lại bộ lọc",
+    uniqueProducts: "Sản phẩm độc đáo",
+    
+    // Chart specific
+    value: "Giá trị",
+    chartData: "Dữ liệu biểu đồ",
+    xAxis: "Trục X",
+    yAxis: "Trục Y",
+    legend: "Chú thích",
+    dataPoints: "Điểm dữ liệu",
+
     // Menu analysis
     productPerformance: "Hiệu suất sản phẩm",
     categoryPerformance: "Hiệu suất danh mục",
@@ -588,6 +610,28 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     timesUnit: " 회",
     hour: "시",
     times: "회",
+
+    // Warehouse Report
+    warehouseReportTab: "창고 보고서",
+    warehouseReportDescription: "창고 활동에 대한 상세 보고서",
+    
+    // Additional missing keys
+    period: "기간",
+    noDataDescription: "표시할 데이터가 없습니다",
+    monthAccumulated: "월 누적",
+    peakHour: "피크 시간",
+    filters: "필터",
+    applyFilters: "필터 적용",
+    resetFilters: "필터 재설정",
+    uniqueProducts: "고유 상품",
+    
+    // Chart specific
+    value: "값",
+    chartData: "차트 데이터",
+    xAxis: "X축",
+    yAxis: "Y축",
+    legend: "범례",
+    dataPoints: "데이터 포인트",
 
     // Menu analysis
     productPerformance: "상품 성과",
@@ -937,6 +981,28 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     timesUnit: " times",
     hour: "hour",
     times: "times",
+
+    // Warehouse Report
+    warehouseReportTab: "Warehouse Report",
+    warehouseReportDescription: "Detailed warehouse activity report",
+    
+    // Additional missing keys
+    period: "Period",
+    noDataDescription: "No data to display",
+    monthAccumulated: "Month Accumulated",
+    peakHour: "Peak Hour",
+    filters: "Filters",
+    applyFilters: "Apply Filters",
+    resetFilters: "Reset Filters",
+    uniqueProducts: "Unique Products",
+    
+    // Chart specific
+    value: "Value",
+    chartData: "Chart Data",
+    xAxis: "X-Axis",
+    yAxis: "Y-Axis",
+    legend: "Legend",
+    dataPoints: "Data Points",
 
     // Menu analysis
     productPerformance: "Product Performance",

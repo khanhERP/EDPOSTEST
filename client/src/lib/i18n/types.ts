@@ -320,8 +320,12 @@ export interface ReportsTranslations {
   receiptCode: string;
   payerReceiver: string;
   revenueExpenseType: string;
+  productCode: string;
+  productName: string;
   soldQuantity: string;
   returnQuantity: string;
+  returnValue: string;
+  netRevenue: string;
 
   // Dashboard specific
   dailySales: string;
@@ -435,313 +439,53 @@ export interface ReportsTranslations {
   profitLoss: string;
   balanceSheet: string;
   cashFlow: string;
-  
+
   // Customer reports  
   customerSalesReport: string;
   channelSalesReport: string;
   employeeSalesReport: string;
-  
+
   // Supplier reports
   supplierReportDescription: string;
   purchaseReport: string;
   supplierPerformance: string;
-  
+
   // Inventory reports
   inventoryReportDescription: string;
   stockLevel: string;
   stockMovementReport: string;
   lowStockAlert: string;
-  
+
   // Additional menu items
   warehouseReport: string;
-  warehouseReportDescription: string;</old_str>
+  warehouseReportDescription: string;
 
-  // Table analysis specific
-  customerCount: string;
-  turnoverRate: string;
-  topRevenueTables: string;
-  topTurnoverTables: string;
-  topUtilizationTables: string;
-  timesPerDay: string;
-  hourUnit: string;
-  timesUnit: string;
-  hour: string;
-  times: string;
+  // Chart and filter labels
+  selectDateRange: string;
+  applyFilter: string;
+  clearFilter: string;
+  exportData: string;
 
-  // Additional keys
-  endOfDayReport: string;
-  endOfDayReportTab: string;
-  revenueExpense: string;
-  mainConcern: string;
-  sales: string;
-  inventory: string;
-  summary: string;
-  dateType: string;
-  singleDate: string;
-  dateRange: string;
-  date: string;
-  paymentMethodFilter: string;
-  transactionTypeFilter: string;
-  creator: string;
-  employee: string;
-  customerPayment: string;
-  customerRefund: string;
-  otherExpense: string;
-  supplierRefund: string;
-  supplierPayment: string;
-  printReport: string;
-  reportGenerated: string;
-  dataFrom: string;
-  to: string;
-  printOptions: string;
-  totalTransactions: string;
-  income: string;
-  expenses: string;
-  netProfit: string;
-  paymentMethodBreakdown: string;
-  transactionDetails: string;
-  transactionId: string;
-  time: string;
-  method: string;
-  amount: string;
-  notes: string;
-  cashPayment: string;
-  cardPayment: string;
-  transfer: string;
-  wallet: string;
+  // Data display
+  noDataAvailable: string;
+  loadingData: string;
+  errorLoadingData: string;
 
-  // Table detail headers
-  salesDetailsHeader: string;
-  revenueExpenseDetailsHeader: string;
-  inventoryDetailsHeader: string;
+  // Warehouse specific
+  warehouseReportTab: string;
+  warehouseReportDescription: string;
 
-  // Sales chart report
-  salesChart: string;
-  salesChartDescription: string;
-
-  // Inventory report
-  inventoryReport: string;
-  inventoryReportDescription: string;
-  productType: string;
-  combo: string;
-  product: string;
-  service: string;
-  inventoryValue: string;
-  inOutInventory: string;
-  detailedInOutInventory: string;
-  disposal: string;
-  employeeBySales: string;
-  customerBySales: string;
-  supplierByPurchase: string;
-  profit: string;
-  salesReportByProduct: string;
-  profitReportByProduct: string;
-  inventoryValueReport: string;
-  inOutInventoryReport: string;
-  detailedInOutInventoryReport: string;
-  disposalReport: string;
-  employeeSalesReport: string;
-  customerSalesReport: string;
-  supplierReportByProduct: string;
-  quantitySold: string;
-  returnQuantity: string;
-  returnValue: string;
-  netRevenue: string;
-  totalCost: string;
-  grossProfit: string;
-  profitMargin: string;
-  salePrice: string;
-  saleValue: string;
-  costPrice: string;
-  inventoryValue: string;
-  openingStock: string;
-  openingValue: string;
-  openingPrice: string;
-  inQuantity: string;
-  outQuantity: string;
-  outValue: string;
-  closingStock: string;
-  closingValue: string;
-  inSupplier: string;
-  inCheck: string;
-  inReturn: string;
-  inTransfer: string;
-  inProduction: string;
-  outSale: string;
-  outDisposal: string;
-  outSupplier: string;
-  outCheck: string;
-  outTransfer: string;
-  outProduction: string;
-  totalDisposed: string;
-  totalValue: string;
-  employeeCount: string;
-  customerCount: string;
-  quantityPurchased: string;
-  supplierCount: string;
-  inValue: string;
-  value: string;
-  quantity: string;
-
-  // Comprehensive sales report
-  comprehensiveSalesReport: string;
-  concernType: string;
-  timeReport: string;
-  profitReport: string;
-  discountReport: string;
-  returnReport: string;
-  employeeReport: string;
-  salesMethod: string;
-  noDelivery: string;
-  delivery: string;
-  salesChannel: string;
-  direct: string;
-  other: string;
-  timeSalesReport: string;
-  profitByInvoiceReport: string;
-  invoiceDiscountReport: string;
-  returnByInvoiceReport: string;
-  employeeSalesReport: string;
-  returnValue: string;
-  netRevenue: string;
-  totalAmount: string;
-  discount: string;
-  totalCost: string;
-  grossProfit: string;
-  totalInvoices: string;
-  invoiceValue: string;
-  invoiceDiscount: string;
-  returnTicketCount: string;
-  seller: string;
-  saleDate: string;
-  paymentDate: string;
-  fromDate: string;
-  toDate: string;
-  barChart: string;
-  pieChart: string;
-  lineChart: string;
-  dailyRevenue: string;
-  paymentMethodDistribution: string;
-  hourlyRevenue: string;
-  barChartDesc: string;
-  pieChartDesc: string;
-  lineChartDesc: string;
-  paymentMethodDetails: string;
-
-  // Table headers for reports
-  transactionCode: string;
-  quantity: string;
-  otherRevenue: string;
-  vat: string;
-  actualRevenue: string;
-  receiptCode: string;
-  payerReceiver: string;
-  revenueExpenseType: string;
-  productCode: string;
-  productName: string;
-  soldQuantity: string;
-  returnQuantity: string;
-  returnValue: string;
-  netRevenue: string;
-
-  // Report specific content
-  salesDetails: string;
-  revenueExpenseDetails: string;
-  inventoryDetails: string;
-  noReportData: string;
-  centralBranch: string;
-
-  // Table headers for reports
-  transactionCode: string;
-  time: string;
-  quantity: string;
-  otherRevenue: string;
-  vat: string;
-  actualRevenue: string;
-  receiptCode: string;
-  payerReceiver: string;
-  revenueExpenseType: string;
-  productCode: string;
-  productName: string;
-  soldQuantity: string;
-  returnQuantity: string;
-  returnValue: string;
-  netRevenue: string;
-
-  // Report titles
-  salesReportTitle: string;
-  revenueReportTitle: string;
-  inventoryReportTitle: string;
-  summaryReportTitle: string;
-
-  // Report specific content
-  salesDetails: string;
-  revenueExpenseDetails: string;
-  inventoryDetails: string;
-  noReportData: string;
-  reportGenerated: string;
-  centralBranch: string;
-
-  // Date labels
-  date: string;
-  saleDate: string;
-  paymentDate: string;
-  fromDate: string;
-  toDate: string;
-
-  // Report titles
-  salesReportTitle: string;
-  revenueReportTitle: string;
-  inventoryReportTitle: string;
-  summaryReportTitle: string;
-
-  // Table detail headers
-  salesDetailsHeader: string;
-  revenueExpenseDetailsHeader: string;
-  inventoryDetailsHeader: string;
-
-  // Table analysis
-  tablePerformance: string;
-  utilizationRate: string;
-  turnoverRate: string;
-  averageRevenue: string;
-  peakHours: string;
-  tableUtilization: string;
-  revenuePerTable: string;
-  ordersPerTable: string;
-
-  // Common report elements
+  // Additional report keys
   period: string;
-  thisMonth: string;
-  noData: string;
   noDataDescription: string;
-  loading: string;
-
-  // Additional dashboard keys
-  periodRevenue: string;
-  customerCount: string;
-  monthRevenue: string;
   monthAccumulated: string;
-  realTimeStatus: string;
-  pendingOrders: string;
-  count: string;
-  performanceMetrics: string;
-  salesAchievementRate: string;
-  hour: string;
   peakHour: string;
-  tableTurnoverRate: string;
-  times: string;
-  targetAverageDailySales: string;
-
-  // Common report keys
-  chartView: string;
-  visualRepresentation: string;
   filters: string;
   applyFilters: string;
   resetFilters: string;
   uniqueProducts: string;
 
-  // Chart specific keys
+  // Chart specific
   value: string;
   chartData: string;
   xAxis: string;
