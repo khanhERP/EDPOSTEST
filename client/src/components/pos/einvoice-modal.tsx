@@ -606,13 +606,14 @@ export function EInvoiceModal({
 
       console.log("✅ Calling onConfirm with publishLater data and receipt");
       console.log("📄 Receipt data to display:", receiptData);
-      // Gọi onConfirm để hiển thị receipt modal ngay lập tức
+      
+      // Đóng modal e-invoice TRƯỚC KHI gọi onConfirm
+      onClose();
+      
+      // Gọi onConfirm để hiển thị receipt modal sau khi modal e-invoice đóng
       setTimeout(() => {
         onConfirm(completeInvoiceData);
-      }, 200); // Tăng delay để đảm bảo modal e-invoice đóng hoàn toàn
-
-      // Đóng modal e-invoice và hiển thị receipt modal
-      onClose();
+      }, 300); // Tăng delay để đảm bảo modal e-invoice đóng hoàn toàn
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
 

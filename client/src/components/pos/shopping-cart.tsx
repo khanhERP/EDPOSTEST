@@ -341,20 +341,19 @@ export function ShoppingCart({
         // Đóng tất cả modal trước khi hiển thị receipt
         setShowPaymentMethodModal(false);
 
-        setTimeout(() => {
-          if (eInvoiceData.receipt) {
-            console.log("📄 Displaying receipt modal for saved draft invoice");
-            setPreviewReceipt(eInvoiceData.receipt);
-            setShowReceiptPreview(true);
+        // Hiển thị receipt modal ngay lập tức
+        if (eInvoiceData.receipt) {
+          console.log("📄 Displaying receipt modal for saved draft invoice");
+          setPreviewReceipt(eInvoiceData.receipt);
+          setShowReceiptPreview(true);
 
-            // Clear cart sau khi hiển thị receipt modal
-            setTimeout(() => {
-              onClearCart();
-            }, 100);
+          // Clear cart sau khi hiển thị receipt modal
+          setTimeout(() => {
+            onClearCart();
+          }, 100);
 
-            // Không cần toast ở đây vì đã có trong e-invoice modal
-            console.log("✅ Receipt modal displayed for draft invoice");
-          } else {
+          console.log("✅ Receipt modal displayed for draft invoice");
+        } else {
             // Fallback nếu không có receipt data từ e-invoice
             console.log(
               "⚠️ No receipt data from e-invoice, creating fallback receipt",
