@@ -178,10 +178,14 @@ export function ReceiptModal({
         // Trigger print dialog
         printWindow.print();
 
-        // Auto close modals after printing
+        // Auto close modals and print window after printing
         printWindow.onafterprint = () => {
-          console.log("🖨️ Print completed, auto-closing all popups");
-          printWindow.close();
+          console.log("🖨️ Print completed, auto-closing all popups and print window");
+          
+          // Force close print window immediately
+          if (!printWindow.closed) {
+            printWindow.close();
+          }
 
           // Auto close receipt modal and complete payment flow immediately after print
           setTimeout(() => {
@@ -222,7 +226,14 @@ export function ReceiptModal({
           }
         }, 500);
 
-        // Clear interval after 15 seconds to prevent memory leaks
+        // Force close print window after 10 seconds and clear interval after 15 seconds
+        setTimeout(() => {
+          if (!printWindow.closed) {
+            console.log("🖨️ Force closing print window after 10s timeout");
+            printWindow.close();
+          }
+        }, 10000);
+
         setTimeout(() => {
           if (!printWindow.closed) {
             console.log("🖨️ Print window still open after 15s, clearing interval");
