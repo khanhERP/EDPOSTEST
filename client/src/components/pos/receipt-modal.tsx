@@ -395,4 +395,6 @@ export function ReceiptModal({
         />
       )}
     </Dialog>
+  );
+}
   
