@@ -1153,7 +1153,33 @@ export class DatabaseStorage implements IStorage {
     const allCustomers = await database
       .select()
       .from(customers)
-      .orderBy(customers.name);</old_str>
+      .orderBy(customers.name);
+
+    // Update membership levels based on spending
+    const updatedCustomers = [];
+    for (const customer of allCustomers) {
+      const totalSpent = parseFloat(customer.totalSpent || "0");
+      const calculatedLevel = this.calculateMembershipLevel(
+        totalSpent,
+        thresholds.GOLD,
+        thresholds.VIP,
+      );
+
+      // Update if membership level has changed
+      if (customer.membershipLevel !== calculatedLevel) {
+        const [updatedCustomer] = await database
+          .update(customers)
+          .set({
+            membershipLevel: calculatedLevel,
+            updatedAt: new Date(),
+          })
+          .where(eq(customers.id, customer.id))
+          .returning();
+        updatedCustomers.push(updatedCustomer);
+      } else {
+        updatedCustomers.push(customer);
+      }
+    }</old_str>
 
     // Update membership levels based on spending
     const updatedCustomers = [];
