@@ -2286,10 +2286,10 @@ export function SalesChartReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
-            Báo cáo theo kênh bán hàng
+            {t("reports.channelSalesReport")}
           </CardTitle>
           <CardDescription>
-            Từ ngày: {formatDate(startDate)} - Đến ngày: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -2301,28 +2301,28 @@ export function SalesChartReport() {
                     className="text-center font-bold bg-green-100 border" 
                     rowSpan={2}
                   >
-                    Hình thức bán
+                    {t("reports.salesMethod")}
                   </TableHead>
                   <TableHead 
                     className="text-center font-bold bg-green-100 border" 
                     colSpan={3}
                   >
-                    Tổng số đơn
+                    {t("reports.totalOrders")}
                   </TableHead>
                   <TableHead 
                     className="text-center font-bold bg-green-100 border" 
                     colSpan={3}
                   >
-                    Doanh thu
+                    {t("reports.revenue")}
                   </TableHead>
                 </TableRow>
                 <TableRow>
-                  <TableHead className="text-center bg-green-50 border">Đã hoàn thành</TableHead>
-                  <TableHead className="text-center bg-green-50 border">Đã hủy</TableHead>
-                  <TableHead className="text-center bg-green-50 border">Cộng</TableHead>
-                  <TableHead className="text-center bg-green-50 border">Đã hoàn thành</TableHead>
-                  <TableHead className="text-center bg-green-50 border">Đã hủy</TableHead>
-                  <TableHead className="text-center bg-green-50 border">Cộng</TableHead>
+                  <TableHead className="text-center bg-green-50 border">{t("reports.completed")}</TableHead>
+                  <TableHead className="text-center bg-green-50 border">{t("reports.cancelled")}</TableHead>
+                  <TableHead className="text-center bg-green-50 border">{t("common.total")}</TableHead>
+                  <TableHead className="text-center bg-green-50 border">{t("reports.completed")}</TableHead>
+                  <TableHead className="text-center bg-green-50 border">{t("reports.cancelled")}</TableHead>
+                  <TableHead className="text-center bg-green-50 border">{t("common.total")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -2355,7 +2355,7 @@ export function SalesChartReport() {
                 {/* Summary Row */}
                 <TableRow className="bg-green-100 font-bold border-t-2">
                   <TableCell className="text-center border font-bold">
-                    Cộng
+                    {t("common.total")}
                   </TableCell>
                   <TableCell className="text-center border">
                     {Object.values(salesMethodData).reduce((sum, data) => sum + data.completedOrders, 0)}
