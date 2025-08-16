@@ -26,6 +26,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalOrders: "Tổng đơn hàng",
     totalQuantitySold: "Tổng số lượng bán",
     averageOrderValue: "Giá trị đơn hàng trung bình",
+    periodRevenue: "Doanh thu kỳ",
 
     // Filter options
     filterByDate: "Lọc theo ngày",
@@ -367,6 +368,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalOrders: "총 주문",
     totalQuantitySold: "총 판매량",
     averageOrderValue: "평균 주문 가치",
+    periodRevenue: "기간 매출",
 
     // Filter options
     filterByDate: "날짜별 필터",
@@ -708,6 +710,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalOrders: "Total Orders",
     totalQuantitySold: "Total Quantity Sold",
     averageOrderValue: "Average Order Value",
+    periodRevenue: "Period Revenue",
 
     // Filter options
     filterByDate: "Filter by Date",
