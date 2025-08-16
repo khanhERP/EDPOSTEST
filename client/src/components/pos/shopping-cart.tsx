@@ -58,8 +58,6 @@ export function ShoppingCart({
   const [onSelectMethod, setOnSelectMethod] = useState(() => () => {}); // Placeholder for the selection function
   const [onShowEInvoice, setOnShowEInvoice] = useState(() => () => {}); // Placeholder for triggering the receipt modal after E-invoice
 
-
-
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
     if (item.taxRate && parseFloat(item.taxRate) > 0) {
@@ -78,17 +76,19 @@ export function ShoppingCart({
       : 0;
 
   // Helper functions for receipt generation (used in handlePaymentMethodSelect)
-  const calculateSubtotal = () => cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
-  const calculateTax = () => cart.reduce((sum, item) => {
-    if (item.taxRate && parseFloat(item.taxRate) > 0) {
-      return (
-        sum +
-        ((parseFloat(item.price) * parseFloat(item.taxRate)) / 100) *
-          item.quantity
-      );
-    }
-    return sum;
-  }, 0);
+  const calculateSubtotal = () =>
+    cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
+  const calculateTax = () =>
+    cart.reduce((sum, item) => {
+      if (item.taxRate && parseFloat(item.taxRate) > 0) {
+        return (
+          sum +
+          ((parseFloat(item.price) * parseFloat(item.taxRate)) / 100) *
+            item.quantity
+        );
+      }
+      return sum;
+    }, 0);
   const calculateTotal = () => calculateSubtotal() + calculateTax();
 
   // WebSocket connection for broadcasting cart updates to customer display
@@ -137,7 +137,7 @@ export function ShoppingCart({
         clearTimeout(reconnectTimer);
       }
       if (ws && isConnected) {
-        ws.close(1000, 'Component unmounting');
+        ws.close(1000, "Component unmounting");
       }
     };
   }, []);
@@ -168,7 +168,7 @@ export function ShoppingCart({
           // Close connection immediately after sending
           setTimeout(() => {
             if (ws.readyState === WebSocket.OPEN) {
-              ws.close(1000, 'Broadcast complete');
+              ws.close(1000, "Broadcast complete");
             }
           }, 100);
         };
@@ -176,7 +176,6 @@ export function ShoppingCart({
         ws.onerror = (error) => {
           console.error("Failed to broadcast cart update:", error);
         };
-
       } catch (error) {
         console.error("Failed to create broadcast WebSocket:", error);
       }
@@ -299,47 +298,52 @@ export function ShoppingCart({
   };
 
   const handleReceiptConfirm = () => {
-    console.log('📄 Receipt confirmed, checking payment method');
+    console.log("📄 Receipt confirmed, checking payment method");
     setShowReceiptPreview(false);
 
     // Chỉ hiển thị payment method modal nếu chưa có thanh toán nào được xử lý
     // Tránh hiển thị lại sau khi e-invoice đã xử lý xong
-    if (!previewReceipt?.paymentMethod || previewReceipt?.paymentMethod === "preview") {
-      console.log('💳 Showing payment method modal for new transaction');
+    if (
+      !previewReceipt?.paymentMethod ||
+      previewReceipt?.paymentMethod === "preview"
+    ) {
+      console.log("💳 Showing payment method modal for new transaction");
       setShowPaymentMethodModal(true);
     } else {
-      console.log('✅ Payment already processed, not showing payment method modal');
+      console.log(
+        "✅ Payment already processed, not showing payment method modal",
+      );
     }
   };
 
   const handlePaymentMethodSelect = (method: string, eInvoiceData?: any) => {
-    console.log('💳 Payment method selected:', method);
-    console.log('📧 E-invoice data received:', eInvoiceData);
+    console.log("💳 Payment method selected:", method);
+    console.log("📧 E-invoice data received:", eInvoiceData);
 
     // Đóng payment modal NGAY LẬP TỨC cho tất cả trường hợp
-    console.log('🔒 Closing payment modal immediately');
+    console.log("🔒 Closing payment modal immediately");
     setShowPaymentMethodModal(false);
 
-    if (method === 'einvoice' && eInvoiceData) {
-      console.log('📧 Processing e-invoice data in shopping cart');
-      console.log('🔍 E-invoice data type check:', {
+    if (method === "einvoice" && eInvoiceData) {
+      console.log("📧 Processing e-invoice data in shopping cart");
+      console.log("🔍 E-invoice data type check:", {
         publishLater: eInvoiceData.publishLater,
         publishedImmediately: eInvoiceData.publishedImmediately,
         showReceiptModal: eInvoiceData.showReceiptModal,
-        autoShowPrint: eInvoiceData.autoShowPrint
+        autoShowPrint: eInvoiceData.autoShowPrint,
       });
 
       // Xử lý "Phát hành sau" trước (priority cao hơn)
       if (eInvoiceData.publishLater || eInvoiceData.showReceiptModal) {
-        console.log('📧 Processing publish later case with receipt modal');
-        console.log('📄 E-invoice data for later:', eInvoiceData);
+        console.log("📧 Processing publish later case with receipt modal");
+        console.log("📄 E-invoice data for later:", eInvoiceData);
 
         // Đóng tất cả modal trước khi hiển thị receipt
         setShowPaymentMethodModal(false);
 
         setTimeout(() => {
           if (eInvoiceData.receipt) {
-            console.log('📄 Displaying receipt modal for saved draft invoice');
+            console.log("📄 Displaying receipt modal for saved draft invoice");
             setPreviewReceipt(eInvoiceData.receipt);
             setShowReceiptPreview(true);
 
@@ -349,10 +353,12 @@ export function ShoppingCart({
             }, 100);
 
             // Không cần toast ở đây vì đã có trong e-invoice modal
-            console.log('✅ Receipt modal displayed for draft invoice');
+            console.log("✅ Receipt modal displayed for draft invoice");
           } else {
             // Fallback nếu không có receipt data từ e-invoice
-            console.log('⚠️ No receipt data from e-invoice, creating fallback receipt');
+            console.log(
+              "⚠️ No receipt data from e-invoice, creating fallback receipt",
+            );
 
             // Tạo fallback receipt từ cart data
             const fallbackReceipt = {
@@ -364,19 +370,19 @@ export function ShoppingCart({
                 price: parseFloat(item.price).toFixed(2),
                 quantity: item.quantity,
                 total: (parseFloat(item.price) * item.quantity).toFixed(2),
-                sku: `FOOD${String(item.id).padStart(5, '0')}`,
-                taxRate: parseFloat(item.taxRate || "10")
+                sku: `FOOD${String(item.id).padStart(5, "0")}`,
+                taxRate: parseFloat(item.taxRate || "10"),
               })),
               subtotal: (total / 1.1).toFixed(2),
-              tax: (total - (total / 1.1)).toFixed(2),
+              tax: (total - total / 1.1).toFixed(2),
               total: total.toFixed(2),
-              paymentMethod: 'einvoice',
+              paymentMethod: "einvoice",
               amountReceived: total.toFixed(2),
               change: "0.00",
               cashierName: "System User",
               createdAt: new Date().toISOString(),
               customerName: eInvoiceData.customerName,
-              customerTaxCode: eInvoiceData.taxCode
+              customerTaxCode: eInvoiceData.taxCode,
             };
 
             console.log("📄 Created fallback receipt:", fallbackReceipt);
@@ -391,7 +397,8 @@ export function ShoppingCart({
 
             toast({
               title: "Thành công",
-              description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
+              description:
+                "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
             });
           }
         }, 200); // Đợi payment modal đóng hoàn toàn
@@ -402,7 +409,9 @@ export function ShoppingCart({
 
       // Xử lý phát hành ngay lập tức
       if (eInvoiceData.publishedImmediately || eInvoiceData.showReceiptModal) {
-        console.log('📄 Processing published immediately or show receipt modal case');
+        console.log(
+          "📄 Processing published immediately or show receipt modal case",
+        );
 
         // Đóng tất cả modal trước khi hiển thị receipt
         setShowPaymentMethodModal(false);
@@ -420,7 +429,7 @@ export function ShoppingCart({
             toast({
               title: "Thành công",
               description: eInvoiceData.publishedImmediately
-                ? `Hóa đơn điện tử đã được phát hành thành công! Số hóa đơn: ${eInvoiceData.invoiceNumber || 'N/A'}`
+                ? `Hóa đơn điện tử đã được phát hành thành công! Số hóa đơn: ${eInvoiceData.invoiceNumber || "N/A"}`
                 : "Hóa đơn điện tử đã được lưu để phát hành sau.",
             });
           }
@@ -432,11 +441,13 @@ export function ShoppingCart({
 
       // Không hiển thị lại payment method modal cho bất kỳ trường hợp e-invoice nào
       // vì tất cả đều đã được xử lý và chuyển sang receipt modal
-      console.log('✅ E-invoice processing completed, payment method modal remains closed');
+      console.log(
+        "✅ E-invoice processing completed, payment method modal remains closed",
+      );
     }
 
     // Existing payment method logic for non-e-invoice methods
-    console.log('💰 Processing regular payment method:', method);
+    console.log("💰 Processing regular payment method:", method);
     if (method === "cash") {
       // Cash payment logic
       const paymentData = {
@@ -477,7 +488,6 @@ export function ShoppingCart({
     onCheckout(paymentData);
   };
 
-
   const handleEInvoiceConfirm = async (eInvoiceData: any) => {
     console.log("📧 E-invoice confirmed:", eInvoiceData);
 
@@ -501,7 +511,7 @@ export function ShoppingCart({
         const successMessage = eInvoiceData.publishLater
           ? "Thông tin hóa đơn điện tử đã được lưu để phát hành sau."
           : eInvoiceData.publishedImmediately
-            ? `Hóa đơn điện tử đã được phát hành thành công! Số HĐ: ${eInvoiceData.invoiceNumber || 'N/A'}`
+            ? `Hóa đơn điện tử đã được phát hành thành công! Số HĐ: ${eInvoiceData.invoiceNumber || "N/A"}`
             : "Giao dịch đã hoàn tất";
 
         toast({
@@ -524,7 +534,7 @@ export function ShoppingCart({
             price: parseFloat(item.price).toFixed(2),
             quantity: item.quantity,
             total: parseFloat(item.total).toFixed(2),
-            sku: `FOOD${String(item.id).padStart(5, '0')}`,
+            sku: `FOOD${String(item.id).padStart(5, "0")}`,
             taxRate: parseFloat(item.taxRate || "10"),
           })),
           subtotal: subtotal.toFixed(2),
@@ -536,7 +546,7 @@ export function ShoppingCart({
           cashierName: "System User",
           createdAt: new Date().toISOString(),
           customerName: eInvoiceData.customerName || "Khách hàng lẻ",
-          customerTaxCode: eInvoiceData.taxCode
+          customerTaxCode: eInvoiceData.taxCode,
         };
 
         console.log("📄 Created fallback receipt:", fallbackReceipt);
@@ -807,7 +817,7 @@ export function ShoppingCart({
       <ReceiptModal
         isOpen={showReceiptPreview}
         onClose={() => {
-          console.log('🔴 Closing receipt modal from shopping cart');
+          console.log("🔴 Closing receipt modal from shopping cart");
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
         }}
@@ -845,8 +855,6 @@ export function ShoppingCart({
           taxRate: parseFloat(item.taxRate || "10"),
         }))}
       />
-
-
 
       {/* E-Invoice Modal (Assuming you have this component) */}
       {/* You would need to pass the correct props like onClose, onSelectMethod, onShowEInvoice, etc. */}
