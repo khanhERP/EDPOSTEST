@@ -31,6 +31,7 @@ export default function CustomerDisplayPage() {
     
     let ws: WebSocket;
     let reconnectTimer: NodeJS.Timeout;
+    let isConnected = false;
 
     const connectWebSocket = () => {
       try {
@@ -38,6 +39,7 @@ export default function CustomerDisplayPage() {
 
         ws.onopen = () => {
           console.log("Customer Display: WebSocket connected");
+          isConnected = true;
           // Send identification as customer display
           ws.send(JSON.stringify({ 
             type: 'customer_display_connected',
@@ -53,11 +55,20 @@ export default function CustomerDisplayPage() {
             switch (data.type) {
               case 'cart_update':
                 console.log("Customer Display: Updating cart:", data.cart);
-                setCart(data.cart || []);
+                // Use React's functional update to ensure we get the latest state
+                setCart(prevCart => {
+                  const newCart = data.cart || [];
+                  console.log("Customer Display: Cart state update from", prevCart.length, "to", newCart.length, "items");
+                  return newCart;
+                });
                 // Clear QR payment when cart updates (new order started)
-                if (qrPayment) {
-                  setQrPayment(null);
-                }
+                setQrPayment(prevQr => {
+                  if (prevQr) {
+                    console.log("Customer Display: Clearing QR payment due to cart update");
+                    return null;
+                  }
+                  return prevQr;
+                });
                 break;
               case 'store_info':
                 console.log("Customer Display: Updating store info:", data.storeInfo);
@@ -106,20 +117,24 @@ export default function CustomerDisplayPage() {
 
         ws.onclose = (event) => {
           console.log("Customer Display: WebSocket closed:", event.code, event.reason);
-          // Reconnect after 3 seconds
-          reconnectTimer = setTimeout(() => {
-            console.log("Customer Display: Attempting to reconnect...");
-            connectWebSocket();
-          }, 3000);
+          isConnected = false;
+          // Only reconnect if not manually closed
+          if (event.code !== 1000) {
+            reconnectTimer = setTimeout(() => {
+              console.log("Customer Display: Attempting to reconnect...");
+              connectWebSocket();
+            }, 1000); // Reduced reconnect delay
+          }
         };
 
         ws.onerror = (error) => {
           console.error("Customer Display: WebSocket error:", error);
+          isConnected = false;
         };
       } catch (error) {
         console.error("Customer Display: Failed to create WebSocket:", error);
-        // Retry after 3 seconds
-        reconnectTimer = setTimeout(connectWebSocket, 3000);
+        // Retry after 1 second
+        reconnectTimer = setTimeout(connectWebSocket, 1000);
       }
     };
 
@@ -135,8 +150,8 @@ export default function CustomerDisplayPage() {
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
       }
-      if (ws) {
-        ws.close();
+      if (ws && isConnected) {
+        ws.close(1000, 'Component unmounting');
       }
     };
   }, []);

@@ -97,6 +97,8 @@ export function ShoppingCart({
     const wsUrl = `${protocol}//${window.location.host}/ws`;
 
     let ws: WebSocket;
+    let isConnected = false;
+    let reconnectTimer: NodeJS.Timeout;
 
     const connectWebSocket = () => {
       try {
@@ -106,56 +108,86 @@ export function ShoppingCart({
           console.log(
             "Shopping Cart: WebSocket connected for customer display broadcasting",
           );
+          isConnected = true;
         };
 
         ws.onerror = (error) => {
           console.error("Shopping Cart: WebSocket error:", error);
+          isConnected = false;
         };
 
-        ws.onclose = () => {
+        ws.onclose = (event) => {
           console.log("Shopping Cart: WebSocket disconnected");
+          isConnected = false;
+          // Auto-reconnect if not manually closed
+          if (event.code !== 1000) {
+            reconnectTimer = setTimeout(connectWebSocket, 1000);
+          }
         };
       } catch (error) {
         console.error("Shopping Cart: Failed to create WebSocket:", error);
+        reconnectTimer = setTimeout(connectWebSocket, 1000);
       }
     };
 
     connectWebSocket();
 
     return () => {
-      if (ws) {
-        ws.close();
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+      if (ws && isConnected) {
+        ws.close(1000, 'Component unmounting');
       }
     };
   }, []);
 
-  // Broadcast cart updates to customer display
+  // Broadcast cart updates to customer display using existing connection
   useEffect(() => {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//${window.location.host}/ws`;
 
-    try {
-      const ws = new WebSocket(wsUrl);
+    // Use a more efficient approach - create connection only when needed
+    const broadcastCartUpdate = () => {
+      try {
+        const ws = new WebSocket(wsUrl);
 
-      ws.onopen = () => {
-        console.log("Broadcasting cart update to customer display:", cart);
-        ws.send(
-          JSON.stringify({
+        ws.onopen = () => {
+          console.log("Broadcasting cart update to customer display:", cart);
+          const message = JSON.stringify({
             type: "cart_update",
             cart: cart,
             subtotal,
             tax,
             total,
             timestamp: new Date().toISOString(),
-          }),
-        );
-      };
+          });
+          
+          ws.send(message);
+          
+          // Close connection immediately after sending
+          setTimeout(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.close(1000, 'Broadcast complete');
+            }
+          }, 100);
+        };
 
-      // Clean up
-      setTimeout(() => ws.close(), 1000);
-    } catch (error) {
-      console.error("Failed to broadcast cart update:", error);
-    }
+        ws.onerror = (error) => {
+          console.error("Failed to broadcast cart update:", error);
+        };
+
+      } catch (error) {
+        console.error("Failed to create broadcast WebSocket:", error);
+      }
+    };
+
+    // Debounce rapid cart updates to prevent too many WebSocket connections
+    const timeoutId = setTimeout(broadcastCartUpdate, 50);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [cart, subtotal, tax, total]);
 
   const getPaymentMethods = () => {
