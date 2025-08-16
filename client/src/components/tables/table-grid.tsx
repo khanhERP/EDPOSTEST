@@ -1160,10 +1160,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <div className="pt-4 space-y-3">
                   <Button
                     onClick={() => {
-                      console.log('🎯 Table: Starting payment flow - closing order details');
-                      setOrderForPayment(selectedOrder);
-                      setOrderDetailsOpen(false); // Đóng màn chi tiết đơn hàng
-                      setSelectedOrder(null); // Xóa chi tiết đơn hàng
+                      console.log('🎯 Table: Starting payment flow - preserving order data');
+                      
+                      // Tạo order data đầy đủ bao gồm cả order items để truyền qua các bước
+                      const completeOrderData = {
+                        ...selectedOrder,
+                        orderItems: orderItems || [], // Đảm bảo orderItems được truyền theo
+                      };
+                      
+                      console.log('💾 Setting order for payment with complete data:', completeOrderData);
+                      setOrderForPayment(completeOrderData);
+                      
+                      // Đóng order details nhưng GIỮ selectedOrder để có thể tham chiếu
+                      setOrderDetailsOpen(false);
+                      // Không xóa selectedOrder để giữ thông tin cho các modal tiếp theo
+                      
                       setShowPaymentMethodModal(true);
                     }}
                     className="w-full bg-green-600 hover:bg-green-700"
@@ -1210,13 +1221,22 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           }
         }}
         total={(() => {
-          if (!orderForPayment || !orderItems || !Array.isArray(orderItems)) return 0;
+          if (!orderForPayment) return 0;
+
+          // Sử dụng orderItems từ orderForPayment nếu có
+          const itemsToCalculate = orderForPayment.orderItems || orderItems || [];
+          console.log('💰 Calculating total from items:', itemsToCalculate.length);
+
+          if (!Array.isArray(itemsToCalculate) || itemsToCalculate.length === 0) {
+            // Fallback to order total if no items
+            return Number(orderForPayment.total || 0);
+          }
 
           let itemsTotal = 0;
           let itemsTax = 0;
 
           if (Array.isArray(products)) {
-            orderItems.forEach((item: any) => {
+            itemsToCalculate.forEach((item: any) => {
               const itemSubtotal = Number(item.total || 0);
               itemsTotal += itemSubtotal;
 
@@ -1226,20 +1246,34 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             });
           }
 
-          return itemsTotal + itemsTax;
+          const calculatedTotal = itemsTotal + itemsTax;
+          console.log('💰 Total calculation result:', {
+            itemsTotal,
+            itemsTax,
+            calculatedTotal,
+            fallbackTotal: Number(orderForPayment.total || 0)
+          });
+
+          return calculatedTotal > 0 ? calculatedTotal : Number(orderForPayment.total || 0);
         })()}
         onShowEInvoice={() => setShowEInvoiceModal(true)}
-        cartItems={orderItems?.map((item: any) => ({
-          id: item.id,
-          name: item.productName || getProductName(item.productId),
-          price: parseFloat(item.unitPrice || '0'),
-          quantity: item.quantity,
-          sku: item.productSku || `SP${item.productId}`,
-          taxRate: (() => {
-            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-            return product?.taxRate ? parseFloat(product.taxRate) : 10;
-          })()
-        })) || []}
+        cartItems={(() => {
+          // Sử dụng orderItems từ orderForPayment nếu có
+          const itemsToMap = orderForPayment?.orderItems || orderItems || [];
+          console.log('📦 Mapping cart items for payment modal:', itemsToMap.length);
+          
+          return itemsToMap.map((item: any) => ({
+            id: item.id,
+            name: item.productName || getProductName(item.productId),
+            price: parseFloat(item.unitPrice || '0'),
+            quantity: item.quantity,
+            sku: item.productSku || `SP${item.productId}`,
+            taxRate: (() => {
+              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+              return product?.taxRate ? parseFloat(product.taxRate) : 10;
+            })()
+          }));
+        })()}
       />
 
       {/* E-Invoice Modal */}
@@ -1252,13 +1286,22 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           }}
           onConfirm={handleEInvoiceConfirm}
           total={(() => {
-            if (!orderForPayment || !orderItems || !Array.isArray(orderItems)) return 0;
+            if (!orderForPayment) return 0;
+
+            // Sử dụng orderItems từ orderForPayment nếu có
+            const itemsToCalculate = orderForPayment.orderItems || orderItems || [];
+            console.log('💰 E-invoice calculating total from items:', itemsToCalculate.length);
+
+            if (!Array.isArray(itemsToCalculate) || itemsToCalculate.length === 0) {
+              // Fallback to order total if no items
+              return Math.round(Number(orderForPayment.total || 0));
+            }
 
             let itemsTotal = 0;
             let itemsTax = 0;
 
             if (Array.isArray(products)) {
-              orderItems.forEach((item: any) => {
+              itemsToCalculate.forEach((item: any) => {
                 const itemSubtotal = Number(item.total || 0);
                 itemsTotal += itemSubtotal;
 
@@ -1268,19 +1311,33 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               });
             }
 
-            return Math.round(itemsTotal + itemsTax);
+            const calculatedTotal = Math.round(itemsTotal + itemsTax);
+            console.log('💰 E-invoice total calculation result:', {
+              itemsTotal,
+              itemsTax,
+              calculatedTotal,
+              fallbackTotal: Math.round(Number(orderForPayment.total || 0))
+            });
+
+            return calculatedTotal > 0 ? calculatedTotal : Math.round(Number(orderForPayment.total || 0));
           })()}
-          cartItems={orderItems?.map((item: any) => ({
-            id: item.id,
-            name: item.productName || getProductName(item.productId),
-            price: parseFloat(item.unitPrice || '0'),
-            quantity: item.quantity,
-            sku: item.productSku || `SP${item.productId}`,
-            taxRate: (() => {
-              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-              return product?.taxRate ? parseFloat(product.taxRate) : 10;
-            })()
-          })) || []}
+          cartItems={(() => {
+            // Sử dụng orderItems từ orderForPayment nếu có
+            const itemsToMap = orderForPayment?.orderItems || orderItems || [];
+            console.log('📦 Mapping cart items for E-invoice modal:', itemsToMap.length);
+            
+            return itemsToMap.map((item: any) => ({
+              id: item.id,
+              name: item.productName || getProductName(item.productId),
+              price: parseFloat(item.unitPrice || '0'),
+              quantity: item.quantity,
+              sku: item.productSku || `SP${item.productId}`,
+              taxRate: (() => {
+                const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+                return product?.taxRate ? parseFloat(product.taxRate) : 10;
+              })()
+            }));
+          })()}
           source="table"
           orderId={orderForPayment.id}
         />
@@ -1297,7 +1354,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setShowPaymentMethodModal(false);
           setShowEInvoiceModal(false);
           setOrderDetailsOpen(false);
-          setSelectedOrder(null);
+          setSelectedOrder(null); // Bây giờ mới clear selectedOrder khi hoàn tất
         }}
         receipt={selectedReceipt}
         cartItems={selectedReceipt?.items?.map((item: any) => ({
