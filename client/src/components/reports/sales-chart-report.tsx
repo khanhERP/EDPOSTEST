@@ -2418,7 +2418,7 @@ export function SalesChartReport() {
             transaction.createdAt || transaction.created_at,
           );
           const year = transactionDate.getFullYear();
-          const month = (transactionDate.getMonth() + 1)
+          const month = (transaction.getMonth() + 1)
             .toString()
             .padStart(2, "0");
           const day = transactionDate.getDate().toString().padStart(2, "0");
@@ -3062,7 +3062,33 @@ export function SalesChartReport() {
           )}
 
           {analysisType === "channel" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+              {/* Date Range */}
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  {t("reports.startDate")}
+                </Label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  {t("reports.endDate")}
+                </Label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
+
+              {/* Sales Method */}
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
                   {t("reports.salesMethod")}
@@ -3079,24 +3105,6 @@ export function SalesChartReport() {
                     <SelectItem value="delivery">
                       {t("reports.delivery")}
                     </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  {t("reports.salesChannel")}
-                </Label>
-                <Select value={salesChannel} onValueChange={setSalesChannel}>
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("common.all")}</SelectItem>
-                    <SelectItem value="direct">
-                      {t("reports.direct")}
-                    </SelectItem>
-                    <SelectItem value="other">{t("reports.other")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
