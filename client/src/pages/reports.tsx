@@ -66,7 +66,7 @@ export default function ReportsPage() {
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{t('navigation.dashboard')}</span>
+                  <span>{t('reports.dashboard')}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="sales"
