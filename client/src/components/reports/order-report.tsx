@@ -128,6 +128,7 @@ export function OrderReport() {
       pending: { label: t("reports.draft"), variant: "secondary" as const },
       confirmed: { label: t("reports.confirmed"), variant: "default" as const },
       preparing: { label: t("reports.delivering"), variant: "outline" as const },
+      served: { label: t("orders.status.served"), variant: "default" as const },
       paid: { label: t("reports.completed"), variant: "default" as const },
     };
     return statusMap[status as keyof typeof statusMap] || { label: status, variant: "secondary" as const };
