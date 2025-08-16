@@ -347,7 +347,7 @@ export function SalesChartReport() {
         <Card>
           <CardHeader>
             <CardTitle>{t("reports.dailySales")}</CardTitle>
-            <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+            <CardDescription>{t("reports.salesChartDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
