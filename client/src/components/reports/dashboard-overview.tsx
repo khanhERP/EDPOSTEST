@@ -19,6 +19,7 @@ import {
   Clock,
   Target,
   Search,
+  RefreshCw
 } from "lucide-react";
 import type { Order, Table as TableType } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
