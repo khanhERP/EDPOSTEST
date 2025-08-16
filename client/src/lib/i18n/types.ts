@@ -107,6 +107,7 @@ export interface CommonTranslations {
 export interface NavigationTranslations {
   pos: string;
   tables: string;
+  salesOrders: string;
   inventory: string;
   reports: string;
   employees: string;
@@ -125,6 +126,7 @@ export interface NavigationTranslations {
   salesChart: string;
   purchaseReport: string;
   warehouseReport: string;
+  orderReport: string;
 }
 
 // Reports translations interface

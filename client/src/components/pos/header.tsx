@@ -39,6 +39,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [location] = useLocation();
   const [submenuTimer, setSubmenuTimer] = useState<NodeJS.Timeout | null>(null);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
   // Fetch store settings
   const { data: storeSettings } = useQuery<StoreSettings>({
@@ -96,6 +97,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
       setSubmenuTimer(null);
     }
     setReportsSubmenuOpen(true);
+    setActiveDropdown('reports');
   };
 
   const handleReportsMouseLeave = () => {
@@ -116,6 +118,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
   const handleReportsContainerMouseLeave = () => {
     const timer = setTimeout(() => {
       setReportsSubmenuOpen(false);
+      setActiveDropdown(null);
     }, 300);
     setSubmenuTimer(timer);
   };
@@ -127,6 +130,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
       if (!target.closest('.pos-dropdown')) {
         setPosMenuOpen(false);
         setReportsSubmenuOpen(false);
+        setActiveDropdown(null);
       }
     };
 
@@ -261,6 +265,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                           e.preventDefault();
                           e.stopPropagation();
                           setReportsSubmenuOpen(!reportsSubmenuOpen);
+                          setActiveDropdown(reportsSubmenuOpen ? null : 'reports');
                         }}
                         onMouseEnter={handleReportsMouseEnter}
                       >
@@ -274,12 +279,15 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                         >
                           <Link href="/reports?tab=overview">
                             <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search === "?tab=overview" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                                activeDropdown === 'reports' && window.location.search === "?tab=overview"
+                                  ? 'text-blue-600 bg-blue-50'
+                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                               }`}
                               onClick={() => {
-                                setReportsSubmenuOpen(false);
+                                setActiveDropdown(null);
                                 setPosMenuOpen(false);
+                                setReportsSubmenuOpen(false);
                               }}
                             >
                               <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
@@ -288,12 +296,15 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                           </Link>
                           <Link href="/reports?tab=sales">
                             <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search === "?tab=sales" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                                activeDropdown === 'reports' && window.location.search === "?tab=sales"
+                                  ? 'text-blue-600 bg-blue-50'
+                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                               }`}
                               onClick={() => {
-                                setReportsSubmenuOpen(false);
+                                setActiveDropdown(null);
                                 setPosMenuOpen(false);
+                                setReportsSubmenuOpen(false);
                               }}
                             >
                               <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
@@ -302,12 +313,15 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                           </Link>
                           <Link href="/reports?tab=menu">
                             <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search === "?tab=menu" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                                activeDropdown === 'reports' && window.location.search === "?tab=menu"
+                                  ? 'text-blue-600 bg-blue-50'
+                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                               }`}
                               onClick={() => {
-                                setReportsSubmenuOpen(false);
+                                setActiveDropdown(null);
                                 setPosMenuOpen(false);
+                                setReportsSubmenuOpen(false);
                               }}
                             >
                               <PieChart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
@@ -316,12 +330,15 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                           </Link>
                           <Link href="/reports?tab=table">
                             <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search === "?tab=table" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                                activeDropdown === 'reports' && window.location.search === "?tab=table"
+                                  ? 'text-blue-600 bg-blue-50'
+                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                               }`}
                               onClick={() => {
-                                setReportsSubmenuOpen(false);
+                                setActiveDropdown(null);
                                 setPosMenuOpen(false);
+                                setReportsSubmenuOpen(false);
                               }}
                             >
                               <Utensils className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
@@ -330,12 +347,15 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                           </Link>
                           <Link href="/reports?tab=saleschart">
                             <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search === "?tab=saleschart" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                                activeDropdown === 'reports' && window.location.search === "?tab=saleschart"
+                                  ? 'text-blue-600 bg-blue-50'
+                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                               }`}
                               onClick={() => {
-                                setReportsSubmenuOpen(false);
+                                setActiveDropdown(null);
                                 setPosMenuOpen(false);
+                                setReportsSubmenuOpen(false);
                               }}
                             >
                               <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
@@ -344,12 +364,15 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                           </Link>
                           <Link href="/reports?tab=order">
                             <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search === "?tab=order" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                                activeDropdown === 'reports' && window.location.search === "?tab=order"
+                                  ? 'text-blue-600 bg-blue-50'
+                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                               }`}
                               onClick={() => {
-                                setReportsSubmenuOpen(false);
+                                setActiveDropdown(null);
                                 setPosMenuOpen(false);
+                                setReportsSubmenuOpen(false);
                               }}
                             >
                               <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
@@ -358,12 +381,15 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                           </Link>
                           <Link href="/reports?tab=inventory">
                             <button
-                              className={`w-full flex items-center px-3 sm:px-4 py-2 text-left hover:bg-green-50 hover:text-green-600 transition-colors text-sm sm:text-base ${
-                                location === "/reports" && window.location.search === "?tab=inventory" ? "bg-green-50 text-green-600" : "text-gray-700 hover:text-green-600"
+                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                                activeDropdown === 'reports' && window.location.search === "?tab=inventory"
+                                  ? 'text-blue-600 bg-blue-50'
+                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                               }`}
                               onClick={() => {
-                                setReportsSubmenuOpen(false);
+                                setActiveDropdown(null);
                                 setPosMenuOpen(false);
+                                setReportsSubmenuOpen(false);
                               }}
                             >
                               <Package className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />

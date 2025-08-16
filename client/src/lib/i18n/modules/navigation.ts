@@ -1,3 +1,4 @@
+
 import type { NavigationTranslations } from '../types';
 
 export const navigationTranslations: { [key: string]: NavigationTranslations } = {
@@ -22,6 +23,7 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     salesChart: '매출 차트',
     purchaseReport: '구매 보고서',
     warehouseReport: '창고 보고서',
+    orderReport: '주문 보고서',
   },
   en: {
     pos: 'POS',
@@ -54,10 +56,10 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     inventory: "Kho hàng",
     reports: 'Báo cáo',
     employees: 'Nhân viên',
-    attendance: 'Chấm công', 
+    attendance: 'Chấm công',
     suppliers: 'Nhà cung cấp',
     salesReports: 'Báo cáo bán hàng',
-    inventoryReports: 'Báo cáo tồn kho', 
+    inventoryReports: 'Báo cáo tồn kho',
     expensesReports: 'Báo cáo chi phí',
     profitReports: 'Báo cáo lợi nhuận',
     tablesSales: 'Bán hàng tại bàn',
