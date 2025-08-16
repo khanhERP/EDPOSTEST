@@ -2435,7 +2435,7 @@ export function SalesChartReport() {
             transaction.createdAt || transaction.created_at,
           );
           const year = transactionDate.getFullYear();
-          const month = (transaction.getMonth() + 1)
+          const month = (transactionDate.getMonth() + 1)
             .toString()
             .padStart(2, "0");
           const day = transactionDate.getDate().toString().padStart(2, "0");
