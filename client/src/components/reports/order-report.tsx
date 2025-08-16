@@ -564,7 +564,7 @@ export function OrderReport() {
             {/* Background decoration */}
             <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-indigo-50/20 rounded-xl"></div>
             <div className="absolute top-4 right-4 flex items-center gap-2 text-sm text-gray-500">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
               Live Data
             </div>
 

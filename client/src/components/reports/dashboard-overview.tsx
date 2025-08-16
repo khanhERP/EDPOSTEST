@@ -188,7 +188,9 @@ export function DashboardOverview() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>{t("reports.dashboard")}</CardTitle>
+              <CardTitle className="text-lg font-semibold text-gray-900">
+                {t('reports.dashboard')}
+              </CardTitle>
               <CardDescription>
                 {t("reports.dashboardDescription")}
               </CardDescription>

@@ -425,7 +425,7 @@ export function TableReport() {
       {/* Detailed Table Performance */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("reports.detailedTablePerformance")}</CardTitle>
+          <CardTitle>{t("reports.tableAnalysis")}</CardTitle>
           <CardDescription>
             {t("reports.detailedTablePerformanceDesc")}
           </CardDescription>

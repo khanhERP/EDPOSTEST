@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -54,16 +53,16 @@ export function SalesReport() {
     new Date().toISOString().split("T")[0],
   );
 
-  
+
 
   const { data: transactions } = useQuery({
     queryKey: ["/api/transactions", startDate, endDate],
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 
-  
 
-  
+
+
 
   const getSalesData = () => {
     if (!transactions || !Array.isArray(transactions)) return null;
@@ -72,17 +71,17 @@ export function SalesReport() {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
-      
+
       // Tạo date objects để so sánh chính xác
       const start = new Date(startDate);
       const end = new Date(endDate);
       // Set end date to end of day
       end.setHours(23, 59, 59, 999);
-      
+
       // Reset transaction date to start of day for comparison
       const transactionDateOnly = new Date(transactionDate);
       transactionDateOnly.setHours(0, 0, 0, 0);
-      
+
       const isInRange = transactionDateOnly >= start && transactionDateOnly <= end;
       return isInRange;
     });
@@ -96,7 +95,7 @@ export function SalesReport() {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
-      
+
       // Đảm bảo format ngày nhất quán - luôn sử dụng UTC để tránh timezone issues
       const year = transactionDate.getFullYear();
       const month = (transactionDate.getMonth() + 1).toString().padStart(2, "0");
@@ -187,7 +186,7 @@ export function SalesReport() {
     };
   };
 
-  
+
 
   const handleDateRangeChange = (range: string) => {
     setDateRange(range);
@@ -202,10 +201,10 @@ export function SalesReport() {
         // Tuần hiện tại: từ thứ 2 đến chủ nhật
         const currentDayOfWeek = today.getDay(); // 0 = Chủ nhật, 1 = Thứ 2, ...
         const daysToMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1; // Tính số ngày từ thứ 2
-        
+
         const thisWeekMonday = new Date(today);
         thisWeekMonday.setDate(today.getDate() - daysToMonday);
-        
+
         const thisWeekSunday = new Date(thisWeekMonday);
         thisWeekSunday.setDate(thisWeekMonday.getDate() + 6);
 
@@ -217,7 +216,7 @@ export function SalesReport() {
         const currentDate = new Date();
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
-        
+
         // Ngày đầu tháng hiện tại
         const monthStart = new Date(year, month, 1);
         // Ngày cuối tháng hiện tại
@@ -273,7 +272,7 @@ export function SalesReport() {
     return labels[method as keyof typeof labels] || method;
   };
 
-  
+
 
   const salesData = getSalesData();
 
@@ -465,7 +464,7 @@ export function SalesReport() {
     </>
   );
 
-  
+
 
   const chartConfig = {
     revenue: {
@@ -489,11 +488,10 @@ export function SalesReport() {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                {t("reports.salesAnalysis")}
-              </CardTitle>
-              <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+              <CardTitle>{t('reports.salesReport')}</CardTitle>
+              <CardDescription>
+                {t('reports.salesReportDescription')}
+              </CardDescription>
             </div>
             <div className="flex items-center gap-4">
 

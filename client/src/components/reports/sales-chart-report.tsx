@@ -2250,7 +2250,7 @@ export function SalesChartReport() {
     filteredTransactions.forEach((transaction: any) => {
       // Xác định phương thức bán hàng dựa trên deliveryMethod hoặc salesChannel
       let method = "Ăn tại chỗ"; // Mặc định
-      
+
       if (transaction.deliveryMethod === "delivery" || 
           transaction.deliveryMethod === "takeout" || 
           transaction.deliveryMethod === "takeaway" ||
@@ -2351,7 +2351,7 @@ export function SalesChartReport() {
                     </TableCell>
                   </TableRow>
                 ))}
-                
+
                 {/* Summary Row */}
                 <TableRow className="bg-green-100 font-bold border-t-2">
                   <TableCell className="text-center border font-bold">

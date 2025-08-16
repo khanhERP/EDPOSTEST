@@ -633,8 +633,8 @@ export function SupplierReport() {
       {/* Main Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("reports.supplierReport")}</CardTitle>
-          <CardDescription>{t("reports.supplierReportDescription")}</CardDescription>
+          {t('reports.supplierReport')}
+          {t('reports.supplierReportDescription')}
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

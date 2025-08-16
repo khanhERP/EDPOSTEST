@@ -132,7 +132,7 @@ export function InventoryReport() {
 
       // Select random products for this order (1-3 products)
       const orderProductCount = Math.min(
-        Math.floor(Math.random() * 3) + 1, 
+        Math.floor(Math.random() * 3) + 1,
         availableProducts.length
       );
 
@@ -1250,10 +1250,10 @@ export function InventoryReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="w-5 h-5" />
-            {t("reports.inventoryReport")}
+            {t('reports.warehouseReport')}
           </CardTitle>
           <CardDescription>
-            {t("reports.inventoryReportDescription")}
+            {t('reports.warehouseReportDescription')}
           </CardDescription>
         </CardHeader>
       </Card>
