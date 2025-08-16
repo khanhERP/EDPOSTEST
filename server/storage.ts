@@ -40,7 +40,7 @@ import {
   type InsertPointTransaction,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, ilike, and, gte, lte, or, sql, desc, not } from "drizzle-orm";
+import { eq, ilike, and, gte, lte, or, sql, desc, not, like } from "drizzle-orm";
 
 export interface IStorage {
   // Categories
@@ -541,30 +541,30 @@ export class DatabaseStorage implements IStorage {
     try {
       const dbToUse = database || db;
       
-      // Get the last customer ID
-      const [lastCustomer] = await dbToUse
+      // Get all customer IDs that match the CUST pattern and extract numbers
+      const allCustomers = await dbToUse
         .select({ customerId: customers.customerId })
         .from(customers)
-        .where(like(customers.customerId, "CUST%"))
-        .orderBy(desc(customers.customerId))
-        .limit(1);
+        .where(like(customers.customerId, "CUST%"));
 
-      if (!lastCustomer) {
+      if (allCustomers.length === 0) {
         return "CUST001";
       }
 
-      // Extract number from last customer ID (CUST001 -> 001)
-      const lastId = lastCustomer.customerId;
-      const match = lastId.match(/CUST(\d+)/);
+      // Extract all numbers from existing customer IDs
+      const existingNumbers = allCustomers
+        .map(customer => {
+          const match = customer.customerId.match(/CUST(\d+)/);
+          return match ? parseInt(match[1], 10) : 0;
+        })
+        .filter(num => num > 0)
+        .sort((a, b) => b - a); // Sort descending
 
-      if (match) {
-        const lastNumber = parseInt(match[1], 10);
-        const nextNumber = lastNumber + 1;
-        return `CUST${nextNumber.toString().padStart(3, "0")}`;
-      }
-
-      // Fallback if format doesn't match
-      return "CUST001";
+      // Find the highest number and increment
+      const highestNumber = existingNumbers[0] || 0;
+      const nextNumber = highestNumber + 1;
+      
+      return `CUST${nextNumber.toString().padStart(3, "0")}`;
     } catch (error) {
       console.error("Error generating next customer ID:", error);
       return "CUST001";
