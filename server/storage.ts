@@ -1182,10 +1182,6 @@ export class DatabaseStorage implements IStorage {
     }
 
     return updatedCustomers;
-  }</old_str>
-    }
-
-    return updatedCustomers;
   }
 
   async searchCustomers(query: string): Promise<Customer[]> {
