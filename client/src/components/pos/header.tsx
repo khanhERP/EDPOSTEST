@@ -297,7 +297,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                               }}
                             >
                               <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.salesAnalysis')}</span>
+                              <span className="truncate">{t('navigation.salesAnalysis')}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=menu">
@@ -311,7 +311,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                               }}
                             >
                               <PieChart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.menuAnalysis')}</span>
+                              <span className="truncate">{t('navigation.menuAnalysis')}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=table">
@@ -325,7 +325,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                               }}
                             >
                               <Utensils className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.tableAnalysis')}</span>
+                              <span className="truncate">{t('navigation.tableAnalysis')}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=saleschart">
@@ -339,7 +339,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                               }}
                             >
                               <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.salesReport')}</span>
+                              <span className="truncate">{t('navigation.salesChart')}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=order">
@@ -353,7 +353,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                               }}
                             >
                               <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t("reports.purchaseReport")}</span>
+                              <span className="truncate">{t("navigation.purchaseReport")}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=inventory">
@@ -367,7 +367,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                               }}
                             >
                               <Package className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t("reports.inventoryReport")}</span>
+                              <span className="truncate">{t("navigation.warehouseReport")}</span>
                             </button>
                           </Link>
                         </div>
