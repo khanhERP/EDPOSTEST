@@ -302,7 +302,7 @@ export function ShoppingCart({
     setShowReceiptPreview(false);
 
     // Kiểm tra xem có phải là receipt từ e-invoice không
-    const isEInvoiceReceipt = previewReceipt?.paymentMethod === "einvoice" || 
+    const isEInvoiceReceipt = previewReceipt?.paymentMethod === "einvoice" ||
                              previewReceipt?.isEInvoiceReceipt ||
                              previewReceipt?.publishLater ||
                              previewReceipt?.publishedImmediately;
@@ -378,12 +378,9 @@ export function ShoppingCart({
           setPreviewReceipt(eInvoiceData.receipt);
           setShowReceiptPreview(true);
 
-          // Clear cart sau khi hiển thị receipt modal
-          setTimeout(() => {
-            onClearCart();
-          }, 100);
+          // Keep cart and receipt modal open - let user control when to close
 
-          // Hiển thị thông báo phù hợp
+          // Show appropriate success message
           const successMessage = eInvoiceData.publishLater
             ? "Thông tin hóa đơn điện tử đã được lưu để phát hành sau."
             : eInvoiceData.publishedImmediately
@@ -432,10 +429,7 @@ export function ShoppingCart({
           setPreviewReceipt(fallbackReceipt);
           setShowReceiptPreview(true);
 
-          // Clear cart sau khi hiển thị receipt modal
-          setTimeout(() => {
-            onClearCart();
-          }, 100);
+          // Keep cart and receipt modal open - let user control when to close
 
           toast({
             title: "Thành công",
@@ -510,10 +504,7 @@ export function ShoppingCart({
         setPreviewReceipt(eInvoiceData.receipt);
         setShowReceiptPreview(true);
 
-        // Clear cart sau khi hiển thị receipt modal
-        setTimeout(() => {
-          onClearCart();
-        }, 100);
+        // Keep cart and receipt modal open - let user control when to close
 
         // Show appropriate success message
         const successMessage = eInvoiceData.publishLater
@@ -562,10 +553,7 @@ export function ShoppingCart({
         setPreviewReceipt(fallbackReceipt);
         setShowReceiptPreview(true);
 
-        // Clear cart sau khi hiển thị receipt modal
-        setTimeout(() => {
-          onClearCart();
-        }, 100);
+        // Keep cart and receipt modal open - let user control when to close
 
         toast({
           title: "Thành công",
