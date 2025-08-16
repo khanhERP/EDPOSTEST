@@ -160,19 +160,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) =>
       apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod }),
     onSuccess: async (data, variables) => {
-      console.log('🎯 completePaymentMutation.onSuccess called');
+      console.log('🎯 Table completePaymentMutation.onSuccess called');
 
       // Invalidate queries first
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-
-      // Close all payment-related dialogs immediately
-      console.log('🚪 Closing all payment dialogs');
-      setOrderDetailsOpen(false);
-      setPaymentMethodsOpen(false);
-      setShowPaymentMethodModal(false);
-      setShowEInvoiceModal(false);
-      setOrderForPayment(null);
 
       toast({
         title: 'Thanh toán thành công',
@@ -200,8 +192,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
         if (completedOrder && orderItemsData) {
           console.log('✅ Table payment completed - preparing receipt data');
-          console.log('Completed order for receipt:', completedOrder);
-          console.log('Order items for receipt:', orderItemsData);
 
           // Calculate totals including tax for receipt
           let subtotal = 0;
@@ -238,7 +228,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             subtotal: subtotal.toFixed(2),
             tax: totalTax.toFixed(2),
             total: finalTotal.toFixed(2),
-            paymentMethod: variables.paymentMethod || 'einvoice',
+            paymentMethod: variables.paymentMethod || 'cash',
             amountReceived: finalTotal.toFixed(2),
             change: '0.00',
             cashierName: 'Table Service',
@@ -246,6 +236,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           };
 
           console.log('📄 Table receipt data prepared:', receiptData);
+
+          // Close all dialogs first
+          setOrderDetailsOpen(false);
+          setPaymentMethodsOpen(false);
+          setShowPaymentMethodModal(false);
+          setShowEInvoiceModal(false);
+          setOrderForPayment(null);
 
           // Show receipt modal
           setSelectedReceipt(receiptData);
@@ -261,13 +258,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       }
     },
     onError: () => {
-      console.log('❌ completePaymentMutation.onError called');
+      console.log('❌ Table completePaymentMutation.onError called');
       toast({
         title: 'Lỗi',
         description: 'Không thể hoàn tất thanh toán',
         variant: "destructive",
       });
-      // Clear orderForPayment on error as well
       setOrderForPayment(null);
     },
   });
@@ -688,6 +684,40 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     if (!products || !Array.isArray(products)) return 'Unknown Product';
     const product = products.find((p: any) => p.id === productId);
     return product ? product.name : 'Unknown Product';
+  };
+
+  // Handle E-invoice confirmation and complete payment
+  const handleEInvoiceConfirm = async (invoiceData: any) => {
+    console.log('🎯 Table handleEInvoiceConfirm called with data:', invoiceData);
+    
+    if (!orderForPayment) {
+      console.error('❌ No order for payment found');
+      toast({
+        title: 'Lỗi',
+        description: 'Không tìm thấy đơn hàng để thanh toán',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      console.log('🔄 Starting payment completion for order:', orderForPayment.id);
+      
+      // Complete payment after e-invoice is created
+      await completePaymentMutation.mutateAsync({
+        orderId: orderForPayment.id,
+        paymentMethod: 'einvoice'
+      });
+
+      console.log('✅ Table payment completed successfully');
+    } catch (error) {
+      console.error('❌ Error completing payment from table:', error);
+      toast({
+        title: 'Lỗi',
+        description: 'Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán',
+        variant: 'destructive',
+      });
+    }
   };
 
   const getPaymentMethods = () => {
@@ -1189,34 +1219,46 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       />
 
       {/* E-Invoice Modal */}
-      {showEInvoiceModal && selectedOrder && (
+      {showEInvoiceModal && orderForPayment && (
         <EInvoiceModal
           isOpen={showEInvoiceModal}
-          onClose={() => setShowEInvoiceModal(false)}
+          onClose={() => {
+            setShowEInvoiceModal(false);
+            setOrderForPayment(null);
+          }}
           onConfirm={handleEInvoiceConfirm}
           total={(() => {
-            const orderItems = selectedOrder.orderItems || [];
-            const subtotal = orderItems.reduce((sum, item) => {
-              const price = typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice;
-              const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-              return sum + (price * quantity);
-            }, 0);
-            const tax = subtotal * 0.0825;
-            return Math.round(subtotal + tax);
+            if (!orderForPayment || !orderItems || !Array.isArray(orderItems)) return 0;
+
+            let itemsTotal = 0;
+            let itemsTax = 0;
+
+            if (Array.isArray(products)) {
+              orderItems.forEach((item: any) => {
+                const itemSubtotal = Number(item.total || 0);
+                itemsTotal += itemSubtotal;
+
+                const product = products.find((p: any) => p.id === item.productId);
+                const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
+                itemsTax += (itemSubtotal * taxRate) / 100;
+              });
+            }
+
+            return Math.round(itemsTotal + itemsTax);
           })()}
-          cartItems={(() => {
-            const orderItems = selectedOrder.orderItems || [];
-            return orderItems.map(item => ({
-              id: item.productId,
-              name: item.productName,
-              price: typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice,
-              quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-              sku: item.productSku || `FOOD${String(item.productId).padStart(5, '0')}`,
-              taxRate: 8.25
-            }));
-          })()}
+          cartItems={orderItems?.map((item: any) => ({
+            id: item.id,
+            name: item.productName || getProductName(item.productId),
+            price: parseFloat(item.unitPrice || '0'),
+            quantity: item.quantity,
+            sku: item.productSku || `SP${item.productId}`,
+            taxRate: (() => {
+              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+              return product?.taxRate ? parseFloat(product.taxRate) : 10;
+            })()
+          })) || []}
           source="table"
-          orderId={selectedOrder.id}
+          orderId={orderForPayment.id}
         />
       )}
 
