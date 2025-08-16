@@ -66,56 +66,56 @@ export default function ReportsPage() {
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{t('reports.dashboard')}</span>
-                  <span className="sm:hidden">{t('reports.dashboard')}</span>
+                  <span className="hidden sm:inline">{t('reports.dashboardTab')}</span>
+                  <span className="sm:hidden">{t('reports.dashboardTab')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="sales" 
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{t('reports.salesAnalysis')}</span>
-                  <span className="sm:hidden">{t('reports.salesAnalysis')}</span>
+                  <span className="hidden sm:inline">{t('reports.salesAnalysisTab')}</span>
+                  <span className="sm:hidden">{t('reports.salesAnalysisTab')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="menu" 
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <PieChart className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{t('reports.menuAnalysis')}</span>
-                  <span className="sm:hidden">{t('reports.menuAnalysis')}</span>
+                  <span className="hidden sm:inline">{t('reports.menuAnalysisTab')}</span>
+                  <span className="sm:hidden">{t('reports.menuAnalysisTab')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="table" 
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <Utensils className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{t('reports.tableAnalysis')}</span>
-                  <span className="sm:hidden">{t('reports.tableAnalysis')}</span>
+                  <span className="hidden sm:inline">{t('reports.tableAnalysisTab')}</span>
+                  <span className="sm:hidden">{t('reports.tableAnalysisTab')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="saleschart" 
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Báo cáo bán hàng</span>
-                  <span className="sm:hidden">Bán hàng</span>
+                  <span className="hidden sm:inline">{t('reports.salesChartTab')}</span>
+                  <span className="sm:hidden">{t('reports.salesChartTab')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="order" 
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">{t("reports.purchaseReport")}</span>
-                  <span className="sm:hidden">{t("reports.purchaseReport")}</span>
+                  <span className="hidden sm:inline">{t("reports.purchaseTab")}</span>
+                  <span className="sm:hidden">{t("reports.purchaseTab")}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="inventory" 
                   className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
                 >
                   <Package className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Báo cáo kho</span>
-                  <span className="sm:hidden">Kho</span>
+                  <span className="hidden sm:inline">{t('reports.warehouseTab')}</span>
+                  <span className="sm:hidden">{t('reports.warehouseTab')}</span>
                 </TabsTrigger>
               </TabsList>
             </div>

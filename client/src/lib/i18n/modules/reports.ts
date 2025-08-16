@@ -301,6 +301,16 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesReport: "매출 보고서",
     purchaseReport: "구매 보고서",
     inventoryReport: "재고 보고서",
+    warehouseReport: "창고 보고서",
+    
+    // Tab names for reports
+    salesAnalysisTab: "매출 분석",
+    menuAnalysisTab: "메뉴 분석",
+    tableAnalysisTab: "테이블 분석", 
+    salesChartTab: "매출 차트",
+    purchaseTab: "구매 보고서",
+    warehouseTab: "창고 보고서",
+    dashboardTab: "대시보드",
 
     // Analysis types
     analysisType: "분석 유형",
@@ -713,6 +723,16 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesReport: "Sales Report",
     purchaseReport: "Purchase Report", 
     inventoryReport: "Inventory Report",
+    warehouseReport: "Warehouse Report",
+    
+    // Tab names for reports
+    salesAnalysisTab: "Sales Analysis",
+    menuAnalysisTab: "Menu Analysis", 
+    tableAnalysisTab: "Table Analysis",
+    salesChartTab: "Sales Chart",
+    purchaseTab: "Purchase Report",
+    warehouseTab: "Warehouse Report",
+    dashboardTab: "Dashboard",
 
     // Analysis types
     analyzeBy: "Analyze By",
@@ -1077,6 +1097,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     purchaseReport: "Báo cáo mua hàng",
     inventoryReport: "Báo cáo tồn kho",
     warehouseReport: "Báo cáo kho",
+    
+    // Tab names for reports
+    salesAnalysisTab: "Phân tích bán hàng",
+    menuAnalysisTab: "Phân tích thực đơn",
+    tableAnalysisTab: "Phân tích bàn",
+    salesChartTab: "Báo cáo bán hàng",
+    purchaseTab: "Báo cáo mua hàng",
+    warehouseTab: "Báo cáo kho",
+    dashboardTab: "Bảng điều khiển",
 
     // Sales chart table columns
     orderNumber: "Số đơn bán",
