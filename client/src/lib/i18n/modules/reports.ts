@@ -83,6 +83,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerFilterPlaceholder: "Tìm theo tên, số điện thoại hoặc mã",
     employeeFilter: "Tìm kiếm nhân viên",
     employeeFilterPlaceholder: "Tìm theo tên nhân viên",
+    employeeId: "Mã nhân viên",
 
     // Sales chart table columns
     date: "Ngày",
@@ -512,6 +513,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerFilterPlaceholder: "이름, 전화번호 또는 코드로 검색",
     employeeFilter: "직원 검색",
     employeeFilterPlaceholder: "직원 이름으로 검색",
+    employeeId: "직원 ID",
 
     // Sales chart table columns
     date: "날짜",
@@ -938,6 +940,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerFilterPlaceholder: "Search by name, phone or code",
     employeeFilter: "Employee Search",
     employeeFilterPlaceholder: "Search by employee name",
+    employeeId: "Employee ID",
 
     // Sales chart table columns
     date: "Date",
