@@ -1178,7 +1178,11 @@ export class DatabaseStorage implements IStorage {
         updatedCustomers.push(updatedCustomer);
       } else {
         updatedCustomers.push(customer);
-      }</old_str>
+      }
+    }
+
+    return updatedCustomers;
+  }</old_str>
     }
 
     return updatedCustomers;
