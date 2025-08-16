@@ -75,7 +75,7 @@ export default function ReportsPage() {
                 >
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('navigation.salesAnalysis')}</span>
-                  <span className="sm:hidden">Bán hàng</span>
+                  <span className="sm:hidden">{t('navigation.salesAnalysis')}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="menu"
@@ -83,7 +83,7 @@ export default function ReportsPage() {
                 >
                   <PieChart className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('navigation.menuAnalysis')}</span>
-                  <span className="sm:hidden">Menu</span>
+                  <span className="sm:hidden">{t('navigation.menuAnalysis')}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="table"
@@ -91,7 +91,7 @@ export default function ReportsPage() {
                 >
                   <Utensils className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('navigation.tableAnalysis')}</span>
-                  <span className="sm:hidden">Bàn</span>
+                  <span className="sm:hidden">{t('navigation.tableAnalysis')}</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="saleschart"

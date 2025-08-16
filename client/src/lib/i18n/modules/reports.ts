@@ -1,4 +1,3 @@
-
 import { type ReportsTranslations } from '../types';
 
 export const reportsTranslations: { [key: string]: ReportsTranslations } = {
@@ -307,23 +306,23 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     profitLoss: "Lãi lỗ",
     balanceSheet: "Bảng cân đối kế toán",
     cashFlow: "Dòng tiền",
-    
+
     // Customer reports  
     customerSalesReport: "Báo cáo bán hàng khách hàng",
     channelSalesReport: "Báo cáo bán hàng kênh",
     employeeSalesReport: "Báo cáo bán hàng nhân viên",
-    
+
     // Supplier reports
     supplierReportDescription: "Báo cáo chi tiết về nhà cung cấp",
     purchaseReport: "Báo cáo mua hàng",
     supplierPerformance: "Hiệu suất nhà cung cấp",
-    
+
     // Inventory reports
     inventoryReportDescription: "Báo cáo chi tiết về tồn kho",
     stockLevel: "Mức tồn kho",
     stockMovementReport: "Báo cáo di chuyển kho",
     lowStockAlert: "Cảnh báo tồn kho thấp",
-    
+
     // Additional menu items
     warehouseReport: "Báo cáo kho hàng",
     warehouseReportDescription: "Báo cáo chi tiết về hoạt động kho hàng",
@@ -333,14 +332,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     categoryPerformance: "Hiệu suất danh mục",
     detailedTablePerformanceDesc: "Hiệu suất và sử dụng bàn chi tiết",
     channelAnalysis: "Phân tích kênh bán hàng",
-    
+
     // Chart and filter labels
     selectDateRange: "Chọn khoảng thời gian",
     applyFilter: "Áp dụng bộ lọc",
     clearFilter: "Xóa bộ lọc",
     exportData: "Xuất dữ liệu",
     printReport: "In báo cáo",
-    
+
     // Data display
     noDataAvailable: "Không có dữ liệu",
     loadingData: "Đang tải dữ liệu...",
@@ -652,23 +651,23 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     profitLoss: "손익",
     balanceSheet: "대차대조표",
     cashFlow: "현금 흐름",
-    
+
     // Customer reports  
     customerSalesReport: "고객 매출 보고서",
     channelSalesReport: "채널 매출 보고서",
     employeeSalesReport: "직원 매출 보고서",
-    
+
     // Supplier reports
     supplierReportDescription: "공급업체에 대한 상세 보고서",
     purchaseReport: "구매 보고서",
     supplierPerformance: "공급업체 성과",
-    
+
     // Inventory reports
     inventoryReportDescription: "재고에 대한 상세 보고서",
     stockLevel: "재고 수준",
     stockMovementReport: "재고 이동 보고서",
     lowStockAlert: "낮은 재고 경고",
-    
+
     // Additional menu items
     warehouseReport: "창고 보고서",
     warehouseReportDescription: "창고 활동에 대한 상세 보고서",
@@ -678,14 +677,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     categoryPerformance: "카테고리 성과",
     detailedTablePerformanceDesc: "테이블 성과 및 사용량 세부사항",
     channelAnalysis: "판매 채널 분석",
-    
+
     // Chart and filter labels
     selectDateRange: "날짜 범위 선택",
     applyFilter: "필터 적용",
     clearFilter: "필터 지우기",
     exportData: "데이터 내보내기",
     printReport: "보고서 인쇄",
-    
+
     // Data display
     noDataAvailable: "데이터 없음",
     loadingData: "데이터 로딩 중...",
@@ -997,23 +996,23 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     profitLoss: "Profit & Loss",
     balanceSheet: "Balance Sheet",
     cashFlow: "Cash Flow",
-    
+
     // Customer reports  
     customerSalesReport: "Customer Sales Report",
     channelSalesReport: "Channel Sales Report",
     employeeSalesReport: "Employee Sales Report",
-    
+
     // Supplier reports
     supplierReportDescription: "Detailed supplier report",
     purchaseReport: "Purchase Report",
     supplierPerformance: "Supplier Performance",
-    
+
     // Inventory reports
     inventoryReportDescription: "Detailed inventory report",
     stockLevel: "Stock Level",
     stockMovementReport: "Stock Movement Report",
     lowStockAlert: "Low Stock Alert",
-    
+
     // Additional menu items
     warehouseReport: "Warehouse Report",
     warehouseReportDescription: "Detailed warehouse activity report",
@@ -1023,14 +1022,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     categoryPerformance: "Category Performance",
     detailedTablePerformanceDesc: "Table performance and utilization details",
     channelAnalysis: "Sales Channel Analysis",
-    
+
     // Chart and filter labels
     selectDateRange: "Select Date Range",
     applyFilter: "Apply Filter",
     clearFilter: "Clear Filter",
     exportData: "Export Data",
     printReport: "Print Report",
-    
+
     // Data display
     noDataAvailable: "No Data Available",
     loadingData: "Loading Data...",
