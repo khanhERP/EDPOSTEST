@@ -354,52 +354,52 @@ export function ShoppingCart({
 
           console.log("✅ Receipt modal displayed for draft invoice");
         } else {
-            // Fallback nếu không có receipt data từ e-invoice
-            console.log(
-              "⚠️ No receipt data from e-invoice, creating fallback receipt",
-            );
+          // Fallback nếu không có receipt data từ e-invoice
+          console.log(
+            "⚠️ No receipt data from e-invoice, creating fallback receipt",
+          );
 
-            // Tạo fallback receipt từ cart data
-            const fallbackReceipt = {
-              transactionId: `TXN-${Date.now()}`,
-              items: cart.map((item) => ({
-                id: item.id,
-                productId: item.id,
-                productName: item.name,
-                price: parseFloat(item.price).toFixed(2),
-                quantity: item.quantity,
-                total: (parseFloat(item.price) * item.quantity).toFixed(2),
-                sku: `FOOD${String(item.id).padStart(5, "0")}`,
-                taxRate: parseFloat(item.taxRate || "10"),
-              })),
-              subtotal: (total / 1.1).toFixed(2),
-              tax: (total - total / 1.1).toFixed(2),
-              total: total.toFixed(2),
-              paymentMethod: "einvoice",
-              amountReceived: total.toFixed(2),
-              change: "0.00",
-              cashierName: "System User",
-              createdAt: new Date().toISOString(),
-              customerName: eInvoiceData.customerName,
-              customerTaxCode: eInvoiceData.taxCode,
-            };
+          // Tạo fallback receipt từ cart data
+          const fallbackReceipt = {
+            transactionId: `TXN-${Date.now()}`,
+            items: cart.map((item) => ({
+              id: item.id,
+              productId: item.id,
+              productName: item.name,
+              price: parseFloat(item.price).toFixed(2),
+              quantity: item.quantity,
+              total: (parseFloat(item.price) * item.quantity).toFixed(2),
+              sku: `FOOD${String(item.id).padStart(5, "0")}`,
+              taxRate: parseFloat(item.taxRate || "10"),
+            })),
+            subtotal: (total / 1.1).toFixed(2),
+            tax: (total - total / 1.1).toFixed(2),
+            total: total.toFixed(2),
+            paymentMethod: "einvoice",
+            amountReceived: total.toFixed(2),
+            change: "0.00",
+            cashierName: "System User",
+            createdAt: new Date().toISOString(),
+            customerName: eInvoiceData.customerName,
+            customerTaxCode: eInvoiceData.taxCode,
+          };
 
-            console.log("📄 Created fallback receipt:", fallbackReceipt);
+          console.log("📄 Created fallback receipt:", fallbackReceipt);
 
-            setPreviewReceipt(fallbackReceipt);
-            setShowReceiptPreview(true);
+          setPreviewReceipt(fallbackReceipt);
+          setShowReceiptPreview(true);
 
-            // Clear cart sau khi hiển thị receipt modal
-            setTimeout(() => {
-              onClearCart();
-            }, 100);
+          // Clear cart sau khi hiển thị receipt modal
+          setTimeout(() => {
+            onClearCart();
+          }, 100);
 
-            toast({
-              title: "Thành công",
-              description:
-                "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
-            });
-          }
+          toast({
+            title: "Thành công",
+            description:
+              "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
+          });
+        }
         }, 200); // Đợi payment modal đóng hoàn toàn
 
         console.log("✅ E-invoice later processing scheduled");
