@@ -27,6 +27,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalQuantitySold: "Tổng số lượng bán",
     averageOrderValue: "Giá trị đơn hàng trung bình",
     periodRevenue: "Doanh thu kỳ",
+    realTimeStatus: "Trạng thái thời gian thực",
+    pendingOrders: "Đơn hàng đang chờ",
+    count: "đơn",
+    tableUtilization: "Sử dụng bàn",
+    performanceMetrics: "Chỉ số hiệu suất",
+    salesAchievementRate: "Tỷ lệ đạt mục tiêu bán hàng",
+    tableTurnoverRate: "Tỷ lệ luân chuyển bàn",
+    targetAverageDailySales: "Mục tiêu doanh thu trung bình hàng ngày {amount}, luân chuyển {turnovers} lần/bàn",
 
     // Filter options
     filterByDate: "Lọc theo ngày",
@@ -369,6 +377,16 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalQuantitySold: "총 판매량",
     averageOrderValue: "평균 주문 가치",
     periodRevenue: "기간 매출",
+    occupiedTables: "사용 중인 테이블",
+    monthRevenue: "월 매출",
+    realTimeStatus: "실시간 현황",
+    pendingOrders: "대기 주문",
+    count: "개",
+    tableUtilization: "테이블 이용률",
+    performanceMetrics: "성과 지표",
+    salesAchievementRate: "매출 달성률",
+    tableTurnoverRate: "테이블 회전율",
+    targetAverageDailySales: "목표 일평균 매출 {amount}, 회전율 {turnovers}회/테이블",
 
     // Filter options
     filterByDate: "날짜별 필터",
@@ -711,6 +729,16 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalQuantitySold: "Total Quantity Sold",
     averageOrderValue: "Average Order Value",
     periodRevenue: "Period Revenue",
+    occupiedTables: "Occupied Tables",
+    monthRevenue: "Monthly Revenue",
+    realTimeStatus: "Real-time Status",
+    pendingOrders: "Pending Orders",
+    count: "orders",
+    tableUtilization: "Table Utilization",
+    performanceMetrics: "Performance Metrics",
+    salesAchievementRate: "Sales Achievement Rate",
+    tableTurnoverRate: "Table Turnover Rate",
+    targetAverageDailySales: "Target daily average sales {amount}, turnovers {turnovers} times/table",
 
     // Filter options
     filterByDate: "Filter by Date",
