@@ -1143,15 +1143,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Customers
-  async getCustomers(): Promise<Customer[]> {
+  async getCustomers(tenantDb?: any): Promise<Customer[]> {
+    const database = tenantDb || db;
+    
     // Get membership thresholds
     const thresholds = await this.getMembershipThresholds();
 
     // Get all customers
-    const allCustomers = await db
+    const allCustomers = await database
       .select()
       .from(customers)
-      .orderBy(customers.name);
+      .orderBy(customers.name);</old_str>
 
     // Update membership levels based on spending
     const updatedCustomers = [];
@@ -1165,7 +1167,7 @@ export class DatabaseStorage implements IStorage {
 
       // Update if membership level has changed
       if (customer.membershipLevel !== calculatedLevel) {
-        const [updatedCustomer] = await db
+        const [updatedCustomer] = await database
           .update(customers)
           .set({
             membershipLevel: calculatedLevel,
@@ -1176,7 +1178,7 @@ export class DatabaseStorage implements IStorage {
         updatedCustomers.push(updatedCustomer);
       } else {
         updatedCustomers.push(customer);
-      }
+      }</old_str>
     }
 
     return updatedCustomers;
