@@ -220,8 +220,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     einvoice: "Hóa đơn điện tử",
 
     // Table analysis specific
-    customerCount: "Số lượng khách hàng",
+    customerCount: "Số lượng khách hàng", 
+    totalCustomers: "Tổng khách hàng",
     turnoverRate: "Tỷ lệ luân chuyển",
+    tableAnalysisDescription: "Phân tích chi tiết hiệu suất và sử dụng bàn",
     topRevenueTables: "Bàn doanh thu cao nhất",
     topTurnoverTables: "Bàn luân chuyển cao nhất",
     topUtilizationTables: "Bàn sử dụng cao nhất",
@@ -623,7 +625,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Table analysis specific
     customerCount: "고객 수",
+    totalCustomers: "총 고객",
     turnoverRate: "회전율",
+    tableAnalysisDescription: "테이블 성과 및 이용률에 대한 상세 분석",
     topRevenueTables: "최고 매출 테이블",
     topTurnoverTables: "최고 회전율 테이블",
     topUtilizationTables: "최고 이용률 테이블",
@@ -1026,7 +1030,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Table analysis specific
     customerCount: "Customer Count",
+    totalCustomers: "Total Customers", 
     turnoverRate: "Turnover Rate",
+    tableAnalysisDescription: "Detailed analysis of table performance and utilization",
     topRevenueTables: "Top Revenue Tables",
     topTurnoverTables: "Top Turnover Tables",
     topUtilizationTables: "Top Utilization Tables",

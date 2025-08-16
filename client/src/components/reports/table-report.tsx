@@ -303,7 +303,7 @@ export function TableReport() {
                 <Utensils className="w-5 h-5" />
                 {t("reports.tableAnalysis")}
               </CardTitle>
-              <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+              <CardDescription>{t("reports.tableAnalysisDescription")}</CardDescription>
             </div>
             <div className="flex items-center gap-4">
               <Select value={dateRange} onValueChange={handleDateRangeChange}>
@@ -430,7 +430,7 @@ export function TableReport() {
             {t("reports.tableAnalysis")}
           </CardTitle>
           <CardDescription>
-            {t("reports.analyzeRevenue")}
+            {t("reports.tableAnalysisDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
