@@ -1180,7 +1180,7 @@ export class DatabaseStorage implements IStorage {
     return result || undefined;
   }
 
-  async createCustomer(customerData: InsertCustomer): Promise<Customer> {
+  async createCustomer(customerData: InsertCustomer, tenantDb?: any): Promise<Customer> {
     // Generate customer ID if not provided
     if (!customerData.customerId) {
       const count = await db
@@ -1190,9 +1190,21 @@ export class DatabaseStorage implements IStorage {
       customerData.customerId = `CUST${String(customerCount + 1).padStart(3, "0")}`;
     }
 
+    // Set default values
+    const customerToInsert = {
+      ...customerData,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      status: customerData.status || 'active',
+      membershipLevel: customerData.membershipLevel || 'Silver',
+      totalSpent: customerData.totalSpent || 0,
+      visitCount: customerData.visitCount || 0,
+      pointsBalance: customerData.pointsBalance || 0
+    };
+
     const [result] = await db
       .insert(customers)
-      .values(customerData)
+      .values(customerToInsert)
       .returning();
     return result;
   }
@@ -1221,11 +1233,31 @@ export class DatabaseStorage implements IStorage {
     customerId: number,
     amount: number,
     points: number,
-  ) {
+    tenantDb?: any
+  ): Promise<Customer | undefined> {
     const [customer] = await db
       .select()
       .from(customers)
       .where(eq(customers.id, customerId));
+
+    if (!customer) {
+      return undefined;
+    }
+
+    const [updatedCustomer] = await db
+      .update(customers)
+      .set({
+        totalSpent: (Number(customer.totalSpent) || 0) + amount,
+        visitCount: (customer.visitCount || 0) + 1,
+        pointsBalance: (customer.pointsBalance || 0) + points,
+        lastVisit: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(customers.id, customerId))
+      .returning();
+
+    return updatedCustomer;
+  }merId));
 
     if (!customer) {
       throw new Error("Customer not found");
