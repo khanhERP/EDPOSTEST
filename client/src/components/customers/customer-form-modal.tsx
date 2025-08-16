@@ -20,7 +20,9 @@ const customerFormSchema = z.object({
   customerId: z.string().optional(),
   name: z.string().min(1, "이름은 필수입니다"),
   phone: z.string().optional(),
-  email: z.string().email("올바른 이메일 형식이 아닙니다").optional().or(z.literal("")),
+  email: z.string().optional().refine((email) => !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email), {
+    message: "올바른 이메일 형식이 아닙니다"
+  }),
   address: z.string().optional(),
   dateOfBirth: z.string().optional(),
   membershipLevel: z.enum(["Silver", "Gold", "VIP"]).optional(),
@@ -132,10 +134,21 @@ export function CustomerFormModal({ isOpen, onClose, customer }: CustomerFormMod
   });
 
   const onSubmit = (data: CustomerFormData) => {
+    // Clean up empty strings to null/undefined for optional fields
+    const cleanData = {
+      ...data,
+      phone: data.phone || undefined,
+      email: data.email || undefined,
+      address: data.address || undefined,
+      dateOfBirth: data.dateOfBirth || undefined,
+      notes: data.notes || undefined,
+      customerId: data.customerId || undefined,
+    };
+
     if (customer) {
-      updateMutation.mutate(data);
+      updateMutation.mutate(cleanData);
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(cleanData);
     }
   };
 

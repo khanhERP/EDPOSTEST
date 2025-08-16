@@ -1316,19 +1316,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create customer
   app.post("/api/customers", async (req: TenantRequest, res) => {
     try {
-      const customerData = req.body;
       const tenantDb = await getTenantDatabase(req);
-      const customer = await storage.createCustomer(customerData, tenantDb);
-      res.status(201).json(customer);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res
-          .status(400)
-          .json({ message: "Invalid customer data", errors: error.errors });
+
+      // Validate required fields
+      if (!req.body.name) {
+        return res.status(400).json({ message: "Customer name is required" });
       }
-      res.status(500).json({ message: "Failed to create customer" });
+
+      // Prepare customer data with proper defaults
+      const customerData = {
+        ...req.body,
+        customerId: req.body.customerId || undefined,
+        phone: req.body.phone || null,
+        email: req.body.email || null,
+        address: req.body.address || null,
+        dateOfBirth: req.body.dateOfBirth || null,
+        membershipLevel: req.body.membershipLevel || "Silver",
+        notes: req.body.notes || null,
+        status: req.body.status || "active",
+        totalSpent: "0",
+        pointsBalance: 0,
+      };
+
+      const [customer] = await db.insert(customers).values(customerData).returning();
+      res.json(customer);
+    } catch (error: any) {
+      console.error("Error creating customer:", error);
+
+      // Handle specific database errors
+      if (error.code === 'SQLITE_CONSTRAINT') {
+        return res.status(400).json({ 
+          message: "Customer with this ID already exists" 
+        });
+      }
+
+      res.status(500).json({ 
+        message: "Failed to create customer",
+        error: error.message 
+      });
     }
   });
 
