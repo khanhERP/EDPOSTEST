@@ -710,6 +710,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       });
 
       console.log('✅ Table payment completed successfully');
+
+      // Close all modals
+      setShowEInvoiceModal(false);
+      setShowPaymentMethodModal(false);
+      setOrderDetailsOpen(false);
+      setOrderForPayment(null);
+
+      // Show receipt modal if receipt data exists
+      if (invoiceData.receipt) {
+        console.log('📄 Showing receipt modal after payment completion');
+        setSelectedReceipt(invoiceData.receipt);
+        setShowReceiptModal(true);
+      }
     } catch (error) {
       console.error('❌ Error completing payment from table:', error);
       toast({
@@ -1179,11 +1192,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setShowPaymentMethodModal(false);
           setOrderForPayment(null);
         }}
-        onSelectMethod={(method) => {
-          console.log('Payment method selected:', method);
+        onSelectMethod={(method, data) => {
+          console.log('🎯 Table payment method selected:', method, data);
           setShowPaymentMethodModal(false);
-          // Show E-invoice modal after payment
-          setShowEInvoiceModal(true);
+          
+          // If payment method returns e-invoice data (like from "phát hành sau"), handle it
+          if (data && data.receipt) {
+            console.log('📄 Table: Payment method returned receipt data, showing receipt');
+            setSelectedReceipt(data.receipt);
+            setShowReceiptModal(true);
+            setOrderForPayment(null);
+          } else {
+            // Otherwise continue to E-invoice modal
+            setShowEInvoiceModal(true);
+          }
         }}
         total={(() => {
           if (!orderForPayment || !orderItems || !Array.isArray(orderItems)) return 0;

@@ -432,17 +432,16 @@ export function PaymentMethodModal({
     // Close Payment modal
     onClose();
 
-    // Pass e-invoice data back to shopping cart
+    // Pass e-invoice data back to parent component
     onSelectMethod('einvoice', eInvoiceData);
   };
 
   const handleEInvoiceClose = () => {
     setShowEInvoice(false);
-
-    // Đóng luôn Payment Modal khi E-invoice modal được đóng
-    console.log('🔙 E-invoice modal closed, closing payment method modal');
     setSelectedPaymentMethod("");
-    onClose(); // Đóng payment method modal
+    
+    // Return to payment method selection instead of closing completely
+    console.log('🔙 E-invoice modal closed, returning to payment method selection');
   };
 
   // Virtual keyboard handlers

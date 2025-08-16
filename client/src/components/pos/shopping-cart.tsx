@@ -58,6 +58,11 @@ export function ShoppingCart({
   const [onSelectMethod, setOnSelectMethod] = useState(() => () => {}); // Placeholder for the selection function
   const [onShowEInvoice, setOnShowEInvoice] = useState(() => () => {}); // Placeholder for triggering the receipt modal after e-invoice
 
+  // State for Receipt Modal and E-Invoice Modal integration
+  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
+
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
     if (item.taxRate && parseFloat(item.taxRate) > 0) {
@@ -225,93 +230,32 @@ export function ShoppingCart({
 
   const handleReceiptConfirm = () => {
     console.log("📄 Receipt confirmed - clearing cart and closing modal");
-    
+
     // Close receipt modal
     setShowReceiptPreview(false);
     setPreviewReceipt(null);
-    
+
     // Clear cart after successful transaction
     onClearCart();
-    
+
     console.log("✅ Transaction completed and cart cleared");
   };
 
-  const handlePaymentMethodSelect = (method: string, eInvoiceData?: any) => {
-    console.log("💳 Payment method selected:", method);
-    
-    // Close payment modal
+  const handlePaymentMethodSelect = (method: string, data?: any) => {
+    console.log('🎯 Shopping cart: Payment method selected:', method, data);
     setShowPaymentMethodModal(false);
 
-    // Handle e-invoice case
-    if (method === "einvoice" && eInvoiceData) {
-      console.log("📧 Processing e-invoice payment");
-      
-      if (eInvoiceData.receipt) {
-        // Show receipt modal with e-invoice data
-        setPreviewReceipt({
-          ...eInvoiceData.receipt,
-          paymentMethod: "einvoice",
-          isEInvoiceReceipt: true,
-          publishLater: eInvoiceData.publishLater,
-          publishedImmediately: eInvoiceData.publishedImmediately,
-          customerName: eInvoiceData.customerName,
-          customerTaxCode: eInvoiceData.taxCode,
-          invoiceNumber: eInvoiceData.invoiceNumber
-        });
-        setShowReceiptPreview(true);
-
-        // Show success message
-        const successMessage = eInvoiceData.publishLater
-          ? "Thông tin hóa đơn điện tử đã được lưu để phát hành sau."
-          : eInvoiceData.publishedImmediately
-            ? `Hóa đơn điện tử đã được phát hành thành công! Số HĐ: ${eInvoiceData.invoiceNumber || "N/A"}`
-            : "Hóa đơn điện tử đã được xử lý thành công.";
-
-        toast({
-          title: "Thành công",
-          description: successMessage,
-        });
-      }
-      return;
+    if (data && data.receipt) {
+      console.log('📄 Shopping cart: Payment method returned receipt data, showing receipt');
+      setSelectedReceipt(data.receipt);
+      setShowReceiptModal(true);
+      onClearCart(); // Use the passed prop to clear cart
+    } else {
+      console.log('🔄 Shopping cart: Continuing to E-invoice modal');
+      // Pass the selected method to the E-invoice modal state or handler
+      setSelectedPaymentMethod(method);
+      setShowEInvoiceModal(true);
     }
-
-    // Handle regular payment methods
-    console.log("💰 Processing regular payment method:", method);
-    
-    // Create receipt for regular payment
-    const receipt = {
-      transactionId: `TXN-${Date.now()}`,
-      items: cart.map((item) => ({
-        id: item.id,
-        productId: item.id,
-        productName: item.name,
-        price: parseFloat(item.price).toFixed(2),
-        quantity: item.quantity,
-        total: parseFloat(item.total).toFixed(2),
-        sku: `ITEM${String(item.id).padStart(3, "0")}`,
-        taxRate: parseFloat(item.taxRate || "10"),
-      })),
-      subtotal: subtotal.toFixed(2),
-      tax: tax.toFixed(2),
-      total: total.toFixed(2),
-      paymentMethod: method,
-      amountReceived: total.toFixed(2),
-      change: "0.00",
-      cashierName: "System User",
-      createdAt: new Date().toISOString(),
-    };
-
-    // Show receipt modal
-    setPreviewReceipt(receipt);
-    setShowReceiptPreview(true);
-
-    // Process the payment
-    const paymentData = {
-      paymentMethod: method,
-      amountReceived: total,
-      change: 0,
-    };
-    onCheckout(paymentData);
   };
 
   const handleCardPaymentMethodSelect = (method: string) => {
@@ -325,84 +269,28 @@ export function ShoppingCart({
     onCheckout(paymentData);
   };
 
-  const handleEInvoiceConfirm = async (eInvoiceData: any) => {
-    console.log("📧 E-invoice confirmed:", eInvoiceData);
+  const handleEInvoiceConfirm = (eInvoiceData: any) => {
+    console.log('📧 Shopping cart: E-Invoice confirmed:', eInvoiceData);
 
-    try {
-      // Đảm bảo payment method modal được đóng
-      setShowPaymentMethodModal(false);
+    setShowEInvoiceModal(false);
 
-      // Đơn giản hóa logic: chỉ cần kiểm tra có receipt data không
-      if (eInvoiceData.receipt) {
-        console.log("📄 E-invoice has receipt data, showing receipt modal");
+    // Always show receipt modal if receipt data exists
+    if (eInvoiceData.receipt) {
+      console.log('📄 Shopping cart: E-invoice completed - showing receipt modal');
+      setSelectedReceipt(eInvoiceData.receipt);
+      setShowReceiptModal(true);
+      onClearCart(); // Use the passed prop to clear cart
+    }
+    // Fallback for cases without receipt
+    else {
+      console.log('✅ Shopping cart: E-invoice completed without receipt, clearing cart');
+      setSelectedReceipt(null);
+      setShowReceiptModal(false);
+      onClearCart(); // Use the passed prop to clear cart
 
-        setPreviewReceipt(eInvoiceData.receipt);
-        setShowReceiptPreview(true);
-
-        // Keep cart and receipt modal open - let user control when to close
-
-        // Show appropriate success message
-        const successMessage = eInvoiceData.publishLater
-          ? "Thông tin hóa đơn điện tử đã được lưu để phát hành sau."
-          : eInvoiceData.publishedImmediately
-            ? `Hóa đơn điện tử đã được phát hành thành công! Số HĐ: ${eInvoiceData.invoiceNumber || "N/A"}`
-            : "Giao dịch đã hoàn tất";
-
-        toast({
-          title: "Thành công",
-          description: successMessage,
-        });
-
-        console.log("✅ E-invoice processing completed, receipt modal shown");
-        return;
-      } else {
-        console.log("⚠️ No receipt data found, creating fallback receipt");
-
-        // Tạo fallback receipt từ cart data
-        const fallbackReceipt = {
-          transactionId: `TXN-${Date.now()}`,
-          items: cart.map((item) => ({
-            id: item.id,
-            productId: item.id,
-            productName: item.name,
-            price: parseFloat(item.price).toFixed(2),
-            quantity: item.quantity,
-            total: parseFloat(item.total).toFixed(2),
-            sku: `FOOD${String(item.id).padStart(5, "0")}`,
-            taxRate: parseFloat(item.taxRate || "10"),
-          })),
-          subtotal: subtotal.toFixed(2),
-          tax: tax.toFixed(2),
-          total: total.toFixed(2),
-          paymentMethod: "einvoice",
-          amountReceived: total.toFixed(2),
-          change: "0.00",
-          cashierName: "System User",
-          createdAt: new Date().toISOString(),
-          customerName: eInvoiceData.customerName || "Khách hàng lẻ",
-          customerTaxCode: eInvoiceData.taxCode,
-        };
-
-        console.log("📄 Created fallback receipt:", fallbackReceipt);
-
-        setPreviewReceipt(fallbackReceipt);
-        setShowReceiptPreview(true);
-
-        // Keep cart and receipt modal open - let user control when to close
-
-        toast({
-          title: "Thành công",
-          description: "Thông tin hóa đơn điện tử đã được xử lý.",
-        });
-
-        console.log("✅ Fallback receipt processing completed");
-      }
-    } catch (error) {
-      console.error("Error processing e-invoice:", error);
       toast({
-        variant: "destructive",
-        title: "Lỗi",
-        description: "Có lỗi xảy ra khi xử lý hóa đơn điện tử",
+        title: "Thành công",
+        description: "Hóa đơn điện tử đã được xử lý thành công",
       });
     }
   };
@@ -646,15 +534,15 @@ export function ShoppingCart({
 
       {/* Receipt Modal - handles both preview and final receipt */}
       <ReceiptModal
-        isOpen={showReceiptPreview}
+        isOpen={showReceiptModal} // Use the new state variable
         onClose={() => {
           console.log("🔴 Closing receipt modal from shopping cart");
-          setShowReceiptPreview(false);
-          setPreviewReceipt(null);
+          setShowReceiptModal(false); // Use the new state variable
+          setSelectedReceipt(null);
         }}
-        receipt={previewReceipt}
+        receipt={selectedReceipt} // Use the new state variable
         onConfirm={handleReceiptConfirm}
-        isPreview={previewReceipt?.paymentMethod === "preview"} // Only preview mode for preview receipts
+        isPreview={selectedReceipt?.paymentMethod === "preview"} // Only preview mode for preview receipts
         cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,
@@ -669,12 +557,8 @@ export function ShoppingCart({
       <PaymentMethodModal
         isOpen={showPaymentMethodModal}
         onClose={() => setShowPaymentMethodModal(false)}
-        onSelectMethod={(method) => {
-          // Check if eInvoiceData needs to be passed
-          // This logic would depend on how your EInvoiceModal is structured and triggered
-          // For now, we pass null as a placeholder if no eInvoice data is available
-          const eInvoiceData = null; // Replace with actual eInvoice data if available
-          handlePaymentMethodSelect(method, eInvoiceData);
+        onSelectMethod={(method, data) => { // Accept data from the modal
+          handlePaymentMethodSelect(method, data);
         }}
         total={total}
         cartItems={cart.map((item) => ({
@@ -690,12 +574,12 @@ export function ShoppingCart({
       {/* E-Invoice Modal (Assuming you have this component) */}
       {/* You would need to pass the correct props like onClose, onSelectMethod, onShowEInvoice, etc. */}
       {/* Example: */}
-      {/* <EInvoiceModal
-        isOpen={showEInvoice}
-        onClose={onClose} // Use the stored onClose function
+      <ReceiptModal // Using ReceiptModal as a placeholder for E-Invoice modal to show receipt data
+        isOpen={showEInvoiceModal} // Use the new state variable
+        onClose={() => setShowEInvoiceModal(false)}
         onConfirm={handleEInvoiceConfirm}
-        selectedPaymentMethod={selectedPaymentMethod} // Pass the currently selected method
-        cartItems={cart.map(item => ({
+        receipt={selectedReceipt} // Pass the selected receipt for display
+        cartItems={cart.map(item => ({ // Pass cart items for potential fallback receipt generation
           id: item.id,
           name: item.name,
           price: parseFloat(item.price),
@@ -704,7 +588,10 @@ export function ShoppingCart({
           taxRate: parseFloat(item.taxRate || "10")
         }))}
         total={total}
-      /> */}
+        isEInvoice={true} // Indicate this is for E-invoice processing
+        customerName={selectedPaymentMethod} // Placeholder, replace with actual customer name
+        customerTaxCode={selectedPaymentMethod} // Placeholder, replace with actual tax code
+      />
     </aside>
   );
 }
