@@ -88,7 +88,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     quantitySold: "Số lượng bán",
     totalAmount: "Tổng số tiền",
     totalDiscount: "Giảm giá",
-    totalRevenue: "Doanh thu",
     categoryName: "Danh mục",
 
     // Report titles
@@ -285,6 +284,26 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Status
     status: "Trạng thái",
+
+    // Missing menu analysis translations
+    topSellingItems: "Sản phẩm bán chạy nhất",
+    topRevenueItems: "Sản phẩm doanh thu cao nhất",
+    categoryBreakdown: "Phân tích theo danh mục",
+    itemPerformance: "Hiệu suất sản phẩm",
+    salesTrend: "Xu hướng bán hàng",
+    profitMargin: "Tỷ suất lợi nhuận",
+    costAnalysis: "Phân tích chi phí",
+    stockMovement: "Di chuyển tồn kho",
+
+    // Additional report sections
+    detailedAnalysis: "Phân tích chi tiết",
+    quickSummary: "Tóm tắt nhanh",
+    comparisonReport: "Báo cáo so sánh",
+    trendsAndInsights: "Xu hướng và thông tin chi tiết",
+    performanceIndicators: "Chỉ số hiệu suất",
+    financialMetrics: "Chỉ số tài chính",
+    operationalMetrics: "Chỉ số vận hành",
+    customerMetrics: "Chỉ số khách hàng",
   },
   ko: {
     title: "보고서",
@@ -349,8 +368,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     visualRepresentation: "데이터 시각화",
 
     // Filter labels
-    startDate: "시작일",
-    endDate: "종료일",
     salesMethod: "판매 방법",
     salesChannel: "판매 채널",
     productFilter: "상품",
@@ -375,7 +392,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     quantitySold: "판매 수량",
     totalAmount: "총 금액",
     totalDiscount: "총 할인",
-    totalRevenue: "총 매출",
     categoryName: "카테고리",
 
     // Report titles
@@ -572,6 +588,26 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Status
     status: "상태",
+
+    // Missing menu analysis translations
+    topSellingItems: "최고 판매 상품",
+    topRevenueItems: "최고 매출 상품",
+    categoryBreakdown: "카테고리별 분석",
+    itemPerformance: "상품 성과",
+    salesTrend: "판매 트렌드",
+    profitMargin: "이익률",
+    costAnalysis: "비용 분석",
+    stockMovement: "재고 움직임",
+
+    // Additional report sections
+    detailedAnalysis: "상세 분석",
+    quickSummary: "빠른 요약",
+    comparisonReport: "비교 보고서",
+    trendsAndInsights: "트렌드 및 인사이트",
+    performanceIndicators: "성과 지표",
+    financialMetrics: "재무 지표",
+    operationalMetrics: "운영 지표",
+    customerMetrics: "고객 지표",
   },
   en: {
     title: "Reports",
@@ -635,8 +671,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     visualRepresentation: "Visual representation of data",
 
     // Filter labels
-    startDate: "Start Date",
-    endDate: "End Date",
     salesMethod: "Sales Method",
     salesChannel: "Sales Channel",
     productFilter: "Product",
@@ -661,7 +695,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     quantitySold: "Quantity Sold",
     totalAmount: "Total Amount",
     totalDiscount: "Total Discount",
-    totalRevenue: "Total Revenue",
     categoryName: "Category",
 
     // Report titles
@@ -859,5 +892,25 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Status
     status: "Status",
     analysisType: "Analysis Type",
+
+    // Missing menu analysis translations
+    topSellingItems: "Top Selling Items",
+    topRevenueItems: "Top Revenue Items",
+    categoryBreakdown: "Category Breakdown",
+    itemPerformance: "Item Performance",
+    salesTrend: "Sales Trend",
+    profitMargin: "Profit Margin",
+    costAnalysis: "Cost Analysis",
+    stockMovement: "Stock Movement",
+
+    // Additional report sections
+    detailedAnalysis: "Detailed Analysis",
+    quickSummary: "Quick Summary",
+    comparisonReport: "Comparison Report",
+    trendsAndInsights: "Trends & Insights",
+    performanceIndicators: "Performance Indicators",
+    financialMetrics: "Financial Metrics",
+    operationalMetrics: "Operational Metrics",
+    customerMetrics: "Customer Metrics",
   },
 };

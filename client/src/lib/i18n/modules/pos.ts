@@ -409,8 +409,8 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     subtotal: 'Subtotal:',
     tax: 'Tax (8.25%):',
     total: 'Total:',
-    paymentMethod: 'Payment Method:',
-    amountReceived: 'Amount Received:',
+    paymentMethodLabel: 'Payment Method:',
+    amountReceivedLabel: 'Amount Received:',
     phone: 'Phone:',
   },
   vi: {
@@ -547,8 +547,8 @@ export const posTranslations: { [key: string]: POSTranslations } = {
     subtotal: 'Tạm tính:',
     tax: 'Thuế (8.25%):',
     total: 'Tổng cộng:',
-    paymentMethod: 'Phương thức thanh toán:',
-    amountReceived: 'Số tiền nhận:',
+    paymentMethodLabel: 'Phương thức thanh toán:',
+    amountReceivedLabel: 'Số tiền nhận:',
     phone: 'Điện thoại:',
   },
 };
