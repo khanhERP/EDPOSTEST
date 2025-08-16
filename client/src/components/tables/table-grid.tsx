@@ -711,15 +711,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
       console.log('✅ Table payment completed successfully');
 
-      // Close all modals
+      // Close E-invoice modal first
       setShowEInvoiceModal(false);
-      setShowPaymentMethodModal(false);
-      setOrderDetailsOpen(false);
       setOrderForPayment(null);
 
-      // Show receipt modal if receipt data exists
+      // Always show receipt modal after invoice processing
       if (invoiceData.receipt) {
-        console.log('📄 Showing receipt modal after payment completion');
+        console.log('📄 Showing receipt modal after E-invoice processing');
         setSelectedReceipt(invoiceData.receipt);
         setShowReceiptModal(true);
       }
@@ -1162,7 +1160,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <div className="pt-4 space-y-3">
                   <Button
                     onClick={() => {
+                      console.log('🎯 Table: Starting payment flow - closing order details');
                       setOrderForPayment(selectedOrder);
+                      setOrderDetailsOpen(false); // Đóng màn chi tiết đơn hàng
+                      setSelectedOrder(null); // Xóa chi tiết đơn hàng
                       setShowPaymentMethodModal(true);
                     }}
                     className="w-full bg-green-600 hover:bg-green-700"
@@ -1204,6 +1205,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             setOrderForPayment(null);
           } else {
             // Otherwise continue to E-invoice modal
+            console.log('🔄 Table: Continuing to E-invoice modal');
             setShowEInvoiceModal(true);
           }
         }}
@@ -1288,8 +1290,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
+          console.log('🔴 Table: Closing receipt modal and clearing all states');
           setShowReceiptModal(false);
           setSelectedReceipt(null);
+          setOrderForPayment(null);
+          setShowPaymentMethodModal(false);
+          setShowEInvoiceModal(false);
+          setOrderDetailsOpen(false);
+          setSelectedOrder(null);
         }}
         receipt={selectedReceipt}
         cartItems={selectedReceipt?.items?.map((item: any) => ({
