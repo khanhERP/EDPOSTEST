@@ -1,3 +1,4 @@
+
 import { X, Printer, Mail } from "lucide-react";
 import {
   Dialog,
@@ -29,6 +30,10 @@ interface ReceiptModalProps {
     sku?: string;
     taxRate?: number;
   }>;
+  total?: number;
+  isEInvoice?: boolean;
+  customerName?: string;
+  customerTaxCode?: string;
 }
 
 export function ReceiptModal({
@@ -38,12 +43,25 @@ export function ReceiptModal({
   onConfirm,
   isPreview = false,
   cartItems = [],
+  total,
+  isEInvoice = false,
+  customerName,
+  customerTaxCode,
 }: ReceiptModalProps) {
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
+  const [hasAutoOpened, setHasAutoOpened] = useState(false);
   const { t } = useTranslation();
 
-  console.log("Receipt Modal:", { isOpen, hasReceipt: !!receipt, isPreview });
+  console.log("=== RECEIPT MODAL RENDERED ===");
+  console.log("Receipt Modal isOpen:", isOpen);
+  console.log("Receipt Modal cartItems received:", cartItems);
+  console.log("Receipt Modal cartItems length:", cartItems?.length || 0);
+  console.log("Receipt Modal cartItems type:", typeof cartItems);
+  console.log("Receipt Modal cartItems is array:", Array.isArray(cartItems));
+  console.log("Receipt Modal total:", total);
+  console.log("Receipt Modal cartItems content:", cartItems);
+  console.log("Receipt Modal receipt:", receipt);
 
   // Query store settings to get dynamic address
   const { data: storeSettings } = useQuery({
@@ -53,6 +71,42 @@ export function ReceiptModal({
       return response.json();
     },
   });
+
+  // Auto-open print dialog for non-preview receipts that have items
+  useEffect(() => {
+    console.log("🔍 Receipt Modal useEffect triggered with:", {
+      isOpen,
+      hasReceipt: !!receipt,
+      isPreview,
+      hasAutoOpened,
+    });
+
+    // Only auto-print for non-preview receipts that are opened and haven't been auto-opened yet
+    if (isOpen && receipt && !isPreview && !hasAutoOpened) {
+      console.log("✅ Initial conditions met for auto-print");
+      setHasAutoOpened(true);
+      
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        console.log("🖨️ Auto-triggering print dialog for completed payment");
+        handlePrint();
+      }, 500);
+    } else {
+      console.log("❌ Initial conditions not met for auto-print:", {
+        isOpen,
+        hasReceipt: !!receipt,
+        isPreview,
+        hasAutoOpened,
+      });
+    }
+  }, [isOpen, receipt, isPreview, hasAutoOpened]);
+
+  // Reset auto-opened flag when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setHasAutoOpened(false);
+    }
+  }, [isOpen]);
 
   if (!receipt) return null;
 
@@ -67,52 +121,51 @@ export function ReceiptModal({
 
       console.log("Receipt content height:", contentHeight, "Window height:", windowHeight);
 
-      if (printContent) {
-        const printWindow = window.open("", "_blank", `width=${windowWidth},height=${windowHeight},scrollbars=yes,resizable=yes`);
-        if (printWindow) {
-          printWindow.document.write(`
-            <!DOCTYPE html>
-            <html>
-              <head>
-                <title>Receipt</title>
-                <style>
-                  body { 
-                    font-family: monospace; 
-                    margin: 0; 
-                    padding: 10px; 
-                    font-size: 12px; 
-                    line-height: 1.4;
-                    background: white;
-                  }
-                  .receipt-container { 
-                    max-width: 300px; 
-                    margin: 0 auto; 
-                    background: white; 
-                  }
-                  .text-center { text-align: center; }
-                  .text-right { text-align: right; }
-                  .font-bold { font-weight: bold; }
-                  .border-t { border-top: 1px dashed #000; margin: 8px 0; }
-                  .border-b { border-bottom: 1px dashed #000; margin: 8px 0; }
-                  .flex { display: flex; }
-                  .justify-between { justify-content: space-between; }
-                  .space-y-1 > * + * { margin-top: 4px; }
-                  .mb-2 { margin-bottom: 8px; }
-                  .mb-4 { margin-bottom: 16px; }
-                  .text-sm { font-size: 11px; }
-                  .text-xs { font-size: 10px; }
-                  @media print {
-                    body { margin: 0; }
-                    .receipt-container { box-shadow: none; }
-                  }
-                </style>
-              </head>
-              <body>
-                ${printContent.innerHTML}
-              </body>
-            </html>
-          `);
-          printWindow.document.close();
+      const printWindow = window.open("", "_blank", `width=${windowWidth},height=${windowHeight},scrollbars=yes,resizable=yes`);
+      if (printWindow) {
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Receipt</title>
+              <style>
+                body { 
+                  font-family: monospace; 
+                  margin: 0; 
+                  padding: 10px; 
+                  font-size: 12px; 
+                  line-height: 1.4;
+                  background: white;
+                }
+                .receipt-container { 
+                  max-width: 300px; 
+                  margin: 0 auto; 
+                  background: white; 
+                }
+                .text-center { text-align: center; }
+                .text-right { text-align: right; }
+                .font-bold { font-weight: bold; }
+                .border-t { border-top: 1px dashed #000; margin: 8px 0; }
+                .border-b { border-bottom: 1px dashed #000; margin: 8px 0; }
+                .flex { display: flex; }
+                .justify-between { justify-content: space-between; }
+                .space-y-1 > * + * { margin-top: 4px; }
+                .mb-2 { margin-bottom: 8px; }
+                .mb-4 { margin-bottom: 16px; }
+                .text-sm { font-size: 11px; }
+                .text-xs { font-size: 10px; }
+                @media print {
+                  body { margin: 0; }
+                  .receipt-container { box-shadow: none; }
+                }
+              </style>
+            </head>
+            <body>
+              ${printContent.innerHTML}
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
 
         // Wait for content to load then adjust window size
         printWindow.onload = () => {
@@ -193,7 +246,7 @@ export function ReceiptModal({
       <DialogContent className="max-w-md w-full max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isPreview ? t('pos.receiptPreview') : t('pos.receipt')}
+            {isEInvoice ? t('pos.eInvoice') : (isPreview ? t('pos.receiptPreview') : t('pos.receipt'))}
           </DialogTitle>
         </DialogHeader>
 
@@ -231,6 +284,18 @@ export function ReceiptModal({
               <span>{t('pos.cashier')}</span>
               <span>{receipt.cashierName}</span>
             </div>
+            {isEInvoice && customerName && (
+              <div className="flex justify-between text-sm">
+                <span>Khách hàng:</span>
+                <span>{customerName}</span>
+              </div>
+            )}
+            {isEInvoice && customerTaxCode && (
+              <div className="flex justify-between text-sm">
+                <span>Mã số thuế:</span>
+                <span>{customerTaxCode}</span>
+              </div>
+            )}
             {receipt.paymentMethod === 'einvoice' && (
               <div className="flex justify-between text-sm text-blue-600">
                 <span>Trạng thái E-Invoice:</span>
@@ -397,4 +462,3 @@ export function ReceiptModal({
     </Dialog>
   );
 }
-  
