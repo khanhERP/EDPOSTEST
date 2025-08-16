@@ -2248,22 +2248,33 @@ export function SalesChartReport() {
     };
 
     filteredTransactions.forEach((transaction: any) => {
-      const isDelivery = transaction.isDelivery || transaction.deliveryMethod === "delivery";
-      const method = isDelivery ? "Mang về" : "Ăn tại chỗ";
-      const amount = Number(transaction.total || 0);
-      const isCompleted = transaction.status === "completed" || transaction.status === "paid" || amount > 0;
-      const isCancelled = transaction.status === "cancelled" || transaction.status === "refunded" || amount < 0;
+      // Xác định phương thức bán hàng dựa trên deliveryMethod hoặc salesChannel
+      let method = "Ăn tại chỗ"; // Mặc định
+      
+      if (transaction.deliveryMethod === "delivery" || 
+          transaction.deliveryMethod === "takeout" || 
+          transaction.deliveryMethod === "takeaway" ||
+          transaction.isDelivery === true ||
+          transaction.salesChannel === "delivery" ||
+          transaction.salesChannel === "takeout") {
+        method = "Mang về";
+      } else if (transaction.deliveryMethod === "dine_in" || 
+                 transaction.deliveryMethod === "dinein" ||
+                 transaction.salesChannel === "dine_in" ||
+                 transaction.tableId) {
+        method = "Ăn tại chỗ";
+      }
 
-      if (isCompleted) {
+      const amount = Number(transaction.total || 0);
+      const isCompleted = transaction.status === "completed" || transaction.status === "paid" || (!transaction.status && amount > 0);
+      const isCancelled = transaction.status === "cancelled" || transaction.status === "refunded";
+
+      if (isCompleted && amount > 0) {
         salesMethodData[method].completedOrders += 1;
-        salesMethodData[method].completedRevenue += Math.abs(amount);
+        salesMethodData[method].completedRevenue += amount;
       } else if (isCancelled) {
         salesMethodData[method].cancelledOrders += 1;
         salesMethodData[method].cancelledRevenue += Math.abs(amount);
-      } else {
-        // Default to completed for positive amounts
-        salesMethodData[method].completedOrders += 1;
-        salesMethodData[method].completedRevenue += Math.abs(amount);
       }
 
       salesMethodData[method].totalOrders = salesMethodData[method].completedOrders + salesMethodData[method].cancelledOrders;
