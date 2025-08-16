@@ -1357,6 +1357,10 @@ export function SalesChartReport() {
               <TableHeader>
                 <TableRow>
                   <TableHead
+                    className="text-center border-r bg-green-50 w-12"
+                    rowSpan={2}
+                  ></TableHead>
+                  <TableHead
                     className="text-center border-r bg-green-50 min-w-[120px]"
                     rowSpan={2}
                   >
@@ -1412,39 +1416,114 @@ export function SalesChartReport() {
               </TableHeader>
               <TableBody>
                 {paginatedData.length > 0 ? (
-                  paginatedData.map((item, index) => (
-                    <TableRow key={`${item.employeeCode}-${index}`} className="hover:bg-gray-50">
-                      <TableCell className="text-center border-r bg-green-50 font-medium min-w-[120px] px-4">
-                        {item.employeeCode}
-                      </TableCell>
-                      <TableCell className="text-center border-r bg-green-50 font-medium min-w-[150px] px-4">
-                        {item.employeeName}
-                      </TableCell>
-                      <TableCell className="text-center border-r min-w-[100px] px-4">
-                        {item.orderCount.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
-                        {formatCurrency(item.revenue)}
-                      </TableCell>
-                      <TableCell className="text-right border-r min-w-[120px] px-4">
-                        {formatCurrency(item.tax)}
-                      </TableCell>
-                      <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
-                        {formatCurrency(item.total)}
-                      </TableCell>
-                      {paymentMethodsArray.map((method) => {
-                        const amount = item.paymentMethods[method] || 0;
-                        return (
-                          <TableCell key={method} className="text-right border-r font-medium min-w-[130px] px-4">
-                            {amount > 0 ? formatCurrency(amount) : "-"}
+                  paginatedData.map((item, index) => {
+                    const isExpanded = expandedRows[`emp-${item.employeeCode}`] || false;
+                    const employeeTransactions = filteredTransactions.filter((transaction: any) => {
+                      const employeeCode = transaction.employeeId || "EMP-000";
+                      const employeeName = transaction.cashierName || transaction.employeeName || "Unknown";
+                      const employeeKey = `${employeeCode}-${employeeName}`;
+                      return employeeKey === `${item.employeeCode}-${item.employeeName}`;
+                    });
+
+                    return (
+                      <>
+                        <TableRow key={`${item.employeeCode}-${index}`} className="hover:bg-gray-50">
+                          <TableCell className="text-center border-r w-12">
+                            <button
+                              onClick={() =>
+                                setExpandedRows((prev) => ({
+                                  ...prev,
+                                  [`emp-${item.employeeCode}`]: !prev[`emp-${item.employeeCode}`],
+                                }))
+                              }
+                              className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded text-sm"
+                            >
+                              {isExpanded ? "−" : "+"}
+                            </button>
                           </TableCell>
-                        );
-                      })}
-                      <TableCell className="text-right font-bold text-green-600 min-w-[150px] px-4">
-                        {formatCurrency(item.total)}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                          <TableCell className="text-center border-r bg-green-50 font-medium min-w-[120px] px-4">
+                            {item.employeeCode}
+                          </TableCell>
+                          <TableCell className="text-center border-r bg-green-50 font-medium min-w-[150px] px-4">
+                            {item.employeeName}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[100px] px-4">
+                            {item.orderCount.toLocaleString()}
+                          </TableCell>
+                          <TableCell className="text-right border-r text-green-600 font-medium min-w-[140px] px-4">
+                            {formatCurrency(item.revenue)}
+                          </TableCell>
+                          <TableCell className="text-right border-r min-w-[120px] px-4">
+                            {formatCurrency(item.tax)}
+                          </TableCell>
+                          <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
+                            {formatCurrency(item.total)}
+                          </TableCell>
+                          {paymentMethodsArray.map((method) => {
+                            const amount = item.paymentMethods[method] || 0;
+                            return (
+                              <TableCell key={method} className="text-right border-r font-medium min-w-[130px] px-4">
+                                {amount > 0 ? formatCurrency(amount) : "-"}
+                              </TableCell>
+                            );
+                          })}
+                          <TableCell className="text-right font-bold text-green-600 min-w-[150px] px-4">
+                            {formatCurrency(item.total)}
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Expanded order details */}
+                        {isExpanded &&
+                          employeeTransactions.length > 0 &&
+                          employeeTransactions.map(
+                            (transaction: any, transactionIndex: number) => (
+                              <TableRow
+                                key={`${item.employeeCode}-transaction-${transaction.id || transactionIndex}`}
+                                className="bg-blue-50/50 border-l-4 border-l-blue-400"
+                              >
+                                <TableCell className="text-center border-r bg-blue-50 w-12">
+                                  <div className="w-8 h-6 flex items-center justify-center text-blue-600 text-xs">
+                                    └
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center border-r text-blue-600 text-sm min-w-[120px] px-4">
+                                  {transaction.transactionId || `TXN-${transaction.id}`}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {new Date(transaction.createdAt || transaction.created_at).toLocaleDateString("vi-VN")} {" "}
+                                  {new Date(transaction.createdAt || transaction.created_at).toLocaleTimeString("vi-VN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">1</TableCell>
+                                <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
+                                  {formatCurrency(Number(transaction.total) - Number(transaction.total) * 0.1)}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
+                                  {formatCurrency(Number(transaction.total) * 0.1)}
+                                </TableCell>
+                                <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
+                                  {formatCurrency(Number(transaction.total))}
+                                </TableCell>
+                                {paymentMethodsArray.map((method) => {
+                                  const transactionMethod = transaction.paymentMethod || "cash";
+                                  const amount = transactionMethod === method ? Number(transaction.total) : 0;
+                                  return (
+                                    <TableCell key={method} className="text-right border-r text-sm min-w-[130px] px-4">
+                                      {amount > 0 ? formatCurrency(amount) : "-"}
+                                    </TableCell>
+                                  );
+                                })}
+                                <TableCell className="text-right font-bold text-green-600 text-sm min-w-[150px] px-4">
+                                  {formatCurrency(Number(transaction.total))}
+                                </TableCell>
+                              </TableRow>
+                            ),
+                          )}
+                      </>
+                    );
+                  })
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7 + paymentMethodsArray.length} className="text-center text-gray-500 py-8">
@@ -1456,6 +1535,7 @@ export function SalesChartReport() {
                 {/* Summary Row */}
                 {data.length > 0 && (
                   <TableRow className="bg-gray-100 font-bold border-t-2">
+                    <TableCell className="text-center border-r w-12"></TableCell>
                     <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
                       {t("common.total")}
                     </TableCell>
