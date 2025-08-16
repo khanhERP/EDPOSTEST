@@ -117,7 +117,8 @@ export function SalesReport() {
         dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
       }
 
-      dailySales[date].revenue += Number(transaction.total || 0);
+      const amount = Number(transaction.total || 0);
+      dailySales[date].revenue += isNaN(amount) ? 0 : amount;
       dailySales[date].orders += 1;
       dailySales[date].customers += 1; // Each transaction represents one customer
     });
@@ -155,8 +156,9 @@ export function SalesReport() {
       if (!paymentMethods[method]) {
         paymentMethods[method] = { count: 0, revenue: 0 };
       }
+      const amount = Number(transaction.total || 0);
+      paymentMethods[method].revenue += isNaN(amount) ? 0 : amount;
       paymentMethods[method].count += 1;
-      paymentMethods[method].revenue += Number(transaction.total);
     });
 
     // Hourly breakdown
@@ -166,12 +168,12 @@ export function SalesReport() {
       const hour = new Date(
         transaction.createdAt || transaction.created_at,
       ).getHours();
-      hourlySales[hour] = (hourlySales[hour] || 0) + Number(transaction.total);
+      hourlySales[hour] = (hourlySales[hour] || 0) + Number(transaction.total || 0);
     });
 
     // Total stats
     const totalRevenue = filteredTransactions.reduce(
-      (sum: number, transaction: any) => sum + Number(transaction.total),
+      (sum: number, transaction: any) => sum + Number(transaction.total || 0),
       0,
     );
     const totalOrders = filteredTransactions.length;
