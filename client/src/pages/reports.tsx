@@ -99,7 +99,7 @@ export default function ReportsPage() {
                 >
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.salesReport')}</span>
-                  <span className="sm:hidden">Sales Report</span>
+                  <span className="sm:hidden">{t('reports.salesReport')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="order" 
