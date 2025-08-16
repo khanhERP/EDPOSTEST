@@ -1076,6 +1076,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesReport: "Báo cáo bán hàng",
     purchaseReport: "Báo cáo mua hàng",
     inventoryReport: "Báo cáo tồn kho",
+    warehouseReport: "Báo cáo kho",
 
     // Sales chart table columns
     orderNumber: "Số đơn bán",
