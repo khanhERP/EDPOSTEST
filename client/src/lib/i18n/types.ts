@@ -372,6 +372,18 @@ export interface ReportsTranslations {
   profitMargin: string;
   costAnalysis: string;
   stockMovement: string;
+  menuAnalysisDescription: string;
+  bestSellingProducts: string;
+  revenueByCategory: string;
+  productSalesVolume: string;
+  categoryRevenue: string;
+  productRevenue: string;
+  averagePrice: string;
+  totalSales: string;
+  menuItemAnalysis: string;
+  categoryAnalysis: string;
+  productTrends: string;
+  menuPerformanceMetrics: string;
 
   // Table analysis
   tablePerformance: string;
