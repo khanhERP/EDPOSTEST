@@ -207,6 +207,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     shopeepayWallet: "ShopeePay 전자지갑",
     grabpayWallet: "GrabPay 전자지갑",
     paymentMethodGeneric: "결제 방법",
+    paid: "결제 완료",
   },
   en: {
     loading: "Loading...",
@@ -353,6 +354,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     shopeepayWallet: "ShopeePay E-Wallet",
     grabpayWallet: "GrabPay E-Wallet",
     paymentMethodGeneric: "Payment Method",
+    paid: "Paid",
   },
   vi: {
     loading: "Đang tải...",
@@ -498,5 +500,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     shopeepayWallet: "Ví điện tử ShopeePay",
     grabpayWallet: "Ví điện tử GrabPay",
     paymentMethodGeneric: "Phương thức thanh toán",
+    paid: "Đã thanh toán",
   },
 };
