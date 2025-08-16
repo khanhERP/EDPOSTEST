@@ -303,12 +303,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inventoryReport: "재고 보고서",
 
     // Analysis types
+    analysisType: "분석 유형",
     analyzeBy: "분석 기준",
     timeAnalysis: "시간",
-    productAnalysis: "상품 분석",
-    employeeAnalysis: "직원",
-    customerAnalysis: "고객",
-    channelAnalysis: "판매 채널",
+    productAnalysis: "판매",
+    employeeAnalysis: "직원별 판매",
+    customerAnalysis: "판매",
+    channelAnalysis: "판매",
 
     // Chart and visual
     chartView: "차트 보기",
@@ -715,11 +716,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Analysis types
     analyzeBy: "Analyze By",
-    timeAnalysis: "Time",
+    timeAnalysis: "Time Analysis",
     productAnalysis: "Product Analysis",
-    employeeAnalysis: "Employee",
-    customerAnalysis: "Customer",
-    channelAnalysis: "Sales Channel",
+    employeeAnalysis: "Employee Analysis",
+    customerAnalysis: "Customer Analysis",
+    channelAnalysis: "Channel Analysis",
 
     // Chart and visual
     chartView: "Chart View",
@@ -854,11 +855,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Analysis types
     analysisType: "Phân tích theo",
     analyzeBy: "Phân tích theo",
-    timeAnalysis: "Phân tích theo thời gian",
-    productAnalysis: "Phân tích theo sản phẩm",
-    employeeAnalysis: "Phân tích theo nhân viên",
-    customerAnalysis: "Phân tích theo khách hàng",
-    channelAnalysis: "Phân tích theo kênh bán hàng",
+    timeAnalysis: "Thời gian",
+    productAnalysis: "Sản phẩm",
+    employeeAnalysis: "Nhân viên",
+    customerAnalysis: "Khách hàng",
+    channelAnalysis: "Kênh bán hàng",
 
     // Time analysis specific
     dateRangeFilter: "Lọc theo khoảng thời gian",
@@ -1084,9 +1085,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalRevenue: "Doanh thu",
     totalTax: "Thuế",
     finalTotal: "Tổng tiền",
-    cashPayment: "Tiền mặt",
-    bankTransfer: "Chuyển khoản",
-    qrPayment: "QR Code InCMS",
     totalCustomerPayment: "Tổng KH thanh toán",
 
     // Inventory report
