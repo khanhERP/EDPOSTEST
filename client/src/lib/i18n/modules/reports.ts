@@ -394,6 +394,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Sales channel report specific
     dineIn: "Ăn tại chỗ",
     takeaway: "Mang về",
+    cancelled: "Đã hủy",
 
     // Financial reports
     financialReport: "Báo cáo tài chính",
@@ -830,6 +831,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Sales channel report specific
     dineIn: "매장 식사",
     takeaway: "포장",
+    cancelled: "취소됨",
 
     // Financial reports
     financialReport: "재무 보고서",
@@ -1257,6 +1259,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Sales channel report specific
     dineIn: "Dine In",
     takeaway: "Takeaway",
+    cancelled: "Cancelled",
 
     // Financial reports
     financialReport: "Financial Report",
