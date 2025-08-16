@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   ShoppingCart as CartIcon,
   Minus,
@@ -158,57 +158,6 @@ export function ShoppingCart({
     }
   }, [cart, subtotal, tax, total]);
 
-  // Broadcast cart updates to customer display via WebSocket
-  const broadcastCartUpdate = useCallback((updatedCart: CartItem[]) => {
-    console.log("Broadcasting cart update to customer display:", updatedCart);
-
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
-
-    const sendCartUpdate = (retryCount = 0) => {
-      try {
-        const ws = new WebSocket(wsUrl);
-
-        ws.onopen = () => {
-          const subtotal = updatedCart.reduce((sum, item) => sum + parseFloat(item.total), 0);
-          const tax = updatedCart.reduce((sum, item) => {
-            if (item.taxRate && parseFloat(item.taxRate) > 0) {
-              return sum + (parseFloat(item.price) * parseFloat(item.taxRate) / 100 * item.quantity);
-            }
-            return sum;
-          }, 0);
-          const total = subtotal + tax;
-
-          ws.send(JSON.stringify({
-            type: 'cart_update',
-            cart: updatedCart,
-            subtotal,
-            tax,
-            total,
-            timestamp: new Date().toISOString()
-          }));
-
-          // Close after a short delay to ensure message is sent
-          setTimeout(() => ws.close(), 100);
-        };
-
-        ws.onerror = (error) => {
-          console.error("WebSocket error during cart broadcast:", error);
-          if (retryCount < 2) {
-            setTimeout(() => sendCartUpdate(retryCount + 1), 500);
-          }
-        };
-      } catch (error) {
-        console.error("Failed to broadcast cart update:", error);
-        if (retryCount < 2) {
-          setTimeout(() => sendCartUpdate(retryCount + 1), 500);
-        }
-      }
-    };
-
-    sendCartUpdate();
-  }, []);
-
   const getPaymentMethods = () => {
     // Only return cash and bank transfer payment methods
     const paymentMethods = [
@@ -320,7 +269,7 @@ export function ShoppingCart({
   const handleReceiptConfirm = () => {
     console.log('📄 Receipt confirmed, checking payment method');
     setShowReceiptPreview(false);
-
+    
     // Chỉ hiển thị payment method modal nếu chưa có thanh toán nào được xử lý
     // Tránh hiển thị lại sau khi e-invoice đã xử lý xong
     if (!previewReceipt?.paymentMethod || previewReceipt?.paymentMethod === "preview") {

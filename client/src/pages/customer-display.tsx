@@ -31,14 +31,8 @@ export default function CustomerDisplayPage() {
     
     let ws: WebSocket;
     let reconnectTimer: NodeJS.Timeout;
-    let isManualClose = false;
 
     const connectWebSocket = () => {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        console.log("Customer Display: WebSocket already connected, skipping");
-        return;
-      }
-
       try {
         ws = new WebSocket(wsUrl);
 
@@ -112,14 +106,11 @@ export default function CustomerDisplayPage() {
 
         ws.onclose = (event) => {
           console.log("Customer Display: WebSocket closed:", event.code, event.reason);
-          if (!isManualClose && !reconnectTimer) {
-            // Reconnect after 5 seconds (increased from 3 seconds)
-            reconnectTimer = setTimeout(() => {
-              console.log("Customer Display: Attempting to reconnect...");
-              reconnectTimer = null;
-              connectWebSocket();
-            }, 5000);
-          }
+          // Reconnect after 3 seconds
+          reconnectTimer = setTimeout(() => {
+            console.log("Customer Display: Attempting to reconnect...");
+            connectWebSocket();
+          }, 3000);
         };
 
         ws.onerror = (error) => {
@@ -141,12 +132,10 @@ export default function CustomerDisplayPage() {
       .catch(err => console.error('Failed to fetch store info:', err));
 
     return () => {
-      isManualClose = true;
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
-        reconnectTimer = null;
       }
-      if (ws && ws.readyState === WebSocket.OPEN) {
+      if (ws) {
         ws.close();
       }
     };
