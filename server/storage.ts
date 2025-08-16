@@ -1179,7 +1179,7 @@ export class DatabaseStorage implements IStorage {
       } else {
         updatedCustomers.push(customer);
       }
-    }</old_str>
+    }
 
     // Update membership levels based on spending
     const updatedCustomers = [];
