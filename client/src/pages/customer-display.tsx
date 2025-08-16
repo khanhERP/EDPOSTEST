@@ -130,13 +130,8 @@ export default function CustomerDisplayPage() {
               case 'restore_cart_display':
                 console.log("Customer Display: Restoring cart display, clearing QR payment");
                 // Force clear QR payment to show cart again
-                setQrPayment(prevQr => {
-                  if (prevQr) {
-                    console.log("Customer Display: Force clearing QR payment to restore cart view");
-                    return null;
-                  }
-                  return prevQr;
-                });
+                setQrPayment(null);
+                console.log("Customer Display: QR payment force cleared to restore cart view");
                 break;
               default:
                 console.log("Customer Display: Unknown message type:", data.type);
