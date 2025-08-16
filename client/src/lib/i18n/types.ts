@@ -118,6 +118,13 @@ export interface NavigationTranslations {
   profitReports: string;
   tablesSales: string;
   directSales: string;
+  dashboard: string;
+  salesAnalysis: string;
+  menuAnalysis: string;
+  tableAnalysis: string;
+  salesChart: string;
+  purchaseReport: string;
+  warehouseReport: string;
 }
 
 // Reports translations interface
