@@ -689,7 +689,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   // Handle E-invoice confirmation and complete payment
   const handleEInvoiceConfirm = async (invoiceData: any) => {
     console.log('🎯 Table handleEInvoiceConfirm called with data:', invoiceData);
-    
+
     if (!orderForPayment) {
       console.error('❌ No order for payment found');
       toast({
@@ -702,7 +702,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
     try {
       console.log('🔄 Starting payment completion for order:', orderForPayment.id);
-      
+
       // Complete payment after e-invoice is created
       await completePaymentMutation.mutateAsync({
         orderId: orderForPayment.id,
@@ -1161,20 +1161,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   <Button
                     onClick={() => {
                       console.log('🎯 Table: Starting payment flow - preserving order data');
-                      
+
                       // Tạo order data đầy đủ bao gồm cả order items để truyền qua các bước
                       const completeOrderData = {
                         ...selectedOrder,
                         orderItems: orderItems || [], // Đảm bảo orderItems được truyền theo
                       };
-                      
+
                       console.log('💾 Setting order for payment with complete data:', completeOrderData);
                       setOrderForPayment(completeOrderData);
-                      
+
                       // Đóng order details nhưng GIỮ selectedOrder để có thể tham chiếu
                       setOrderDetailsOpen(false);
                       // Không xóa selectedOrder để giữ thông tin cho các modal tiếp theo
-                      
+
                       setShowPaymentMethodModal(true);
                     }}
                     className="w-full bg-green-600 hover:bg-green-700"
@@ -1207,7 +1207,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         onSelectMethod={(method, data) => {
           console.log('🎯 Table payment method selected:', method, data);
           setShowPaymentMethodModal(false);
-          
+
           // If payment method returns e-invoice data (like from "phát hành sau"), handle it
           if (data && data.receipt) {
             console.log('📄 Table: Payment method returned receipt data, showing receipt');
@@ -1261,7 +1261,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           // Sử dụng orderItems từ orderForPayment nếu có
           const itemsToMap = orderForPayment?.orderItems || orderItems || [];
           console.log('📦 Mapping cart items for payment modal:', itemsToMap.length);
-          
+
           return itemsToMap.map((item: any) => ({
             id: item.id,
             name: item.productName || getProductName(item.productId),
@@ -1325,7 +1325,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             // Sử dụng orderItems từ orderForPayment nếu có
             const itemsToMap = orderForPayment?.orderItems || orderItems || [];
             console.log('📦 Mapping cart items for E-invoice modal:', itemsToMap.length);
-            
+
             return itemsToMap.map((item: any) => ({
               id: item.id,
               name: item.productName || getProductName(item.productId),
@@ -1524,26 +1524,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <p className="text-3xl font-bold text-green-600">
                   {mixedPaymentData ? 
                     mixedPaymentData.remainingAmount.toLocaleString('vi-VN') :
-                    (() => {
-                      // Calculate correct total for QR payment
-                      let itemsTotal = 0;
-                      let itemsTax = 0;
-
-                      if (Array.isArray(orderItems) && Array.isArray(products)) {
-                        orderItems.forEach((item: any) => {
-                          const itemSubtotal = Number(item.total || 0);
-                          itemsTotal += itemSubtotal;
-
-                          const product = products.find((p: any) => p.id === item.productId);
-                          const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
-                          itemsTax += (itemSubtotal * taxRate) / 100;
-                        });
-                      }
-
-                      return (itemsTotal + itemsTax).toLocaleString('vi-VN');
-                    })()
-                  } ₫
-                </p>
+                    Number(selectedOrder?.total || 0).toLocaleString('vi-VN')
+                  } ₫</p>
                 {mixedPaymentData && (
                   <div className="mt-2 pt-2 border-t border-gray-300">
                     <p className="text-xs text-blue-600">
