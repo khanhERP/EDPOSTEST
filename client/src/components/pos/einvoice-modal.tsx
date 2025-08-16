@@ -495,25 +495,30 @@ export function EInvoiceModal({
 
       // Show success message
       toast({
-        title: 'Thành công',
-        description: 'Thông tin hóa đơn điện tử đã được lưu vào database để phát hành sau.',
+        title: 'Thành công', 
+        description: 'Thông tin hóa đơn điện tử đã được lưu. Đang hiển thị màn hình in hóa đơn...',
       });
 
-      // Đóng modal e-invoice TRƯỚC KHI gọi onConfirm để tránh conflict
-      console.log('🔒 Closing e-invoice modal before calling onConfirm');
-      onClose();
+      // Prepare comprehensive invoice data với receipt để hiển thị modal in
+      const completeInvoiceData = {
+        ...invoiceData,
+        publishLater: true,
+        receipt: receiptData, // Receipt data để hiển thị modal in
+        customerName: formData.customerName,
+        taxCode: formData.taxCode,
+        showReceiptModal: true // Flag để parent component biết cần hiển thị receipt modal
+      };
 
-      // Gọi onConfirm sau khi đóng modal để đảm bảo parent component nhận được data
-      console.log('✅ Calling onConfirm with publishLater data');
+      console.log('✅ Calling onConfirm with publishLater data and receipt');
+      console.log('📄 Receipt data to display:', receiptData);
+
+      // Đóng modal e-invoice và hiển thị receipt modal
+      onClose();
+      
+      // Gọi onConfirm để hiển thị receipt modal ngay lập tức
       setTimeout(() => {
-        onConfirm({
-          ...invoiceData,
-          publishLater: true,
-          receipt: receiptData, // Đảm bảo receipt data được truyền
-          customerName: formData.customerName,
-          taxCode: formData.taxCode
-        });
-      }, 100);
+        onConfirm(completeInvoiceData);
+      }, 200); // Tăng delay để đảm bảo modal e-invoice đóng hoàn toàn
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);

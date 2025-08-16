@@ -162,9 +162,9 @@ export function ShoppingCart({
             total,
             timestamp: new Date().toISOString(),
           });
-          
+
           ws.send(message);
-          
+
           // Close connection immediately after sending
           setTimeout(() => {
             if (ws.readyState === WebSocket.OPEN) {
@@ -301,7 +301,7 @@ export function ShoppingCart({
   const handleReceiptConfirm = () => {
     console.log('📄 Receipt confirmed, checking payment method');
     setShowReceiptPreview(false);
-    
+
     // Chỉ hiển thị payment method modal nếu chưa có thanh toán nào được xử lý
     // Tránh hiển thị lại sau khi e-invoice đã xử lý xong
     if (!previewReceipt?.paymentMethod || previewReceipt?.paymentMethod === "preview") {
@@ -330,14 +330,16 @@ export function ShoppingCart({
       });
 
       // Xử lý "Phát hành sau" trước (priority cao hơn)
-      if (eInvoiceData.publishLater) {
-        console.log('📋 Processing publish later case');
+      if (eInvoiceData.publishLater || eInvoiceData.showReceiptModal) {
+        console.log('📧 Processing publish later case with receipt modal');
+        console.log('📄 E-invoice data for later:', eInvoiceData);
 
         // Đóng tất cả modal trước khi hiển thị receipt
         setShowPaymentMethodModal(false);
 
         setTimeout(() => {
           if (eInvoiceData.receipt) {
+            console.log('📄 Displaying receipt modal for saved draft invoice');
             setPreviewReceipt(eInvoiceData.receipt);
             setShowReceiptPreview(true);
 
@@ -346,13 +348,13 @@ export function ShoppingCart({
               onClearCart();
             }, 100);
 
-            toast({
-              title: "Thành công",
-              description: "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
-            });
+            // Không cần toast ở đây vì đã có trong e-invoice modal
+            console.log('✅ Receipt modal displayed for draft invoice');
           } else {
             // Fallback nếu không có receipt data từ e-invoice
             console.log('⚠️ No receipt data from e-invoice, creating fallback receipt');
+
+            // Tạo fallback receipt từ cart data
             const fallbackReceipt = {
               transactionId: `TXN-${Date.now()}`,
               items: cart.map((item) => ({
@@ -362,7 +364,7 @@ export function ShoppingCart({
                 price: parseFloat(item.price).toFixed(2),
                 quantity: item.quantity,
                 total: (parseFloat(item.price) * item.quantity).toFixed(2),
-                sku: String(item.id),
+                sku: `FOOD${String(item.id).padStart(5, '0')}`,
                 taxRate: parseFloat(item.taxRate || "10")
               })),
               subtotal: (total / 1.1).toFixed(2),
@@ -418,7 +420,7 @@ export function ShoppingCart({
             toast({
               title: "Thành công",
               description: eInvoiceData.publishedImmediately
-                ? `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${eInvoiceData.invoiceNumber || 'N/A'}`
+                ? `Hóa đơn điện tử đã được phát hành thành công! Số hóa đơn: ${eInvoiceData.invoiceNumber || 'N/A'}`
                 : "Hóa đơn điện tử đã được lưu để phát hành sau.",
             });
           }

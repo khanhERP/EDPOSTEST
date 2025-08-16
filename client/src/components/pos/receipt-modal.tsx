@@ -260,6 +260,12 @@ export function ReceiptModal({
               <span>{t('pos.cashier')}</span>
               <span>{receipt.cashierName}</span>
             </div>
+            {receipt.paymentMethod === 'einvoice' && (
+              <div className="flex justify-between text-sm text-blue-600">
+                <span>Trạng thái E-Invoice:</span>
+                <span>{receipt.invoiceNumber ? 'Đã phát hành' : 'Chờ phát hành'}</span>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2 mb-3">
