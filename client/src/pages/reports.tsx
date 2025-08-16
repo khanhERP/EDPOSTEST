@@ -67,7 +67,7 @@ export default function ReportsPage() {
                 >
                   <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.dashboard')}</span>
-                  <span className="sm:hidden">Dashboard</span>
+                  <span className="sm:hidden">{t('reports.dashboard')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="sales" 
@@ -75,7 +75,7 @@ export default function ReportsPage() {
                 >
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.salesAnalysis')}</span>
-                  <span className="sm:hidden">Sales Analysis</span>
+                  <span className="sm:hidden">{t('reports.salesAnalysis')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="menu" 
@@ -83,7 +83,7 @@ export default function ReportsPage() {
                 >
                   <PieChart className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.menuAnalysis')}</span>
-                  <span className="sm:hidden">Menu Analysis</span>
+                  <span className="sm:hidden">{t('reports.menuAnalysis')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="table" 
@@ -91,7 +91,7 @@ export default function ReportsPage() {
                 >
                   <Utensils className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t('reports.tableAnalysis')}</span>
-                  <span className="sm:hidden">Table Analysis</span>
+                  <span className="sm:hidden">{t('reports.tableAnalysis')}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="saleschart" 
@@ -107,7 +107,7 @@ export default function ReportsPage() {
                 >
                   <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.purchaseReport")}</span>
-                  <span className="sm:hidden">Purchase Report</span>
+                  <span className="sm:hidden">{t("reports.purchaseReport")}</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="inventory" 
@@ -115,7 +115,7 @@ export default function ReportsPage() {
                 >
                   <Package className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{t("reports.inventoryReport")}</span>
-                  <span className="sm:hidden">Inventory Report</span>
+                  <span className="sm:hidden">{t("reports.inventoryReport")}</span>
                 </TabsTrigger>
               </TabsList>
             </div>
