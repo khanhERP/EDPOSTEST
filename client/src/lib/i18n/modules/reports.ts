@@ -1,4 +1,3 @@
-
 import { type ReportsTranslations } from '../types';
 
 export const reportsTranslations: { [key: string]: ReportsTranslations } = {
@@ -246,7 +245,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Warehouse Report
     warehouseReportTab: "Báo cáo kho hàng",
     warehouseReportDescription: "Báo cáo chi tiết về hoạt động kho hàng",
-    
+
     // Additional missing keys
     period: "Kỳ",
     noDataDescription: "Không có dữ liệu để hiển thị",
@@ -256,7 +255,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     applyFilters: "Áp dụng bộ lọc",
     resetFilters: "Đặt lại bộ lọc",
     uniqueProducts: "Sản phẩm độc đáo",
-    
+
     // Chart specific
     value: "Giá trị",
     chartData: "Dữ liệu biểu đồ",
@@ -276,19 +275,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     profitMargin: "Tỷ suất lợi nhuận",
     costAnalysis: "Phân tích chi phí",
     stockMovement: "Di chuyển tồn kho",
-    menuAnalysisDescription: "Phân tích chi tiết hiệu suất menu và sản phẩm",
-    bestSellingProducts: "Sản phẩm bán chạy",
-    revenueByCategory: "Doanh thu theo danh mục",
-    productSalesVolume: "Khối lượng bán sản phẩm",
-    categoryRevenue: "Doanh thu danh mục",
-    productRevenue: "Doanh thu sản phẩm",
-    averagePrice: "Giá trung bình",
-    totalSales: "Tổng bán hàng",
-    menuItemAnalysis: "Phân tích món ăn",
-    categoryAnalysis: "Phân tích danh mục",
-    productTrends: "Xu hướng sản phẩm",
-    menuPerformanceMetrics: "Chỉ số hiệu suất menu",
-    
+    menuAnalysisDescription: "Phân tích hiệu suất menu và sản phẩm bán chạy",
+
+    // Sales Chart Report specific
+    salesChartTab: "Biểu đồ bán hàng",
+    salesChartDescription: "Báo cáo chi tiết về doanh số và phân tích theo thời gian",
+
+    // Table Analysis
+    tableAnalysis: "Phân tích bàn",
+
     // Missing keys for menu report
     menuItems: "Món ăn",
     itemsSold: "Đã bán",
@@ -314,6 +309,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     utilizationRate: "Tỷ lệ sử dụng",
     averageRevenue: "Doanh thu trung bình",
     peakHours: "Giờ cao điểm",
+    tableUtilization: "Tỷ lệ sử dụng bàn",
     revenuePerTable: "Doanh thu mỗi bàn",
     ordersPerTable: "Đơn hàng mỗi bàn",
 
@@ -650,7 +646,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Warehouse Report
     warehouseReportTab: "창고 활동 보고서",
     warehouseReportDescription: "창고 활동에 대한 상세 보고서",
-    
+
     // Additional missing keys
     period: "기간",
     noDataDescription: "표시할 데이터가 없습니다",
@@ -660,7 +656,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     applyFilters: "필터 적용",
     resetFilters: "필터 재설정",
     uniqueProducts: "고유 상품",
-    
+
     // Chart specific
     value: "값",
     chartData: "차트 데이터",
@@ -681,18 +677,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     costAnalysis: "비용 분석",
     stockMovement: "재고 움직임",
     menuAnalysisDescription: "메뉴 및 상품 성과에 대한 상세 분석",
-    bestSellingProducts: "인기 상품",
-    revenueByCategory: "카테고리별 매출",
-    productSalesVolume: "상품 판매량",
-    categoryRevenue: "카테고리 매출",
-    productRevenue: "상품 매출",
-    averagePrice: "평균 가격",
-    totalSales: "총 매출",
-    menuItemAnalysis: "메뉴 항목 분석",
-    categoryAnalysis: "카테고리 분석",
-    productTrends: "상품 트렌드",
-    menuPerformanceMetrics: "메뉴 성과 지표",
-    
+
+    // Sales Chart Report specific
+    salesChartTab: "매출 차트",
+    salesChartDescription: "매출 세부 분석 및 시간별 분석",
+
+    // Table Analysis
+    tableAnalysis: "테이블 분석",
+
     // Missing keys for menu report
     menuItems: "메뉴 항목",
     itemsSold: "판매됨",
@@ -1055,7 +1047,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Warehouse Report
     warehouseReportTab: "Warehouse Activity Report",
     warehouseReportDescription: "Detailed warehouse activity report",
-    
+
     // Additional missing keys
     period: "Period",
     noDataDescription: "No data to display",
@@ -1065,7 +1057,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     applyFilters: "Apply Filters",
     resetFilters: "Reset Filters",
     uniqueProducts: "Unique Products",
-    
+
     // Chart specific
     value: "Value",
     chartData: "Chart Data",
@@ -1086,18 +1078,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     costAnalysis: "Cost Analysis",
     stockMovement: "Stock Movement",
     menuAnalysisDescription: "Detailed analysis of menu and product performance",
-    bestSellingProducts: "Best Selling Products",
-    revenueByCategory: "Revenue by Category",
-    productSalesVolume: "Product Sales Volume",
-    categoryRevenue: "Category Revenue",
-    productRevenue: "Product Revenue",
-    averagePrice: "Average Price",
-    totalSales: "Total Sales",
-    menuItemAnalysis: "Menu Item Analysis",
-    categoryAnalysis: "Category Analysis",
-    productTrends: "Product Trends",
-    menuPerformanceMetrics: "Menu Performance Metrics",
-    
+
+    // Sales Chart Report specific
+    salesChartTab: "Sales Chart",
+    salesChartDescription: "Detailed sales analysis and time-based breakdown",
+
+    // Table Analysis
+    tableAnalysis: "Table Analysis",
+
     // Missing keys for menu report
     menuItems: "Menu Items",
     itemsSold: "Items Sold",
