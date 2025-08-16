@@ -2198,170 +2198,176 @@ export function SalesChartReport() {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
+    // Filter transactions by date and sales method
     const filteredTransactions = transactions.filter((transaction: any) => {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
       const dateMatch = transactionDate >= start && transactionDate <= end;
 
-      const channelMatch =
-        salesChannel === "all" ||
-        transaction.salesChannel === salesChannel ||
-        (salesChannel === "direct" &&
-          (!transaction.salesChannel ||
-            transaction.salesChannel === "Direct")) ||
-        (salesChannel === "other" &&
-          transaction.salesChannel &&
-          transaction.salesChannel !== "Direct");
+      // Filter by sales method if specified
+      let methodMatch = true;
+      if (salesMethod !== "all") {
+        if (salesMethod === "no_delivery") {
+          methodMatch = !transaction.isDelivery && (!transaction.deliveryMethod || transaction.deliveryMethod === "none");
+        } else if (salesMethod === "delivery") {
+          methodMatch = transaction.isDelivery || transaction.deliveryMethod === "delivery";
+        }
+      }
 
-      return dateMatch && channelMatch;
+      return dateMatch && methodMatch;
     });
 
-    const channelData: {
-      [channel: string]: {
-        salesChannel: string;
-        revenue: number;
-        returnValue: number;
-        netRevenue: number;
-        orders: number;
-        totalProducts: number;
-        commission: number;
-        netProfit: number;
-        totalCost: number;
-        grossProfit: number;
+    // Group data by sales method (Ăn tại chỗ vs Mang về)
+    const salesMethodData: {
+      [method: string]: {
+        completedOrders: number;
+        cancelledOrders: number;
+        totalOrders: number;
+        completedRevenue: number;
+        cancelledRevenue: number;
+        totalRevenue: number;
       };
-    } = {};
+    } = {
+      "Ăn tại chỗ": {
+        completedOrders: 0,
+        cancelledOrders: 0,
+        totalOrders: 0,
+        completedRevenue: 0,
+        cancelledRevenue: 0,
+        totalRevenue: 0,
+      },
+      "Mang về": {
+        completedOrders: 0,
+        cancelledOrders: 0,
+        totalOrders: 0,
+        completedRevenue: 0,
+        cancelledRevenue: 0,
+        totalRevenue: 0,
+      },
+    };
 
     filteredTransactions.forEach((transaction: any) => {
-      const channel = transaction.salesChannel || "Direct";
+      const isDelivery = transaction.isDelivery || transaction.deliveryMethod === "delivery";
+      const method = isDelivery ? "Mang về" : "Ăn tại chỗ";
+      const amount = Number(transaction.total || 0);
+      const isCompleted = transaction.status === "completed" || transaction.status === "paid" || amount > 0;
+      const isCancelled = transaction.status === "cancelled" || transaction.status === "refunded" || amount < 0;
 
-      if (!channelData[channel]) {
-        channelData[channel] = {
-          salesChannel: channel,
-          revenue: 0,
-          returnValue: 0,
-          netRevenue: 0,
-          orders: 0,
-          totalProducts: 0,
-          commission: 0,
-          netProfit: 0,
-          totalCost: 0,
-          grossProfit: 0,
-        };
-      }
-
-      const amount = Number(transaction.total);
-      channelData[channel].orders += 1;
-
-      if (amount > 0) {
-        channelData[channel].revenue += amount;
-        channelData[channel].totalCost += amount * 0.6;
-
-        const commissionRate = channel === "Direct" ? 0 : 0.05;
-        channelData[channel].commission += amount * commissionRate;
+      if (isCompleted) {
+        salesMethodData[method].completedOrders += 1;
+        salesMethodData[method].completedRevenue += Math.abs(amount);
+      } else if (isCancelled) {
+        salesMethodData[method].cancelledOrders += 1;
+        salesMethodData[method].cancelledRevenue += Math.abs(amount);
       } else {
-        channelData[channel].returnValue += Math.abs(amount);
+        // Default to completed for positive amounts
+        salesMethodData[method].completedOrders += 1;
+        salesMethodData[method].completedRevenue += Math.abs(amount);
       }
 
-      const items = transaction.items || [];
-      items.forEach((item: any) => {
-        channelData[channel].totalProducts += Number(item.quantity || 1);
-      });
+      salesMethodData[method].totalOrders = salesMethodData[method].completedOrders + salesMethodData[method].cancelledOrders;
+      salesMethodData[method].totalRevenue = salesMethodData[method].completedRevenue + salesMethodData[method].cancelledRevenue;
     });
-
-    Object.values(channelData).forEach((data) => {
-      data.netRevenue = data.revenue - data.returnValue;
-      data.grossProfit = data.netRevenue - data.totalCost;
-      data.netProfit = data.grossProfit - data.commission;
-    });
-
-    const data = Object.values(channelData).sort(
-      (a, b) => b.netRevenue - a.netRevenue,
-    );
 
     return (
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
-            {t("reports.channelSalesReport")}
+            Báo cáo theo kênh bán hàng
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-            {t("reports.toDate")}: {formatDate(endDate)}
+            Từ ngày: {formatDate(startDate)} - Đến ngày: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t("reports.salesChannel")}</TableHead>
-                <TableHead className="text-center">
-                  {t("reports.orders")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {t("reports.totalProducts")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.revenue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.returnValue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.netRevenue")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.commission")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.grossProfit")}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t("reports.netProfit")}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.length > 0 ? (
-                data.map((item, index) => (
-                  <TableRow key={`${item.salesChannel}-${index}`}>
-                    <TableCell className="font-medium">
-                      {item.salesChannel}
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead 
+                    className="text-center font-bold bg-green-100 border" 
+                    rowSpan={2}
+                  >
+                    Hình thức bán
+                  </TableHead>
+                  <TableHead 
+                    className="text-center font-bold bg-green-100 border" 
+                    colSpan={3}
+                  >
+                    Tổng số đơn
+                  </TableHead>
+                  <TableHead 
+                    className="text-center font-bold bg-green-100 border" 
+                    colSpan={3}
+                  >
+                    Doanh thu
+                  </TableHead>
+                </TableRow>
+                <TableRow>
+                  <TableHead className="text-center bg-green-50 border">Đã hoàn thành</TableHead>
+                  <TableHead className="text-center bg-green-50 border">Đã hủy</TableHead>
+                  <TableHead className="text-center bg-green-50 border">Cộng</TableHead>
+                  <TableHead className="text-center bg-green-50 border">Đã hoàn thành</TableHead>
+                  <TableHead className="text-center bg-green-50 border">Đã hủy</TableHead>
+                  <TableHead className="text-center bg-green-50 border">Cộng</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Object.entries(salesMethodData).map(([method, data]) => (
+                  <TableRow key={method} className="hover:bg-gray-50">
+                    <TableCell className="font-medium text-center border bg-blue-50">
+                      {method}
                     </TableCell>
-                    <TableCell className="text-center">{item.orders}</TableCell>
-                    <TableCell className="text-center">
-                      {item.totalProducts}
+                    <TableCell className="text-center border">
+                      {data.completedOrders}
                     </TableCell>
-                    <TableCell className="text-right text-green-600">
-                      {formatCurrency(item.revenue)}
+                    <TableCell className="text-center border">
+                      {data.cancelledOrders}
                     </TableCell>
-                    <TableCell className="text-right text-red-600">
-                      {formatCurrency(item.returnValue)}
+                    <TableCell className="text-center border font-medium">
+                      {data.totalOrders}
                     </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(item.netRevenue)}
+                    <TableCell className="text-right border">
+                      {formatCurrency(data.completedRevenue)}
                     </TableCell>
-                    <TableCell className="text-right text-orange-600">
-                      {formatCurrency(item.commission)}
+                    <TableCell className="text-right border">
+                      {formatCurrency(data.cancelledRevenue)}
                     </TableCell>
-                    <TableCell className="text-right text-purple-600">
-                      {formatCurrency(item.grossProfit)}
-                    </TableCell>
-                    <TableCell className="text-right text-blue-600">
-                      {formatCurrency(item.netProfit)}
+                    <TableCell className="text-right border font-medium">
+                      {formatCurrency(data.totalRevenue)}
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center text-gray-500">
-                    {t("reports.noDataDescription")}
+                ))}
+                
+                {/* Summary Row */}
+                <TableRow className="bg-green-100 font-bold border-t-2">
+                  <TableCell className="text-center border font-bold">
+                    Cộng
+                  </TableCell>
+                  <TableCell className="text-center border">
+                    {Object.values(salesMethodData).reduce((sum, data) => sum + data.completedOrders, 0)}
+                  </TableCell>
+                  <TableCell className="text-center border">
+                    {Object.values(salesMethodData).reduce((sum, data) => sum + data.cancelledOrders, 0)}
+                  </TableCell>
+                  <TableCell className="text-center border font-bold">
+                    {Object.values(salesMethodData).reduce((sum, data) => sum + data.totalOrders, 0)}
+                  </TableCell>
+                  <TableCell className="text-right border">
+                    {formatCurrency(Object.values(salesMethodData).reduce((sum, data) => sum + data.completedRevenue, 0))}
+                  </TableCell>
+                  <TableCell className="text-right border">
+                    {formatCurrency(Object.values(salesMethodData).reduce((sum, data) => sum + data.cancelledRevenue, 0))}
+                  </TableCell>
+                  <TableCell className="text-right border font-bold">
+                    {formatCurrency(Object.values(salesMethodData).reduce((sum, data) => sum + data.totalRevenue, 0))}
                   </TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     );
