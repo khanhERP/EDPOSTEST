@@ -374,6 +374,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerSalesReport: "Báo cáo bán hàng khách hàng",
     channelSalesReport: "Báo cáo bán hàng kênh",
     employeeSalesReport: "Báo cáo bán hàng nhân viên",
+    employeeId: "Mã nhân viên",
+    customerId: "Mã khách hàng",
+    customerName: "Tên khách hàng",
 
     // Supplier reports
     supplierReportDescription: "Báo cáo chi tiết về nhà cung cấp",
