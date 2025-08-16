@@ -133,8 +133,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     printOptions: "Tùy chọn in",
 
     // Order report
-    orderReport: "Báo cáo đơn hàng",
-    orderReportTab: "Báo cáo đơn hàng",
+    orderReport: "Báo cáo mua hàng",
+    orderReportTab: "Báo cáo mua hàng",
     orderReportDescription: "Phân tích đơn hàng và sản phẩm",
     orderConcernType: "Loại quan tâm đơn hàng",
     transactionConcern: "Giao dịch",
