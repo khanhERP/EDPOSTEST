@@ -151,6 +151,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productSearch: "Loại sản phẩm",
     productSearchPlaceholder: "Tìm theo tên hoặc mã",
 
+    // Additional order report keys
+    orderReportByTransaction: "Báo cáo đơn hàng theo giao dịch",
+    orderReportByProduct: "Báo cáo đơn hàng theo sản phẩm",
+    orderCode: "Mã đơn hàng",
+    orderTime: "Thời gian đặt",
+    orderQuantity: "Số lượng đặt",
+    orderValue: "Giá trị đơn hàng",
+    productGroup: "Nhóm sản phẩm",
+
     // Purchase Report specific
     purchaseReport: "Báo cáo mua hàng",
     purchaseReportTitle: "Báo cáo mua hàng",
@@ -562,6 +571,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productSearch: "상품 유형",
     productSearchPlaceholder: "이름 또는 코드로 검색",
 
+    // Additional order report keys
+    orderReportByTransaction: "거래별 주문 보고서",
+    orderReportByProduct: "상품별 주문 보고서",
+    orderCode: "주문 코드",
+    orderTime: "주문 시간",
+    orderQuantity: "주문 수량",
+    orderValue: "주문 가치",
+    productGroup: "상품 그룹",
+
     // Purchase Report specific
     purchaseReport: "구매 보고서",
     purchaseReportTitle: "구매 보고서",
@@ -969,6 +987,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerSearchPlaceholder: "Search by name or phone",
     productSearch: "Product Type",
     productSearchPlaceholder: "Search by name or code",
+
+    // Additional order report keys
+    orderReportByTransaction: "Order Report by Transaction",
+    orderReportByProduct: "Order Report by Product",
+    orderCode: "Order Code",
+    orderTime: "Order Time",
+    orderQuantity: "Order Quantity",
+    orderValue: "Order Value",
+    productGroup: "Product Group",
 
     // Purchase Report specific
     purchaseReport: "Purchase Report",
