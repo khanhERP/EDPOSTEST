@@ -178,9 +178,9 @@ export function ReceiptModal({
         // Trigger print dialog
         printWindow.print();
 
-        // Auto close modals and print window after printing
-        printWindow.onafterprint = () => {
-          console.log("🖨️ Print completed, auto-closing all popups and print window");
+        // Auto close modals and print window after printing or saving
+        const handlePrintComplete = () => {
+          console.log("🖨️ Print/Save completed, auto-closing all popups and print window");
           
           // Force close print window immediately
           if (!printWindow.closed) {
@@ -189,7 +189,7 @@ export function ReceiptModal({
 
           // Auto close receipt modal and complete payment flow immediately after print
           setTimeout(() => {
-            console.log("🔄 Auto-closing receipt modal and completing payment after print");
+            console.log("🔄 Auto-closing receipt modal and completing payment after print/save");
             if (onConfirm) {
               // Complete the payment flow first
               onConfirm();
@@ -203,26 +203,29 @@ export function ReceiptModal({
           }, 200);
         };
 
+        // Handle print completion
+        printWindow.onafterprint = handlePrintComplete;
+
+        // Handle browser's save dialog completion (when user saves or cancels)
+        printWindow.addEventListener('beforeunload', handlePrintComplete);
+        
+        // Handle when print dialog is dismissed without printing
+        printWindow.addEventListener('focus', () => {
+          // Check if print dialog was closed without printing after a short delay
+          setTimeout(() => {
+            if (printWindow.document.hasFocus() && !printWindow.closed) {
+              console.log("🖨️ Print dialog likely dismissed, auto-closing window");
+              handlePrintComplete();
+            }
+          }, 500);
+        });
+
         // Handle manual close of print window
         const checkClosed = setInterval(() => {
           if (printWindow.closed) {
             console.log("🖨️ Print window closed manually, auto-closing all popups");
             clearInterval(checkClosed);
-
-            // Auto close receipt modal and complete payment when print window is closed manually
-            setTimeout(() => {
-              console.log("🔄 Auto-closing receipt modal and completing payment after manual print window close");
-              if (onConfirm) {
-                // Complete the payment flow first
-                onConfirm();
-              }
-              // Close the receipt modal
-              onClose();
-              
-              // Close any other modals that might be open
-              setShowEInvoiceModal(false);
-              setShowPaymentMethodModal(false);
-            }, 200);
+            handlePrintComplete();
           }
         }, 500);
 
