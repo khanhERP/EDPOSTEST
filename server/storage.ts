@@ -536,6 +536,41 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  // Generate next customer ID
+  async getNextCustomerId(database?: Database): Promise<string> {
+    try {
+      const dbToUse = database || db;
+      
+      // Get the last customer ID
+      const [lastCustomer] = await dbToUse
+        .select({ customerId: customers.customerId })
+        .from(customers)
+        .where(like(customers.customerId, "CUST%"))
+        .orderBy(desc(customers.customerId))
+        .limit(1);
+
+      if (!lastCustomer) {
+        return "CUST001";
+      }
+
+      // Extract number from last customer ID (CUST001 -> 001)
+      const lastId = lastCustomer.customerId;
+      const match = lastId.match(/CUST(\d+)/);
+
+      if (match) {
+        const lastNumber = parseInt(match[1], 10);
+        const nextNumber = lastNumber + 1;
+        return `CUST${nextNumber.toString().padStart(3, "0")}`;
+      }
+
+      // Fallback if format doesn't match
+      return "CUST001";
+    } catch (error) {
+      console.error("Error generating next customer ID:", error);
+      return "CUST001";
+    }
+  }
+
   // Employee methods
   async getEmployees(): Promise<Employee[]> {
     return await db

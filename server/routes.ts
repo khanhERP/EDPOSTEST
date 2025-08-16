@@ -21,6 +21,7 @@ import {
   invoiceTemplates,
   invoices,
   invoiceItems,
+  customers,
 } from "@shared/schema";
 import { initializeSampleData, db } from "./db";
 import { registerTenantRoutes } from "./tenant-routes";
@@ -1288,6 +1289,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Supplier deleted successfully" });
     } catch (error) {
       res.status(500).json({ message: "Failed to delete supplier" });
+    }
+  });
+
+  // Get next customer ID
+  app.get("/api/customers/next-id", async (req: TenantRequest, res) => {
+    try {
+      const tenantDb = await getTenantDatabase(req);
+      const nextId = await storage.getNextCustomerId(tenantDb);
+      res.json({ nextId });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate customer ID" });
     }
   });
 
