@@ -587,7 +587,50 @@ export function PaymentMethodModal({
   }, [isOpen, currentTransactionUuid, removePaymentListener, showQRCode, qrCodeUrl, wasShowingQRCode]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={(open) => {
+        if (!open) {
+          // When dialog is closed via X button or outside click
+          try {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            const ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+              console.log('Payment Modal: Sending clear message from X button close');
+              // If QR code was showing, send cancellation and restore cart
+              if (showQRCode || qrCodeUrl) {
+                ws.send(JSON.stringify({
+                  type: 'qr_payment_cancelled',
+                  timestamp: new Date().toISOString()
+                }));
+                // Wait a bit then send cart restore message
+                setTimeout(() => {
+                  ws.send(JSON.stringify({
+                    type: 'restore_cart_display',
+                    timestamp: new Date().toISOString(),
+                    reason: 'payment_dialog_x_button'
+                  }));
+                  ws.close();
+                }, 100);
+              } else {
+                // Just send cart restore message if no QR code
+                ws.send(JSON.stringify({
+                  type: 'restore_cart_display',
+                  timestamp: new Date().toISOString(),
+                  reason: 'payment_dialog_x_button'
+                }));
+                ws.close();
+              }
+            };
+          } catch (error) {
+            console.error('Failed to send clear message when X button clicked:', error);
+          }
+        }
+        onClose();
+      }}
+    >
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{t("common.selectPaymentMethod")}</DialogTitle>
