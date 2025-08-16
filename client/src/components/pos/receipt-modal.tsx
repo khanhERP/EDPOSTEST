@@ -43,7 +43,7 @@ export function ReceiptModal({
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const { t } = useTranslation();
 
-  console.log("Receipt Modal opened with:", { isOpen, hasReceipt: !!receipt });
+  console.log("Receipt Modal:", { isOpen, hasReceipt: !!receipt, isPreview });
 
   // Query store settings to get dynamic address
   const { data: storeSettings } = useQuery({
@@ -251,11 +251,19 @@ export function ReceiptModal({
             <div className="flex justify-center space-x-3">
               <Button
                 onClick={handlePrint}
-                className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+                className="bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
               >
                 <Printer className="mr-2" size={16} />
                 {t('pos.printReceipt')}
               </Button>
+              {onConfirm && (
+                <Button
+                  onClick={onConfirm}
+                  className="bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
+                >
+                  {t('pos.complete')}
+                </Button>
+              )}
             </div>
           )}
         </div>

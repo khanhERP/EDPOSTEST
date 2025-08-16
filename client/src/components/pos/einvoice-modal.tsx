@@ -606,14 +606,10 @@ export function EInvoiceModal({
 
       console.log("✅ Calling onConfirm with publishLater data and receipt");
       console.log("📄 Receipt data to display:", receiptData);
-      
-      // Đóng modal e-invoice TRƯỚC KHI gọi onConfirm
+
+      // Close e-invoice modal and return data
       onClose();
-      
-      // Gọi onConfirm để hiển thị receipt modal sau khi modal e-invoice đóng
-      setTimeout(() => {
-        onConfirm(completeInvoiceData);
-      }, 300); // Tăng delay để đảm bảo modal e-invoice đóng hoàn toàn
+      onConfirm(completeInvoiceData);
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
 
@@ -1110,41 +1106,9 @@ export function EInvoiceModal({
 
         console.log("✅ Prepared comprehensive invoice result:", invoiceResult);
 
-        // Đóng modal e-invoice TRƯỚC KHI gọi onConfirm để tránh conflict
+        // Close e-invoice modal and return data
         onClose();
-
-        // Xử lý logic khác nhau theo nguồn gọi
-        if (source === "pos") {
-          // Logic cho POS: hiển thị receipt modal
-          console.log(
-            "🏪 POS E-Invoice: Processing payment completion and showing receipt",
-          );
-
-          // Gọi onConfirm để hiển thị receipt modal
-          onConfirm(invoiceResult);
-        } else if (source === "table" && orderId) {
-          // Logic cho Table: Tự hoàn tất thanh toán luôn
-          console.log(
-            "🍽️ Table E-Invoice: Completing payment directly for order:",
-            orderId,
-          );
-          console.log("🍽️ Invoice data received:", result.data);
-
-          // Gọi onConfirm để parent component biết về việc phát hành thành công
-          onConfirm(invoiceResult);
-
-          // Gọi mutation để hoàn tất thanh toán ngay lập tức
-          console.log("🍽️ Executing payment completion for order:", orderId);
-          completePaymentMutation.mutate({
-            orderId: orderId,
-            paymentMethod: "einvoice",
-          });
-        } else {
-          // Fallback: trả về data cho parent component xử lý
-          console.log("🔄 Fallback: Returning data to parent");
-
-          onConfirm(invoiceResult);
-        }
+        onConfirm(invoiceResult);
       } else {
         throw new Error(
           result.message || "Có lỗi xảy ra khi phát hành hóa đơn",

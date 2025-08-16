@@ -216,269 +216,102 @@ export function ShoppingCart({
   const handleCheckout = () => {
     if (cart.length === 0) return;
 
-    console.log("=== SHOPPING CART CHECKOUT DEBUG ===");
-    console.log("Cart items before checkout:", cart);
-    console.log("Cart items count:", cart.length);
-    console.log("Cart items details:", JSON.stringify(cart, null, 2));
+    console.log("🛒 Starting checkout process");
+    console.log("Cart items:", cart.length);
 
-    // Always use bank transfer payment
-    {
-      // Show receipt preview first for non-cash payments
-      const receipt = {
-        transactionId: `TXN-${Date.now()}`,
-        items: cart.map((item) => ({
-          id: item.id,
-          productId: item.id,
-          productName: item.name,
-          price: parseFloat(item.price).toFixed(2),
-          quantity: item.quantity,
-          total: parseFloat(item.total).toFixed(2),
-          sku: `ITEM${String(item.id).padStart(3, "0")}`,
-          taxRate: parseFloat(item.taxRate || "10"),
-        })),
-        subtotal: subtotal.toFixed(2),
-        tax: tax.toFixed(2),
-        total: total.toFixed(2),
-        paymentMethod: "preview", // Sử dụng "preview" thay vì "bankTransfer" để phân biệt
-        amountReceived: total.toFixed(2),
-        change: "0.00",
-        cashierName: "John Smith",
-        createdAt: new Date().toISOString(),
-      };
-
-      // Create cartItems in the format expected by receipt modal with detailed logging
-      console.log("🛒 Processing cart items for receipt:", cart);
-      console.log("🛒 Cart items count:", cart.length);
-
-      const cartItemsForReceipt = cart.map((item) => {
-        console.log(`🔍 Processing cart item ${item.id}:`, {
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          priceType: typeof item.price,
-          quantity: item.quantity,
-          quantityType: typeof item.quantity,
-          taxRate: item.taxRate,
-          total: item.total,
-          sku: item.id,
-        });
-
-        const processedItem = {
-          id: item.id,
-          name: item.name,
-          price:
-            typeof item.price === "string"
-              ? parseFloat(item.price)
-              : item.price,
-          quantity:
-            typeof item.quantity === "string"
-              ? parseInt(item.quantity)
-              : item.quantity,
-          sku: item.id, // Use more descriptive SKU format
-          taxRate:
-            typeof item.taxRate === "string"
-              ? parseFloat(item.taxRate || "10")
-              : item.taxRate || 10,
-          total: parseFloat(item.total),
-        };
-        console.log(`📦 Processed item ${item.id}:`, processedItem);
-        return processedItem;
-      });
-
-      console.log("✅ Final cartItemsForReceipt:", cartItemsForReceipt);
-      console.log("✅ CartItemsForReceipt count:", cartItemsForReceipt.length);
-
-      console.log("Receipt created with items:", receipt.items);
-      console.log("Cart items for receipt:", cartItemsForReceipt);
-      console.log("Setting preview receipt:", receipt);
-
-      setPreviewReceipt(receipt);
-      setShowReceiptPreview(true);
-    }
+    // Show payment method modal directly
+    setShowPaymentMethodModal(true);
   };
 
   const handleReceiptConfirm = () => {
-    console.log("📄 Receipt confirmed, checking payment method");
+    console.log("📄 Receipt confirmed - clearing cart and closing modal");
     
-    // Keep receipt modal open - only close if user explicitly closes it
-    // Do not auto-close receipt modal
+    // Close receipt modal
+    setShowReceiptPreview(false);
+    setPreviewReceipt(null);
     
-    // Kiểm tra xem có phải là receipt từ e-invoice không
-    const isEInvoiceReceipt = previewReceipt?.paymentMethod === "einvoice" ||
-                             previewReceipt?.isEInvoiceReceipt ||
-                             previewReceipt?.publishLater ||
-                             previewReceipt?.publishedImmediately;
-
-    console.log("🔍 Receipt analysis:", {
-      paymentMethod: previewReceipt?.paymentMethod,
-      isEInvoiceReceipt: previewReceipt?.isEInvoiceReceipt,
-      publishLater: previewReceipt?.publishLater,
-      publishedImmediately: previewReceipt?.publishedImmediately,
-      customerTaxCode: previewReceipt?.customerTaxCode,
-      customerName: previewReceipt?.customerName,
-      finalIsEInvoiceReceipt: isEInvoiceReceipt
-    });
-
-    // Nếu đây là receipt từ e-invoice (đã xử lý xong), không hiển thị payment method modal
-    if (isEInvoiceReceipt) {
-      console.log("✅ E-invoice receipt confirmed, transaction completed - not showing payment method modal");
-      console.log("🎯 E-invoice process completed, receipt confirmed successfully");
-      return; // Kết thúc luôn, không hiển thị payment method modal
-    }
-
-    // Chỉ hiển thị payment method modal nếu chưa có thanh toán nào được xử lý
-    // Tránh hiển thị lại sau khi e-invoice đã xử lý xong
-    if (
-      !previewReceipt?.paymentMethod ||
-      previewReceipt?.paymentMethod === "preview"
-    ) {
-      console.log("💳 Showing payment method modal for new transaction");
-      setShowPaymentMethodModal(true);
-    } else {
-      console.log(
-        "✅ Payment already processed, not showing payment method modal",
-      );
-    }
+    // Clear cart after successful transaction
+    onClearCart();
+    
+    console.log("✅ Transaction completed and cart cleared");
   };
 
   const handlePaymentMethodSelect = (method: string, eInvoiceData?: any) => {
     console.log("💳 Payment method selected:", method);
-    console.log("📧 E-invoice data received:", eInvoiceData);
-
-    // Đóng payment modal NGAY LẬP TỨC cho tất cả trường hợp
-    console.log("🔒 Closing payment modal immediately");
+    
+    // Close payment modal
     setShowPaymentMethodModal(false);
 
-    // Kiểm tra nếu đây là e-invoice và có data
+    // Handle e-invoice case
     if (method === "einvoice" && eInvoiceData) {
-      console.log("📧 Processing e-invoice data in shopping cart");
-      console.log("🔍 E-invoice data type check:", {
-        publishLater: eInvoiceData.publishLater,
-        publishedImmediately: eInvoiceData.publishedImmediately,
-        showReceiptModal: eInvoiceData.showReceiptModal,
-        autoShowPrint: eInvoiceData.autoShowPrint,
-      });
+      console.log("📧 Processing e-invoice payment");
+      
+      if (eInvoiceData.receipt) {
+        // Show receipt modal with e-invoice data
+        setPreviewReceipt({
+          ...eInvoiceData.receipt,
+          paymentMethod: "einvoice",
+          isEInvoiceReceipt: true,
+          publishLater: eInvoiceData.publishLater,
+          publishedImmediately: eInvoiceData.publishedImmediately,
+          customerName: eInvoiceData.customerName,
+          customerTaxCode: eInvoiceData.taxCode,
+          invoiceNumber: eInvoiceData.invoiceNumber
+        });
+        setShowReceiptPreview(true);
 
-      // Ngăn không cho payment method modal hiển thị lại
-      console.log("🚫 Preventing payment method modal from reopening");
+        // Show success message
+        const successMessage = eInvoiceData.publishLater
+          ? "Thông tin hóa đơn điện tử đã được lưu để phát hành sau."
+          : eInvoiceData.publishedImmediately
+            ? `Hóa đơn điện tử đã được phát hành thành công! Số HĐ: ${eInvoiceData.invoiceNumber || "N/A"}`
+            : "Hóa đơn điện tử đã được xử lý thành công.";
 
-      // Xử lý tất cả trường hợp e-invoice (phát hành sau hoặc phát hành ngay)
-      if (
-        eInvoiceData.publishLater ||
-        eInvoiceData.publishedImmediately ||
-        eInvoiceData.showReceiptModal
-      ) {
-        console.log("📧 Processing e-invoice case - showing receipt modal");
-        console.log("📄 E-invoice data:", eInvoiceData);
-
-        // Đảm bảo payment modal đã đóng hoàn toàn
-        setShowPaymentMethodModal(false);
-
-        // Hiển thị receipt modal ngay lập tức
-        if (eInvoiceData.receipt) {
-          console.log("📄 Displaying receipt modal with e-invoice data");
-          setPreviewReceipt(eInvoiceData.receipt);
-          setShowReceiptPreview(true);
-
-          // Keep cart and receipt modal open - let user control when to close
-
-          // Show appropriate success message
-          const successMessage = eInvoiceData.publishLater
-            ? "Thông tin hóa đơn điện tử đã được lưu để phát hành sau."
-            : eInvoiceData.publishedImmediately
-              ? `Hóa đơn điện tử đã được phát hành thành công! Số HĐ: ${eInvoiceData.invoiceNumber || "N/A"}`
-              : "Hóa đơn điện tử đã được xử lý thành công.";
-
-          toast({
-            title: "Thành công",
-            description: successMessage,
-          });
-
-          console.log("✅ Receipt modal displayed for e-invoice");
-        } else {
-          // Fallback nếu không có receipt data từ e-invoice
-          console.log(
-            "⚠️ No receipt data from e-invoice, creating fallback receipt",
-          );
-
-          // Tạo fallback receipt từ cart data
-          const fallbackReceipt = {
-            transactionId: `TXN-${Date.now()}`,
-            items: cart.map((item) => ({
-              id: item.id,
-              productId: item.id,
-              productName: item.name,
-              price: parseFloat(item.price).toFixed(2),
-              quantity: item.quantity,
-              total: (parseFloat(item.price) * item.quantity).toFixed(2),
-              sku: `FOOD${String(item.id).padStart(5, "0")}`,
-              taxRate: parseFloat(item.taxRate || "10"),
-            })),
-            subtotal: (total / 1.1).toFixed(2),
-            tax: (total - total / 1.1).toFixed(2),
-            total: total.toFixed(2),
-            paymentMethod: "einvoice",
-            amountReceived: total.toFixed(2),
-            change: "0.00",
-            cashierName: "System User",
-            createdAt: new Date().toISOString(),
-            customerName: eInvoiceData.customerName || "Khách hàng lẻ",
-            customerTaxCode: eInvoiceData.taxCode,
-          };
-
-          console.log("📄 Created fallback receipt:", fallbackReceipt);
-
-          setPreviewReceipt(fallbackReceipt);
-          setShowReceiptPreview(true);
-
-          // Keep cart and receipt modal open - let user control when to close
-
-          toast({
-            title: "Thành công",
-            description: "Thông tin hóa đơn điện tử đã được xử lý.",
-          });
-        }
-
-        console.log("✅ E-invoice processing completed, returning early");
-        return; // Ngăn không cho logic payment khác chạy
+        toast({
+          title: "Thành công",
+          description: successMessage,
+        });
       }
-
-      // Nếu không có showReceiptModal, vẫn không hiển thị payment method modal
-      console.log(
-        "✅ E-invoice processing completed, payment method modal remains closed",
-      );
-      return; // Thêm return để tránh chạy logic payment khác
+      return;
     }
 
-    // Existing payment method logic for non-e-invoice methods
+    // Handle regular payment methods
     console.log("💰 Processing regular payment method:", method);
-    if (method === "cash") {
-      // Cash payment logic
-      const paymentData = {
-        paymentMethod: method,
-        amountReceived: parseFloat(amountReceived || "0"),
-        change: change,
-      };
-      onCheckout(paymentData);
-    } else if (method === "bankTransfer") {
-      // Bank transfer logic
-      const paymentData = {
-        paymentMethod: method,
-        amountReceived: total, // Assume full amount is received for bank transfer
-        change: 0,
-      };
-      onCheckout(paymentData);
-    } else if (method === "creditCard") {
-      // Placeholder for credit card payment, you might need more specific data
-      const paymentData = {
-        paymentMethod: method,
-        cardType: selectedCardMethod, // Use the selected card method
-        amountReceived: total,
-        change: 0,
-      };
-      onCheckout(paymentData);
-    }
-    // Add other payment methods here
+    
+    // Create receipt for regular payment
+    const receipt = {
+      transactionId: `TXN-${Date.now()}`,
+      items: cart.map((item) => ({
+        id: item.id,
+        productId: item.id,
+        productName: item.name,
+        price: parseFloat(item.price).toFixed(2),
+        quantity: item.quantity,
+        total: parseFloat(item.total).toFixed(2),
+        sku: `ITEM${String(item.id).padStart(3, "0")}`,
+        taxRate: parseFloat(item.taxRate || "10"),
+      })),
+      subtotal: subtotal.toFixed(2),
+      tax: tax.toFixed(2),
+      total: total.toFixed(2),
+      paymentMethod: method,
+      amountReceived: total.toFixed(2),
+      change: "0.00",
+      cashierName: "System User",
+      createdAt: new Date().toISOString(),
+    };
+
+    // Show receipt modal
+    setPreviewReceipt(receipt);
+    setShowReceiptPreview(true);
+
+    // Process the payment
+    const paymentData = {
+      paymentMethod: method,
+      amountReceived: total,
+      change: 0,
+    };
+    onCheckout(paymentData);
   };
 
   const handleCardPaymentMethodSelect = (method: string) => {
