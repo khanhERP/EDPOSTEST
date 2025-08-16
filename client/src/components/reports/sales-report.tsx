@@ -56,8 +56,15 @@ export function SalesReport() {
 
 
 
-  const { data: transactions } = useQuery({
+  const { data: transactions, isLoading: transactionsLoading } = useQuery({
     queryKey: ["/api/transactions", startDate, endDate],
+    queryFn: async () => {
+      const response = await fetch(`/api/transactions/${startDate}/${endDate}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions');
+      }
+      return response.json();
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 
@@ -83,17 +90,19 @@ export function SalesReport() {
         transaction.createdAt || transaction.created_at,
       );
 
-      // Tạo date objects để so sánh chính xác
+      // Tạo date objects để so sánh chính xác  
       const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      
       const end = new Date(endDate);
-      // Set end date to end of day
       end.setHours(23, 59, 59, 999);
 
-      // Reset transaction date to start of day for comparison
-      const transactionDateOnly = new Date(transactionDate);
-      transactionDateOnly.setHours(0, 0, 0, 0);
+      // So sánh với timestamp thực
+      const transactionTimestamp = transactionDate.getTime();
+      const startTimestamp = start.getTime();
+      const endTimestamp = end.getTime();
 
-      const isInRange = transactionDateOnly >= start && transactionDateOnly <= end;
+      const isInRange = transactionTimestamp >= startTimestamp && transactionTimestamp <= endTimestamp;
       return isInRange;
     });
 
@@ -293,7 +302,7 @@ export function SalesReport() {
 
 
   const salesData = getSalesData();
-  const isLoading = !transactions;
+  const isLoading = transactionsLoading || !transactions;
 
   const peakHour = salesData ? Object.entries(salesData.hourlySales).reduce(
     (peak, [hour, revenue]) =>
