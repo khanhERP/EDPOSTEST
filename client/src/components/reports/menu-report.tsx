@@ -169,7 +169,10 @@ export function MenuReport() {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"></CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="w-5 h-5" />
+            {t("reports.filters")}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Date Range Filter */}
@@ -328,7 +331,7 @@ export function MenuReport() {
       <Card>
         <CardHeader>
           <CardTitle>{t("reports.categoryPerformance")}</CardTitle>
-          <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+          <CardDescription>{t("reports.categoryBreakdown")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
