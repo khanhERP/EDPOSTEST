@@ -1,4 +1,3 @@
-
 import { type ReportsTranslations } from '../types';
 
 export const reportsTranslations: { [key: string]: ReportsTranslations } = {
@@ -27,21 +26,21 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalOrders: "Tổng đơn hàng",
     totalQuantitySold: "Tổng số lượng bán",
     averageOrderValue: "Giá trị đơn hàng TB",
-    
+
     // Filter options
     filterByDate: "Lọc theo ngày",
     dateRange: "Khoảng thời gian",
-    
+
     // Chart titles
     dailySalesChart: "Biểu đồ doanh số hàng ngày",
     paymentMethodChart: "Biểu đồ phương thức thanh toán",
     hourlyBreakdownChart: "Phân tích theo giờ",
     topProductsChart: "Sản phẩm bán chạy",
-    
+
     // Payment methods
     paymentMethodBreakdown: "Phân tích phương thức thanh toán",
     paymentMethodDetails: "Chi tiết phương thức thanh toán và phân tích doanh số hàng ngày",
-    
+
     // Tab names for reports
     salesAnalysisTab: "Phân tích bán hàng",
     menuAnalysisTab: "Phân tích menu",
@@ -312,21 +311,21 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalOrders: "총 주문",
     totalQuantitySold: "총 판매량",
     averageOrderValue: "평균 주문 가치",
-    
+
     // Filter options
     filterByDate: "날짜별 필터",
     dateRange: "날짜 범위",
-    
+
     // Chart titles
     dailySalesChart: "일일 매출 차트",
     paymentMethodChart: "결제 방법 차트",
     hourlyBreakdownChart: "시간별 분석",
     topProductsChart: "인기 상품",
-    
+
     // Payment methods
     paymentMethodBreakdown: "결제 방법 분석",
     paymentMethodDetails: "결제 방법별 분석을 확인하세요",
-    
+
     // Tab names for reports
     salesAnalysisTab: "매출 분석",
     menuAnalysisTab: "메뉴 분석",
@@ -599,21 +598,21 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalOrders: "Total Orders",
     totalQuantitySold: "Total Quantity Sold",
     averageOrderValue: "Average Order Value",
-    
+
     // Filter options
     filterByDate: "Filter by Date",
     dateRange: "Date Range",
-    
+
     // Chart titles
     dailySalesChart: "Daily Sales Chart",
     paymentMethodChart: "Payment Method Chart",
     hourlyBreakdownChart: "Hourly Breakdown",
     topProductsChart: "Top Products",
-    
+
     // Payment methods
     paymentMethodBreakdown: "Payment Method Breakdown",
     paymentMethodDetails: "Check payment method analysis and daily sales breakdown",
-    
+
     // Tab names for reports
     salesAnalysisTab: "Sales Analysis",
     menuAnalysisTab: "Menu Analysis", 
