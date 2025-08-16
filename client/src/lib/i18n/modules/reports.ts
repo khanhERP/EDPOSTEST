@@ -151,6 +151,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productSearch: "Loại sản phẩm",
     productSearchPlaceholder: "Tìm theo tên hoặc mã",
 
+    // Purchase Report specific
+    purchaseReport: "Báo cáo mua hàng",
+    purchaseReportTitle: "Báo cáo mua hàng",
+    purchaseReportDescription: "Báo cáo chi tiết về hoạt động mua hàng",
+
     // Sales chart report
     salesChart: "Biểu đồ bán hàng",
     salesChartDescription: "Báo cáo chi tiết về doanh số và phân tích theo thời gian",
@@ -557,6 +562,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     productSearch: "상품 유형",
     productSearchPlaceholder: "이름 또는 코드로 검색",
 
+    // Purchase Report specific
+    purchaseReport: "구매 보고서",
+    purchaseReportTitle: "구매 보고서",
+    purchaseReportDescription: "구매 활동에 대한 상세 보고서",
+
     // Sales chart report
     salesChart: "매출 차트",
     salesChartDescription: "매출 세부 분석 및 시간별 분석",
@@ -959,6 +969,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerSearchPlaceholder: "Search by name or phone",
     productSearch: "Product Type",
     productSearchPlaceholder: "Search by name or code",
+
+    // Purchase Report specific
+    purchaseReport: "Purchase Report",
+    purchaseReportTitle: "Purchase Report",
+    purchaseReportDescription: "Detailed purchase activity report",
 
     // Sales chart report
     salesChart: "Sales Chart",
