@@ -283,7 +283,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                               }}
                             >
                               <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.dashboard')}</span>
+                              <span className="truncate">{t('navigation.dashboard')}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=sales">
@@ -353,7 +353,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                               }}
                             >
                               <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t("navigation.purchaseReport")}</span>
+                              <span className="truncate">{t("navigation.orderReport")}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=inventory">

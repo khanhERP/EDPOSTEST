@@ -45,6 +45,7 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     salesChart: 'Sales Chart',
     purchaseReport: 'Purchase Report',
     warehouseReport: 'Warehouse Report',
+    orderReport: 'Order Report',
   },
   vi: {
     pos: 'Bán hàng',
@@ -68,5 +69,6 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     salesChart: 'Báo cáo bán hàng',
     purchaseReport: 'Báo cáo mua hàng',
     warehouseReport: 'Báo cáo kho',
+    orderReport: 'Báo cáo đơn hàng',
   },
 };
