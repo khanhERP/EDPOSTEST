@@ -400,7 +400,6 @@ export function ShoppingCart({
               "Thông tin hóa đơn điện tử đã được lưu để phát hành sau.",
           });
         }
-        }, 200); // Đợi payment modal đóng hoàn toàn
 
         console.log("✅ E-invoice later processing scheduled");
         return;
