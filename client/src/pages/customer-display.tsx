@@ -13,6 +13,22 @@ export default function CustomerDisplayPage() {
     transactionUuid: string;
   } | null>(null);
 
+  // Auto-clear QR payment after 5 minutes if not manually cleared
+  useEffect(() => {
+    if (qrPayment) {
+      console.log("Customer Display: QR payment shown, setting 5-minute auto-clear timer");
+      const timeoutId = setTimeout(() => {
+        console.log("Customer Display: Auto-clearing QR payment after timeout");
+        setQrPayment(null);
+      }, 5 * 60 * 1000); // 5 minutes
+
+      return () => {
+        console.log("Customer Display: Clearing QR payment timeout");
+        clearTimeout(timeoutId);
+      };
+    }
+  }, [qrPayment]);
+
   // Calculate totals
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
@@ -41,10 +57,15 @@ export default function CustomerDisplayPage() {
           console.log("Customer Display: WebSocket connected");
           isConnected = true;
           // Send identification as customer display
-          ws.send(JSON.stringify({ 
-            type: 'customer_display_connected',
-            timestamp: new Date().toISOString()
-          }));
+          try {
+            ws.send(JSON.stringify({ 
+              type: 'customer_display_connected',
+              timestamp: new Date().toISOString()
+            }));
+            console.log("Customer Display: Identification message sent");
+          } catch (error) {
+            console.error("Customer Display: Failed to send identification:", error);
+          }
         };
 
         ws.onmessage = (event) => {
@@ -89,9 +110,14 @@ export default function CustomerDisplayPage() {
                 setCart([]);
                 break;
               case 'qr_payment_cancelled':
-                console.log("Customer Display: QR payment cancelled, clearing QR and showing cart");
-                setQrPayment(null);
-                // Keep cart visible (don't clear it)
+                console.log("Customer Display: QR payment cancelled, clearing QR and restoring cart");
+                setQrPayment(prevQr => {
+                  if (prevQr) {
+                    console.log("Customer Display: Clearing QR payment state");
+                    return null;
+                  }
+                  return prevQr;
+                });
                 break;
               case 'refresh_customer_display':
                 console.log("Customer Display: Refresh requested, reloading page in 500ms");
@@ -103,9 +129,14 @@ export default function CustomerDisplayPage() {
                 break;
               case 'restore_cart_display':
                 console.log("Customer Display: Restoring cart display, clearing QR payment");
-                // Clear QR payment to show cart again
-                setQrPayment(null);
-                // Cart should already be available, no need to modify it
+                // Force clear QR payment to show cart again
+                setQrPayment(prevQr => {
+                  if (prevQr) {
+                    console.log("Customer Display: Force clearing QR payment to restore cart view");
+                    return null;
+                  }
+                  return prevQr;
+                });
                 break;
               default:
                 console.log("Customer Display: Unknown message type:", data.type);

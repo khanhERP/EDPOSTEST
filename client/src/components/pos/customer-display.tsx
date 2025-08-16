@@ -234,6 +234,15 @@ export function CustomerDisplay({
           <p className="text-sm text-gray-500">
             Cảm ơn bạn đã mua sắm tại {storeInfo?.name || "IDMC Store"}
           </p>
+          {/* Hidden refresh button - double click to refresh */}
+          <button
+            onClick={() => window.location.reload()}
+            onDoubleClick={() => window.location.reload()}
+            className="invisible hover:visible absolute bottom-2 right-2 text-xs text-gray-300 hover:text-gray-600 bg-transparent border-none cursor-pointer"
+            title="Double click to refresh display"
+          >
+            🔄
+          </button>
         </div>
       </div>
     </div>
