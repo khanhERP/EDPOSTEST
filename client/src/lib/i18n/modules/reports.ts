@@ -1,11 +1,12 @@
+
 import { type ReportsTranslations } from '../types';
 
 export const reportsTranslations: { [key: string]: ReportsTranslations } = {
   vi: {
     title: "Báo cáo",
     description: "Xem báo cáo bán hàng và vận hành",
-    dashboard: "Bảng điều khiển",
-    dashboardDescription: "Bảng điều khiển về tổng doanh số và trạng thái hoạt động",
+    dashboard: "Tổng quan",
+    dashboardDescription: "Tổng quan về doanh số và trạng thái hoạt động",
     salesAnalysis: "Phân tích bán hàng",
     menuAnalysis: "Phân tích menu",
     tableAnalysis: "Phân tích bàn",
@@ -27,6 +28,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     totalQuantitySold: "Tổng số lượng bán",
     averageOrderValue: "Giá trị đơn hàng trung bình",
     periodRevenue: "Doanh thu kỳ",
+    occupiedTables: "Bàn đang sử dụng",
+    monthRevenue: "Doanh thu tháng",
     realTimeStatus: "Trạng thái thời gian thực",
     pendingOrders: "Đơn hàng đang chờ",
     count: "đơn",
@@ -132,11 +135,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     to: "đến",
     printOptions: "Tùy chọn in",
 
-    // Order report
+    // Order report - Updated to Purchase Report
     orderReport: "Báo cáo mua hàng",
     orderReportTab: "Báo cáo mua hàng",
-    orderReportDescription: "Phân tích đơn hàng và sản phẩm",
-    orderConcernType: "Loại quan tâm đơn hàng",
+    orderReportDescription: "Phân tích đơn mua hàng và sản phẩm",
+    orderConcernType: "Loại quan tâm mua hàng",
     transactionConcern: "Giao dịch",
     productConcern: "Sản phẩm",
     orderStatus: "Trạng thái",
@@ -255,12 +258,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     utilizationRate: "Tỷ lệ sử dụng",
     averageRevenue: "Doanh thu trung bình",
     peakHours: "Giờ cao điểm",
-    tableUtilization: "Sử dụng bàn",
     revenuePerTable: "Doanh thu mỗi bàn",
     ordersPerTable: "Đơn hàng mỗi bàn",
 
     // Sales report specific
-    salesReport: "Báo cáo bán hàng",
     salesReportDescription: "Phân tích chi tiết về doanh số bán hàng",
     loading: "Đang tải",
     noData: "Không có dữ liệu",
@@ -272,15 +273,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     centralBranch: "Chi nhánh trung tâm",
 
     // Report specific content
-    salesReportTitle: "Tiêu đề báo cáo bán hàng",
-    revenueReportTitle: "Tiêu đề báo cáo doanh thu",
-    inventoryReportTitle: "Tiêu đề báo cáo hàng hóa",
-    summaryReportTitle: "Tiêu đề báo cáo tóm tắt",
+    salesReportTitle: "Báo cáo bán hàng",
+    revenueReportTitle: "Báo cáo doanh thu",
+    inventoryReportTitle: "Báo cáo hàng hóa",
+    summaryReportTitle: "Báo cáo tóm tắt",
 
     // Table detail headers
-    salesDetailsHeader: "Tiêu đề chi tiết bán hàng",
-    revenueExpenseDetailsHeader: "Tiêu đề chi tiết thu chi",
-    inventoryDetailsHeader: "Tiêu đề chi tiết hàng hóa",
+    salesDetailsHeader: "Chi tiết bán hàng",
+    revenueExpenseDetailsHeader: "Chi tiết thu chi",
+    inventoryDetailsHeader: "Chi tiết hàng hóa",
 
     // Additional transaction types
     totalTransactions: "Tổng giao dịch",
@@ -336,8 +337,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Additional menu items
     warehouseReport: "Báo cáo kho",
     warehouseReportDescription: "Báo cáo chi tiết hoạt động kho",
-    orderReport: "Báo cáo đơn hàng",
-    salesChart: "Biểu đồ bán hàng",
 
     // Chart and filter labels
     selectDateRange: "Chọn khoảng thời gian",
@@ -484,11 +483,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     to: "~",
     printOptions: "인쇄 옵션",
 
-    // Order report
-    orderReport: "주문 보고서",
-    orderReportTab: "주문 보고서",
-    orderReportDescription: "주문 및 상품 분석",
-    orderConcernType: "관심사 유형",
+    // Order report - Updated to Purchase Report
+    orderReport: "구매 보고서",
+    orderReportTab: "구매 보고서",
+    orderReportDescription: "구매 주문 및 상품 분석",
+    orderConcernType: "구매 관심사 유형",
     transactionConcern: "거래",
     productConcern: "상품",
     orderStatus: "상태",
@@ -612,7 +611,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     ordersPerTable: "테이블당 주문",
 
     // Sales report specific
-    salesReport: "매출 보고서",
     salesReportDescription: "매출에 대한 상세 분석",
     loading: "로딩 중",
     noData: "데이터 없음",
@@ -624,15 +622,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     centralBranch: "중앙 지점",
 
     // Report specific content
-    salesReportTitle: "매출 보고서 제목",
-    revenueReportTitle: "수익 보고서 제목",
-    inventoryReportTitle: "재고 보고서 제목",
-    summaryReportTitle: "요약 보고서 제목",
+    salesReportTitle: "매출 보고서",
+    revenueReportTitle: "수익 보고서",
+    inventoryReportTitle: "재고 보고서",
+    summaryReportTitle: "요약 보고서",
 
     // Table detail headers
-    salesDetailsHeader: "매출 세부사항 헤더",
-    revenueExpenseDetailsHeader: "수입 지출 세부사항 헤더",
-    inventoryDetailsHeader: "재고 세부사항 헤더",
+    salesDetailsHeader: "매출 세부사항",
+    revenueExpenseDetailsHeader: "수입 지출 세부사항",
+    inventoryDetailsHeader: "재고 세부사항",
 
     // Additional transaction types
     totalTransactions: "총 거래",
@@ -688,8 +686,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Additional menu items
     warehouseReport: "창고 보고서",
     warehouseReportDescription: "창고 활동에 대한 상세 보고서",
-    orderReport: "주문 보고서",
-    salesChart: "매출 차트",
 
     // Chart and filter labels
     selectDateRange: "날짜 범위 선택",
@@ -836,11 +832,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     to: "to",
     printOptions: "Print Options",
 
-    // Order report
-    orderReport: "Order Report",
-    orderReportTab: "Order Report",
-    orderReportDescription: "Order and product analysis",
-    orderConcernType: "Order Concern Type",
+    // Order report - Updated to Purchase Report
+    orderReport: "Purchase Report",
+    orderReportTab: "Purchase Report",
+    orderReportDescription: "Purchase order and product analysis",
+    orderConcernType: "Purchase Concern Type",
     transactionConcern: "Transaction",
     productConcern: "Product",
     orderStatus: "Status",
@@ -964,7 +960,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     ordersPerTable: "Orders per Table",
 
     // Sales report specific
-    salesReport: "Sales Report",
     salesReportDescription: "Detailed analysis of sales performance",
     loading: "Loading",
     noData: "No Data",
@@ -976,15 +971,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     centralBranch: "Central Branch",
 
     // Report specific content
-    salesReportTitle: "Sales Report Title",
-    revenueReportTitle: "Revenue Report Title",
-    inventoryReportTitle: "Inventory Report Title",
-    summaryReportTitle: "Summary Report Title",
+    salesReportTitle: "Sales Report",
+    revenueReportTitle: "Revenue Report",
+    inventoryReportTitle: "Inventory Report",
+    summaryReportTitle: "Summary Report",
 
     // Table detail headers
-    salesDetailsHeader: "Sales Details Header",
-    revenueExpenseDetailsHeader: "Revenue Expense Details Header",
-    inventoryDetailsHeader: "Inventory Details Header",
+    salesDetailsHeader: "Sales Details",
+    revenueExpenseDetailsHeader: "Revenue Expense Details",
+    inventoryDetailsHeader: "Inventory Details",
 
     // Additional transaction types
     totalTransactions: "Total Transactions",
@@ -1040,8 +1035,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Additional menu items
     warehouseReport: "Warehouse Report",
     warehouseReportDescription: "Detailed warehouse activity report",
-    orderReport: "Order Report",
-    salesChart: "Sales Chart",
 
     // Chart and filter labels
     selectDateRange: "Select Date Range",
