@@ -825,7 +825,7 @@ export function SalesChartReport() {
             {Object.entries(dailySales).length > 0 && (
               <div className="flex items-center justify-between space-x-6 py-4">
                 <div className="flex items-center space-x-2">
-                  <p className="text-sm font-medium">{t("common.show")}</p>
+                  <p className="text-sm font-medium">{t("common.show")} </p>
                   <Select
                     value={pageSize.toString()}
                     onValueChange={(value) => {
@@ -844,7 +844,7 @@ export function SalesChartReport() {
                       <SelectItem value="100">100</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-sm font-medium">{t("common.rows")}</p>
+                  <p className="text-sm font-medium"> {t("common.rows")}</p>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -1169,7 +1169,7 @@ export function SalesChartReport() {
             <>
               <div className="flex items-center justify-between space-x-6 py-4">
                 <div className="flex items-center space-x-2">
-                  <p className="text-sm font-medium">{t("common.show")}</p>
+                  <p className="text-sm font-medium">{t("common.show")} </p>
                   <Select
                     value={productPageSize.toString()}
                     onValueChange={(value) => {
@@ -1188,7 +1188,7 @@ export function SalesChartReport() {
                       <SelectItem value="100">100</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-sm font-medium">{t("common.rows")}</p>
+                  <p className="text-sm font-medium"> {t("common.rows")}</p>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -1744,7 +1744,7 @@ export function SalesChartReport() {
           {data.length > 0 && (
             <div className="flex items-center justify-between space-x-6 py-4">
               <div className="flex items-center space-x-2">
-                <p className="text-sm font-medium">{t("common.show")}</p>
+                <p className="text-sm font-medium">{t("common.show")} </p>
                 <Select
                   value={employeePageSize.toString()}
                   onValueChange={(value) => {
@@ -1763,7 +1763,7 @@ export function SalesChartReport() {
                     <SelectItem value="100">100</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-sm font-medium">{t("common.rows")}</p>
+                <p className="text-sm font-medium"> {t("common.rows")}</p>
               </div>
 
               <div className="flex items-center space-x-2">
@@ -2120,7 +2120,7 @@ export function SalesChartReport() {
           {data.length > 0 && (
             <div className="flex items-center justify-between space-x-6 py-4">
               <div className="flex items-center space-x-2">
-                <p className="text-sm font-medium">{t("common.show")}</p>
+                <p className="text-sm font-medium">{t("common.show")} </p>
                 <Select
                   value={customerPageSize.toString()}
                   onValueChange={(value) => {
@@ -2139,7 +2139,7 @@ export function SalesChartReport() {
                     <SelectItem value="100">100</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-sm font-medium">{t("common.rows")}</p>
+                <p className="text-sm font-medium"> {t("common.rows")}</p>
               </div>
 
               <div className="flex items-center space-x-2">
