@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   Dialog,
@@ -56,11 +55,11 @@ export function PrintDialog({
 
   const handlePrint = async () => {
     setIsPrinting(true);
-    
+
     try {
       // Create a new window for printing
       const printWindow = window.open('', '_blank', 'width=800,height=600');
-      
+
       if (!printWindow) {
         alert('Popup bị chặn. Vui lòng cho phép popup để in hóa đơn.');
         return;
@@ -127,9 +126,9 @@ export function PrintDialog({
           <div class="center">
             Điện thoại: ${storeInfo.phone}
           </div>
-          
+
           <div class="separator"></div>
-          
+
           <div style="display: flex; justify-content: space-between;">
             <span>Số giao dịch:</span>
             <span>${receiptData.transactionId}</span>
@@ -142,30 +141,30 @@ export function PrintDialog({
             <span>Thu ngân:</span>
             <span>${receiptData.cashierName}</span>
           </div>
-          
+
           ${receiptData.customerName ? `
           <div style="display: flex; justify-content: space-between;">
             <span>Khách hàng:</span>
             <span>${receiptData.customerName}</span>
           </div>
           ` : ''}
-          
+
           ${receiptData.customerTaxCode ? `
           <div style="display: flex; justify-content: space-between;">
             <span>MST:</span>
             <span>${receiptData.customerTaxCode}</span>
           </div>
           ` : ''}
-          
+
           ${receiptData.invoiceNumber ? `
           <div style="display: flex; justify-content: space-between;">
             <span>Số HĐ:</span>
             <span>${receiptData.invoiceNumber}</span>
           </div>
           ` : ''}
-          
+
           <div class="separator"></div>
-          
+
           ${receiptData.items.map(item => `
             <div class="item-row">
               <div class="item-name">${item.productName}</div>
@@ -175,19 +174,34 @@ export function PrintDialog({
               SKU: ${item.sku} | ${item.quantity} x ${parseFloat(item.price).toLocaleString('vi-VN')} đ
             </div>
           `).join('')}
-          
+
           <div class="separator"></div>
-          
+
           <div class="total-row">
             <span>Tạm tính:</span>
             <span>${parseFloat(receiptData.subtotal).toLocaleString('vi-VN')} đ</span>
           </div>
           <div class="total-row">
             <span>Thuế (${(() => {
-              const subtotal = parseFloat(receiptData.subtotal) || 0;
-              const tax = parseFloat(receiptData.tax) || 0;
-              if (subtotal === 0) return "10.0";
-              return ((tax / subtotal) * 100).toFixed(1);
+              if (!receiptData.items || receiptData.items.length === 0) return "10.0";
+
+              // Calculate weighted average tax rate from items
+              let totalTaxableAmount = 0;
+              let totalTaxAmount = 0;
+
+              receiptData.items.forEach(item => {
+                const itemSubtotal = parseFloat(item.price) * item.quantity;
+                const itemTaxRate = item.taxRate || 10; // Default 10% if not specified
+                const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+                totalTaxableAmount += itemSubtotal;
+                totalTaxAmount += itemTax;
+              });
+
+              if (totalTaxableAmount === 0) return "10.0";
+
+              const avgTaxRate = (totalTaxAmount / totalTaxableAmount * 100);
+              return avgTaxRate.toFixed(1);
             })()}%):</span>
             <span>${parseFloat(receiptData.tax).toLocaleString('vi-VN')} đ</span>
           </div>
@@ -195,9 +209,9 @@ export function PrintDialog({
             <span>Tổng cộng:</span>
             <span>${parseFloat(receiptData.total).toLocaleString('vi-VN')} đ</span>
           </div>
-          
+
           <div class="separator"></div>
-          
+
           <div style="display: flex; justify-content: space-between;">
             <span>Phương thức thanh toán:</span>
             <span>${receiptData.paymentMethod === 'einvoice' ? 'Hóa đơn điện tử' : receiptData.paymentMethod}</span>
@@ -206,9 +220,9 @@ export function PrintDialog({
             <span>Số tiền nhận:</span>
             <span>${parseFloat(receiptData.amountReceived).toLocaleString('vi-VN')} đ</span>
           </div>
-          
+
           <div class="separator"></div>
-          
+
           <div class="center">
             Cảm ơn bạn đã mua hàng!
           </div>
@@ -221,7 +235,7 @@ export function PrintDialog({
 
       printWindow.document.write(printContent);
       printWindow.document.close();
-      
+
       // Wait for content to load then print
       printWindow.onload = () => {
         setTimeout(() => {
@@ -261,9 +275,9 @@ export function PrintDialog({
             <div className="text-center text-xs mb-2">
               Điện thoại: {storeInfo.phone}
             </div>
-            
+
             <div className="border-t border-dashed border-gray-400 my-2"></div>
-            
+
             <div className="flex justify-between text-xs">
               <span>Số giao dịch:</span>
               <span>{receiptData.transactionId}</span>
@@ -276,23 +290,23 @@ export function PrintDialog({
               <span>Thu ngân:</span>
               <span>{receiptData.cashierName}</span>
             </div>
-            
+
             {receiptData.customerName && (
               <div className="flex justify-between text-xs">
                 <span>Khách hàng:</span>
                 <span>{receiptData.customerName}</span>
               </div>
             )}
-            
+
             {receiptData.invoiceNumber && (
               <div className="flex justify-between text-xs">
                 <span>Số HĐ:</span>
                 <span>{receiptData.invoiceNumber}</span>
               </div>
             )}
-            
+
             <div className="border-t border-dashed border-gray-400 my-2"></div>
-            
+
             {receiptData.items.map((item, index) => (
               <div key={index} className="mb-2">
                 <div className="flex justify-between">
@@ -304,19 +318,34 @@ export function PrintDialog({
                 </div>
               </div>
             ))}
-            
+
             <div className="border-t border-dashed border-gray-400 my-2"></div>
-            
+
             <div className="flex justify-between text-xs">
               <span>Tạm tính:</span>
               <span>{parseFloat(receiptData.subtotal).toLocaleString('vi-VN')} đ</span>
             </div>
             <div className="flex justify-between text-xs">
               <span>Thuế ({(() => {
-                const subtotal = parseFloat(receiptData.subtotal) || 0;
-                const tax = parseFloat(receiptData.tax) || 0;
-                if (subtotal === 0) return "10.0";
-                return ((tax / subtotal) * 100).toFixed(1);
+                if (!receiptData.items || receiptData.items.length === 0) return "10.0";
+
+                // Calculate weighted average tax rate from items
+                let totalTaxableAmount = 0;
+                let totalTaxAmount = 0;
+
+                receiptData.items.forEach(item => {
+                  const itemSubtotal = parseFloat(item.price) * item.quantity;
+                  const itemTaxRate = item.taxRate || 10; // Default 10% if not specified
+                  const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+                  totalTaxableAmount += itemSubtotal;
+                  totalTaxAmount += itemTax;
+                });
+
+                if (totalTaxableAmount === 0) return "10.0";
+
+                const avgTaxRate = (totalTaxAmount / totalTaxableAmount * 100);
+                return avgTaxRate.toFixed(1);
               })()}%):</span>
               <span>{parseFloat(receiptData.tax).toLocaleString('vi-VN')} đ</span>
             </div>
@@ -324,16 +353,16 @@ export function PrintDialog({
               <span>Tổng cộng:</span>
               <span>{parseFloat(receiptData.total).toLocaleString('vi-VN')} đ</span>
             </div>
-            
+
             <div className="border-t border-dashed border-gray-400 my-2"></div>
-            
+
             <div className="flex justify-between text-xs">
               <span>Phương thức thanh toán:</span>
               <span>{receiptData.paymentMethod === 'einvoice' ? 'Hóa đơn điện tử' : receiptData.paymentMethod}</span>
             </div>
-            
+
             <div className="border-t border-dashed border-gray-400 my-2"></div>
-            
+
             <div className="text-center text-xs">
               <div>Cảm ơn bạn đã mua hàng!</div>
               <div>Vui lòng giữ hóa đơn để làm bằng chứng</div>
