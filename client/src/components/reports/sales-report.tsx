@@ -553,7 +553,7 @@ export function SalesReport() {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle className="text-lg font-semibold">
-                {t('reports.salesReport')}
+                {t('reports.salesAnalysis')}
               </CardTitle>
               <CardDescription>
                 {t('reports.analyzeRevenue')}
