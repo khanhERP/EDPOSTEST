@@ -281,22 +281,7 @@ export function SalesReport() {
 
 
   const salesData = getSalesData();
-
-  if (!transactions) {
-    return (
-      <div className="flex justify-center py-8">
-        <div className="text-gray-500">{t("reports.loading")}</div>
-      </div>
-    );
-  }
-
-  if (!salesData) {
-    return (
-      <div className="flex justify-center py-8">
-        <div className="text-gray-500">{t("reports.noDataDescription")}</div>
-      </div>
-    );
-  }
+  const isLoading = !transactions;
 
   const peakHour = salesData ? Object.entries(salesData.hourlySales).reduce(
     (peak, [hour, revenue]) =>
@@ -315,9 +300,13 @@ export function SalesReport() {
                 <p className="text-sm font-medium text-gray-600">
                   {t("reports.totalRevenue")}
                 </p>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(salesData?.totalRevenue || 0)}
-                </p>
+                {isLoading ? (
+                  <div className="h-8 bg-gray-200 rounded animate-pulse mt-2"></div>
+                ) : (
+                  <p className="text-2xl font-bold text-green-600">
+                    {formatCurrency(salesData?.totalRevenue || 0)}
+                  </p>
+                )}
               </div>
               <DollarSign className="w-8 h-8 text-green-500" />
             </div>
@@ -331,7 +320,11 @@ export function SalesReport() {
                 <p className="text-sm font-medium text-gray-600">
                   {t("reports.totalOrders")}
                 </p>
-                <p className="text-2xl font-bold">{salesData?.totalOrders || 0}</p>
+                {isLoading ? (
+                  <div className="h-8 bg-gray-200 rounded animate-pulse mt-2"></div>
+                ) : (
+                  <p className="text-2xl font-bold">{salesData?.totalOrders || 0}</p>
+                )}
               </div>
               <Calendar className="w-8 h-8 text-blue-500" />
             </div>
@@ -344,9 +337,13 @@ export function SalesReport() {
               <p className="text-sm font-medium text-gray-600">
                 {t("reports.averageOrderValue")}
               </p>
-              <p className="text-2xl font-bold">
-                {formatCurrency(salesData?.averageOrderValue || 0)}
-              </p>
+              {isLoading ? (
+                <div className="h-8 bg-gray-200 rounded animate-pulse mt-2"></div>
+              ) : (
+                <p className="text-2xl font-bold">
+                  {formatCurrency(salesData?.averageOrderValue || 0)}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -357,11 +354,17 @@ export function SalesReport() {
               <p className="text-sm font-medium text-gray-600">
                 {t("reports.totalCustomers")}
               </p>
-              <p className="text-2xl font-bold">{salesData?.totalCustomers || 0}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                {t("reports.peakHour")}: {peakHour}
-                {t("reports.hour")}
-              </p>
+              {isLoading ? (
+                <div className="h-8 bg-gray-200 rounded animate-pulse mt-2"></div>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold">{salesData?.totalCustomers || 0}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {t("reports.peakHour")}: {peakHour}
+                    {t("reports.hour")}
+                  </p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -385,29 +388,51 @@ export function SalesReport() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {salesData?.dailySales.map((day) => (
-                  <TableRow key={day.date}>
-                    <TableCell>{formatDate(day.date)}</TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(day.revenue)}
-                    </TableCell>
-                    <TableCell>
-                      {day.orders} {t("reports.count")}
-                    </TableCell>
-                    <TableCell>
-                      {day.customers} {t("reports.count")}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {(!salesData?.dailySales || salesData.dailySales.length === 0) && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className="text-center text-gray-500"
-                    >
-                      {t("reports.noDataDescription")}
-                    </TableCell>
-                  </TableRow>
+                {isLoading ? (
+                  // Skeleton rows for loading state
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <>
+                    {salesData?.dailySales.map((day) => (
+                      <TableRow key={day.date}>
+                        <TableCell>{formatDate(day.date)}</TableCell>
+                        <TableCell className="font-medium">
+                          {formatCurrency(day.revenue)}
+                        </TableCell>
+                        <TableCell>
+                          {day.orders} {t("reports.count")}
+                        </TableCell>
+                        <TableCell>
+                          {day.customers} {t("reports.count")}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {(!salesData?.dailySales || salesData.dailySales.length === 0) && (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          className="text-center text-gray-500"
+                        >
+                          {t("reports.noDataDescription")}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </>
                 )}
               </TableBody>
             </Table>
@@ -422,46 +447,69 @@ export function SalesReport() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {salesData?.paymentMethods.map((payment) => {
-                const percentage =
-                  (salesData?.totalRevenue || 0) > 0
-                    ? (Number(payment.revenue) / Number(salesData?.totalRevenue || 1)) * 100
-                    : 0;
-
-                return (
-                  <div key={payment.method} className="space-y-2">
+              {isLoading ? (
+                // Skeleton for payment methods loading
+                Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="space-y-2">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline">
-                          {getPaymentMethodLabel(payment.method)}
-                        </Badge>
-                        <span className="text-sm text-gray-600">
-                          {payment.count} {t("reports.count")}
-                        </span>
+                        <div className="h-6 w-20 bg-gray-200 rounded animate-pulse"></div>
+                        <div className="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
                       </div>
                       <div className="text-right">
-                        <div className="font-medium">
-                          {formatCurrency(payment.revenue)}
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
-                        </div>
+                        <div className="h-5 w-24 bg-gray-200 rounded animate-pulse mb-1"></div>
+                        <div className="h-3 w-12 bg-gray-200 rounded animate-pulse"></div>
                       </div>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="bg-blue-500 h-2 rounded-full transition-all"
-                        style={{ width: `${percentage}%` }}
-                      ></div>
+                      <div className="bg-gray-300 h-2 rounded-full animate-pulse w-1/3"></div>
                     </div>
                   </div>
-                );
-              })}
+                ))
+              ) : (
+                <>
+                  {salesData?.paymentMethods.map((payment) => {
+                    const percentage =
+                      (salesData?.totalRevenue || 0) > 0
+                        ? (Number(payment.revenue) / Number(salesData?.totalRevenue || 1)) * 100
+                        : 0;
 
-              {(!salesData?.paymentMethods || salesData.paymentMethods.length === 0) && (
-                <div className="text-center text-gray-500 py-4">
-                  {t("reports.noPaymentData")}
-                </div>
+                    return (
+                      <div key={payment.method} className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">
+                              {getPaymentMethodLabel(payment.method)}
+                            </Badge>
+                            <span className="text-sm text-gray-600">
+                              {payment.count} {t("reports.count")}
+                            </span>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-medium">
+                              {formatCurrency(payment.revenue)}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
+                            </div>
+                          </div>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-500 h-2 rounded-full transition-all"
+                            style={{ width: `${percentage}%` }}
+                          ></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {(!salesData?.paymentMethods || salesData.paymentMethods.length === 0) && (
+                    <div className="text-center text-gray-500 py-4">
+                      {t("reports.noPaymentData")}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </CardContent>
