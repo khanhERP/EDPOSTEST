@@ -951,146 +951,65 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   ) : (
                     <>
                       {(() => {
-                        console.log('=== RENDER CHECK ULTRA DETAILED ===');
-                        console.log('Raw orderItems data:', orderItems);
-                        console.log('orderItems type:', typeof orderItems);
-                        console.log('orderItems is array:', Array.isArray(orderItems));
-                        console.log('orderItems length:', orderItems?.length);
-                        console.log('orderItemsLoading:', orderItemsLoading);
-                        console.log('selectedOrder?.id:', selectedOrder?.id);
-                        console.log('orderDetailsOpen:', orderDetailsOpen);
-
-                        // Try JSON stringify to see raw structure
-                        try {
-                          console.log('orderItems JSON:', JSON.stringify(orderItems, null, 2));
-                        } catch (e) {
-                          console.log('Cannot stringify orderItems:', e);
-                        }
-
-                        // Try different ways to access the data
-                        if (orderItems) {
-                          console.log('Object.keys(orderItems):', Object.keys(orderItems));
-                          console.log('orderItems.data:', (orderItems as any).data);
-                          console.log('orderItems.items:', (orderItems as any).items);
-                          console.log('orderItems[0]:', orderItems[0]);
-                        }
-
-                        // Force array conversion and check different possible structures
+                        // Process orderItems data consistently
                         let itemsToRender = [];
 
                         if (Array.isArray(orderItems)) {
                           itemsToRender = orderItems;
-                          console.log('✅ orderItems is already an array with length:', itemsToRender.length);
                         } else if (orderItems && (orderItems as any).data && Array.isArray((orderItems as any).data)) {
                           itemsToRender = (orderItems as any).data;
-                          console.log('✅ Found items in orderItems.data with length:', itemsToRender.length);
                         } else if (orderItems && (orderItems as any).items && Array.isArray((orderItems as any).items)) {
                           itemsToRender = (orderItems as any).items;
-                          console.log('✅ Found items in orderItems.items with length:', itemsToRender.length);
                         } else if (orderItems && typeof orderItems === 'object') {
-                          // Try to convert object to array if it has numeric keys
                           try {
                             itemsToRender = Object.values(orderItems).filter(item => item && typeof item === 'object');
-                            console.log('✅ Converted object to array with length:', itemsToRender.length);
                           } catch (e) {
-                            console.log('❌ Failed to convert object to array:', e);
+                            itemsToRender = [];
                           }
                         }
 
-                        console.log('Final itemsToRender:', itemsToRender);
-                        console.log('itemsToRender length:', itemsToRender.length);
-                        console.log('=== END RENDER CHECK ULTRA DETAILED ===');
-
                         if (itemsToRender && itemsToRender.length > 0) {
-                          console.log('🎉 SUCCESS! Rendering', itemsToRender.length, 'items');
                           return (
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-green-600 mb-3">
-                                ✅ {t('common.showing')} {itemsToRender.length} {t('orders.orderItems').toLowerCase()} {t('common.for')} {t('orders.orderNumber').toLowerCase()} {selectedOrder?.orderNumber}
+                                ✅ Hiển thị {itemsToRender.length} món trong đơn hàng {selectedOrder?.orderNumber}
                               </p>
-                              {itemsToRender.map((item: any, index: number) => {
-                                console.log(`🍽️ Rendering item ${index + 1}:`, {
-                                  id: item.id,
-                                  productId: item.productId,
-                                  productName: item.productName,
-                                  quantity: item.quantity,
-                                  unitPrice: item.unitPrice,
-                                  total: item.total
-                                });
-
-                                return (
-                                  <div key={`item-${item.id || index}`} className="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm">
-                                    <div className="flex-1">
-                                      <p className="font-medium text-gray-900">
-                                        {item.productName || getProductName(item.productId) || `Sản phẩm #${item.productId}`}
+                              {itemsToRender.map((item: any, index: number) => (
+                                <div key={`item-${item.id || index}`} className="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm">
+                                  <div className="flex-1">
+                                    <p className="font-medium text-gray-900">
+                                      {item.productName || getProductName(item.productId) || `Sản phẩm #${item.productId}`}
+                                    </p>
+                                    <p className="text-sm text-gray-600">
+                                      Số lượng: <span className="font-medium">{item.quantity}</span>
+                                    </p>
+                                    {item.notes && (
+                                      <p className="text-xs text-blue-600 italic mt-1">
+                                        Ghi chú: {item.notes}
                                       </p>
-                                      <p className="text-sm text-gray-600">
-                                        {t('pos.quantity')}: <span className="font-medium">{item.quantity}</span>
-                                      </p>
-                                      {(() => {
-                                        const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-                                        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
-                                        const taxAmount = taxRate > 0 ? (Number(item.unitPrice || 0) * taxRate / 100 * item.quantity) : 0;
-
-                                        return taxAmount > 0 ? (
-                                          <p className="text-xs text-orange-600">
-                                            {t('orders.tax')}: {taxAmount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ ({taxRate}%)
-                                          </p>
-                                        ) : null;
-                                      })()}
-                                      {item.notes && (
-                                        <p className="text-xs text-blue-600 italic mt-1">
-                                          {t('orders.memo')}: {item.notes}
-                                        </p>
-                                      )}
-                                    </div>
-                                    <div className="text-right ml-4">
-                                      <p className="font-bold text-lg text-green-600">
-                                        {Number(item.total || 0).toLocaleString()} ₫
-                                      </p>
-                                      <p className="text-sm text-gray-500">
-                                        {Number(item.unitPrice || 0).toLocaleString()} ₫/{t('pos.product').toLowerCase()}
-                                      </p>
-                                    </div>
+                                    )}
                                   </div>
-                                );
-                              })}
+                                  <div className="text-right ml-4">
+                                    <p className="font-bold text-lg text-green-600">
+                                      {Number(item.total || 0).toLocaleString('vi-VN')} ₫
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                      {Number(item.unitPrice || 0).toLocaleString('vi-VN')} ₫/món
+                                    </p>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           );
                         } else {
-                          console.log('💔 NO ITEMS TO RENDER - Complete debug info:');
-                          const completeDebug = {
-                            orderItemsExists: !!orderItems,
-                            orderItemsType: typeof orderItems,
-                            isArray: Array.isArray(orderItems),
-                            rawLength: orderItems?.length,
-                            processedLength: itemsToRender?.length,
-                            loading: orderItemsLoading,
-                            orderId: selectedOrder?.id,
-                            dialogOpen: orderDetailsOpen,
-                            rawData: orderItems,
-                            queryEnabled: !!selectedOrder?.id && orderDetailsOpen
-                          };
-                          console.log('Complete debug:', completeDebug);
-
                           return (
-                            <div className="text-center py-6 bg-red-50 rounded-lg border border-red-200">
-                              <p className="text-red-600 font-medium mb-3">
-                                ❌ {t('common.noData')} {t('orders.orderItems').toLowerCase()} {t('common.for')} {t('orders.orderNumber').toLowerCase()} {selectedOrder?.orderNumber}
+                            <div className="text-center py-6 bg-gray-50 rounded-lg border">
+                              <p className="text-gray-600">
+                                Không có món nào trong đơn hàng {selectedOrder?.orderNumber}
                               </p>
-                              <div className="text-xs text-gray-500 space-y-1 bg-white p-3 rounded border max-h-40 overflow-y-auto">
-                                <p><strong>Complete Debug Info:</strong></p>
-                                <p>Loading: {orderItemsLoading ? 'Có' : 'Không'}</p>
-                                <p>Data exists: {orderItems ? 'Có' : 'Không'}</p>
-                                <p>Is array: {Array.isArray(orderItems) ? 'Có' : 'Không'}</p>
-                                <p>Raw length: {orderItems?.length || 0}</p>
-                                <p>Processed length: {itemsToRender?.length || 0}</p>
-                                <p>Type: {typeof orderItems}</p>
-                                <p>Order ID: {selectedOrder?.id}</p>
-                                <p>Dialog open: {orderDetailsOpen ? 'Có' : 'Không'}</p>
-                                <p>Query enabled: {(!!selectedOrder?.id && orderDetailsOpen) ? 'Có' : 'Không'}</p>
-                                <p>Raw data: {JSON.stringify(orderItems)?.substring(0, 100)}...</p>
-                              </div>
+                              {orderItemsLoading && (
+                                <p className="text-sm text-gray-500 mt-2">Đang tải...</p>
+                              )}
                             </div>
                           );
                         }
