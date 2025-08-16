@@ -1,3 +1,4 @@
+
 import { type ReportsTranslations } from '../types';
 
 export const reportsTranslations: { [key: string]: ReportsTranslations } = {
@@ -54,10 +55,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     analysisType: "Loại phân tích",
     analyzeBy: "Phân tích theo",
     timeAnalysis: "Thời gian",
-    productAnalysis: "Bán hàng",
-    employeeAnalysis: "Bán hàng theo nhân viên",
-    customerAnalysis: "Bán hàng",
-    channelAnalysis: "Bán hàng",
+    productAnalysis: "Sản phẩm",
+    employeeAnalysis: "Nhân viên",
+    customerAnalysis: "Khách hàng",
+    channelAnalysis: "Kênh bán hàng",
 
     // Chart and visual
     chartView: "Xem biểu đồ",
@@ -98,7 +99,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscountReport: "Báo cáo giảm giá hóa đơn",
     returnByInvoiceReport: "Báo cáo trả hàng theo hóa đơn",
 
-    // Additional keys for comprehensive coverage
+    // Additional comprehensive keys
     endOfDayReport: "Báo cáo cuối ngày",
     endOfDayReportTab: "Báo cáo cuối ngày",
     revenueExpense: "Thu chi",
@@ -152,6 +153,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     discountReport: "Báo cáo giảm giá",
     returnReport: "Báo cáo trả hàng",
     employeeReport: "Báo cáo nhân viên",
+    customerReport: "Báo cáo khách hàng",
+    supplierReport: "Báo cáo nhà cung cấp",
     noDelivery: "Không giao hàng",
     delivery: "Giao hàng",
     direct: "Trực tiếp",
@@ -192,7 +195,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     soldQuantity: "Số lượng bán",
     returnQuantity: "Số lượng trả",
 
-    // Additional dashboard
+    // Dashboard specific
     dailySales: "Bán hàng hàng ngày",
     paymentMethods: "Phương thức thanh toán",
     hourlyBreakdown: "Phân tích theo giờ",
@@ -229,6 +232,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Menu analysis
     productPerformance: "Hiệu suất sản phẩm",
     categoryPerformance: "Hiệu suất danh mục",
+    topSellingItems: "Sản phẩm bán chạy nhất",
+    topRevenueItems: "Sản phẩm doanh thu cao nhất",
+    categoryBreakdown: "Phân tích theo danh mục",
+    itemPerformance: "Hiệu suất sản phẩm",
+    salesTrend: "Xu hướng bán hàng",
+    profitMargin: "Tỷ suất lợi nhuận",
+    costAnalysis: "Phân tích chi phí",
+    stockMovement: "Di chuyển tồn kho",
 
     // Table analysis
     tablePerformance: "Hiệu suất bàn",
@@ -277,23 +288,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     transfer: "Chuyển khoản",
     wallet: "Ví điện tử",
 
-    // Customer report
-    customerSalesReport: "Báo cáo bán hàng khách hàng",
-    channelSalesReport: "Báo cáo bán hàng kênh",
-    employeeSalesReport: "Báo cáo bán hàng nhân viên",
-
     // Status
     status: "Trạng thái",
-
-    // Missing menu analysis translations
-    topSellingItems: "Sản phẩm bán chạy nhất",
-    topRevenueItems: "Sản phẩm doanh thu cao nhất",
-    categoryBreakdown: "Phân tích theo danh mục",
-    itemPerformance: "Hiệu suất sản phẩm",
-    salesTrend: "Xu hướng bán hàng",
-    profitMargin: "Tỷ suất lợi nhuận",
-    costAnalysis: "Phân tích chi phí",
-    stockMovement: "Di chuyển tồn kho",
 
     // Additional report sections
     detailedAnalysis: "Phân tích chi tiết",
@@ -304,7 +300,35 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     financialMetrics: "Chỉ số tài chính",
     operationalMetrics: "Chỉ số vận hành",
     customerMetrics: "Chỉ số khách hàng",
+
+    // Financial reports
+    financialReport: "Báo cáo tài chính",
+    financialReportDescription: "Báo cáo chi tiết về tình hình tài chính",
+    profitLoss: "Lãi lỗ",
+    balanceSheet: "Bảng cân đối kế toán",
+    cashFlow: "Dòng tiền",
+    
+    // Customer reports  
+    customerSalesReport: "Báo cáo bán hàng khách hàng",
+    channelSalesReport: "Báo cáo bán hàng kênh",
+    employeeSalesReport: "Báo cáo bán hàng nhân viên",
+    
+    // Supplier reports
+    supplierReportDescription: "Báo cáo chi tiết về nhà cung cấp",
+    purchaseReport: "Báo cáo mua hàng",
+    supplierPerformance: "Hiệu suất nhà cung cấp",
+    
+    // Inventory reports
+    inventoryReportDescription: "Báo cáo chi tiết về tồn kho",
+    stockLevel: "Mức tồn kho",
+    stockMovementReport: "Báo cáo di chuyển kho",
+    lowStockAlert: "Cảnh báo tồn kho thấp",
+    
+    // Additional menu items
+    warehouseReport: "Báo cáo kho hàng",
+    warehouseReportDescription: "Báo cáo chi tiết về hoạt động kho hàng"
   },
+
   ko: {
     title: "보고서",
     description: "판매 및 운영 보고서 보기",
@@ -343,7 +367,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Payment methods
     paymentMethodBreakdown: "결제 방법 분석",
-    paymentMethodDetails: "결제 방법별 분석을 확인하세요",
+    paymentMethodDetails: "결제 방법별 세부 분석 및 일일 매출 분석",
 
     // Tab names for reports
     salesAnalysisTab: "매출 분석",
@@ -358,10 +382,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     analysisType: "분석 유형",
     analyzeBy: "분석 기준",
     timeAnalysis: "시간",
-    productAnalysis: "판매",
-    employeeAnalysis: "직원별 판매",
-    customerAnalysis: "판매",
-    channelAnalysis: "판매",
+    productAnalysis: "상품",
+    employeeAnalysis: "직원",
+    customerAnalysis: "고객",
+    channelAnalysis: "판매 채널",
 
     // Chart and visual
     chartView: "차트 보기",
@@ -371,7 +395,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesMethod: "판매 방법",
     salesChannel: "판매 채널",
     productFilter: "상품",
-    productFilterPlaceholder: "이름 또는 코드로 검색",
+    productFilterPlaceholder: "코드, 이름으로 검색",
     customerFilter: "고객",
     customerFilterPlaceholder: "이름, 전화번호 또는 코드로 검색",
 
@@ -402,7 +426,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscountReport: "송장 할인 보고서",
     returnByInvoiceReport: "송장별 반품 보고서",
 
-    // Additional keys for comprehensive coverage
+    // Additional comprehensive keys
     endOfDayReport: "마감 보고서",
     endOfDayReportTab: "마감 보고서",
     revenueExpense: "수입 지출",
@@ -456,6 +480,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     discountReport: "할인 보고서",
     returnReport: "반품 보고서",
     employeeReport: "직원 보고서",
+    customerReport: "고객 보고서",
+    supplierReport: "공급업체 보고서",
     noDelivery: "배송 없음",
     delivery: "배송",
     direct: "직접",
@@ -480,7 +506,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     paymentMethodDistribution: "결제 방법 분포",
     hourlyRevenue: "시간별 매출",
     barChartDesc: "시간에 따른 매출 추세 분석",
-    pieChartDesc: "결제 방법별 분석을 확인하세요",
+    pieChartDesc: "결제 방법별 세부 분석 및 일일 매출 분석",
     lineChartDesc: "선형 차트로 시간에 따른 매출 추세 분석",
 
     // Table headers for reports
@@ -496,7 +522,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     soldQuantity: "판매 수량",
     returnQuantity: "반품 수량",
 
-    // Additional dashboard
+    // Dashboard specific
     dailySales: "일일 판매",
     paymentMethods: "결제 방법",
     hourlyBreakdown: "시간별 분석",
@@ -520,7 +546,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cumulativeVisitors: "누적 방문자",
     totalByTable: "테이블별 총계",
     detailedTablePerformance: "상세 테이블 성과",
-    detailedTablePerformanceDesc: "각 테이블의 상세 운영 지표를 확인하세요",
+    detailedTablePerformanceDesc: "각 테이블의 상세 운영 지표 확인",
     currentStatus: "현재 상태",
     orderCount: "주문 수",
     peakTime: "피크 시간",
@@ -533,6 +559,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Menu analysis
     productPerformance: "상품 성과",
     categoryPerformance: "카테고리 성과",
+    topSellingItems: "최고 판매 상품",
+    topRevenueItems: "최고 매출 상품",
+    categoryBreakdown: "카테고리별 분석",
+    itemPerformance: "상품 성과",
+    salesTrend: "판매 트렌드",
+    profitMargin: "이익률",
+    costAnalysis: "비용 분석",
+    stockMovement: "재고 움직임",
 
     // Table analysis
     tablePerformance: "테이블 성과",
@@ -581,23 +615,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     transfer: "이체",
     wallet: "전자지갑",
 
-    // Customer report
-    customerSalesReport: "고객 매출 보고서",
-    channelSalesReport: "채널 매출 보고서",
-    employeeSalesReport: "직원 매출 보고서",
-
     // Status
     status: "상태",
-
-    // Missing menu analysis translations
-    topSellingItems: "최고 판매 상품",
-    topRevenueItems: "최고 매출 상품",
-    categoryBreakdown: "카테고리별 분석",
-    itemPerformance: "상품 성과",
-    salesTrend: "판매 트렌드",
-    profitMargin: "이익률",
-    costAnalysis: "비용 분석",
-    stockMovement: "재고 움직임",
 
     // Additional report sections
     detailedAnalysis: "상세 분석",
@@ -608,7 +627,35 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     financialMetrics: "재무 지표",
     operationalMetrics: "운영 지표",
     customerMetrics: "고객 지표",
+
+    // Financial reports
+    financialReport: "재무 보고서",
+    financialReportDescription: "재무 상황에 대한 상세 보고서",
+    profitLoss: "손익",
+    balanceSheet: "대차대조표",
+    cashFlow: "현금 흐름",
+    
+    // Customer reports  
+    customerSalesReport: "고객 매출 보고서",
+    channelSalesReport: "채널 매출 보고서",
+    employeeSalesReport: "직원 매출 보고서",
+    
+    // Supplier reports
+    supplierReportDescription: "공급업체에 대한 상세 보고서",
+    purchaseReport: "구매 보고서",
+    supplierPerformance: "공급업체 성과",
+    
+    // Inventory reports
+    inventoryReportDescription: "재고에 대한 상세 보고서",
+    stockLevel: "재고 수준",
+    stockMovementReport: "재고 이동 보고서",
+    lowStockAlert: "낮은 재고 경고",
+    
+    // Additional menu items
+    warehouseReport: "창고 보고서",
+    warehouseReportDescription: "창고 활동에 대한 상세 보고서"
   },
+
   en: {
     title: "Reports",
     description: "View sales and operational reports",
@@ -647,7 +694,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Payment methods
     paymentMethodBreakdown: "Payment Method Breakdown",
-    paymentMethodDetails: "Check payment method analysis and daily sales breakdown",
+    paymentMethodDetails: "Payment method detailed analysis and daily sales breakdown",
 
     // Tab names for reports
     salesAnalysisTab: "Sales Analysis",
@@ -659,12 +706,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     dashboardTab: "Dashboard",
 
     // Analysis types
+    analysisType: "Analysis Type",
     analyzeBy: "Analyze By",
-    timeAnalysis: "Time Analysis",
-    productAnalysis: "Product Analysis",
-    employeeAnalysis: "Employee Analysis",
-    customerAnalysis: "Customer Analysis",
-    channelAnalysis: "Channel Analysis",
+    timeAnalysis: "Time",
+    productAnalysis: "Product",
+    employeeAnalysis: "Employee",
+    customerAnalysis: "Customer",
+    channelAnalysis: "Sales Channel",
 
     // Chart and visual
     chartView: "Chart View",
@@ -674,7 +722,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesMethod: "Sales Method",
     salesChannel: "Sales Channel",
     productFilter: "Product",
-    productFilterPlaceholder: "Search by name or code",
+    productFilterPlaceholder: "Search by code, name",
     customerFilter: "Customer",
     customerFilterPlaceholder: "Search by name, phone or code",
 
@@ -705,7 +753,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     invoiceDiscountReport: "Invoice Discount Report",
     returnByInvoiceReport: "Return by Invoice Report",
 
-    // Additional keys for comprehensive coverage
+    // Additional comprehensive keys
     endOfDayReport: "End of Day Report",
     endOfDayReportTab: "End of Day Report",
     revenueExpense: "Revenue Expense",
@@ -759,6 +807,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     discountReport: "Discount Report",
     returnReport: "Return Report",
     employeeReport: "Employee Report",
+    customerReport: "Customer Report",
+    supplierReport: "Supplier Report",
     noDelivery: "No Delivery",
     delivery: "Delivery",
     direct: "Direct",
@@ -783,7 +833,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     paymentMethodDistribution: "Payment Method Distribution",
     hourlyRevenue: "Hourly Revenue",
     barChartDesc: "Analyze revenue trends over time",
-    pieChartDesc: "Check payment method analysis and daily sales breakdown",
+    pieChartDesc: "Payment method detailed analysis and daily sales breakdown",
     lineChartDesc: "Analyze revenue trends over time with line chart",
 
     // Table headers for reports
@@ -799,7 +849,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     soldQuantity: "Sold Quantity",
     returnQuantity: "Return Quantity",
 
-    // Additional dashboard
+    // Dashboard specific
     dailySales: "Daily Sales",
     paymentMethods: "Payment Methods",
     hourlyBreakdown: "Hourly Breakdown",
@@ -836,6 +886,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Menu analysis
     productPerformance: "Product Performance",
     categoryPerformance: "Category Performance",
+    topSellingItems: "Top Selling Items",
+    topRevenueItems: "Top Revenue Items",
+    categoryBreakdown: "Category Breakdown",
+    itemPerformance: "Item Performance",
+    salesTrend: "Sales Trend",
+    profitMargin: "Profit Margin",
+    costAnalysis: "Cost Analysis",
+    stockMovement: "Stock Movement",
 
     // Table analysis
     tablePerformance: "Table Performance",
@@ -884,24 +942,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     transfer: "Transfer",
     wallet: "Wallet",
 
-    // Customer report
-    customerSalesReport: "Customer Sales Report",
-    channelSalesReport: "Channel Sales Report",
-    employeeSalesReport: "Employee Sales Report",
-
     // Status
     status: "Status",
-    analysisType: "Analysis Type",
-
-    // Missing menu analysis translations
-    topSellingItems: "Top Selling Items",
-    topRevenueItems: "Top Revenue Items",
-    categoryBreakdown: "Category Breakdown",
-    itemPerformance: "Item Performance",
-    salesTrend: "Sales Trend",
-    profitMargin: "Profit Margin",
-    costAnalysis: "Cost Analysis",
-    stockMovement: "Stock Movement",
 
     // Additional report sections
     detailedAnalysis: "Detailed Analysis",
@@ -912,5 +954,32 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     financialMetrics: "Financial Metrics",
     operationalMetrics: "Operational Metrics",
     customerMetrics: "Customer Metrics",
+
+    // Financial reports
+    financialReport: "Financial Report",
+    financialReportDescription: "Detailed financial situation report",
+    profitLoss: "Profit & Loss",
+    balanceSheet: "Balance Sheet",
+    cashFlow: "Cash Flow",
+    
+    // Customer reports  
+    customerSalesReport: "Customer Sales Report",
+    channelSalesReport: "Channel Sales Report",
+    employeeSalesReport: "Employee Sales Report",
+    
+    // Supplier reports
+    supplierReportDescription: "Detailed supplier report",
+    purchaseReport: "Purchase Report",
+    supplierPerformance: "Supplier Performance",
+    
+    // Inventory reports
+    inventoryReportDescription: "Detailed inventory report",
+    stockLevel: "Stock Level",
+    stockMovementReport: "Stock Movement Report",
+    lowStockAlert: "Low Stock Alert",
+    
+    // Additional menu items
+    warehouseReport: "Warehouse Report",
+    warehouseReportDescription: "Detailed warehouse activity report"
   },
 };

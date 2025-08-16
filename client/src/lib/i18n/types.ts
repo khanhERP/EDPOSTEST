@@ -139,7 +139,6 @@ export interface ReportsTranslations {
   menuAnalysis: string;
   tableAnalysis: string;
   backToTables: string;
-  noPaymentData: string;
 
   // Date and time filters
   startDate: string;
@@ -147,52 +146,315 @@ export interface ReportsTranslations {
   refresh: string;
   toDay: string;
   lastWeek: string;
+  thisMonth: string;
   lastMonth: string;
   custom: string;
-  filterOptions: string;
 
   // Dashboard metrics
   totalRevenue: string;
   totalOrders: string;
-  totalCustomers: string;
+  totalQuantitySold: string;
   averageOrderValue: string;
-  dailyAverage: string;
-  activeOrders: string;
-  occupiedTables: string;
-  monthlyRevenue: string;
-  uniqueProducts: string;
-  credit_card: string;
 
-  // Sales analysis
-  analyzeRevenue: string;
+  // Filter options
+  filterByDate: string;
+  dateRange: string;
+
+  // Chart titles
+  dailySalesChart: string;
+  paymentMethodChart: string;
+  hourlyBreakdownChart: string;
+  topProductsChart: string;
+
+  // Payment methods
+  paymentMethodBreakdown: string;
+  paymentMethodDetails: string;
+
+  // Tab names for reports
+  salesAnalysisTab: string;
+  menuAnalysisTab: string;
+  tableAnalysisTab: string;
+  salesChartTab: string;
+  purchaseTab: string;
+  warehouseTab: string;
+  dashboardTab: string;
+
+  // Analysis types
+  analysisType: string;
+  analyzeBy: string;
+  timeAnalysis: string;
+  productAnalysis: string;
+  employeeAnalysis: string;
+  customerAnalysis: string;
+  channelAnalysis: string;
+
+  // Chart and visual
+  chartView: string;
+  visualRepresentation: string;
+
+  // Filter labels
+  salesMethod: string;
+  salesChannel: string;
+  productFilter: string;
+  productFilterPlaceholder: string;
+  customerFilter: string;
+  customerFilterPlaceholder: string;
+
+  // Sales chart table columns
+  date: string;
+  orderNumber: string;
+  subtotal: string;
+  discount: string;
+  revenue: string;
+  tax: string;
+  total: string;
+  totalCustomerPayment: string;
+
+  // Product report columns
+  productCode: string;
+  productName: string;
+  unit: string;
+  quantitySold: string;
+  totalAmount: string;
+  totalDiscount: string;
+  categoryName: string;
+
+  // Report titles
+  timeSalesReport: string;
+  inventoryReport: string;
+  salesReportByProduct: string;
+  profitByInvoiceReport: string;
+  invoiceDiscountReport: string;
+  returnByInvoiceReport: string;
+
+  // Additional comprehensive keys
+  endOfDayReport: string;
+  endOfDayReportTab: string;
+  revenueExpense: string;
+  mainConcern: string;
+  sales: string;
+  inventory: string;
+  summary: string;
+  dateType: string;
+  singleDate: string;
+  paymentMethodFilter: string;
+  transactionTypeFilter: string;
+  creator: string;
+  employee: string;
+  customerPayment: string;
+  customerRefund: string;
+  otherExpense: string;
+  supplierRefund: string;
+  supplierPayment: string;
+  printReport: string;
+  reportGenerated: string;
+  dataFrom: string;
+  to: string;
+  printOptions: string;
+
+  // Order report
+  orderReport: string;
+  orderReportTab: string;
+  orderReportDescription: string;
+  orderConcernType: string;
+  transactionConcern: string;
+  productConcern: string;
+  orderStatus: string;
+  draft: string;
+  confirmed: string;
+  delivering: string;
+  completed: string;
+  customerSearch: string;
+  customerSearchPlaceholder: string;
+  productSearch: string;
+  productSearchPlaceholder: string;
+
+  // Sales chart report
+  salesChart: string;
+  salesChartDescription: string;
+
+  // Comprehensive sales report
+  comprehensiveSalesReport: string;
+  concernType: string;
+  timeReport: string;
+  profitReport: string;
+  discountReport: string;
+  returnReport: string;
+  employeeReport: string;
+  customerReport: string;
+  supplierReport: string;
+  noDelivery: string;
+  delivery: string;
+  direct: string;
+  other: string;
+  returnValue: string;
+  netRevenue: string;
+  totalCost: string;
+  grossProfit: string;
+  totalInvoices: string;
+  invoiceValue: string;
+  invoiceDiscount: string;
+  returnTicketCount: string;
+  seller: string;
+  saleDate: string;
+  paymentDate: string;
+  fromDate: string;
+  toDate: string;
+  barChart: string;
+  pieChart: string;
+  lineChart: string;
+  dailyRevenue: string;
+  paymentMethodDistribution: string;
+  hourlyRevenue: string;
+  barChartDesc: string;
+  pieChartDesc: string;
+  lineChartDesc: string;
+
+  // Table headers for reports
+  transactionCode: string;
+  time: string;
+  quantity: string;
+  otherRevenue: string;
+  vat: string;
+  actualRevenue: string;
+  receiptCode: string;
+  payerReceiver: string;
+  revenueExpenseType: string;
+  soldQuantity: string;
+  returnQuantity: string;
+
+  // Dashboard specific
   dailySales: string;
   paymentMethods: string;
   hourlyBreakdown: string;
-  revenue: string;
   orders: string;
   customers: string;
   cash: string;
   card: string;
+  credit_card: string;
+  qrbanking: string;
+  einvoice: string;
+
+  // Table analysis specific
+  customerCount: string;
+  turnoverRate: string;
+  topRevenueTables: string;
+  topTurnoverTables: string;
+  topUtilizationTables: string;
+  averageUtilization: string;
+  averageOrdersPerTable: string;
+  allTables: string;
+  cumulativeVisitors: string;
+  totalByTable: string;
+  detailedTablePerformance: string;
+  detailedTablePerformanceDesc: string;
+  currentStatus: string;
+  orderCount: string;
+  peakTime: string;
+  timesPerDay: string;
+  hourUnit: string;
+  timesUnit: string;
+  hour: string;
+  times: string;
 
   // Menu analysis
   productPerformance: string;
   categoryPerformance: string;
-  topSellingProducts: string;
-  topRevenueProducts: string;
-  menuItems: string;
-  itemsSold: string;
-  revenueShare: string;
-  salesShare: string;
-  rank: string;
-  menuName: string;
-  salesCount: string;
-  popularMenuByQuantity: string;
-  popularMenuByQuantityDesc: string;
-  highRevenueMenu: string;
-  highRevenueMenuDesc: string;
-  noSalesData: string;
-  noRevenueData: string;
-  noCategoryData: string;
+  topSellingItems: string;
+  topRevenueItems: string;
+  categoryBreakdown: string;
+  itemPerformance: string;
+  salesTrend: string;
+  profitMargin: string;
+  costAnalysis: string;
+  stockMovement: string;
+
+  // Table analysis
+  tablePerformance: string;
+  utilizationRate: string;
+  averageRevenue: string;
+  peakHours: string;
+  tableUtilization: string;
+  revenuePerTable: string;
+  ordersPerTable: string;
+
+  // Sales report specific
+  salesReport: string;
+  salesReportDescription: string;
+  loading: string;
+  noData: string;
+  noPaymentData: string;
+  salesDetails: string;
+  revenueExpenseDetails: string;
+  inventoryDetails: string;
+  noReportData: string;
+  centralBranch: string;
+
+  // Report specific content
+  salesReportTitle: string;
+  revenueReportTitle: string;
+  inventoryReportTitle: string;
+  summaryReportTitle: string;
+
+  // Table detail headers
+  salesDetailsHeader: string;
+  revenueExpenseDetailsHeader: string;
+  inventoryDetailsHeader: string;
+
+  // Additional transaction types
+  totalTransactions: string;
+  income: string;
+  expenses: string;
+  netProfit: string;
+  transactionDetails: string;
+  transactionId: string;
+  method: string;
+  amount: string;
+  notes: string;
+  cashPayment: string;
+  cardPayment: string;
+  transfer: string;
+  wallet: string;
+
+  // Status
+  status: string;
+
+  // Additional report sections
+  detailedAnalysis: string;
+  quickSummary: string;
+  comparisonReport: string;
+  trendsAndInsights: string;
+  performanceIndicators: string;
+  financialMetrics: string;
+  operationalMetrics: string;
+  customerMetrics: string;
+
+  // Financial reports
+  financialReport: string;
+  financialReportDescription: string;
+  profitLoss: string;
+  balanceSheet: string;
+  cashFlow: string;
+  
+  // Customer reports  
+  customerSalesReport: string;
+  channelSalesReport: string;
+  employeeSalesReport: string;
+  
+  // Supplier reports
+  supplierReportDescription: string;
+  purchaseReport: string;
+  supplierPerformance: string;
+  
+  // Inventory reports
+  inventoryReportDescription: string;
+  stockLevel: string;
+  stockMovementReport: string;
+  lowStockAlert: string;
+  
+  // Additional menu items
+  warehouseReport: string;
+  warehouseReportDescription: string;</old_str>
 
   // Table analysis specific
   customerCount: string;
