@@ -67,16 +67,52 @@ export function ReceiptModal({
 
       console.log("Receipt content height:", contentHeight, "Window height:", windowHeight);
 
-      const printWindow = window.open("", "", `height=${windowHeight},width=${windowWidth}`);
-      if (printWindow) {
-        printWindow.document.write("<html><head><title>Receipt</title>");
-        printWindow.document.write(
-          "<style>body { font-family: monospace; font-size: 12px; margin: 0; padding: 16px; min-height: auto; } .text-center { text-align: center; } .text-right { text-align: right; } .border-t { border-top: 1px solid #000; } .border-b { border-bottom: 1px solid #000; } .py-2 { padding: 4px 0; } .mb-4 { margin-bottom: 8px; } .mb-2 { margin-bottom: 4px; } .mt-4 { margin-top: 8px; } .mt-2 { margin-top: 4px; } .space-y-1 > * + * { margin-top: 2px; } .flex { display: flex; } .justify-between { justify-content: space-between; } .text-sm { font-size: 11px; } .text-xs { font-size: 10px; } .font-bold { font-weight: bold; } @media print { body { min-height: auto !important; height: auto !important; } } @page { margin: 10mm; size: auto; }</style>",
-        );
-        printWindow.document.write("</head><body>");
-        printWindow.document.write(printContent.innerHTML);
-        printWindow.document.write("</body></html>");
-        printWindow.document.close();
+      if (printContent) {
+        const printWindow = window.open("", "_blank", `width=${windowWidth},height=${windowHeight},scrollbars=yes,resizable=yes`);
+        if (printWindow) {
+          printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <title>Receipt</title>
+                <style>
+                  body { 
+                    font-family: monospace; 
+                    margin: 0; 
+                    padding: 10px; 
+                    font-size: 12px; 
+                    line-height: 1.4;
+                    background: white;
+                  }
+                  .receipt-container { 
+                    max-width: 300px; 
+                    margin: 0 auto; 
+                    background: white; 
+                  }
+                  .text-center { text-align: center; }
+                  .text-right { text-align: right; }
+                  .font-bold { font-weight: bold; }
+                  .border-t { border-top: 1px dashed #000; margin: 8px 0; }
+                  .border-b { border-bottom: 1px dashed #000; margin: 8px 0; }
+                  .flex { display: flex; }
+                  .justify-between { justify-content: space-between; }
+                  .space-y-1 > * + * { margin-top: 4px; }
+                  .mb-2 { margin-bottom: 8px; }
+                  .mb-4 { margin-bottom: 16px; }
+                  .text-sm { font-size: 11px; }
+                  .text-xs { font-size: 10px; }
+                  @media print {
+                    body { margin: 0; }
+                    .receipt-container { box-shadow: none; }
+                  }
+                </style>
+              </head>
+              <body>
+                ${printContent.innerHTML}
+              </body>
+            </html>
+          `);
+          printWindow.document.close();
 
         // Wait for content to load then adjust window size
         printWindow.onload = () => {
@@ -89,24 +125,49 @@ export function ReceiptModal({
         // Trigger print dialog
         printWindow.print();
 
-        // Only close the print window, not the receipt modal
+        // Auto close modals after printing
         printWindow.onafterprint = () => {
-          console.log("🖨️ Print completed, closing print window only");
+          console.log("🖨️ Print completed, auto-closing print window and receipt modal");
           printWindow.close();
+
+          // Auto close receipt modal after a short delay to ensure print dialog closes first
+          setTimeout(() => {
+            console.log("🔄 Auto-closing receipt modal after print completion");
+            if (onConfirm) {
+              // If there's a confirmation callback, call it to complete the payment flow
+              onConfirm();
+            }
+            // Close the receipt modal
+            onClose();
+          }, 500);
         };
 
-        // Cleanup when print window is closed manually
+        // Handle manual close of print window
         const checkClosed = setInterval(() => {
           if (printWindow.closed) {
-            console.log("🖨️ Print window closed manually");
+            console.log("🖨️ Print window closed manually, auto-closing receipt modal");
             clearInterval(checkClosed);
+
+            // Auto close receipt modal when print window is closed manually
+            setTimeout(() => {
+              console.log("🔄 Auto-closing receipt modal after manual print window close");
+              if (onConfirm) {
+                // If there's a confirmation callback, call it to complete the payment flow
+                onConfirm();
+              }
+              // Close the receipt modal
+              onClose();
+            }, 300);
           }
         }, 500);
 
-        // Clear interval after 10 seconds to prevent memory leaks
+        // Clear interval after 15 seconds to prevent memory leaks
         setTimeout(() => {
+          if (!printWindow.closed) {
+            console.log("🖨️ Print window still open after 15s, clearing interval");
+          }
           clearInterval(checkClosed);
-        }, 10000);
+        }, 15000);
       }
     }
   };
