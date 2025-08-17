@@ -1,3 +1,4 @@
+
 import { X, Printer, Mail } from "lucide-react";
 import {
   Dialog,
@@ -83,7 +84,7 @@ export function ReceiptModal({
     if (isOpen && receipt && !isPreview && !hasAutoOpened) {
       console.log("✅ Initial conditions met for auto-print");
       setHasAutoOpened(true);
-
+      
       // Small delay to ensure DOM is ready
       setTimeout(() => {
         console.log("🖨️ Auto-triggering print dialog for completed payment");
@@ -179,7 +180,7 @@ export function ReceiptModal({
         // Auto close modals and print window after printing or saving
         const handlePrintComplete = () => {
           console.log("🖨️ Print/Save completed, auto-closing all popups and print window");
-
+          
           // Force close print window immediately
           if (!printWindow.closed) {
             printWindow.close();
@@ -194,7 +195,7 @@ export function ReceiptModal({
             }
             // Close the receipt modal
             onClose();
-
+            
             // Close any other modals that might be open
             setShowEInvoiceModal(false);
             setShowPaymentMethodModal(false);
@@ -206,144 +207,7 @@ export function ReceiptModal({
 
         // Handle browser's save dialog completion (when user saves or cancels)
         printWindow.addEventListener('beforeunload', handlePrintComplete);
-
-        // Handle when print dialog is dismissed without printing
-        printWindow.addEventListener('focus', () => {
-          // Check if print dialog was closed without printing after a short delay
-          setTimeout(() => {
-            if (printWindow.document.hasFocus() && !printWindow.closed) {
-              console.log("🖨️ Print dialog likely dismissed, auto-closing window");
-              handlePrintComplete();
-            }
-          }, 500);
-        });
-
-        // Handle manual close of print window
-        const checkClosed = setInterval(() => {
-          if (printWindow.closed) {
-            console.log("🖨️ Print window closed manually, auto-closing all popups");
-            clearInterval(checkClosed);
-            handlePrintComplete();
-          }
-        }, 500);
-
-        // Force close print window after 10 seconds and clear interval after 15 seconds
-        setTimeout(() => {
-          if (!printWindow.closed) {
-            console.log("🖨️ Force closing print window after 10s timeout");
-            printWindow.close();
-          }
-        }, 10000);
-
-        setTimeout(() => {
-          if (!printWindow.closed) {
-            console.log("🖨️ Print window still open after 15s, clearing interval");
-          }
-          clearInterval(checkClosed);
-        }, 15000);
-      }
-    }
-  };
-
-  const handlePrint = () => {
-    const printContent = document.getElementById("receipt-content");
-    if (printContent) {
-      // Calculate content height dynamically
-      const contentHeight = printContent.scrollHeight;
-      const windowWidth = 400;
-      // Add some padding for print margins and controls
-      const windowHeight = Math.min(Math.max(contentHeight + 120, 300), 800);
-
-      console.log("Receipt content height:", contentHeight, "Window height:", windowHeight);
-
-      const printWindow = window.open("", "_blank", `width=${windowWidth},height=${windowHeight},scrollbars=yes,resizable=yes`);
-      if (printWindow) {
-        printWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <title>Receipt</title>
-              <style>
-                body { 
-                  font-family: monospace; 
-                  margin: 0; 
-                  padding: 10px; 
-                  font-size: 12px; 
-                  line-height: 1.4;
-                  background: white;
-                }
-                .receipt-container { 
-                  max-width: 300px; 
-                  margin: 0 auto; 
-                  background: white; 
-                }
-                .text-center { text-align: center; }
-                .text-right { text-align: right; }
-                .font-bold { font-weight: bold; }
-                .border-t { border-top: 1px dashed #000; margin: 8px 0; }
-                .border-b { border-bottom: 1px dashed #000; margin: 8px 0; }
-                .flex { display: flex; }
-                .justify-between { justify-content: space-between; }
-                .space-y-1 > * + * { margin-top: 4px; }
-                .mb-2 { margin-bottom: 8px; }
-                .mb-4 { margin-bottom: 16px; }
-                .text-sm { font-size: 11px; }
-                .text-xs { font-size: 10px; }
-                @media print {
-                  body { margin: 0; }
-                  .receipt-container { box-shadow: none; }
-                }
-              </style>
-            </head>
-            <body>
-              ${printContent.innerHTML}
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-
-        // Wait for content to load then adjust window size
-        printWindow.onload = () => {
-          const actualContentHeight = printWindow.document.body.scrollHeight;
-          const newHeight = Math.min(Math.max(actualContentHeight + 100, 300), 800);
-          console.log("Actual content height:", actualContentHeight, "Resizing to:", newHeight);
-          printWindow.resizeTo(windowWidth, newHeight);
-        };
-
-        // Trigger print dialog
-        printWindow.print();
-
-        // Auto close modals and print window after printing or saving
-        const handlePrintComplete = () => {
-          console.log("🖨️ Print/Save completed, auto-closing all popups and print window");
-
-          // Force close print window immediately
-          if (!printWindow.closed) {
-            printWindow.close();
-          }
-
-          // Auto close receipt modal and complete payment flow immediately after print
-          setTimeout(() => {
-            console.log("🔄 Auto-closing receipt modal and completing payment after print/save");
-            if (onConfirm) {
-              // Complete the payment flow first
-              onConfirm();
-            }
-            // Close the receipt modal
-            onClose();
-
-            // Close any other modals that might be open
-            setShowEInvoiceModal(false);
-            setShowPaymentMethodModal(false);
-          }, 200);
-        };
-
-        // Handle print completion
-        printWindow.onafterprint = handlePrintComplete;
-
-        // Handle browser's save dialog completion (when user saves or cancels)
-        printWindow.addEventListener('beforeunload', handlePrintComplete);
-
+        
         // Handle when print dialog is dismissed without printing
         printWindow.addEventListener('focus', () => {
           // Check if print dialog was closed without printing after a short delay
@@ -393,30 +257,6 @@ export function ReceiptModal({
       onConfirm();
     }
   };
-
-  // This is the function that gets called when a payment method is selected
-  // in the PaymentMethodModal. It needs to be passed down.
-  const handlePaymentMethodSelect = (method: string) => {
-    console.log("✅ Payment method selected in ReceiptModal:", method);
-    // Here you would typically handle the payment process.
-    // For now, we'll just close the modal.
-    setShowPaymentMethodModal(false);
-
-    // If the selected method is e-invoice, open the e-invoice modal
-    if (method === 'einvoice') {
-      console.log("➡️ Navigating to E-Invoice flow");
-      setShowEInvoiceModal(true);
-    } else {
-      // For other payment methods, we assume the payment is handled
-      // and we might want to re-open the receipt modal for final printing.
-      // For now, just close the payment method modal.
-      console.log(`➡️ Payment method ${method} selected, closing payment modal.`);
-      // If you need to re-open the receipt modal or do something else,
-      // you would add that logic here. For example, to re-open the receipt
-      // modal with updated status or to finalize the receipt.
-    }
-  };
-
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -519,12 +359,12 @@ export function ReceiptModal({
                 {(() => {
                   // Always prioritize originalPaymentMethod for e-invoices
                   let displayMethod = receipt.paymentMethod;
-
+                  
                   // If this is an e-invoice transaction and we have originalPaymentMethod, use it
                   if (receipt.originalPaymentMethod) {
                     displayMethod = receipt.originalPaymentMethod;
                   }
-
+                  
                   // Map payment methods to display names
                   const methodNames = {
                     cash: t('common.cash'),
@@ -538,7 +378,7 @@ export function ReceiptModal({
                     grabpay: t('common.grabpay'),
                     einvoice: t('pos.eInvoice')
                   };
-
+                  
                   return methodNames[displayMethod] || displayMethod;
                 })()}
               </span>

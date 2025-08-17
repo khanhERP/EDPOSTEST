@@ -371,7 +371,7 @@ export function OrderManagement() {
         }
       } catch (error) {
         console.error('Error calling CreateQRPos API:', error);
-
+        
         // Check if QR service is disabled
         if (error.message && (error.message.includes('503') || error.message.includes('temporarily unavailable'))) {
           toast({
@@ -382,7 +382,7 @@ export function OrderManagement() {
           setQrLoading(false);
           return;
         }
-
+        
         // Fallback to mock QR code on error
         try {
           console.log('Creating fallback QR code due to API error');
@@ -399,7 +399,7 @@ export function OrderManagement() {
           setSelectedPaymentMethod({ key: paymentMethodKey, method });
           setShowQRPayment(true);
           setPaymentMethodsOpen(false);
-
+          
           toast({
             title: 'Sử Dụng QR Offline',
             description: 'Dịch vụ QR không khả dụng. Đã tạo mã QR offline để tham khảo.',
@@ -435,16 +435,35 @@ export function OrderManagement() {
       setShowQRPayment(true);
       setPaymentMethodsOpen(false);
     } catch (error) {
-      console.error('Error generating QR code:', error);
-      toast({
-        title: 'Lỗi',
-        description: 'Không thể tạo mã QR',
-        variant: 'destructive',
-      });
-    } finally {
-      setQrLoading(false);
+      console.error('Error generating QR code:', error)reateQRPos API:', error);
+        // Fallback to mock QR code on error
+        try {
+          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
+          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
+            width: 256,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          setQrCodeUrl(qrUrl);
+          setSelectedPaymentMethod({ key: paymentMethodKey, method });
+          setShowQRPayment(true);
+          setPaymentMethodsOpen(false);
+        } catch (fallbackError) {
+          console.error('Error generating fallback QR code:', fallbackError);
+          toast({
+            title: 'Lỗi',
+            description: 'Không thể tạo mã QR',
+            variant: 'destructive',
+          });
+        }
+      } finally {
+        setQrLoading(false);
+      }
+      return;
     }
-    return;
   };
 
   const handleQRPaymentConfirm = () => {
@@ -1179,7 +1198,7 @@ export function OrderManagement() {
 
       {/* Mixed Payment Dialog */}
       <Dialog open={mixedPaymentOpen} onOpenChange={setMixedPaymentOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-orange-600" />
