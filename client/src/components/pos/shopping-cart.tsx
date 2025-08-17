@@ -263,12 +263,12 @@ export function ShoppingCart({
   const handlePaymentMethodSelect = (method: string, data?: any) => {
     console.log('🎯 Shopping cart: Step 3: Payment method selected:', method, data);
     
-    // Step 3: Payment method selected, now go to Step 4: Invoice
+    // Step 3: Payment method selected, now go directly to Step 4: E-Invoice modal
     setShowPaymentMethodModal(false);
     setSelectedPaymentMethod(method);
     
-    // Always go to E-invoice modal for invoice processing
-    console.log('📧 Shopping cart: Going to E-invoice modal for invoice processing');
+    // Go directly to E-invoice modal for invoice processing (no duplicate payment selection)
+    console.log('📧 Shopping cart: Going directly to E-invoice modal for invoice processing');
     setShowEInvoiceModal(true);
   };
 

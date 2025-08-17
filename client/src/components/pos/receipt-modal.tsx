@@ -252,11 +252,7 @@ export function ReceiptModal({
   };
 
   const handleConfirmAndSelectPayment = () => {
-    setShowPaymentMethodModal(true);
-  };
-
-  const handlePaymentMethodSelect = (method: string) => {
-    setShowPaymentMethodModal(false);
+    // Close preview modal and trigger payment method selection in parent
     if (onConfirm) {
       onConfirm();
     }

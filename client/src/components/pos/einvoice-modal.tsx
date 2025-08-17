@@ -110,6 +110,9 @@ export function EInvoiceModal({
     }
   };
 
+  // Log the pre-selected payment method for debugging
+  console.log("💳 E-Invoice modal received payment method:", selectedPaymentMethod);
+
   // Mutation để hoàn tất thanh toán và cập nhật trạng thái
   const completePaymentMutation = useMutation({
     mutationFn: ({
