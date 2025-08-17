@@ -87,6 +87,16 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     employeeId: "Mã nhân viên",
     customerId: "Mã khách hàng",
     customerName: "Tên khách hàng",
+    vip: "Khách VIP",
+    newCustomer: "Khách hàng mới",
+    inactive: "Không hoạt động",
+    active: "Hoạt động",
+
+    // Time analysis specific keys
+    timeSalesReport: "Báo cáo bán hàng theo thời gian",
+    profitByInvoiceReport: "Báo cáo lợi nhuận theo hóa đơn",
+    invoiceDiscountReport: "Báo cáo giảm giá hóa đơn",
+    returnByInvoiceReport: "Báo cáo trả hàng theo hóa đơn",
 
     // Sales chart table columns
     date: "Ngày",
@@ -391,7 +401,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     financialMetrics: "Chỉ số tài chính",
     operationalMetrics: "Chỉ số vận hành",
     customerMetrics: "Chỉ số khách hàng",
-    
+
     // Sales channel report specific
     dineIn: "Ăn tại chỗ",
     takeaway: "Mang về",
@@ -829,7 +839,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     financialMetrics: "재무 지표",
     operationalMetrics: "운영 지표",
     customerMetrics: "고객 지표",
-    
+
     // Sales channel report specific
     dineIn: "매장 식사",
     takeaway: "포장",
@@ -960,6 +970,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     employeeId: "Employee ID",
     customerId: "Customer ID",
     customerName: "Customer Name",
+    vip: "VIP Customer",
+    newCustomer: "New Customer",
+    inactive: "Inactive", 
+    active: "Active",
 
     // Sales chart table columns
     date: "Date",
@@ -1258,7 +1272,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     financialMetrics: "Financial Metrics",
     operationalMetrics: "Operational Metrics",
     customerMetrics: "Customer Metrics",
-    
+
     // Sales channel report specific
     dineIn: "Dine In",
     takeaway: "Takeaway",
