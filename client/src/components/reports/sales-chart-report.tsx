@@ -3109,18 +3109,6 @@ export function SalesChartReport() {
 
       {/* Report Content */}
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              {t("reports.salesChartTab")}
-            </CardTitle>
-            <CardDescription>
-              {t("reports.salesChartDescription")}
-            </CardDescription>
-          </CardHeader>
-        </Card>
-
         {transactionsLoading || ordersLoading ? (
           <div className="flex justify-center py-8">
             <div className="text-gray-500">{t("reports.loading")}...</div>
