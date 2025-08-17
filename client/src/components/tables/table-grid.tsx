@@ -48,6 +48,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [orderForPayment, setOrderForPayment] = useState<any>(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
+  const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const { toast } = useToast();
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
@@ -1034,22 +1036,63 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <div className="pt-4 space-y-3">
                   <Button
                     onClick={() => {
-                      console.log('🎯 Table: Starting payment flow - preserving order data');
+                      console.log('🎯 Table: Starting payment flow - showing receipt preview first');
 
-                      // Tạo order data đầy đủ bao gồm cả order items để truyền qua các bước
-                      const completeOrderData = {
+                      if (!selectedOrder || !orderItems || !Array.isArray(orderItems)) {
+                        console.error('❌ Missing order data for preview');
+                        toast({
+                          title: 'Lỗi',
+                          description: 'Không thể tạo xem trước hóa đơn. Vui lòng thử lại.',
+                          variant: 'destructive',
+                        });
+                        return;
+                      }
+
+                      // Calculate totals for preview
+                      let subtotal = 0;
+                      let totalTax = 0;
+
+                      const processedItems = orderItems.map((item: any) => {
+                        const itemSubtotal = Number(item.total || 0);
+                        const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+                        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
+                        const itemTax = (itemSubtotal * taxRate) / 100;
+
+                        subtotal += itemSubtotal;
+                        totalTax += itemTax;
+
+                        return {
+                          id: item.id,
+                          productId: item.productId,
+                          productName: item.productName || getProductName(item.productId),
+                          quantity: item.quantity,
+                          price: item.unitPrice,
+                          total: item.total,
+                          sku: item.productSku || `SP${item.productId}`,
+                          taxRate: taxRate
+                        };
+                      });
+
+                      const finalTotal = subtotal + totalTax;
+
+                      // Create preview receipt data
+                      const previewData = {
                         ...selectedOrder,
-                        orderItems: orderItems || [], // Đảm bảo orderItems được truyền theo
+                        transactionId: `PREVIEW-${Date.now()}`,
+                        items: processedItems,
+                        subtotal: subtotal.toFixed(2),
+                        tax: totalTax.toFixed(2),
+                        total: finalTotal.toFixed(2),
+                        paymentMethod: 'preview',
+                        cashierName: 'Table Service',
+                        createdAt: new Date().toISOString(),
+                        orderItems: orderItems // Keep original order items for payment flow
                       };
 
-                      console.log('💾 Setting order for payment with complete data:', completeOrderData);
-                      setOrderForPayment(completeOrderData);
-
-                      // Đóng order details nhưng GIỮ selectedOrder để có thể tham chiếu
+                      console.log('📄 Table: Showing receipt preview before payment');
+                      setPreviewReceipt(previewData);
                       setOrderDetailsOpen(false);
-                      // Không xóa selectedOrder để giữ thông tin cho các modal tiếp theo
-
-                      setShowPaymentMethodModal(true);
+                      setShowReceiptPreview(true);
                     }}
                     className="w-full bg-green-600 hover:bg-green-700"
                     size="lg"
@@ -1070,6 +1113,48 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Receipt Preview Modal - Step 1: "Xem trước hóa đơn" */}
+      <ReceiptModal
+        isOpen={showReceiptPreview}
+        onClose={() => {
+          console.log("🔴 Table: Closing receipt preview modal");
+          setShowReceiptPreview(false);
+          setPreviewReceipt(null);
+        }}
+        receipt={previewReceipt}
+        onConfirm={() => {
+          console.log("📄 Table: Receipt preview confirmed, starting payment flow");
+          
+          if (!previewReceipt) {
+            console.error('❌ No preview receipt data available');
+            return;
+          }
+
+          // Prepare complete order data for payment flow
+          const completeOrderData = {
+            ...selectedOrder,
+            orderItems: previewReceipt.orderItems || orderItems || [],
+          };
+
+          console.log('💾 Setting order for payment with complete data:', completeOrderData);
+          setOrderForPayment(completeOrderData);
+          
+          // Close preview and show payment method modal
+          setShowReceiptPreview(false);
+          setShowPaymentMethodModal(true);
+        }}
+        isPreview={true}
+        cartItems={previewReceipt?.items?.map((item: any) => ({
+          id: item.productId || item.id,
+          name: item.productName || item.name,
+          price: parseFloat(item.price || item.unitPrice || '0'),
+          quantity: item.quantity,
+          sku: item.sku || `SP${item.productId}`,
+          taxRate: item.taxRate || 10
+        })) || []}
+        total={previewReceipt ? parseFloat(previewReceipt.total) : 0}
+      />
 
       {/* Payment Method Modal */}
       <PaymentMethodModal
@@ -1217,18 +1302,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         />
       )}
 
-      {/* Receipt Modal */}
+      {/* Receipt Modal - Final receipt after payment */}
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log('🔴 Table: Closing receipt modal and clearing all states');
+          console.log('🔴 Table: Closing final receipt modal and clearing all states');
           setShowReceiptModal(false);
           setSelectedReceipt(null);
           setOrderForPayment(null);
           setShowPaymentMethodModal(false);
           setShowEInvoiceModal(false);
+          setShowReceiptPreview(false);
+          setPreviewReceipt(null);
           setOrderDetailsOpen(false);
-          setSelectedOrder(null); // Bây giờ mới clear selectedOrder khi hoàn tất
+          setSelectedOrder(null);
         }}
         receipt={selectedReceipt}
         cartItems={selectedReceipt?.items?.map((item: any) => ({
