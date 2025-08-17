@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/lib/i18n";
 import { PaymentMethodModal } from "./payment-method-modal";
 import { ReceiptModal } from "./receipt-modal";
+import { EInvoiceModal } from "./einvoice-modal";
 import type { CartItem } from "@shared/schema";
 import { toast } from "@/hooks/use-toast";
 
@@ -51,17 +52,11 @@ export function ShoppingCart({
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const { t } = useTranslation();
 
-  // State for E-invoice modal (assuming it exists in your project)
-  const [showEInvoice, setShowEInvoice] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState(""); // To store the selected payment method for E-invoice
-  const [onClose, setOnClose] = useState(() => () => {}); // Placeholder for the close function of the E-invoice modal
-  const [onSelectMethod, setOnSelectMethod] = useState(() => () => {}); // Placeholder for the selection function
-  const [onShowEInvoice, setOnShowEInvoice] = useState(() => () => {}); // Placeholder for triggering the receipt modal after e-invoice
-
   // State for Receipt Modal and E-Invoice Modal integration
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
