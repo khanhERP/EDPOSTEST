@@ -359,7 +359,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                               }}
                             >
                               <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.salesChart')}</span>
+                              <span className="truncate">{t('reports.salesChartTab')}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=order">
