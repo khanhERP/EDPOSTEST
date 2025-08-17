@@ -293,9 +293,9 @@ export function ShoppingCart({
 
     setShowEInvoiceModal(false);
 
-    // Step 5: Always show receipt modal after invoice processing
+    // Step 5: Always show final receipt modal after invoice processing
     if (eInvoiceData.receipt) {
-      console.log('📄 Shopping cart: Step 5: Showing final receipt modal');
+      console.log('📄 Shopping cart: Step 5: Showing final receipt modal (not preview)');
       setSelectedReceipt(eInvoiceData.receipt);
       setShowReceiptModal(true);
       // Don't clear cart yet - wait for receipt confirmation
@@ -547,11 +547,11 @@ export function ShoppingCart({
         </div>
       )}
 
-      {/* Step 1: Receipt Preview Modal */}
+      {/* Step 1: Receipt Preview Modal - "Xem trước hóa đơn" */}
       <ReceiptModal
         isOpen={showReceiptPreview}
         onClose={() => {
-          console.log("🔴 Step 1: Closing receipt preview modal");
+          console.log("🔴 Step 1: Closing receipt preview modal (Xem trước hóa đơn)");
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
         }}
@@ -561,7 +561,7 @@ export function ShoppingCart({
           setShowReceiptPreview(false);
           setShowPaymentMethodModal(true);
         }}
-        isPreview={true} // This is always preview mode
+        isPreview={true} // This is the preview modal - "Xem trước hóa đơn"
         cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,
@@ -572,17 +572,17 @@ export function ShoppingCart({
         }))}
       />
 
-      {/* Step 5: Final Receipt Modal - for completed transactions */}
+      {/* Step 5: Final Receipt Modal - "Receipt" after all processing complete */}
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log("🔴 Step 5: Closing final receipt modal from shopping cart");
+          console.log("🔴 Step 5: Closing final receipt modal (Receipt) from shopping cart");
           setShowReceiptModal(false);
           setSelectedReceipt(null);
         }}
         receipt={selectedReceipt}
         onConfirm={handleReceiptConfirm}
-        isPreview={false} // This is final receipt, not preview
+        isPreview={false} // This is the final receipt - "Receipt"
         cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,

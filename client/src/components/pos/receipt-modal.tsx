@@ -54,13 +54,12 @@ export function ReceiptModal({
   const { t } = useTranslation();
 
   console.log("=== RECEIPT MODAL RENDERED ===");
+  console.log("Receipt Modal Mode:", isPreview ? "PREVIEW (Step 1)" : "FINAL RECEIPT (Step 5)");
   console.log("Receipt Modal isOpen:", isOpen);
+  console.log("Receipt Modal isPreview:", isPreview);
   console.log("Receipt Modal cartItems received:", cartItems);
   console.log("Receipt Modal cartItems length:", cartItems?.length || 0);
-  console.log("Receipt Modal cartItems type:", typeof cartItems);
-  console.log("Receipt Modal cartItems is array:", Array.isArray(cartItems));
   console.log("Receipt Modal total:", total);
-  console.log("Receipt Modal cartItems content:", cartItems);
   console.log("Receipt Modal receipt:", receipt);
 
   // Query store settings to get dynamic address

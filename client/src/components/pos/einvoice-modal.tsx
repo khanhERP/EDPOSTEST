@@ -1109,9 +1109,57 @@ export function EInvoiceModal({
 
         console.log("✅ Prepared comprehensive invoice result:", invoiceResult);
 
-        // Close e-invoice modal and return data
+        // --- CHANGE START ---
+        // Always show receipt after processing
+        const receiptDataToConfirm = {
+          transactionId: result.data?.invoiceNo || `TXN-${Date.now()}`,
+          items: cartItems.map((item) => {
+            const itemPrice =
+              typeof item.price === "string"
+                ? parseFloat(item.price)
+                : item.price;
+            const itemQuantity =
+              typeof item.quantity === "string"
+                ? parseInt(item.quantity)
+                : item.quantity;
+            const itemTaxRate =
+              typeof item.taxRate === "string"
+                ? parseFloat(item.taxRate || "10")
+                : item.taxRate || 10;
+            const itemSubtotal = itemPrice * itemQuantity;
+            const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+            return {
+              id: item.id,
+              productId: item.id,
+              productName: item.name,
+              price: itemPrice.toFixed(2),
+              quantity: itemQuantity,
+              total: (itemSubtotal + itemTax).toFixed(2),
+              sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+              taxRate: itemTaxRate,
+            };
+          }),
+          subtotal: cartSubtotal.toFixed(2),
+          tax: cartTaxAmount.toFixed(2),
+          total: cartTotal.toFixed(2),
+          paymentMethod: "einvoice",
+          originalPaymentMethod: selectedPaymentMethod,
+          amountReceived: cartTotal.toFixed(2),
+          change: "0.00",
+          cashierName: "System User",
+          createdAt: new Date().toISOString(),
+          invoiceNumber: result.data?.invoiceNo || null,
+          customerName: formData.customerName,
+          customerTaxCode: formData.taxCode,
+        };
+
+        console.log(
+          "📧 Step 4: E-Invoice completed, going directly to final receipt",
+        );
+        onConfirm({ receipt: receiptDataToConfirm });
         onClose();
-        onConfirm(invoiceResult);
+        // --- CHANGE END ---
       } else {
         throw new Error(
           result.message || "Có lỗi xảy ra khi phát hành hóa đơn",
