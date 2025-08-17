@@ -282,6 +282,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Warehouse Report
     warehouseReportTab: "Báo cáo kho hàng",
     inventoryReportDescription: "Báo cáo chi tiết về tồn kho và hàng hóa",
+    inventoryReportOfInterestType: "Báo cáo kho loại quan tâm",
     warehouseReportDescription: "Báo cáo chi tiết về hoạt động kho hàng",
 
     // Additional missing keys
@@ -719,6 +720,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Warehouse Report
     warehouseReportTab: "창고 활동 보고서",
+    inventoryReportOfInterestType: "관심 유형별 창고 보고서",
     warehouseReportDescription: "창고 활동에 대한 상세 보고서",
 
     // Additional missing keys
@@ -1141,6 +1143,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Warehouse Report
     warehouseReportTab: "Warehouse Activity Report",
+    inventoryReportOfInterestType: "Inventory Report of Interest Type",
     warehouseReportDescription: "Detailed warehouse activity report",
 
     // Additional missing keys
