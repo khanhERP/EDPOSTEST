@@ -351,7 +351,7 @@ export function ReceiptModal({
               <span>{receipt.subtotal} ₫</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>{t('pos.tax')}</span>
+              <span>Thuế</span>
               <span>{receipt.tax} ₫</span>
             </div>
             <div className="flex justify-between font-bold">
