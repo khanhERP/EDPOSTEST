@@ -362,8 +362,10 @@ export function ReceiptModal({
               <span>{t('pos.paymentMethod')}</span>
               <span className="capitalize">
                 {(() => {
-                  // Get the original payment method from eInvoiceData if available
-                  const method = receipt.originalPaymentMethod || receipt.paymentMethod;
+                  // For e-invoices, always show the original payment method that was selected
+                  const method = receipt.paymentMethod === 'einvoice' && receipt.originalPaymentMethod 
+                    ? receipt.originalPaymentMethod 
+                    : receipt.paymentMethod;
                   
                   // Map payment methods to display names
                   const methodNames = {
