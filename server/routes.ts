@@ -2905,8 +2905,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("POS Login request:", { clientID, clientSecret, masterId, bankCode });
 
-      // Use external server URL for login
+      // Check if external QR API is disabled
+      if (process.env.DISABLE_EXTERNAL_QR_API === 'true') {
+        console.log("QR Payment API is disabled");
+        return res.status(503).json({
+          error: "QR Payment service is temporarily unavailable",
+          message: "Please use alternative payment methods",
+          disabled: true
+        });
+      }
+
+      // Use external server URL for login with timeout
       const apiBaseUrl = process.env.QR_API_BASE_URL || "http://1.55.212.135:9335";
+      console.log("Attempting to connect to QR API:", apiBaseUrl);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`${apiBaseUrl}/api/pos/login`, {
         method: "POST",
         headers: {
@@ -2919,7 +2934,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           masterId,
           bankCode,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         console.error("POS Login API error:", response.status, response.statusText);
@@ -2935,16 +2953,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       console.error("POS Login proxy error:", error);
-      res.status(500).json({
-        error: "Failed to login for QR payment",
+      
+      let errorMessage = "Failed to login for QR payment";
+      let statusCode = 500;
+      
+      if (error.name === 'AbortError') {
+        errorMessage = "QR Payment service timeout";
+        statusCode = 408;
+      } else if (error.code === 'ECONNREFUSED') {
+        errorMessage = "Cannot connect to QR payment service";
+        statusCode = 503;
+      }
+      
+      res.status(statusCode).json({
+        error: errorMessage,
         details: error.message,
+        suggestion: "Please try again or use alternative payment methods"
       });
     }
   });
 
   // QR Payment API proxy endpoint
   app.post("/api/pos/create-qr", async (req: TenantRequest, res) => {
-    // Stock update error
     try {
       const { bankCode, clientID } = req.query;
       const body = req.body;
@@ -2952,9 +2982,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("CreateQRPos request:", { bankCode, clientID, body });
 
-      // Use external server URL
-      const apiBaseUrl =
-        process.env.QR_API_BASE_URL || "http://1.55.212.135:9335";
+      // Check if external QR API is disabled
+      if (process.env.DISABLE_EXTERNAL_QR_API === 'true') {
+        console.log("QR Payment API is disabled");
+        return res.status(503).json({
+          error: "QR Payment service is temporarily unavailable",
+          message: "Please use alternative payment methods",
+          disabled: true
+        });
+      }
+
+      // Use external server URL with timeout
+      const apiBaseUrl = process.env.QR_API_BASE_URL || "http://1.55.212.135:9335";
+      console.log("Attempting to create QR via API:", apiBaseUrl);
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for QR creation
+
       const response = await fetch(
         `${apiBaseUrl}/api/CreateQRPos?bankCode=${bankCode}&clientID=${clientID}`,
         {
@@ -2964,8 +3008,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             Accept: "application/json",
           },
           body: JSON.stringify(body),
+          signal: controller.signal,
         },
       );
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         console.error(
@@ -2985,9 +3032,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       console.error("CreateQRPos proxy error:", error);
-      res.status(500).json({
-        error: "Failed to create QR payment",
+      
+      let errorMessage = "Failed to create QR payment";
+      let statusCode = 500;
+      
+      if (error.name === 'AbortError') {
+        errorMessage = "QR Payment service timeout";
+        statusCode = 408;
+      } else if (error.code === 'ECONNREFUSED') {
+        errorMessage = "Cannot connect to QR payment service";
+        statusCode = 503;
+      }
+      
+      res.status(statusCode).json({
+        error: errorMessage,
         details: error.message,
+        suggestion: "Please try again or use alternative payment methods"
       });
     }
   });
