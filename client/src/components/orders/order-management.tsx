@@ -788,7 +788,7 @@ export function OrderManagement() {
 
                           // Calculate subtotal (before tax)
                           const itemSubtotal = itemUnitPrice * itemQuantity;
-                          
+
                           // Calculate tax amount
                           const itemTax = taxRate > 0 ? (itemSubtotal * taxRate) / 100 : 0;
 
@@ -823,61 +823,37 @@ export function OrderManagement() {
                 {/* Status Update Actions */}
                 {selectedOrder.status !== 'paid' && selectedOrder.status !== 'cancelled' && (
                   <div className="flex gap-2 pt-4">
-                    {selectedOrder.status === 'pending' && (
-                      <Button
-                        onClick={() => handleStatusUpdate(selectedOrder.id, 'confirmed')}
-                        disabled={updateOrderStatusMutation.isPending}
-                        className="flex-1"
-                      >
-                        {t('orders.confirm')}
-                      </Button>
+                    <Button
+                      onClick={() => setPaymentMethodsOpen(true)}
+                      disabled={completePaymentMutation.isPending}
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                    >
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      {t('orders.payment')}
+                    </Button>
+                    <Button
+                      onClick={() => setPointsPaymentOpen(true)}
+                      disabled={completePaymentMutation.isPending}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    >
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      {t('customers.pointManagement')}
+                    </Button>
+                  </div>
+                )}
+
+                {/* Final Status Display */}
+                {(selectedOrder.status === 'paid' || selectedOrder.status === 'cancelled') && (
+                  <div className="flex justify-center pt-4">
+                    {selectedOrder.status === 'paid' && (
+                      <Badge variant="outline" className="px-4 py-2 bg-green-100 text-green-800 border-green-300">
+                        ✅ {t('orders.status.completed')}
+                      </Badge>
                     )}
-                    {selectedOrder.status === 'confirmed' && (
-                      <Button
-                        onClick={() => handleStatusUpdate(selectedOrder.id, 'preparing')}
-                        disabled={updateOrderStatusMutation.isPending}
-                        className="flex-1"
-                      >
-                        {t('orders.startCooking')}
-                      </Button>
-                    )}
-                    {selectedOrder.status === 'preparing' && (
-                      <Button
-                        onClick={() => handleStatusUpdate(selectedOrder.id, 'ready')}
-                        disabled={updateOrderStatusMutation.isPending}
-                        className="flex-1"
-                      >
-                        {t('orders.ready')}
-                      </Button>
-                    )}
-                    {selectedOrder.status === 'ready' && (
-                      <Button
-                        onClick={() => handleStatusUpdate(selectedOrder.id, 'served')}
-                        disabled={updateOrderStatusMutation.isPending}
-                        className="flex-1"
-                      >
-                        {t('orders.served')}
-                      </Button>
-                    )}
-                    {selectedOrder.status === 'served' && (
-                      <>
-                        <Button
-                          onClick={() => setPaymentMethodsOpen(true)}
-                          disabled={completePaymentMutation.isPending}
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                        >
-                          <CreditCard className="w-4 h-4 mr-2" />
-                          {t('orders.payment')}
-                        </Button>
-                        <Button
-                          onClick={() => setPointsPaymentOpen(true)}
-                          disabled={completePaymentMutation.isPending}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700"
-                        >
-                          <CreditCard className="w-4 h-4 mr-2" />
-                          {t('customers.pointManagement')}
-                        </Button>
-                      </>
+                    {selectedOrder.status === 'cancelled' && (
+                      <Badge variant="destructive" className="px-4 py-2">
+                        ❌ {t('orders.status.cancelled')}
+                      </Badge>
                     )}
                   </div>
                 )}
