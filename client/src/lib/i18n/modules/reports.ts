@@ -125,7 +125,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Report titles
     timeSalesReport: "Báo cáo bán hàng theo thời gian",
-    inventoryReport: "Báo cáo hàng hóa",
+    inventoryReport: "Báo cáo kho",
     salesReportByProduct: "Báo cáo bán hàng theo sản phẩm",
     profitByInvoiceReport: "Báo cáo lợi nhuận theo hóa đơn",
     invoiceDiscountReport: "Báo cáo giảm giá hóa đơn",
@@ -281,6 +281,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Warehouse Report
     warehouseReportTab: "Báo cáo kho hàng",
+    inventoryReportDescription: "Báo cáo chi tiết về tồn kho và hàng hóa",
     warehouseReportDescription: "Báo cáo chi tiết về hoạt động kho hàng",
 
     // Additional missing keys
@@ -563,7 +564,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Report titles
     timeSalesReport: "시간별 매출 보고서",
-    inventoryReport: "재고 보고서",
+    inventoryReport: "창고 보고서",
     salesReportByProduct: "상품별 매출 보고서",
     profitByInvoiceReport: "송장별 수익 보고서",
     invoiceDiscountReport: "송장 할인 보고서",
@@ -619,7 +620,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     orderTime: "주문 시간",
     orderQuantity: "주문 수량",
     orderValue: "주문 가치",
-    productGroup: "상품 그룹",
 
     // Purchase Report specific
     purchaseReport: "구매 보고서",
@@ -752,12 +752,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     stockMovement: "재고 움직임",
     menuAnalysisDescription: "메뉴 및 상품 성과에 대한 상세 분석",
 
-    // Sales Chart Report specific
-    salesChartTab: "매출 차트",
-    salesChartDescription: "매출 세부 분석 및 시간별 분석",
-
     // Table Analysis
-    tableAnalysis: "테이블 분석",
 
     // Missing keys for menu report
     menuItems: "메뉴 항목",
@@ -774,17 +769,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noCategoryData: "카테고리 데이터 없음",
     noSalesData: "판매 데이터 없음",
     noRevenueData: "매출 데이터 없음",
-    productType: "상품 유형",
-    combo: "콤보",
-    product: "상품",
-    service: "서비스",
 
     // Table analysis
     tablePerformance: "테이블 성과",
     utilizationRate: "이용률",
     averageRevenue: "평균 매출",
     peakHours: "피크 시간대",
-    tableUtilization: "테이블 이용률",
     revenuePerTable: "테이블당 매출",
     ordersPerTable: "테이블당 주문",
 
@@ -859,7 +849,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Supplier reports
     supplierReportDescription: "공급업체에 대한 상세 보고서",
-    purchaseReport: "구매 보고서",
     supplierPerformance: "공급업체 성과",
 
     // Inventory reports
@@ -996,7 +985,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Report titles
     timeSalesReport: "Time Sales Report",
-    inventoryReport: "Inventory Report",
+    inventoryReport: "Warehouse Report",
     salesReportByProduct: "Sales Report by Product",
     profitByInvoiceReport: "Profit by Invoice Report",
     invoiceDiscountReport: "Invoice Discount Report",
@@ -1185,12 +1174,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     stockMovement: "Stock Movement",
     menuAnalysisDescription: "Detailed analysis of menu and product performance",
 
-    // Sales Chart Report specific
-    salesChartTab: "Sales Chart",
-    salesChartDescription: "Detailed sales analysis and time-based breakdown",
-
     // Table Analysis
-    tableAnalysis: "Table Analysis",
 
     // Missing keys for menu report
     menuItems: "Menu Items",
@@ -1217,7 +1201,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     utilizationRate: "Utilization Rate",
     averageRevenue: "Average Revenue",
     peakHours: "Peak Hours",
-    tableUtilization: "Table Utilization",
     revenuePerTable: "Revenue per Table",
     ordersPerTable: "Orders per Table",
 
@@ -1260,8 +1243,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Status
     status: "Status",
-    active: "Active",
-    inactive: "Inactive",
 
     // Additional report sections
     detailedAnalysis: "Detailed Analysis",
@@ -1292,7 +1273,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Supplier reports
     supplierReportDescription: "Detailed supplier report",
-    purchaseReport: "Purchase Report",
     supplierPerformance: "Supplier Performance",
 
     // Inventory reports
