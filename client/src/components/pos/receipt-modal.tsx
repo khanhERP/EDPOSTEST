@@ -360,7 +360,25 @@ export function ReceiptModal({
             </div>
             <div className="flex justify-between text-sm mt-2">
               <span>{t('pos.paymentMethod')}</span>
-              <span className="capitalize">{receipt.paymentMethod}</span>
+              <span className="capitalize">
+                {(() => {
+                  const method = receipt.paymentMethod;
+                  // Map payment methods to display names
+                  const methodNames = {
+                    cash: t('common.cash'),
+                    creditCard: t('common.creditCard'),
+                    debitCard: t('common.debitCard'),
+                    momo: t('common.momo'),
+                    zalopay: t('common.zalopay'),
+                    vnpay: t('common.vnpay'),
+                    qrCode: t('common.qrCode'),
+                    shopeepay: t('common.shopeepay'),
+                    grabpay: t('common.grabpay'),
+                    einvoice: t('pos.eInvoice')
+                  };
+                  return methodNames[method] || method;
+                })()}
+              </span>
             </div>
             {receipt.amountReceived && (
               <div className="flex justify-between text-sm">
