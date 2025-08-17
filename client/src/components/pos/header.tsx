@@ -376,7 +376,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                               }}
                             >
                               <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t("reports.purchaseReport")}</span>
+                              <span className="truncate">{t("reports.purchaseTab")}</span>
                             </button>
                           </Link>
                           <Link href="/reports?tab=inventory">
