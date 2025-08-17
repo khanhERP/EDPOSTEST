@@ -436,34 +436,15 @@ export function OrderManagement() {
       setPaymentMethodsOpen(false);
     } catch (error) {
       console.error('Error generating QR code:', error);
-        // Fallback to mock QR code on error
-        try {
-          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
-          const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
-            width: 256,
-            margin: 2,
-            color: {
-              dark: '#000000',
-              light: '#FFFFFF'
-            }
-          });
-          setQrCodeUrl(qrUrl);
-          setSelectedPaymentMethod({ key: paymentMethodKey, method });
-          setShowQRPayment(true);
-          setPaymentMethodsOpen(false);
-        } catch (fallbackError) {
-          console.error('Error generating fallback QR code:', fallbackError);
-          toast({
-            title: 'Lỗi',
-            description: 'Không thể tạo mã QR',
-            variant: 'destructive',
-          });
-        }
-      } finally {
-        setQrLoading(false);
-      }
-      return;
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể tạo mã QR',
+        variant: 'destructive',
+      });
+    } finally {
+      setQrLoading(false);
     }
+    return;
   };
 
   const handleQRPaymentConfirm = () => {
