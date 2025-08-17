@@ -73,9 +73,18 @@ export function SalesReport() {
   const getSalesData = () => {
     if (!transactions || !Array.isArray(transactions)) {
       return {
-        dailySales: [],
-        paymentMethods: [],
-        hourlySales: {},
+        dailySales: [{
+          date: new Date().toISOString().split('T')[0],
+          revenue: 0,
+          orders: 0,
+          customers: 0,
+        }],
+        paymentMethods: [
+          { method: 'cash', count: 0, revenue: 0 },
+          { method: 'card', count: 0, revenue: 0 },
+          { method: 'qrCode', count: 0, revenue: 0 },
+        ],
+        hourlySales: { 12: 0 },
         totalRevenue: 0,
         totalOrders: 0,
         totalCustomers: 0,
@@ -574,7 +583,7 @@ export function SalesReport() {
                       {(!salesData?.dailySales || salesData.dailySales.length === 0) && (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center text-gray-500 py-8">
-                            {t("common.noData")}
+                            {t("reports.noSalesData")}
                           </TableCell>
                         </TableRow>
                       )}
@@ -633,7 +642,10 @@ export function SalesReport() {
 
                   {(!salesData?.paymentMethods || salesData.paymentMethods.length === 0) && (
                     <div className="text-center text-gray-500 py-8">
-                      {t("common.noData")}
+                      <div className="bg-gray-50 rounded-lg p-6">
+                        <p className="text-gray-600 mb-2">{t("reports.noPaymentData")}</p>
+                        <p className="text-sm text-gray-500">{t("reports.noPaymentDataDescription")}</p>
+                      </div>
                     </div>
                   )}
                 </div>
