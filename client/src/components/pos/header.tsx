@@ -1,14 +1,27 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { ScanBarcode, Users, Home, Clock, Utensils, BarChart3, ChevronDown, Package, Settings as SettingsIcon, Building2 } from "lucide-react";
+import {
+  ScanBarcode,
+  Users,
+  Home,
+  Clock,
+  Utensils,
+  BarChart3,
+  ChevronDown,
+  Package,
+  Settings as SettingsIcon,
+  Building2,
+} from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import logoPath from "@assets/EDPOS_1753091767028.png";
 import { useTranslation } from "@/lib/i18n";
 import { LanguageSwitcher } from "@/components/ui/language-switcher";
-import { type StoreSettings, type Employee, type AttendanceRecord } from "@shared/schema";
 import {
-  PieChart
-} from "lucide-react";
+  type StoreSettings,
+  type Employee,
+  type AttendanceRecord,
+} from "@shared/schema";
+import { PieChart } from "lucide-react";
 import {
   Search,
   Bell,
@@ -43,22 +56,22 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
 
   // Fetch store settings
   const { data: storeSettings } = useQuery<StoreSettings>({
-    queryKey: ['/api/store-settings'],
+    queryKey: ["/api/store-settings"],
   });
 
   // Fetch employees
   const { data: employees } = useQuery<Employee[]>({
-    queryKey: ['/api/employees'],
+    queryKey: ["/api/employees"],
   });
 
-  // Fetch today's attendance records  
-  const todayDate = new Date().toISOString().split('T')[0];
+  // Fetch today's attendance records
+  const todayDate = new Date().toISOString().split("T")[0];
   const { data: todayAttendance } = useQuery<AttendanceRecord[]>({
-    queryKey: ['/api/attendance', todayDate],
+    queryKey: ["/api/attendance", todayDate],
     queryFn: async () => {
       const response = await fetch(`/api/attendance?date=${todayDate}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch attendance records');
+        throw new Error("Failed to fetch attendance records");
       }
       return response.json();
     },
@@ -70,10 +83,10 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
 
     // Get cashiers who are currently clocked in (have clock in but no clock out)
     const workingCashiers = todayAttendance
-      .filter(record => record.clockIn && !record.clockOut)
-      .map(record => {
-        const employee = employees.find(emp => emp.id === record.employeeId);
-        return employee && employee.role === 'cashier' ? employee : null;
+      .filter((record) => record.clockIn && !record.clockOut)
+      .map((record) => {
+        const employee = employees.find((emp) => emp.id === record.employeeId);
+        return employee && employee.role === "cashier" ? employee : null;
       })
       .filter(Boolean);
 
@@ -97,7 +110,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
       setSubmenuTimer(null);
     }
     setReportsSubmenuOpen(true);
-    setActiveDropdown('reports');
+    setActiveDropdown("reports");
   };
 
   const handleReportsMouseLeave = () => {
@@ -127,7 +140,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (!target.closest('.pos-dropdown')) {
+      if (!target.closest(".pos-dropdown")) {
         setPosMenuOpen(false);
         setReportsSubmenuOpen(false);
         setActiveDropdown(null);
@@ -135,8 +148,8 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
     };
 
     if (posMenuOpen || reportsSubmenuOpen) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      document.addEventListener("click", handleClickOutside);
+      return () => document.removeEventListener("click", handleClickOutside);
     }
   }, [posMenuOpen, reportsSubmenuOpen]);
 
@@ -150,10 +163,10 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
   }, [submenuTimer]);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
+    return date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -173,41 +186,55 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
       <div className="px-6 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-6">
           <div className="flex items-center">
-            <img 
-              src={logoPath} 
-              alt="EDPOS Logo" 
-              className="h-12 cursor-pointer" 
-              onClick={() => window.location.href = '/pos'}
+            <img
+              src={logoPath}
+              alt="EDPOS Logo"
+              className="h-12 cursor-pointer"
+              onClick={() => (window.location.href = "/pos")}
             />
           </div>
-          <div className="opacity-90 font-semibold text-[20px]">{storeSettings?.storeName || t('common.restaurant')}</div>
+          <div className="opacity-90 font-semibold text-[20px]">
+            {storeSettings?.storeName || t("common.restaurant")}
+          </div>
         </div>
 
         <div className="flex items-center space-x-6">
           <div className="text-right">
-            <div className="text-sm opacity-90">{t('pos.cashierName')}</div>
+            <div className="text-sm opacity-90">{t("pos.cashierName")}</div>
             <div className="font-medium">
-              {currentCashier ? currentCashier.name : t('pos.beforeWork')}
+              {currentCashier ? currentCashier.name : t("pos.beforeWork")}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-sm opacity-90">{t('common.time')}</div>
+            <div className="text-sm opacity-90">{t("common.time")}</div>
             <div className="font-medium">{formatTime(currentTime)}</div>
           </div>
           {/* Navigation Menu */}
           <nav className="flex items-center space-x-4">
             <div className="relative pos-dropdown">
-              <button 
+              <button
                 className={`flex items-center px-4 py-2 rounded-full transition-all duration-200 ${
-                  ["/", "/pos", "/tables", "/inventory", "/reports", "/employees", "/attendance", "/suppliers", "/settings"].includes(location)
-                    ? "bg-white bg-opacity-20" 
+                  [
+                    "/",
+                    "/pos",
+                    "/tables",
+                    "/inventory",
+                    "/reports",
+                    "/employees",
+                    "/attendance",
+                    "/suppliers",
+                    "/settings",
+                  ].includes(location)
+                    ? "bg-white bg-opacity-20"
                     : "hover:bg-white hover:bg-opacity-10"
                 }`}
                 onClick={() => setPosMenuOpen(!posMenuOpen)}
               >
                 <ScanBarcode className="w-4 h-4 mr-2" />
-                {t('nav.pos')}
-                <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${posMenuOpen ? 'rotate-180' : ''}`} />
+                {t("nav.pos")}
+                <ChevronDown
+                  className={`w-4 h-4 ml-1 transition-transform ${posMenuOpen ? "rotate-180" : ""}`}
+                />
               </button>
 
               {/* Dropdown Menu */}
@@ -216,245 +243,284 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                   {/* Only show Tables option for restaurant business type */}
                   {storeSettings?.businessType === "restaurant" && (
                     <Link href="/tables">
-                      <button 
+                      <button
                         className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                          location === "/tables" ? "bg-green-50 text-green-600" : "text-gray-700"
+                          location === "/tables"
+                            ? "bg-green-50 text-green-600"
+                            : "text-gray-700"
                         }`}
                         onClick={() => setPosMenuOpen(false)}
                       >
                         <Utensils className="w-4 h-4 mr-3" />
-                        {t('nav.tablesSales')}
+                        {t("nav.tablesSales")}
                       </button>
                     </Link>
                   )}
 
                   <Link href="/pos">
-                    <button 
+                    <button
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                        location === "/pos" ? "bg-green-50 text-green-600" : "text-gray-700"
+                        location === "/pos"
+                          ? "bg-green-50 text-green-600"
+                          : "text-gray-700"
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >
                       <Home className="w-4 h-4 mr-3" />
-                      {t('nav.directSales')}
+                      {t("nav.directSales")}
                     </button>
                   </Link>
 
                   <div className="border-t border-gray-200 my-2"></div>
 
                   <Link href="/inventory">
-                    <button 
+                    <button
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                        location === "/inventory" ? "bg-green-50 text-green-600" : "text-gray-700"
+                        location === "/inventory"
+                          ? "bg-green-50 text-green-600"
+                          : "text-gray-700"
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >
                       <Package className="w-4 h-4 mr-3" />
-                      {t('nav.inventory')}
+                      {t("nav.inventory")}
                     </button>
                   </Link>
-                    <div 
-                      className="relative"
-                      onMouseLeave={handleReportsContainerMouseLeave}
+                  <div
+                    className="relative"
+                    onMouseLeave={handleReportsContainerMouseLeave}
+                  >
+                    <button
+                      className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
+                        location === "/reports"
+                          ? "bg-green-50 text-green-600"
+                          : "text-gray-700"
+                      }`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setReportsSubmenuOpen(!reportsSubmenuOpen);
+                        setActiveDropdown(
+                          reportsSubmenuOpen ? null : "reports",
+                        );
+                      }}
+                      onMouseEnter={handleReportsMouseEnter}
                     >
-                      <button
-                        className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                          location === "/reports" ? "bg-green-50 text-green-600" : "text-gray-700"
-                        }`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setReportsSubmenuOpen(!reportsSubmenuOpen);
-                          setActiveDropdown(reportsSubmenuOpen ? null : 'reports');
-                        }}
-                        onMouseEnter={handleReportsMouseEnter}
-                      >
-                        <BarChart3 className="w-4 h-4 mr-3" />
-                        {t('nav.reports')}
-                        <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${reportsSubmenuOpen ? 'rotate-180' : ''}`} />
-                      </button>
-                      {reportsSubmenuOpen && (
-                        <div 
-                          className="absolute top-0 right-full mr-0.5 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50 max-w-xs sm:max-w-none"
-                        >
-                          <Link href="/reports?tab=overview">
-                            <button
-                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
-                                activeDropdown === 'reports' && window.location.search === "?tab=overview"
-                                  ? 'text-blue-600 bg-blue-50'
-                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                              }`}
-                              onClick={() => {
-                                setActiveDropdown(null);
-                                setPosMenuOpen(false);
-                                setReportsSubmenuOpen(false);
-                              }}
-                            >
-                              <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.dashboard')}</span>
-                            </button>
-                          </Link>
-                          <Link href="/reports?tab=sales">
-                            <button
-                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
-                                activeDropdown === 'reports' && window.location.search === "?tab=sales"
-                                  ? 'text-blue-600 bg-blue-50'
-                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                              }`}
-                              onClick={() => {
-                                setActiveDropdown(null);
-                                setPosMenuOpen(false);
-                                setReportsSubmenuOpen(false);
-                              }}
-                            >
-                              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.salesAnalysis')}</span>
-                            </button>
-                          </Link>
-                          <Link href="/reports?tab=menu">
-                            <button
-                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
-                                activeDropdown === 'reports' && window.location.search === "?tab=menu"
-                                  ? 'text-blue-600 bg-blue-50'
-                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                              }`}
-                              onClick={() => {
-                                setActiveDropdown(null);
-                                setPosMenuOpen(false);
-                                setReportsSubmenuOpen(false);
-                              }}
-                            >
-                              <PieChart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.menuAnalysis')}</span>
-                            </button>
-                          </Link>
-                          <Link href="/reports?tab=table">
-                            <button
-                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
-                                activeDropdown === 'reports' && window.location.search === "?tab=table"
-                                  ? 'text-blue-600 bg-blue-50'
-                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                              }`}
-                              onClick={() => {
-                                setActiveDropdown(null);
-                                setPosMenuOpen(false);
-                                setReportsSubmenuOpen(false);
-                              }}
-                            >
-                              <Utensils className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.tableAnalysis')}</span>
-                            </button>
-                          </Link>
-                          <Link href="/reports?tab=saleschart">
-                            <button
-                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
-                                activeDropdown === 'reports' && window.location.search === "?tab=saleschart"
-                                  ? 'text-blue-600 bg-blue-50'
-                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                              }`}
-                              onClick={() => {
-                                setActiveDropdown(null);
-                                setPosMenuOpen(false);
-                                setReportsSubmenuOpen(false);
-                              }}
-                            >
-                              <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t('reports.salesChartTab')}</span>
-                            </button>
-                          </Link>
-                          <Link href="/reports?tab=order">
-                            <button
-                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
-                                activeDropdown === 'reports' && window.location.search === "?tab=order"
-                                  ? 'text-blue-600 bg-blue-50'
-                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                              }`}
-                              onClick={() => {
-                                setActiveDropdown(null);
-                                setPosMenuOpen(false);
-                                setReportsSubmenuOpen(false);
-                              }}
-                            >
-                              <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t("reports.purchaseTab")}</span>
-                            </button>
-                          </Link>
-                          <Link href="/reports?tab=inventory">
-                            <button
-                              className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
-                                activeDropdown === 'reports' && window.location.search === "?tab=inventory"
-                                  ? 'text-blue-600 bg-blue-50'
-                                  : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
-                              }`}
-                              onClick={() => {
-                                setActiveDropdown(null);
-                                setPosMenuOpen(false);
-                                setReportsSubmenuOpen(false);
-                              }}
-                            >
-                              <Package className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                              <span className="truncate">{t("reports.warehouseReport")}</span>
-                            </button>
-                          </Link>
-                        </div>
-                      )}
-                    </div>
+                      <BarChart3 className="w-4 h-4 mr-3" />
+                      {t("nav.reports")}
+                      <ChevronDown
+                        className={`w-4 h-4 ml-auto transition-transform ${reportsSubmenuOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {reportsSubmenuOpen && (
+                      <div className="absolute top-0 right-full mr-0.5 bg-white rounded-xl shadow-lg border border-gray-200 py-2 min-w-48 z-50 max-w-xs sm:max-w-none">
+                        <Link href="/reports?tab=overview">
+                          <button
+                            className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                              activeDropdown === "reports" &&
+                              window.location.search === "?tab=overview"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                            }`}
+                            onClick={() => {
+                              setActiveDropdown(null);
+                              setPosMenuOpen(false);
+                              setReportsSubmenuOpen(false);
+                            }}
+                          >
+                            <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                            <span className="truncate">
+                              {t("reports.dashboard")}
+                            </span>
+                          </button>
+                        </Link>
+                        <Link href="/reports?tab=sales">
+                          <button
+                            className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                              activeDropdown === "reports" &&
+                              window.location.search === "?tab=sales"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                            }`}
+                            onClick={() => {
+                              setActiveDropdown(null);
+                              setPosMenuOpen(false);
+                              setReportsSubmenuOpen(false);
+                            }}
+                          >
+                            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                            <span className="truncate">
+                              {t("reports.salesAnalysis")}
+                            </span>
+                          </button>
+                        </Link>
+                        <Link href="/reports?tab=menu">
+                          <button
+                            className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                              activeDropdown === "reports" &&
+                              window.location.search === "?tab=menu"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                            }`}
+                            onClick={() => {
+                              setActiveDropdown(null);
+                              setPosMenuOpen(false);
+                              setReportsSubmenuOpen(false);
+                            }}
+                          >
+                            <PieChart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                            <span className="truncate">
+                              {t("reports.menuAnalysis")}
+                            </span>
+                          </button>
+                        </Link>
+                        <Link href="/reports?tab=table">
+                          <button
+                            className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                              activeDropdown === "reports" &&
+                              window.location.search === "?tab=table"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                            }`}
+                            onClick={() => {
+                              setActiveDropdown(null);
+                              setPosMenuOpen(false);
+                              setReportsSubmenuOpen(false);
+                            }}
+                          >
+                            <Utensils className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                            <span className="truncate">
+                              {t("reports.tableAnalysis")}
+                            </span>
+                          </button>
+                        </Link>
+                        <Link href="/reports?tab=saleschart">
+                          <button
+                            className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                              activeDropdown === "reports" &&
+                              window.location.search === "?tab=saleschart"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                            }`}
+                            onClick={() => {
+                              setActiveDropdown(null);
+                              setPosMenuOpen(false);
+                              setReportsSubmenuOpen(false);
+                            }}
+                          >
+                            <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                            <span className="truncate">
+                              {t("reports.salesReport")}
+                            </span>
+                          </button>
+                        </Link>
+                        <Link href="/reports?tab=order">
+                          <button
+                            className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                              activeDropdown === "reports" &&
+                              window.location.search === "?tab=order"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                            }`}
+                            onClick={() => {
+                              setActiveDropdown(null);
+                              setPosMenuOpen(false);
+                              setReportsSubmenuOpen(false);
+                            }}
+                          >
+                            <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                            <span className="truncate">
+                              {t("reports.purchaseTab")}
+                            </span>
+                          </button>
+                        </Link>
+                        <Link href="/reports?tab=inventory">
+                          <button
+                            className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
+                              activeDropdown === "reports" &&
+                              window.location.search === "?tab=inventory"
+                                ? "text-blue-600 bg-blue-50"
+                                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
+                            }`}
+                            onClick={() => {
+                              setActiveDropdown(null);
+                              setPosMenuOpen(false);
+                              setReportsSubmenuOpen(false);
+                            }}
+                          >
+                            <Package className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
+                            <span className="truncate">
+                              {t("reports.warehouseReport")}
+                            </span>
+                          </button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="border-t border-gray-200 my-2"></div>
 
                   <Link href="/employees">
-                    <button 
+                    <button
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                        location === "/employees" ? "bg-green-50 text-green-600" : "text-gray-700"
+                        location === "/employees"
+                          ? "bg-green-50 text-green-600"
+                          : "text-gray-700"
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >
                       <Users className="w-4 h-4 mr-3" />
-                      {t('nav.employees')}
+                      {t("nav.employees")}
                     </button>
                   </Link>
 
                   <Link href="/attendance">
-                    <button 
+                    <button
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                        location === "/attendance" ? "bg-green-50 text-green-600" : "text-gray-700"
+                        location === "/attendance"
+                          ? "bg-green-50 text-green-600"
+                          : "text-gray-700"
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >
                       <Clock className="w-4 h-4 mr-3" />
-                      {t('nav.attendance')}
+                      {t("nav.attendance")}
                     </button>
                   </Link>
 
                   <Link href="/suppliers">
-                    <button 
+                    <button
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                        location === "/suppliers" ? "bg-green-50 text-green-600" : "text-gray-700"
+                        location === "/suppliers"
+                          ? "bg-green-50 text-green-600"
+                          : "text-gray-700"
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >
                       <Building2 className="w-4 h-4 mr-3" />
-                      {t('nav.suppliers')}
+                      {t("nav.suppliers")}
                     </button>
                   </Link>
 
                   <div className="border-t border-gray-200 my-2"></div>
 
                   <Link href="/settings">
-                    <button 
+                    <button
                       className={`w-full flex items-center px-4 py-2 text-left hover:bg-green-50 transition-colors ${
-                        location === "/settings" ? "bg-green-50 text-green-600" : "text-gray-700"
+                        location === "/settings"
+                          ? "bg-green-50 text-green-600"
+                          : "text-gray-700"
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >
                       <SettingsIcon className="w-4 h-4 mr-3" />
-                      {t('settings.title')}
+                      {t("settings.title")}
                     </button>
                   </Link>
 
                   <div className="border-t border-gray-200 my-2"></div>
 
-                  <a 
+                  <a
                     href="/customer-display"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -467,7 +533,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
 
                   <div className="border-t border-gray-200 my-2"></div>
 
-                  <button 
+                  <button
                     className="w-full flex items-center px-4 py-2 text-left hover:bg-red-50 hover:text-red-600 text-gray-700 transition-colors"
                     onClick={() => {
                       setPosMenuOpen(false);
