@@ -351,27 +351,7 @@ export function ReceiptModal({
               <span>{receipt.subtotal} ₫</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>{t('pos.tax')} ({(() => {
-                if (!receipt.items || receipt.items.length === 0) return "10.0";
-                
-                // Calculate weighted average tax rate from items
-                let totalTaxableAmount = 0;
-                let totalTaxAmount = 0;
-                
-                receipt.items.forEach(item => {
-                  const itemSubtotal = parseFloat(item.price) * item.quantity;
-                  const itemTaxRate = item.taxRate || 10; // Default 10% if not specified
-                  const itemTax = (itemSubtotal * itemTaxRate) / 100;
-                  
-                  totalTaxableAmount += itemSubtotal;
-                  totalTaxAmount += itemTax;
-                });
-                
-                if (totalTaxableAmount === 0) return "10.0";
-                
-                const avgTaxRate = (totalTaxAmount / totalTaxableAmount * 100);
-                return avgTaxRate.toFixed(1);
-              })()}%)</span>
+              <span>{t('pos.tax')}</span>
               <span>{receipt.tax} ₫</span>
             </div>
             <div className="flex justify-between font-bold">
