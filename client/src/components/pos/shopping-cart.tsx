@@ -224,8 +224,32 @@ export function ShoppingCart({
     console.log("🛒 Starting checkout process");
     console.log("Cart items:", cart.length);
 
-    // Show payment method modal directly
-    setShowPaymentMethodModal(true);
+    // Generate preview receipt data first
+    const previewReceiptData = {
+      transactionId: `TXN-${Date.now()}`,
+      items: cart.map((item) => ({
+        id: item.id,
+        productId: item.id,
+        productName: item.name,
+        price: parseFloat(item.price).toFixed(2),
+        quantity: item.quantity,
+        total: parseFloat(item.total).toFixed(2),
+        sku: `FOOD${String(item.id).padStart(5, "0")}`,
+        taxRate: parseFloat(item.taxRate || "10"),
+      })),
+      subtotal: subtotal.toFixed(2),
+      tax: tax.toFixed(2),
+      total: total.toFixed(2),
+      paymentMethod: "preview", // Special flag for preview mode
+      amountReceived: total.toFixed(2),
+      change: "0.00",
+      cashierName: "System User",
+      createdAt: new Date().toISOString(),
+    };
+
+    // Show receipt preview first
+    setPreviewReceipt(previewReceiptData);
+    setShowReceiptPreview(true);
   };
 
   const handleReceiptConfirm = () => {
@@ -532,17 +556,42 @@ export function ShoppingCart({
         </div>
       )}
 
-      {/* Receipt Modal - handles both preview and final receipt */}
+      {/* Receipt Preview Modal */}
       <ReceiptModal
-        isOpen={showReceiptModal} // Use the new state variable
+        isOpen={showReceiptPreview}
         onClose={() => {
-          console.log("🔴 Closing receipt modal from shopping cart");
-          setShowReceiptModal(false); // Use the new state variable
+          console.log("🔴 Closing receipt preview modal");
+          setShowReceiptPreview(false);
+          setPreviewReceipt(null);
+        }}
+        receipt={previewReceipt}
+        onConfirm={() => {
+          console.log("📄 Receipt preview confirmed, showing payment methods");
+          setShowReceiptPreview(false);
+          setShowPaymentMethodModal(true);
+        }}
+        isPreview={true} // This is always preview mode
+        cartItems={cart.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: `ITEM${String(item.id).padStart(3, "0")}`,
+          taxRate: parseFloat(item.taxRate || "10"),
+        }))}
+      />
+
+      {/* Final Receipt Modal - for completed transactions */}
+      <ReceiptModal
+        isOpen={showReceiptModal}
+        onClose={() => {
+          console.log("🔴 Closing final receipt modal from shopping cart");
+          setShowReceiptModal(false);
           setSelectedReceipt(null);
         }}
-        receipt={selectedReceipt} // Use the new state variable
+        receipt={selectedReceipt}
         onConfirm={handleReceiptConfirm}
-        isPreview={selectedReceipt?.paymentMethod === "preview"} // Only preview mode for preview receipts
+        isPreview={false} // This is never preview mode
         cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,
