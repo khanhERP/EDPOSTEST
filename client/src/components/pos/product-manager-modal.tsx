@@ -407,6 +407,23 @@ export function ProductManagerModal({
     }
   }, [isOpen, refetch, editingProduct]);
 
+  // Add keyboard support for closing modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isOpen) {
+        handleModalClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
   const handleModalClose = () => {
     // Reset all form states when modal closes
     setShowAddForm(false);
@@ -426,16 +443,20 @@ export function ProductManagerModal({
   };
 
   return (
-    <Dialog open={isOpen}>
+    <Dialog open={isOpen} onOpenChange={handleModalClose}>
       <DialogContent
-        className="max-w-4xl w-full max-h-screen overflow-y-auto [&>button]:hidden"
-        onInteractOutside={(e) => e.preventDefault()}
+        className="max-w-4xl w-full max-h-screen overflow-y-auto"
       >
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             {t("tables.productManagement")}
-            <Button variant="ghost" size="sm" onClick={handleModalClose}>
-              <X size={20} />
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleModalClose}
+              className="h-6 w-6 p-0"
+            >
+              <X size={16} />
             </Button>
           </DialogTitle>
         </DialogHeader>
