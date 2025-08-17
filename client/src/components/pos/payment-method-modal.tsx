@@ -432,8 +432,11 @@ export function PaymentMethodModal({
     // Close Payment modal
     onClose();
 
-    // Pass e-invoice data back to parent component
-    onSelectMethod('einvoice', eInvoiceData);
+    // Pass e-invoice data back to parent component with original payment method
+    onSelectMethod('einvoice', {
+      ...eInvoiceData,
+      originalPaymentMethod: selectedPaymentMethod
+    });
   };
 
   const handleEInvoiceClose = () => {

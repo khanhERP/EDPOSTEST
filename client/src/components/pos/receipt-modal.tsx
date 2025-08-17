@@ -362,7 +362,9 @@ export function ReceiptModal({
               <span>{t('pos.paymentMethod')}</span>
               <span className="capitalize">
                 {(() => {
-                  const method = receipt.paymentMethod;
+                  // Get the original payment method from eInvoiceData if available
+                  const method = receipt.originalPaymentMethod || receipt.paymentMethod;
+                  
                   // Map payment methods to display names
                   const methodNames = {
                     cash: t('common.cash'),
