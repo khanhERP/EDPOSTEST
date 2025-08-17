@@ -363,7 +363,6 @@ export function SalesReport() {
   };
 
   const salesData = getSalesData();
-  const isLoading = transactionsLoading && (!transactions || transactions.length === 0);
   const hasError = !!transactionsError;
 
   const peakHour = salesData ? Object.entries(salesData.hourlySales).reduce(
@@ -461,10 +460,10 @@ export function SalesReport() {
                 onClick={handleRefresh}
                 variant="outline"
                 size="sm"
-                disabled={isLoading}
+                disabled={transactionsLoading}
                 className="flex items-center gap-2"
               >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${transactionsLoading ? 'animate-spin' : ''}`} />
                 {t("reports.refresh")}
               </Button>
             </div>
@@ -475,17 +474,6 @@ export function SalesReport() {
       {/* Content */}
       {hasError ? (
         <ErrorState />
-      ) : isLoading ? (
-        <LoadingSkeleton />
-      ) : !transactions || transactions.length === 0 ? (
-        <Card className="border-yellow-200">
-          <CardContent className="p-6">
-            <div className="text-center text-yellow-600">
-              <p className="mb-2">{t("reports.noSalesData")}</p>
-              <p className="text-sm text-gray-500">{t("reports.noSalesDataDescription")}</p>
-            </div>
-          </CardContent>
-        </Card>
       ) : (
         <>
           {/* Summary Stats */}

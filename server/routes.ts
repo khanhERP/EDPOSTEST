@@ -466,6 +466,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get transactions by date range
+  app.get("/api/transactions/:startDate/:endDate", async (req: TenantRequest, res) => {
+    try {
+      const { startDate, endDate } = req.params;
+
+      const start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+
+      const end = new Date(endDate);
+      end.setUTCHours(23, 59, 59, 999);
+
+      const transactions = await db.select().from(transactionsTable)
+        .where(
+          and(
+            gte(transactionsTable.createdAt, start),
+            lte(transactionsTable.createdAt, end)
+          )
+        )
+        .orderBy(desc(transactionsTable.createdAt));
+
+      // Always return an array, even if empty
+      res.json(transactions || []);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      // Return empty array instead of error for reports
+      res.json([]);
+    }
+  });
+
+
   app.get("/api/transactions/:transactionId", async (req: TenantRequest, res) => {
     try {
       const transactionId = req.params.transactionId;
@@ -2283,7 +2313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             transaction.employeeId?.toString() === selectedEmployee ||
             (transaction.cashierName && transaction.cashierName.includes(selectedEmployee));
 
-          return dateMatch && methodMatch && channelMatch && employeeMatch;
+          return dateMatch && methodMatch && salesChannelMatch && employeeMatch;
         });
 
         res.json(filteredTransactions);
