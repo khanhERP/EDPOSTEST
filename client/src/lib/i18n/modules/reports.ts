@@ -285,6 +285,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inventoryReportOfInterestType: "Báo cáo kho loại quan tâm",
     warehouseReportDescription: "Báo cáo chi tiết về hoạt động kho hàng",
 
+    // Inventory report concern types
+    concernType: "Loại quan tâm",
+    inOutInventory: "Xuất nhập tồn",
+    detailedInOutInventory: "Chi tiết xuất nhập tồn",
+    disposal: "Hủy hàng",
+    employeeBySales: "Nhân viên theo bán hàng",
+    customerBySales: "Khách hàng theo bán hàng",
+    supplierByPurchase: "Nhà cung cấp theo mua hàng",
+
     // Additional missing keys
     period: "Kỳ",
     noDataDescription: "Không có dữ liệu để hiển thị",
@@ -723,6 +732,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     inventoryReportOfInterestType: "관심 유형별 창고 보고서",
     warehouseReportDescription: "창고 활동에 대한 상세 보고서",
 
+    // Inventory report concern types
+    concernType: "관심 유형",
+    inOutInventory: "입출고",
+    detailedInOutInventory: "상세 입출고",
+    disposal: "폐기",
+    employeeBySales: "직원별 판매",
+    customerBySales: "고객별 판매",
+    supplierByPurchase: "공급업체별 구매",
+
     // Additional missing keys
     period: "기간",
     noDataDescription: "표시할 데이터가 없습니다",
@@ -1143,8 +1161,17 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Warehouse Report
     warehouseReportTab: "Warehouse Activity Report",
-    inventoryReportOfInterestType: "Inventory Report of Interest Type",
+    inventoryReportOfInterestType: "Inventory Report of Interest Type", 
     warehouseReportDescription: "Detailed warehouse activity report",
+
+    // Inventory report concern types
+    concernType: "Concern Type",
+    inOutInventory: "In/Out Inventory",
+    detailedInOutInventory: "Detailed In/Out Inventory",
+    disposal: "Disposal",
+    employeeBySales: "Employee by Sales",
+    customerBySales: "Customer by Sales",
+    supplierByPurchase: "Supplier by Purchase",
 
     // Additional missing keys
     period: "Period",
