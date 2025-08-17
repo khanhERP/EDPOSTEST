@@ -435,7 +435,7 @@ export function OrderManagement() {
       setShowQRPayment(true);
       setPaymentMethodsOpen(false);
     } catch (error) {
-      console.error('Error generating QR code:', error)reateQRPos API:', error);
+      console.error('Error generating QR code:', error);
         // Fallback to mock QR code on error
         try {
           const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
