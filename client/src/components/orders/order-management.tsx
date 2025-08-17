@@ -371,7 +371,7 @@ export function OrderManagement() {
         }
       } catch (error) {
         console.error('Error calling CreateQRPos API:', error);
-        
+
         // Check if QR service is disabled
         if (error.message && (error.message.includes('503') || error.message.includes('temporarily unavailable'))) {
           toast({
@@ -382,7 +382,7 @@ export function OrderManagement() {
           setQrLoading(false);
           return;
         }
-        
+
         // Fallback to mock QR code on error
         try {
           console.log('Creating fallback QR code due to API error');
@@ -399,7 +399,7 @@ export function OrderManagement() {
           setSelectedPaymentMethod({ key: paymentMethodKey, method });
           setShowQRPayment(true);
           setPaymentMethodsOpen(false);
-          
+
           toast({
             title: 'Sử Dụng QR Offline',
             description: 'Dịch vụ QR không khả dụng. Đã tạo mã QR offline để tham khảo.',
@@ -416,6 +416,7 @@ export function OrderManagement() {
       } finally {
         setQrLoading(false);
       }
+      return;
     }
 
     // For other non-cash payments, show mock QR code
@@ -1197,7 +1198,7 @@ export function OrderManagement() {
 
       {/* Mixed Payment Dialog */}
       <Dialog open={mixedPaymentOpen} onOpenChange={setMixedPaymentOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-orange-600" />
