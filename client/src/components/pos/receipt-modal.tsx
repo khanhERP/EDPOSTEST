@@ -362,10 +362,13 @@ export function ReceiptModal({
               <span>{t('pos.paymentMethod')}</span>
               <span className="capitalize">
                 {(() => {
-                  // For e-invoices, always show the original payment method that was selected
-                  const method = receipt.paymentMethod === 'einvoice' && receipt.originalPaymentMethod 
-                    ? receipt.originalPaymentMethod 
-                    : receipt.paymentMethod;
+                  // Always prioritize originalPaymentMethod for e-invoices
+                  let displayMethod = receipt.paymentMethod;
+                  
+                  // If this is an e-invoice transaction and we have originalPaymentMethod, use it
+                  if (receipt.originalPaymentMethod) {
+                    displayMethod = receipt.originalPaymentMethod;
+                  }
                   
                   // Map payment methods to display names
                   const methodNames = {
@@ -380,7 +383,8 @@ export function ReceiptModal({
                     grabpay: t('common.grabpay'),
                     einvoice: t('pos.eInvoice')
                   };
-                  return methodNames[method] || method;
+                  
+                  return methodNames[displayMethod] || displayMethod;
                 })()}
               </span>
             </div>
