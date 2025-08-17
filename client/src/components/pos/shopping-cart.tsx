@@ -221,7 +221,7 @@ export function ShoppingCart({
   const handleCheckout = () => {
     if (cart.length === 0) return;
 
-    console.log("🛒 Starting checkout process");
+    console.log("🛒 Starting checkout process - Step 1: Preview Receipt");
     console.log("Cart items:", cart.length);
 
     // Generate preview receipt data first
@@ -247,7 +247,7 @@ export function ShoppingCart({
       createdAt: new Date().toISOString(),
     };
 
-    // Show receipt preview first
+    // Step 1: Show receipt preview first
     setPreviewReceipt(previewReceiptData);
     setShowReceiptPreview(true);
   };
@@ -266,20 +266,15 @@ export function ShoppingCart({
   };
 
   const handlePaymentMethodSelect = (method: string, data?: any) => {
-    console.log('🎯 Shopping cart: Payment method selected:', method, data);
+    console.log('🎯 Shopping cart: Step 3: Payment method selected:', method, data);
+    
+    // Step 3: Payment method selected, now go to Step 4: Invoice
     setShowPaymentMethodModal(false);
-
-    if (data && data.receipt) {
-      console.log('📄 Shopping cart: Payment method returned receipt data, showing receipt');
-      setSelectedReceipt(data.receipt);
-      setShowReceiptModal(true);
-      onClearCart(); // Use the passed prop to clear cart
-    } else {
-      console.log('🔄 Shopping cart: Continuing to E-invoice modal');
-      // Pass the selected method to the E-invoice modal state or handler
-      setSelectedPaymentMethod(method);
-      setShowEInvoiceModal(true);
-    }
+    setSelectedPaymentMethod(method);
+    
+    // Always go to E-invoice modal for invoice processing
+    console.log('📧 Shopping cart: Going to E-invoice modal for invoice processing');
+    setShowEInvoiceModal(true);
   };
 
   const handleCardPaymentMethodSelect = (method: string) => {
@@ -294,28 +289,24 @@ export function ShoppingCart({
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
-    console.log('📧 Shopping cart: E-Invoice confirmed:', eInvoiceData);
+    console.log('📧 Shopping cart: Step 4: E-Invoice processing completed:', eInvoiceData);
 
     setShowEInvoiceModal(false);
 
-    // Always show receipt modal if receipt data exists
+    // Step 5: Always show receipt modal after invoice processing
     if (eInvoiceData.receipt) {
-      console.log('📄 Shopping cart: E-invoice completed - showing receipt modal');
+      console.log('📄 Shopping cart: Step 5: Showing final receipt modal');
       setSelectedReceipt(eInvoiceData.receipt);
       setShowReceiptModal(true);
-      onClearCart(); // Use the passed prop to clear cart
-    }
-    // Fallback for cases without receipt
-    else {
-      console.log('✅ Shopping cart: E-invoice completed without receipt, clearing cart');
-      setSelectedReceipt(null);
-      setShowReceiptModal(false);
-      onClearCart(); // Use the passed prop to clear cart
-
+      // Don't clear cart yet - wait for receipt confirmation
+    } else {
+      console.log('❌ Shopping cart: E-invoice completed but no receipt data');
       toast({
-        title: "Thành công",
-        description: "Hóa đơn điện tử đã được xử lý thành công",
+        title: "Lỗi",
+        description: "Không có dữ liệu hóa đơn để hiển thị",
+        variant: "destructive",
       });
+      onClearCart();
     }
   };
 
@@ -556,17 +547,17 @@ export function ShoppingCart({
         </div>
       )}
 
-      {/* Receipt Preview Modal */}
+      {/* Step 1: Receipt Preview Modal */}
       <ReceiptModal
         isOpen={showReceiptPreview}
         onClose={() => {
-          console.log("🔴 Closing receipt preview modal");
+          console.log("🔴 Step 1: Closing receipt preview modal");
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
         }}
         receipt={previewReceipt}
         onConfirm={() => {
-          console.log("📄 Receipt preview confirmed, showing payment methods");
+          console.log("📄 Step 1 → Step 2: Receipt preview confirmed, showing payment methods");
           setShowReceiptPreview(false);
           setShowPaymentMethodModal(true);
         }}
@@ -581,17 +572,17 @@ export function ShoppingCart({
         }))}
       />
 
-      {/* Final Receipt Modal - for completed transactions */}
+      {/* Step 5: Final Receipt Modal - for completed transactions */}
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log("🔴 Closing final receipt modal from shopping cart");
+          console.log("🔴 Step 5: Closing final receipt modal from shopping cart");
           setShowReceiptModal(false);
           setSelectedReceipt(null);
         }}
         receipt={selectedReceipt}
         onConfirm={handleReceiptConfirm}
-        isPreview={false} // This is never preview mode
+        isPreview={false} // This is final receipt, not preview
         cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,
@@ -602,11 +593,14 @@ export function ShoppingCart({
         }))}
       />
 
-      {/* Payment Method Selection Modal */}
+      {/* Step 2: Payment Method Selection Modal */}
       <PaymentMethodModal
         isOpen={showPaymentMethodModal}
-        onClose={() => setShowPaymentMethodModal(false)}
-        onSelectMethod={(method, data) => { // Accept data from the modal
+        onClose={() => {
+          console.log("🔴 Step 2: Closing payment method modal");
+          setShowPaymentMethodModal(false);
+        }}
+        onSelectMethod={(method, data) => {
           handlePaymentMethodSelect(method, data);
         }}
         total={total}
@@ -620,27 +614,27 @@ export function ShoppingCart({
         }))}
       />
 
-      {/* E-Invoice Modal (Assuming you have this component) */}
-      {/* You would need to pass the correct props like onClose, onSelectMethod, onShowEInvoice, etc. */}
-      {/* Example: */}
-      <ReceiptModal // Using ReceiptModal as a placeholder for E-Invoice modal to show receipt data
-        isOpen={showEInvoiceModal} // Use the new state variable
-        onClose={() => setShowEInvoiceModal(false)}
-        onConfirm={handleEInvoiceConfirm}
-        receipt={selectedReceipt} // Pass the selected receipt for display
-        cartItems={cart.map(item => ({ // Pass cart items for potential fallback receipt generation
-          id: item.id,
-          name: item.name,
-          price: parseFloat(item.price),
-          quantity: item.quantity,
-          sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
-          taxRate: parseFloat(item.taxRate || "10")
-        }))}
-        total={total}
-        isEInvoice={true} // Indicate this is for E-invoice processing
-        customerName={selectedPaymentMethod} // Placeholder, replace with actual customer name
-        customerTaxCode={selectedPaymentMethod} // Placeholder, replace with actual tax code
-      />
+      {/* Step 4: E-Invoice Modal for invoice processing */}
+      {showEInvoiceModal && (
+        <EInvoiceModal
+          isOpen={showEInvoiceModal}
+          onClose={() => {
+            console.log("🔴 Step 4: Closing E-invoice modal");
+            setShowEInvoiceModal(false);
+          }}
+          onConfirm={handleEInvoiceConfirm}
+          total={total}
+          selectedPaymentMethod={selectedPaymentMethod}
+          cartItems={cart.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
+            taxRate: parseFloat(item.taxRate || "10")
+          }))}
+        />
+      )}
     </aside>
   );
 }

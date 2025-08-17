@@ -597,6 +597,8 @@ export function EInvoiceModal({
       // Prepare comprehensive invoice data với receipt để hiển thị modal in
       const completeInvoiceData = {
         ...invoiceData,
+        paymentMethod: selectedPaymentMethod, // Use original payment method
+        originalPaymentMethod: selectedPaymentMethod,
         publishLater: true,
         receipt: receiptData, // Receipt data để hiển thị modal in
         customerName: formData.customerName,
@@ -1094,7 +1096,8 @@ export function EInvoiceModal({
           invoiceData: result.data,
           cartItems: cartItems,
           total: total,
-          paymentMethod: "einvoice",
+          paymentMethod: selectedPaymentMethod, // Use original payment method
+          originalPaymentMethod: selectedPaymentMethod,
           source: source || "pos",
           orderId: orderId,
           publishedImmediately: true, // Flag để phân biệt với phát hành sau

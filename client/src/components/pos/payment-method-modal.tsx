@@ -368,15 +368,17 @@ export function PaymentMethodModal({
         setQrLoading(false);
       }
     } else {
-      // Directly proceed with E-invoice for other payment methods
-      setShowEInvoice(true);
+      // Close payment method modal and let parent handle the flow
+      onSelectMethod(method);
     }
   };
 
   const handleQRComplete = () => {
     setShowQRCode(false);
     setQrCodeUrl("");
-    setShowEInvoice(true);
+    
+    // Return to parent with QR payment method
+    onSelectMethod('qrCode');
   };
 
   const handleBack = () => {
@@ -420,7 +422,12 @@ export function PaymentMethodModal({
     }
 
     setShowCashPayment(false);
-    setShowEInvoice(true);
+    
+    // Return to parent with cash payment method and amount data
+    onSelectMethod('cash', {
+      amountReceived: receivedAmount,
+      change: changeAmount
+    });
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
