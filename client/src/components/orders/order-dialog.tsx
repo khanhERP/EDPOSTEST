@@ -232,7 +232,13 @@ export function OrderDialog({
 
   const calculateTotal = () => {
     const cartTotal = cart.reduce(
-      (total, item) => total + Number(item.product.price) * item.quantity,
+      (total, item) => {
+        const product = products?.find((p: Product) => p.id === item.product.id);
+        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
+        const itemSubtotal = item.product.price * item.quantity;
+        const itemTax = (itemSubtotal * taxRate) / 100;
+        return total + itemSubtotal;
+      },
       0,
     );
 
@@ -252,25 +258,54 @@ export function OrderDialog({
   };
 
   const calculateTax = () => {
-    return calculateTotal() * 0.1;
+    let totalTax = 0;
+
+    // Calculate tax for items in the current cart
+    cart.forEach((item) => {
+      const product = products?.find((p: Product) => p.id === item.product.id);
+      const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10; // Default 10%
+      const itemSubtotal = item.product.price * item.quantity;
+      totalTax += (itemSubtotal * taxRate) / 100;
+    });
+
+    // Calculate tax for existing items in edit mode
+    if (mode === "edit" && existingItems.length > 0) {
+      existingItems.forEach((item) => {
+        const product = products?.find((p: Product) => p.id === item.productId);
+        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10; // Default 10%
+        const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
+        totalTax += (itemSubtotal * taxRate) / 100;
+      });
+    }
+
+    return totalTax;
   };
+
 
   const calculateGrandTotal = () => {
     return calculateTotal() + calculateTax();
   };
 
   const handlePlaceOrder = () => {
-    if (!table || cart.length === 0) return;
+    if (!table || (cart.length === 0 && (mode !== "edit" || existingItems.length === 0))) return;
 
     if (mode === "edit" && existingOrder) {
       // For edit mode, only send the new items to be added
-      const items = cart.map((item) => ({
-        productId: item.product.id,
-        quantity: item.quantity,
-        unitPrice: item.product.price.toString(),
-        total: (item.product.price * item.quantity).toString(),
-        notes: item.notes || null,
-      }));
+      const items = cart.map((item) => {
+        const product = products?.find((p: Product) => p.id === item.product.id);
+        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10; // Default 10%
+        const itemSubtotal = item.product.price * item.quantity;
+        const itemTax = (itemSubtotal * taxRate) / 100;
+        const itemTotal = itemSubtotal + itemTax;
+
+        return {
+          productId: item.product.id,
+          quantity: item.quantity,
+          unitPrice: item.product.price.toString(),
+          total: itemTotal.toString(),
+          notes: item.notes || null,
+        };
+      });
 
       console.log("Adding items to existing order:", { items });
       createOrderMutation.mutate({ order: existingOrder, items });
@@ -281,7 +316,7 @@ export function OrderDialog({
         (sum, item) => sum + item.product.price * item.quantity,
         0,
       );
-      const taxAmount = subtotalAmount * 0.1; // 10% tax
+      const taxAmount = calculateTax(); // Use the new calculateTax function
       const totalAmount = subtotalAmount + taxAmount;
 
       const order = {
@@ -298,13 +333,21 @@ export function OrderDialog({
         orderedAt: new Date().toISOString(),
       };
 
-      const items = cart.map((item) => ({
-        productId: item.product.id,
-        quantity: item.quantity,
-        unitPrice: item.product.price.toString(),
-        total: (item.product.price * item.quantity).toString(),
-        notes: item.notes || null,
-      }));
+      const items = cart.map((item) => {
+        const product = products?.find((p: Product) => p.id === item.product.id);
+        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10; // Default 10%
+        const itemSubtotal = item.product.price * item.quantity;
+        const itemTax = (itemSubtotal * taxRate) / 100;
+        const itemTotal = itemSubtotal + itemTax;
+
+        return {
+          productId: item.product.id,
+          quantity: item.quantity,
+          unitPrice: item.product.price.toString(),
+          total: itemTotal.toString(),
+          notes: item.notes || null,
+        };
+      });
 
       console.log("Placing order:", { order, items });
       createOrderMutation.mutate({ order, items });
@@ -662,9 +705,7 @@ export function OrderDialog({
                   </>
                 )}
                 <div className="flex items-center gap-2">
-                  <span className="text-gray-600">
-                    {t("tables.subtotalLabel")}
-                  </span>
+                  <span className="text-gray-600">{t("tables.subtotalLabel")}</span>
                   <span className="font-medium">
                     {calculateTotal().toLocaleString()} ₫
                   </span>
