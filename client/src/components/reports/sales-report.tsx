@@ -83,10 +83,16 @@ export function SalesReport() {
       };
     }
 
+    // Filter transactions by date range
     const filteredTransactions = transactions.filter((transaction: any) => {
+      if (!transaction) return false;
+      
       const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at,
+        transaction.createdAt || transaction.created_at || transaction.date
       );
+
+      // Check if date is valid
+      if (isNaN(transactionDate.getTime())) return false;
 
       const start = new Date(startDate);
       start.setHours(0, 0, 0, 0);
@@ -94,11 +100,7 @@ export function SalesReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      const transactionTimestamp = transactionDate.getTime();
-      const startTimestamp = start.getTime();
-      const endTimestamp = end.getTime();
-
-      return transactionTimestamp >= startTimestamp && transactionTimestamp <= endTimestamp;
+      return transactionDate >= start && transactionDate <= end;
     });
 
     // Daily sales breakdown
@@ -107,9 +109,14 @@ export function SalesReport() {
     } = {};
 
     filteredTransactions.forEach((transaction: any) => {
+      if (!transaction) return;
+      
       const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at,
+        transaction.createdAt || transaction.created_at || transaction.date
       );
+
+      // Skip invalid dates
+      if (isNaN(transactionDate.getTime())) return;
 
       const year = transactionDate.getFullYear();
       const month = (transactionDate.getMonth() + 1).toString().padStart(2, "0");
@@ -120,10 +127,12 @@ export function SalesReport() {
         dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
       }
 
-      const amount = Number(transaction.total || 0);
-      dailySales[date].revenue += isNaN(amount) ? 0 : amount;
-      dailySales[date].orders += 1;
-      dailySales[date].customers += 1;
+      const amount = Number(transaction.total || transaction.amount || 0);
+      if (!isNaN(amount) && amount >= 0) {
+        dailySales[date].revenue += amount;
+        dailySales[date].orders += 1;
+        dailySales[date].customers += 1; // Assuming 1 customer per transaction
+      }
     });
 
     // Payment method breakdown with proper consolidation
@@ -132,53 +141,98 @@ export function SalesReport() {
     } = {};
 
     const consolidatePaymentMethod = (method: string): string => {
-      switch (method.toLowerCase()) {
+      if (!method) return 'cash';
+      
+      const normalizedMethod = method.toLowerCase().trim();
+      switch (normalizedMethod) {
         case 'credit_card':
         case 'creditcard':
+        case 'credit card':
           return 'credit_card';
         case 'debit_card':
         case 'debitcard':
+        case 'debit card':
           return 'debit_card';
         case 'qr_code':
         case 'qrcode':
+        case 'qr code':
           return 'qrCode';
         case 'card':
           return 'card';
         case 'transfer':
         case 'bank_transfer':
+        case 'bank transfer':
           return 'transfer';
+        case 'cash':
+        case 'tiền mặt':
+          return 'cash';
+        case 'momo':
+          return 'momo';
+        case 'zalopay':
+          return 'zalopay';
+        case 'vnpay':
+          return 'vnpay';
+        case 'shopeepay':
+          return 'shopeepay';
+        case 'grabpay':
+          return 'grabpay';
         default:
-          return method;
+          return normalizedMethod;
       }
     };
 
     filteredTransactions.forEach((transaction: any) => {
-      const rawMethod = transaction.paymentMethod || "cash";
+      if (!transaction) return;
+      
+      const rawMethod = transaction.paymentMethod || transaction.payment_method || "cash";
       const method = consolidatePaymentMethod(rawMethod);
+      
       if (!paymentMethods[method]) {
         paymentMethods[method] = { count: 0, revenue: 0 };
       }
-      const amount = Number(transaction.total || 0);
-      paymentMethods[method].revenue += isNaN(amount) ? 0 : amount;
-      paymentMethods[method].count += 1;
+      
+      const amount = Number(transaction.total || transaction.amount || 0);
+      if (!isNaN(amount) && amount > 0) {
+        paymentMethods[method].revenue += amount;
+        paymentMethods[method].count += 1;
+      }
     });
 
     // Hourly breakdown
     const hourlySales: { [hour: number]: number } = {};
     filteredTransactions.forEach((transaction: any) => {
-      const hour = new Date(
-        transaction.createdAt || transaction.created_at,
-      ).getHours();
-      hourlySales[hour] = (hourlySales[hour] || 0) + Number(transaction.total || 0);
+      if (!transaction) return;
+      
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at || transaction.date
+      );
+      
+      if (isNaN(transactionDate.getTime())) return;
+      
+      const hour = transactionDate.getHours();
+      const amount = Number(transaction.total || transaction.amount || 0);
+      
+      if (!isNaN(amount) && amount >= 0) {
+        hourlySales[hour] = (hourlySales[hour] || 0) + amount;
+      }
     });
 
-    // Total stats
-    const totalRevenue = filteredTransactions.reduce(
-      (sum: number, transaction: any) => sum + Number(transaction.total || 0),
+    // Total stats with proper validation
+    const validTransactions = filteredTransactions.filter((transaction: any) => {
+      const amount = Number(transaction.total || transaction.amount || 0);
+      return transaction && !isNaN(amount) && amount >= 0;
+    });
+
+    const totalRevenue = validTransactions.reduce(
+      (sum: number, transaction: any) => {
+        const amount = Number(transaction.total || transaction.amount || 0);
+        return sum + amount;
+      },
       0,
     );
-    const totalOrders = filteredTransactions.length;
-    const totalCustomers = filteredTransactions.length;
+    
+    const totalOrders = validTransactions.length;
+    const totalCustomers = validTransactions.length; // Assuming 1 customer per transaction
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     return {
@@ -206,40 +260,58 @@ export function SalesReport() {
 
     switch (range) {
       case "today":
-        setStartDate(today.toISOString().split("T")[0]);
-        setEndDate(today.toISOString().split("T")[0]);
+        const todayStr = today.toISOString().split("T")[0];
+        setStartDate(todayStr);
+        setEndDate(todayStr);
         break;
+        
       case "week":
+        // Get current week (Monday to Sunday)
         const currentDayOfWeek = today.getDay();
         const daysToMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
 
         const thisWeekMonday = new Date(today);
         thisWeekMonday.setDate(today.getDate() - daysToMonday);
+        thisWeekMonday.setHours(0, 0, 0, 0);
 
         const thisWeekSunday = new Date(thisWeekMonday);
         thisWeekSunday.setDate(thisWeekMonday.getDate() + 6);
+        thisWeekSunday.setHours(23, 59, 59, 999);
 
         setStartDate(thisWeekMonday.toISOString().split("T")[0]);
         setEndDate(thisWeekSunday.toISOString().split("T")[0]);
         break;
+        
       case "month":
-        const currentDate = new Date();
-        const year = currentDate.getFullYear();
-        const month = currentDate.getMonth();
+        // Get current month
+        const year = today.getFullYear();
+        const month = today.getMonth();
 
         const monthStart = new Date(year, month, 1);
         const monthEnd = new Date(year, month + 1, 0);
 
-        const startDateStr = `${monthStart.getFullYear()}-${(monthStart.getMonth() + 1).toString().padStart(2, "0")}-${monthStart.getDate().toString().padStart(2, "0")}`;
-        const endDateStr = `${monthEnd.getFullYear()}-${(monthEnd.getMonth() + 1).toString().padStart(2, "0")}-${monthEnd.getDate().toString().padStart(2, "0")}`;
+        const formatDate = (date: Date) => {
+          const y = date.getFullYear();
+          const m = (date.getMonth() + 1).toString().padStart(2, "0");
+          const d = date.getDate().toString().padStart(2, "0");
+          return `${y}-${m}-${d}`;
+        };
 
-        setStartDate(startDateStr);
-        setEndDate(endDateStr);
+        setStartDate(formatDate(monthStart));
+        setEndDate(formatDate(monthEnd));
         break;
+        
       case "custom":
-        const customCurrentDate = new Date().toISOString().split("T")[0];
-        setStartDate(customCurrentDate);
-        setEndDate(customCurrentDate);
+        // Default to today for custom range
+        const customToday = today.toISOString().split("T")[0];
+        setStartDate(customToday);
+        setEndDate(customToday);
+        break;
+        
+      default:
+        const defaultDate = today.toISOString().split("T")[0];
+        setStartDate(defaultDate);
+        setEndDate(defaultDate);
         break;
     }
   };
