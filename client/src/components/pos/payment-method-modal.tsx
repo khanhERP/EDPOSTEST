@@ -13,7 +13,6 @@ import { createQRPosAsync, type CreateQRPosRequest } from "@/lib/api";
 import { EInvoiceModal } from "./einvoice-modal";
 import { usePopupSignal } from "@/hooks/use-popup-signal";
 import VirtualKeyboard from "@/components/ui/virtual-keyboard";
-import { useToast } from "@/components/ui/use-toast";
 
 interface PaymentMethodModalProps {
   isOpen: boolean;
@@ -40,7 +39,6 @@ export function PaymentMethodModal({
   cartItems = [],
 }: PaymentMethodModalProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
   const [showEInvoice, setShowEInvoice] = useState(false);
@@ -327,12 +325,6 @@ export function PaymentMethodModal({
           });
           setQrCodeUrl(qrUrl);
           setShowQRCode(true);
-
-          toast({
-            title: "Using Offline QR Code",
-            description: "QR payment service is unavailable. Generated offline QR code for reference.",
-            variant: "default",
-          });
         }
       } catch (error) {
         console.error("Error calling CreateQRPos API:", error);
@@ -349,19 +341,8 @@ export function PaymentMethodModal({
           });
           setQrCodeUrl(qrUrl);
           setShowQRCode(true);
-
-          toast({
-            title: "Using Offline QR Code",
-            description: "QR payment service is unavailable. Generated offline QR code for reference.",
-            variant: "default",
-          });
         } catch (fallbackError) {
           console.error("Error generating fallback QR code:", fallbackError);
-          toast({
-            title: "QR Code Error",
-            description: "Cannot generate QR code. Please use alternative payment methods.",
-            variant: "destructive",
-          });
         }
       } finally {
         setQrLoading(false);
@@ -395,7 +376,7 @@ export function PaymentMethodModal({
   const handleQRComplete = () => {
     setShowQRCode(false);
     setQrCodeUrl("");
-
+    
     // Return to parent with QR payment method
     onSelectMethod('qrCode');
   };
@@ -441,7 +422,7 @@ export function PaymentMethodModal({
     }
 
     setShowCashPayment(false);
-
+    
     // Return to parent with cash payment method and amount data
     onSelectMethod('cash', {
       amountReceived: receivedAmount,
@@ -468,7 +449,7 @@ export function PaymentMethodModal({
   const handleEInvoiceClose = () => {
     setShowEInvoice(false);
     setSelectedPaymentMethod("");
-
+    
     // Return to payment method selection instead of closing completely
     console.log('🔙 E-invoice modal closed, returning to payment method selection');
   };
@@ -616,8 +597,8 @@ export function PaymentMethodModal({
   }, [isOpen, currentTransactionUuid, removePaymentListener, showQRCode, qrCodeUrl, wasShowingQRCode]);
 
   return (
-    <Dialog
-      open={isOpen}
+    <Dialog 
+      open={isOpen} 
       onOpenChange={(open) => {
         if (!open) {
           // When dialog is closed via X button or outside click

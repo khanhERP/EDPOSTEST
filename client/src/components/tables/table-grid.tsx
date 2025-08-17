@@ -536,21 +536,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         }
       } catch (error) {
         console.error('Error calling CreateQRPos API:', error);
-        
-        // Check if QR service is disabled
-        if (error.message && (error.message.includes('503') || error.message.includes('temporarily unavailable'))) {
-          toast({
-            title: 'QR Payment Không Khả Dụng',
-            description: 'Dịch vụ thanh toán QR tạm thời bị tắt. Vui lòng sử dụng phương thức thanh toán khác.',
-            variant: 'destructive',
-          });
-          setQrLoading(false);
-          return;
-        }
-        
         // Fallback to mock QR code on error
         try {
-          console.log('Creating fallback QR code due to API error');
           const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
           const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
             width: 256,
@@ -564,17 +551,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setSelectedPaymentMethod({ key: paymentMethodKey, method });
           setShowQRPayment(true);
           setPaymentMethodsOpen(false);
-          
-          toast({
-            title: 'Sử Dụng QR Offline',
-            description: 'Dịch vụ QR không khả dụng. Đã tạo mã QR offline để tham khảo.',
-            variant: 'default',
-          });
         } catch (fallbackError) {
           console.error('Error generating fallback QR code:', fallbackError);
           toast({
             title: 'Lỗi',
-            description: 'Không thể tạo mã QR. Vui lòng sử dụng phương thức thanh toán khác.',
+            description: 'Không thể tạo mã QR',
             variant: 'destructive',
           });
         }
