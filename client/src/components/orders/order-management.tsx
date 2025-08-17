@@ -542,7 +542,7 @@ export function OrderManagement() {
   }) || [];
 
   if (ordersLoading) {
-    return (
+     (
       <div className="flex items-center justify-center py-8">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
       </div>
