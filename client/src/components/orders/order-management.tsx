@@ -416,7 +416,6 @@ export function OrderManagement() {
       } finally {
         setQrLoading(false);
       }
-      return;
     }
 
     // For other non-cash payments, show mock QR code
