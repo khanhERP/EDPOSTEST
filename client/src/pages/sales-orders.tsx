@@ -931,10 +931,10 @@ export default function SalesOrders() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {/* Fixed Header */}
-                    <div className="grid grid-cols-11 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded sticky top-0 z-10">
-                      <div className="col-span-1 flex items-center">
+                  <div className="space-y-4">
+                    {/* Header with Select All */}
+                    <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                      <div className="flex items-center space-x-2">
                         <Checkbox
                           checked={isAllSelected}
                           ref={(el) => {
@@ -942,33 +942,25 @@ export default function SalesOrders() {
                           }}
                           onCheckedChange={handleSelectAll}
                         />
+                        <span className="text-sm font-medium text-gray-700">Chọn tất cả ({filteredInvoices.length} đơn hàng)</span>
                       </div>
-                      <div className="col-span-2">Số đơn bán</div>
-                      <div className="col-span-2">Ngày đơn bán</div>
-                      <div className="col-span-3">Khách hàng</div>
-                      <div className="col-span-2">Thành tiền</div>
-                      <div className="col-span-1">Trạng thái</div>
+                      <div className="text-sm text-gray-500">
+                        Đã chọn: {selectedOrderIds.size} đơn hàng
+                      </div>
                     </div>
-                    {/* Scrollable Content */}
-                    <div className="max-h-80 overflow-y-auto space-y-2">
-                      {filteredInvoices.map((item) => (
-                        <div
-                          key={`${item.type}-${item.id}`}
-                          className={`grid grid-cols-11 gap-2 text-xs p-2 rounded hover:bg-blue-50 ${
-                            selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
-                          }`}
-                        >
-                          <div className="col-span-1 flex items-center">
-                            <Checkbox
-                              checked={isOrderSelected(item.id, item.type)}
-                              onCheckedChange={(checked) => handleSelectOrder(item.id, item.type, checked as boolean)}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-                          <div 
-                            className="col-span-2 font-medium cursor-pointer"
+
+                    {/* Grid Layout for Orders */}
+                    <div className="max-h-96 overflow-y-auto">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {filteredInvoices.map((item) => (
+                          <div
+                            key={`${item.type}-${item.id}`}
+                            className={`relative bg-white rounded-lg border-2 transition-all duration-200 hover:shadow-md cursor-pointer ${
+                              selectedInvoice?.id === item.id && selectedInvoice?.type === item.type 
+                                ? 'border-blue-500 bg-blue-50 shadow-lg' 
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
                             onClick={() => {
-                              // Ensure type is properly set when selecting
                               const itemWithType = {
                                 ...item,
                                 type: item.type || (item.orderNumber ? 'order' : 'invoice')
@@ -976,34 +968,76 @@ export default function SalesOrders() {
                               setSelectedInvoice(itemWithType);
                             }}
                           >
-                            {item.displayNumber}
+                            {/* Checkbox in top-left corner */}
+                            <div className="absolute top-3 left-3 z-10">
+                              <Checkbox
+                                checked={isOrderSelected(item.id, item.type)}
+                                onCheckedChange={(checked) => handleSelectOrder(item.id, item.type, checked as boolean)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="bg-white border-2"
+                              />
+                            </div>
+
+                            {/* Status badge in top-right corner */}
+                            <div className="absolute top-3 right-3">
+                              {getInvoiceStatusBadge(item.displayStatus)}
+                            </div>
+
+                            {/* Card Content */}
+                            <div className="p-4 pt-12">
+                              {/* Order Number */}
+                              <div className="mb-3">
+                                <h3 className="font-bold text-lg text-gray-900 truncate">
+                                  {item.displayNumber}
+                                </h3>
+                                <div className="flex items-center text-xs text-gray-500 mt-1">
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs ${
+                                    item.type === 'order' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                                  }`}>
+                                    {item.type === 'order' ? 'Đơn hàng' : 'Hóa đơn'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Customer Name */}
+                              <div className="mb-3">
+                                <p className="text-sm font-medium text-gray-700 mb-1">Khách hàng:</p>
+                                <p className="text-sm text-gray-900 truncate">
+                                  {item.customerName || 'Khách hàng lẻ'}
+                                </p>
+                              </div>
+
+                              {/* Date */}
+                              <div className="mb-3">
+                                <p className="text-sm font-medium text-gray-700 mb-1">Ngày:</p>
+                                <p className="text-sm text-gray-900">
+                                  {formatDate(item.date)}
+                                </p>
+                              </div>
+
+                              {/* Total Amount */}
+                              <div className="border-t pt-3">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm font-medium text-gray-700">Thành tiền:</span>
+                                  <span className="text-lg font-bold text-green-600">
+                                    {formatCurrency(item.total)} ₫
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* E-invoice Status if applicable */}
+                              {item.einvoiceStatus > 0 && (
+                                <div className="mt-2 pt-2 border-t">
+                                  <div className="flex justify-between items-center text-xs">
+                                    <span className="text-gray-500">E-Invoice:</span>
+                                    {getEInvoiceStatusBadge(item.einvoiceStatus)}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                          <div 
-                            className="col-span-2 cursor-pointer"
-                            onClick={() => setSelectedInvoice(item)}
-                          >
-                            {formatDate(item.date)}
-                          </div>
-                          <div 
-                            className="col-span-3 truncate cursor-pointer"
-                            onClick={() => setSelectedInvoice(item)}
-                          >
-                            {item.customerName || 'Khách hàng lẻ'}
-                          </div>
-                          <div 
-                            className="col-span-2 text-right font-medium cursor-pointer"
-                            onClick={() => setSelectedInvoice(item)}
-                          >
-                            {formatCurrency(item.total)}
-                          </div>
-                          <div 
-                            className="col-span-1 cursor-pointer"
-                            onClick={() => setSelectedInvoice(item)}
-                          >
-                            {getInvoiceStatusBadge(item.displayStatus)}
-                          </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
