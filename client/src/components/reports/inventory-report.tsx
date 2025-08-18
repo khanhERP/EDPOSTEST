@@ -45,7 +45,7 @@ export function InventoryReport() {
   const { t } = useTranslation();
 
   // Filters
-  const [concernType, setConcernType] = useState("sales");
+  const [concernType, setConcernType] = useState("inventoryValue");
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -391,23 +391,7 @@ export function InventoryReport() {
   };
 
   const getChartData = () => {
-    if (concernType === "sales") {
-      return getSalesData()
-        .slice(0, 10)
-        .map((item) => ({
-          name: item.productName,
-          value: item.netRevenue,
-          quantity: item.quantitySold,
-        }));
-    } else if (concernType === "profit") {
-      return getProfitData()
-        .slice(0, 10)
-        .map((item) => ({
-          name: item.productName,
-          value: item.profit,
-          margin: item.profitMargin,
-        }));
-    } else if (concernType === "inventoryValue") {
+    if (concernType === "inventoryValue") {
       return getInventoryValue()
         .slice(0, 10)
         .map((item) => ({
@@ -1268,8 +1252,6 @@ export function InventoryReport() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="sales">{t("reports.sales")}</SelectItem>
-                  <SelectItem value="profit">{t("reports.profit")}</SelectItem>
                   <SelectItem value="inventoryValue">
                     {t("reports.inventoryValue")}
                   </SelectItem>
@@ -1281,15 +1263,6 @@ export function InventoryReport() {
                   </SelectItem>
                   <SelectItem value="disposal">
                     {t("reports.disposal")}
-                  </SelectItem>
-                  <SelectItem value="employeeSales">
-                    {t("reports.employeeBySales")}
-                  </SelectItem>
-                  <SelectItem value="customerSales">
-                    {t("reports.customerBySales")}
-                  </SelectItem>
-                  <SelectItem value="supplierPurchase">
-                    {t("reports.supplierByPurchase")}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -1377,8 +1350,8 @@ export function InventoryReport() {
         </CardContent>
       </Card>
 
-      {/* Chart Display for Sales, Profit, and Inventory Value */}
-      {["sales", "profit", "inventoryValue"].includes(concernType) && (
+      {/* Chart Display for Inventory Value */}
+      {concernType === "inventoryValue" && (
         <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
             <CardTitle className="flex items-center gap-3 text-lg font-semibold">
@@ -1390,8 +1363,6 @@ export function InventoryReport() {
                   {t("reports.chartView")}
                 </div>
                 <div className="text-white font-semibold">
-                  {concernType === "sales" && t("reports.sales")}
-                  {concernType === "profit" && t("reports.profit")}
                   {concernType === "inventoryValue" &&
                     t("reports.inventoryValue")}
                 </div>
@@ -1501,16 +1472,11 @@ export function InventoryReport() {
 
       {/* Data Tables */}
       <div className="space-y-6">
-        {concernType === "sales" && renderSalesReport()}
-        {concernType === "profit" && renderProfitReport()}
         {concernType === "inventoryValue" && renderInventoryValueReport()}
         {concernType === "inOutInventory" && renderInOutInventoryReport()}
         {concernType === "detailedInOutInventory" &&
           renderDetailedInOutInventoryReport()}
         {concernType === "disposal" && renderDisposalReport()}
-        {concernType === "employeeSales" && renderEmployeeSalesReport()}
-        {concernType === "customerSales" && renderCustomerSalesReport()}
-        {concernType === "supplierPurchase" && renderSupplierReport()}
       </div>
     </div>
   );
