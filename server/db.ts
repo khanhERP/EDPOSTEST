@@ -31,15 +31,21 @@ let DATABASE_URL =
   process.env.CUSTOM_DATABASE_URL ||
   process.env.DATABASE_URL;
 
-// Add sslmode=disable for external database if not already present
-if (DATABASE_URL?.includes("1.55.212.135") && !DATABASE_URL.includes("sslmode")) {
-  DATABASE_URL += DATABASE_URL.includes("?") ? "&sslmode=disable" : "?sslmode=disable";
-}
-
 if (!DATABASE_URL) {
   throw new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?",
   );
+}
+
+// Ensure we're using the correct database and SSL settings for external server
+if (DATABASE_URL?.includes("1.55.212.135")) {
+  // Make sure we're using postgres database and sslmode=disable
+  if (!DATABASE_URL.includes("/postgres")) {
+    DATABASE_URL = DATABASE_URL.replace(/\/[^\/\?]+(\?|$)/, "/postgres$1");
+  }
+  if (!DATABASE_URL.includes("sslmode=disable")) {
+    DATABASE_URL += DATABASE_URL.includes("?") ? "&sslmode=disable" : "?sslmode=disable";
+  }
 }
 
 export const pool = new Pool({

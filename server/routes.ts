@@ -3697,28 +3697,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Database health check
   app.get("/api/health/db", async (req, res) => {
     try {
-      // Directly execute a simple query to check DB connection
-      const result = await db.execute(sql`SELECT current_database(), current_user, inet_server_addr(), inet_server_port()`);
+      // Test basic connection with simple query
+      const result = await db.execute(sql`SELECT 
+        current_database() as database_name,
+        current_user as user_name,
+        version() as postgres_version,
+        NOW() as server_time
+      `);
 
-      // Safely access properties of the first row if it exists
       const dbInfo = result && result.length > 0 ? result[0] : {};
 
       res.json({ 
         status: "healthy",
-        database: dbInfo.current_database,
-        user: dbInfo.current_user,
-        host: dbInfo.inet_server_addr,
-        port: dbInfo.inet_server_port,
-        // Avoid logging sensitive information like passwords
-        connectionString: process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@') 
+        database: dbInfo.database_name,
+        user: dbInfo.user_name,
+        version: dbInfo.postgres_version,
+        serverTime: dbInfo.server_time,
+        connectionString: DATABASE_URL?.replace(/:[^:@]*@/, ':****@'),
+        usingExternalDb: !!process.env.EXTERNAL_DB_URL
       });
     } catch (error) {
-      // Ensure error is an instance of Error to access message property safely
       const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("Database health check failed:", error);
+      
       res.status(500).json({ 
         status: "unhealthy", 
         error: errorMessage,
-        connectionString: process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@')
+        connectionString: DATABASE_URL?.replace(/:[^:@]*@/, ':****@'),
+        usingExternalDb: !!process.env.EXTERNAL_DB_URL,
+        details: error
       });
     }
   });
