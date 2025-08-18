@@ -3304,7 +3304,7 @@ export function SalesChartReport() {
                     {t("reports.salesDetailReport")}
                   </SelectItem>
                 </SelectContent>
-              </categorize>
+              </Select>
 
             </div>
 
