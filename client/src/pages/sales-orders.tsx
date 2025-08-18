@@ -701,7 +701,8 @@ export default function SalesOrders() {
     if (!ws['!merges']) ws['!merges'] = [];
     ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 14 } });
 
-    // Style title cell exactly like in image - bold, centered, bigger font
+    // Ensure title cell exists and style it
+    if (!ws['A1']) ws['A1'] = { v: 'DANH SÁCH ĐƠN HÀNG BÁN', t: 's' };
     ws['A1'].s = {
       font: { bold: true, size: 16, color: { rgb: '000000' }, name: 'Times New Roman' },
       alignment: { horizontal: 'center', vertical: 'center' },
@@ -711,49 +712,85 @@ export default function SalesOrders() {
     // Style header row (row 3) exactly like in image - green background with white text
     for (let col = 0; col < 15; col++) {
       const cellAddress = XLSX.utils.encode_cell({ r: 2, c: col });
-      if (ws[cellAddress]) {
-        ws[cellAddress].s = {
-          font: { bold: true, size: 11, color: { rgb: 'FFFFFF' }, name: 'Times New Roman' },
-          alignment: { horizontal: 'center', vertical: 'center' },
-          fill: { fgColor: { rgb: '92D050' } }, // Green background like in image
-          border: {
-            top: { style: 'thin', color: { rgb: '000000' } },
-            bottom: { style: 'thin', color: { rgb: '000000' } },
-            left: { style: 'thin', color: { rgb: '000000' } },
-            right: { style: 'thin', color: { rgb: '000000' } }
-          }
-        };
+      // Ensure cell exists
+      if (!ws[cellAddress]) {
+        const headerTexts = [
+          'Số đơn hàng', 'Ngày đơn hàng', 'Bàn', 'Mã khách hàng', 'Khách hàng',
+          'Thành tiền', 'Giảm giá', 'Tiền thuế', 'Tổng tiền', 'Đã thanh toán',
+          'Mã nhân viên', 'Tên nhân viên', 'Ký hiệu hóa đơn', 'Số hóa đơn', 'Trạng thái'
+        ];
+        ws[cellAddress] = { v: headerTexts[col] || '', t: 's' };
       }
+      
+      ws[cellAddress].s = {
+        font: { bold: true, size: 11, color: { rgb: 'FFFFFF' }, name: 'Times New Roman' },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        fill: { fgColor: { rgb: '92D050' } }, // Green background like in image
+        border: {
+          top: { style: 'thin', color: { rgb: '000000' } },
+          bottom: { style: 'thin', color: { rgb: '000000' } },
+          left: { style: 'thin', color: { rgb: '000000' } },
+          right: { style: 'thin', color: { rgb: '000000' } }
+        }
+      };
     }
 
     // Style data rows exactly like in image
     for (let row = 3; row < 3 + selectedOrders.length; row++) {
       for (let col = 0; col < 15; col++) {
         const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
-        if (ws[cellAddress]) {
-          // Alternate row colors like in image
-          const isEvenRow = (row - 3) % 2 === 0;
-          const fillColor = isEvenRow ? 'FFFFFF' : 'F2F2F2';
-          
-          ws[cellAddress].s = {
-            font: { size: 11, name: 'Times New Roman', color: { rgb: '000000' } },
-            alignment: { 
-              horizontal: [5, 6, 7, 8, 9].includes(col) ? 'right' : 'center', 
-              vertical: 'center' 
-            },
-            fill: { fgColor: { rgb: fillColor } },
-            border: {
-              top: { style: 'thin', color: { rgb: 'BFBFBF' } },
-              bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
-              left: { style: 'thin', color: { rgb: 'BFBFBF' } },
-              right: { style: 'thin', color: { rgb: 'BFBFBF' } }
-            }
-          };
-          
-          // Format currency columns exactly like in image
-          if ([5, 6, 7, 8, 9].includes(col)) {
-            ws[cellAddress].z = '#,##0.00';
+        
+        // Ensure cell exists with data
+        if (!ws[cellAddress]) {
+          const rowIndex = row - 3;
+          const item = selectedOrders[rowIndex];
+          if (item) {
+            const rowData = [
+              item.tradeNumber || item.invoiceNumber || item.orderNumber || `DB${new Date().getFullYear()}${String(item.id).padStart(6, '0')}`,
+              formatDate(item.date),
+              item.tableId ? `Tầng 1 - Bàn ${item.tableId}` : 'Tầng 1 - Bàn 1',
+              item.customerTaxCode || `KH000${String(rowIndex + 1).padStart(3, '0')}`,
+              item.customerName || 'Khách lẻ',
+              parseFloat(item.subtotal || '0'),
+              0, // Giảm giá
+              parseFloat(item.tax || '0'),
+              parseFloat(item.total || '0'),
+              parseFloat(item.total || '0'), // Đã thanh toán
+              item.employeeId || 'NV0001',
+              'Phạm Vân Duy',
+              item.symbol || 'C11DTD',
+              item.invoiceNumber || String(item.id).padStart(8, '0'),
+              item.displayStatus === 1 ? 'Đã hoàn thành' : item.displayStatus === 2 ? 'Đang phục vụ' : 'Đã hủy'
+            ];
+            ws[cellAddress] = { 
+              v: rowData[col] || '', 
+              t: typeof rowData[col] === 'number' ? 'n' : 's' 
+            };
           }
+        }
+        
+        // Alternate row colors like in image
+        const isEvenRow = (row - 3) % 2 === 0;
+        const fillColor = isEvenRow ? 'FFFFFF' : 'F2F2F2';
+        
+        ws[cellAddress].s = {
+          font: { size: 11, name: 'Times New Roman', color: { rgb: '000000' } },
+          alignment: { 
+            horizontal: [5, 6, 7, 8, 9].includes(col) ? 'right' : 'center', 
+            vertical: 'center' 
+          },
+          fill: { fgColor: { rgb: fillColor } },
+          border: {
+            top: { style: 'thin', color: { rgb: 'BFBFBF' } },
+            bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
+            left: { style: 'thin', color: { rgb: 'BFBFBF' } },
+            right: { style: 'thin', color: { rgb: 'BFBFBF' } }
+          }
+        };
+        
+        // Format currency columns exactly like in image
+        if ([5, 6, 7, 8, 9].includes(col) && ws[cellAddress].t === 'n') {
+          ws[cellAddress].z = '#,##0.00';
         }
       }
     }
