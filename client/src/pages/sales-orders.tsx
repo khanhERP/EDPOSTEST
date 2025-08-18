@@ -709,54 +709,51 @@ export default function SalesOrders() {
     if (!ws['!merges']) ws['!merges'] = [];
     ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 14 } });
 
-    // Ensure title cell exists and style it with better compatibility
+    // Style title cell with proper Excel compatibility
     if (!ws['A1']) ws['A1'] = { v: 'DANH SÁCH ĐƠN HÀNG BÁN', t: 's' };
     ws['A1'].s = {
       font: { 
         bold: true, 
-        size: 16, 
+        sz: 16, 
         color: { rgb: '000000' }, 
         name: 'Times New Roman' 
       },
       alignment: { 
         horizontal: 'center', 
-        vertical: 'center',
-        wrapText: false
-      },
-      fill: { 
-        patternType: 'solid',
-        fgColor: { rgb: 'FFFFFF' } 
+        vertical: 'center'
       }
     };
 
     // Style header row (row 3) exactly like in image - green background with white text
+    const headerTexts = [
+      'Số đơn hàng', 'Ngày đơn hàng', 'Bàn', 'Mã khách hàng', 'Khách hàng',
+      'Thành tiền', 'Giảm giá', 'Tiền thuế', 'Tổng tiền', 'Đã thanh toán',
+      'Mã nhân viên', 'Tên nhân viên', 'Ký hiệu hóa đơn', 'Số hóa đơn', 'Trạng thái'
+    ];
+    
     for (let col = 0; col < 15; col++) {
       const cellAddress = XLSX.utils.encode_cell({ r: 2, c: col });
-      // Ensure cell exists
+      
+      // Create cell if it doesn't exist
       if (!ws[cellAddress]) {
-        const headerTexts = [
-          'Số đơn hàng', 'Ngày đơn hàng', 'Bàn', 'Mã khách hàng', 'Khách hàng',
-          'Thành tiền', 'Giảm giá', 'Tiền thuế', 'Tổng tiền', 'Đã thanh toán',
-          'Mã nhân viên', 'Tên nhân viên', 'Ký hiệu hóa đơn', 'Số hóa đơn', 'Trạng thái'
-        ];
         ws[cellAddress] = { v: headerTexts[col] || '', t: 's' };
       }
       
+      // Apply header styling
       ws[cellAddress].s = {
         font: { 
           bold: true, 
-          size: 11, 
+          sz: 11, 
           color: { rgb: 'FFFFFF' }, 
           name: 'Times New Roman' 
         },
         alignment: { 
           horizontal: 'center', 
-          vertical: 'center',
-          wrapText: false
+          vertical: 'center'
         },
         fill: { 
           patternType: 'solid',
-          fgColor: { rgb: '92D050' } 
+          fgColor: { rgb: '92D050' }
         },
         border: {
           top: { style: 'thin', color: { rgb: '000000' } },
@@ -807,19 +804,17 @@ export default function SalesOrders() {
         
         ws[cellAddress].s = {
           font: { 
-            size: 11, 
+            sz: 11, 
             name: 'Times New Roman', 
-            color: { rgb: '000000' },
-            bold: false
+            color: { rgb: '000000' }
           },
           alignment: { 
             horizontal: [5, 6, 7, 8, 9].includes(col) ? 'right' : 'center', 
-            vertical: 'center',
-            wrapText: false
+            vertical: 'center'
           },
           fill: { 
             patternType: 'solid',
-            fgColor: { rgb: fillColor } 
+            fgColor: { rgb: fillColor }
           },
           border: {
             top: { style: 'thin', color: { rgb: 'BFBFBF' } },
@@ -843,7 +838,7 @@ export default function SalesOrders() {
     // Set workbook properties for better compatibility
     wb.Props = {
       Title: "Danh sách đơn hàng bán",
-      Subject: "Báo cáo đơn hàng",
+      Subject: "Báo cáo đơn hàng", 
       Author: "EDPOS System",
       CreatedDate: new Date()
     };
@@ -852,50 +847,21 @@ export default function SalesOrders() {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const defaultFilename = `danh-sach-don-hang-ban_${timestamp}.xlsx`;
 
-    // Try to use the File System Access API for modern browsers
-    if ('showSaveFilePicker' in window) {
-      try {
-        window.showSaveFilePicker({
-          suggestedName: defaultFilename,
-          types: [{
-            description: 'Excel files',
-            accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
-          }]
-        }).then(async (fileHandle) => {
-          const writable = await fileHandle.createWritable();
-          const buffer = XLSX.write(wb, { 
-            bookType: 'xlsx', 
-            type: 'array',
-            cellStyles: true,
-            sheetStubs: false,
-            bookSST: false
-          });
-          await writable.write(buffer);
-          await writable.close();
-          console.log('File saved successfully');
-        }).catch((err) => {
-          if (err.name !== 'AbortError') {
-            console.log('Save dialog cancelled or error:', err);
-            // Fallback to automatic download
-            XLSX.writeFile(wb, defaultFilename, { 
-              cellStyles: true,
-              sheetStubs: false,
-              bookSST: false
-            });
-          }
-        });
-      } catch (error) {
-        console.log('File System Access API not supported, using fallback');
-        // Fallback to automatic download
-        XLSX.writeFile(wb, defaultFilename);
-      }
-    } else {
-      // Fallback for older browsers with proper options
+    // Use proper Excel writing with styles enabled
+    try {
+      // Force enable styles and use proper Excel format
       XLSX.writeFile(wb, defaultFilename, { 
+        bookType: 'xlsx',
         cellStyles: true,
         sheetStubs: false,
-        bookSST: false
+        compression: true
       });
+      
+      console.log('✅ Excel file exported successfully with formatting');
+    } catch (error) {
+      console.error('❌ Error exporting Excel file:', error);
+      // Fallback without styles if there's an error
+      XLSX.writeFile(wb, defaultFilename);
     }
   };
 
