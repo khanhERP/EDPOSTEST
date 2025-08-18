@@ -612,14 +612,6 @@ export default function SalesOrders() {
       selectedOrderIds.has(`${item.type}-${item.id}`)
     );
 
-    // Calculate totals for footer
-    const totals = selectedOrders.reduce((acc, item) => {
-      acc.subtotal += parseFloat(item.subtotal || '0');
-      acc.tax += parseFloat(item.tax || '0');
-      acc.total += parseFloat(item.total || '0');
-      return acc;
-    }, { subtotal: 0, tax: 0, total: 0 });
-
     // Create Excel data structure matching the image format exactly
     const excelData = [];
     
@@ -674,194 +666,146 @@ export default function SalesOrders() {
       ]);
     });
 
-    // Create worksheet
+    // Create worksheet from array data
     const ws = XLSX.utils.aoa_to_sheet(excelData);
 
-    // Set column widths to match the image exactly
-    const colWidths = [
-      { wch: 15 }, // Số đơn hàng
-      { wch: 13 }, // Ngày đơn hàng
-      { wch: 15 }, // Bàn
-      { wch: 12 }, // Mã khách hàng
-      { wch: 12 }, // Khách hàng
-      { wch: 12 }, // Thành tiền
-      { wch: 10 }, // Giảm giá
-      { wch: 10 }, // Tiền thuế
-      { wch: 12 }, // Tổng tiền
-      { wch: 14 }, // Đã thanh toán
-      { wch: 12 }, // Mã nhân viên
-      { wch: 13 }, // Tên nhân viên
-      { wch: 15 }, // Ký hiệu hóa đơn
-      { wch: 10 }, // Số hóa đơn
-      { wch: 12 }  // Trạng thái
+    // Set column widths
+    ws['!cols'] = [
+      { wch: 15 }, { wch: 13 }, { wch: 15 }, { wch: 12 }, { wch: 12 },
+      { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 14 },
+      { wch: 12 }, { wch: 13 }, { wch: 15 }, { wch: 10 }, { wch: 12 }
     ];
-    ws['!cols'] = colWidths;
 
-    // Set row heights for better appearance
+    // Set row heights
     ws['!rows'] = [
-      { hpt: 25 }, // Title row height
+      { hpt: 25 }, // Title row
       { hpt: 15 }, // Empty row
-      { hpt: 20 }, // Header row height
-      ...Array(selectedOrders.length).fill({ hpt: 18 }) // Data rows height
+      { hpt: 20 }, // Header row
+      ...Array(selectedOrders.length).fill({ hpt: 18 }) // Data rows
     ];
 
-    // Merge title cells (row 1, A1:O1) exactly like in image
-    if (!ws['!merges']) ws['!merges'] = [];
-    ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 14 } });
+    // Merge title cells A1:O1
+    ws['!merges'] = [{ s: { r: 0, c: 0 }, e: { r: 0, c: 14 } }];
 
-    // Style title cell with proper Excel compatibility
-    if (!ws['A1']) ws['A1'] = { v: 'DANH SÁCH ĐƠN HÀNG BÁN', t: 's' };
-    ws['A1'].s = {
-      font: { 
-        bold: true, 
-        sz: 16, 
-        color: { rgb: '000000' }, 
-        name: 'Times New Roman' 
-      },
-      alignment: { 
-        horizontal: 'center', 
-        vertical: 'center'
+    // Apply styles using a different approach for better compatibility
+    const styleSheet = {};
+
+    // Title cell style
+    styleSheet['A1'] = {
+      v: 'DANH SÁCH ĐƠN HÀNG BÁN',
+      t: 's',
+      s: {
+        font: { name: 'Times New Roman', sz: 16, bold: true, color: { rgb: '000000' } },
+        alignment: { horizontal: 'center', vertical: 'center' }
       }
     };
 
-    // Style header row (row 3) exactly like in image - green background with white text
+    // Header row styles (row 3)
+    const headerCells = ['A3', 'B3', 'C3', 'D3', 'E3', 'F3', 'G3', 'H3', 'I3', 'J3', 'K3', 'L3', 'M3', 'N3', 'O3'];
     const headerTexts = [
       'Số đơn hàng', 'Ngày đơn hàng', 'Bàn', 'Mã khách hàng', 'Khách hàng',
       'Thành tiền', 'Giảm giá', 'Tiền thuế', 'Tổng tiền', 'Đã thanh toán',
       'Mã nhân viên', 'Tên nhân viên', 'Ký hiệu hóa đơn', 'Số hóa đơn', 'Trạng thái'
     ];
-    
-    for (let col = 0; col < 15; col++) {
-      const cellAddress = XLSX.utils.encode_cell({ r: 2, c: col });
-      
-      // Create cell if it doesn't exist
-      if (!ws[cellAddress]) {
-        ws[cellAddress] = { v: headerTexts[col] || '', t: 's' };
-      }
-      
-      // Apply header styling
-      ws[cellAddress].s = {
-        font: { 
-          bold: true, 
-          sz: 11, 
-          color: { rgb: 'FFFFFF' }, 
-          name: 'Times New Roman' 
-        },
-        alignment: { 
-          horizontal: 'center', 
-          vertical: 'center'
-        },
-        fill: { 
-          patternType: 'solid',
-          fgColor: { rgb: '92D050' }
-        },
-        border: {
-          top: { style: 'thin', color: { rgb: '000000' } },
-          bottom: { style: 'thin', color: { rgb: '000000' } },
-          left: { style: 'thin', color: { rgb: '000000' } },
-          right: { style: 'thin', color: { rgb: '000000' } }
+
+    headerCells.forEach((cell, index) => {
+      styleSheet[cell] = {
+        v: headerTexts[index],
+        t: 's',
+        s: {
+          font: { name: 'Times New Roman', sz: 11, bold: true, color: { rgb: 'FFFFFF' } },
+          fill: { patternType: 'solid', fgColor: { rgb: '92D050' } },
+          alignment: { horizontal: 'center', vertical: 'center' },
+          border: {
+            top: { style: 'thin', color: { rgb: '000000' } },
+            bottom: { style: 'thin', color: { rgb: '000000' } },
+            left: { style: 'thin', color: { rgb: '000000' } },
+            right: { style: 'thin', color: { rgb: '000000' } }
+          }
         }
       };
-    }
+    });
 
-    // Style data rows exactly like in image
-    for (let row = 3; row < 3 + selectedOrders.length; row++) {
-      for (let col = 0; col < 15; col++) {
-        const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+    // Data row styles
+    selectedOrders.forEach((item, rowIndex) => {
+      const excelRowIndex = rowIndex + 4; // Start from row 4 (0-indexed: row 3)
+      const isEven = rowIndex % 2 === 0;
+      const bgColor = isEven ? 'FFFFFF' : 'F2F2F2';
+
+      // Currency columns: F, G, H, I, J (indices 5,6,7,8,9)
+      const currencyColumns = ['F', 'G', 'H', 'I', 'J'];
+      const allColumns = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O'];
+
+      allColumns.forEach((col, colIndex) => {
+        const cellRef = `${col}${excelRowIndex}`;
+        const isCurrency = currencyColumns.includes(col);
         
-        // Ensure cell exists with data
-        if (!ws[cellAddress]) {
-          const rowIndex = row - 3;
-          const item = selectedOrders[rowIndex];
-          if (item) {
-            const rowData = [
-              item.tradeNumber || item.invoiceNumber || item.orderNumber || `DB${new Date().getFullYear()}${String(item.id).padStart(6, '0')}`,
-              formatDate(item.date),
-              item.tableId ? `Tầng 1 - Bàn ${item.tableId}` : 'Tầng 1 - Bàn 1',
-              item.customerTaxCode || `KH000${String(rowIndex + 1).padStart(3, '0')}`,
-              item.customerName || 'Khách lẻ',
-              parseFloat(item.subtotal || '0'),
-              0, // Giảm giá
-              parseFloat(item.tax || '0'),
-              parseFloat(item.total || '0'),
-              parseFloat(item.total || '0'), // Đã thanh toán
-              item.employeeId || 'NV0001',
-              'Phạm Vân Duy',
-              item.symbol || 'C11DTD',
-              item.invoiceNumber || String(item.id).padStart(8, '0'),
-              item.displayStatus === 1 ? 'Đã hoàn thành' : item.displayStatus === 2 ? 'Đang phục vụ' : 'Đã hủy'
-            ];
-            ws[cellAddress] = { 
-              v: rowData[col] || '', 
-              t: typeof rowData[col] === 'number' ? 'n' : 's' 
-            };
+        if (ws[cellRef]) {
+          ws[cellRef].s = {
+            font: { name: 'Times New Roman', sz: 11, color: { rgb: '000000' } },
+            fill: { patternType: 'solid', fgColor: { rgb: bgColor } },
+            alignment: { 
+              horizontal: isCurrency ? 'right' : 'center', 
+              vertical: 'center' 
+            },
+            border: {
+              top: { style: 'thin', color: { rgb: 'BFBFBF' } },
+              bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
+              left: { style: 'thin', color: { rgb: 'BFBFBF' } },
+              right: { style: 'thin', color: { rgb: 'BFBFBF' } }
+            }
+          };
+
+          // Apply number format for currency columns
+          if (isCurrency && ws[cellRef].t === 'n') {
+            ws[cellRef].z = '#,##0.00';
           }
         }
-        
-        // Alternate row colors like in image
-        const isEvenRow = (row - 3) % 2 === 0;
-        const fillColor = isEvenRow ? 'FFFFFF' : 'F2F2F2';
-        
-        ws[cellAddress].s = {
-          font: { 
-            sz: 11, 
-            name: 'Times New Roman', 
-            color: { rgb: '000000' }
-          },
-          alignment: { 
-            horizontal: [5, 6, 7, 8, 9].includes(col) ? 'right' : 'center', 
-            vertical: 'center'
-          },
-          fill: { 
-            patternType: 'solid',
-            fgColor: { rgb: fillColor }
-          },
-          border: {
-            top: { style: 'thin', color: { rgb: 'BFBFBF' } },
-            bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
-            left: { style: 'thin', color: { rgb: 'BFBFBF' } },
-            right: { style: 'thin', color: { rgb: 'BFBFBF' } }
-          }
-        };
-        
-        // Format currency columns exactly like in image
-        if ([5, 6, 7, 8, 9].includes(col) && ws[cellAddress].t === 'n') {
-          ws[cellAddress].z = '#,##0.00';
-        }
+      });
+    });
+
+    // Apply all styles to worksheet
+    Object.keys(styleSheet).forEach(cell => {
+      if (ws[cell]) {
+        ws[cell] = { ...ws[cell], ...styleSheet[cell] };
+      } else {
+        ws[cell] = styleSheet[cell];
       }
-    }
+    });
 
-    // Create workbook with proper settings
+    // Create workbook
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Danh sách đơn hàng');
-    
-    // Set workbook properties for better compatibility
+
+    // Set workbook properties
     wb.Props = {
       Title: "Danh sách đơn hàng bán",
-      Subject: "Báo cáo đơn hàng", 
+      Subject: "Báo cáo đơn hàng",
       Author: "EDPOS System",
       CreatedDate: new Date()
     };
 
-    // Generate default filename with timestamp
+    // Generate filename with timestamp
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const defaultFilename = `danh-sach-don-hang-ban_${timestamp}.xlsx`;
 
-    // Use proper Excel writing with styles enabled
+    // Write file with proper options
     try {
-      // Force enable styles and use proper Excel format
       XLSX.writeFile(wb, defaultFilename, { 
         bookType: 'xlsx',
         cellStyles: true,
         sheetStubs: false,
-        compression: true
+        compression: true,
+        bookSST: false
       });
       
-      console.log('✅ Excel file exported successfully with formatting');
+      console.log('✅ Excel file exported successfully with Times New Roman formatting');
+      alert('File Excel đã được xuất thành công với định dạng Times New Roman!');
     } catch (error) {
       console.error('❌ Error exporting Excel file:', error);
-      // Fallback without styles if there's an error
-      XLSX.writeFile(wb, defaultFilename);
+      // Fallback export without advanced formatting
+      XLSX.writeFile(wb, defaultFilename, { bookType: 'xlsx' });
+      alert('File Excel đã được xuất nhưng có thể thiếu một số định dạng.');
     }
   };
 
