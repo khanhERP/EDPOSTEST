@@ -73,29 +73,50 @@ export function DashboardOverview() {
     )
       return null;
 
-    console.log("Dashboard Debug:", {
-      totalOrders: orders.length,
-      startDate,
-      endDate,
-      firstOrder: orders[0],
-      allOrderDates: orders.map((o: any) =>
-        new Date(o.orderedAt || o.createdAt || o.created_at).toDateString(),
-      ),
-    });
-
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999); // Include the entire end date
 
     // Filter completed orders within date range
     const filteredCompletedOrders = orders.filter((order: any) => {
-      // Check if order is completed (status 'paid' means completed)
+      // Check if order is completed/paid
       if (order.status !== 'completed' && order.status !== 'paid') return false;
-      
+
+      // Try multiple possible date fields
       const orderDate = new Date(
-        order.orderedAt || order.createdAt || order.created_at,
+        order.orderedAt || order.createdAt || order.created_at || order.paidAt
       );
+
+      // Skip if date is invalid
+      if (isNaN(orderDate.getTime())) {
+        console.log('Invalid order date for order:', order.id, 'date fields:', {
+          orderedAt: order.orderedAt,
+          createdAt: order.createdAt,
+          created_at: order.created_at,
+          paidAt: order.paidAt
+        });
+        return false;
+      }
+
       return orderDate >= start && orderDate <= end;
+    });
+
+    console.log("Dashboard Debug:", {
+      totalOrders: orders.length,
+      startDate,
+      endDate,
+      firstOrder: orders[0],
+      completedOrders: orders.filter((o: any) => o.status === 'completed' || o.status === 'paid').length,
+      filteredCompletedOrders: filteredCompletedOrders.length,
+      sampleOrderDates: orders.slice(0, 5).map((o: any) => ({
+        id: o.id,
+        status: o.status,
+        orderedAt: o.orderedAt,
+        createdAt: o.createdAt,
+        created_at: o.created_at,
+        paidAt: o.paidAt,
+        parsedDate: new Date(o.orderedAt || o.createdAt || o.created_at || o.paidAt).toISOString()
+      })),
     });
 
     // Period revenue: total amount - discount for all completed orders
@@ -110,7 +131,7 @@ export function DashboardOverview() {
 
     // Order count: count of completed orders in the filtered period
     const periodOrderCount = filteredCompletedOrders.length;
-    
+
     // Customer count: count unique customers from completed orders
     const uniqueCustomers = new Set();
     filteredCompletedOrders.forEach((order: any) => {
@@ -149,10 +170,13 @@ export function DashboardOverview() {
     // Peak hours analysis from filtered completed orders
     const hourlyOrders: { [key: number]: number } = {};
     filteredCompletedOrders.forEach((order: any) => {
-      const hour = new Date(
-        order.orderedAt || order.createdAt || order.created_at,
-      ).getHours();
-      hourlyOrders[hour] = (hourlyOrders[hour] || 0) + 1;
+      const orderDate = new Date(
+        order.orderedAt || order.createdAt || order.created_at || order.paidAt
+      );
+      if (!isNaN(orderDate.getTime())) {
+        const hour = orderDate.getHours();
+        hourlyOrders[hour] = (hourlyOrders[hour] || 0) + 1;
+      }
     });
 
     const peakHour = Object.keys(hourlyOrders).reduce(
