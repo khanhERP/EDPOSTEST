@@ -2655,8 +2655,26 @@ export function SalesChartReport() {
       },
     );
 
-    // Map transactions to the detailed report format
-    const salesDetailData = filteredTransactions.flatMap((transaction: any) => {
+    // Group transactions by date, customer, employee to show order count
+    const groupedTransactions: {
+      [key: string]: {
+        date: string;
+        time: string;
+        orderCount: number;
+        customerId: string;
+        customerName: string;
+        employeeName: string;
+        totalRevenue: number;
+        totalDiscount: number;
+        totalTax: number;
+        totalAmount: number;
+        transactions: any[];
+        salesChannel: string;
+        tableNumber: string;
+      };
+    } = {};
+
+    filteredTransactions.forEach((transaction: any) => {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
@@ -2666,137 +2684,72 @@ export function SalesChartReport() {
         minute: "2-digit",
       });
       const salesChannelValue = transaction.salesChannel || "Trực tiếp";
-      const salesMethodValue = transaction.deliveryMethod || "Tại bàn";
       const customerId = transaction.customerId || "KL-001";
       const customerName =
         transaction.customerName || t("common.walkInCustomer");
       const employeeName =
         transaction.cashierName || transaction.employeeName || "Nhân viên";
 
-      const transactionTotal = Number(transaction.total || 0);
-      const transactionSubtotal = Number(
-        transaction.subtotal || transactionTotal / 1.1,
-      );
-      const transactionTax = Number(transaction.tax || transactionTotal * 0.1);
-      const transactionDiscount = transactionSubtotal - (transactionTotal - transactionTax);
+      // Create grouping key by date + customer + employee
+      const groupKey = `${transactionDateStr}-${customerId}-${employeeName}`;
 
-      // If no items but has total, create sample items based on transaction total
-      if (!transaction.items || !Array.isArray(transaction.items) || transaction.items.length === 0) {
-        if (transactionTotal > 0) {
-          // Generate sample items for demo purposes
-          const sampleProducts = products?.slice(0, Math.min(3, products.length)) || [];
-          if (sampleProducts.length === 0) {
-            return [
-              {
-                date: transactionDateStr,
-                time: transactionTimeStr,
-                orderNumber: transaction.transactionId || `ORD-${transaction.id}`,
-                customerCode: customerId,
-                customerName: customerName,
-                productCode: "SAMPLE-001",
-                productName: "Sản phẩm mẫu",
-                unit: "Cái",
-                quantity: 1,
-                unitPrice: transactionSubtotal,
-                totalAmount: transactionSubtotal,
-                discount: transactionDiscount,
-                revenue: transactionTotal - transactionTax,
-                taxRate: "10%",
-                taxAmount: transactionTax,
-                total: transactionTotal,
-                group: "Nhóm mẫu",
-                note: transaction.note || "",
-                channel: salesChannelValue,
-                table: transaction.tableNumber || "B01",
-                employeeName: employeeName,
-                status: transaction.status || "Hoàn thành",
-              },
-            ];
-          }
-
-          return sampleProducts.map((product: any, index: number) => {
-            const quantity = Math.floor(Math.random() * 3) + 1;
-            const unitPrice = Number(product.price || 15000);
-            const itemTotal = quantity * unitPrice;
-            const itemTax = itemTotal * 0.1;
-            const itemDiscount = itemTotal * 0.05; // 5% discount
-            const itemRevenue = itemTotal - itemDiscount - itemTax;
-
-            const category = categories?.find((cat: any) => cat.id === product.categoryId);
-
-            return {
-              date: transactionDateStr,
-              time: transactionTimeStr,
-              orderNumber: transaction.transactionId || `ORD-${transaction.id}`,
-              customerCode: customerId,
-              customerName: customerName,
-              productCode: product.sku || `PRD-${product.id}`,
-              productName: product.name || `Sản phẩm ${index + 1}`,
-              unit: "Cái",
-              quantity: quantity,
-              unitPrice: unitPrice,
-              totalAmount: itemTotal,
-              discount: itemDiscount,
-              revenue: itemRevenue,
-              taxRate: "10%",
-              taxAmount: itemTax,
-              total: itemTotal,
-              group: category?.name || "Nhóm sản phẩm",
-              note: transaction.note || "",
-              channel: salesChannelValue,
-              table: transaction.tableNumber || "B01",
-              employeeName: employeeName,
-              status: transaction.status || "Hoàn thành",
-            };
-          });
-        }
-        return [];
-      }
-
-      return transaction.items.map((item: any) => {
-        const itemTotal = Number(item.total || 0);
-        const itemUnitPrice = Number(item.price || item.unitPrice || 0);
-        const itemQuantity = Number(item.quantity || 0);
-        const itemDiscount = (itemUnitPrice * itemQuantity) - itemTotal;
-        const itemTax = itemTotal * 0.1;
-        const itemRevenue = itemTotal - itemTax;
-
-        const product = products?.find(
-          (p: any) => p.id.toString() === item.productId?.toString(),
-        );
-        const productName =
-          product?.name || item.productName || "Sản phẩm";
-        const productCode = product?.sku || item.productCode || `PRD-${item.productId}`;
-        const unit = "Cái";
-        
-        const category = categories?.find((cat: any) => cat.id === product?.categoryId);
-        const group = category?.name || product?.categoryName || item.group || "Nhóm sản phẩm";
-
-        return {
+      if (!groupedTransactions[groupKey]) {
+        groupedTransactions[groupKey] = {
           date: transactionDateStr,
           time: transactionTimeStr,
-          orderNumber: transaction.transactionId || `ORD-${transaction.id}`,
-          customerCode: customerId,
-          customerName: customerName,
-          productCode: productCode,
-          productName: productName,
-          unit: unit,
-          quantity: itemQuantity,
-          unitPrice: itemUnitPrice,
-          totalAmount: itemTotal,
-          discount: itemDiscount,
-          revenue: itemRevenue,
-          taxRate: "10%",
-          taxAmount: itemTax,
-          total: itemTotal,
-          group: group,
-          note: transaction.note || "",
-          channel: salesChannelValue,
-          table: transaction.tableNumber || "B01",
-          employeeName: employeeName,
-          status: transaction.status || "Hoàn thành",
+          orderCount: 0,
+          customerId,
+          customerName,
+          employeeName,
+          totalRevenue: 0,
+          totalDiscount: 0,
+          totalTax: 0,
+          totalAmount: 0,
+          transactions: [],
+          salesChannel: salesChannelValue,
+          tableNumber: transaction.tableNumber || "B01",
         };
-      });
+      }
+
+      groupedTransactions[groupKey].orderCount += 1;
+      groupedTransactions[groupKey].totalAmount += Number(transaction.total || 0);
+      groupedTransactions[groupKey].totalTax += Number(transaction.tax || Number(transaction.total) * 0.1);
+      groupedTransactions[groupKey].totalRevenue += Number(transaction.total || 0) - Number(transaction.tax || Number(transaction.total) * 0.1);
+      groupedTransactions[groupKey].totalDiscount += Number(transaction.subtotal || Number(transaction.total) * 1.1) - Number(transaction.total || 0);
+      groupedTransactions[groupKey].transactions.push(transaction);
+    });
+
+    // Map grouped transactions to the detailed report format
+    const salesDetailData = Object.values(groupedTransactions).flatMap((group) => {
+
+      // Return order summary row for each group
+      return [{
+        date: group.date,
+        time: group.time,
+        orderNumber: `${group.orderCount} đơn hàng`, // Show order count instead of specific order number
+        customerCode: group.customerId,
+        customerName: group.customerName,
+        productCode: "---", // Summary row, no specific product
+        productName: "Tổng cộng các đơn hàng",
+        unit: "---",
+        quantity: group.orderCount, // Number of orders
+        unitPrice: 0,
+        totalAmount: group.totalAmount,
+        discount: group.totalDiscount,
+        revenue: group.totalRevenue,
+        taxRate: "10%",
+        taxAmount: group.totalTax,
+        total: group.totalAmount,
+        group: "Tổng hợp",
+        note: `${group.orderCount} đơn hàng`,
+        channel: group.salesChannel,
+        table: group.tableNumber,
+        employeeName: group.employeeName,
+        status: "Hoàn thành",
+        isGroupHeader: true, // Mark as group header
+        groupKey: Object.keys(groupedTransactions).find(key => groupedTransactions[key] === group),
+        transactions: group.transactions, // Store transactions for expansion
+      }];
     });
 
     // If no data exists, generate sample data for demonstration
@@ -2888,8 +2841,8 @@ export function SalesChartReport() {
     const paginatedData = sortedData.slice(startIndex, endIndex);
 
     // Calculate totals for the summary row
-    const totalQuantitySold = paginatedData.reduce(
-      (sum, item) => sum + item.quantity,
+    const totalOrderCount = paginatedData.reduce(
+      (sum, item) => sum + (item.isGroupHeader ? item.quantity : 0), // Only count orders from group headers
       0,
     );
     const totalRevenue = paginatedData.reduce(
@@ -2995,22 +2948,25 @@ export function SalesChartReport() {
               <TableBody>
                 {paginatedData.length > 0 ? (
                   paginatedData.map((item, index) => {
-                    const isExpanded = expandedRows[item.orderNumber] || false; // Use orderNumber for expansion key
+                    const isExpanded = expandedRows[`group-${item.groupKey}`] || false;
                     return (
                       <React.Fragment key={index}>
-                        <TableRow className="hover:bg-gray-50">
+                        {/* Group Header Row */}
+                        <TableRow className={`hover:bg-gray-50 ${item.isGroupHeader ? 'bg-blue-50 font-medium' : ''}`}>
                           <TableCell className="text-center border-r w-12">
-                            <button
-                              onClick={() =>
-                                setExpandedRows((prev) => ({
-                                  ...prev,
-                                  [`detail-${item.orderNumber}-${index}`]: !prev[`detail-${item.orderNumber}-${index}`],
-                                }))
-                              }
-                              className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded text-sm"
-                            >
-                              {expandedRows[`detail-${item.orderNumber}-${index}`] ? "−" : "+"}
-                            </button>
+                            {item.isGroupHeader && (
+                              <button
+                                onClick={() =>
+                                  setExpandedRows((prev) => ({
+                                    ...prev,
+                                    [`group-${item.groupKey}`]: !prev[`group-${item.groupKey}`],
+                                  }))
+                                }
+                                className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded text-sm"
+                              >
+                                {isExpanded ? "−" : "+"}
+                              </button>
+                            )}
                           </TableCell>
                           <TableCell className="text-center border-r bg-green-50 font-medium min-w-[100px] px-4">
                             {item.date}
@@ -3018,7 +2974,7 @@ export function SalesChartReport() {
                           <TableCell className="text-center border-r min-w-[80px] px-4">
                             {item.time}
                           </TableCell>
-                          <TableCell className="text-center border-r min-w-[130px] px-4">
+                          <TableCell className="text-center border-r min-w-[130px] px-4 font-bold text-blue-600">
                             {item.orderNumber}
                           </TableCell>
                           <TableCell className="text-center border-r min-w-[120px] px-4">
@@ -3030,17 +2986,17 @@ export function SalesChartReport() {
                           <TableCell className="text-center border-r min-w-[100px] px-4">
                             {item.productCode}
                           </TableCell>
-                          <TableCell className="text-center border-r min-w-[150px] px-4">
+                          <TableCell className="text-center border-r min-w-[150px] px-4 font-medium">
                             {item.productName}
                           </TableCell>
                           <TableCell className="text-center border-r min-w-[80px] px-4">
                             {item.unit}
                           </TableCell>
-                          <TableCell className="text-center border-r min-w-[80px] px-4">
+                          <TableCell className="text-center border-r min-w-[80px] px-4 font-bold">
                             {item.quantity}
                           </TableCell>
                           <TableCell className="text-right border-r min-w-[100px] px-4">
-                            {formatCurrency(item.unitPrice)}
+                            {item.unitPrice > 0 ? formatCurrency(item.unitPrice) : "---"}
                           </TableCell>
                           <TableCell className="text-right border-r min-w-[120px] px-4">
                             {formatCurrency(item.totalAmount)}
@@ -3080,92 +3036,190 @@ export function SalesChartReport() {
                           </TableCell>
                         </TableRow>
 
-                        {/* Expanded customer and employee details */}
-                        {expandedRows[`detail-${item.orderNumber}-${index}`] && (
-                          <>
-                            <TableRow className="bg-blue-50/30 border-l-4 border-l-blue-400">
-                              <TableCell className="text-center border-r bg-blue-50 w-12">
-                                <div className="w-8 h-6 flex items-center justify-center text-blue-600 text-xs">
-                                  └
-                                </div>
-                              </TableCell>
-                              <TableCell
-                                colSpan={8}
-                                className="font-medium text-blue-700 px-4 py-2"
-                              >
-                                📋 Chi tiết khách hàng: {item.customerName} ({item.customerCode})
-                              </TableCell>
-                              <TableCell
-                                colSpan={14}
-                                className="text-sm text-gray-600 px-4 py-2"
-                              >
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <strong>Thông tin khách hàng:</strong>
-                                    <br />
-                                    • Mã: {item.customerCode}
-                                    <br />
-                                    • Tên: {item.customerName}
-                                    <br />
-                                    • Loại: {item.customerCode === "KL-001" ? "Khách lẻ" : "Khách thành viên"}
+                        {/* Expanded Order Details */}
+                        {isExpanded && item.transactions && item.transactions.map((transaction: any, txIndex: number) => {
+                          // Get all items for this transaction
+                          const transactionItems = transaction.items || [];
+                          
+                          // If no items, create a simple transaction row
+                          if (transactionItems.length === 0) {
+                            return (
+                              <TableRow key={`tx-${txIndex}`} className="bg-yellow-50/50 border-l-4 border-l-yellow-400">
+                                <TableCell className="text-center border-r bg-yellow-50 w-12">
+                                  <div className="w-8 h-6 flex items-center justify-center text-yellow-600 text-xs">
+                                    └
                                   </div>
-                                  <div>
-                                    <strong>Thông tin đơn hàng:</strong>
-                                    <br />
-                                    • Bàn: {item.table}
-                                    <br />
-                                    • Kênh: {item.channel}
-                                    <br />
-                                    • Trạng thái: {item.status}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  {new Date(transaction.createdAt || transaction.created_at).toLocaleDateString("vi-VN")}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  {new Date(transaction.createdAt || transaction.created_at).toLocaleTimeString("vi-VN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-blue-600 text-sm min-w-[130px] px-4">
+                                  {transaction.transactionId || `TXN-${transaction.id}`}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[120px] px-4">
+                                  {transaction.customerId || "KL-001"}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {transaction.customerName || t("common.walkInCustomer")}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  ---
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  Giao dịch tổng hợp
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  ---
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  1
+                                </TableCell>
+                                <TableCell className="text-right border-r text-sm min-w-[100px] px-4">
+                                  {formatCurrency(Number(transaction.total))}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
+                                  {formatCurrency(Number(transaction.total))}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-red-600 text-sm min-w-[100px] px-4">
+                                  {formatCurrency(0)}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[120px] px-4">
+                                  {formatCurrency(Number(transaction.total) * 0.9)}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  10%
+                                </TableCell>
+                                <TableCell className="text-right border-r text-sm min-w-[100px] px-4">
+                                  {formatCurrency(Number(transaction.total) * 0.1)}
+                                </TableCell>
+                                <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[120px] px-4">
+                                  {formatCurrency(Number(transaction.total))}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[120px] px-4">
+                                  Giao dịch
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {transaction.note || ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  {transaction.salesChannel || "Trực tiếp"}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  {transaction.tableNumber || "B01"}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {transaction.cashierName || transaction.employeeName || "Nhân viên"}
+                                </TableCell>
+                                <TableCell className="text-center text-sm min-w-[100px] px-4">
+                                  {transaction.status || "Hoàn thành"}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          }
+
+                          // Show individual items for this transaction
+                          return transactionItems.map((txItem: any, itemIndex: number) => {
+                            const product = products?.find(
+                              (p: any) => p.id.toString() === txItem.productId?.toString(),
+                            );
+                            const productName = product?.name || txItem.productName || "Sản phẩm";
+                            const productCode = product?.sku || txItem.productCode || `PRD-${txItem.productId}`;
+                            const category = categories?.find((cat: any) => cat.id === product?.categoryId);
+                            const group = category?.name || product?.categoryName || txItem.group || "Nhóm sản phẩm";
+
+                            const itemTotal = Number(txItem.total || 0);
+                            const itemUnitPrice = Number(txItem.price || txItem.unitPrice || 0);
+                            const itemQuantity = Number(txItem.quantity || 0);
+                            const itemDiscount = (itemUnitPrice * itemQuantity) - itemTotal;
+                            const itemTax = itemTotal * 0.1;
+                            const itemRevenue = itemTotal - itemTax;
+
+                            return (
+                              <TableRow key={`tx-${txIndex}-item-${itemIndex}`} className="bg-green-50/30 border-l-4 border-l-green-400">
+                                <TableCell className="text-center border-r bg-green-50 w-12">
+                                  <div className="w-8 h-6 flex items-center justify-center text-green-600 text-xs">
+                                    └
                                   </div>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                            <TableRow className="bg-green-50/30 border-l-4 border-l-green-400">
-                              <TableCell className="text-center border-r bg-green-50 w-12">
-                                <div className="w-8 h-6 flex items-center justify-center text-green-600 text-xs">
-                                  └
-                                </div>
-                              </TableCell>
-                              <TableCell
-                                colSpan={8}
-                                className="font-medium text-green-700 px-4 py-2"
-                              >
-                                👤 Chi tiết nhân viên: {item.employeeName}
-                              </TableCell>
-                              <TableCell
-                                colSpan={14}
-                                className="text-sm text-gray-600 px-4 py-2"
-                              >
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <strong>Thông tin nhân viên:</strong>
-                                    <br />
-                                    • Tên: {item.employeeName}
-                                    <br />
-                                    • Thời gian xử lý: {item.time}
-                                    <br />
-                                    • Đơn hàng: {item.orderNumber}
-                                  </div>
-                                  <div>
-                                    <strong>Thông tin sản phẩm:</strong>
-                                    <br />
-                                    • Mã SP: {item.productCode}
-                                    <br />
-                                    • Nhóm: {item.group}
-                                    <br />
-                                    • SL bán: {item.quantity} {item.unit}
-                                  </div>
-                                </div>
-                                {item.note && (
-                                  <div className="mt-2 p-2 bg-yellow-50 rounded border-l-2 border-yellow-400">
-                                    <strong>Ghi chú:</strong> {item.note}
-                                  </div>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          </>
-                        )}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  {itemIndex === 0 ? new Date(transaction.createdAt || transaction.created_at).toLocaleDateString("vi-VN") : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  {itemIndex === 0 ? new Date(transaction.createdAt || transaction.created_at).toLocaleTimeString("vi-VN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }) : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-blue-600 text-sm min-w-[130px] px-4">
+                                  {itemIndex === 0 ? (transaction.transactionId || `TXN-${transaction.id}`) : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[120px] px-4">
+                                  {itemIndex === 0 ? (transaction.customerId || "KL-001") : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {itemIndex === 0 ? (transaction.customerName || t("common.walkInCustomer")) : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  {productCode}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {productName}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  Cái
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  {itemQuantity}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-sm min-w-[100px] px-4">
+                                  {formatCurrency(itemUnitPrice)}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
+                                  {formatCurrency(itemUnitPrice * itemQuantity)}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-red-600 text-sm min-w-[100px] px-4">
+                                  {formatCurrency(itemDiscount)}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[120px] px-4">
+                                  {formatCurrency(itemRevenue)}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  10%
+                                </TableCell>
+                                <TableCell className="text-right border-r text-sm min-w-[100px] px-4">
+                                  {formatCurrency(itemTax)}
+                                </TableCell>
+                                <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[120px] px-4">
+                                  {formatCurrency(itemTotal)}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[120px] px-4">
+                                  {group}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {itemIndex === 0 ? (transaction.note || "") : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  {itemIndex === 0 ? (transaction.salesChannel || "Trực tiếp") : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  {itemIndex === 0 ? (transaction.tableNumber || "B01") : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {itemIndex === 0 ? (transaction.cashierName || transaction.employeeName || "Nhân viên") : ""}
+                                </TableCell>
+                                <TableCell className="text-center text-sm min-w-[100px] px-4">
+                                  {itemIndex === 0 ? (transaction.status || "Hoàn thành") : ""}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          });
+                        })}
                       </React.Fragment>
                     );
                   })
@@ -3195,7 +3249,7 @@ export function SalesChartReport() {
                     <TableCell className="text-center border-r min-w-[150px] px-4"></TableCell>
                     <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
                     <TableCell className="text-center border-r min-w-[80px] px-4 font-bold">
-                      {totalQuantitySold}
+                      {totalOrderCount}
                     </TableCell>
                     <TableCell className="text-right border-r min-w-[100px] px-4"></TableCell>
                     <TableCell className="text-right border-r min-w-[120px] px-4 font-bold">
