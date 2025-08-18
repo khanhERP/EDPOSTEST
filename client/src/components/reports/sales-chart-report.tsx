@@ -85,10 +85,21 @@ export function SalesChartReport() {
 
   // Data queries with dynamic filtering
   const { data: transactions, isLoading: transactionsLoading } = useQuery({
-    queryKey: ["/api/transactions", startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee],
+    queryKey: [
+      "/api/transactions",
+      startDate,
+      endDate,
+      salesMethod,
+      salesChannel,
+      analysisType,
+      concernType,
+      selectedEmployee,
+    ],
     queryFn: async () => {
-      const response = await fetch(`/api/transactions/${startDate}/${endDate}/${salesMethod}/${salesChannel}/${analysisType}/${concernType}/${selectedEmployee}`);
-      if (!response.ok) throw new Error('Failed to fetch transactions');
+      const response = await fetch(
+        `/api/transactions/${startDate}/${endDate}/${salesMethod}/${salesChannel}/${analysisType}/${concernType}/${selectedEmployee}`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch transactions");
       return response.json();
     },
     staleTime: 5 * 60 * 1000,
@@ -96,10 +107,21 @@ export function SalesChartReport() {
   });
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
-    queryKey: ["/api/orders", startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType],
+    queryKey: [
+      "/api/orders",
+      startDate,
+      endDate,
+      selectedEmployee,
+      salesChannel,
+      salesMethod,
+      analysisType,
+      concernType,
+    ],
     queryFn: async () => {
-      const response = await fetch(`/api/orders/${startDate}/${endDate}/${selectedEmployee}/${salesChannel}/${salesMethod}/${analysisType}/${concernType}`);
-      if (!response.ok) throw new Error('Failed to fetch orders');
+      const response = await fetch(
+        `/api/orders/${startDate}/${endDate}/${selectedEmployee}/${salesChannel}/${salesMethod}/${analysisType}/${concernType}`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch orders");
       return response.json();
     },
     staleTime: 5 * 60 * 1000,
@@ -114,8 +136,10 @@ export function SalesChartReport() {
   const { data: products } = useQuery({
     queryKey: ["/api/products", selectedCategory, productType, productSearch],
     queryFn: async () => {
-      const response = await fetch(`/api/products/${selectedCategory}/${productType}/${productSearch || ''}`);
-      if (!response.ok) throw new Error('Failed to fetch products');
+      const response = await fetch(
+        `/api/products/${selectedCategory}/${productType}/${productSearch || ""}`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch products");
       return response.json();
     },
     staleTime: 5 * 60 * 1000,
@@ -129,8 +153,10 @@ export function SalesChartReport() {
   const { data: customers } = useQuery({
     queryKey: ["/api/customers", customerSearch, customerStatus],
     queryFn: async () => {
-      const response = await fetch(`/api/customers/${customerSearch || ''}/${customerStatus || 'all'}`);
-      if (!response.ok) throw new Error('Failed to fetch customers');
+      const response = await fetch(
+        `/api/customers/${customerSearch || ""}/${customerStatus || "all"}`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch customers");
       return response.json();
     },
     staleTime: 5 * 60 * 1000,
@@ -348,7 +374,9 @@ export function SalesChartReport() {
         <Card>
           <CardHeader>
             <CardTitle>{t("reports.dailySales")}</CardTitle>
-            <CardDescription>{t("reports.salesChartDescription")}</CardDescription>
+            <CardDescription>
+              {t("reports.salesChartDescription")}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
@@ -727,7 +755,9 @@ export function SalesChartReport() {
                         {t("common.total")}
                       </TableCell>
                       <TableCell className="text-center border-r min-w-[100px] px-4">
-                        {Object.values(dailySales).reduce((sum, data) => sum + data.orders, 0).toLocaleString()}
+                        {Object.values(dailySales)
+                          .reduce((sum, data) => sum + data.orders, 0)
+                          .toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right border-r min-w-[140px] px-4">
                         {formatCurrency(
@@ -1121,10 +1151,18 @@ export function SalesChartReport() {
                 <TableHead>{t("reports.productCode")}</TableHead>
                 <TableHead>{t("reports.productName")}</TableHead>
                 <TableHead>{t("reports.unit")}</TableHead>
-                <TableHead className="text-center">{t("reports.quantitySold")}</TableHead>
-                <TableHead className="text-right">{t("reports.totalAmount")}</TableHead>
-                <TableHead className="text-right">{t("reports.discount")}</TableHead>
-                <TableHead className="text-right">{t("reports.revenue")}</TableHead>
+                <TableHead className="text-center">
+                  {t("reports.quantitySold")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.totalAmount")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.discount")}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t("reports.revenue")}
+                </TableHead>
                 <TableHead>{t("reports.categoryName")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -1296,7 +1334,8 @@ export function SalesChartReport() {
 
     filteredTransactions.forEach((transaction: any) => {
       const employeeCode = transaction.employeeId || "EMP-000";
-      const employeeName = transaction.cashierName || transaction.employeeName || "Unknown";
+      const employeeName =
+        transaction.cashierName || transaction.employeeName || "Unknown";
       const employeeKey = `${employeeCode}-${employeeName}`;
 
       if (!employeeData[employeeKey]) {
@@ -1311,7 +1350,7 @@ export function SalesChartReport() {
         };
 
         // Initialize payment methods for each employee
-        allPaymentMethods.forEach(method => {
+        allPaymentMethods.forEach((method) => {
           employeeData[employeeKey].paymentMethods[method] = 0;
         });
       }
@@ -1327,7 +1366,8 @@ export function SalesChartReport() {
 
       // Add to payment method total
       const paymentMethod = transaction.paymentMethod || "cash";
-      employeeData[employeeKey].paymentMethods[paymentMethod] += transactionTotal;
+      employeeData[employeeKey].paymentMethods[paymentMethod] +=
+        transactionTotal;
     });
 
     const data = Object.values(employeeData).sort((a, b) => b.total - a.total);
@@ -1455,23 +1495,37 @@ export function SalesChartReport() {
               <TableBody>
                 {paginatedData.length > 0 ? (
                   paginatedData.map((item, index) => {
-                    const isExpanded = expandedRows[`emp-${item.employeeCode}`] || false;
-                    const employeeTransactions = filteredTransactions.filter((transaction: any) => {
-                      const employeeCode = transaction.employeeId || "EMP-000";
-                      const employeeName = transaction.cashierName || transaction.employeeName || "Unknown";
-                      const employeeKey = `${employeeCode}-${employeeName}`;
-                      return employeeKey === `${item.employeeCode}-${item.employeeName}`;
-                    });
+                    const isExpanded =
+                      expandedRows[`emp-${item.employeeCode}`] || false;
+                    const employeeTransactions = filteredTransactions.filter(
+                      (transaction: any) => {
+                        const employeeCode =
+                          transaction.employeeId || "EMP-000";
+                        const employeeName =
+                          transaction.cashierName ||
+                          transaction.employeeName ||
+                          "Unknown";
+                        const employeeKey = `${employeeCode}-${employeeName}`;
+                        return (
+                          employeeKey ===
+                          `${item.employeeCode}-${item.employeeName}`
+                        );
+                      },
+                    );
 
                     return (
                       <>
-                        <TableRow key={`${item.employeeCode}-${index}`} className="hover:bg-gray-50">
+                        <TableRow
+                          key={`${item.employeeCode}-${index}`}
+                          className="hover:bg-gray-50"
+                        >
                           <TableCell className="text-center border-r w-12">
                             <button
                               onClick={() =>
                                 setExpandedRows((prev) => ({
                                   ...prev,
-                                  [`emp-${item.employeeCode}`]: !prev[`emp-${item.employeeCode}`],
+                                  [`emp-${item.employeeCode}`]:
+                                    !prev[`emp-${item.employeeCode}`],
                                 }))
                               }
                               className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded text-sm"
@@ -1537,8 +1591,7 @@ export function SalesChartReport() {
                             return (
                               <>
                                 {paymentMethodsArray.map((method: any) => {
-                                  const amount =
-                                    paymentMethods[method] || 0;
+                                  const amount = paymentMethods[method] || 0;
                                   return (
                                     <TableCell
                                       key={method}
@@ -1573,21 +1626,32 @@ export function SalesChartReport() {
                                   </div>
                                 </TableCell>
                                 <TableCell className="text-center border-r text-blue-600 text-sm min-w-[120px] px-4">
-                                  {transaction.transactionId || `TXN-${transaction.id}`}
+                                  {transaction.transactionId ||
+                                    `TXN-${transaction.id}`}
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
-                                  {new Date(transaction.createdAt || transaction.created_at).toLocaleDateString("vi-VN")} {" "}
-                                  {new Date(transaction.createdAt || transaction.created_at).toLocaleTimeString("vi-VN", {
+                                  {new Date(
+                                    transaction.createdAt ||
+                                      transaction.created_at,
+                                  ).toLocaleDateString("vi-VN")}{" "}
+                                  {new Date(
+                                    transaction.createdAt ||
+                                      transaction.created_at,
+                                  ).toLocaleTimeString("vi-VN", {
                                     hour: "2-digit",
                                     minute: "2-digit",
                                   })}
                                 </TableCell>
-                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">1</TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  1
+                                </TableCell>
                                 <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
                                   {formatCurrency(Number(transaction.total))}
                                 </TableCell>
                                 <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
-                                  {formatCurrency(Number(transaction.total) * 0.1)}
+                                  {formatCurrency(
+                                    Number(transaction.total) * 0.1,
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[140px] px-4">
                                   {formatCurrency(Number(transaction.total))}
@@ -1606,8 +1670,7 @@ export function SalesChartReport() {
                                     filteredTransactions.forEach(
                                       (transaction: any) => {
                                         const method =
-                                          transaction.paymentMethod ||
-                                          "cash";
+                                          transaction.paymentMethod || "cash";
                                         allPaymentMethods.add(method);
                                       },
                                     );
@@ -1677,16 +1740,24 @@ export function SalesChartReport() {
                       {data.length} {t("reports.employee")}
                     </TableCell>
                     <TableCell className="text-center border-r min-w-[100px] px-4">
-                      {data.reduce((sum, item) => sum + item.orderCount, 0).toLocaleString()}
+                      {data
+                        .reduce((sum, item) => sum + item.orderCount, 0)
+                        .toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
-                      {formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0))}
+                      {formatCurrency(
+                        data.reduce((sum, item) => sum + item.revenue, 0),
+                      )}
                     </TableCell>
                     <TableCell className="text-right border-r min-w-[120px] px-4">
-                      {formatCurrency(data.reduce((sum, item) => sum + item.tax, 0))}
+                      {formatCurrency(
+                        data.reduce((sum, item) => sum + item.tax, 0),
+                      )}
                     </TableCell>
                     <TableCell className="text-right border-r text-blue-600 min-w-[140px] px-4">
-                      {formatCurrency(data.reduce((sum, item) => sum + item.total, 0))}
+                      {formatCurrency(
+                        data.reduce((sum, item) => sum + item.total, 0),
+                      )}
                     </TableCell>
                     {(() => {
                       // Calculate total payment methods across all employees
@@ -1780,14 +1851,20 @@ export function SalesChartReport() {
                     «
                   </button>
                   <button
-                    onClick={() => setEmployeeCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    onClick={() =>
+                      setEmployeeCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                     disabled={employeeCurrentPage === 1}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     ‹
                   </button>
                   <button
-                    onClick={() => setEmployeeCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    onClick={() =>
+                      setEmployeeCurrentPage((prev) =>
+                        Math.min(prev + 1, totalPages),
+                      )
+                    }
                     disabled={employeeCurrentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
@@ -1875,7 +1952,9 @@ export function SalesChartReport() {
         }
       }
 
-      return dateMatch && customerMatch && statusMatch && order.status === "paid";
+      return (
+        dateMatch && customerMatch && statusMatch && order.status === "paid"
+      );
     });
 
     const customerData: {
@@ -1992,7 +2071,10 @@ export function SalesChartReport() {
 
                     return (
                       <>
-                        <TableRow key={`${item.customerId}-${index}`} className="hover:bg-gray-50">
+                        <TableRow
+                          key={`${item.customerId}-${index}`}
+                          className="hover:bg-gray-50"
+                        >
                           <TableCell className="text-center border-r w-12">
                             <button
                               onClick={() =>
@@ -2016,7 +2098,13 @@ export function SalesChartReport() {
                             {item.orders}
                           </TableCell>
                           <TableCell className="text-center border-r min-w-[130px] px-4">
-                            <Badge variant={item.customerGroup === t("reports.vip") ? "default" : "secondary"}>
+                            <Badge
+                              variant={
+                                item.customerGroup === t("reports.vip")
+                                  ? "default"
+                                  : "secondary"
+                              }
+                            >
                               {item.customerGroup}
                             </Badge>
                           </TableCell>
@@ -2030,7 +2118,13 @@ export function SalesChartReport() {
                             {formatCurrency(item.revenue)}
                           </TableCell>
                           <TableCell className="text-center min-w-[100px] px-4">
-                            <Badge variant={item.status === t("reports.active") ? "default" : "secondary"}>
+                            <Badge
+                              variant={
+                                item.status === t("reports.active")
+                                  ? "default"
+                                  : "secondary"
+                              }
+                            >
                               {t("reports.active")}
                             </Badge>
                           </TableCell>
@@ -2054,34 +2148,61 @@ export function SalesChartReport() {
                                   {order.orderNumber || `ORD-${order.id}`}
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
-                                  {new Date(order.orderedAt || order.created_at).toLocaleDateString("vi-VN")}
+                                  {new Date(
+                                    order.orderedAt || order.created_at,
+                                  ).toLocaleDateString("vi-VN")}
                                 </TableCell>
-                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">1</TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  1
+                                </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[130px] px-4">
                                   {getPaymentMethodLabel(order.paymentMethod)}
                                 </TableCell>
                                 <TableCell className="text-right border-r text-sm min-w-[140px] px-4">
-                                  {formatCurrency(Number(order.subtotal || Number(order.total) * 1.1))}
+                                  {formatCurrency(
+                                    Number(
+                                      order.subtotal ||
+                                        Number(order.total) * 1.1,
+                                    ),
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-right border-r text-red-600 text-sm min-w-[120px] px-4">
-                                  {formatCurrency((Number(order.subtotal || Number(order.total) * 1.1) - Number(order.total)))}
+                                  {formatCurrency(
+                                    Number(
+                                      order.subtotal ||
+                                        Number(order.total) * 1.1,
+                                    ) - Number(order.total),
+                                  )}
                                 </TableCell>
                                 <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[140px] px-4">
                                   {formatCurrency(Number(order.total))}
                                 </TableCell>
                                 <TableCell className="text-center text-sm min-w-[100px] px-4">
-                                  <Badge variant={order.status === "paid" ? "default" : "secondary"} className="text-xs">
-                                    {order.status === "paid" ? t("common.paid") : order.status}
+                                  <Badge
+                                    variant={
+                                      order.status === "paid"
+                                        ? "default"
+                                        : "secondary"
+                                    }
+                                    className="text-xs"
+                                  >
+                                    {order.status === "paid"
+                                      ? t("common.paid")
+                                      : order.status}
                                   </Badge>
                                 </TableCell>
                               </TableRow>
-                            ))}
+                            ),
+                          )}
                       </>
                     );
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center text-gray-500">
+                    <TableCell
+                      colSpan={9}
+                      className="text-center text-gray-500"
+                    >
                       {t("reports.noDataDescription")}
                     </TableCell>
                   </TableRow>
@@ -2098,17 +2219,25 @@ export function SalesChartReport() {
                       {data.length} khách hàng
                     </TableCell>
                     <TableCell className="text-center border-r min-w-[100px] px-4">
-                      {data.reduce((sum, item) => sum + item.orders, 0).toLocaleString()}
+                      {data
+                        .reduce((sum, item) => sum + item.orders, 0)
+                        .toLocaleString()}
                     </TableCell>
                     <TableCell className="text-center border-r min-w-[130px] px-4"></TableCell>
                     <TableCell className="text-right border-r min-w-[140px] px-4">
-                      {formatCurrency(data.reduce((sum, item) => sum + item.totalAmount, 0))}
+                      {formatCurrency(
+                        data.reduce((sum, item) => sum + item.totalAmount, 0),
+                      )}
                     </TableCell>
                     <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
-                      {formatCurrency(data.reduce((sum, item) => sum + item.discount, 0))}
+                      {formatCurrency(
+                        data.reduce((sum, item) => sum + item.discount, 0),
+                      )}
                     </TableCell>
                     <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
-                      {formatCurrency(data.reduce((sum, item) => sum + item.revenue, 0))}
+                      {formatCurrency(
+                        data.reduce((sum, item) => sum + item.revenue, 0),
+                      )}
                     </TableCell>
                     <TableCell className="text-center min-w-[100px] px-4"></TableCell>
                   </TableRow>
@@ -2156,14 +2285,20 @@ export function SalesChartReport() {
                     «
                   </button>
                   <button
-                    onClick={() => setCustomerCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    onClick={() =>
+                      setCustomerCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                     disabled={customerCurrentPage === 1}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     ‹
                   </button>
                   <button
-                    onClick={() => setCustomerCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    onClick={() =>
+                      setCustomerCurrentPage((prev) =>
+                        Math.min(prev + 1, totalPages),
+                      )
+                    }
                     disabled={customerCurrentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
@@ -2210,9 +2345,13 @@ export function SalesChartReport() {
       let methodMatch = true;
       if (salesMethod !== "all") {
         if (salesMethod === "no_delivery") {
-          methodMatch = !transaction.isDelivery && (!transaction.deliveryMethod || transaction.deliveryMethod === "none");
+          methodMatch =
+            !transaction.isDelivery &&
+            (!transaction.deliveryMethod ||
+              transaction.deliveryMethod === "none");
         } else if (salesMethod === "delivery") {
-          methodMatch = transaction.isDelivery || transaction.deliveryMethod === "delivery";
+          methodMatch =
+            transaction.isDelivery || transaction.deliveryMethod === "delivery";
         }
       }
 
@@ -2252,23 +2391,31 @@ export function SalesChartReport() {
       // Determine sales method based on deliveryMethod or salesChannel
       let method = t("reports.dineIn"); // Default
 
-      if (transaction.deliveryMethod === "delivery" || 
-          transaction.deliveryMethod === "takeout" || 
-          transaction.deliveryMethod === "takeaway" ||
-          transaction.isDelivery === true ||
-          transaction.salesChannel === "delivery" ||
-          transaction.salesChannel === "takeout") {
+      if (
+        transaction.deliveryMethod === "delivery" ||
+        transaction.deliveryMethod === "takeout" ||
+        transaction.deliveryMethod === "takeaway" ||
+        transaction.isDelivery === true ||
+        transaction.salesChannel === "delivery" ||
+        transaction.salesChannel === "takeout"
+      ) {
         method = t("reports.takeaway");
-      } else if (transaction.deliveryMethod === "dine_in" || 
-                 transaction.deliveryMethod === "dinein" ||
-                 transaction.salesChannel === "dine_in" ||
-                 transaction.tableId) {
+      } else if (
+        transaction.deliveryMethod === "dine_in" ||
+        transaction.deliveryMethod === "dinein" ||
+        transaction.salesChannel === "dine_in" ||
+        transaction.tableId
+      ) {
         method = t("reports.dineIn");
       }
 
       const amount = Number(transaction.total || 0);
-      const isCompleted = transaction.status === "completed" || transaction.status === "paid" || (!transaction.status && amount > 0);
-      const isCancelled = transaction.status === "cancelled" || transaction.status === "refunded";
+      const isCompleted =
+        transaction.status === "completed" ||
+        transaction.status === "paid" ||
+        (!transaction.status && amount > 0);
+      const isCancelled =
+        transaction.status === "cancelled" || transaction.status === "refunded";
 
       if (isCompleted && amount > 0) {
         salesMethodData[method].completedOrders += 1;
@@ -2278,8 +2425,12 @@ export function SalesChartReport() {
         salesMethodData[method].cancelledRevenue += Math.abs(amount);
       }
 
-      salesMethodData[method].totalOrders = salesMethodData[method].completedOrders + salesMethodData[method].cancelledOrders;
-      salesMethodData[method].totalRevenue = salesMethodData[method].completedRevenue + salesMethodData[method].cancelledRevenue;
+      salesMethodData[method].totalOrders =
+        salesMethodData[method].completedOrders +
+        salesMethodData[method].cancelledOrders;
+      salesMethodData[method].totalRevenue =
+        salesMethodData[method].completedRevenue +
+        salesMethodData[method].cancelledRevenue;
     });
 
     return (
@@ -2290,7 +2441,8 @@ export function SalesChartReport() {
             {t("reports.channelSalesReport")}
           </CardTitle>
           <CardDescription>
-            {t("reports.fromDate")}: {formatDate(startDate)} - {t("reports.toDate")}: {formatDate(endDate)}
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -2298,32 +2450,44 @@ export function SalesChartReport() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead 
-                    className="text-center font-bold bg-green-100 border" 
+                  <TableHead
+                    className="text-center font-bold bg-green-100 border"
                     rowSpan={2}
                   >
                     {t("reports.salesMethod")}
                   </TableHead>
-                  <TableHead 
-                    className="text-center font-bold bg-green-100 border" 
+                  <TableHead
+                    className="text-center font-bold bg-green-100 border"
                     colSpan={3}
                   >
                     {t("reports.totalOrders")}
                   </TableHead>
-                  <TableHead 
-                    className="text-center font-bold bg-green-100 border" 
+                  <TableHead
+                    className="text-center font-bold bg-green-100 border"
                     colSpan={3}
                   >
                     {t("reports.revenue")}
                   </TableHead>
                 </TableRow>
                 <TableRow>
-                  <TableHead className="text-center bg-green-50 border">{t("reports.completed")}</TableHead>
-                  <TableHead className="text-center bg-green-50 border">{t("reports.cancelled")}</TableHead>
-                  <TableHead className="text-center bg-green-50 border">{t("common.total")}</TableHead>
-                  <TableHead className="text-center bg-green-50 border">{t("reports.completed")}</TableHead>
-                  <TableHead className="text-center bg-green-50 border">{t("reports.cancelled")}</TableHead>
-                  <TableHead className="text-center bg-green-50 border">{t("common.total")}</TableHead>
+                  <TableHead className="text-center bg-green-50 border">
+                    {t("reports.completed")}
+                  </TableHead>
+                  <TableHead className="text-center bg-green-50 border">
+                    {t("reports.cancelled")}
+                  </TableHead>
+                  <TableHead className="text-center bg-green-50 border">
+                    {t("common.total")}
+                  </TableHead>
+                  <TableHead className="text-center bg-green-50 border">
+                    {t("reports.completed")}
+                  </TableHead>
+                  <TableHead className="text-center bg-green-50 border">
+                    {t("reports.cancelled")}
+                  </TableHead>
+                  <TableHead className="text-center bg-green-50 border">
+                    {t("common.total")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -2359,22 +2523,46 @@ export function SalesChartReport() {
                     {t("common.total")}
                   </TableCell>
                   <TableCell className="text-center border">
-                    {Object.values(salesMethodData).reduce((sum, data) => sum + data.completedOrders, 0)}
+                    {Object.values(salesMethodData).reduce(
+                      (sum, data) => sum + data.completedOrders,
+                      0,
+                    )}
                   </TableCell>
                   <TableCell className="text-center border">
-                    {Object.values(salesMethodData).reduce((sum, data) => sum + data.cancelledOrders, 0)}
+                    {Object.values(salesMethodData).reduce(
+                      (sum, data) => sum + data.cancelledOrders,
+                      0,
+                    )}
                   </TableCell>
                   <TableCell className="text-center border font-bold">
-                    {Object.values(salesMethodData).reduce((sum, data) => sum + data.totalOrders, 0)}
+                    {Object.values(salesMethodData).reduce(
+                      (sum, data) => sum + data.totalOrders,
+                      0,
+                    )}
                   </TableCell>
                   <TableCell className="text-right border">
-                    {formatCurrency(Object.values(salesMethodData).reduce((sum, data) => sum + data.completedRevenue, 0))}
+                    {formatCurrency(
+                      Object.values(salesMethodData).reduce(
+                        (sum, data) => sum + data.completedRevenue,
+                        0,
+                      ),
+                    )}
                   </TableCell>
                   <TableCell className="text-right border">
-                    {formatCurrency(Object.values(salesMethodData).reduce((sum, data) => sum + data.cancelledRevenue, 0))}
+                    {formatCurrency(
+                      Object.values(salesMethodData).reduce(
+                        (sum, data) => sum + data.cancelledRevenue,
+                        0,
+                      ),
+                    )}
                   </TableCell>
                   <TableCell className="text-right border font-bold">
-                    {formatCurrency(Object.values(salesMethodData).reduce((sum, data) => sum + data.totalRevenue, 0))}
+                    {formatCurrency(
+                      Object.values(salesMethodData).reduce(
+                        (sum, data) => sum + data.totalRevenue,
+                        0,
+                      ),
+                    )}
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -2413,34 +2601,49 @@ export function SalesChartReport() {
         transaction.cashierName?.includes(selectedEmployee);
 
       const salesChannelMatch =
-        salesChannel === "all" ||
-        transaction.salesChannel === salesChannel;
+        salesChannel === "all" || transaction.salesChannel === salesChannel;
 
       const salesMethodMatch =
         salesMethod === "all" ||
-        (salesMethod === "delivery" && (transaction.isDelivery || transaction.deliveryMethod === "delivery")) ||
-        (salesMethod === "no_delivery" && !transaction.isDelivery && (!transaction.deliveryMethod || transaction.deliveryMethod === "none"));
+        (salesMethod === "delivery" &&
+          (transaction.isDelivery ||
+            transaction.deliveryMethod === "delivery")) ||
+        (salesMethod === "no_delivery" &&
+          !transaction.isDelivery &&
+          (!transaction.deliveryMethod ||
+            transaction.deliveryMethod === "none"));
 
       // Product filters are usually applied at the item level, but for a summary, we might filter transactions based on whether they contain products from certain categories/types.
       // This is more complex and might require fetching product details for each transaction item.
       // For simplicity here, we'll focus on the main filters and leave detailed product filtering for later if needed.
 
-      return dateMatch && employeeMatch && salesChannelMatch && salesMethodMatch;
+      return (
+        dateMatch && employeeMatch && salesChannelMatch && salesMethodMatch
+      );
     });
 
     // Map transactions to the detailed report format
     const salesDetailData = filteredTransactions.flatMap((transaction: any) => {
-      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
       const transactionDateStr = transactionDate.toLocaleDateString("vi-VN");
-      const transactionTimeStr = transactionDate.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+      const transactionTimeStr = transactionDate.toLocaleTimeString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
       const salesChannel = transaction.salesChannel || "Direct";
       const salesMethod = transaction.deliveryMethod || "Dine In";
       const customerId = transaction.customerId || "guest";
-      const customerName = transaction.customerName || t("common.walkInCustomer");
-      const employeeName = transaction.cashierName || transaction.employeeName || "Unknown";
+      const customerName =
+        transaction.customerName || t("common.walkInCustomer");
+      const employeeName =
+        transaction.cashierName || transaction.employeeName || "Unknown";
 
       const transactionTotal = Number(transaction.total || 0);
-      const transactionSubtotal = Number(transaction.subtotal || transactionTotal * 1.1); // Assuming a 10% tax or calculation for subtotal
+      const transactionSubtotal = Number(
+        transaction.subtotal || transactionTotal * 1.1,
+      ); // Assuming a 10% tax or calculation for subtotal
       const transactionDiscount = transactionSubtotal - transactionTotal;
       const transactionTaxableAmount = transactionTotal; // Assuming tax is on the final total for simplicity
       const transactionTax = transactionTaxableAmount * 0.1; // Assuming 10% VAT
@@ -2449,30 +2652,32 @@ export function SalesChartReport() {
       if (!transaction.items || !Array.isArray(transaction.items)) {
         // If no items, still add a row for the transaction itself if it has a total
         if (transactionTotal > 0) {
-          return [{
-            date: transactionDateStr,
-            time: transactionTimeStr,
-            orderNumber: transaction.transactionId || `TXN-${transaction.id}`,
-            customerCode: customerId,
-            customerName: customerName,
-            productCode: "-",
-            productName: "-",
-            unit: "-",
-            quantity: 0,
-            unitPrice: 0,
-            totalAmount: 0,
-            discount: 0,
-            revenue: 0,
-            taxRate: "10%",
-            taxAmount: 0,
-            total: transactionTotal,
-            group: "-",
-            note: transaction.note || "",
-            channel: salesChannel,
-            table: transaction.tableNumber || "-",
-            employeeName: employeeName,
-            status: transaction.status || "Completed",
-          }];
+          return [
+            {
+              date: transactionDateStr,
+              time: transactionTimeStr,
+              orderNumber: transaction.transactionId || `TXN-${transaction.id}`,
+              customerCode: customerId,
+              customerName: customerName,
+              productCode: "-",
+              productName: "-",
+              unit: "-",
+              quantity: 0,
+              unitPrice: 0,
+              totalAmount: 0,
+              discount: 0,
+              revenue: 0,
+              taxRate: "10%",
+              taxAmount: 0,
+              total: transactionTotal,
+              group: "-",
+              note: transaction.note || "",
+              channel: salesChannel,
+              table: transaction.tableNumber || "-",
+              employeeName: employeeName,
+              status: transaction.status || "Completed",
+            },
+          ];
         }
         return [];
       }
@@ -2481,12 +2686,15 @@ export function SalesChartReport() {
         const itemTotal = Number(item.total || 0);
         const itemUnitPrice = Number(item.price || 0);
         const itemQuantity = Number(item.quantity || 0);
-        const itemDiscount = (itemUnitPrice * itemQuantity) - itemTotal;
+        const itemDiscount = itemUnitPrice * itemQuantity - itemTotal;
         const itemTax = itemTotal * 0.1; // Assuming 10% VAT on item total
         const itemNetAmount = itemTotal - itemTax;
 
-        const product = products?.find((p: any) => p.id.toString() === item.productId?.toString());
-        const productName = product?.name || item.productName || "Unknown Product";
+        const product = products?.find(
+          (p: any) => p.id.toString() === item.productId?.toString(),
+        );
+        const productName =
+          product?.name || item.productName || "Unknown Product";
         const productCode = product?.sku || item.productCode || "-";
         const unit = product?.unit || item.unit || "-";
         const group = product?.categoryName || item.group || "-";
@@ -2532,11 +2740,23 @@ export function SalesChartReport() {
     const paginatedData = sortedData.slice(startIndex, endIndex);
 
     // Calculate totals for the summary row
-    const totalQuantitySold = paginatedData.reduce((sum, item) => sum + item.quantity, 0);
-    const totalRevenue = paginatedData.reduce((sum, item) => sum + item.revenue, 0);
-    const totalTaxAmount = paginatedData.reduce((sum, item) => sum + item.taxAmount, 0);
+    const totalQuantitySold = paginatedData.reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
+    const totalRevenue = paginatedData.reduce(
+      (sum, item) => sum + item.revenue,
+      0,
+    );
+    const totalTaxAmount = paginatedData.reduce(
+      (sum, item) => sum + item.taxAmount,
+      0,
+    );
     const grandTotal = paginatedData.reduce((sum, item) => sum + item.total, 0);
-    const totalDiscount = paginatedData.reduce((sum, item) => sum + item.discount, 0);
+    const totalDiscount = paginatedData.reduce(
+      (sum, item) => sum + item.discount,
+      0,
+    );
 
     return (
       <Card>
@@ -2556,28 +2776,72 @@ export function SalesChartReport() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-center border-r bg-green-50 w-12"></TableHead>
-                  <TableHead className="text-center border-r bg-green-50 min-w-[100px]">{t("reports.date")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[80px]">{t("reports.time")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[130px]">{t("reports.orderNumber")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[120px]">{t("reports.customerCode")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[150px]">{t("reports.customerName")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[100px]">{t("reports.productCode")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[150px]">{t("reports.productName")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[80px]">{t("reports.unit")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[80px]">{t("reports.quantity")}</TableHead>
-                  <TableHead className="text-right border-r min-w-[100px]">{t("reports.unitPrice")}</TableHead>
-                  <TableHead className="text-right border-r min-w-[120px]">{t("reports.totalAmount")}</TableHead>
-                  <TableHead className="text-right border-r text-red-600 min-w-[100px]">{t("reports.discount")}</TableHead>
-                  <TableHead className="text-right border-r text-green-600 font-medium min-w-[120px]">{t("reports.revenue")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[80px]">{t("reports.taxRate")}</TableHead>
-                  <TableHead className="text-right border-r min-w-[100px]">{t("reports.taxAmount")}</TableHead>
-                  <TableHead className="text-right border-r font-bold text-blue-600 min-w-[120px]">{t("reports.total")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[120px]">{t("reports.group")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[150px]">{t("reports.note")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[100px]">{t("reports.channel")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[80px]">{t("reports.table")}</TableHead>
-                  <TableHead className="text-center border-r min-w-[150px]">{t("reports.employeeName")}</TableHead>
-                  <TableHead className="text-center min-w-[100px]">{t("reports.status")}</TableHead>
+                  <TableHead className="text-center border-r bg-green-50 min-w-[100px]">
+                    {t("reports.date")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[80px]">
+                    {t("reports.time")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[130px]">
+                    {t("reports.orderNumber")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[120px]">
+                    {t("reports.customerCode")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[150px]">
+                    {t("reports.customerName")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[100px]">
+                    {t("reports.productCode")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[150px]">
+                    {t("reports.productName")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[80px]">
+                    {t("reports.unit")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[80px]">
+                    {t("reports.quantity")}
+                  </TableHead>
+                  <TableHead className="text-right border-r min-w-[100px]">
+                    {t("reports.unitPrice")}
+                  </TableHead>
+                  <TableHead className="text-right border-r min-w-[120px]">
+                    {t("reports.totalAmount")}
+                  </TableHead>
+                  <TableHead className="text-right border-r text-red-600 min-w-[100px]">
+                    {t("reports.discount")}
+                  </TableHead>
+                  <TableHead className="text-right border-r text-green-600 font-medium min-w-[120px]">
+                    {t("reports.revenue")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[80px]">
+                    {t("reports.taxRate")}
+                  </TableHead>
+                  <TableHead className="text-right border-r min-w-[100px]">
+                    {t("reports.taxAmount")}
+                  </TableHead>
+                  <TableHead className="text-right border-r font-bold text-blue-600 min-w-[120px]">
+                    {t("reports.total")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[120px]">
+                    {t("reports.group")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[150px]">
+                    {t("reports.note")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[100px]">
+                    {t("reports.channel")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[80px]">
+                    {t("reports.table")}
+                  </TableHead>
+                  <TableHead className="text-center border-r min-w-[150px]">
+                    {t("reports.employeeName")}
+                  </TableHead>
+                  <TableHead className="text-center min-w-[100px]">
+                    {t("reports.status")}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -2600,35 +2864,82 @@ export function SalesChartReport() {
                               {isExpanded ? "−" : "+"}
                             </button>
                           </TableCell>
-                          <TableCell className="text-center border-r bg-green-50 font-medium min-w-[100px] px-4">{item.date}</TableCell>
-                          <TableCell className="text-center border-r min-w-[80px] px-4">{item.time}</TableCell>
-                          <TableCell className="text-center border-r min-w-[130px] px-4">{item.orderNumber}</TableCell>
-                          <TableCell className="text-center border-r min-w-[120px] px-4">{item.customerCode}</TableCell>
-                          <TableCell className="text-center border-r min-w-[150px] px-4">{item.customerName}</TableCell>
-                          <TableCell className="text-center border-r min-w-[100px] px-4">{item.productCode}</TableCell>
-                          <TableCell className="text-center border-r min-w-[150px] px-4">{item.productName}</TableCell>
-                          <TableCell className="text-center border-r min-w-[80px] px-4">{item.unit}</TableCell>
-                          <TableCell className="text-center border-r min-w-[80px] px-4">{item.quantity}</TableCell>
-                          <TableCell className="text-right border-r min-w-[100px] px-4">{formatCurrency(item.unitPrice)}</TableCell>
-                          <TableCell className="text-right border-r min-w-[120px] px-4">{formatCurrency(item.totalAmount)}</TableCell>
-                          <TableCell className="text-right border-r text-red-600 min-w-[100px] px-4">{formatCurrency(item.discount)}</TableCell>
-                          <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">{formatCurrency(item.revenue)}</TableCell>
-                          <TableCell className="text-center border-r min-w-[80px] px-4">{item.taxRate}</TableCell>
-                          <TableCell className="text-right border-r min-w-[100px] px-4">{formatCurrency(item.taxAmount)}</TableCell>
-                          <TableCell className="text-right border-r font-bold text-blue-600 min-w-[120px] px-4">{formatCurrency(item.total)}</TableCell>
-                          <TableCell className="text-center border-r min-w-[120px] px-4">{item.group}</TableCell>
-                          <TableCell className="text-center border-r min-w-[150px] px-4">{item.note}</TableCell>
-                          <TableCell className="text-center border-r min-w-[100px] px-4">{item.channel}</TableCell>
-                          <TableCell className="text-center border-r min-w-[80px] px-4">{item.table}</TableCell>
-                          <TableCell className="text-center border-r min-w-[150px] px-4">{item.employeeName}</TableCell>
-                          <TableCell className="text-center min-w-[100px] px-4">{item.status}</TableCell>
+                          <TableCell className="text-center border-r bg-green-50 font-medium min-w-[100px] px-4">
+                            {item.date}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[80px] px-4">
+                            {item.time}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[130px] px-4">
+                            {item.orderNumber}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[120px] px-4">
+                            {item.customerCode}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[150px] px-4">
+                            {item.customerName}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[100px] px-4">
+                            {item.productCode}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[150px] px-4">
+                            {item.productName}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[80px] px-4">
+                            {item.unit}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[80px] px-4">
+                            {item.quantity}
+                          </TableCell>
+                          <TableCell className="text-right border-r min-w-[100px] px-4">
+                            {formatCurrency(item.unitPrice)}
+                          </TableCell>
+                          <TableCell className="text-right border-r min-w-[120px] px-4">
+                            {formatCurrency(item.totalAmount)}
+                          </TableCell>
+                          <TableCell className="text-right border-r text-red-600 min-w-[100px] px-4">
+                            {formatCurrency(item.discount)}
+                          </TableCell>
+                          <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
+                            {formatCurrency(item.revenue)}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[80px] px-4">
+                            {item.taxRate}
+                          </TableCell>
+                          <TableCell className="text-right border-r min-w-[100px] px-4">
+                            {formatCurrency(item.taxAmount)}
+                          </TableCell>
+                          <TableCell className="text-right border-r font-bold text-blue-600 min-w-[120px] px-4">
+                            {formatCurrency(item.total)}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[120px] px-4">
+                            {item.group}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[150px] px-4">
+                            {item.note}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[100px] px-4">
+                            {item.channel}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[80px] px-4">
+                            {item.table}
+                          </TableCell>
+                          <TableCell className="text-center border-r min-w-[150px] px-4">
+                            {item.employeeName}
+                          </TableCell>
+                          <TableCell className="text-center min-w-[100px] px-4">
+                            {item.status}
+                          </TableCell>
                         </TableRow>
                       </React.Fragment>
                     );
                   })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={22} className="text-center text-gray-500 py-8">
+                    <TableCell
+                      colSpan={22}
+                      className="text-center text-gray-500 py-8"
+                    >
                       {t("reports.noDataDescription")}
                     </TableCell>
                   </TableRow>
@@ -2638,7 +2949,9 @@ export function SalesChartReport() {
                 {paginatedData.length > 0 && (
                   <TableRow className="bg-gray-100 font-bold border-t-2">
                     <TableCell className="text-center border-r w-12"></TableCell>
-                    <TableCell className="text-center border-r bg-green-100 min-w-[100px] px-4">{t("common.total")}</TableCell>
+                    <TableCell className="text-center border-r bg-green-100 min-w-[100px] px-4">
+                      {t("common.total")}
+                    </TableCell>
                     <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
                     <TableCell className="text-center border-r min-w-[130px] px-4"></TableCell>
                     <TableCell className="text-center border-r min-w-[120px] px-4"></TableCell>
@@ -2646,14 +2959,31 @@ export function SalesChartReport() {
                     <TableCell className="text-center border-r min-w-[100px] px-4"></TableCell>
                     <TableCell className="text-center border-r min-w-[150px] px-4"></TableCell>
                     <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
-                    <TableCell className="text-center border-r min-w-[80px] px-4 font-bold">{totalQuantitySold}</TableCell>
+                    <TableCell className="text-center border-r min-w-[80px] px-4 font-bold">
+                      {totalQuantitySold}
+                    </TableCell>
                     <TableCell className="text-right border-r min-w-[100px] px-4"></TableCell>
-                    <TableCell className="text-right border-r min-w-[120px] px-4 font-bold">{formatCurrency(paginatedData.reduce((sum, item) => sum + item.totalAmount, 0))}</TableCell>
-                    <TableCell className="text-right border-r text-red-600 min-w-[100px] px-4 font-bold">{formatCurrency(totalDiscount)}</TableCell>
-                    <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4 font-bold">{formatCurrency(totalRevenue)}</TableCell>
+                    <TableCell className="text-right border-r min-w-[120px] px-4 font-bold">
+                      {formatCurrency(
+                        paginatedData.reduce(
+                          (sum, item) => sum + item.totalAmount,
+                          0,
+                        ),
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right border-r text-red-600 min-w-[100px] px-4 font-bold">
+                      {formatCurrency(totalDiscount)}
+                    </TableCell>
+                    <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4 font-bold">
+                      {formatCurrency(totalRevenue)}
+                    </TableCell>
                     <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
-                    <TableCell className="text-right border-r min-w-[100px] px-4 font-bold">{formatCurrency(totalTaxAmount)}</TableCell>
-                    <TableCell className="text-right border-r font-bold text-blue-600 min-w-[120px] px-4 font-bold">{formatCurrency(grandTotal)}</TableCell>
+                    <TableCell className="text-right border-r min-w-[100px] px-4 font-bold">
+                      {formatCurrency(totalTaxAmount)}
+                    </TableCell>
+                    <TableCell className="text-right border-r font-bold text-blue-600 min-w-[120px] px-4 font-bold">
+                      {formatCurrency(grandTotal)}
+                    </TableCell>
                     <TableCell className="text-center border-r min-w-[120px] px-4"></TableCell>
                     <TableCell className="text-center border-r min-w-[150px] px-4"></TableCell>
                     <TableCell className="text-center border-r min-w-[100px] px-4"></TableCell>
@@ -2715,24 +3045,16 @@ export function SalesChartReport() {
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(prev + 1, totalPages),
-                      )
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
                     }
-                    disabled={
-                      currentPage === totalPages
-                    }
+                    disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     ›
                   </button>
                   <button
-                    onClick={() =>
-                      setCurrentPage(totalPages)
-                    }
-                    disabled={
-                      currentPage === totalPages
-                    }
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     »
@@ -2745,7 +3067,6 @@ export function SalesChartReport() {
       </Card>
     );
   };
-
 
   // Chart configurations for each analysis type
   const chartConfig = {
@@ -3305,47 +3626,7 @@ export function SalesChartReport() {
                   </SelectItem>
                 </SelectContent>
               </Select>
-
             </div>
-
-            {/* Concern Type Filter (visible for 'time' analysis) */}
-            {analysisType === "time" && (
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  {t("reports.reportType")}
-                </Label>
-                <Select
-                  value={concernType}
-                  onValueChange={(value) => {
-                    setConcernType(value);
-                  }}
-                >
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="time">
-                      {t("reports.timeSalesReport")}
-                    </SelectItem>
-                    <SelectItem value="profit">
-                      {t("reports.profitByInvoiceReport")}
-                    </SelectItem>
-                    <SelectItem value="discount">
-                      {t("reports.invoiceDiscountReport")}
-                    </SelectItem>
-                    <SelectItem value="return">
-                      {t("reports.returnByInvoiceReport")}
-                    </SelectItem>
-                    <SelectItem value="employee">
-                      {t("reports.employeeSalesReport")}
-                    </SelectItem>
-                    <SelectItem value="salesDetail">
-                      {t("reports.salesDetailReport")}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
 
             {/* Date Range */}
             <div>
@@ -3415,16 +3696,25 @@ export function SalesChartReport() {
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
                   {t("reports.status")}
                 </Label>
-                <Select value={customerStatus} onValueChange={setCustomerStatus}>
+                <Select
+                  value={customerStatus}
+                  onValueChange={setCustomerStatus}
+                >
                   <SelectTrigger className="h-9 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t("common.all")}</SelectItem>
-                    <SelectItem value="active">{t("reports.active")}</SelectItem>
-                    <SelectItem value="inactive">{t("reports.inactive")}</SelectItem>
+                    <SelectItem value="active">
+                      {t("reports.active")}
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      {t("reports.inactive")}
+                    </SelectItem>
                     <SelectItem value="vip">{t("reports.vip")}</SelectItem>
-                    <SelectItem value="new">{t("reports.newCustomer")}</SelectItem>
+                    <SelectItem value="new">
+                      {t("reports.newCustomer")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -3459,8 +3749,12 @@ export function SalesChartReport() {
                   <SelectContent>
                     <SelectItem value="all">{t("common.all")}</SelectItem>
                     <SelectItem value="combo">{t("reports.combo")}</SelectItem>
-                    <SelectItem value="product">{t("reports.product")}</SelectItem>
-                    <SelectItem value="service">{t("reports.service")}</SelectItem>
+                    <SelectItem value="product">
+                      {t("reports.product")}
+                    </SelectItem>
+                    <SelectItem value="service">
+                      {t("reports.service")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -3511,9 +3805,7 @@ export function SalesChartReport() {
                       <SelectItem value="no_delivery">
                         Không giao hàng
                       </SelectItem>
-                      <SelectItem value="delivery">
-                        Có giao hàng
-                      </SelectItem>
+                      <SelectItem value="delivery">Có giao hàng</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -3532,7 +3824,12 @@ export function SalesChartReport() {
         ) : (
           <>
             {/* Chart Display */}
-            {(analysisType === "time" || analysisType === "product" || analysisType === "employee" || analysisType === "customer" || analysisType === "channel") && renderChart()}
+            {(analysisType === "time" ||
+              analysisType === "product" ||
+              analysisType === "employee" ||
+              analysisType === "customer" ||
+              analysisType === "channel") &&
+              renderChart()}
 
             {/* Data Tables */}
             {renderReportContent()}
