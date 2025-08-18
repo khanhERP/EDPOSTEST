@@ -47,6 +47,10 @@ export function DashboardOverview() {
     queryKey: ["/api/transactions"],
   });
 
+  const { data: orders } = useQuery({
+    queryKey: ["/api/orders"],
+  });
+
   const { data: tables } = useQuery({
     queryKey: ["/api/tables"],
   });
@@ -62,20 +66,20 @@ export function DashboardOverview() {
 
   const getDashboardStats = () => {
     if (
-      !transactions ||
+      !orders ||
       !tables ||
-      !Array.isArray(transactions) ||
+      !Array.isArray(orders) ||
       !Array.isArray(tables)
     )
       return null;
 
     console.log("Dashboard Debug:", {
-      totalTransactions: transactions.length,
+      totalOrders: orders.length,
       startDate,
       endDate,
-      firstTransaction: transactions[0],
-      allTransactionDates: transactions.map((t: any) =>
-        new Date(t.createdAt).toDateString(),
+      firstOrder: orders[0],
+      allOrderDates: orders.map((o: any) =>
+        new Date(o.createdAt || o.created_at).toDateString(),
       ),
     });
 
@@ -83,21 +87,41 @@ export function DashboardOverview() {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999); // Include the entire end date
 
-    const filteredTransactions = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at,
+    // Filter completed orders within date range
+    const filteredCompletedOrders = orders.filter((order: any) => {
+      // Check if order is completed
+      if (order.status !== 'completed') return false;
+      
+      const orderDate = new Date(
+        order.createdAt || order.created_at,
       );
-      return transactionDate >= start && transactionDate <= end;
+      return orderDate >= start && orderDate <= end;
     });
 
-    // Period stats
-    const periodRevenue = filteredTransactions.reduce(
-      (total: number, transaction: any) => total + Number(transaction.total),
+    // Period revenue: total amount - discount for all completed orders
+    const periodRevenue = filteredCompletedOrders.reduce(
+      (total: number, order: any) => {
+        const orderTotal = Number(order.total || 0);
+        const discount = Number(order.discount || 0);
+        return total + (orderTotal - discount);
+      },
       0,
     );
 
-    const periodOrderCount = filteredTransactions.length;
-    const periodCustomerCount = filteredTransactions.length; // Each transaction represents customers
+    // Order count: count of completed orders in the filtered period
+    const periodOrderCount = filteredCompletedOrders.length;
+    
+    // Customer count: count unique customers from completed orders
+    const uniqueCustomers = new Set();
+    filteredCompletedOrders.forEach((order: any) => {
+      if (order.customerId) {
+        uniqueCustomers.add(order.customerId);
+      } else {
+        // If no customer ID, count as unique customer per order
+        uniqueCustomers.add(`order_${order.id}`);
+      }
+    });
+    const periodCustomerCount = uniqueCustomers.size;
 
     // Daily average for the period
     const daysDiff = Math.max(
@@ -106,32 +130,34 @@ export function DashboardOverview() {
     );
     const dailyAverageRevenue = periodRevenue / daysDiff;
 
-    // Current status (for active orders, we need to check the orders table separately)
-    const activeOrders = 0; // Will show 0 since we're using transactions data
+    // Active orders (pending/in-progress orders)
+    const activeOrders = orders.filter((order: any) => 
+      order.status === 'pending' || order.status === 'in_progress'
+    ).length;
 
     const occupiedTables = tables.filter(
       (table: TableType) => table.status === "occupied",
     );
 
-    // Revenue for selected date range (displayed as "month revenue")
+    // Month revenue: same as period revenue for the selected date range
     const monthRevenue = periodRevenue;
 
     // Average order value
     const averageOrderValue =
       periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
 
-    // Peak hours analysis from filtered transactions
-    const hourlyTransactions: { [key: number]: number } = {};
-    filteredTransactions.forEach((transaction: any) => {
+    // Peak hours analysis from filtered completed orders
+    const hourlyOrders: { [key: number]: number } = {};
+    filteredCompletedOrders.forEach((order: any) => {
       const hour = new Date(
-        transaction.createdAt || transaction.created_at,
+        order.createdAt || order.created_at,
       ).getHours();
-      hourlyTransactions[hour] = (hourlyTransactions[hour] || 0) + 1;
+      hourlyOrders[hour] = (hourlyOrders[hour] || 0) + 1;
     });
 
-    const peakHour = Object.keys(hourlyTransactions).reduce(
+    const peakHour = Object.keys(hourlyOrders).reduce(
       (peak, hour) =>
-        hourlyTransactions[parseInt(hour)] > hourlyTransactions[parseInt(peak)]
+        hourlyOrders[parseInt(hour)] > hourlyOrders[parseInt(peak)]
           ? hour
           : peak,
       "12",
