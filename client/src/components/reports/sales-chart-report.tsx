@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -184,6 +184,7 @@ export function SalesChartReport() {
           discount: t("reports.invoiceDiscountReport"),
           return: t("reports.returnByInvoiceReport"),
           employee: t("reports.employeeSalesReport"),
+          salesDetail: t("reports.salesDetailReport"),
         };
         return (
           concernTypes[concernType as keyof typeof concernTypes] ||
@@ -915,7 +916,7 @@ export function SalesChartReport() {
   };
 
   // Legacy Inventory Report Component Logic
-  const renderInventoryReport = () => {
+  const renderProductReport = () => {
     const getFilteredProducts = () => {
       if (!products || !Array.isArray(products)) return [];
 
@@ -2384,6 +2385,368 @@ export function SalesChartReport() {
     );
   };
 
+  // New Sales Detail Report Component Logic
+  const renderSalesDetailReport = () => {
+    if (!transactions || !Array.isArray(transactions)) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    const filteredTransactions = transactions.filter((transaction: any) => {
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
+      const dateMatch = transactionDate >= start && transactionDate <= end;
+
+      // Apply other filters as needed
+      const employeeMatch =
+        selectedEmployee === "all" ||
+        transaction.cashierName === selectedEmployee ||
+        transaction.employeeId?.toString() === selectedEmployee ||
+        transaction.cashierName?.includes(selectedEmployee);
+
+      const salesChannelMatch =
+        salesChannel === "all" ||
+        transaction.salesChannel === salesChannel;
+
+      const salesMethodMatch =
+        salesMethod === "all" ||
+        (salesMethod === "delivery" && (transaction.isDelivery || transaction.deliveryMethod === "delivery")) ||
+        (salesMethod === "no_delivery" && !transaction.isDelivery && (!transaction.deliveryMethod || transaction.deliveryMethod === "none"));
+
+      // Product filters are usually applied at the item level, but for a summary, we might filter transactions based on whether they contain products from certain categories/types.
+      // This is more complex and might require fetching product details for each transaction item.
+      // For simplicity here, we'll focus on the main filters and leave detailed product filtering for later if needed.
+
+      return dateMatch && employeeMatch && salesChannelMatch && salesMethodMatch;
+    });
+
+    // Map transactions to the detailed report format
+    const salesDetailData = filteredTransactions.flatMap((transaction: any) => {
+      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
+      const transactionDateStr = transactionDate.toLocaleDateString("vi-VN");
+      const transactionTimeStr = transactionDate.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+      const salesChannel = transaction.salesChannel || "Direct";
+      const salesMethod = transaction.deliveryMethod || "Dine In";
+      const customerId = transaction.customerId || "guest";
+      const customerName = transaction.customerName || t("common.walkInCustomer");
+      const employeeName = transaction.cashierName || transaction.employeeName || "Unknown";
+
+      const transactionTotal = Number(transaction.total || 0);
+      const transactionSubtotal = Number(transaction.subtotal || transactionTotal * 1.1); // Assuming a 10% tax or calculation for subtotal
+      const transactionDiscount = transactionSubtotal - transactionTotal;
+      const transactionTaxableAmount = transactionTotal; // Assuming tax is on the final total for simplicity
+      const transactionTax = transactionTaxableAmount * 0.1; // Assuming 10% VAT
+      const transactionNetAmount = transactionTotal - transactionTax;
+
+      if (!transaction.items || !Array.isArray(transaction.items)) {
+        // If no items, still add a row for the transaction itself if it has a total
+        if (transactionTotal > 0) {
+          return [{
+            date: transactionDateStr,
+            time: transactionTimeStr,
+            orderNumber: transaction.transactionId || `TXN-${transaction.id}`,
+            customerCode: customerId,
+            customerName: customerName,
+            productCode: "-",
+            productName: "-",
+            unit: "-",
+            quantity: 0,
+            unitPrice: 0,
+            totalAmount: 0,
+            discount: 0,
+            revenue: 0,
+            taxRate: "10%",
+            taxAmount: 0,
+            total: transactionTotal,
+            group: "-",
+            note: transaction.note || "",
+            channel: salesChannel,
+            table: transaction.tableNumber || "-",
+            employeeName: employeeName,
+            status: transaction.status || "Completed",
+          }];
+        }
+        return [];
+      }
+
+      return transaction.items.map((item: any) => {
+        const itemTotal = Number(item.total || 0);
+        const itemUnitPrice = Number(item.price || 0);
+        const itemQuantity = Number(item.quantity || 0);
+        const itemDiscount = (itemUnitPrice * itemQuantity) - itemTotal;
+        const itemTax = itemTotal * 0.1; // Assuming 10% VAT on item total
+        const itemNetAmount = itemTotal - itemTax;
+
+        const product = products?.find((p: any) => p.id.toString() === item.productId?.toString());
+        const productName = product?.name || item.productName || "Unknown Product";
+        const productCode = product?.sku || item.productCode || "-";
+        const unit = product?.unit || item.unit || "-";
+        const group = product?.categoryName || item.group || "-";
+
+        return {
+          date: transactionDateStr,
+          time: transactionTimeStr,
+          orderNumber: transaction.transactionId || `TXN-${transaction.id}`,
+          customerCode: customerId,
+          customerName: customerName,
+          productCode: productCode,
+          productName: productName,
+          unit: unit,
+          quantity: itemQuantity,
+          unitPrice: itemUnitPrice,
+          totalAmount: itemTotal, // Thành tiền
+          discount: itemDiscount,
+          revenue: itemNetAmount, // Doanh thu = Thành tiền - Giảm giá (tạm tính) - Thuế
+          taxRate: "10%",
+          taxAmount: itemTax,
+          total: itemTotal, // Tổng tiền (bao gồm thuế)
+          group: group,
+          note: transaction.note || "",
+          channel: salesChannel,
+          table: transaction.tableNumber || "-",
+          employeeName: employeeName,
+          status: transaction.status || "Completed",
+        };
+      });
+    });
+
+    // Sort data by date and time
+    const sortedData = [...salesDetailData].sort((a, b) => {
+      const dateA = new Date(`${a.date} ${a.time}`);
+      const dateB = new Date(`${b.date} ${b.time}`);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    // Pagination logic
+    const totalPages = Math.ceil(sortedData.length / pageSize);
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginatedData = sortedData.slice(startIndex, endIndex);
+
+    // Calculate totals for the summary row
+    const totalQuantitySold = paginatedData.reduce((sum, item) => sum + item.quantity, 0);
+    const totalRevenue = paginatedData.reduce((sum, item) => sum + item.revenue, 0);
+    const totalTaxAmount = paginatedData.reduce((sum, item) => sum + item.taxAmount, 0);
+    const grandTotal = paginatedData.reduce((sum, item) => sum + item.total, 0);
+    const totalDiscount = paginatedData.reduce((sum, item) => sum + item.discount, 0);
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="w-5 h-5" />
+            {t("reports.salesDetailReport")}
+          </CardTitle>
+          <CardDescription>
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-center border-r bg-green-50 w-12"></TableHead>
+                  <TableHead className="text-center border-r bg-green-50 min-w-[100px]">{t("reports.date")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[80px]">{t("reports.time")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[130px]">{t("reports.orderNumber")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[120px]">{t("reports.customerCode")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[150px]">{t("reports.customerName")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[100px]">{t("reports.productCode")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[150px]">{t("reports.productName")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[80px]">{t("reports.unit")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[80px]">{t("reports.quantity")}</TableHead>
+                  <TableHead className="text-right border-r min-w-[100px]">{t("reports.unitPrice")}</TableHead>
+                  <TableHead className="text-right border-r min-w-[120px]">{t("reports.totalAmount")}</TableHead>
+                  <TableHead className="text-right border-r text-red-600 min-w-[100px]">{t("reports.discount")}</TableHead>
+                  <TableHead className="text-right border-r text-green-600 font-medium min-w-[120px]">{t("reports.revenue")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[80px]">{t("reports.taxRate")}</TableHead>
+                  <TableHead className="text-right border-r min-w-[100px]">{t("reports.taxAmount")}</TableHead>
+                  <TableHead className="text-right border-r font-bold text-blue-600 min-w-[120px]">{t("reports.total")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[120px]">{t("reports.group")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[150px]">{t("reports.note")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[100px]">{t("reports.channel")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[80px]">{t("reports.table")}</TableHead>
+                  <TableHead className="text-center border-r min-w-[150px]">{t("reports.employeeName")}</TableHead>
+                  <TableHead className="text-center min-w-[100px]">{t("reports.status")}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedData.length > 0 ? (
+                  paginatedData.map((item, index) => {
+                    const isExpanded = expandedRows[item.orderNumber] || false; // Use orderNumber for expansion key
+                    return (
+                      <React.Fragment key={index}>
+                        <TableRow className="hover:bg-gray-50">
+                          <TableCell className="text-center border-r w-12">
+                            <button
+                              onClick={() =>
+                                setExpandedRows((prev) => ({
+                                  ...prev,
+                                  [item.orderNumber]: !prev[item.orderNumber],
+                                }))
+                              }
+                              className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded text-sm"
+                            >
+                              {isExpanded ? "−" : "+"}
+                            </button>
+                          </TableCell>
+                          <TableCell className="text-center border-r bg-green-50 font-medium min-w-[100px] px-4">{item.date}</TableCell>
+                          <TableCell className="text-center border-r min-w-[80px] px-4">{item.time}</TableCell>
+                          <TableCell className="text-center border-r min-w-[130px] px-4">{item.orderNumber}</TableCell>
+                          <TableCell className="text-center border-r min-w-[120px] px-4">{item.customerCode}</TableCell>
+                          <TableCell className="text-center border-r min-w-[150px] px-4">{item.customerName}</TableCell>
+                          <TableCell className="text-center border-r min-w-[100px] px-4">{item.productCode}</TableCell>
+                          <TableCell className="text-center border-r min-w-[150px] px-4">{item.productName}</TableCell>
+                          <TableCell className="text-center border-r min-w-[80px] px-4">{item.unit}</TableCell>
+                          <TableCell className="text-center border-r min-w-[80px] px-4">{item.quantity}</TableCell>
+                          <TableCell className="text-right border-r min-w-[100px] px-4">{formatCurrency(item.unitPrice)}</TableCell>
+                          <TableCell className="text-right border-r min-w-[120px] px-4">{formatCurrency(item.totalAmount)}</TableCell>
+                          <TableCell className="text-right border-r text-red-600 min-w-[100px] px-4">{formatCurrency(item.discount)}</TableCell>
+                          <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">{formatCurrency(item.revenue)}</TableCell>
+                          <TableCell className="text-center border-r min-w-[80px] px-4">{item.taxRate}</TableCell>
+                          <TableCell className="text-right border-r min-w-[100px] px-4">{formatCurrency(item.taxAmount)}</TableCell>
+                          <TableCell className="text-right border-r font-bold text-blue-600 min-w-[120px] px-4">{formatCurrency(item.total)}</TableCell>
+                          <TableCell className="text-center border-r min-w-[120px] px-4">{item.group}</TableCell>
+                          <TableCell className="text-center border-r min-w-[150px] px-4">{item.note}</TableCell>
+                          <TableCell className="text-center border-r min-w-[100px] px-4">{item.channel}</TableCell>
+                          <TableCell className="text-center border-r min-w-[80px] px-4">{item.table}</TableCell>
+                          <TableCell className="text-center border-r min-w-[150px] px-4">{item.employeeName}</TableCell>
+                          <TableCell className="text-center min-w-[100px] px-4">{item.status}</TableCell>
+                        </TableRow>
+                      </React.Fragment>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={22} className="text-center text-gray-500 py-8">
+                      {t("reports.noDataDescription")}
+                    </TableCell>
+                  </TableRow>
+                )}
+
+                {/* Summary Row */}
+                {paginatedData.length > 0 && (
+                  <TableRow className="bg-gray-100 font-bold border-t-2">
+                    <TableCell className="text-center border-r w-12"></TableCell>
+                    <TableCell className="text-center border-r bg-green-100 min-w-[100px] px-4">{t("common.total")}</TableCell>
+                    <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[130px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[120px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[150px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[100px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[150px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[80px] px-4 font-bold">{totalQuantitySold}</TableCell>
+                    <TableCell className="text-right border-r min-w-[100px] px-4"></TableCell>
+                    <TableCell className="text-right border-r min-w-[120px] px-4 font-bold">{formatCurrency(paginatedData.reduce((sum, item) => sum + item.totalAmount, 0))}</TableCell>
+                    <TableCell className="text-right border-r text-red-600 min-w-[100px] px-4 font-bold">{formatCurrency(totalDiscount)}</TableCell>
+                    <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4 font-bold">{formatCurrency(totalRevenue)}</TableCell>
+                    <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
+                    <TableCell className="text-right border-r min-w-[100px] px-4 font-bold">{formatCurrency(totalTaxAmount)}</TableCell>
+                    <TableCell className="text-right border-r font-bold text-blue-600 min-w-[120px] px-4 font-bold">{formatCurrency(grandTotal)}</TableCell>
+                    <TableCell className="text-center border-r min-w-[120px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[150px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[100px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
+                    <TableCell className="text-center min-w-[150px] px-4"></TableCell>
+                    <TableCell className="text-center min-w-[100px] px-4"></TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Pagination Controls */}
+          {sortedData.length > 0 && (
+            <div className="flex items-center justify-between space-x-6 py-4">
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">{t("common.show")} </p>
+                <Select
+                  value={pageSize.toString()}
+                  onValueChange={(value) => {
+                    setPageSize(Number(value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[70px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent side="top">
+                    <SelectItem value="15">15</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="30">30</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-sm font-medium"> {t("common.rows")}</p>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <p className="text-sm font-medium">
+                  {t("common.page")} {currentPage} / {totalPages}
+                </p>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    «
+                  </button>
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    disabled={currentPage === 1}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) =>
+                        Math.min(prev + 1, totalPages),
+                      )
+                    }
+                    disabled={
+                      currentPage === totalPages
+                    }
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    ›
+                  </button>
+                  <button
+                    onClick={() =>
+                      setCurrentPage(totalPages)
+                    }
+                    disabled={
+                      currentPage === totalPages
+                    }
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                  >
+                    »
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
+
   // Chart configurations for each analysis type
   const chartConfig = {
     revenue: {
@@ -2871,15 +3234,23 @@ export function SalesChartReport() {
   const renderReportContent = () => {
     switch (analysisType) {
       case "time":
-        return <div className="space-y-6">{renderSalesReport()}</div>;
+        // Handle concernType for time-based analysis
+        if (concernType === "employee") {
+          return renderEmployeeReport();
+        } else if (concernType === "salesDetail") {
+          return renderSalesDetailReport();
+        }
+        return renderSalesReport();
       case "product":
-        return renderInventoryReport();
+        return renderProductReport(); // Assuming renderProductReport exists and handles product-level data
       case "employee":
         return renderEmployeeReport();
       case "customer":
         return renderCustomerReport();
       case "channel":
         return renderSalesChannelReport();
+      case "salesDetail": // Added case for the new report type
+        return renderSalesDetailReport();
       default:
         return renderSalesReport();
     }
@@ -2901,10 +3272,12 @@ export function SalesChartReport() {
                 value={analysisType}
                 onValueChange={(value) => {
                   setAnalysisType(value);
-                  if (value !== "time") {
-                    setConcernType("sales");
+                  // Reset concernType when analysisType changes if necessary
+                  if (value === "time") {
+                    setConcernType("time"); // Default for time analysis
                   } else {
-                    setConcernType("time");
+                    // If moving away from 'time', ensure concernType is sensible or reset
+                    setConcernType("sales"); // Or a more appropriate default
                   }
                 }}
               >
@@ -2927,9 +3300,52 @@ export function SalesChartReport() {
                   <SelectItem value="channel">
                     {t("reports.channelAnalysis")}
                   </SelectItem>
+                  <SelectItem value="salesDetail">
+                    {t("reports.salesDetailReport")}
+                  </SelectItem>
                 </SelectContent>
-              </Select>
+              </categorize>
+
             </div>
+
+            {/* Concern Type Filter (visible for 'time' analysis) */}
+            {analysisType === "time" && (
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  {t("reports.reportType")}
+                </Label>
+                <Select
+                  value={concernType}
+                  onValueChange={(value) => {
+                    setConcernType(value);
+                  }}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="time">
+                      {t("reports.timeSalesReport")}
+                    </SelectItem>
+                    <SelectItem value="profit">
+                      {t("reports.profitByInvoiceReport")}
+                    </SelectItem>
+                    <SelectItem value="discount">
+                      {t("reports.invoiceDiscountReport")}
+                    </SelectItem>
+                    <SelectItem value="return">
+                      {t("reports.returnByInvoiceReport")}
+                    </SelectItem>
+                    <SelectItem value="employee">
+                      {t("reports.employeeSalesReport")}
+                    </SelectItem>
+                    <SelectItem value="salesDetail">
+                      {t("reports.salesDetailReport")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Date Range */}
             <div>
@@ -3116,7 +3532,7 @@ export function SalesChartReport() {
         ) : (
           <>
             {/* Chart Display */}
-            {renderChart()}
+            {(analysisType === "time" || analysisType === "product" || analysisType === "employee" || analysisType === "customer" || analysisType === "channel") && renderChart()}
 
             {/* Data Tables */}
             {renderReportContent()}
