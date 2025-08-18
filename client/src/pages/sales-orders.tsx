@@ -912,68 +912,98 @@ export default function SalesOrders() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {/* Fixed Header */}
-                    <div className="grid grid-cols-12 gap-1 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded sticky top-0 z-10 overflow-x-auto">
-                      <div className="col-span-1 flex items-center min-w-[50px]">
-                        <Checkbox
-                          checked={isAllSelected}
-                          ref={(el) => {
-                            if (el) el.indeterminate = isIndeterminate;
-                          }}
-                          onCheckedChange={handleSelectAll}
-                        />
-                      </div>
-                      <div className="col-span-1 min-w-[100px]">Số đơn bán</div>
-                      <div className="col-span-1 min-w-[90px]">Ngày đơn bán</div>
-                      <div className="col-span-1 min-w-[60px]">Bàn</div>
-                      <div className="col-span-1 min-w-[100px]">Mã khách hàng</div>
-                      <div className="col-span-1 min-w-[120px]">Tên khách hàng</div>
-                      <div className="col-span-1 min-w-[80px]">Thành tiền</div>
-                      <div className="col-span-1 min-w-[80px]">Giảm giá</div>
-                      <div className="col-span-1 min-w-[80px]">Tiền thuế</div>
-                      <div className="col-span-1 min-w-[90px]">Đã thanh toán</div>
-                      <div className="col-span-1 min-w-[100px]">Mã nhân viên</div>
-                      <div className="col-span-1 min-w-[100px]">Tên nhân viên</div>
-                    </div>
-                    <div className="grid grid-cols-12 gap-1 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded sticky top-0 z-10 overflow-x-auto mt-1">
-                      <div className="col-span-1 min-w-[120px]">Ký hiệu hóa đơn</div>
-                      <div className="col-span-1 min-w-[100px]">Số hóa đơn</div>
-                      <div className="col-span-1 min-w-[150px]">Ghi chú</div>
-                      <div className="col-span-1 min-w-[80px]">Trạng thái</div>
-                      <div className="col-span-8"></div>
-                    </div>
-                    {/* Scrollable Content */}
-                    <div className="max-h-80 overflow-y-auto space-y-2">
-                      {filteredInvoices.map((item, index) => {
-                        const customerCode = item.customerTaxCode || `KH000${String(index + 1).padStart(3, '0')}`;
-                        const discount = 0; // Giảm giá mặc định là 0
-                        const tax = parseFloat(item.tax || '0');
-                        const subtotal = parseFloat(item.subtotal || '0');
-                        const total = parseFloat(item.total || '0');
-                        const paid = total; // Đã thanh toán = tổng tiền
-                        const employeeCode = item.employeeId || 'NV0001';
-                        const employeeName = 'Phạm Vân Duy';
-                        const symbol = item.symbol || 'C11DTD';
-                        const invoiceNumber = item.invoiceNumber || String(item.id).padStart(8, '0');
-                        const notes = item.notes || '';
-                        
-                        return (
-                          <div key={`${item.type}-${item.id}`}>
-                            <div
-                              className={`grid grid-cols-12 gap-1 text-xs p-2 rounded hover:bg-blue-50 border-b ${
-                                selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
-                              }`}
-                            >
-                              <div className="col-span-1 flex items-center min-w-[50px]">
-                                <Checkbox
-                                  checked={isOrderSelected(item.id, item.type)}
-                                  onCheckedChange={(checked) => handleSelectOrder(item.id, item.type, checked as boolean)}
-                                  onClick={(e) => e.stopPropagation()}
-                                />
+                  {/* Table with horizontal scroll similar to settings page */}
+                  <div className="w-full overflow-x-auto border rounded-md bg-white">
+                    <table className="w-full min-w-[1600px] table-fixed">
+                      <thead>
+                        <tr className="bg-gray-50 border-b">
+                          <th className="w-[50px] px-3 py-3 text-center font-medium text-sm text-gray-600">
+                            <Checkbox
+                              checked={isAllSelected}
+                              ref={(el) => {
+                                if (el) el.indeterminate = isIndeterminate;
+                              }}
+                              onCheckedChange={handleSelectAll}
+                            />
+                          </th>
+                          <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Số đơn bán</div>
+                          </th>
+                          <th className="w-[100px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Ngày đơn bán</div>
+                          </th>
+                          <th className="w-[60px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Bàn</div>
+                          </th>
+                          <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Mã khách hàng</div>
+                          </th>
+                          <th className="w-[150px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Tên khách hàng</div>
+                          </th>
+                          <th className="w-[100px] px-3 py-3 text-right font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Thành tiền</div>
+                          </th>
+                          <th className="w-[80px] px-3 py-3 text-right font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Giảm giá</div>
+                          </th>
+                          <th className="w-[90px] px-3 py-3 text-right font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Tiền thuế</div>
+                          </th>
+                          <th className="w-[110px] px-3 py-3 text-right font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Đã thanh toán</div>
+                          </th>
+                          <th className="w-[110px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Mã nhân viên</div>
+                          </th>
+                          <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Tên nhân viên</div>
+                          </th>
+                          <th className="w-[120px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Ký hiệu hóa đơn</div>
+                          </th>
+                          <th className="w-[110px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Số hóa đơn</div>
+                          </th>
+                          <th className="w-[200px] px-3 py-3 text-left font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Ghi chú</div>
+                          </th>
+                          <th className="w-[100px] px-3 py-3 text-center font-medium text-sm text-gray-600">
+                            <div className="leading-tight">Trạng thái</div>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {filteredInvoices.length === 0 ? (
+                          <tr>
+                            <td colSpan={16} className="p-8 text-center text-sm text-gray-500">
+                              <div className="flex flex-col items-center gap-2">
+                                <FileText className="w-8 h-8 text-gray-400" />
+                                <p>Không có đơn hàng nào</p>
+                                <p className="text-xs">Thử thay đổi bộ lọc để xem kết quả khác</p>
                               </div>
-                              <div 
-                                className="col-span-1 font-medium cursor-pointer min-w-[100px] truncate"
+                            </td>
+                          </tr>
+                        ) : (
+                      filteredInvoices.map((item, index) => {
+                            const customerCode = item.customerTaxCode || `KH000${String(index + 1).padStart(3, '0')}`;
+                            const discount = 0; // Giảm giá mặc định là 0
+                            const tax = parseFloat(item.tax || '0');
+                            const subtotal = parseFloat(item.subtotal || '0');
+                            const total = parseFloat(item.total || '0');
+                            const paid = total; // Đã thanh toán = tổng tiền
+                            const employeeCode = item.employeeId || 'NV0001';
+                            const employeeName = 'Phạm Vân Duy';
+                            const symbol = item.symbol || 'C11DTD';
+                            const invoiceNumber = item.invoiceNumber || String(item.id).padStart(8, '0');
+                            const notes = item.notes || '';
+                            
+                            return (
+                              <tr
+                                key={`${item.type}-${item.id}`}
+                                className={`hover:bg-gray-50 cursor-pointer ${
+                                  selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100' : ''
+                                }`}
                                 onClick={() => {
                                   const itemWithType = {
                                     ...item,
@@ -982,104 +1012,93 @@ export default function SalesOrders() {
                                   setSelectedInvoice(itemWithType);
                                 }}
                               >
-                                {item.displayNumber}
-                              </div>
-                              <div 
-                                className="col-span-1 cursor-pointer min-w-[90px]"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {formatDate(item.date)}
-                              </div>
-                              <div 
-                                className="col-span-1 cursor-pointer min-w-[60px]"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {item.type === 'order' && item.tableId ? `Bàn ${item.tableId}` : ''}
-                              </div>
-                              <div 
-                                className="col-span-1 cursor-pointer min-w-[100px] truncate"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {customerCode}
-                              </div>
-                              <div 
-                                className="col-span-1 cursor-pointer min-w-[120px] truncate"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {item.customerName || 'Khách hàng lẻ'}
-                              </div>
-                              <div 
-                                className="col-span-1 text-right cursor-pointer min-w-[80px]"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {formatCurrency(subtotal)}
-                              </div>
-                              <div 
-                                className="col-span-1 text-right cursor-pointer min-w-[80px]"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {formatCurrency(discount)}
-                              </div>
-                              <div 
-                                className="col-span-1 text-right cursor-pointer min-w-[80px]"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {formatCurrency(tax)}
-                              </div>
-                              <div 
-                                className="col-span-1 text-right cursor-pointer min-w-[90px]"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {formatCurrency(paid)}
-                              </div>
-                              <div 
-                                className="col-span-1 cursor-pointer min-w-[100px]"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {employeeCode}
-                              </div>
-                              <div 
-                                className="col-span-1 cursor-pointer min-w-[100px] truncate"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {employeeName}
-                              </div>
-                            </div>
-                            <div
-                              className={`grid grid-cols-12 gap-1 text-xs p-2 hover:bg-blue-50 ${
-                                selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
-                              }`}
-                            >
-                              <div 
-                                className="col-span-1 cursor-pointer min-w-[120px]"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {symbol}
-                              </div>
-                              <div 
-                                className="col-span-1 cursor-pointer min-w-[100px]"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {invoiceNumber}
-                              </div>
-                              <div 
-                                className="col-span-1 cursor-pointer min-w-[150px] truncate"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {notes}
-                              </div>
-                              <div 
-                                className="col-span-1 cursor-pointer min-w-[80px]"
-                                onClick={() => setSelectedInvoice(item)}
-                              >
-                                {getInvoiceStatusBadge(item.displayStatus)}
-                              </div>
-                              <div className="col-span-8"></div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                                <td className="px-3 py-3 text-center">
+                                  <Checkbox
+                                    checked={isOrderSelected(item.id, item.type)}
+                                    onCheckedChange={(checked) => handleSelectOrder(item.id, item.type, checked as boolean)}
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="font-medium truncate" title={item.displayNumber}>
+                                    {item.displayNumber}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-sm truncate">
+                                    {formatDate(item.date)}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-sm">
+                                    {item.type === 'order' && item.tableId ? `Bàn ${item.tableId}` : ''}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-sm font-mono truncate" title={customerCode}>
+                                    {customerCode}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-sm truncate" title={item.customerName || 'Khách hàng lẻ'}>
+                                    {item.customerName || 'Khách hàng lẻ'}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3 text-right">
+                                  <div className="text-sm font-medium">
+                                    {formatCurrency(subtotal)}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3 text-right">
+                                  <div className="text-sm">
+                                    {formatCurrency(discount)}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3 text-right">
+                                  <div className="text-sm">
+                                    {formatCurrency(tax)}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3 text-right">
+                                  <div className="text-sm font-medium">
+                                    {formatCurrency(paid)}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-sm font-mono">
+                                    {employeeCode}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-sm truncate" title={employeeName}>
+                                    {employeeName}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-sm">
+                                    {symbol}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-sm font-mono">
+                                    {invoiceNumber}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <div className="text-sm truncate" title={notes || '-'}>
+                                    {notes || '-'}
+                                  </div>
+                                </td>
+                                <td className="px-3 py-3 text-center">
+                                  {getInvoiceStatusBadge(item.displayStatus)}
+                                </td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                   </div>
                 )}
                 
