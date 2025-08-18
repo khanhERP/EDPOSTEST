@@ -111,7 +111,13 @@ export function TableReport() {
       if (tableStats[order.tableId]) {
         const stats = tableStats[order.tableId];
         stats.orderCount += 1;
-        stats.revenue += Number(order.total);
+        
+        // Revenue = subtotal - discount (excluding tax)
+        const subtotal = Number(order.subtotal || order.total);
+        const discount = Number(order.discount || 0);
+        const revenue = subtotal - discount;
+        stats.revenue += revenue;
+        
         stats.customerCount += order.customerCount || 0;
 
         // Track peak hours
