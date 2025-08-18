@@ -3358,6 +3358,53 @@ export function SalesChartReport() {
           }))
           .sort((a, b) => b.revenue - a.revenue);
 
+      case "salesDetail":
+        // For sales detail, show daily revenue like time analysis
+        if (!transactions || !Array.isArray(transactions)) return [];
+
+        const detailStart = new Date(startDate);
+        const detailEnd = new Date(endDate);
+        detailEnd.setHours(23, 59, 59, 999);
+
+        const detailFilteredTransactions = transactions.filter((transaction: any) => {
+          const transactionDate = new Date(
+            transaction.createdAt || transaction.created_at,
+          );
+          const transactionDateOnly = new Date(transactionDate);
+          transactionDateOnly.setHours(0, 0, 0, 0);
+          return transactionDateOnly >= detailStart && transactionDateOnly <= detailEnd;
+        });
+
+        const dailyDetailSales: {
+          [date: string]: { revenue: number; orders: number };
+        } = {};
+
+        detailFilteredTransactions.forEach((transaction: any) => {
+          const transactionDate = new Date(
+            transaction.createdAt || transaction.created_at,
+          );
+          const year = transactionDate.getFullYear();
+          const month = (transactionDate.getMonth() + 1)
+            .toString()
+            .padStart(2, "0");
+          const day = transactionDate.getDate().toString().padStart(2, "0");
+          const date = `${day}/${month}`;
+
+          if (!dailyDetailSales[date]) {
+            dailyDetailSales[date] = { revenue: 0, orders: 0 };
+          }
+          dailyDetailSales[date].revenue += Number(transaction.total || 0);
+          dailyDetailSales[date].orders += 1;
+        });
+
+        return Object.entries(dailyDetailSales)
+          .map(([date, data]) => ({
+            name: date,
+            revenue: data.revenue,
+            orders: data.orders,
+          }))
+          .slice(0, 10);
+
       default:
         return [];
     }
@@ -3532,7 +3579,8 @@ export function SalesChartReport() {
 
                   {(analysisType === "employee" ||
                     analysisType === "customer" ||
-                    analysisType === "channel") && (
+                    analysisType === "channel" ||
+                    analysisType === "salesDetail") && (
                     <Bar
                       dataKey="orders"
                       fill="url(#ordersGradient)"
@@ -3561,14 +3609,14 @@ export function SalesChartReport() {
         }
         return renderSalesReport();
       case "product":
-        return renderProductReport(); // Assuming renderProductReport exists and handles product-level data
+        return renderProductReport();
       case "employee":
         return renderEmployeeReport();
       case "customer":
         return renderCustomerReport();
       case "channel":
         return renderSalesChannelReport();
-      case "salesDetail": // Added case for the new report type
+      case "salesDetail":
         return renderSalesDetailReport();
       default:
         return renderSalesReport();
@@ -3594,6 +3642,8 @@ export function SalesChartReport() {
                   // Reset concernType when analysisType changes if necessary
                   if (value === "time") {
                     setConcernType("time"); // Default for time analysis
+                  } else if (value === "salesDetail") {
+                    setConcernType("sales"); // Default for sales detail analysis
                   } else {
                     // If moving away from 'time', ensure concernType is sensible or reset
                     setConcernType("sales"); // Or a more appropriate default
