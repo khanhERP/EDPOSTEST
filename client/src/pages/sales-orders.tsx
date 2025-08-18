@@ -713,7 +713,7 @@ export default function SalesOrders() {
       const cellAddress = XLSX.utils.encode_cell({ r: 2, c: col });
       if (ws[cellAddress]) {
         ws[cellAddress].s = {
-          font: { bold: true, size: 10, color: { rgb: 'FFFFFF' }, name: 'Times New Roman' },
+          font: { bold: true, size: 11, color: { rgb: 'FFFFFF' }, name: 'Times New Roman' },
           alignment: { horizontal: 'center', vertical: 'center' },
           fill: { fgColor: { rgb: '92D050' } }, // Green background like in image
           border: {
@@ -736,7 +736,7 @@ export default function SalesOrders() {
           const fillColor = isEvenRow ? 'FFFFFF' : 'F2F2F2';
           
           ws[cellAddress].s = {
-            font: { size: 10, name: 'Times New Roman', color: { rgb: '000000' } },
+            font: { size: 11, name: 'Times New Roman', color: { rgb: '000000' } },
             alignment: { 
               horizontal: [5, 6, 7, 8, 9].includes(col) ? 'right' : 'center', 
               vertical: 'center' 
