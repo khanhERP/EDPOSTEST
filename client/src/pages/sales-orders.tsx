@@ -633,9 +633,9 @@ export default function SalesOrders() {
     
     // Add header row at A3
     const headers = [
-      'Số đơn hàng', 'Ngày đơn hàng', 'Bàn', 'Mã khách hàng', 'Khách hàng',
-      'Thành tiền', 'Giảm giá', 'Tiền thuế', 'Tổng tiền', 'Đã thanh toán',
-      'Mã nhân viên', 'Tên nhân viên', 'Ký hiệu hóa đơn', 'Số hóa đơn', 'Trạng thái'
+      'Số đơn bán', 'Ngày đơn bán', 'Bàn', 'Mã khách hàng', 'Tên khách hàng',
+      'Thành tiền', 'Giảm giá', 'Tiền thuế', 'Đã thanh toán',
+      'Mã nhân viên', 'Tên nhân viên', 'Ký hiệu hóa đơn', 'Số hóa đơn', 'Ghi chú', 'Trạng thái'
     ];
     XLSX.utils.sheet_add_aoa(ws, [headers], { origin: 'A3' });
     
@@ -661,8 +661,8 @@ export default function SalesOrders() {
 
       return [
         orderNumber, orderDate, table, customerCode, customerName,
-        subtotal, discount, tax, total, paid,
-        employeeCode, employeeName, symbol, invoiceNumber, status
+        subtotal, discount, tax, paid,
+        employeeCode, employeeName, symbol, invoiceNumber, item.notes || '', status
       ];
     });
     
@@ -670,9 +670,9 @@ export default function SalesOrders() {
 
     // Set column widths
     ws['!cols'] = [
-      { wch: 15 }, { wch: 13 }, { wch: 15 }, { wch: 12 }, { wch: 12 },
-      { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 14 },
-      { wch: 12 }, { wch: 13 }, { wch: 15 }, { wch: 10 }, { wch: 12 }
+      { wch: 15 }, { wch: 13 }, { wch: 8 }, { wch: 12 }, { wch: 15 },
+      { wch: 12 }, { wch: 10 }, { wch: 10 }, { wch: 12 },
+      { wch: 12 }, { wch: 15 }, { wch: 12 }, { wch: 12 }, { wch: 20 }, { wch: 12 }
     ];
 
     // Set row heights
@@ -720,7 +720,7 @@ export default function SalesOrders() {
       
       for (let col = 0; col <= 14; col++) {
         const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
-        const isCurrency = [5, 6, 7, 8, 9].includes(col); // Columns F, G, H, I, J
+        const isCurrency = [5, 6, 7, 8].includes(col); // Columns F, G, H, I
         
         if (ws[cellAddress]) {
           ws[cellAddress].s = {
@@ -914,8 +914,8 @@ export default function SalesOrders() {
                 ) : (
                   <div className="space-y-2">
                     {/* Fixed Header */}
-                    <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded sticky top-0 z-10">
-                      <div className="col-span-1 flex items-center">
+                    <div className="grid grid-cols-12 gap-1 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded sticky top-0 z-10 overflow-x-auto">
+                      <div className="col-span-1 flex items-center min-w-[50px]">
                         <Checkbox
                           checked={isAllSelected}
                           ref={(el) => {
@@ -924,74 +924,161 @@ export default function SalesOrders() {
                           onCheckedChange={handleSelectAll}
                         />
                       </div>
-                      <div className="col-span-2">Số đơn bán</div>
-                      <div className="col-span-2">Ngày đơn bán</div>
-                      <div className="col-span-1">Bàn</div>
-                      <div className="col-span-3">Khách hàng</div>
-                      <div className="col-span-2">Thành tiền</div>
-                      <div className="col-span-1">Trạng thái</div>
+                      <div className="col-span-1 min-w-[100px]">Số đơn bán</div>
+                      <div className="col-span-1 min-w-[90px]">Ngày đơn bán</div>
+                      <div className="col-span-1 min-w-[60px]">Bàn</div>
+                      <div className="col-span-1 min-w-[100px]">Mã khách hàng</div>
+                      <div className="col-span-1 min-w-[120px]">Tên khách hàng</div>
+                      <div className="col-span-1 min-w-[80px]">Thành tiền</div>
+                      <div className="col-span-1 min-w-[80px]">Giảm giá</div>
+                      <div className="col-span-1 min-w-[80px]">Tiền thuế</div>
+                      <div className="col-span-1 min-w-[90px]">Đã thanh toán</div>
+                      <div className="col-span-1 min-w-[100px]">Mã nhân viên</div>
+                      <div className="col-span-1 min-w-[100px]">Tên nhân viên</div>
+                    </div>
+                    <div className="grid grid-cols-12 gap-1 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded sticky top-0 z-10 overflow-x-auto mt-1">
+                      <div className="col-span-1 min-w-[120px]">Ký hiệu hóa đơn</div>
+                      <div className="col-span-1 min-w-[100px]">Số hóa đơn</div>
+                      <div className="col-span-1 min-w-[150px]">Ghi chú</div>
+                      <div className="col-span-1 min-w-[80px]">Trạng thái</div>
+                      <div className="col-span-8"></div>
                     </div>
                     {/* Scrollable Content */}
                     <div className="max-h-80 overflow-y-auto space-y-2">
-                      {filteredInvoices.map((item) => (
-                        <div
-                          key={`${item.type}-${item.id}`}
-                          className={`grid grid-cols-12 gap-2 text-xs p-2 rounded hover:bg-blue-50 ${
-                            selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
-                          }`}
-                        >
-                          <div className="col-span-1 flex items-center">
-                            <Checkbox
-                              checked={isOrderSelected(item.id, item.type)}
-                              onCheckedChange={(checked) => handleSelectOrder(item.id, item.type, checked as boolean)}
-                              onClick={(e) => e.stopPropagation()}
-                            />
+                      {filteredInvoices.map((item, index) => {
+                        const customerCode = item.customerTaxCode || `KH000${String(index + 1).padStart(3, '0')}`;
+                        const discount = 0; // Giảm giá mặc định là 0
+                        const tax = parseFloat(item.tax || '0');
+                        const subtotal = parseFloat(item.subtotal || '0');
+                        const total = parseFloat(item.total || '0');
+                        const paid = total; // Đã thanh toán = tổng tiền
+                        const employeeCode = item.employeeId || 'NV0001';
+                        const employeeName = 'Phạm Vân Duy';
+                        const symbol = item.symbol || 'C11DTD';
+                        const invoiceNumber = item.invoiceNumber || String(item.id).padStart(8, '0');
+                        const notes = item.notes || '';
+                        
+                        return (
+                          <div key={`${item.type}-${item.id}`}>
+                            <div
+                              className={`grid grid-cols-12 gap-1 text-xs p-2 rounded hover:bg-blue-50 border-b ${
+                                selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
+                              }`}
+                            >
+                              <div className="col-span-1 flex items-center min-w-[50px]">
+                                <Checkbox
+                                  checked={isOrderSelected(item.id, item.type)}
+                                  onCheckedChange={(checked) => handleSelectOrder(item.id, item.type, checked as boolean)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
+                              <div 
+                                className="col-span-1 font-medium cursor-pointer min-w-[100px] truncate"
+                                onClick={() => {
+                                  const itemWithType = {
+                                    ...item,
+                                    type: item.type || (item.orderNumber ? 'order' : 'invoice')
+                                  };
+                                  setSelectedInvoice(itemWithType);
+                                }}
+                              >
+                                {item.displayNumber}
+                              </div>
+                              <div 
+                                className="col-span-1 cursor-pointer min-w-[90px]"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {formatDate(item.date)}
+                              </div>
+                              <div 
+                                className="col-span-1 cursor-pointer min-w-[60px]"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {item.type === 'order' && item.tableId ? `Bàn ${item.tableId}` : ''}
+                              </div>
+                              <div 
+                                className="col-span-1 cursor-pointer min-w-[100px] truncate"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {customerCode}
+                              </div>
+                              <div 
+                                className="col-span-1 cursor-pointer min-w-[120px] truncate"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {item.customerName || 'Khách hàng lẻ'}
+                              </div>
+                              <div 
+                                className="col-span-1 text-right cursor-pointer min-w-[80px]"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {formatCurrency(subtotal)}
+                              </div>
+                              <div 
+                                className="col-span-1 text-right cursor-pointer min-w-[80px]"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {formatCurrency(discount)}
+                              </div>
+                              <div 
+                                className="col-span-1 text-right cursor-pointer min-w-[80px]"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {formatCurrency(tax)}
+                              </div>
+                              <div 
+                                className="col-span-1 text-right cursor-pointer min-w-[90px]"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {formatCurrency(paid)}
+                              </div>
+                              <div 
+                                className="col-span-1 cursor-pointer min-w-[100px]"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {employeeCode}
+                              </div>
+                              <div 
+                                className="col-span-1 cursor-pointer min-w-[100px] truncate"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {employeeName}
+                              </div>
+                            </div>
+                            <div
+                              className={`grid grid-cols-12 gap-1 text-xs p-2 hover:bg-blue-50 ${
+                                selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
+                              }`}
+                            >
+                              <div 
+                                className="col-span-1 cursor-pointer min-w-[120px]"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {symbol}
+                              </div>
+                              <div 
+                                className="col-span-1 cursor-pointer min-w-[100px]"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {invoiceNumber}
+                              </div>
+                              <div 
+                                className="col-span-1 cursor-pointer min-w-[150px] truncate"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {notes}
+                              </div>
+                              <div 
+                                className="col-span-1 cursor-pointer min-w-[80px]"
+                                onClick={() => setSelectedInvoice(item)}
+                              >
+                                {getInvoiceStatusBadge(item.displayStatus)}
+                              </div>
+                              <div className="col-span-8"></div>
+                            </div>
                           </div>
-                          <div 
-                            className="col-span-2 font-medium cursor-pointer"
-                            onClick={() => {
-                              // Ensure type is properly set when selecting
-                              const itemWithType = {
-                                ...item,
-                                type: item.type || (item.orderNumber ? 'order' : 'invoice')
-                              };
-                              setSelectedInvoice(itemWithType);
-                            }}
-                          >
-                            {item.displayNumber}
-                          </div>
-                          <div 
-                            className="col-span-2 cursor-pointer"
-                            onClick={() => setSelectedInvoice(item)}
-                          >
-                            {formatDate(item.date)}
-                          </div>
-                          <div 
-                            className="col-span-1 cursor-pointer"
-                            onClick={() => setSelectedInvoice(item)}
-                          >
-                            {item.type === 'order' && item.tableId ? `Bàn ${item.tableId}` : ''}
-                          </div>
-                          <div 
-                            className="col-span-3 truncate cursor-pointer"
-                            onClick={() => setSelectedInvoice(item)}
-                          >
-                            {item.customerName || 'Khách hàng lẻ'}
-                          </div>
-                          <div 
-                            className="col-span-2 text-right font-medium cursor-pointer"
-                            onClick={() => setSelectedInvoice(item)}
-                          >
-                            {formatCurrency(item.total)}
-                          </div>
-                          <div 
-                            className="col-span-1 cursor-pointer"
-                            onClick={() => setSelectedInvoice(item)}
-                          >
-                            {getInvoiceStatusBadge(item.displayStatus)}
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
