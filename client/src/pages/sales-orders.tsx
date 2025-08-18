@@ -912,57 +912,57 @@ export default function SalesOrders() {
                     </Button>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {/* Fixed Header */}
-                    <div className="grid grid-cols-12 gap-1 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded sticky top-0 z-10 overflow-x-auto">
-                      <div className="col-span-1 flex items-center min-w-[50px]">
-                        <Checkbox
-                          checked={isAllSelected}
-                          ref={(el) => {
-                            if (el) el.indeterminate = isIndeterminate;
-                          }}
-                          onCheckedChange={handleSelectAll}
-                        />
+                  <div className="space-y-2 overflow-x-auto">
+                    {/* Fixed Header - Single Row */}
+                    <div className="min-w-[1600px] sticky top-0 z-10 bg-gray-50 rounded">
+                      <div className="grid grid-cols-15 gap-1 text-xs font-medium text-gray-700 p-2">
+                        <div className="col-span-1 flex items-center min-w-[50px]">
+                          <Checkbox
+                            checked={isAllSelected}
+                            ref={(el) => {
+                              if (el) el.indeterminate = isIndeterminate;
+                            }}
+                            onCheckedChange={handleSelectAll}
+                          />
+                        </div>
+                        <div className="col-span-1 min-w-[100px]">Số đơn bán</div>
+                        <div className="col-span-1 min-w-[90px]">Ngày đơn bán</div>
+                        <div className="col-span-1 min-w-[60px]">Bàn</div>
+                        <div className="col-span-1 min-w-[100px]">Mã khách hàng</div>
+                        <div className="col-span-1 min-w-[120px]">Tên khách hàng</div>
+                        <div className="col-span-1 min-w-[80px]">Thành tiền</div>
+                        <div className="col-span-1 min-w-[80px]">Giảm giá</div>
+                        <div className="col-span-1 min-w-[80px]">Tiền thuế</div>
+                        <div className="col-span-1 min-w-[90px]">Đã thanh toán</div>
+                        <div className="col-span-1 min-w-[100px]">Mã nhân viên</div>
+                        <div className="col-span-1 min-w-[100px]">Tên nhân viên</div>
+                        <div className="col-span-1 min-w-[120px]">Ký hiệu hóa đơn</div>
+                        <div className="col-span-1 min-w-[100px]">Số hóa đơn</div>
+                        <div className="col-span-1 min-w-[150px]">Ghi chú</div>
+                        <div className="col-span-1 min-w-[80px]">Trạng thái</div>
                       </div>
-                      <div className="col-span-1 min-w-[100px]">Số đơn bán</div>
-                      <div className="col-span-1 min-w-[90px]">Ngày đơn bán</div>
-                      <div className="col-span-1 min-w-[60px]">Bàn</div>
-                      <div className="col-span-1 min-w-[100px]">Mã khách hàng</div>
-                      <div className="col-span-1 min-w-[120px]">Tên khách hàng</div>
-                      <div className="col-span-1 min-w-[80px]">Thành tiền</div>
-                      <div className="col-span-1 min-w-[80px]">Giảm giá</div>
-                      <div className="col-span-1 min-w-[80px]">Tiền thuế</div>
-                      <div className="col-span-1 min-w-[90px]">Đã thanh toán</div>
-                      <div className="col-span-1 min-w-[100px]">Mã nhân viên</div>
-                      <div className="col-span-1 min-w-[100px]">Tên nhân viên</div>
-                    </div>
-                    <div className="grid grid-cols-12 gap-1 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded sticky top-0 z-10 overflow-x-auto mt-1">
-                      <div className="col-span-1 min-w-[120px]">Ký hiệu hóa đơn</div>
-                      <div className="col-span-1 min-w-[100px]">Số hóa đơn</div>
-                      <div className="col-span-1 min-w-[150px]">Ghi chú</div>
-                      <div className="col-span-1 min-w-[80px]">Trạng thái</div>
-                      <div className="col-span-8"></div>
                     </div>
                     {/* Scrollable Content */}
-                    <div className="max-h-80 overflow-y-auto space-y-2">
-                      {filteredInvoices.map((item, index) => {
-                        const customerCode = item.customerTaxCode || `KH000${String(index + 1).padStart(3, '0')}`;
-                        const discount = 0; // Giảm giá mặc định là 0
-                        const tax = parseFloat(item.tax || '0');
-                        const subtotal = parseFloat(item.subtotal || '0');
-                        const total = parseFloat(item.total || '0');
-                        const paid = total; // Đã thanh toán = tổng tiền
-                        const employeeCode = item.employeeId || 'NV0001';
-                        const employeeName = 'Phạm Vân Duy';
-                        const symbol = item.symbol || 'C11DTD';
-                        const invoiceNumber = item.invoiceNumber || String(item.id).padStart(8, '0');
-                        const notes = item.notes || '';
-                        
-                        return (
-                          <div key={`${item.type}-${item.id}`}>
+                    <div className="max-h-80 overflow-y-auto space-y-2 overflow-x-auto">
+                      <div className="min-w-[1600px]">
+                        {filteredInvoices.map((item, index) => {
+                          const customerCode = item.customerTaxCode || `KH000${String(index + 1).padStart(3, '0')}`;
+                          const discount = 0; // Giảm giá mặc định là 0
+                          const tax = parseFloat(item.tax || '0');
+                          const subtotal = parseFloat(item.subtotal || '0');
+                          const total = parseFloat(item.total || '0');
+                          const paid = total; // Đã thanh toán = tổng tiền
+                          const employeeCode = item.employeeId || 'NV0001';
+                          const employeeName = 'Phạm Vân Duy';
+                          const symbol = item.symbol || 'C11DTD';
+                          const invoiceNumber = item.invoiceNumber || String(item.id).padStart(8, '0');
+                          const notes = item.notes || '';
+                          
+                          return (
                             <div
-                              className={`grid grid-cols-12 gap-1 text-xs p-2 rounded hover:bg-blue-50 border-b ${
-                                selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
+                              key={`${item.type}-${item.id}`}
+                              className={`grid grid-cols-15 gap-1 text-xs p-2 rounded hover:bg-blue-50 border ${
+                                selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100 border-blue-300' : 'border-gray-200'
                               }`}
                             >
                               <div className="col-span-1 flex items-center min-w-[50px]">
@@ -1044,12 +1044,6 @@ export default function SalesOrders() {
                               >
                                 {employeeName}
                               </div>
-                            </div>
-                            <div
-                              className={`grid grid-cols-12 gap-1 text-xs p-2 hover:bg-blue-50 ${
-                                selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
-                              }`}
-                            >
                               <div 
                                 className="col-span-1 cursor-pointer min-w-[120px]"
                                 onClick={() => setSelectedInvoice(item)}
@@ -1074,11 +1068,10 @@ export default function SalesOrders() {
                               >
                                 {getInvoiceStatusBadge(item.displayStatus)}
                               </div>
-                              <div className="col-span-8"></div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 )}
