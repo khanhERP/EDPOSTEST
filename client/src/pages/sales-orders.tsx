@@ -643,7 +643,8 @@ export default function SalesOrders() {
     const dataRows = selectedOrders.map((item, index) => {
       const orderNumber = item.tradeNumber || item.invoiceNumber || item.orderNumber || `DB${new Date().getFullYear()}${String(item.id).padStart(6, '0')}`;
       const orderDate = formatDate(item.date);
-      const table = item.tableId ? `Tầng 1 - Bàn ${item.tableId}` : 'Tầng 1 - Bàn 1';
+      // Only show table info for orders, leave empty for invoices
+      const table = item.type === 'order' && item.tableId ? `Bàn ${item.tableId}` : '';
       const customerCode = item.customerTaxCode || `KH000${String(index + 1).padStart(3, '0')}`;
       const customerName = item.customerName || 'Khách lẻ';
       const subtotal = parseFloat(item.subtotal || '0');
@@ -913,7 +914,7 @@ export default function SalesOrders() {
                 ) : (
                   <div className="space-y-2">
                     {/* Fixed Header */}
-                    <div className="grid grid-cols-11 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded sticky top-0 z-10">
+                    <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2 rounded sticky top-0 z-10">
                       <div className="col-span-1 flex items-center">
                         <Checkbox
                           checked={isAllSelected}
@@ -925,6 +926,7 @@ export default function SalesOrders() {
                       </div>
                       <div className="col-span-2">Số đơn bán</div>
                       <div className="col-span-2">Ngày đơn bán</div>
+                      <div className="col-span-1">Bàn</div>
                       <div className="col-span-3">Khách hàng</div>
                       <div className="col-span-2">Thành tiền</div>
                       <div className="col-span-1">Trạng thái</div>
@@ -934,7 +936,7 @@ export default function SalesOrders() {
                       {filteredInvoices.map((item) => (
                         <div
                           key={`${item.type}-${item.id}`}
-                          className={`grid grid-cols-11 gap-2 text-xs p-2 rounded hover:bg-blue-50 ${
+                          className={`grid grid-cols-12 gap-2 text-xs p-2 rounded hover:bg-blue-50 ${
                             selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100 border border-blue-300' : 'border border-gray-200'
                           }`}
                         >
@@ -963,6 +965,12 @@ export default function SalesOrders() {
                             onClick={() => setSelectedInvoice(item)}
                           >
                             {formatDate(item.date)}
+                          </div>
+                          <div 
+                            className="col-span-1 cursor-pointer"
+                            onClick={() => setSelectedInvoice(item)}
+                          >
+                            {item.type === 'order' && item.tableId ? `Bàn ${item.tableId}` : ''}
                           </div>
                           <div 
                             className="col-span-3 truncate cursor-pointer"
