@@ -23,7 +23,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Dashboard metrics
     totalRevenue: "Tổng doanh thu",
-    totalOrders: "Đơn hàng",
+    totalOrders: "Tổng đơn hàng",
     totalQuantitySold: "Tổng số lượng bán",
     averageOrderValue: "Giá trị đơn hàng trung bình",
     periodRevenue: "Doanh thu kỳ",
@@ -292,7 +292,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     einvoice: "Hóa đơn điện tử",
 
     // Table analysis specific
-    customerCount: "Số lượng khách",
+    customerCount: "Số lượng khách hàng",
     totalCustomers: "Tổng khách hàng",
     turnoverRate: "Tỷ lệ luân chuyển",
     tableAnalysisDescription: "Phân tích chi tiết hiệu suất và sử dụng bàn",
@@ -549,7 +549,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Dashboard metrics
     totalRevenue: "총 매출",
-    totalOrders: "주문",
+    totalOrders: "총 주문",
     totalQuantitySold: "총 판매량",
     averageOrderValue: "평균 주문 가치",
     periodRevenue: "기간 매출",
@@ -790,7 +790,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     paymentMethods: "결제 방법",
     hourlyBreakdown: "시간별 분석",
     orders: "주문",
-    customers: "고객 수",
+    customers: "고객",
     cash: "현금",
     card: "카드",
     credit_card: "신용카드",
@@ -1050,7 +1050,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Dashboard metrics
     totalRevenue: "Total Revenue",
-    totalOrders: "Orders",
+    totalOrders: "Total Orders",
     totalQuantitySold: "Total Quantity Sold",
     averageOrderValue: "Average Order Value",
     periodRevenue: "Period Revenue",
@@ -1290,7 +1290,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     paymentMethods: "Payment Methods",
     hourlyBreakdown: "Hourly Breakdown",
     orders: "Orders",
-    customers: "Customer Count",
+    customers: "Customers",
     cash: "Cash",
     card: "Card",
     credit_card: "Credit Card",
