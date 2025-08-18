@@ -273,58 +273,77 @@ export function SalesReport() {
     setDateRange(range);
     const today = new Date();
 
+    const formatDate = (date: Date) => {
+      const y = date.getFullYear();
+      const m = (date.getMonth() + 1).toString().padStart(2, "0");
+      const d = date.getDate().toString().padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    };
+
     switch (range) {
       case "today":
-        const todayStr = today.toISOString().split("T")[0];
+        const todayStr = formatDate(today);
         setStartDate(todayStr);
         setEndDate(todayStr);
         break;
         
       case "week":
+        // Get last week (7 days ago to yesterday)
+        const lastWeekEnd = new Date(today);
+        lastWeekEnd.setDate(today.getDate() - 1); // Yesterday
+        
+        const lastWeekStart = new Date(today);
+        lastWeekStart.setDate(today.getDate() - 7); // 7 days ago
+
+        setStartDate(formatDate(lastWeekStart));
+        setEndDate(formatDate(lastWeekEnd));
+        break;
+        
+      case "month":
+        // Get last month
+        const lastMonth = new Date(today);
+        lastMonth.setMonth(today.getMonth() - 1);
+        
+        const lastMonthStart = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
+        const lastMonthEnd = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0);
+
+        setStartDate(formatDate(lastMonthStart));
+        setEndDate(formatDate(lastMonthEnd));
+        break;
+
+      case "thisWeek":
         // Get current week (Monday to Sunday)
         const currentDayOfWeek = today.getDay();
         const daysToMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
 
         const thisWeekMonday = new Date(today);
         thisWeekMonday.setDate(today.getDate() - daysToMonday);
-        thisWeekMonday.setHours(0, 0, 0, 0);
 
         const thisWeekSunday = new Date(thisWeekMonday);
         thisWeekSunday.setDate(thisWeekMonday.getDate() + 6);
-        thisWeekSunday.setHours(23, 59, 59, 999);
 
-        setStartDate(thisWeekMonday.toISOString().split("T")[0]);
-        setEndDate(thisWeekSunday.toISOString().split("T")[0]);
+        setStartDate(formatDate(thisWeekMonday));
+        setEndDate(formatDate(thisWeekSunday));
         break;
-        
-      case "month":
+
+      case "thisMonth":
         // Get current month
-        const year = today.getFullYear();
-        const month = today.getMonth();
+        const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        const thisMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-        const monthStart = new Date(year, month, 1);
-        const monthEnd = new Date(year, month + 1, 0);
-
-        const formatDate = (date: Date) => {
-          const y = date.getFullYear();
-          const m = (date.getMonth() + 1).toString().padStart(2, "0");
-          const d = date.getDate().toString().padStart(2, "0");
-          return `${y}-${m}-${d}`;
-        };
-
-        setStartDate(formatDate(monthStart));
-        setEndDate(formatDate(monthEnd));
+        setStartDate(formatDate(thisMonthStart));
+        setEndDate(formatDate(thisMonthEnd));
         break;
         
       case "custom":
         // Default to today for custom range
-        const customToday = today.toISOString().split("T")[0];
+        const customToday = formatDate(today);
         setStartDate(customToday);
         setEndDate(customToday);
         break;
         
       default:
-        const defaultDate = today.toISOString().split("T")[0];
+        const defaultDate = formatDate(today);
         setStartDate(defaultDate);
         setEndDate(defaultDate);
         break;
@@ -426,8 +445,10 @@ export function SalesReport() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="today">{t("reports.toDay")}</SelectItem>
-                    <SelectItem value="week">{t("reports.lastWeek")}</SelectItem>
-                    <SelectItem value="month">{t("reports.lastMonth")}</SelectItem>
+                    <SelectItem value="thisWeek">Tuần này</SelectItem>
+                    <SelectItem value="week">Tuần trước</SelectItem>
+                    <SelectItem value="thisMonth">Tháng này</SelectItem>
+                    <SelectItem value="month">Tháng trước</SelectItem>
                     <SelectItem value="custom">{t("reports.custom")}</SelectItem>
                   </SelectContent>
                 </Select>
