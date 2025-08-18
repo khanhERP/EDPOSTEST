@@ -26,10 +26,15 @@ config({ path: path.resolve(".env.local") });
 config({ path: path.resolve(".env") });
 
 // Use EXTERNAL_DB_URL first, then fallback to CUSTOM_DATABASE_URL, then DATABASE_URL
-const DATABASE_URL =
+let DATABASE_URL =
   process.env.EXTERNAL_DB_URL ||
   process.env.CUSTOM_DATABASE_URL ||
   process.env.DATABASE_URL;
+
+// Add sslmode=disable for external database if not already present
+if (DATABASE_URL?.includes("1.55.212.135") && !DATABASE_URL.includes("sslmode")) {
+  DATABASE_URL += DATABASE_URL.includes("?") ? "&sslmode=disable" : "?sslmode=disable";
+}
 
 if (!DATABASE_URL) {
   throw new Error(
@@ -43,6 +48,8 @@ export const pool = new Pool({
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
   ssl: DATABASE_URL?.includes("1.55.212.135")
+    ? false  // Disable SSL for external server
+    : DATABASE_URL?.includes("neon")
     ? { rejectUnauthorized: false }
     : undefined,
 });
