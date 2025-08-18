@@ -42,7 +42,7 @@ export const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
-  ssl: DATABASE_URL?.includes("1.55.212.138")
+  ssl: DATABASE_URL?.includes("1.55.212.135")
     ? { rejectUnauthorized: false }
     : undefined,
 });
@@ -73,8 +73,8 @@ console.log(
   DATABASE_URL?.replace(/:[^:@]*@/, ":****@"),
 );
 console.log(
-  "  - Contains 1.55.212.138:",
-  DATABASE_URL?.includes("1.55.212.138"),
+  "  - Contains 1.55.212.135:",
+  DATABASE_URL?.includes("1.55.212.135"),
 );
 console.log("  - Contains neon:", DATABASE_URL?.includes("neon"));
 console.log(
