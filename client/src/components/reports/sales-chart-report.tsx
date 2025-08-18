@@ -3834,35 +3834,9 @@ export function SalesChartReport() {
           )}
 
           {/* Sales Detail Report Filters */}
-          {concernType === "salesDetail" && (
+          {analysisType === "salesDetail" && (
             <div className="space-y-4 pt-4 border-t border-gray-200">
-              {/* First row: Date filters */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    {t("reports.startDate")}
-                  </Label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="h-9 text-sm"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    {t("reports.endDate")}
-                  </Label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="h-9 text-sm"
-                  />
-                </div>
-              </div>
-
-              {/* Second row: Employee and Order Code */}
+              {/* Employee and Order Code */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -3894,7 +3868,7 @@ export function SalesChartReport() {
                 </div>
               </div>
 
-              {/* Third row: Product and Product Group */}
+              {/* Product and Product Group */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -3938,7 +3912,7 @@ export function SalesChartReport() {
                 </div>
               </div>
 
-              {/* Fourth row: Status only */}
+              {/* Status only */}
               <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">
