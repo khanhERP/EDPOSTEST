@@ -55,7 +55,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Tab names for reports
     salesAnalysisTab: "Báo cáo phân tích bán hàng",
     menuAnalysisTab: "Báo cáo phân tích menu",
-    tableAnalysisTab: "Báo cáo phân tích bàn", 
+    tableAnalysisTab: "Báo cáo phân tích bàn",
     salesChartTab: "Báo cáo bán hàng",
     purchaseTab: "Báo cáo mua hàng",
     warehouseTab: "Báo cáo kho hàng",
@@ -65,6 +65,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     analysisType: "Loại phân tích",
     analyzeBy: "Phân tích theo",
     analyzeRevenue: "Phân tích doanh thu và hiệu suất",
+    analyzeTableRevenueTrend: "Phân tích xu hướng doanh thu theo bàn",
     timeAnalysis: "Thời gian",
     productAnalysis: "Sản phẩm",
     employeeAnalysis: "Nhân viên",
@@ -103,7 +104,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     orderNumber: "Số đơn hàng",
     orderCode: "Mã đơn bán",
     subtotal: "Tạm tính",
-    discount: "Giả giá",
+    discount: "Giảm giá",
     revenue: "Doanh thu",
     tax: "Thuế",
     total: "Tổng cộng",
@@ -291,7 +292,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     einvoice: "Hóa đơn điện tử",
 
     // Table analysis specific
-    customerCount: "Số lượng khách hàng", 
+    customerCount: "Số lượng khách hàng",
     totalCustomers: "Tổng khách hàng",
     turnoverRate: "Tỷ lệ luân chuyển",
     tableAnalysisDescription: "Phân tích chi tiết hiệu suất và sử dụng bàn",
@@ -316,7 +317,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Warehouse Report
     warehouseReportTab: "Báo cáo kho hàng",
-    inventoryReportDescription: "Báo cáo chi tiết về tồn kho và hàng hóa",
     inventoryReportOfInterestType: "Phân tích theo",
     warehouseReportDescription: "Báo cáo chi tiết về hoạt động kho hàng",
 
@@ -581,7 +581,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Tab names for reports
     salesAnalysisTab: "매출 분석 보고서",
     menuAnalysisTab: "메뉴 분석 보고서",
-    tableAnalysisTab: "테이블 분석 보고서", 
+    tableAnalysisTab: "테이블 분석 보고서",
     salesChartTab: "매출 보고서",
     purchaseTab: "구매 보고서",
     warehouseTab: "창고 보고서",
@@ -591,6 +591,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     analysisType: "분석 유형",
     analyzeBy: "분석 기준",
     analyzeRevenue: "매출 및 성과 분석",
+    analyzeTableRevenueTrend: "테이블별 매출 동향 분석",
     timeAnalysis: "시간",
     productAnalysis: "상품",
     employeeAnalysis: "직원",
@@ -919,6 +920,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noCategoryData: "카테고리 데이터 없음",
     noSalesData: "판매 데이터 없음",
     noRevenueData: "매출 데이터 없음",
+    productType: "상품 유형",
+    combo: "콤보",
+    product: "상품",
+    service: "서비스",
 
     // Table analysis
     tablePerformance: "테이블 성과",
@@ -1076,7 +1081,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Tab names for reports
     salesAnalysisTab: "Sales Analysis Report",
-    menuAnalysisTab: "Menu Analysis Report", 
+    menuAnalysisTab: "Menu Analysis Report",
     tableAnalysisTab: "Table Analysis Report",
     salesChartTab: "Sales Report",
     purchaseTab: "Purchase Report",
@@ -1087,6 +1092,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     analysisType: "Analysis Type",
     analyzeBy: "Analyze By",
     analyzeRevenue: "Analyze revenue and performance",
+    analyzeTableRevenueTrend: "Analyze table revenue trends",
     timeAnalysis: "Time",
     productAnalysis: "Product",
     employeeAnalysis: "Employee",
@@ -1111,7 +1117,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerName: "Customer Name",
     vip: "VIP Customer",
     newCustomer: "New Customer",
-    inactive: "Inactive", 
+    inactive: "Inactive",
     active: "Active",
 
     // Sales chart table columns
@@ -1293,7 +1299,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Table analysis specific
     customerCount: "Customer Count",
-    totalCustomers: "Total Customers", 
+    totalCustomers: "Total Customers",
     turnoverRate: "Turnover Rate",
     tableAnalysisDescription: "Detailed analysis of table performance and utilization",
     topRevenueTables: "Top Revenue Tables",
@@ -1317,7 +1323,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Warehouse Report
     warehouseReportTab: "Warehouse Activity Report",
-    inventoryReportOfInterestType: "Analyze By", 
+    inventoryReportOfInterestType: "Analyze By",
     warehouseReportDescription: "Detailed warehouse activity report",
 
     // Inventory report concern types

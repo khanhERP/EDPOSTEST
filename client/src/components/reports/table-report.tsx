@@ -303,7 +303,7 @@ export function TableReport() {
                 <Utensils className="w-5 h-5" />
                 {t("reports.tableAnalysis")}
               </CardTitle>
-              <CardDescription>{t("reports.tableAnalysisDescription")}</CardDescription>
+              <CardDescription>{t("reports.analyzeTableRevenueTrend")}</CardDescription>
             </div>
             <div className="flex items-center gap-4">
               <Select value={dateRange} onValueChange={handleDateRangeChange}>
