@@ -79,7 +79,7 @@ export function DashboardOverview() {
       endDate,
       firstOrder: orders[0],
       allOrderDates: orders.map((o: any) =>
-        new Date(o.createdAt || o.created_at).toDateString(),
+        new Date(o.orderedAt || o.createdAt || o.created_at).toDateString(),
       ),
     });
 
@@ -89,11 +89,11 @@ export function DashboardOverview() {
 
     // Filter completed orders within date range
     const filteredCompletedOrders = orders.filter((order: any) => {
-      // Check if order is completed
-      if (order.status !== 'completed') return false;
+      // Check if order is completed (status 'paid' means completed)
+      if (order.status !== 'completed' && order.status !== 'paid') return false;
       
       const orderDate = new Date(
-        order.createdAt || order.created_at,
+        order.orderedAt || order.createdAt || order.created_at,
       );
       return orderDate >= start && orderDate <= end;
     });
@@ -150,7 +150,7 @@ export function DashboardOverview() {
     const hourlyOrders: { [key: number]: number } = {};
     filteredCompletedOrders.forEach((order: any) => {
       const hour = new Date(
-        order.createdAt || order.created_at,
+        order.orderedAt || order.createdAt || order.created_at,
       ).getHours();
       hourlyOrders[hour] = (hourlyOrders[hour] || 0) + 1;
     });
