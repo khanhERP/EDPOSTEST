@@ -912,8 +912,9 @@ export default function SalesOrders() {
                     </Button>
                   </div>
                 ) : (
-                  {/* Table with horizontal scroll similar to settings page */}
-                  <div className="w-full overflow-x-auto border rounded-md bg-white">
+                  <div>
+                    {/* Table with horizontal scroll similar to settings page */}
+                    <div className="w-full overflow-x-auto border rounded-md bg-white">
                     <table className="w-full min-w-[1600px] table-fixed">
                       <thead>
                         <tr className="bg-gray-50 border-b">
@@ -1098,7 +1099,7 @@ export default function SalesOrders() {
                         )}
                       </tbody>
                     </table>
-                  </div>
+                    </div>
                   </div>
                 )}
                 
