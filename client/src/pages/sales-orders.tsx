@@ -697,16 +697,36 @@ export default function SalesOrders() {
     ];
     ws['!cols'] = colWidths;
 
+    // Set row heights for better appearance
+    ws['!rows'] = [
+      { hpt: 25 }, // Title row height
+      { hpt: 15 }, // Empty row
+      { hpt: 20 }, // Header row height
+      ...Array(selectedOrders.length).fill({ hpt: 18 }) // Data rows height
+    ];
+
     // Merge title cells (row 1, A1:O1) exactly like in image
     if (!ws['!merges']) ws['!merges'] = [];
     ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 14 } });
 
-    // Ensure title cell exists and style it
+    // Ensure title cell exists and style it with better compatibility
     if (!ws['A1']) ws['A1'] = { v: 'DANH SÁCH ĐƠN HÀNG BÁN', t: 's' };
     ws['A1'].s = {
-      font: { bold: true, size: 16, color: { rgb: '000000' }, name: 'Times New Roman' },
-      alignment: { horizontal: 'center', vertical: 'center' },
-      fill: { fgColor: { rgb: 'FFFFFF' } }
+      font: { 
+        bold: true, 
+        size: 16, 
+        color: { rgb: '000000' }, 
+        name: 'Times New Roman' 
+      },
+      alignment: { 
+        horizontal: 'center', 
+        vertical: 'center',
+        wrapText: false
+      },
+      fill: { 
+        patternType: 'solid',
+        fgColor: { rgb: 'FFFFFF' } 
+      }
     };
 
     // Style header row (row 3) exactly like in image - green background with white text
@@ -723,9 +743,21 @@ export default function SalesOrders() {
       }
       
       ws[cellAddress].s = {
-        font: { bold: true, size: 11, color: { rgb: 'FFFFFF' }, name: 'Times New Roman' },
-        alignment: { horizontal: 'center', vertical: 'center' },
-        fill: { fgColor: { rgb: '92D050' } }, // Green background like in image
+        font: { 
+          bold: true, 
+          size: 11, 
+          color: { rgb: 'FFFFFF' }, 
+          name: 'Times New Roman' 
+        },
+        alignment: { 
+          horizontal: 'center', 
+          vertical: 'center',
+          wrapText: false
+        },
+        fill: { 
+          patternType: 'solid',
+          fgColor: { rgb: '92D050' } 
+        },
         border: {
           top: { style: 'thin', color: { rgb: '000000' } },
           bottom: { style: 'thin', color: { rgb: '000000' } },
@@ -774,12 +806,21 @@ export default function SalesOrders() {
         const fillColor = isEvenRow ? 'FFFFFF' : 'F2F2F2';
         
         ws[cellAddress].s = {
-          font: { size: 11, name: 'Times New Roman', color: { rgb: '000000' } },
+          font: { 
+            size: 11, 
+            name: 'Times New Roman', 
+            color: { rgb: '000000' },
+            bold: false
+          },
           alignment: { 
             horizontal: [5, 6, 7, 8, 9].includes(col) ? 'right' : 'center', 
-            vertical: 'center' 
+            vertical: 'center',
+            wrapText: false
           },
-          fill: { fgColor: { rgb: fillColor } },
+          fill: { 
+            patternType: 'solid',
+            fgColor: { rgb: fillColor } 
+          },
           border: {
             top: { style: 'thin', color: { rgb: 'BFBFBF' } },
             bottom: { style: 'thin', color: { rgb: 'BFBFBF' } },
@@ -795,9 +836,17 @@ export default function SalesOrders() {
       }
     }
 
-    // Create workbook
+    // Create workbook with proper settings
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Danh sách đơn hàng');
+    
+    // Set workbook properties for better compatibility
+    wb.Props = {
+      Title: "Danh sách đơn hàng bán",
+      Subject: "Báo cáo đơn hàng",
+      Author: "EDPOS System",
+      CreatedDate: new Date()
+    };
 
     // Generate default filename with timestamp
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
@@ -814,7 +863,13 @@ export default function SalesOrders() {
           }]
         }).then(async (fileHandle) => {
           const writable = await fileHandle.createWritable();
-          const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+          const buffer = XLSX.write(wb, { 
+            bookType: 'xlsx', 
+            type: 'array',
+            cellStyles: true,
+            sheetStubs: false,
+            bookSST: false
+          });
           await writable.write(buffer);
           await writable.close();
           console.log('File saved successfully');
@@ -822,7 +877,11 @@ export default function SalesOrders() {
           if (err.name !== 'AbortError') {
             console.log('Save dialog cancelled or error:', err);
             // Fallback to automatic download
-            XLSX.writeFile(wb, defaultFilename);
+            XLSX.writeFile(wb, defaultFilename, { 
+              cellStyles: true,
+              sheetStubs: false,
+              bookSST: false
+            });
           }
         });
       } catch (error) {
@@ -831,8 +890,12 @@ export default function SalesOrders() {
         XLSX.writeFile(wb, defaultFilename);
       }
     } else {
-      // Fallback for older browsers
-      XLSX.writeFile(wb, defaultFilename);
+      // Fallback for older browsers with proper options
+      XLSX.writeFile(wb, defaultFilename, { 
+        cellStyles: true,
+        sheetStubs: false,
+        bookSST: false
+      });
     }
   };
 
