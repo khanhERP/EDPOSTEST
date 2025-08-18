@@ -3835,106 +3835,126 @@ export function SalesChartReport() {
 
           {/* Sales Detail Report Filters */}
           {concernType === "salesDetail" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  {t("reports.orderCode")}
-                </Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <div className="space-y-4 pt-4 border-t border-gray-200">
+              {/* First row: Date filters */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.startDate")}
+                  </Label>
                   <Input
-                    placeholder={t("reports.searchOrderCode")}
-                    className="pl-10 h-9 text-sm"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="h-9 text-sm"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.endDate")}
+                  </Label>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="h-9 text-sm"
                   />
                 </div>
               </div>
 
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  {t("reports.productFilter")}
-                </Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder={t("reports.productFilterPlaceholder")}
-                    value={productSearch}
-                    onChange={(e) => setProductSearch(e.target.value)}
-                    className="pl-10 h-9 text-sm"
-                  />
+              {/* Second row: Employee and Order Code */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.employeeFilter")}
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder={t("reports.employeeFilterPlaceholder")}
+                      value={selectedEmployee === "all" ? "" : selectedEmployee}
+                      onChange={(e) =>
+                        setSelectedEmployee(e.target.value || "all")
+                      }
+                      className="pl-10 h-9 text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.orderCode")}
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder={t("reports.searchOrderCode")}
+                      className="pl-10 h-9 text-sm"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  {t("reports.productGroup")}
-                </Label>
-                <Select
-                  value={selectedCategory}
-                  onValueChange={setSelectedCategory}
-                >
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder={t("reports.productGroup")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("common.all")}</SelectItem>
-                    {categories &&
-                      Array.isArray(categories) &&
-                      categories.map((category: any) => (
-                        <SelectItem
-                          key={category.id}
-                          value={category.id.toString()}
-                        >
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+              {/* Third row: Product and Product Group */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.productFilter")}
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder={t("reports.productFilterPlaceholder")}
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      className="pl-10 h-9 text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.productGroup")}
+                  </Label>
+                  <Select
+                    value={selectedCategory}
+                    onValueChange={setSelectedCategory}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder={t("reports.productGroup")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
+                      {categories &&
+                        Array.isArray(categories) &&
+                        categories.map((category: any) => (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id.toString()}
+                          >
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  {t("reports.status")}
-                </Label>
-                <Select defaultValue="all">
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("common.all")}</SelectItem>
-                    <SelectItem value="completed">{t("reports.completed")}</SelectItem>
-                    <SelectItem value="pending">{t("reports.pending")}</SelectItem>
-                    <SelectItem value="cancelled">{t("reports.cancelled")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  {t("reports.salesChannel")}
-                </Label>
-                <Select value={salesChannel} onValueChange={setSalesChannel}>
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{t("common.all")}</SelectItem>
-                    <SelectItem value="dine_in">{t("reports.dineIn")}</SelectItem>
-                    <SelectItem value="takeaway">{t("reports.takeaway")}</SelectItem>
-                    <SelectItem value="delivery">{t("reports.delivery")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                  {t("reports.table")}
-                </Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    placeholder={t("reports.searchTable")}
-                    className="pl-10 h-9 text-sm"
-                  />
+              {/* Fourth row: Status only */}
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.status")}
+                  </Label>
+                  <Select defaultValue="all">
+                    <SelectTrigger className="h-9 text-sm w-full md:w-1/2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
+                      <SelectItem value="completed">{t("reports.completed")}</SelectItem>
+                      <SelectItem value="pending">{t("reports.pending")}</SelectItem>
+                      <SelectItem value="cancelled">{t("reports.cancelled")}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
