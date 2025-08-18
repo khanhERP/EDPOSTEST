@@ -601,7 +601,7 @@ export default function SalesOrders() {
   const isIndeterminate = selectedOrderIds.size > 0 && selectedOrderIds.size < filteredInvoices.length;
 
   // Function to export selected orders to Excel
-  const exportSelectedOrdersToExcel = () => {
+  const exportSelectedOrdersToExcel = async () => {
     if (selectedOrderIds.size === 0) {
       alert('Vui lòng chọn ít nhất một đơn hàng để xuất Excel');
       return;
@@ -766,36 +766,71 @@ export default function SalesOrders() {
     const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
     const defaultFilename = `danh-sach-don-hang-ban_${timestamp}.xlsx`;
 
-    // Try to use the File System Access API for modern browsers
+    // Function to open file after saving
+    const openFileAfterSave = (filePath) => {
+      try {
+        // Create a temporary URL for the file and open it
+        const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        
+        // Open file in new tab/window
+        const newWindow = window.open(url, '_blank');
+        if (newWindow) {
+          // Clean up the URL after a delay
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 5000);
+        } else {
+          // Fallback: trigger download if popup blocked
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = defaultFilename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      } catch (error) {
+        console.error('Error opening file:', error);
+      }
+    };
+
+    // Try to use the File System Access API for modern browsers with save dialog
     if ('showSaveFilePicker' in window) {
       try {
-        window.showSaveFilePicker({
+        const fileHandle = await window.showSaveFilePicker({
           suggestedName: defaultFilename,
           types: [{
             description: 'Excel files',
             accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
           }]
-        }).then(async (fileHandle) => {
-          const writable = await fileHandle.createWritable();
-          const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-          await writable.write(buffer);
-          await writable.close();
-          console.log('File saved successfully');
-        }).catch((err) => {
-          if (err.name !== 'AbortError') {
-            console.log('Save dialog cancelled or error:', err);
-            // Fallback to automatic download
-            XLSX.writeFile(wb, defaultFilename);
-          }
         });
+
+        const writable = await fileHandle.createWritable();
+        const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        await writable.write(buffer);
+        await writable.close();
+        
+        console.log('✅ File saved successfully to:', fileHandle.name);
+        alert(`File đã được lưu thành công: ${fileHandle.name}`);
+        
+        // Open the file after successful save
+        openFileAfterSave(fileHandle.name);
+        
       } catch (error) {
-        console.log('File System Access API not supported, using fallback');
-        // Fallback to automatic download
-        XLSX.writeFile(wb, defaultFilename);
+        if (error.name !== 'AbortError') {
+          console.log('Save dialog cancelled or error:', error);
+          // Fallback to automatic download and open
+          XLSX.writeFile(wb, defaultFilename);
+          setTimeout(() => openFileAfterSave(defaultFilename), 500);
+        }
       }
     } else {
-      // Fallback for older browsers
+      // Fallback for older browsers - auto download and open
+      console.log('File System Access API not supported, using fallback');
       XLSX.writeFile(wb, defaultFilename);
+      setTimeout(() => openFileAfterSave(defaultFilename), 500);
     }
   };
 
