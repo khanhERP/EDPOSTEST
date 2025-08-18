@@ -282,17 +282,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Warehouse Report
     warehouseReportTab: "Báo cáo kho hàng",
     inventoryReportDescription: "Báo cáo chi tiết về tồn kho và hàng hóa",
-    inventoryReportOfInterestType: "Báo cáo kho loại quan tâm",
+    inventoryReportOfInterestType: "Phân tích theo",
     warehouseReportDescription: "Báo cáo chi tiết về hoạt động kho hàng",
 
     // Inventory report concern types
-    concernType: "Loại quan tâm",
+    concernType: "Phân tích theo",
+    inventoryValue: "Giá trị kho",
     inOutInventory: "Xuất nhập tồn",
-    detailedInOutInventory: "Chi tiết xuất nhập tồn",
-    disposal: "Hủy hàng",
-    employeeBySales: "Nhân viên theo bán hàng",
-    customerBySales: "Khách hàng theo bán hàng",
-    supplierByPurchase: "Nhà cung cấp theo mua hàng",
+    detailedInOutInventory: "Xuất nhập tồn chi tiết",
+    disposal: "Xuất hủy",
 
     // Inventory report additional keys
     inventoryValue: "Giá trị tồn kho",
@@ -768,17 +766,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Warehouse Report
     warehouseReportTab: "창고 활동 보고서",
-    inventoryReportOfInterestType: "관심 유형별 창고 보고서",
+    inventoryReportOfInterestType: "분석 기준",
     warehouseReportDescription: "창고 활동에 대한 상세 보고서",
 
     // Inventory report concern types
-    concernType: "관심 유형",
+    concernType: "분석 기준",
+    inventoryValue: "재고 가치",
     inOutInventory: "입출고",
     detailedInOutInventory: "상세 입출고",
     disposal: "폐기",
-    employeeBySales: "직원별 판매",
-    customerBySales: "고객별 판매",
-    supplierByPurchase: "공급업체별 구매",
 
     // Inventory report additional keys
     inventoryValue: "재고 가치",
@@ -1239,17 +1235,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Warehouse Report
     warehouseReportTab: "Warehouse Activity Report",
-    inventoryReportOfInterestType: "Inventory Report of Interest Type", 
+    inventoryReportOfInterestType: "Analyze By", 
     warehouseReportDescription: "Detailed warehouse activity report",
 
     // Inventory report concern types
-    concernType: "Concern Type",
+    concernType: "Analyze By",
+    inventoryValue: "Inventory Value",
     inOutInventory: "In/Out Inventory",
     detailedInOutInventory: "Detailed In/Out Inventory",
     disposal: "Disposal",
-    employeeBySales: "Employee by Sales",
-    customerBySales: "Customer by Sales",
-    supplierByPurchase: "Supplier by Purchase",
 
     // Inventory report additional keys
     inventoryValue: "Inventory Value",
