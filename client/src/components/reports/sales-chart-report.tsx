@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
@@ -2573,7 +2573,7 @@ export function SalesChartReport() {
 
   // New Sales Detail Report Component Logic
   const renderSalesDetailReport = () => {
-    if (!transactions || !Array.isArray(transactions)) {
+    if (transactionsLoading || ordersLoading) {
       return (
         <div className="flex justify-center py-8">
           <div className="text-gray-500">{t("reports.loading")}...</div>
@@ -2615,9 +2615,15 @@ export function SalesChartReport() {
 
     const filteredTransactions = allTransactionsAndOrders.filter(
       (transaction: any) => {
+        if (!transaction) return false;
+        
         const transactionDate = new Date(
           transaction.createdAt || transaction.created_at,
         );
+        
+        // Check if date is valid
+        if (isNaN(transactionDate.getTime())) return false;
+        
         const dateMatch = transactionDate >= start && transactionDate <= end;
 
         // Apply other filters as needed
@@ -2625,10 +2631,12 @@ export function SalesChartReport() {
           selectedEmployee === "all" ||
           transaction.cashierName === selectedEmployee ||
           transaction.employeeId?.toString() === selectedEmployee ||
-          transaction.cashierName?.includes(selectedEmployee);
+          (selectedEmployee && transaction.cashierName?.includes(selectedEmployee));
 
         const salesChannelMatch =
-          salesChannel === "all" || transaction.salesChannel === salesChannel;
+          salesChannel === "all" || 
+          transaction.salesChannel === salesChannel ||
+          !transaction.salesChannel;
 
         const salesMethodMatch =
           salesMethod === "all" ||
@@ -2638,7 +2646,8 @@ export function SalesChartReport() {
           (salesMethod === "no_delivery" &&
             !transaction.isDelivery &&
             (!transaction.deliveryMethod ||
-              transaction.deliveryMethod === "none"));
+              transaction.deliveryMethod === "none" ||
+              transaction.deliveryMethod === "pickup"));
 
         return (
           dateMatch && employeeMatch && salesChannelMatch && salesMethodMatch
@@ -2793,23 +2802,31 @@ export function SalesChartReport() {
     // If no data exists, generate sample data for demonstration
     if (salesDetailData.length === 0) {
       const sampleData = [];
-      const sampleEmployees = employees?.slice(0, 3) || [
-        { id: 1, name: "Nguyễn Văn A" },
-        { id: 2, name: "Trần Thị B" },
-        { id: 3, name: "Lê Văn C" },
-      ];
+      const sampleEmployees = employees && Array.isArray(employees) && employees.length > 0 
+        ? employees.slice(0, 3) 
+        : [
+            { id: 1, name: "Nguyễn Văn A" },
+            { id: 2, name: "Trần Thị B" },
+            { id: 3, name: "Lê Văn C" },
+          ];
+      
       const sampleCustomers = [
         { id: "KH001", name: "Nguyễn Minh Tuấn" },
         { id: "KH002", name: "Trần Thị Lan" },
         { id: "KL-001", name: t("common.walkInCustomer") },
       ];
-      const sampleProducts = products?.slice(0, 5) || [
-        { id: 1, sku: "FOOD-001", name: "Cà phê đen", price: 25000, categoryId: 1 },
-        { id: 2, sku: "FOOD-002", name: "Bánh mì thịt", price: 15000, categoryId: 2 },
-        { id: 3, sku: "FOOD-003", name: "Nước cam", price: 20000, categoryId: 1 },
-      ];
+      
+      const sampleProducts = products && Array.isArray(products) && products.length > 0
+        ? products.slice(0, 5)
+        : [
+            { id: 1, sku: "FOOD-001", name: "Cà phê đen", price: 25000, categoryId: 1 },
+            { id: 2, sku: "FOOD-002", name: "Bánh mì thịt", price: 15000, categoryId: 2 },
+            { id: 3, sku: "FOOD-003", name: "Nước cam", price: 20000, categoryId: 1 },
+            { id: 4, sku: "FOOD-004", name: "Trà sữa", price: 18000, categoryId: 1 },
+            { id: 5, sku: "FOOD-005", name: "Bánh ngọt", price: 12000, categoryId: 3 },
+          ];
 
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 15; i++) {
         const employee = sampleEmployees[i % sampleEmployees.length];
         const customer = sampleCustomers[i % sampleCustomers.length];
         const product = sampleProducts[i % sampleProducts.length];
