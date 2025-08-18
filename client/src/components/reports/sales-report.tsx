@@ -103,13 +103,21 @@ export function SalesReport() {
       // Check if date is valid
       if (isNaN(transactionDate.getTime())) return false;
 
+      // Normalize dates for comparison
       const start = new Date(startDate);
       start.setHours(0, 0, 0, 0);
       
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      return transactionDate >= start && transactionDate <= end;
+      // Normalize transaction date to compare properly
+      const transactionDateOnly = new Date(transactionDate);
+      transactionDateOnly.setHours(0, 0, 0, 0);
+
+      const endDateOnly = new Date(end);
+      endDateOnly.setHours(0, 0, 0, 0);
+
+      return transactionDateOnly >= start && transactionDateOnly <= endDateOnly;
     });
 
     // Daily sales breakdown
@@ -127,10 +135,8 @@ export function SalesReport() {
       // Skip invalid dates
       if (isNaN(transactionDate.getTime())) return;
 
-      const year = transactionDate.getFullYear();
-      const month = (transactionDate.getMonth() + 1).toString().padStart(2, "0");
-      const day = transactionDate.getDate().toString().padStart(2, "0");
-      const date = `${year}-${month}-${day}`;
+      // Use toISOString to get consistent date format
+      const date = transactionDate.toISOString().split('T')[0];
 
       if (!dailySales[date]) {
         dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
@@ -221,7 +227,7 @@ export function SalesReport() {
       const hour = transactionDate.getHours();
       const amount = Number(transaction.total || transaction.amount || 0);
       
-      if (!isNaN(amount) && amount >= 0) {
+      if (!isNaN(amount) && amount > 0) {
         hourlySales[hour] = (hourlySales[hour] || 0) + amount;
       }
     });
