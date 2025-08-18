@@ -2313,7 +2313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             transaction.employeeId?.toString() === selectedEmployee ||
             (transaction.cashierName && transaction.cashierName.includes(selectedEmployee));
 
-          return dateMatch && methodMatch && salesChannelMatch && employeeMatch;
+          return dateMatch && methodMatch && channelMatch && employeeMatch;
         });
 
         res.json(filteredTransactions);
