@@ -234,7 +234,10 @@ export function SalesChartReport() {
         return false;
       }
 
-      return orderDate >= start && orderDate <= end;
+      const orderDateOnly = new Date(orderDate);
+      orderDateOnly.setHours(0, 0, 0, 0);
+
+      return orderDateOnly >= start && orderDateOnly <= end;
     }) || [];
 
     // Convert orders to transaction-like format for compatibility
@@ -280,7 +283,7 @@ export function SalesChartReport() {
       const discount = Number(order.discount || 0);
       dailySales[date].revenue += (orderTotal - discount);
       dailySales[date].orders += 1;
-      
+
       // Count unique customers per day
       if (order.customerId) {
         dailySales[date].customers += 1;
@@ -299,7 +302,7 @@ export function SalesChartReport() {
         paymentMethods[method] = { count: 0, revenue: 0 };
       }
       paymentMethods[method].count += 1;
-      
+
       // Use same revenue calculation as dashboard
       const orderTotal = Number(order.total || 0);
       const discount = Number(order.discount || 0);
@@ -315,9 +318,9 @@ export function SalesChartReport() {
       },
       0,
     );
-    
+
     const totalOrders = filteredCompletedOrders.length;
-    
+
     // Count unique customers like dashboard does
     const uniqueCustomers = new Set();
     filteredCompletedOrders.forEach((order: any) => {
@@ -329,7 +332,7 @@ export function SalesChartReport() {
       }
     });
     const totalCustomers = uniqueCustomers.size;
-    
+
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     return (
@@ -776,9 +779,10 @@ export function SalesChartReport() {
                         {t("common.total")}
                       </TableCell>
                       <TableCell className="text-center border-r min-w-[100px] px-4">
-                        {Object.values(dailySales)
-                          .reduce((sum, data) => sum + data.orders, 0)
-                          .toLocaleString()}
+                        {Object.values(dailySales).reduce(
+                          (sum, data) => sum + data.orders,
+                          0,
+                        ).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right border-r min-w-[140px] px-4">
                         {formatCurrency(
@@ -1291,12 +1295,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
+            )}
+          </CardContent>
+        </Card>
+      );
+    };
 
   // Employee Report with Pagination State
   const [employeeCurrentPage, setEmployeeCurrentPage] = useState(1);
@@ -2606,23 +2609,23 @@ export function SalesChartReport() {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    // Filter real transactions by date range
+    // Filter transactions by date and sales method
     const filteredTransactions = transactions?.filter((transaction: any) => {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
       const transactionDateOnly = new Date(transactionDate);
       transactionDateOnly.setHours(0, 0, 0, 0);
-      
+
       const isInRange = transactionDateOnly >= start && transactionDateOnly <= end;
-      
+
       // Filter by employee if specified
       const employeeMatch =
         selectedEmployee === "all" ||
         transaction.cashierName === selectedEmployee ||
         transaction.employeeId?.toString() === selectedEmployee ||
         transaction.cashierName?.includes(selectedEmployee);
-        
+
       // Filter by product if specified
       const productMatch = !productSearch || 
         (transaction.items && transaction.items.some((item: any) => {
@@ -2632,7 +2635,7 @@ export function SalesChartReport() {
             (product.sku && product.sku.toLowerCase().includes(productSearch.toLowerCase()))
           );
         }));
-        
+
       return isInRange && employeeMatch && productMatch;
     }) || [];
 
@@ -2662,13 +2665,13 @@ export function SalesChartReport() {
         hour: "2-digit",
         minute: "2-digit",
       });
-      
+
       const customerId = transaction.customerId || "KL-001";
       const customerName = transaction.customerName || "Khách lẻ";
       const employeeName = transaction.cashierName || transaction.employeeName || "Nhân viên";
-      
+
       const groupKey = `${dateStr}-${customerId}-${employeeName}`;
-      
+
       if (!groupedTransactions[groupKey]) {
         groupedTransactions[groupKey] = {
           date: dateStr,
@@ -2686,13 +2689,13 @@ export function SalesChartReport() {
           tableNumber: transaction.tableNumber || "B01",
         };
       }
-      
+
       const transactionTotal = Number(transaction.total || 0);
       const transactionSubtotal = Number(transaction.subtotal || transactionTotal * 1.1);
       const transactionDiscount = transactionSubtotal - transactionTotal;
       const transactionTax = transactionTotal * 0.1;
       const transactionRevenue = transactionTotal - transactionTax;
-      
+
       groupedTransactions[groupKey].orderCount += 1;
       groupedTransactions[groupKey].totalAmount += transactionTotal;
       groupedTransactions[groupKey].totalDiscount += transactionDiscount;
@@ -2891,7 +2894,7 @@ export function SalesChartReport() {
                           <TableCell className="text-center border-r min-w-[100px] px-4">
                             {item.productCode}
                           </TableCell>
-                          <TableCell className="text-center border-r min-w-[150px] px-4 font-medium">
+                          <TableCell className="text-center border-r min-w-[150px] px-4">
                             {item.productName}
                           </TableCell>
                           <TableCell className="text-center border-r min-w-[80px] px-4">
@@ -2945,7 +2948,7 @@ export function SalesChartReport() {
                         {isExpanded && item.transactions && item.transactions.map((transaction: any, txIndex: number) => {
                           // Get all items for this transaction from database
                           const transactionItems = transaction.items || [];
-                          
+
                           // If no items in database, show transaction summary
                           if (transactionItems.length === 0) {
                             return (
