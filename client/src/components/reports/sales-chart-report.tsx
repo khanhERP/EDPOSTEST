@@ -675,9 +675,9 @@ export function SalesChartReport() {
                             {isExpanded &&
                               dateTransactions.length > 0 &&
                               dateTransactions.map(
-                                (transaction: any, index: number) => (
+                                (transaction: any, txIndex: number) => (
                                   <TableRow
-                                    key={`${date}-${transaction.id || index}`}
+                                    key={`${date}-transaction-${transaction.id || txIndex}`}
                                     className="bg-blue-50/50 border-l-4 border-l-blue-400"
                                   >
                                     <TableCell className="text-center border-r bg-blue-50 w-12">
@@ -702,7 +702,7 @@ export function SalesChartReport() {
                                     <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
                                       #
                                       {transaction.transactionId ||
-                                        `TXN-${index + 1}`}
+                                        `TXN-${txIndex + 1}`}
                                     </TableCell>
                                     <TableCell className="text-right border-r text-sm min-w-[140px] px-4">
                                       {formatCurrency(
@@ -743,8 +743,7 @@ export function SalesChartReport() {
                                         filteredTransactions.forEach(
                                           (transaction: any) => {
                                             const method =
-                                              transaction.paymentMethod ||
-                                              "cash";
+                                              transaction.paymentMethod || "cash";
                                             allPaymentMethods.add(method);
                                           },
                                         );
@@ -3965,7 +3964,7 @@ export function SalesChartReport() {
       <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-lg">
           <CardTitle className="flex items-center gap-3 text-lg font-semibold">
-            <div className="p-2 bg-white/20 rounded-lg">
+            <divthe p-2 bg-white/20 rounded-lg">
               <TrendingUp className="w-6 h-6" />
             </div>
             <div>
