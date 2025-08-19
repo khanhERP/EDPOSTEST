@@ -3377,9 +3377,9 @@ export function SalesChartReport() {
                               );
                             },
                           )}
-                      </>
-                    );
-                  })
+                        </>
+                      );
+                    })
                 ) : (
                   <TableRow>
                     <TableCell
