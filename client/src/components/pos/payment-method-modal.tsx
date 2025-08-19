@@ -652,14 +652,10 @@ export function PaymentMethodModal({
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600">{t("common.totalAmount")}</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {(() => {
-                    // Use the passed total directly without any calculation
-                    // The total should already be calculated correctly by the parent component
-                    return total.toLocaleString("vi-VN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    });
-                  })()}{" "}
+                  {total.toLocaleString("vi-VN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}{" "}
                   ₫
                 </p>
               </div>
