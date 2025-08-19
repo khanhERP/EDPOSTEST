@@ -3504,67 +3504,98 @@ export function SalesChartReport() {
           .slice(0, 10);
 
       case "product":
-        if (
-          !products ||
-          !Array.isArray(products) ||
-          !orders ||
-          !Array.isArray(orders)
-        )
-          return [];
+        if (!products || !Array.isArray(products)) return [];
 
         const start = new Date(startDate);
         const end = new Date(endDate);
         end.setHours(23, 59, 59, 999);
 
-        const filteredOrders = orders.filter((order: any) => {
-          const orderDate = new Date(order.orderedAt || order.created_at);
-          return (
-            orderDate >= start && orderDate <= end && order.status === "paid"
-          );
-        });
-
         const productSales: {
           [productId: string]: { quantity: number; revenue: number };
         } = {};
 
-        filteredOrders.forEach((order: any) => {
-          const orderTotal = Number(order.total);
-          const availableProducts = products.filter((p) => p.price > 0);
-
-          if (availableProducts.length === 0) return;
-
-          const orderProductCount = Math.min(
-            Math.floor(Math.random() * 3) + 1,
-            availableProducts.length,
-          );
-          const selectedProducts = availableProducts
-            .sort(() => 0.5 - Math.random())
-            .slice(0, orderProductCount);
-          const totalSelectedPrice = selectedProducts.reduce(
-            (sum, p) => sum + (p.price || 0),
-            0,
-          );
-
-          selectedProducts.forEach((product: any) => {
-            const productId = product.id.toString();
-            if (!productSales[productId]) {
-              productSales[productId] = { quantity: 0, revenue: 0 };
-            }
-
-            const proportion =
-              totalSelectedPrice > 0
-                ? (product.price || 0) / totalSelectedPrice
-                : 1 / selectedProducts.length;
-            const productRevenue = orderTotal * proportion;
-            const quantity = Math.max(
-              1,
-              Math.floor(productRevenue / (product.price || 1)),
+        // Process transaction items from transactions (EXACT same logic as renderProductReport)
+        if (transactions && Array.isArray(transactions)) {
+          const filteredTransactions = transactions.filter((transaction: any) => {
+            const transactionDate = new Date(
+              transaction.createdAt || transaction.created_at,
             );
-
-            productSales[productId].quantity += quantity;
-            productSales[productId].revenue += productRevenue;
+            const transactionDateOnly = new Date(transactionDate);
+            transactionDateOnly.setHours(0, 0, 0, 0);
+            return transactionDateOnly >= start && transactionDateOnly <= end;
           });
-        });
+
+          filteredTransactions.forEach((transaction: any) => {
+            if (transaction.items && Array.isArray(transaction.items)) {
+              transaction.items.forEach((item: any) => {
+                const productId = item.productId?.toString();
+                if (!productId) return;
+
+                // Check if this product is in our products list
+                const product = products.find(
+                  (p) => p.id.toString() === productId,
+                );
+                if (!product) return;
+
+                if (!productSales[productId]) {
+                  productSales[productId] = {
+                    quantity: 0,
+                    revenue: 0,
+                  };
+                }
+
+                const quantity = Number(item.quantity || 0);
+                const total = Number(item.total || 0);
+
+                productSales[productId].quantity += quantity;
+                productSales[productId].revenue += total;
+              });
+            }
+          });
+        }
+
+        // Process order items from orders (EXACT same logic as renderProductReport)
+        if (orders && Array.isArray(orders)) {
+          const filteredOrders = orders.filter((order: any) => {
+            // Check if order is completed/paid (EXACT same as dashboard)
+            if (order.status !== 'completed' && order.status !== 'paid') return false;
+
+            const orderDate = new Date(
+              order.orderedAt || order.createdAt || order.created_at || order.paidAt
+            );
+            const orderDateOnly = new Date(orderDate);
+            orderDateOnly.setHours(0, 0, 0, 0);
+            return orderDateOnly >= start && orderDateOnly <= end;
+          });
+
+          filteredOrders.forEach((order: any) => {
+            if (order.items && Array.isArray(order.items)) {
+              order.items.forEach((item: any) => {
+                const productId = item.productId?.toString();
+                if (!productId) return;
+
+                // Check if this product is in our products list
+                const product = products.find(
+                  (p) => p.id.toString() === productId,
+                );
+                if (!product) return;
+
+                if (!productSales[productId]) {
+                  productSales[productId] = {
+                    quantity: 0,
+                    revenue: 0,
+                  };
+                }
+
+                const quantity = Number(item.quantity || 0);
+                const total = Number(item.total || 0);
+
+                productSales[productId].quantity += quantity;
+                productSales[productId].revenue += total;
+              });
+            }
+          });
+        }
 
         return products
           .map((product: any) => {
