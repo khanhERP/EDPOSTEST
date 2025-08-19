@@ -1134,7 +1134,8 @@ export default function SalesOrders() {
                   <div className="space-y-4">
                     {/* Invoice Info */}
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
+                      {/* First Row */}
+                      <div className="grid grid-cols-5 gap-4 text-sm mb-3">
                         <div>
                           <span className="font-medium">Số đơn bán:</span>
                           {isEditing && editableInvoice ? (
@@ -1144,7 +1145,7 @@ export default function SalesOrders() {
                               className="mt-1"
                             />
                           ) : (
-                            <div>{selectedInvoice.displayNumber}</div>
+                            <div className="text-blue-600 font-medium">{selectedInvoice.displayNumber}</div>
                           )}
                         </div>
                         <div>
@@ -1169,7 +1170,7 @@ export default function SalesOrders() {
                               className="mt-1"
                             />
                           ) : (
-                            <div>{selectedInvoice.customerName}</div>
+                            <div className="text-blue-600 font-medium">{selectedInvoice.customerName}</div>
                           )}
                         </div>
                         <div>
@@ -1184,21 +1185,25 @@ export default function SalesOrders() {
                             <div>{selectedInvoice.customerPhone || '-'}</div>
                           )}
                         </div>
-                        <div className="col-span-2">
-                          <span className="font-medium">Địa chỉ:</span>
-                          {isEditing && editableInvoice ? (
-                            <Input 
-                              value={editableInvoice.customerAddress || ''}
-                              onChange={(e) => updateEditableInvoiceField('customerAddress', e.target.value)}
-                              className="mt-1"
-                            />
-                          ) : (
-                            <div>{selectedInvoice.customerAddress || '-'}</div>
-                          )}
+                        <div>
+                          <span className="font-medium">Trạng thái:</span>
+                          <div>{getInvoiceStatusBadge(selectedInvoice.displayStatus)}</div>
+                        </div>
+                      </div>
+
+                      {/* Second Row */}
+                      <div className="grid grid-cols-5 gap-4 text-sm">
+                        <div>
+                          <span className="font-medium">Thu ngân:</span>
+                          <div>Nguyễn Văn A</div>
                         </div>
                         <div>
                           <span className="font-medium">Hình thức bán:</span>
-                          <div>Bán tại cửa hàng</div>
+                          <div>Ăn tại chỗ</div>
+                        </div>
+                        <div>
+                          <span className="font-medium">Bàn:</span>
+                          <div>{selectedInvoice.type === 'order' && selectedInvoice.tableId ? `Tầng 2 - Bàn ${selectedInvoice.tableId}` : '-'}</div>
                         </div>
                         <div>
                           <span className="font-medium">Ký hiệu hóa đơn:</span>
@@ -1224,20 +1229,36 @@ export default function SalesOrders() {
                             <div>{selectedInvoice.invoiceNumber || String(selectedInvoice.id).padStart(8, '0')}</div>
                           )}
                         </div>
+                      </div>
+
+                      {/* Address Row (if exists) */}
+                      {(selectedInvoice.customerAddress || isEditing) && (
+                        <div className="mt-3 text-sm">
+                          <span className="font-medium">Địa chỉ:</span>
+                          {isEditing && editableInvoice ? (
+                            <Input 
+                              value={editableInvoice.customerAddress || ''}
+                              onChange={(e) => updateEditableInvoiceField('customerAddress', e.target.value)}
+                              className="mt-1"
+                            />
+                          ) : (
+                            <div className="mt-1">{selectedInvoice.customerAddress || '-'}</div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Additional Status Info */}
+                      <div className="mt-3 flex items-center gap-4 text-sm">
                         <div>
                           <span className="font-medium">Trạng thái HĐ:</span>
-                          <div>{getEInvoiceStatusBadge(selectedInvoice.einvoiceStatus || 0)}</div>
-                        </div>
-                        <div>
-                          <span className="font-medium">Trạng thái đơn:</span>
-                          <div>{getInvoiceStatusBadge(selectedInvoice.displayStatus)}</div>
+                          <span className="ml-2">{getEInvoiceStatusBadge(selectedInvoice.einvoiceStatus || 0)}</span>
                         </div>
                         {selectedInvoice.type === 'order' && (
                           <div>
                             <span className="font-medium">Loại:</span>
-                            <div className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                            <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
                               Đơn hàng
-                            </div>
+                            </span>
                           </div>
                         )}
                       </div>
