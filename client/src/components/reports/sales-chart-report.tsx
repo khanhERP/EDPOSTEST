@@ -206,7 +206,7 @@ export function SalesChartReport() {
 
   // Legacy Sales Report Component Logic
   const renderSalesReport = () => {
-    if (!transactions || !Array.isArray(transactions)) {
+    if (!orders || !Array.isArray(orders)) {
       return (
         <div className="flex justify-center py-8">
           <div className="text-gray-500">{t("reports.loading")}...</div>
@@ -214,36 +214,51 @@ export function SalesChartReport() {
       );
     }
 
-    // Use same filtering logic as dashboard
+    // Use EXACT same filtering logic as dashboard
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    // Filter completed orders like dashboard does
-    const filteredCompletedOrders =
-      orders?.filter((order: any) => {
-        // Check if order is completed/paid (same as dashboard)
-        if (order.status !== "completed" && order.status !== "paid")
-          return false;
+    // Filter completed orders EXACTLY like dashboard does
+    const filteredCompletedOrders = orders.filter((order: any) => {
+      // Check if order is completed/paid (EXACT same as dashboard)
+      if (order.status !== 'completed' && order.status !== 'paid') return false;
 
-        // Try multiple possible date fields (same as dashboard)
-        const orderDate = new Date(
-          order.orderedAt ||
-            order.createdAt ||
-            order.created_at ||
-            order.paidAt,
-        );
+      // Try multiple possible date fields (EXACT same as dashboard)
+      const orderDate = new Date(
+        order.orderedAt || order.createdAt || order.created_at || order.paidAt
+      );
 
-        // Skip if date is invalid
-        if (isNaN(orderDate.getTime())) {
-          return false;
-        }
+      // Skip if date is invalid (EXACT same as dashboard)
+      if (isNaN(orderDate.getTime())) {
+        console.log('Invalid order date for order:', order.id, 'date fields:', {
+          orderedAt: order.orderedAt,
+          createdAt: order.createdAt,
+          created_at: order.created_at,
+          paidAt: order.paidAt
+        });
+        return false;
+      }
 
-        const orderDateOnly = new Date(orderDate);
-        orderDateOnly.setHours(0, 0, 0, 0);
+      return orderDate >= start && orderDate <= end;
+    });
 
-        return orderDateOnly >= start && orderDateOnly <= end;
-      }) || [];
+    console.log("Sales Chart Report Debug:", {
+      totalOrders: orders.length,
+      startDate,
+      endDate,
+      completedOrders: orders.filter((o: any) => o.status === 'completed' || o.status === 'paid').length,
+      filteredCompletedOrders: filteredCompletedOrders.length,
+      sampleOrderDates: orders.slice(0, 5).map((o: any) => ({
+        id: o.id,
+        status: o.status,
+        orderedAt: o.orderedAt,
+        createdAt: o.createdAt,
+        created_at: o.created_at,
+        paidAt: o.paidAt,
+        parsedDate: new Date(o.orderedAt || o.createdAt || o.created_at || o.paidAt).toISOString()
+      })),
+    });
 
     // Convert orders to transaction-like format for compatibility
     const filteredTransactions = filteredCompletedOrders.map((order: any) => ({
@@ -283,7 +298,7 @@ export function SalesChartReport() {
         dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
       }
 
-      // Use same revenue calculation as dashboard
+      // Use EXACT same revenue calculation as dashboard: total - discount
       const orderTotal = Number(order.total || 0);
       const discount = Number(order.discount || 0);
       dailySales[date].revenue += orderTotal - discount;
@@ -308,13 +323,13 @@ export function SalesChartReport() {
       }
       paymentMethods[method].count += 1;
 
-      // Use same revenue calculation as dashboard
+      // Use EXACT same revenue calculation as dashboard: total - discount
       const orderTotal = Number(order.total || 0);
       const discount = Number(order.discount || 0);
       paymentMethods[method].revenue += orderTotal - discount;
     });
 
-    // Calculate totals using same logic as dashboard
+    // Calculate totals using EXACT same logic as dashboard
     const totalRevenue = filteredCompletedOrders.reduce(
       (total: number, order: any) => {
         const orderTotal = Number(order.total || 0);
@@ -326,7 +341,7 @@ export function SalesChartReport() {
 
     const totalOrders = filteredCompletedOrders.length;
 
-    // Count unique customers like dashboard does
+    // Count unique customers EXACTLY like dashboard does
     const uniqueCustomers = new Set();
     filteredCompletedOrders.forEach((order: any) => {
       if (order.customerId) {
@@ -1312,7 +1327,7 @@ export function SalesChartReport() {
 
   // Legacy Employee Report Component Logic
   const renderEmployeeReport = () => {
-    if (!transactions || !Array.isArray(transactions)) {
+    if (!orders || !Array.isArray(orders)) {
       return (
         <div className="flex justify-center py-8">
           <div className="text-gray-500">{t("reports.loading")}...</div>
@@ -1324,22 +1339,35 @@ export function SalesChartReport() {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    const filteredTransactions = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at,
+    // Use EXACT same filtering logic as dashboard for orders
+    const filteredCompletedOrders = orders.filter((order: any) => {
+      // Check if order is completed/paid (EXACT same as dashboard)
+      if (order.status !== 'completed' && order.status !== 'paid') return false;
+
+      // Try multiple possible date fields (EXACT same as dashboard)
+      const orderDate = new Date(
+        order.orderedAt || order.createdAt || order.created_at || order.paidAt
       );
-      const dateMatch = transactionDate >= start && transactionDate <= end;
+
+      // Skip if date is invalid
+      if (isNaN(orderDate.getTime())) {
+        return false;
+      }
+
+      const dateMatch = orderDate >= start && orderDate <= end;
 
       const employeeMatch =
         selectedEmployee === "all" ||
-        transaction.cashierName === selectedEmployee ||
-        transaction.employeeId?.toString() === selectedEmployee ||
-        transaction.cashierName?.includes(selectedEmployee);
+        order.employeeName === selectedEmployee ||
+        order.cashierName === selectedEmployee ||
+        order.employeeId?.toString() === selectedEmployee ||
+        order.employeeName?.includes(selectedEmployee) ||
+        order.cashierName?.includes(selectedEmployee);
 
       return dateMatch && employeeMatch;
     });
 
-    // Group transactions by employee and extract payment methods
+    // Group orders by employee and extract payment methods
     const employeeData: {
       [employeeKey: string]: {
         employeeCode: string;
@@ -1352,17 +1380,17 @@ export function SalesChartReport() {
       };
     } = {};
 
-    // Get all unique payment methods from filtered transactions
+    // Get all unique payment methods from filtered orders
     const allPaymentMethods = new Set<string>();
-    filteredTransactions.forEach((transaction: any) => {
-      const method = transaction.paymentMethod || "cash";
+    filteredCompletedOrders.forEach((order: any) => {
+      const method = order.paymentMethod || "cash";
       allPaymentMethods.add(method);
     });
 
-    filteredTransactions.forEach((transaction: any) => {
-      const employeeCode = transaction.employeeId || "EMP-000";
+    filteredCompletedOrders.forEach((order: any) => {
+      const employeeCode = order.employeeId || "EMP-000";
       const employeeName =
-        transaction.cashierName || transaction.employeeName || "Unknown";
+        order.cashierName || order.employeeName || "Unknown";
       const employeeKey = `${employeeCode}-${employeeName}`;
 
       if (!employeeData[employeeKey]) {
@@ -1382,20 +1410,21 @@ export function SalesChartReport() {
         });
       }
 
-      const transactionTotal = Number(transaction.total || 0);
-      const transactionDiscount = Number(transaction.discount || 0);
-      const transactionRevenue = transactionTotal - transactionDiscount; // Use same calculation as dashboard
-      const transactionTax = transactionRevenue * 0.1; // 10% tax on revenue
+      // Use EXACT same calculation as dashboard: total - discount
+      const orderTotal = Number(order.total || 0);
+      const orderDiscount = Number(order.discount || 0);
+      const orderRevenue = orderTotal - orderDiscount; // Use same calculation as dashboard
+      const orderTax = orderRevenue * 0.1; // 10% tax on revenue
 
       employeeData[employeeKey].orderCount += 1;
-      employeeData[employeeKey].revenue += transactionRevenue;
-      employeeData[employeeKey].tax += transactionTax;
-      employeeData[employeeKey].total += transactionRevenue;
+      employeeData[employeeKey].revenue += orderRevenue;
+      employeeData[employeeKey].tax += orderTax;
+      employeeData[employeeKey].total += orderRevenue;
 
       // Add to payment method total
-      const paymentMethod = transaction.paymentMethod || "cash";
+      const paymentMethod = order.paymentMethod || "cash";
       employeeData[employeeKey].paymentMethods[paymentMethod] +=
-        transactionTotal;
+        orderRevenue; // Use revenue instead of total for consistency
     });
 
     const data = Object.values(employeeData).sort((a, b) => b.total - a.total);
