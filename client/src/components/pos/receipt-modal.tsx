@@ -429,7 +429,8 @@ export function ReceiptModal({
           </div>
         </div>
 
-        <div className="flex justify-center p-2 border-t">
+        <div className="flex justify-center p-2 border-t"></div>
+      </DialogContent>
           {isPreview ? (
             <div className="flex space-x-3 w-full">
               <Button onClick={onClose} variant="outline" className="flex-1">
@@ -454,7 +455,6 @@ export function ReceiptModal({
             </div>
           )}
         </div>
-      </DialogContent>
 
       {/* Payment Method Modal */}
       {showPaymentMethodModal && (
