@@ -322,22 +322,29 @@ export function ReceiptModal({
           </div>
 
           <div className="space-y-2 mb-3">
-            {receipt.items.map((item) => (
-              <div key={item.id}>
-                <div className="flex justify-between text-sm">
-                  <div className="flex-1">
-                    <div>{item.productName}</div>
-                    <div className="text-xs text-gray-600">
-                      SKU: {`FOOD${String(item.productId || item.id).padStart(5, '0')}`}
+            {receipt.items.map((item) => {
+              // Calculate price without tax for display
+              const itemTaxRate = item.taxRate || 10;
+              const priceWithoutTax = parseFloat(item.price) / (1 + itemTaxRate / 100);
+              const displayTotal = priceWithoutTax * item.quantity;
+              
+              return (
+                <div key={item.id}>
+                  <div className="flex justify-between text-sm">
+                    <div className="flex-1">
+                      <div>{item.productName}</div>
+                      <div className="text-xs text-gray-600">
+                        SKU: {`FOOD${String(item.productId || item.id).padStart(5, '0')}`}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {item.quantity} x {priceWithoutTax.toFixed(2)} ₫
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-600">
-                      {item.quantity} x {item.price} ₫
-                    </div>
+                    <div>{displayTotal.toFixed(2)} ₫</div>
                   </div>
-                  <div>{item.total} ₫</div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="border-t border-gray-300 pt-3 space-y-1">
