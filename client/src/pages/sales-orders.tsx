@@ -49,7 +49,7 @@ interface InvoiceItem {
 interface Order {
   id: number;
   orderNumber: string;
-  tableId: number;
+  tableId?: number;
   employeeId?: number;
   status: string;
   customerName?: string;
@@ -550,7 +550,7 @@ export default function SalesOrders() {
     setEditableInvoice(null);
   };
 
-  const updateEditableInvoiceField = (field: keyof Invoice, value: string) => {
+  const updateEditableInvoiceField = (field: keyof Invoice | 'orderedAt' | 'orderNumber' | 'customerName' | 'customerPhone' | 'customerAddress' | 'symbol' | 'invoiceNumber' | 'notes', value: any) => {
     if (editableInvoice) {
       setEditableInvoice({
         ...editableInvoice,
@@ -1004,7 +1004,7 @@ export default function SalesOrders() {
                             return (
                               <tr
                                 key={`${item.type}-${item.id}`}
-                                className={`hover:bg-gray-50 cursor-pointer ${
+                                className={`hover:bg-gray-50 ${
                                   selectedInvoice?.id === item.id && selectedInvoice?.type === item.type ? 'bg-blue-100' : ''
                                 }`}
                                 onClick={() => {
@@ -1102,6 +1102,331 @@ export default function SalesOrders() {
                       </tbody>
                     </table>
                     </div>
+                    {/* Detail row for selected invoice */}
+                    {selectedInvoice && (
+                      <div className="mt-2 p-4 border rounded-lg bg-gray-50">
+                        <div className="space-y-4">
+                          {/* Invoice Info */}
+                          <div className="bg-white p-4 rounded-lg">
+                            <div className="w-full overflow-x-auto">
+                              <div className="space-y-3 min-w-max">
+                                <div className="flex items-center gap-6 text-sm whitespace-nowrap">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">Số đơn bán:</span>
+                                    {isEditing && editableInvoice ? (
+                                      <Input 
+                                        value={editableInvoice.tradeNumber || editableInvoice.invoiceNumber || editableInvoice.orderNumber || ''}
+                                        onChange={(e) => updateEditableInvoiceField(selectedInvoice.type === 'order' ? 'orderNumber' : 'tradeNumber', e.target.value)}
+                                        className="w-32"
+                                      />
+                                    ) : (
+                                      <span className="text-blue-600 font-medium">{selectedInvoice.displayNumber}</span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">Ngày:</span>
+                                    {isEditing && editableInvoice ? (
+                                      <Input 
+                                        type="date"
+                                        value={(editableInvoice.invoiceDate || editableInvoice.orderedAt)?.split('T')[0]}
+                                        onChange={(e) => updateEditableInvoiceField(selectedInvoice.type === 'order' ? 'orderedAt' : 'invoiceDate', e.target.value)}
+                                        className="w-32"
+                                      />
+                                    ) : (
+                                      <span>{formatDate(selectedInvoice.date)}</span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">Khách hàng:</span>
+                                    {isEditing && editableInvoice ? (
+                                      <Input 
+                                        value={editableInvoice.customerName}
+                                        onChange={(e) => updateEditableInvoiceField('customerName', e.target.value)}
+                                        className="w-40"
+                                      />
+                                    ) : (
+                                      <span className="text-blue-600 font-medium">{selectedInvoice.customerName}</span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">Điện thoại:</span>
+                                    {isEditing && editableInvoice ? (
+                                      <Input 
+                                        value={editableInvoice.customerPhone || ''}
+                                        onChange={(e) => updateEditableInvoiceField('customerPhone', e.target.value)}
+                                        className="w-32"
+                                      />
+                                    ) : (
+                                      <span>{selectedInvoice.customerPhone || '-'}</span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">Trạng thái:</span>
+                                    <span>{getInvoiceStatusBadge(selectedInvoice.displayStatus)}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-6 text-sm whitespace-nowrap">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">Thu ngân:</span>
+                                    <span>Nguyễn Văn A</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">Hình thức bán:</span>
+                                    <span>Ăn tại chỗ</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">Bàn:</span>
+                                    <span>{selectedInvoice.type === 'order' && selectedInvoice.tableId ? `Tầng 2 - Bàn ${selectedInvoice.tableId}` : '-'}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">Ký hiệu hóa đơn:</span>
+                                    {isEditing && editableInvoice ? (
+                                      <Input 
+                                        value={editableInvoice.symbol || ''}
+                                        onChange={(e) => updateEditableInvoiceField('symbol', e.target.value)}
+                                        className="w-24"
+                                      />
+                                    ) : (
+                                      <span>{selectedInvoice.symbol || '1C21DTD'}</span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">Số hóa đơn:</span>
+                                    {isEditing && editableInvoice ? (
+                                      <Input 
+                                        value={editableInvoice.invoiceNumber || ''}
+                                        onChange={(e) => updateEditableInvoiceField('invoiceNumber', e.target.value)}
+                                        className="w-32"
+                                      />
+                                    ) : (
+                                      <span>{selectedInvoice.invoiceNumber || String(selectedInvoice.id).padStart(8, '0')}</span>
+                                    )}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-medium">Trạng thái HĐ:</span>
+                                    <span>{getEInvoiceStatusBadge(selectedInvoice.einvoiceStatus || 0)}</span>
+                                  </div>
+                                  {selectedInvoice.type === 'order' && (
+                                    <div className="flex items-center gap-2">
+                                      <span className="font-medium">Loại:</span>
+                                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                                        Đơn hàng
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            {(selectedInvoice.customerAddress || isEditing) && (
+                              <div className="mt-3 text-sm border-t pt-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">Địa chỉ:</span>
+                                  {isEditing && editableInvoice ? (
+                                    <Input 
+                                      value={editableInvoice.customerAddress || ''}
+                                      onChange={(e) => updateEditableInvoiceField('customerAddress', e.target.value)}
+                                      className="flex-1"
+                                    />
+                                  ) : (
+                                    <span className="flex-1">{selectedInvoice.customerAddress || '-'}</span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Invoice/Order Items */}
+                          <div>
+                            <h4 className="font-medium mb-3">Danh sách hàng hóa</h4>
+                            <div className="border rounded-lg overflow-hidden">
+                              <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2">
+                                <div className="col-span-1">STT</div>
+                                <div className="col-span-3">Mã hàng</div>
+                                <div className="col-span-3">Tên hàng</div>
+                                <div className="col-span-1">ĐVT</div>
+                                <div className="col-span-1">SL</div>
+                                <div className="col-span-1">Đơn giá</div>
+                                <div className="col-span-1">Thành tiền</div>
+                                <div className="col-span-1">Thuế GTGT</div>
+                              </div>
+                              {(() => {
+                                const items = selectedInvoice?.type === 'order' ? orderItems : invoiceItems;
+                                if (!items || items.length === 0) {
+                                  return (
+                                    <div className="text-center py-4 text-gray-500 border-t">
+                                      Không có sản phẩm nào
+                                    </div>
+                                  );
+                                }
+                                return items.map((item: any, index: number) => (
+                                  <div key={item.id} className="grid grid-cols-12 gap-2 text-xs p-2 border-t">
+                                    <div className="col-span-1">{index + 1}</div>
+                                    <div className="col-span-3">SP{String(item.productId).padStart(3, '0')}</div>
+                                    <div className="col-span-3">{item.productName}</div>
+                                    <div className="col-span-1">Cái</div>
+                                    <div className="col-span-1 text-center">{item.quantity}</div>
+                                    <div className="col-span-1 text-right">{formatCurrency(item.unitPrice)}</div>
+                                    <div className="col-span-1 text-right">{formatCurrency(item.total)}</div>
+                                    <div className="col-span-1 text-center">{item.taxRate || 0}%</div>
+                                  </div>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+
+                          {/* Summary */}
+                          <div className="bg-blue-50 p-4 rounded-lg">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div className="space-y-2">
+                                {(() => {
+                                  const subtotal = parseFloat(selectedInvoice.subtotal || '0');
+                                  const tax = parseFloat(selectedInvoice.tax || '0');
+                                  const discount = 0; 
+                                  const totalPayment = subtotal + tax - discount;
+                                  return (
+                                    <>
+                                      <div className="flex justify-between">
+                                        <span>Tổng tiền thanh toán:</span>
+                                        <span className="font-bold">{formatCurrency(totalPayment)}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span>Thành tiền:</span>
+                                        <span className="font-bold">{formatCurrency(subtotal)}</span>
+                                      </div>
+                                      <div className="flex justify-between text-red-600">
+                                        <span>Giảm giá:</span>
+                                        <span>{formatCurrency(discount)}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span>Thuế suất (10%) Thuế GTGT:</span>
+                                        <span className="font-bold">{formatCurrency(tax)}</span>
+                                      </div>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                              <div className="space-y-2">
+                                {(() => {
+                                  const isPaid = selectedInvoice.displayStatus === 1 || 
+                                                selectedInvoice.status === 'paid' || 
+                                                selectedInvoice.paymentStatus === 'paid';
+                                  const paidAmount = isPaid ? selectedInvoice.total : 0;
+                                  return (
+                                    <>
+                                      <div className="flex justify-between">
+                                        <span>Khách hàng trả:</span>
+                                        <span className="font-bold">{formatCurrency(paidAmount)}</span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span>Tiền mặt:</span>
+                                        <span className="font-bold">
+                                          {isPaid && (!selectedInvoice.paymentMethod || selectedInvoice.paymentMethod === 1) 
+                                            ? formatCurrency(paidAmount) : '0'}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span>Chuyển khoản:</span>
+                                        <span className="font-bold">
+                                          {isPaid && selectedInvoice.paymentMethod === 2 
+                                            ? formatCurrency(paidAmount) : '0'}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between">
+                                        <span>QR Code InfoCAMS:</span>
+                                        <span className="font-bold">
+                                          {isPaid && (selectedInvoice.paymentMethod === 7 || selectedInvoice.paymentMethod >= 4) 
+                                            ? formatCurrency(paidAmount) : '0'}
+                                        </span>
+                                      </div>
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Notes */}
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Ghi chú</label>
+                            {isEditing && editableInvoice ? (
+                              <textarea
+                                value={editableInvoice.notes || ''}
+                                onChange={(e) => updateEditableInvoiceField('notes', e.target.value)}
+                                className="w-full p-3 border rounded min-h-[80px] resize-none"
+                                placeholder="Nhập ghi chú..."
+                              />
+                            ) : (
+                              <div className="p-3 bg-gray-50 rounded border min-h-[80px]">
+                                {selectedInvoice.notes || 'Không có ghi chú'}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 pt-4 border-t">
+                            <Button 
+                              size="sm" 
+                              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+                              onClick={() => {
+                                if (selectedInvoice && selectedInvoice.invoiceStatus !== 3) {
+                                  setShowCancelDialog(true);
+                                }
+                              }}
+                              disabled={selectedInvoice?.invoiceStatus === 3 || cancelInvoiceMutation.isPending}
+                            >
+                              <X className="w-4 h-4" />
+                              {cancelInvoiceMutation.isPending ? 'Đang hủy...' : 'Hủy đơn'}
+                            </Button>
+                            {!isEditing ? (
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
+                                onClick={handleEditInvoice}
+                              >
+                                <FileText className="w-4 h-4" />
+                                Sửa đơn
+                              </Button>
+                            ) : (
+                              <>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                                  onClick={handleSaveInvoice}
+                                  disabled={updateInvoiceMutation.isPending}
+                                >
+                                  <Package className="w-4 h-4" />
+                                  {updateInvoiceMutation.isPending ? 'Đang lưu...' : 'Lưu'}
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="flex items-center gap-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                                  onClick={handleCancelEdit}
+                                >
+                                  <X className="w-4 h-4" />
+                                  Hủy sửa
+                                </Button>
+                              </>
+                            )}
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              className="flex items-center gap-2 border-red-500 text-red-600 hover:bg-red-50"
+                              onClick={() => {
+                                setSelectedInvoice(null);
+                                setIsEditing(false);
+                                setEditableInvoice(null);
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                              Đóng
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     {/* Pagination controls */}
                     <div className="flex justify-between items-center mt-4">
                       <div className="flex items-center space-x-2">
@@ -1164,362 +1489,6 @@ export default function SalesOrders() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Invoice Details - Only show when an invoice is selected */}
-            {selectedInvoice && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Chi tiết đơn hàng</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {selectedInvoice ? (
-                  <div className="space-y-4">
-                    {/* Invoice Info */}
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      {/* Two Row Layout with Combined Horizontal Scroll */}
-                      <div className="w-full overflow-x-auto">
-                        <div className="space-y-3 min-w-max">
-                          {/* First Row */}
-                          <div className="flex items-center gap-6 text-sm whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Số đơn bán:</span>
-                              {isEditing && editableInvoice ? (
-                                <Input 
-                                  value={editableInvoice.tradeNumber || editableInvoice.invoiceNumber || editableInvoice.orderNumber || ''}
-                                  onChange={(e) => updateEditableInvoiceField(selectedInvoice.type === 'order' ? 'orderNumber' : 'tradeNumber', e.target.value)}
-                                  className="w-32"
-                                />
-                              ) : (
-                                <span className="text-blue-600 font-medium">{selectedInvoice.displayNumber}</span>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Ngày:</span>
-                              {isEditing && editableInvoice ? (
-                                <Input 
-                                  type="date"
-                                  value={(editableInvoice.invoiceDate || editableInvoice.orderedAt)?.split('T')[0]}
-                                  onChange={(e) => updateEditableInvoiceField(selectedInvoice.type === 'order' ? 'orderedAt' : 'invoiceDate', e.target.value)}
-                                  className="w-32"
-                                />
-                              ) : (
-                                <span>{formatDate(selectedInvoice.date)}</span>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Khách hàng:</span>
-                              {isEditing && editableInvoice ? (
-                                <Input 
-                                  value={editableInvoice.customerName}
-                                  onChange={(e) => updateEditableInvoiceField('customerName', e.target.value)}
-                                  className="w-40"
-                                />
-                              ) : (
-                                <span className="text-blue-600 font-medium">{selectedInvoice.customerName}</span>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Điện thoại:</span>
-                              {isEditing && editableInvoice ? (
-                                <Input 
-                                  value={editableInvoice.customerPhone || ''}
-                                  onChange={(e) => updateEditableInvoiceField('customerPhone', e.target.value)}
-                                  className="w-32"
-                                />
-                              ) : (
-                                <span>{selectedInvoice.customerPhone || '-'}</span>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Trạng thái:</span>
-                              <span>{getInvoiceStatusBadge(selectedInvoice.displayStatus)}</span>
-                            </div>
-                          </div>
-
-                          {/* Second Row */}
-                          <div className="flex items-center gap-6 text-sm whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Thu ngân:</span>
-                              <span>Nguyễn Văn A</span>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Hình thức bán:</span>
-                              <span>Ăn tại chỗ</span>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Bàn:</span>
-                              <span>{selectedInvoice.type === 'order' && selectedInvoice.tableId ? `Tầng 2 - Bàn ${selectedInvoice.tableId}` : '-'}</span>
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Ký hiệu hóa đơn:</span>
-                              {isEditing && editableInvoice ? (
-                                <Input 
-                                  value={editableInvoice.symbol || ''}
-                                  onChange={(e) => updateEditableInvoiceField('symbol', e.target.value)}
-                                  className="w-24"
-                                />
-                              ) : (
-                                <span>{selectedInvoice.symbol || '1C21DTD'}</span>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Số hóa đơn:</span>
-                              {isEditing && editableInvoice ? (
-                                <Input 
-                                  value={editableInvoice.invoiceNumber || ''}
-                                  onChange={(e) => updateEditableInvoiceField('invoiceNumber', e.target.value)}
-                                  className="w-32"
-                                />
-                              ) : (
-                                <span>{selectedInvoice.invoiceNumber || String(selectedInvoice.id).padStart(8, '0')}</span>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">Trạng thái HĐ:</span>
-                              <span>{getEInvoiceStatusBadge(selectedInvoice.einvoiceStatus || 0)}</span>
-                            </div>
-                            
-                            {selectedInvoice.type === 'order' && (
-                              <div className="flex items-center gap-2">
-                                <span className="font-medium">Loại:</span>
-                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                                  Đơn hàng
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Address Row (if exists) */}
-                      {(selectedInvoice.customerAddress || isEditing) && (
-                        <div className="mt-3 text-sm border-t pt-3">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">Địa chỉ:</span>
-                            {isEditing && editableInvoice ? (
-                              <Input 
-                                value={editableInvoice.customerAddress || ''}
-                                onChange={(e) => updateEditableInvoiceField('customerAddress', e.target.value)}
-                                className="flex-1"
-                              />
-                            ) : (
-                              <span className="flex-1">{selectedInvoice.customerAddress || '-'}</span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Invoice/Order Items */}
-                    <div>
-                      <h4 className="font-medium mb-3">Danh sách hàng hóa</h4>
-                      <div className="border rounded-lg overflow-hidden">
-                        <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700 bg-gray-50 p-2">
-                          <div className="col-span-1">STT</div>
-                          <div className="col-span-3">Mã hàng</div>
-                          <div className="col-span-3">Tên hàng</div>
-                          <div className="col-span-1">ĐVT</div>
-                          <div className="col-span-1">SL</div>
-                          <div className="col-span-1">Đơn giá</div>
-                          <div className="col-span-1">Thành tiền</div>
-                          <div className="col-span-1">Thuế GTGT</div>
-                        </div>
-                        {(() => {
-                          // Use appropriate items based on selected invoice type
-                          const items = selectedInvoice?.type === 'order' ? orderItems : invoiceItems;
-
-                          if (!items || items.length === 0) {
-                            return (
-                              <div className="text-center py-4 text-gray-500 border-t">
-                                Không có sản phẩm nào
-                              </div>
-                            );
-                          }
-
-                          return items.map((item: any, index: number) => (
-                            <div key={item.id} className="grid grid-cols-12 gap-2 text-xs p-2 border-t">
-                              <div className="col-span-1">{index + 1}</div>
-                              <div className="col-span-3">SP{String(item.productId).padStart(3, '0')}</div>
-                              <div className="col-span-3">{item.productName}</div>
-                              <div className="col-span-1">Cái</div>
-                              <div className="col-span-1 text-center">{item.quantity}</div>
-                              <div className="col-span-1 text-right">{formatCurrency(item.unitPrice)}</div>
-                              <div className="col-span-1 text-right">{formatCurrency(item.total)}</div>
-                              <div className="col-span-1 text-center">{item.taxRate || 0}%</div>
-                            </div>
-                          ));
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Summary */}
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="space-y-2">
-                          {(() => {
-                            const subtotal = parseFloat(selectedInvoice.subtotal || '0');
-                            const tax = parseFloat(selectedInvoice.tax || '0');
-                            const discount = 0; // Giảm giá mặc định là 0
-                            const totalPayment = subtotal + tax - discount;
-
-                            return (
-                              <>
-                                <div className="flex justify-between">
-                                  <span>Tổng tiền thanh toán:</span>
-                                  <span className="font-bold">{formatCurrency(totalPayment)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Thành tiền:</span>
-                                  <span className="font-bold">{formatCurrency(subtotal)}</span>
-                                </div>
-                                <div className="flex justify-between text-red-600">
-                                  <span>Giảm giá:</span>
-                                  <span>{formatCurrency(discount)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Thuế suất (10%) Thuế GTGT:</span>
-                                  <span className="font-bold">{formatCurrency(tax)}</span>
-                                </div>
-                              </>
-                            );
-                          })()}
-                        </div>
-                        <div className="space-y-2">
-                          {(() => {
-                            // Check if order is paid based on status and payment status
-                            const isPaid = selectedInvoice.displayStatus === 1 || 
-                                          selectedInvoice.status === 'paid' || 
-                                          selectedInvoice.paymentStatus === 'paid';
-
-                            const paidAmount = isPaid ? selectedInvoice.total : 0;
-
-                            return (
-                              <>
-                                <div className="flex justify-between">
-                                  <span>Khách hàng trả:</span>
-                                  <span className="font-bold">{formatCurrency(paidAmount)}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Tiền mặt:</span>
-                                  <span className="font-bold">
-                                    {isPaid && (!selectedInvoice.paymentMethod || selectedInvoice.paymentMethod === 1) 
-                                      ? formatCurrency(paidAmount) : '0'}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>Chuyển khoản:</span>
-                                  <span className="font-bold">
-                                    {isPaid && selectedInvoice.paymentMethod === 2 
-                                      ? formatCurrency(paidAmount) : '0'}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span>QR Code InfoCAMS:</span>
-                                  <span className="font-bold">
-                                    {isPaid && (selectedInvoice.paymentMethod === 7 || selectedInvoice.paymentMethod >= 4) 
-                                      ? formatCurrency(paidAmount) : '0'}
-                                  </span>
-                                </div>
-                              </>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Notes */}
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Ghi chú</label>
-                      {isEditing && editableInvoice ? (
-                        <textarea
-                          value={editableInvoice.notes || ''}
-                          onChange={(e) => updateEditableInvoiceField('notes', e.target.value)}
-                          className="w-full p-3 border rounded min-h-[80px] resize-none"
-                          placeholder="Nhập ghi chú..."
-                        />
-                      ) : (
-                        <div className="p-3 bg-gray-50 rounded border min-h-[80px]">
-                          {selectedInvoice.notes || 'Không có ghi chú'}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-2 pt-4 border-t">
-                      <Button 
-                        size="sm" 
-                        className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
-                        onClick={() => {
-                          if (selectedInvoice && selectedInvoice.invoiceStatus !== 3) {
-                            setShowCancelDialog(true);
-                          }
-                        }}
-                        disabled={selectedInvoice?.invoiceStatus === 3 || cancelInvoiceMutation.isPending}
-                      >
-                        <X className="w-4 h-4" />
-                        {cancelInvoiceMutation.isPending ? 'Đang hủy...' : 'Hủy đơn'}
-                      </Button>
-                      {!isEditing ? (
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
-                          onClick={handleEditInvoice}
-                        >
-                          <FileText className="w-4 h-4" />
-                          Sửa đơn
-                        </Button>
-                      ) : (
-                        <>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
-                            onClick={handleSaveInvoice}
-                            disabled={updateInvoiceMutation.isPending}
-                          >
-                            <Package className="w-4 h-4" />
-                            {updateInvoiceMutation.isPending ? 'Đang lưu...' : 'Lưu'}
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="flex items-center gap-2 border-yellow-500 text-yellow-600 hover:bg-yellow-50"
-                            onClick={handleCancelEdit}
-                          >
-                            <X className="w-4 h-4" />
-                            Hủy sửa
-                          </Button>
-                        </>
-                      )}
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="flex items-center gap-2 border-red-500 text-red-600 hover:bg-red-50"
-                        onClick={() => {
-                          setSelectedInvoice(null);
-                          setIsEditing(false);
-                          setEditableInvoice(null);
-                        }}
-                      >
-                        <X className="w-4 h-4" />
-                        Đóng
-                      </Button>
-                    </div>
-                  </div>
-                ) : null}
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </div>
