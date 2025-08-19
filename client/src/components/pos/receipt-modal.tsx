@@ -331,28 +331,54 @@ export function ReceiptModal({
                       SKU: {`FOOD${String(item.productId || item.id).padStart(5, '0')}`}
                     </div>
                     <div className="text-xs text-gray-600">
-                      {item.quantity} x {item.price} ₫
+                      {item.quantity} x {parseFloat(item.price).toLocaleString('vi-VN')} ₫
                     </div>
                   </div>
-                  <div>{item.total} ₫</div>
+                  <div>{parseFloat(item.total).toLocaleString('vi-VN')} ₫</div>
                 </div>
               </div>
             ))}
           </div>
 
           <div className="border-t border-gray-300 pt-3 space-y-1">
-            <div className="flex justify-between text-sm">
-              <span>{t('pos.subtotal')}</span>
-              <span>{receipt.subtotal} ₫</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Thuế</span>
-              <span>{receipt.tax} ₫</span>
-            </div>
-            <div className="flex justify-between font-bold">
-              <span>{t('pos.total')}</span>
-              <span>{receipt.total} ₫</span>
-            </div>
+            {(() => {
+              // Calculate correct totals
+              let calculatedSubtotal = 0;
+              let calculatedTax = 0;
+              
+              receipt.items.forEach((item) => {
+                const itemPrice = parseFloat(item.price) || 0;
+                const itemQuantity = parseInt(item.quantity) || 0;
+                const itemSubtotal = itemPrice * itemQuantity;
+                
+                // Calculate tax based on the tax rate (default 10%)
+                const taxRate = 10; // Fixed 10% tax rate
+                const itemTax = (itemSubtotal * taxRate) / 100;
+                
+                calculatedSubtotal += itemSubtotal;
+                calculatedTax += itemTax;
+              });
+              
+              const calculatedTotal = calculatedSubtotal + calculatedTax;
+              
+              return (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span>{t('pos.subtotal')}</span>
+                    <span>{calculatedSubtotal.toLocaleString('vi-VN')} ₫</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Thuế (10%)</span>
+                    <span>{calculatedTax.toLocaleString('vi-VN')} ₫</span>
+                  </div>
+                  <div className="flex justify-between font-bold">
+                    <span>{t('pos.total')}</span>
+                    <span>{calculatedTotal.toLocaleString('vi-VN')} ₫</span>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
             <div className="flex justify-between text-sm mt-2">
               <span>{t('pos.paymentMethod')}</span>
               <span className="capitalize">
