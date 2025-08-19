@@ -104,7 +104,24 @@ export function SalesReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      // Filter completed orders by date range (like dashboard)
+      console.log("Sales Report Debug:", {
+        totalOrders: orders.length,
+        startDate,
+        endDate,
+        firstOrder: orders[0],
+        completedOrders: orders.filter((o: any) => o.status === 'completed' || o.status === 'paid').length,
+        sampleOrderDates: orders.slice(0, 5).map((o: any) => ({
+          id: o.id,
+          status: o.status,
+          orderedAt: o.orderedAt,
+          createdAt: o.createdAt,
+          created_at: o.created_at,
+          paidAt: o.paidAt,
+          parsedDate: new Date(o.orderedAt || o.createdAt || o.created_at || o.paidAt).toISOString()
+        })),
+      });
+
+      // Filter completed orders by date range (EXACT same logic as dashboard)
       const filteredOrders = orders.filter((order: any) => {
         // Check if order is completed/paid
         if (order.status !== 'completed' && order.status !== 'paid') return false;
@@ -116,13 +133,24 @@ export function SalesReport() {
 
         // Skip if date is invalid
         if (isNaN(orderDate.getTime())) {
+          console.log('Invalid order date for order:', order.id, 'date fields:', {
+            orderedAt: order.orderedAt,
+            createdAt: order.createdAt,
+            created_at: order.created_at,
+            paidAt: order.paidAt
+          });
           return false;
         }
 
         return orderDate >= start && orderDate <= end;
       });
 
-      // Daily sales breakdown with error handling
+      console.log("Sales Report Filtered:", {
+        filteredOrdersCount: filteredOrders.length,
+        dateRange: `${startDate} to ${endDate}`
+      });
+
+      // Daily sales breakdown with EXACT same logic as dashboard
       const dailySales: {
         [date: string]: { revenue: number; orders: number; customers: number };
       } = {};
@@ -135,94 +163,50 @@ export function SalesReport() {
 
           if (isNaN(orderDate.getTime())) return;
 
-          const date = orderDate.toISOString().split('T')[0];
+          const year = orderDate.getFullYear();
+          const month = (orderDate.getMonth() + 1).toString().padStart(2, "0");
+          const day = orderDate.getDate().toString().padStart(2, "0");
+          const date = `${year}-${month}-${day}`;
 
           if (!dailySales[date]) {
             dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
           }
 
+          // Use EXACT same revenue calculation as dashboard: total - discount
           const orderTotal = Number(order.total || 0);
           const discount = Number(order.discount || 0);
-          const revenue = orderTotal - discount;
-          
-          if (!isNaN(revenue) && revenue >= 0) {
-            dailySales[date].revenue += revenue;
-            dailySales[date].orders += 1;
-            // Count unique customers
-            if (order.customerId) {
-              dailySales[date].customers += 1;
-            } else {
-              dailySales[date].customers += 1; // Count as unique per order
-            }
+          dailySales[date].revenue += orderTotal - discount;
+          dailySales[date].orders += 1;
+
+          // Count unique customers per day
+          if (order.customerId) {
+            dailySales[date].customers += 1;
+          } else {
+            dailySales[date].customers += 1; // Count walk-in customers
           }
         } catch (error) {
           console.warn("Error processing order for daily sales:", error);
         }
       });
 
-      // Payment method breakdown with proper consolidation
+      // Payment method breakdown with EXACT same logic as dashboard
       const paymentMethods: {
         [method: string]: { count: number; revenue: number };
       } = {};
 
-      const consolidatePaymentMethod = (method: string): string => {
-        if (!method) return 'cash';
-        
-        const normalizedMethod = method.toLowerCase().trim();
-        switch (normalizedMethod) {
-          case 'credit_card':
-          case 'creditcard':
-          case 'credit card':
-            return 'credit_card';
-          case 'debit_card':
-          case 'debitcard':
-          case 'debit card':
-            return 'debit_card';
-          case 'qr_code':
-          case 'qrcode':
-          case 'qr code':
-            return 'qrCode';
-          case 'card':
-            return 'card';
-          case 'transfer':
-          case 'bank_transfer':
-          case 'bank transfer':
-            return 'transfer';
-          case 'cash':
-          case 'tiền mặt':
-            return 'cash';
-          case 'momo':
-            return 'momo';
-          case 'zalopay':
-            return 'zalopay';
-          case 'vnpay':
-            return 'vnpay';
-          case 'shopeepay':
-            return 'shopeepay';
-          case 'grabpay':
-            return 'grabpay';
-          default:
-            return normalizedMethod;
-        }
-      };
-
       filteredOrders.forEach((order: any) => {
         try {
-          const rawMethod = order.paymentMethod || order.payment_method || "cash";
-          const method = consolidatePaymentMethod(rawMethod);
-          
+          const method = order.paymentMethod || "cash";
           if (!paymentMethods[method]) {
             paymentMethods[method] = { count: 0, revenue: 0 };
           }
           
+          paymentMethods[method].count += 1;
+          
+          // Use EXACT same revenue calculation as dashboard: total - discount
           const orderTotal = Number(order.total || 0);
           const discount = Number(order.discount || 0);
-          const revenue = orderTotal - discount;
-          
-          if (!isNaN(revenue) && revenue > 0) {
-            paymentMethods[method].revenue += revenue;
-            paymentMethods[method].count += 1;
-          }
+          paymentMethods[method].revenue += orderTotal - discount;
         } catch (error) {
           console.warn("Error processing order for payment methods:", error);
         }
@@ -251,24 +235,25 @@ export function SalesReport() {
         }
       });
 
-      // Calculate totals with validation (like dashboard)
+      // Calculate totals using EXACT same logic as dashboard
       const totalRevenue = filteredOrders.reduce(
-        (sum: number, order: any) => {
+        (total: number, order: any) => {
           const orderTotal = Number(order.total || 0);
           const discount = Number(order.discount || 0);
-          return sum + (orderTotal - discount);
+          return total + (orderTotal - discount);
         },
         0,
       );
       
       const totalOrders = filteredOrders.length;
       
-      // Count unique customers
+      // Count unique customers EXACTLY like dashboard does
       const uniqueCustomers = new Set();
       filteredOrders.forEach((order: any) => {
         if (order.customerId) {
           uniqueCustomers.add(order.customerId);
         } else {
+          // If no customer ID, count as unique customer per order
           uniqueCustomers.add(`order_${order.id}`);
         }
       });
