@@ -653,7 +653,7 @@ export function PaymentMethodModal({
                 <p className="text-sm text-gray-600">{t("common.totalAmount")}</p>
                 <p className="text-2xl font-bold text-blue-600">
                   {(() => {
-                    // Calculate total similar to order detail: base price + tax
+                    // Calculate total without tax - just base price
                     if (cartItems && cartItems.length > 0) {
                       const baseSubtotal = cartItems.reduce((sum, item) => {
                         const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
@@ -661,16 +661,7 @@ export function PaymentMethodModal({
                         return sum + (itemPrice * itemQuantity);
                       }, 0);
 
-                      const totalTax = cartItems.reduce((sum, item) => {
-                        const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-                        const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
-                        const itemTaxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
-                        const itemSubtotal = itemPrice * itemQuantity;
-                        return sum + (itemSubtotal * itemTaxRate) / 100;
-                      }, 0);
-
-                      const calculatedTotal = baseSubtotal + totalTax;
-                      return calculatedTotal.toLocaleString("vi-VN", {
+                      return baseSubtotal.toLocaleString("vi-VN", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       });
