@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -93,13 +92,16 @@ export default function SalesOrders() {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
   const [showBulkCancelDialog, setShowBulkCancelDialog] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+
 
   // Query invoices
   const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError } = useQuery({
-    queryKey: ["/api/invoices"],
+    queryKey: ["/api/invoices", currentPage, itemsPerPage],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", "/api/invoices");
+        const response = await apiRequest("GET", `/api/invoices?page=${currentPage}&limit=${itemsPerPage}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -116,10 +118,10 @@ export default function SalesOrders() {
 
   // Query orders
   const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
-    queryKey: ["/api/orders"],
+    queryKey: ["/api/orders", currentPage, itemsPerPage],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", "/api/orders");
+        const response = await apiRequest("GET", `/api/orders?page=${currentPage}&limit=${itemsPerPage}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -205,7 +207,7 @@ export default function SalesOrders() {
         const [type, id] = orderKey.split('-');
         try {
           let response;
-          
+
           if (type === 'order') {
             // For orders, update status to 'cancelled'
             response = await apiRequest("PUT", `/api/orders/${id}/status`, { 
@@ -219,12 +221,12 @@ export default function SalesOrders() {
               status: 'cancelled' // Also update general status
             });
           }
-          
+
           if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Failed to cancel ${type} ${id}: ${errorText}`);
           }
-          
+
           results.push({ orderKey, success: true });
         } catch (error) {
           console.error(`Error canceling ${type} ${id}:`, error);
@@ -235,21 +237,21 @@ export default function SalesOrders() {
     },
     onSuccess: (results) => {
       console.log('Bulk cancel results:', results);
-      
+
       // Count successful cancellations
       const successCount = results.filter(r => r.success).length;
       const failCount = results.length - successCount;
-      
+
       // Close dialog
       setShowBulkCancelDialog(false);
-      
+
       // Clear selections
       setSelectedOrderIds(new Set());
-      
+
       // Refresh data
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      
+
       // Update selected invoice if it was cancelled
       if (selectedInvoice) {
         const selectedOrderKey = `${selectedInvoice.type}-${selectedInvoice.id}`;
@@ -266,7 +268,7 @@ export default function SalesOrders() {
           setEditableInvoice(null);
         }
       }
-      
+
       // Show success message
       if (successCount > 0) {
         alert(`Đã hủy thành công ${successCount} đơn hàng${failCount > 0 ? `, ${failCount} đơn thất bại` : ''}`);
@@ -286,7 +288,7 @@ export default function SalesOrders() {
     mutationFn: async (item: { id: number, type: string }) => {
       try {
         let response;
-        
+
         if (item.type === 'order') {
           // For orders, update status to 'cancelled'
           response = await apiRequest("PUT", `/api/orders/${item.id}/status`, { 
@@ -300,7 +302,7 @@ export default function SalesOrders() {
             status: 'cancelled' // Also update general status
           });
         }
-        
+
         if (!response.ok) {
           let errorMessage = `HTTP ${response.status}`;
           try {
@@ -311,7 +313,7 @@ export default function SalesOrders() {
           }
           throw new Error(`Không thể hủy đơn hàng: ${errorMessage}`);
         }
-        
+
         // Try to parse JSON response, but don't fail if it's not JSON
         try {
           const contentType = response.headers.get('content-type');
@@ -331,14 +333,14 @@ export default function SalesOrders() {
     },
     onSuccess: (data, item) => {
       console.log('Order/Invoice cancelled successfully:', item);
-      
+
       // 1. Đóng dialog xác nhận
       setShowCancelDialog(false);
-      
+
       // 2. Refresh danh sách hóa đơn và đơn hàng
       queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      
+
       // 3. Cập nhật trạng thái của selectedInvoice nếu đang hiển thị
       if (selectedInvoice && selectedInvoice.id === item.id && selectedInvoice.type === item.type) {
         setSelectedInvoice({
@@ -348,12 +350,12 @@ export default function SalesOrders() {
           displayStatus: 3,
           status: item.type === 'order' ? 'cancelled' : selectedInvoice.status
         });
-        
+
         // Reset editing states
         setIsEditing(false);
         setEditableInvoice(null);
       }
-      
+
       console.log('Order/Invoice cancelled and status updated');
     },
     onError: (error) => {
@@ -385,7 +387,7 @@ export default function SalesOrders() {
       published: "bg-green-100 text-green-800",
       cancelled: "bg-red-100 text-red-800",
     };
-    
+
     const statusLabels = {
       draft: "Nháp",
       published: "Đã xuất",
@@ -494,10 +496,10 @@ export default function SalesOrders() {
   const filteredInvoices = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
     try {
       if (!item || !item.date) return false;
-      
+
       const itemDate = new Date(item.date);
       if (isNaN(itemDate.getTime())) return false;
-      
+
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
@@ -557,7 +559,7 @@ export default function SalesOrders() {
     }
   };
 
-  
+
 
   const calculateTotals = () => {
     const totals = filteredInvoices.reduce((acc, item) => {
@@ -574,13 +576,13 @@ export default function SalesOrders() {
   const handleSelectOrder = (orderId: number, orderType: string, checked: boolean) => {
     const orderKey = `${orderType}-${orderId}`;
     const newSelectedIds = new Set(selectedOrderIds);
-    
+
     if (checked) {
       newSelectedIds.add(orderKey);
     } else {
       newSelectedIds.delete(orderKey);
     }
-    
+
     setSelectedOrderIds(newSelectedIds);
   };
 
@@ -614,7 +616,7 @@ export default function SalesOrders() {
 
     // Create workbook first
     const wb = XLSX.utils.book_new();
-    
+
     // Create worksheet with empty data first
     const ws = XLSX.utils.aoa_to_sheet([]);
 
@@ -623,14 +625,14 @@ export default function SalesOrders() {
 
     // Add title row (A1)
     XLSX.utils.sheet_add_aoa(ws, [['DANH SÁCH ĐƠN HÀNG BÁN']], { origin: 'A1' });
-    
+
     // Merge title cells A1:O1
     if (!ws['!merges']) ws['!merges'] = [];
     ws['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 14 } });
 
     // Add empty row for spacing
     XLSX.utils.sheet_add_aoa(ws, [[]], { origin: 'A2' });
-    
+
     // Add header row at A3
     const headers = [
       'Số đơn bán', 'Ngày đơn bán', 'Bàn', 'Mã khách hàng', 'Tên khách hàng',
@@ -638,7 +640,7 @@ export default function SalesOrders() {
       'Mã nhân viên', 'Tên nhân viên', 'Ký hiệu hóa đơn', 'Số hóa đơn', 'Ghi chú', 'Trạng thái'
     ];
     XLSX.utils.sheet_add_aoa(ws, [headers], { origin: 'A3' });
-    
+
     // Add data rows starting from A4
     const dataRows = selectedOrders.map((item, index) => {
       const orderNumber = item.tradeNumber || item.invoiceNumber || item.orderNumber || `DB${new Date().getFullYear()}${String(item.id).padStart(6, '0')}`;
@@ -665,7 +667,7 @@ export default function SalesOrders() {
         employeeCode, employeeName, symbol, invoiceNumber, item.notes || '', status
       ];
     });
-    
+
     XLSX.utils.sheet_add_aoa(ws, dataRows, { origin: 'A4' });
 
     // Set column widths
@@ -685,7 +687,7 @@ export default function SalesOrders() {
 
     // Apply styles to all cells
     const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:O1');
-    
+
     // Style title cell (A1)
     if (ws['A1']) {
       ws['A1'].s = {
@@ -717,11 +719,11 @@ export default function SalesOrders() {
     for (let row = 3; row < 3 + selectedOrders.length; row++) {
       const isEven = (row - 3) % 2 === 0;
       const bgColor = isEven ? 'FFFFFF' : 'F2F2F2';
-      
+
       for (let col = 0; col <= 14; col++) {
         const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
         const isCurrency = [5, 6, 7, 8].includes(col); // Columns F, G, H, I
-        
+
         if (ws[cellAddress]) {
           ws[cellAddress].s = {
             font: { name: 'Times New Roman', sz: 11, color: { rgb: '000000' } },
@@ -769,7 +771,7 @@ export default function SalesOrders() {
         sheetStubs: false,
         compression: true
       });
-      
+
       console.log('✅ Excel file exported successfully with Times New Roman formatting');
       alert('File Excel đã được xuất thành công với định dạng Times New Roman!');
     } catch (error) {
@@ -785,7 +787,7 @@ export default function SalesOrders() {
   return (
     <div className="min-h-screen bg-green-50">
       <RightSidebar />
-      
+
       <div className="main-content p-6">
         <div className="max-w-full mx-auto">
           {/* Header */}
@@ -998,7 +1000,7 @@ export default function SalesOrders() {
                             const symbol = item.symbol || 'C11DTD';
                             const invoiceNumber = item.invoiceNumber || String(item.id).padStart(8, '0');
                             const notes = item.notes || '';
-                            
+
                             return (
                               <tr
                                 key={`${item.type}-${item.id}`}
@@ -1100,9 +1102,49 @@ export default function SalesOrders() {
                       </tbody>
                     </table>
                     </div>
+                    {/* Pagination controls */}
+                    <div className="flex justify-between items-center mt-4">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm text-gray-600">Số hàng mỗi trang:</span>
+                        <select
+                          value={itemsPerPage}
+                          onChange={(e) => {
+                            setItemsPerPage(parseInt(e.target.value, 10));
+                            setCurrentPage(1); // Reset to first page on items per page change
+                          }}
+                          className="border rounded p-1 text-sm"
+                        >
+                          <option value={10}>10</option>
+                          <option value={20}>20</option>
+                          <option value={50}>50</option>
+                          <option value={100}>100</option>
+                        </select>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                          disabled={currentPage === 1}
+                        >
+                          Trước
+                        </Button>
+                        <span className="text-sm text-gray-600">
+                          Trang {currentPage} / {Math.ceil(filteredInvoices.length / itemsPerPage) || 1}
+                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredInvoices.length / itemsPerPage) || 1))}
+                          disabled={currentPage >= (Math.ceil(filteredInvoices.length / itemsPerPage) || 1)}
+                        >
+                          Sau
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 )}
-                
+
                 {/* Totals */}
                 <div className="mt-4 pt-4 border-t bg-blue-50 p-3 rounded">
                   <div className="grid grid-cols-3 gap-4 text-sm">
@@ -1281,7 +1323,7 @@ export default function SalesOrders() {
                         {(() => {
                           // Use appropriate items based on selected invoice type
                           const items = selectedInvoice?.type === 'order' ? orderItems : invoiceItems;
-                          
+
                           if (!items || items.length === 0) {
                             return (
                               <div className="text-center py-4 text-gray-500 border-t">
@@ -1315,7 +1357,7 @@ export default function SalesOrders() {
                             const tax = parseFloat(selectedInvoice.tax || '0');
                             const discount = 0; // Giảm giá mặc định là 0
                             const totalPayment = subtotal + tax - discount;
-                            
+
                             return (
                               <>
                                 <div className="flex justify-between">
@@ -1344,9 +1386,9 @@ export default function SalesOrders() {
                             const isPaid = selectedInvoice.displayStatus === 1 || 
                                           selectedInvoice.status === 'paid' || 
                                           selectedInvoice.paymentStatus === 'paid';
-                            
+
                             const paidAmount = isPaid ? selectedInvoice.total : 0;
-                            
+
                             return (
                               <>
                                 <div className="flex justify-between">
