@@ -323,8 +323,9 @@ export function ReceiptModal({
 
           <div className="space-y-2 mb-3">
             {receipt.items.map((item) => {
-              // Use the original unit price directly (before tax calculation)
-              // item.price should be the base price without tax
+              // item.price is the base price (15,000)
+              // item.total is the price with tax included (16,500)
+              // For display, show base price without tax
               const unitPrice = parseFloat(item.price);
               const lineTotal = unitPrice * item.quantity;
               
