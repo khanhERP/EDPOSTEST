@@ -398,6 +398,14 @@ export default function Settings() {
     },
   ]);
 
+  // Payment method editing state
+  const [editingPaymentMethod, setEditingPaymentMethod] = useState<any>(null);
+  const [showPaymentMethodForm, setShowPaymentMethodForm] = useState(false);
+  const [paymentMethodForm, setPaymentMethodForm] = useState({
+    name: "",
+    icon: "",
+  });
+
   const handleStoreSettingChange = (field: string, value: string) => {
     setStoreSettings((prev) => ({
       ...prev,
@@ -440,6 +448,43 @@ export default function Settings() {
     setPaymentMethods(updatedMethods);
     // Save to localStorage immediately when removed
     localStorage.setItem("paymentMethods", JSON.stringify(updatedMethods));
+  };
+
+  // Payment method management functions
+  const handleEditPaymentMethod = (method: any) => {
+    setPaymentMethodForm({
+      name: method.name,
+      icon: method.icon,
+    });
+    setEditingPaymentMethod(method);
+    setShowPaymentMethodForm(true);
+  };
+
+  const handleUpdatePaymentMethod = () => {
+    if (!paymentMethodForm.name.trim() || !editingPaymentMethod) return;
+
+    const updatedMethods = paymentMethods.map((method) =>
+      method.id === editingPaymentMethod.id
+        ? { ...method, name: paymentMethodForm.name.trim(), icon: paymentMethodForm.icon }
+        : method
+    );
+    
+    setPaymentMethods(updatedMethods);
+    localStorage.setItem("paymentMethods", JSON.stringify(updatedMethods));
+    
+    setShowPaymentMethodForm(false);
+    setEditingPaymentMethod(null);
+    setPaymentMethodForm({ name: "", icon: "" });
+
+    toast({
+      title: "Thành công",
+      description: "Phương thức thanh toán đã được cập nhật thành công",
+    });
+  };
+
+  const resetPaymentMethodForm = () => {
+    setPaymentMethodForm({ name: "", icon: "" });
+    setEditingPaymentMethod(null);
   };
 
   // Customer management functions
@@ -2945,7 +2990,7 @@ export default function Settings() {
                             <div className="flex items-center gap-2">
                               <span className="text-2xl">{method.icon}</span>
                               <span className="font-medium">
-                                {t(`settings.payments.${method.nameKey}`)}
+                                {method.name}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -2955,6 +3000,14 @@ export default function Settings() {
                                   togglePaymentMethod(method.id)
                                 }
                               />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleEditPaymentMethod(method)}
+                                className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
                               <Button
                                 size="sm"
                                 variant="ghost"
@@ -4030,6 +4083,67 @@ export default function Settings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Payment Method Form Modal */}
+      <Dialog open={showPaymentMethodForm} onOpenChange={setShowPaymentMethodForm}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>
+              Chỉnh sửa phương thức thanh toán
+            </DialogTitle>
+            <DialogDescription>
+              Cập nhật thông tin của phương thức thanh toán
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="paymentMethodName" className="text-right">
+                Tên phương thức
+              </Label>
+              <Input
+                id="paymentMethodName"
+                value={paymentMethodForm.name}
+                onChange={(e) =>
+                  setPaymentMethodForm((prev) => ({ ...prev, name: e.target.value }))
+                }
+                className="col-span-3"
+                placeholder="Nhập tên phương thức thanh toán"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="paymentMethodIcon" className="text-right">
+                Biểu tượng
+              </Label>
+              <Input
+                id="paymentMethodIcon"
+                value={paymentMethodForm.icon}
+                onChange={(e) =>
+                  setPaymentMethodForm((prev) => ({ ...prev, icon: e.target.value }))
+                }
+                className="col-span-3"
+                placeholder="Nhập emoji biểu tượng"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowPaymentMethodForm(false);
+                resetPaymentMethodForm();
+              }}
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              onClick={handleUpdatePaymentMethod}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Cập nhật
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
