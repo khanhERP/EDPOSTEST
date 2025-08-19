@@ -2014,6 +2014,17 @@ export function SalesChartReport() {
         </CardContent>
       </Card>
     );
+    } catch (error) {
+      console.error("Error in renderEmployeeReport:", error);
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-red-500">
+            <p>Có lỗi xảy ra khi hiển thị báo cáo nhân viên</p>
+            <p className="text-sm">{error.message}</p>
+          </div>
+        </div>
+      );
+    }
   };
 
   // Customer Report with Pagination State
@@ -2839,7 +2850,7 @@ export function SalesChartReport() {
         date: group.date,
         time: group.time,
         orderNumber: group.orderCount, // Show order count as number
-        customerCode: group.customerId,
+        customerId: group.customerId,
         customerName: group.customerName,
         productCode: "---",
         productName: "Tổng cộng các đơn hàng",
@@ -2854,8 +2865,8 @@ export function SalesChartReport() {
         total: group.totalAmount,
         group: "Tổng hợp",
         note: `${group.orderCount} đơn hàng`,
-        channel: group.salesChannel,
-        table: group.tableNumber,
+        salesChannel: group.salesChannel,
+        tableNumber: group.tableNumber,
         employeeName: group.employeeName,
         status: "Hoàn thành",
         isGroupHeader: true,
@@ -3019,7 +3030,7 @@ export function SalesChartReport() {
                             {item.orderNumber}
                           </TableCell>
                           <TableCell className="text-center border-r min-w-[120px] px-4">
-                            {item.customerCode}
+                            {item.customerId}
                           </TableCell>
                           <TableCell className="text-center border-r min-w-[150px] px-4">
                             {item.customerName}
@@ -3066,10 +3077,10 @@ export function SalesChartReport() {
                             {item.note}
                           </TableCell>
                           <TableCell className="text-center border-r min-w-[100px] px-4">
-                            {item.channel}
+                            {item.salesChannel}
                           </TableCell>
                           <TableCell className="text-center border-r min-w-[80px] px-4">
-                            {item.table}
+                            {item.tableNumber}
                           </TableCell>
                           <TableCell className="text-center border-r min-w-[150px] px-4">
                             {item.employeeName}
@@ -3367,14 +3378,14 @@ export function SalesChartReport() {
                               );
                             },
                           )}
-                      </React.Fragment>
+                      </>
                     );
                   })
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={22}
-                      className="text-center text-gray-500 py-8"
+                      colSpan={9}
+                      className="text-center text-gray-500"
                     >
                       {t("reports.noDataDescription")}
                     </TableCell>
@@ -3382,49 +3393,36 @@ export function SalesChartReport() {
                 )}
 
                 {/* Summary Row */}
-                {paginatedData.length > 0 && (
+                {data.length > 0 && (
                   <TableRow className="bg-gray-100 font-bold border-t-2">
                     <TableCell className="text-center border-r w-12"></TableCell>
-                    <TableCell className="text-center border-r bg-green-100 min-w-[100px] px-4">
+                    <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
                       {t("common.total")}
                     </TableCell>
-                    <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
-                    <TableCell className="text-center border-r min-w-[130px] px-4"></TableCell>
-                    <TableCell className="text-center border-r min-w-[120px] px-4"></TableCell>
-                    <TableCell className="text-center border-r min-w-[150px] px-4"></TableCell>
-                    <TableCell className="text-center border-r min-w-[100px] px-4"></TableCell>
-                    <TableCell className="text-center border-r min-w-[150px] px-4"></TableCell>
-                    <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
-                    <TableCell className="text-center border-r min-w-[80px] px-4 font-bold">
-                      {totalOrderCount}
+                    <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4">
+                      {data.length} khách hàng
                     </TableCell>
-                    <TableCell className="text-right border-r min-w-[100px] px-4"></TableCell>
-                    <TableCell className="text-right border-r min-w-[120px] px-4 font-bold">
+                    <TableCell className="text-center border-r min-w-[100px] px-4">
+                      {data
+                        .reduce((sum, item) => sum + item.orders, 0)
+                        .toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-center border-r min-w-[130px] px-4"></TableCell>
+                    <TableCell className="text-right border-r min-w-[140px] px-4">
                       {formatCurrency(
-                        paginatedData.reduce(
-                          (sum, item) => sum + item.totalAmount,
-                          0,
-                        ),
+                        data.reduce((sum, item) => sum + item.totalAmount, 0),
                       )}
                     </TableCell>
-                    <TableCell className="text-right border-r text-red-600 min-w-[100px] px-4 font-bold">
-                      {formatCurrency(totalDiscount)}
+                    <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
+                      {formatCurrency(
+                        data.reduce((sum, item) => sum + item.discount, 0),
+                      )}
                     </TableCell>
-                    <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4 font-bold">
-                      {formatCurrency(totalRevenue)}
+                    <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
+                      {formatCurrency(
+                        data.reduce((sum, item) => sum + item.revenue, 0),
+                      )}
                     </TableCell>
-                    <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
-                    <TableCell className="text-right border-r min-w-[100px] px-4 font-bold">
-                      {formatCurrency(totalTaxAmount)}
-                    </TableCell>
-                    <TableCell className="text-right border-r font-bold text-blue-600 min-w-[120px] px-4 font-bold">
-                      {formatCurrency(grandTotal)}
-                    </TableCell>
-                    <TableCell className="text-center border-r min-w-[120px] px-4"></TableCell>
-                    <TableCell className="text-center border-r min-w-[150px] px-4"></TableCell>
-                    <TableCell className="text-center border-r min-w-[100px] px-4"></TableCell>
-                    <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
-                    <TableCell className="text-center min-w-[150px] px-4"></TableCell>
                     <TableCell className="text-center min-w-[100px] px-4"></TableCell>
                   </TableRow>
                 )}
@@ -3432,16 +3430,16 @@ export function SalesChartReport() {
             </Table>
           </div>
 
-          {/* Pagination Controls */}
-          {sortedData.length > 0 && (
+          {/* Pagination Controls for Customer Report */}
+          {data.length > 0 && (
             <div className="flex items-center justify-between space-x-6 py-4">
               <div className="flex items-center space-x-2">
                 <p className="text-sm font-medium">{t("common.show")} </p>
                 <Select
-                  value={pageSize.toString()}
+                  value={customerPageSize.toString()}
                   onValueChange={(value) => {
-                    setPageSize(Number(value));
-                    setCurrentPage(1);
+                    setCustomerPageSize(Number(value));
+                    setCustomerCurrentPage(1);
                   }}
                 >
                   <SelectTrigger className="h-8 w-[70px]">
@@ -3460,37 +3458,39 @@ export function SalesChartReport() {
 
               <div className="flex items-center space-x-2">
                 <p className="text-sm font-medium">
-                  {t("common.page")} {currentPage} / {totalPages}
+                  {t("common.page")} {customerCurrentPage} / {totalPages}
                 </p>
                 <div className="flex items-center space-x-1">
                   <button
-                    onClick={() => setCurrentPage(1)}
-                    disabled={currentPage === 1}
+                    onClick={() => setCustomerCurrentPage(1)}
+                    disabled={customerCurrentPage === 1}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     «
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                      setCustomerCurrentPage((prev) => Math.max(prev - 1, 1))
                     }
-                    disabled={currentPage === 1}
+                    disabled={customerCurrentPage === 1}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     ‹
                   </button>
                   <button
                     onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      setCustomerCurrentPage((prev) =>
+                        Math.min(prev + 1, totalPages),
+                      )
                     }
-                    disabled={currentPage === totalPages}
+                    disabled={customerCurrentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     ›
                   </button>
                   <button
-                    onClick={() => setCurrentPage(totalPages)}
-                    disabled={currentPage === totalPages}
+                    onClick={() => setCustomerCurrentPage(totalPages)}
+                    disabled={customerCurrentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     »
