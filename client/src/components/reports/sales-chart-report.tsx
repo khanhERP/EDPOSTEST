@@ -1023,6 +1023,15 @@ export function SalesChartReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
+      console.log("Product Report Debug:", {
+        startDate,
+        endDate,
+        start: start.toISOString(),
+        end: end.toISOString(),
+        ordersLength: orders?.length || 0,
+        transactionsLength: transactions?.length || 0,
+      });
+
       const productSales: {
         [productId: string]: {
           quantity: number;
@@ -1032,8 +1041,86 @@ export function SalesChartReport() {
         };
       } = {};
 
-      // Process transaction items from transactions
-      if (transactions && Array.isArray(transactions)) {
+      // Process order items from orders first (main data source)
+      if (orders && Array.isArray(orders)) {
+        // Use EXACT same filtering logic as other reports
+        const filteredOrders = orders.filter((order: any) => {
+          // Check if order is completed/paid (EXACT same as dashboard)
+          if (order.status !== 'completed' && order.status !== 'paid') return false;
+
+          // Try multiple possible date fields (EXACT same as dashboard)
+          const orderDate = new Date(
+            order.orderedAt || order.createdAt || order.created_at || order.paidAt
+          );
+
+          // Skip if date is invalid
+          if (isNaN(orderDate.getTime())) {
+            return false;
+          }
+
+          return orderDate >= start && orderDate <= end;
+        });
+
+        console.log("Filtered Orders for Product Report:", {
+          totalOrders: orders.length,
+          filteredOrders: filteredOrders.length,
+          sampleOrder: filteredOrders[0] ? {
+            id: filteredOrders[0].id,
+            status: filteredOrders[0].status,
+            orderedAt: filteredOrders[0].orderedAt,
+            createdAt: filteredOrders[0].createdAt,
+            items: filteredOrders[0].items?.length || 0
+          } : null
+        });
+
+        filteredOrders.forEach((order: any) => {
+          if (order.items && Array.isArray(order.items)) {
+            order.items.forEach((item: any) => {
+              const productId = item.productId?.toString();
+              if (!productId) return;
+
+              // Check if this product is in our filtered products list
+              const product = filteredProducts.find(
+                (p) => p.id.toString() === productId,
+              );
+              if (!product) return;
+
+              if (!productSales[productId]) {
+                productSales[productId] = {
+                  quantity: 0,
+                  totalAmount: 0,
+                  discount: 0,
+                  revenue: 0,
+                };
+              }
+
+              const quantity = Number(item.quantity || 0);
+              const total = Number(item.total || 0);
+              const unitPrice = Number(item.unitPrice || item.price || 0);
+              const totalAmount = quantity * unitPrice;
+              const discount = Math.max(0, totalAmount - total); // Ensure discount is not negative
+
+              productSales[productId].quantity += quantity;
+              productSales[productId].totalAmount += totalAmount;
+              productSales[productId].discount += discount;
+              productSales[productId].revenue += total;
+
+              console.log("Processing order item:", {
+                productId,
+                productName: product.name,
+                quantity,
+                total,
+                unitPrice,
+                totalAmount,
+                discount
+              });
+            });
+          }
+        });
+      }
+
+      // Fallback: Process transaction items from transactions if no order data
+      if (transactions && Array.isArray(transactions) && Object.keys(productSales).length === 0) {
         const filteredTransactions = transactions.filter((transaction: any) => {
           const transactionDate = new Date(
             transaction.createdAt || transaction.created_at,
@@ -1041,6 +1128,11 @@ export function SalesChartReport() {
           const transactionDateOnly = new Date(transactionDate);
           transactionDateOnly.setHours(0, 0, 0, 0);
           return transactionDateOnly >= start && transactionDateOnly <= end;
+        });
+
+        console.log("Fallback to transactions:", {
+          totalTransactions: transactions.length,
+          filteredTransactions: filteredTransactions.length
         });
 
         filteredTransactions.forEach((transaction: any) => {
@@ -1068,7 +1160,7 @@ export function SalesChartReport() {
               const total = Number(item.total || 0);
               const unitPrice = Number(item.price || 0);
               const totalAmount = quantity * unitPrice;
-              const discount = totalAmount - total;
+              const discount = Math.max(0, totalAmount - total);
 
               productSales[productId].quantity += quantity;
               productSales[productId].totalAmount += totalAmount;
@@ -1079,56 +1171,7 @@ export function SalesChartReport() {
         });
       }
 
-      // Process order items from orders
-      if (orders && Array.isArray(orders)) {
-        const filteredOrders = orders.filter((order: any) => {
-          const orderDate = new Date(
-            order.orderedAt || order.created_at || order.createdAt,
-          );
-          const orderDateOnly = new Date(orderDate);
-          orderDateOnly.setHours(0, 0, 0, 0);
-          return (
-            orderDateOnly >= start &&
-            orderDateOnly <= end &&
-            order.status === "paid"
-          );
-        });
-
-        filteredOrders.forEach((order: any) => {
-          if (order.items && Array.isArray(order.items)) {
-            order.items.forEach((item: any) => {
-              const productId = item.productId?.toString();
-              if (!productId) return;
-
-              // Check if this product is in our filtered products list
-              const product = filteredProducts.find(
-                (p) => p.id.toString() === productId,
-              );
-              if (!product) return;
-
-              if (!productSales[productId]) {
-                productSales[productId] = {
-                  quantity: 0,
-                  totalAmount: 0,
-                  discount: 0,
-                  revenue: 0,
-                };
-              }
-
-              const quantity = Number(item.quantity || 0);
-              const total = Number(item.total || 0);
-              const unitPrice = Number(item.unitPrice || 0);
-              const totalAmount = quantity * unitPrice;
-              const discount = totalAmount - total;
-
-              productSales[productId].quantity += quantity;
-              productSales[productId].totalAmount += totalAmount;
-              productSales[productId].discount += discount;
-              productSales[productId].revenue += total;
-            });
-          }
-        });
-      }
+      console.log("Product Sales Summary:", productSales);
 
       return filteredProducts
         .map((product: any) => {
@@ -1138,16 +1181,6 @@ export function SalesChartReport() {
             discount: 0,
             revenue: 0,
           };
-
-          // Chỉ hiển thị sản phẩm có dữ liệu bán hàng hoặc hiển thị tất cả nếu không có bộ lọc tìm kiếm
-          if (
-            sales.quantity === 0 &&
-            (productSearch ||
-              selectedCategory !== "all" ||
-              productType !== "all")
-          ) {
-            return null;
-          }
 
           // Tìm category name
           const categoryName =
