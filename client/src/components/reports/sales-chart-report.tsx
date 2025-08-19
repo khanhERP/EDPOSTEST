@@ -1360,10 +1360,19 @@ export function SalesChartReport() {
 
   // Legacy Employee Report Component Logic
   const renderEmployeeReport = () => {
-    if (!orders || !Array.isArray(orders)) {
+    try {
+      if (!orders || !Array.isArray(orders)) {
+        return (
+          <div className="flex justify-center py-8">
+            <div className="text-gray-500">{t("reports.loading")}...</div>
+          </div>
+        );
+      }
+    } catch (error) {
+      console.error("Error in renderEmployeeReport:", error);
       return (
         <div className="flex justify-center py-8">
-          <div className="text-gray-500">{t("reports.loading")}...</div>
+          <div className="text-red-500">Lỗi khi tải báo cáo nhân viên</div>
         </div>
       );
     }
@@ -3676,70 +3685,90 @@ export function SalesChartReport() {
           .slice(0, 10);
 
       case "employee":
-        if (!orders || !Array.isArray(orders)) return [];
-
-        const empStart = new Date(startDate);
-        const empEnd = new Date(endDate);
-        empEnd.setHours(23, 59, 59, 999);
-
-        // Use EXACT same filtering logic as dashboard for orders
-        const empFilteredOrders = orders.filter((order: any) => {
-          // Check if order is completed/paid (EXACT same as dashboard)
-          if (order.status !== 'completed' && order.status !== 'paid') return false;
-
-          // Try multiple possible date fields (EXACT same as dashboard)
-          const orderDate = new Date(
-            order.orderedAt || order.createdAt || order.created_at || order.paidAt
-          );
-
-          // Skip if date is invalid
-          if (isNaN(orderDate.getTime())) {
-            return false;
+        try {
+          if (!orders || !Array.isArray(orders)) {
+            console.warn("Employee chart: No orders data available");
+            return [];
           }
 
-          const dateMatch = orderDate >= empStart && orderDate <= empEnd;
+          const empStart = new Date(startDate);
+          const empEnd = new Date(endDate);
+          empEnd.setHours(23, 59, 59, 999);
 
-          const employeeMatch =
-            selectedEmployee === "all" ||
-            order.employeeName === selectedEmployee ||
-            order.cashierName === selectedEmployee ||
-            order.employeeId?.toString() === selectedEmployee ||
-            order.employeeName?.includes(selectedEmployee) ||
-            order.cashierName?.includes(selectedEmployee);
+          // Use EXACT same filtering logic as dashboard for orders
+          const empFilteredOrders = orders.filter((order: any) => {
+            try {
+              // Check if order is completed/paid (EXACT same as dashboard)
+              if (order.status !== 'completed' && order.status !== 'paid') return false;
 
-          return dateMatch && employeeMatch;
-        });
+              // Try multiple possible date fields (EXACT same as dashboard)
+              const orderDate = new Date(
+                order.orderedAt || order.createdAt || order.created_at || order.paidAt
+              );
 
-        const employeeData: {
-          [cashier: string]: { revenue: number; orders: number };
-        } = {};
+              // Skip if date is invalid
+              if (isNaN(orderDate.getTime())) {
+                return false;
+              }
 
-        empFilteredOrders.forEach((order: any) => {
-          const cashier =
-            order.cashierName || order.employeeName || "Unknown";
-          if (!employeeData[cashier]) {
-            employeeData[cashier] = { revenue: 0, orders: 0 };
-          }
+              const dateMatch = orderDate >= empStart && orderDate <= empEnd;
 
-          // Use EXACT same calculation as dashboard: total - discount
-          const orderTotal = Number(order.total || 0);
-          const orderDiscount = Number(order.discount || 0);
-          const revenue = orderTotal - orderDiscount;
+              const employeeMatch =
+                selectedEmployee === "all" ||
+                order.employeeName === selectedEmployee ||
+                order.cashierName === selectedEmployee ||
+                order.employeeId?.toString() === selectedEmployee ||
+                (order.employeeName && order.employeeName.includes(selectedEmployee)) ||
+                (order.cashierName && order.cashierName.includes(selectedEmployee));
 
-          if (revenue > 0) {
-            employeeData[cashier].revenue += revenue;
-            employeeData[cashier].orders += 1;
-          }
-        });
+              return dateMatch && employeeMatch;
+            } catch (error) {
+              console.warn("Error filtering order:", error);
+              return false;
+            }
+          });
 
-        return Object.entries(employeeData)
-          .map(([name, data]) => ({
-            name: name.length > 10 ? name.substring(0, 10) + "..." : name,
-            revenue: data.revenue,
-            orders: data.orders,
-          }))
-          .sort((a, b) => b.revenue - a.revenue)
-          .slice(0, 10);
+          const employeeData: {
+            [cashier: string]: { revenue: number; orders: number };
+          } = {};
+
+          empFilteredOrders.forEach((order: any) => {
+            try {
+              const cashier =
+                order.cashierName || order.employeeName || "Unknown";
+              if (!employeeData[cashier]) {
+                employeeData[cashier] = { revenue: 0, orders: 0 };
+              }
+
+              // Use EXACT same calculation as dashboard: total - discount
+              const orderTotal = Number(order.total || 0);
+              const orderDiscount = Number(order.discount || 0);
+              const revenue = orderTotal - orderDiscount;
+
+              if (revenue > 0) {
+                employeeData[cashier].revenue += revenue;
+                employeeData[cashier].orders += 1;
+              }
+            } catch (error) {
+              console.warn("Error processing employee order:", error);
+            }
+          });
+
+          const result = Object.entries(employeeData)
+            .map(([name, data]) => ({
+              name: name && name.length > 10 ? name.substring(0, 10) + "..." : name || "Unknown",
+              revenue: data.revenue || 0,
+              orders: data.orders || 0,
+            }))
+            .sort((a, b) => (b.revenue || 0) - (a.revenue || 0))
+            .slice(0, 10);
+
+          console.log("Employee chart data generated:", result);
+          return result;
+        } catch (error) {
+          console.error("Error in employee chart data generation:", error);
+          return [];
+        }
 
       case "customer":
         if (!orders || !Array.isArray(orders)) return [];
@@ -3895,12 +3924,21 @@ export function SalesChartReport() {
 
   // Chart rendering component
   const renderChart = () => {
-    const chartData = getChartData();
+    try {
+      const chartData = getChartData();
 
-    if (!chartData || chartData.length === 0) {
+      if (!chartData || chartData.length === 0) {
+        return (
+          <div className="flex justify-center py-8">
+            <div className="text-gray-500">{t("reports.noDataDescription")}</div>
+          </div>
+        );
+      }
+    } catch (error) {
+      console.error("Error in renderChart:", error);
       return (
         <div className="flex justify-center py-8">
-          <div className="text-gray-500">{t("reports.noDataDescription")}</div>
+          <div className="text-red-500">Lỗi khi hiển thị biểu đồ</div>
         </div>
       );
     }
@@ -4082,27 +4120,41 @@ export function SalesChartReport() {
 
   // Main render component function
   const renderReportContent = () => {
-    switch (analysisType) {
-      case "time":
-        // Handle concernType for time-based analysis
-        if (concernType === "employee") {
+    try {
+      console.log("Rendering report content for analysisType:", analysisType, "concernType:", concernType);
+      
+      switch (analysisType) {
+        case "time":
+          // Handle concernType for time-based analysis
+          if (concernType === "employee") {
+            return renderEmployeeReport();
+          } else if (concernType === "salesDetail") {
+            return renderSalesDetailReport();
+          }
+          return renderSalesReport();
+        case "product":
+          return renderProductReport();
+        case "employee":
           return renderEmployeeReport();
-        } else if (concernType === "salesDetail") {
+        case "customer":
+          return renderCustomerReport();
+        case "channel":
+          return renderSalesChannelReport();
+        case "salesDetail":
           return renderSalesDetailReport();
-        }
-        return renderSalesReport();
-      case "product":
-        return renderProductReport();
-      case "employee":
-        return renderEmployeeReport();
-      case "customer":
-        return renderCustomerReport();
-      case "channel":
-        return renderSalesChannelReport();
-      case "salesDetail":
-        return renderSalesDetailReport();
-      default:
-        return renderSalesReport();
+        default:
+          return renderSalesReport();
+      }
+    } catch (error) {
+      console.error("Error in renderReportContent:", error);
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-red-500">
+            <p>Có lỗi xảy ra khi hiển thị báo cáo</p>
+            <p className="text-sm">{error.message}</p>
+          </div>
+        </div>
+      );
     }
   };
 
