@@ -1176,134 +1176,141 @@ export default function SalesOrders() {
                   <div className="space-y-4">
                     {/* Invoice Info */}
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      {/* First Row */}
-                      <div className="grid grid-cols-5 gap-4 text-sm mb-3">
-                        <div>
-                          <span className="font-medium">Số đơn bán:</span>
-                          {isEditing && editableInvoice ? (
-                            <Input 
-                              value={editableInvoice.tradeNumber || editableInvoice.invoiceNumber || editableInvoice.orderNumber || ''}
-                              onChange={(e) => updateEditableInvoiceField(selectedInvoice.type === 'order' ? 'orderNumber' : 'tradeNumber', e.target.value)}
-                              className="mt-1"
-                            />
-                          ) : (
-                            <div className="text-blue-600 font-medium">{selectedInvoice.displayNumber}</div>
-                          )}
-                        </div>
-                        <div>
-                          <span className="font-medium">Ngày:</span>
-                          {isEditing && editableInvoice ? (
-                            <Input 
-                              type="date"
-                              value={(editableInvoice.invoiceDate || editableInvoice.orderedAt)?.split('T')[0]}
-                              onChange={(e) => updateEditableInvoiceField(selectedInvoice.type === 'order' ? 'orderedAt' : 'invoiceDate', e.target.value)}
-                              className="mt-1"
-                            />
-                          ) : (
-                            <div>{formatDate(selectedInvoice.date)}</div>
-                          )}
-                        </div>
-                        <div>
-                          <span className="font-medium">Khách hàng:</span>
-                          {isEditing && editableInvoice ? (
-                            <Input 
-                              value={editableInvoice.customerName}
-                              onChange={(e) => updateEditableInvoiceField('customerName', e.target.value)}
-                              className="mt-1"
-                            />
-                          ) : (
-                            <div className="text-blue-600 font-medium">{selectedInvoice.customerName}</div>
-                          )}
-                        </div>
-                        <div>
-                          <span className="font-medium">Điện thoại:</span>
-                          {isEditing && editableInvoice ? (
-                            <Input 
-                              value={editableInvoice.customerPhone || ''}
-                              onChange={(e) => updateEditableInvoiceField('customerPhone', e.target.value)}
-                              className="mt-1"
-                            />
-                          ) : (
-                            <div>{selectedInvoice.customerPhone || '-'}</div>
-                          )}
-                        </div>
-                        <div>
-                          <span className="font-medium">Trạng thái:</span>
-                          <div>{getInvoiceStatusBadge(selectedInvoice.displayStatus)}</div>
-                        </div>
-                      </div>
-
-                      {/* Second Row */}
-                      <div className="grid grid-cols-5 gap-4 text-sm">
-                        <div>
-                          <span className="font-medium">Thu ngân:</span>
-                          <div>Nguyễn Văn A</div>
-                        </div>
-                        <div>
-                          <span className="font-medium">Hình thức bán:</span>
-                          <div>Ăn tại chỗ</div>
-                        </div>
-                        <div>
-                          <span className="font-medium">Bàn:</span>
-                          <div>{selectedInvoice.type === 'order' && selectedInvoice.tableId ? `Tầng 2 - Bàn ${selectedInvoice.tableId}` : '-'}</div>
-                        </div>
-                        <div>
-                          <span className="font-medium">Ký hiệu hóa đơn:</span>
-                          {isEditing && editableInvoice ? (
-                            <Input 
-                              value={editableInvoice.symbol || ''}
-                              onChange={(e) => updateEditableInvoiceField('symbol', e.target.value)}
-                              className="mt-1"
-                            />
-                          ) : (
-                            <div>{selectedInvoice.symbol || '1C21DTD'}</div>
-                          )}
-                        </div>
-                        <div>
-                          <span className="font-medium">Số hóa đơn:</span>
-                          {isEditing && editableInvoice ? (
-                            <Input 
-                              value={editableInvoice.invoiceNumber || ''}
-                              onChange={(e) => updateEditableInvoiceField('invoiceNumber', e.target.value)}
-                              className="mt-1"
-                            />
-                          ) : (
-                            <div>{selectedInvoice.invoiceNumber || String(selectedInvoice.id).padStart(8, '0')}</div>
+                      {/* Single Row with Horizontal Scroll */}
+                      <div className="w-full overflow-x-auto">
+                        <div className="flex items-center gap-6 text-sm min-w-max whitespace-nowrap pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Số đơn bán:</span>
+                            {isEditing && editableInvoice ? (
+                              <Input 
+                                value={editableInvoice.tradeNumber || editableInvoice.invoiceNumber || editableInvoice.orderNumber || ''}
+                                onChange={(e) => updateEditableInvoiceField(selectedInvoice.type === 'order' ? 'orderNumber' : 'tradeNumber', e.target.value)}
+                                className="w-32"
+                              />
+                            ) : (
+                              <span className="text-blue-600 font-medium">{selectedInvoice.displayNumber}</span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Ngày:</span>
+                            {isEditing && editableInvoice ? (
+                              <Input 
+                                type="date"
+                                value={(editableInvoice.invoiceDate || editableInvoice.orderedAt)?.split('T')[0]}
+                                onChange={(e) => updateEditableInvoiceField(selectedInvoice.type === 'order' ? 'orderedAt' : 'invoiceDate', e.target.value)}
+                                className="w-32"
+                              />
+                            ) : (
+                              <span>{formatDate(selectedInvoice.date)}</span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Khách hàng:</span>
+                            {isEditing && editableInvoice ? (
+                              <Input 
+                                value={editableInvoice.customerName}
+                                onChange={(e) => updateEditableInvoiceField('customerName', e.target.value)}
+                                className="w-40"
+                              />
+                            ) : (
+                              <span className="text-blue-600 font-medium">{selectedInvoice.customerName}</span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Điện thoại:</span>
+                            {isEditing && editableInvoice ? (
+                              <Input 
+                                value={editableInvoice.customerPhone || ''}
+                                onChange={(e) => updateEditableInvoiceField('customerPhone', e.target.value)}
+                                className="w-32"
+                              />
+                            ) : (
+                              <span>{selectedInvoice.customerPhone || '-'}</span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Trạng thái:</span>
+                            <span>{getInvoiceStatusBadge(selectedInvoice.displayStatus)}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Thu ngân:</span>
+                            <span>Nguyễn Văn A</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Hình thức bán:</span>
+                            <span>Ăn tại chỗ</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Bàn:</span>
+                            <span>{selectedInvoice.type === 'order' && selectedInvoice.tableId ? `Tầng 2 - Bàn ${selectedInvoice.tableId}` : '-'}</span>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Ký hiệu hóa đơn:</span>
+                            {isEditing && editableInvoice ? (
+                              <Input 
+                                value={editableInvoice.symbol || ''}
+                                onChange={(e) => updateEditableInvoiceField('symbol', e.target.value)}
+                                className="w-24"
+                              />
+                            ) : (
+                              <span>{selectedInvoice.symbol || '1C21DTD'}</span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Số hóa đơn:</span>
+                            {isEditing && editableInvoice ? (
+                              <Input 
+                                value={editableInvoice.invoiceNumber || ''}
+                                onChange={(e) => updateEditableInvoiceField('invoiceNumber', e.target.value)}
+                                className="w-32"
+                              />
+                            ) : (
+                              <span>{selectedInvoice.invoiceNumber || String(selectedInvoice.id).padStart(8, '0')}</span>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Trạng thái HĐ:</span>
+                            <span>{getEInvoiceStatusBadge(selectedInvoice.einvoiceStatus || 0)}</span>
+                          </div>
+                          
+                          {selectedInvoice.type === 'order' && (
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">Loại:</span>
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                                Đơn hàng
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>
 
                       {/* Address Row (if exists) */}
                       {(selectedInvoice.customerAddress || isEditing) && (
-                        <div className="mt-3 text-sm">
-                          <span className="font-medium">Địa chỉ:</span>
-                          {isEditing && editableInvoice ? (
-                            <Input 
-                              value={editableInvoice.customerAddress || ''}
-                              onChange={(e) => updateEditableInvoiceField('customerAddress', e.target.value)}
-                              className="mt-1"
-                            />
-                          ) : (
-                            <div className="mt-1">{selectedInvoice.customerAddress || '-'}</div>
-                          )}
+                        <div className="mt-3 text-sm border-t pt-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">Địa chỉ:</span>
+                            {isEditing && editableInvoice ? (
+                              <Input 
+                                value={editableInvoice.customerAddress || ''}
+                                onChange={(e) => updateEditableInvoiceField('customerAddress', e.target.value)}
+                                className="flex-1"
+                              />
+                            ) : (
+                              <span className="flex-1">{selectedInvoice.customerAddress || '-'}</span>
+                            )}
+                          </div>
                         </div>
                       )}
-
-                      {/* Additional Status Info */}
-                      <div className="mt-3 flex items-center gap-4 text-sm">
-                        <div>
-                          <span className="font-medium">Trạng thái HĐ:</span>
-                          <span className="ml-2">{getEInvoiceStatusBadge(selectedInvoice.einvoiceStatus || 0)}</span>
-                        </div>
-                        {selectedInvoice.type === 'order' && (
-                          <div>
-                            <span className="font-medium">Loại:</span>
-                            <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
-                              Đơn hàng
-                            </span>
-                          </div>
-                        )}
-                      </div>
                     </div>
 
                     {/* Invoice/Order Items */}
