@@ -2584,7 +2584,9 @@ export function SalesChartReport() {
 
   // Legacy Sales Channel Report Component Logic
   const renderSalesChannelReport = () => {
-    if (!transactions || !Array.isArray(transactions)) {
+    const dashboardStats = getDashboardStats();
+    
+    if (!dashboardStats) {
       return (
         <div className="flex justify-center py-8">
           <div className="text-gray-500">{t("reports.loading")}...</div>
@@ -2592,39 +2594,14 @@ export function SalesChartReport() {
       );
     }
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    const { filteredCompletedOrders } = dashboardStats;
 
-    // Filter transactions by date and sales method
-    const filteredTransactions = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at,
-      );
-      const transactionDateOnly = new Date(transactionDate);
-      transactionDateOnly.setHours(0, 0, 0, 0);
-
-      const isInRange =
-        transactionDateOnly >= start && transactionDateOnly <= end;
-
-      // Filter by sales method if specified
-      let methodMatch = true;
-      if (salesMethod !== "all") {
-        if (salesMethod === "no_delivery") {
-          methodMatch =
-            !transaction.isDelivery &&
-            (!transaction.deliveryMethod ||
-              transaction.deliveryMethod === "none");
-        } else if (salesMethod === "delivery") {
-          methodMatch =
-            transaction.isDelivery || transaction.deliveryMethod === "delivery";
-        }
-      }
-
-      return isInRange && methodMatch;
+    console.log("Sales Channel Report Debug:", {
+      filteredCompletedOrders: filteredCompletedOrders.length,
+      sampleOrder: filteredCompletedOrders[0],
     });
 
-    // Group data by sales method (Dine In vs Takeaway)
+    // Group data by sales method (Dine In vs Takeaway) - use EXACT same logic as dashboard
     const salesMethodData: {
       [method: string]: {
         completedOrders: number;
@@ -2653,51 +2630,48 @@ export function SalesChartReport() {
       },
     };
 
-    filteredTransactions.forEach((transaction: any) => {
-      // Determine sales method based on deliveryMethod or salesChannel
+    // Process completed orders from dashboard (EXACT same data source)
+    filteredCompletedOrders.forEach((order: any) => {
+      // Determine sales method based on order properties
       let method = t("reports.dineIn"); // Default
 
+      // Check for delivery/takeaway indicators
       if (
-        transaction.deliveryMethod === "delivery" ||
-        transaction.deliveryMethod === "takeout" ||
-        transaction.deliveryMethod === "takeaway" ||
-        transaction.isDelivery === true ||
-        transaction.salesChannel === "delivery" ||
-        transaction.salesChannel === "takeout"
+        order.deliveryMethod === "delivery" ||
+        order.deliveryMethod === "takeout" ||
+        order.deliveryMethod === "takeaway" ||
+        order.isDelivery === true ||
+        order.salesChannel === "delivery" ||
+        order.salesChannel === "takeout" ||
+        order.salesChannel === "takeaway"
       ) {
         method = t("reports.takeaway");
       } else if (
-        transaction.deliveryMethod === "dine_in" ||
-        transaction.deliveryMethod === "dinein" ||
-        transaction.salesChannel === "dine_in" ||
-        transaction.tableId
+        order.deliveryMethod === "dine_in" ||
+        order.deliveryMethod === "dinein" ||
+        order.salesChannel === "dine_in" ||
+        order.tableId ||
+        order.tableNumber
       ) {
         method = t("reports.dineIn");
       }
 
-      const amount = Number(transaction.total || 0);
-      const isCompleted =
-        transaction.status === "completed" ||
-        transaction.status === "paid" ||
-        (!transaction.status && amount > 0);
-      const isCancelled =
-        transaction.status === "cancelled" || transaction.status === "refunded";
+      // Use EXACT same revenue calculation as dashboard: total - discount
+      const orderTotal = Number(order.total || 0);
+      const discount = Number(order.discount || 0);
+      const revenue = orderTotal - discount;
 
-      if (isCompleted && amount > 0) {
+      // All orders from filteredCompletedOrders are already completed/paid
+      if (revenue > 0) {
         salesMethodData[method].completedOrders += 1;
-        salesMethodData[method].completedRevenue += amount;
-      } else if (isCancelled) {
-        salesMethodData[method].cancelledOrders += 1;
-        salesMethodData[method].cancelledRevenue += Math.abs(amount);
+        salesMethodData[method].completedRevenue += revenue;
       }
 
-      salesMethodData[method].totalOrders =
-        salesMethodData[method].completedOrders +
-        salesMethodData[method].cancelledOrders;
-      salesMethodData[method].totalRevenue =
-        salesMethodData[method].completedRevenue +
-        salesMethodData[method].cancelledRevenue;
+      salesMethodData[method].totalOrders = salesMethodData[method].completedOrders;
+      salesMethodData[method].totalRevenue = salesMethodData[method].completedRevenue;
     });
+
+    console.log("Sales Method Data:", salesMethodData);
 
     return (
       <Card>
