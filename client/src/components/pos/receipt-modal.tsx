@@ -366,11 +366,26 @@ export function ReceiptModal({
             </div>
             <div className="flex justify-between text-sm">
               <span>Thuế</span>
-              <span>{receipt.tax} ₫</span>
+              <span>{(() => {
+                // Calculate tax based on base prices (without tax)
+                const baseSubtotal = receipt.items.reduce((sum, item) => {
+                  return sum + (parseFloat(item.price) * item.quantity);
+                }, 0);
+                const taxAmount = baseSubtotal * 0.1; // 10% tax
+                return taxAmount.toFixed(2);
+              })()} ₫</span>
             </div>
             <div className="flex justify-between font-bold">
               <span>{t('pos.total')}</span>
-              <span>{receipt.total} ₫</span>
+              <span>{(() => {
+                // Calculate total as base subtotal + tax
+                const baseSubtotal = receipt.items.reduce((sum, item) => {
+                  return sum + (parseFloat(item.price) * item.quantity);
+                }, 0);
+                const taxAmount = baseSubtotal * 0.1;
+                const total = baseSubtotal + taxAmount;
+                return total.toFixed(2);
+              })()} ₫</span>
             </div>
             <div className="flex justify-between text-sm mt-2">
               <span>{t('pos.paymentMethod')}</span>
