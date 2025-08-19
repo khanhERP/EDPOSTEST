@@ -1344,12 +1344,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
+            )}
+          </CardContent>
+        </Card>
+      );
+    };
 
   // Employee Report with Pagination State
   const [employeeCurrentPage, setEmployeeCurrentPage] = useState(1);
@@ -3377,8 +3376,9 @@ export function SalesChartReport() {
                               );
                             },
                           )}
-                      );
-                    })
+                      </>
+                    );
+                  })
                 ) : (
                   <TableRow>
                     <TableCell
