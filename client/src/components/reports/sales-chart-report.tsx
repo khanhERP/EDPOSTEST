@@ -799,9 +799,7 @@ export function SalesChartReport() {
                         {t("common.total")}
                       </TableCell>
                       <TableCell className="text-center border-r min-w-[100px] px-4">
-                        {Object.values(dailySales)
-                          .reduce((sum, data) => sum + data.orders, 0)
-                          .toLocaleString()}
+                        {Object.values(dailySales).reduce((sum, data) => sum + data.orders, 0).toLocaleString()}
                       </TableCell>
                       <TableCell className="text-right border-r min-w-[140px] px-4">
                         {formatCurrency(
@@ -3778,7 +3776,7 @@ export function SalesChartReport() {
             employeeDataKeys: Object.keys(employeeData),
             result
           });
-          
+
           return result;
         } catch (error) {
           console.error("Error in employee chart data generation:", error);
@@ -4142,7 +4140,7 @@ export function SalesChartReport() {
   const renderReportContent = () => {
     try {
       console.log("Rendering report content for analysisType:", analysisType, "concernType:", concernType);
-      
+
       switch (analysisType) {
         case "time":
           // Handle concernType for time-based analysis
