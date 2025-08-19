@@ -1047,15 +1047,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">{t('pos.subtotal')}:</span>
-                        <span className="font-medium">{subtotal.toLocaleString('vi-VN')} ₫</span>
+                        <span className="font-medium">{Math.round(subtotal).toLocaleString('vi-VN')} ₫</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Thuế:</span>
-                        <span className="font-medium">{totalTax.toLocaleString('vi-VN')} ₫</span>
+                        <span className="font-medium">{Math.round(totalTax).toLocaleString('vi-VN')} ₫</span>
                       </div>
                       <div className="flex justify-between text-lg font-bold border-t pt-2">
                         <span>{t('orders.totalAmount')}:</span>
-                        <span className="text-green-600">{grandTotal.toLocaleString('vi-VN')} ₫</span>
+                        <span className="text-green-600">{Math.round(grandTotal).toLocaleString('vi-VN')} ₫</span>
                       </div>
                     </>
                   );
