@@ -3514,7 +3514,62 @@ export function SalesChartReport() {
           [productId: string]: { quantity: number; revenue: number };
         } = {};
 
-        // Process transaction items from transactions (EXACT same logic as renderProductReport)
+        // Lấy dữ liệu từ orders và order_items
+        if (orders && Array.isArray(orders)) {
+          // Filter orders theo ngày và status
+          const filteredOrders = orders.filter((order: any) => {
+            // Chỉ lấy orders đã hoàn thành/thanh toán
+            if (order.status !== 'completed' && order.status !== 'paid') return false;
+
+            const orderDate = new Date(
+              order.orderedAt || order.createdAt || order.created_at || order.paidAt
+            );
+            const orderDateOnly = new Date(orderDate);
+            orderDateOnly.setHours(0, 0, 0, 0);
+            return orderDateOnly >= start && orderDateOnly <= end;
+          });
+
+          // Xử lý từng order để lấy order items
+          for (const order of filteredOrders) {
+            try {
+              // Fetch order items cho từng order
+              const response = await fetch(`/api/order-items/${order.id}`);
+              if (response.ok) {
+                const orderItems = await response.json();
+                
+                if (orderItems && Array.isArray(orderItems)) {
+                  orderItems.forEach((item: any) => {
+                    const productId = item.productId?.toString();
+                    if (!productId) return;
+
+                    // Kiểm tra product có tồn tại trong danh sách products không
+                    const product = products.find(
+                      (p) => p.id.toString() === productId,
+                    );
+                    if (!product) return;
+
+                    if (!productSales[productId]) {
+                      productSales[productId] = {
+                        quantity: 0,
+                        revenue: 0,
+                      };
+                    }
+
+                    const quantity = Number(item.quantity || 0);
+                    const total = Number(item.total || 0);
+
+                    productSales[productId].quantity += quantity;
+                    productSales[productId].revenue += total;
+                  });
+                }
+              }
+            } catch (error) {
+              console.warn(`Failed to fetch order items for order ${order.id}:`, error);
+            }
+          }
+        }
+
+        // Fallback: Process transaction items from transactions if available
         if (transactions && Array.isArray(transactions)) {
           const filteredTransactions = transactions.filter((transaction: any) => {
             const transactionDate = new Date(
@@ -3528,49 +3583,6 @@ export function SalesChartReport() {
           filteredTransactions.forEach((transaction: any) => {
             if (transaction.items && Array.isArray(transaction.items)) {
               transaction.items.forEach((item: any) => {
-                const productId = item.productId?.toString();
-                if (!productId) return;
-
-                // Check if this product is in our products list
-                const product = products.find(
-                  (p) => p.id.toString() === productId,
-                );
-                if (!product) return;
-
-                if (!productSales[productId]) {
-                  productSales[productId] = {
-                    quantity: 0,
-                    revenue: 0,
-                  };
-                }
-
-                const quantity = Number(item.quantity || 0);
-                const total = Number(item.total || 0);
-
-                productSales[productId].quantity += quantity;
-                productSales[productId].revenue += total;
-              });
-            }
-          });
-        }
-
-        // Process order items from orders (EXACT same logic as renderProductReport)
-        if (orders && Array.isArray(orders)) {
-          const filteredOrders = orders.filter((order: any) => {
-            // Check if order is completed/paid (EXACT same as dashboard)
-            if (order.status !== 'completed' && order.status !== 'paid') return false;
-
-            const orderDate = new Date(
-              order.orderedAt || order.createdAt || order.created_at || order.paidAt
-            );
-            const orderDateOnly = new Date(orderDate);
-            orderDateOnly.setHours(0, 0, 0, 0);
-            return orderDateOnly >= start && orderDateOnly <= end;
-          });
-
-          filteredOrders.forEach((order: any) => {
-            if (order.items && Array.isArray(order.items)) {
-              order.items.forEach((item: any) => {
                 const productId = item.productId?.toString();
                 if (!productId) return;
 
