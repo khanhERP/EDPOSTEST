@@ -2726,7 +2726,7 @@ export function SalesChartReport() {
       return [{
         date: group.date,
         time: group.time,
-        orderNumber: group.orderCount, // Show total order count
+        orderNumber: `${group.orderCount} đơn hàng`, // Show order count instead of specific order number
         customerCode: group.customerId,
         customerName: group.customerName,
         productCode: "---", // Summary row, no specific product
@@ -2975,7 +2975,7 @@ export function SalesChartReport() {
                             {item.time}
                           </TableCell>
                           <TableCell className="text-center border-r min-w-[130px] px-4 font-bold text-blue-600">
-                            {item.isGroupHeader ? `${item.orderNumber} đơn hàng` : item.orderNumber}
+                            {item.orderNumber}
                           </TableCell>
                           <TableCell className="text-center border-r min-w-[120px] px-4">
                             {item.customerCode}
@@ -3038,93 +3038,187 @@ export function SalesChartReport() {
 
                         {/* Expanded Order Details */}
                         {isExpanded && item.transactions && item.transactions.map((transaction: any, txIndex: number) => {
-                          // Create a row for each order showing order summary
-                          const orderTotal = Number(transaction.total || 0);
-                          const orderDate = new Date(transaction.createdAt || transaction.created_at);
-                          const orderDiscount = orderTotal * 0.05; // 5% discount 
-                          const orderTax = orderTotal * 0.1; // 10% tax
-                          const orderRevenue = orderTotal - orderTax;
-
-                          return (
-                            <TableRow key={`order-${txIndex}`} className="bg-blue-50/50 border-l-4 border-l-blue-400">
-                              <TableCell className="text-center border-r bg-blue-50 w-12">
-                                <div className="w-8 h-6 flex items-center justify-center text-blue-600 text-xs">
-                                  └
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
-                                {orderDate.toLocaleDateString("vi-VN")}
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
-                                {orderDate.toLocaleTimeString("vi-VN", {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </TableCell>
-                              <TableCell className="text-center border-r text-blue-600 text-sm min-w-[130px] px-4 font-medium">
-                                {transaction.transactionId || transaction.orderNumber || `TXN-${transaction.id}`}
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[120px] px-4">
-                                {transaction.customerId || "KL-001"}
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
-                                {transaction.customerName || t("common.walkInCustomer")}
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[100px] px-4 text-gray-500">
-                                ---
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[150px] px-4 italic text-gray-600">
-                                Chi tiết đơn hàng
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[80px] px-4 text-gray-500">
-                                ---
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[80px] px-4 font-medium">
-                                1
-                              </TableCell>
-                              <TableCell className="text-right border-r text-sm min-w-[100px] px-4">
-                                {formatCurrency(orderTotal)}
-                              </TableCell>
-                              <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
-                                {formatCurrency(orderTotal * 1.05)}
-                              </TableCell>
-                              <TableCell className="text-right border-r text-red-600 text-sm min-w-[100px] px-4">
-                                {formatCurrency(orderDiscount)}
-                              </TableCell>
-                              <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[120px] px-4">
-                                {formatCurrency(orderRevenue)}
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
-                                10%
-                              </TableCell>
-                              <TableCell className="text-right border-r text-sm min-w-[100px] px-4">
-                                {formatCurrency(orderTax)}
-                              </TableCell>
-                              <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[120px] px-4">
-                                {formatCurrency(orderTotal)}
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[120px] px-4">
-                                Đơn hàng
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
-                                {transaction.note || ""}
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
-                                {transaction.salesChannel || "Trực tiếp"}
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
-                                {transaction.tableNumber || "B01"}
-                              </TableCell>
-                              <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
-                                {transaction.cashierName || transaction.employeeName || "Nhân viên"}
-                              </TableCell>
-                              <TableCell className="text-center text-sm min-w-[100px] px-4">
-                                <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                          // Get all items for this transaction
+                          const transactionItems = transaction.items || [];
+                          
+                          // If no items, create a simple transaction row
+                          if (transactionItems.length === 0) {
+                            return (
+                              <TableRow key={`tx-${txIndex}`} className="bg-yellow-50/50 border-l-4 border-l-yellow-400">
+                                <TableCell className="text-center border-r bg-yellow-50 w-12">
+                                  <div className="w-8 h-6 flex items-center justify-center text-yellow-600 text-xs">
+                                    └
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  {new Date(transaction.createdAt || transaction.created_at).toLocaleDateString("vi-VN")}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  {new Date(transaction.createdAt || transaction.created_at).toLocaleTimeString("vi-VN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-blue-600 text-sm min-w-[130px] px-4">
+                                  {transaction.transactionId || `TXN-${transaction.id}`}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[120px] px-4">
+                                  {transaction.customerId || "KL-001"}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {transaction.customerName || t("common.walkInCustomer")}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  ---
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  Giao dịch tổng hợp
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  ---
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  1
+                                </TableCell>
+                                <TableCell className="text-right border-r text-sm min-w-[100px] px-4">
+                                  {formatCurrency(Number(transaction.total))}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
+                                  {formatCurrency(Number(transaction.total))}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-red-600 text-sm min-w-[100px] px-4">
+                                  {formatCurrency(0)}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[120px] px-4">
+                                  {formatCurrency(Number(transaction.total) * 0.9)}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  10%
+                                </TableCell>
+                                <TableCell className="text-right border-r text-sm min-w-[100px] px-4">
+                                  {formatCurrency(Number(transaction.total) * 0.1)}
+                                </TableCell>
+                                <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[120px] px-4">
+                                  {formatCurrency(Number(transaction.total))}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[120px] px-4">
+                                  Giao dịch
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {transaction.note || ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  {transaction.salesChannel || "Trực tiếp"}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  {transaction.tableNumber || "B01"}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {transaction.cashierName || transaction.employeeName || "Nhân viên"}
+                                </TableCell>
+                                <TableCell className="text-center text-sm min-w-[100px] px-4">
                                   {transaction.status || "Hoàn thành"}
-                                </span>
-                              </TableCell>
-                            </TableRow>
-                          );
+                                </TableCell>
+                              </TableRow>
+                            );
+                          }
+
+                          // Show individual items for this transaction
+                          return transactionItems.map((txItem: any, itemIndex: number) => {
+                            const product = products?.find(
+                              (p: any) => p.id.toString() === txItem.productId?.toString(),
+                            );
+                            const productName = product?.name || txItem.productName || "Sản phẩm";
+                            const productCode = product?.sku || txItem.productCode || `PRD-${txItem.productId}`;
+                            const category = categories?.find((cat: any) => cat.id === product?.categoryId);
+                            const group = category?.name || product?.categoryName || txItem.group || "Nhóm sản phẩm";
+
+                            const itemTotal = Number(txItem.total || 0);
+                            const itemUnitPrice = Number(txItem.price || txItem.unitPrice || 0);
+                            const itemQuantity = Number(txItem.quantity || 0);
+                            const itemDiscount = (itemUnitPrice * itemQuantity) - itemTotal;
+                            const itemTax = itemTotal * 0.1;
+                            const itemRevenue = itemTotal - itemTax;
+
+                            return (
+                              <TableRow key={`tx-${txIndex}-item-${itemIndex}`} className="bg-green-50/30 border-l-4 border-l-green-400">
+                                <TableCell className="text-center border-r bg-green-50 w-12">
+                                  <div className="w-8 h-6 flex items-center justify-center text-green-600 text-xs">
+                                    └
+                                  </div>
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  {itemIndex === 0 ? new Date(transaction.createdAt || transaction.created_at).toLocaleDateString("vi-VN") : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  {itemIndex === 0 ? new Date(transaction.createdAt || transaction.created_at).toLocaleTimeString("vi-VN", {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }) : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-blue-600 text-sm min-w-[130px] px-4">
+                                  {itemIndex === 0 ? (transaction.transactionId || `TXN-${transaction.id}`) : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[120px] px-4">
+                                  {itemIndex === 0 ? (transaction.customerId || "KL-001") : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {itemIndex === 0 ? (transaction.customerName || t("common.walkInCustomer")) : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  {productCode}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {productName}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  Cái
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  {itemQuantity}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-sm min-w-[100px] px-4">
+                                  {formatCurrency(itemUnitPrice)}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
+                                  {formatCurrency(itemUnitPrice * itemQuantity)}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-red-600 text-sm min-w-[100px] px-4">
+                                  {formatCurrency(itemDiscount)}
+                                </TableCell>
+                                <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[120px] px-4">
+                                  {formatCurrency(itemRevenue)}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  10%
+                                </TableCell>
+                                <TableCell className="text-right border-r text-sm min-w-[100px] px-4">
+                                  {formatCurrency(itemTax)}
+                                </TableCell>
+                                <TableCell className="text-right border-r font-bold text-blue-600 text-sm min-w-[120px] px-4">
+                                  {formatCurrency(itemTotal)}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[120px] px-4">
+                                  {group}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {itemIndex === 0 ? (transaction.note || "") : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
+                                  {itemIndex === 0 ? (transaction.salesChannel || "Trực tiếp") : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
+                                  {itemIndex === 0 ? (transaction.tableNumber || "B01") : ""}
+                                </TableCell>
+                                <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
+                                  {itemIndex === 0 ? (transaction.cashierName || transaction.employeeName || "Nhân viên") : ""}
+                                </TableCell>
+                                <TableCell className="text-center text-sm min-w-[100px] px-4">
+                                  {itemIndex === 0 ? (transaction.status || "Hoàn thành") : ""}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          });
                         })}
                       </React.Fragment>
                     );
