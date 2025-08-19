@@ -1368,14 +1368,17 @@ export function SalesChartReport() {
           </div>
         );
       }
-    } catch (error) {
-      console.error("Error in renderEmployeeReport:", error);
-      return (
-        <div className="flex justify-center py-8">
-          <div className="text-red-500">Lỗi khi tải báo cáo nhân viên</div>
-        </div>
-      );
-    }
+
+      console.log("Employee Report - orders data:", {
+        ordersLength: orders.length,
+        sampleOrder: orders[0] ? {
+          id: orders[0].id,
+          status: orders[0].status,
+          employeeName: orders[0].employeeName,
+          cashierName: orders[0].cashierName,
+          total: orders[0].total
+        } : null
+      });
 
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -1454,43 +1457,49 @@ export function SalesChartReport() {
     });
 
     filteredCompletedOrders.forEach((order: any) => {
-      const employeeCode = order.employeeId || "EMP-000";
-      const employeeName =
-        order.cashierName || order.employeeName || "Unknown";
-      const employeeKey = `${employeeCode}-${employeeName}`;
+      try {
+        const employeeCode = order.employeeId || "EMP-000";
+        const employeeName =
+          order.cashierName || order.employeeName || "Unknown";
+        const employeeKey = `${employeeCode}-${employeeName}`;
 
-      if (!employeeData[employeeKey]) {
-        employeeData[employeeKey] = {
-          employeeCode,
-          employeeName,
-          orderCount: 0,
-          revenue: 0,
-          tax: 0,
-          total: 0,
-          paymentMethods: {},
-        };
+        if (!employeeData[employeeKey]) {
+          employeeData[employeeKey] = {
+            employeeCode,
+            employeeName,
+            orderCount: 0,
+            revenue: 0,
+            tax: 0,
+            total: 0,
+            paymentMethods: {},
+          };
 
-        // Initialize payment methods for each employee
-        allPaymentMethods.forEach((method) => {
-          employeeData[employeeKey].paymentMethods[method] = 0;
-        });
+          // Initialize payment methods for each employee
+          allPaymentMethods.forEach((method) => {
+            employeeData[employeeKey].paymentMethods[method] = 0;
+          });
+        }
+
+        // Use EXACT same calculation as dashboard: total - discount
+        const orderTotal = Number(order.total || 0);
+        const orderDiscount = Number(order.discount || 0);
+        const orderRevenue = orderTotal - orderDiscount; // EXACT same calculation as dashboard
+        const orderTax = orderRevenue * 0.1; // 10% tax on revenue
+
+        employeeData[employeeKey].orderCount += 1;
+        employeeData[employeeKey].revenue += orderRevenue;
+        employeeData[employeeKey].tax += orderTax;
+        employeeData[employeeKey].total += orderRevenue;
+
+        // Add to payment method total
+        const paymentMethod = order.paymentMethod || "cash";
+        if (!employeeData[employeeKey].paymentMethods[paymentMethod]) {
+          employeeData[employeeKey].paymentMethods[paymentMethod] = 0;
+        }
+        employeeData[employeeKey].paymentMethods[paymentMethod] += orderRevenue;
+      } catch (error) {
+        console.warn("Error processing employee order:", error, order);
       }
-
-      // Use EXACT same calculation as dashboard: total - discount
-      const orderTotal = Number(order.total || 0);
-      const orderDiscount = Number(order.discount || 0);
-      const orderRevenue = orderTotal - orderDiscount; // EXACT same calculation as dashboard
-      const orderTax = orderRevenue * 0.1; // 10% tax on revenue
-
-      employeeData[employeeKey].orderCount += 1;
-      employeeData[employeeKey].revenue += orderRevenue;
-      employeeData[employeeKey].tax += orderTax;
-      employeeData[employeeKey].total += orderRevenue;
-
-      // Add to payment method total
-      const paymentMethod = order.paymentMethod || "cash";
-      employeeData[employeeKey].paymentMethods[paymentMethod] +=
-        orderRevenue; // Use revenue instead of total for consistency
     });
 
     const data = Object.values(employeeData).sort((a, b) => b.total - a.total);
@@ -3745,7 +3754,7 @@ export function SalesChartReport() {
               const orderDiscount = Number(order.discount || 0);
               const revenue = orderTotal - orderDiscount;
 
-              if (revenue > 0) {
+              if (revenue >= 0) { // Allow 0 revenue orders
                 employeeData[cashier].revenue += revenue;
                 employeeData[cashier].orders += 1;
               }
@@ -3757,13 +3766,19 @@ export function SalesChartReport() {
           const result = Object.entries(employeeData)
             .map(([name, data]) => ({
               name: name && name.length > 10 ? name.substring(0, 10) + "..." : name || "Unknown",
-              revenue: data.revenue || 0,
-              orders: data.orders || 0,
+              revenue: Math.max(0, data.revenue || 0), // Ensure no negative values
+              orders: Math.max(0, data.orders || 0), // Ensure no negative values
             }))
+            .filter(item => item.revenue > 0 || item.orders > 0) // Only show employees with data
             .sort((a, b) => (b.revenue || 0) - (a.revenue || 0))
             .slice(0, 10);
 
-          console.log("Employee chart data generated:", result);
+          console.log("Employee chart data generated:", {
+            filteredOrdersCount: empFilteredOrders.length,
+            employeeDataKeys: Object.keys(employeeData),
+            result
+          });
+          
           return result;
         } catch (error) {
           console.error("Error in employee chart data generation:", error);
@@ -3927,6 +3942,8 @@ export function SalesChartReport() {
     try {
       const chartData = getChartData();
 
+      console.log("Chart data for", analysisType, ":", chartData);
+
       if (!chartData || chartData.length === 0) {
         return (
           <div className="flex justify-center py-8">
@@ -3938,7 +3955,10 @@ export function SalesChartReport() {
       console.error("Error in renderChart:", error);
       return (
         <div className="flex justify-center py-8">
-          <div className="text-red-500">Lỗi khi hiển thị biểu đồ</div>
+          <div className="text-red-500">
+            <p>Lỗi khi hiển thị biểu đồ</p>
+            <p className="text-sm">{error.message}</p>
+          </div>
         </div>
       );
     }
