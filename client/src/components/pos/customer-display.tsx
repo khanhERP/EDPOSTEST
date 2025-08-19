@@ -104,7 +104,7 @@ export function CustomerDisplay({
                 <div className="bg-gray-50 rounded-2xl p-4 mb-4">
                   <p className="text-sm text-gray-600 mb-1">Số tiền cần thanh toán</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {Math.round(qrPayment.amount).toLocaleString('vi-VN')} ₫
+                    {qrPayment.amount.toLocaleString('vi-VN')} ₫
                   </p>
                 </div>
 

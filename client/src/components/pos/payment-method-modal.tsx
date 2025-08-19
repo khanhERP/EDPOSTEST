@@ -376,7 +376,7 @@ export function PaymentMethodModal({
   const handleQRComplete = () => {
     setShowQRCode(false);
     setQrCodeUrl("");
-
+    
     // Return to parent with QR payment method
     onSelectMethod('qrCode');
   };
@@ -422,7 +422,7 @@ export function PaymentMethodModal({
     }
 
     setShowCashPayment(false);
-
+    
     // Return to parent with cash payment method and amount data
     onSelectMethod('cash', {
       amountReceived: receivedAmount,
@@ -449,7 +449,7 @@ export function PaymentMethodModal({
   const handleEInvoiceClose = () => {
     setShowEInvoice(false);
     setSelectedPaymentMethod("");
-
+    
     // Return to payment method selection instead of closing completely
     console.log('🔙 E-invoice modal closed, returning to payment method selection');
   };
@@ -597,8 +597,8 @@ export function PaymentMethodModal({
   }, [isOpen, currentTransactionUuid, removePaymentListener, showQRCode, qrCodeUrl, wasShowingQRCode]);
 
   return (
-    <Dialog
-      open={isOpen}
+    <Dialog 
+      open={isOpen} 
       onOpenChange={(open) => {
         if (!open) {
           // When dialog is closed via X button or outside click

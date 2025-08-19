@@ -69,10 +69,10 @@ export function ShoppingCart({
     }
     return sum;
   }, 0);
-  const total = Math.round(subtotal + tax);
+  const total = subtotal + tax;
   const change =
     paymentMethod === "cash"
-      ? Math.max(0, Math.round(parseFloat(amountReceived || "0") - total))
+      ? Math.max(0, parseFloat(amountReceived || "0") - total)
       : 0;
 
   // Helper functions for receipt generation (used in handlePaymentMethodSelect)

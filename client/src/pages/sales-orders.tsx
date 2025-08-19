@@ -1249,7 +1249,7 @@ export default function SalesOrders() {
                             
                             <div className="flex items-center gap-2">
                               <span className="font-medium">Hình thức bán:</span>
-                              <span>{selectedInvoice.type === 'order' ? 'Bán tại bàn' : 'Bán tại cửa hàng'}</span>
+                              <span>Ăn tại chỗ</span>
                             </div>
                             
                             <div className="flex items-center gap-2">
