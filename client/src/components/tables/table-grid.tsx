@@ -1025,10 +1025,41 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
               {/* Tax and Total Summary */}
               <div className="space-y-2">
-                <div className="flex justify-between text-lg font-bold">
-                  <span>{t('orders.totalAmount')}:</span>
-                  <span className="text-green-600">{Number(selectedOrder.total).toLocaleString('vi-VN')} ₫</span>
-                </div>
+                {(() => {
+                  // Calculate subtotal and tax from order items
+                  let subtotal = 0;
+                  let totalTax = 0;
+
+                  if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
+                    orderItems.forEach((item: any) => {
+                      const itemSubtotal = Number(item.total || 0);
+                      subtotal += itemSubtotal;
+
+                      const product = products.find((p: any) => p.id === item.productId);
+                      const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
+                      totalTax += (itemSubtotal * taxRate) / 100;
+                    });
+                  }
+
+                  const grandTotal = subtotal + totalTax;
+
+                  return (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">{t('pos.subtotal')}:</span>
+                        <span className="font-medium">{subtotal.toLocaleString('vi-VN')} ₫</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Thuế:</span>
+                        <span className="font-medium">{totalTax.toLocaleString('vi-VN')} ₫</span>
+                      </div>
+                      <div className="flex justify-between text-lg font-bold border-t pt-2">
+                        <span>{t('orders.totalAmount')}:</span>
+                        <span className="text-green-600">{grandTotal.toLocaleString('vi-VN')} ₫</span>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Payment Buttons */}
