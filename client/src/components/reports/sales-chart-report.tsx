@@ -3044,7 +3044,7 @@ export function SalesChartReport() {
                           <TableCell className="text-center border-r min-w-[80px] px-4">
                             {item.unit}
                           </TableCell>
-                          <TableCell className="text-center border-r min-w-[80px] px-4 font-bold">
+                          <TableCell className="text-center border-r min-w-[80px] px-4">
                             {item.quantity}
                           </TableCell>
                           <TableCell className="text-right border-r min-w-[100px] px-4">
