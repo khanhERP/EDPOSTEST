@@ -294,7 +294,7 @@ export function SalesChartReport() {
     const dailyAverageRevenue = periodRevenue / daysDiff;
 
     // Active orders (pending/in-progress orders) - EXACT same as dashboard
-    const activeOrders = orders.filter((order: any) => 
+    const activeOrders = orders.filter((order: any) =>
       order.status === 'pending' || order.status === 'in_progress'
     ).length;
 
@@ -347,7 +347,7 @@ export function SalesChartReport() {
   // Legacy Sales Report Component Logic using dashboard stats
   const renderSalesReport = () => {
     const dashboardStats = getDashboardStats();
-    
+
     if (!dashboardStats) {
       return (
         <div className="flex justify-center py-8">
@@ -505,7 +505,7 @@ export function SalesChartReport() {
                     {formatCurrency(dashboardStats.monthRevenue)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {startDate === endDate 
+                    {startDate === endDate
                       ? formatDate(startDate)
                       : `${formatDate(startDate)} - ${formatDate(endDate)}`
                     }
@@ -894,7 +894,7 @@ export function SalesChartReport() {
                   )}
 
                   {/* Summary Row */}
-                  {Object.entries(dailySales).length > 0 && (
+                  {paginatedEntries.length > 0 && (
                     <TableRow className="bg-gray-100 font-bold border-t-2">
                       <TableCell className="text-center border-r w-12"></TableCell>
                       <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
@@ -1455,8 +1455,8 @@ export function SalesChartReport() {
   };
 
   // Employee Report with Pagination State
-  const [employeeCurrentPage, setEmployeeCurrentPage] = useState(1);
-  const [employeePageSize, setEmployeePageSize] = useState(15);
+  // const [employeeCurrentPage, setEmployeeCurrentPage] = useState(1); // Moved up
+  // const [employeePageSize, setEmployeePageSize] = useState(15); // Moved up
 
   // Legacy Employee Report Component Logic
   const renderEmployeeReport = () => {
@@ -2235,7 +2235,7 @@ export function SalesChartReport() {
 
     filteredOrders.forEach((order: any) => {
       const customerId = order.customerId || "guest";
-      const customerName = order.customerName || t("common.walkInCustomer");
+      const customerName = order.customerName || "Khách lẻ";
 
       if (!customerData[customerId]) {
         customerData[customerId] = {
@@ -2597,32 +2597,33 @@ export function SalesChartReport() {
     end.setHours(23, 59, 59, 999);
 
     // Filter transactions by date and sales method
-    const filteredTransactions = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at,
-      );
-      const transactionDateOnly = new Date(transactionDate);
-      transactionDateOnly.setHours(0, 0, 0, 0);
+    const filteredTransactions =
+      transactions?.filter((transaction: any) => {
+        const transactionDate = new Date(
+          transaction.createdAt || transaction.created_at,
+        );
+        const transactionDateOnly = new Date(transactionDate);
+        transactionDateOnly.setHours(0, 0, 0, 0);
 
-      const isInRange =
-        transactionDateOnly >= start && transactionDateOnly <= end;
+        const isInRange =
+          transactionDateOnly >= start && transactionDateOnly <= end;
 
-      // Filter by sales method if specified
-      let methodMatch = true;
-      if (salesMethod !== "all") {
-        if (salesMethod === "no_delivery") {
-          methodMatch =
-            !transaction.isDelivery &&
-            (!transaction.deliveryMethod ||
-              transaction.deliveryMethod === "none");
-        } else if (salesMethod === "delivery") {
-          methodMatch =
-            transaction.isDelivery || transaction.deliveryMethod === "delivery";
+        // Filter by sales method if specified
+        let methodMatch = true;
+        if (salesMethod !== "all") {
+          if (salesMethod === "no_delivery") {
+            methodMatch =
+              !transaction.isDelivery &&
+              (!transaction.deliveryMethod ||
+                transaction.deliveryMethod === "none");
+          } else if (salesMethod === "delivery") {
+            methodMatch =
+              transaction.isDelivery || transaction.deliveryMethod === "delivery";
+          }
         }
-      }
 
-      return isInRange && methodMatch;
-    });
+        return isInRange && methodMatch;
+      }) || [];
 
     // Group data by sales method (Dine In vs Takeaway)
     const salesMethodData: {
@@ -3499,9 +3500,9 @@ export function SalesChartReport() {
                               );
                             },
                           )}
-                        </React.Fragment>
-                      );
-                    })
+                      </>
+                    );
+                  })
                 ) : (
                   <TableRow>
                     <TableCell
