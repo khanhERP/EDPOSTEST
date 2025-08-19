@@ -368,10 +368,27 @@ export function ReceiptModal({
               <span>Thuế</span>
               <span>{(() => {
                 // Calculate tax based on base prices (without tax)
+                // item.price should be the base price (15,000)
+                // If item.total includes tax, calculate base price from total
                 const baseSubtotal = receipt.items.reduce((sum, item) => {
-                  return sum + (parseFloat(item.price) * item.quantity);
+                  const itemPrice = parseFloat(item.price);
+                  const itemTotal = parseFloat(item.total);
+                  
+                  // Check if item.total is significantly higher than item.price * quantity
+                  // This indicates item.total includes tax
+                  const expectedBaseTotal = itemPrice * item.quantity;
+                  const actualTotal = itemTotal;
+                  
+                  if (actualTotal > expectedBaseTotal * 1.05) {
+                    // item.total includes tax, calculate base price
+                    const basePrice = actualTotal / (1 + 0.1); // Remove 10% tax
+                    return sum + basePrice;
+                  } else {
+                    // item.price is the base price
+                    return sum + expectedBaseTotal;
+                  }
                 }, 0);
-                const taxAmount = baseSubtotal * 0.1; // 10% tax
+                const taxAmount = baseSubtotal * 0.1; // 10% tax on base price
                 return taxAmount.toFixed(2);
               })()} ₫</span>
             </div>
