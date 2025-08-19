@@ -1307,22 +1307,44 @@ export default function SalesOrders() {
                           </div>
                         </div>
                         <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span>Khách hàng trả:</span>
-                            <span className="font-bold">{formatCurrency(selectedInvoice.total)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Tiền mặt:</span>
-                            <span className="font-bold">{formatCurrency(selectedInvoice.total)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Chuyển khoản:</span>
-                            <span>0</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>QR Code InfoCAMS:</span>
-                            <span className="font-bold">{formatCurrency(selectedInvoice.total)}</span>
-                          </div>
+                          {(() => {
+                            // Check if order is paid based on status and payment status
+                            const isPaid = selectedInvoice.displayStatus === 1 || 
+                                          selectedInvoice.status === 'paid' || 
+                                          selectedInvoice.paymentStatus === 'paid';
+                            
+                            const paidAmount = isPaid ? selectedInvoice.total : 0;
+                            
+                            return (
+                              <>
+                                <div className="flex justify-between">
+                                  <span>Khách hàng trả:</span>
+                                  <span className="font-bold">{formatCurrency(paidAmount)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Tiền mặt:</span>
+                                  <span className="font-bold">
+                                    {isPaid && (!selectedInvoice.paymentMethod || selectedInvoice.paymentMethod === 1) 
+                                      ? formatCurrency(paidAmount) : '0'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Chuyển khoản:</span>
+                                  <span className="font-bold">
+                                    {isPaid && selectedInvoice.paymentMethod === 2 
+                                      ? formatCurrency(paidAmount) : '0'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>QR Code InfoCAMS:</span>
+                                  <span className="font-bold">
+                                    {isPaid && (selectedInvoice.paymentMethod === 7 || selectedInvoice.paymentMethod >= 4) 
+                                      ? formatCurrency(paidAmount) : '0'}
+                                  </span>
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
