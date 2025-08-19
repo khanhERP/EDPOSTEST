@@ -1300,6 +1300,7 @@ export function SalesChartReport() {
         </Card>
       );
     };
+  </div>
 
   // Employee Report with Pagination State
   const [employeeCurrentPage, setEmployeeCurrentPage] = useState(1);
