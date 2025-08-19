@@ -1383,13 +1383,14 @@ export function SalesChartReport() {
       }
 
       const transactionTotal = Number(transaction.total || 0);
-      const transactionTax = transactionTotal * 0.1; // 10% tax
-      const transactionRevenue = transactionTotal - transactionTax;
+      const transactionDiscount = Number(transaction.discount || 0);
+      const transactionRevenue = transactionTotal - transactionDiscount; // Use same calculation as dashboard
+      const transactionTax = transactionRevenue * 0.1; // 10% tax on revenue
 
       employeeData[employeeKey].orderCount += 1;
       employeeData[employeeKey].revenue += transactionRevenue;
       employeeData[employeeKey].tax += transactionTax;
-      employeeData[employeeKey].total += transactionTotal;
+      employeeData[employeeKey].total += transactionRevenue;
 
       // Add to payment method total
       const paymentMethod = transaction.paymentMethod || "cash";
@@ -2366,7 +2367,11 @@ export function SalesChartReport() {
       const transactionDate = new Date(
         transaction.createdAt || transaction.created_at,
       );
-      const dateMatch = transactionDate >= start && transactionDate <= end;
+      const transactionDateOnly = new Date(transactionDate);
+      transactionDateOnly.setHours(0, 0, 0, 0);
+
+      const isInRange =
+        transactionDateOnly >= start && transactionDateOnly <= end;
 
       // Filter by sales method if specified
       let methodMatch = true;
@@ -2382,7 +2387,7 @@ export function SalesChartReport() {
         }
       }
 
-      return dateMatch && methodMatch;
+      return isInRange && methodMatch;
     });
 
     // Group data by sales method (Dine In vs Takeaway)
