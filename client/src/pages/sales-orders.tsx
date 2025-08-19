@@ -1176,9 +1176,9 @@ export default function SalesOrders() {
                   <div className="space-y-4">
                     {/* Invoice Info */}
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      {/* Single Row with Horizontal Scroll */}
-                      <div className="w-full overflow-x-auto">
-                        <div className="flex items-center gap-6 text-sm min-w-max whitespace-nowrap pb-2">
+                      {/* First Row with Horizontal Scroll */}
+                      <div className="w-full overflow-x-auto mb-3">
+                        <div className="flex items-center gap-6 text-sm min-w-max whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">Số đơn bán:</span>
                             {isEditing && editableInvoice ? (
@@ -1236,7 +1236,12 @@ export default function SalesOrders() {
                             <span className="font-medium">Trạng thái:</span>
                             <span>{getInvoiceStatusBadge(selectedInvoice.displayStatus)}</span>
                           </div>
-                          
+                        </div>
+                      </div>
+
+                      {/* Second Row with Horizontal Scroll */}
+                      <div className="w-full overflow-x-auto">
+                        <div className="flex items-center gap-6 text-sm min-w-max whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">Thu ngân:</span>
                             <span>Nguyễn Văn A</span>
