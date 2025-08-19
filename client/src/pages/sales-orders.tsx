@@ -1289,22 +1289,33 @@ export default function SalesOrders() {
                     <div className="bg-blue-50 p-4 rounded-lg">
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="space-y-2">
-                          <div className="flex justify-between">
-                            <span>Tổng tiền thanh toán:</span>
-                            <span className="font-bold">{formatCurrency(selectedInvoice.subtotal)}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Thành tiền:</span>
-                            <span className="font-bold">{formatCurrency(selectedInvoice.subtotal)}</span>
-                          </div>
-                          <div className="flex justify-between text-red-600">
-                            <span>Giảm giá %:</span>
-                            <span>0</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Thuế suất (10%) Thuế GTGT:</span>
-                            <span className="font-bold">{formatCurrency(selectedInvoice.tax)}</span>
-                          </div>
+                          {(() => {
+                            const subtotal = parseFloat(selectedInvoice.subtotal || '0');
+                            const tax = parseFloat(selectedInvoice.tax || '0');
+                            const discount = 0; // Giảm giá mặc định là 0
+                            const totalPayment = subtotal + tax - discount;
+                            
+                            return (
+                              <>
+                                <div className="flex justify-between">
+                                  <span>Tổng tiền thanh toán:</span>
+                                  <span className="font-bold">{formatCurrency(totalPayment)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Thành tiền:</span>
+                                  <span className="font-bold">{formatCurrency(subtotal)}</span>
+                                </div>
+                                <div className="flex justify-between text-red-600">
+                                  <span>Giảm giá:</span>
+                                  <span>{formatCurrency(discount)}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>Thuế suất (10%) Thuế GTGT:</span>
+                                  <span className="font-bold">{formatCurrency(tax)}</span>
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
                         <div className="space-y-2">
                           {(() => {
