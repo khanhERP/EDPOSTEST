@@ -3473,7 +3473,7 @@ export function SalesChartReport() {
                               );
                             },
                           )}
-                      </>
+                      </React.Fragment>
                     );
                   })
                 ) : (
