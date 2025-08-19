@@ -3964,7 +3964,7 @@ export function SalesChartReport() {
       <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-lg">
           <CardTitle className="flex items-center gap-3 text-lg font-semibold">
-            <divthe p-2 bg-white/20 rounded-lg">
+            <div className="p-2 bg-white/20 rounded-lg">
               <TrendingUp className="w-6 h-6" />
             </div>
             <div>
