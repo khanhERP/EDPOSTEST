@@ -1,4 +1,3 @@
-
 import { X, Printer, Mail } from "lucide-react";
 import {
   Dialog,
@@ -84,7 +83,7 @@ export function ReceiptModal({
     if (isOpen && receipt && !isPreview && !hasAutoOpened) {
       console.log("✅ Initial conditions met for auto-print");
       setHasAutoOpened(true);
-      
+
       // Small delay to ensure DOM is ready
       setTimeout(() => {
         console.log("🖨️ Auto-triggering print dialog for completed payment");
@@ -180,7 +179,7 @@ export function ReceiptModal({
         // Auto close modals and print window after printing or saving
         const handlePrintComplete = () => {
           console.log("🖨️ Print/Save completed, auto-closing all popups and print window");
-          
+
           // Force close print window immediately
           if (!printWindow.closed) {
             printWindow.close();
@@ -195,7 +194,7 @@ export function ReceiptModal({
             }
             // Close the receipt modal
             onClose();
-            
+
             // Close any other modals that might be open
             setShowEInvoiceModal(false);
             setShowPaymentMethodModal(false);
@@ -207,7 +206,7 @@ export function ReceiptModal({
 
         // Handle browser's save dialog completion (when user saves or cancels)
         printWindow.addEventListener('beforeunload', handlePrintComplete);
-        
+
         // Handle when print dialog is dismissed without printing
         printWindow.addEventListener('focus', () => {
           // Check if print dialog was closed without printing after a short delay
@@ -256,6 +255,12 @@ export function ReceiptModal({
     if (onConfirm) {
       onConfirm();
     }
+  };
+
+  // Placeholder for handlePaymentMethodSelect, assuming it's defined elsewhere or in a parent component
+  const handlePaymentMethodSelect = (method: string) => {
+    console.log("Selected payment method:", method);
+    // Logic to handle payment method selection, potentially opening e-invoice modal
   };
 
   return (
@@ -328,7 +333,7 @@ export function ReceiptModal({
               // For display, show base price without tax
               const unitPrice = parseFloat(item.price);
               const lineTotal = unitPrice * item.quantity;
-              
+
               return (
                 <div key={item.id}>
                   <div className="flex justify-between text-sm">
@@ -350,8 +355,14 @@ export function ReceiptModal({
 
           <div className="border-t border-gray-300 pt-3 space-y-1">
             <div className="flex justify-between text-sm">
-              <span>{t('pos.subtotal')}</span>
-              <span>{receipt.subtotal} ₫</span>
+              <span>Tạm tính</span>
+              <span>{(() => {
+                // Calculate subtotal as sum of base prices (without tax)
+                const baseSubtotal = receipt.items.reduce((sum, item) => {
+                  return sum + (parseFloat(item.price) * item.quantity);
+                }, 0);
+                return baseSubtotal.toFixed(2);
+              })()} ₫</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Thuế</span>
@@ -367,12 +378,12 @@ export function ReceiptModal({
                 {(() => {
                   // Always prioritize originalPaymentMethod for e-invoices
                   let displayMethod = receipt.paymentMethod;
-                  
+
                   // If this is an e-invoice transaction and we have originalPaymentMethod, use it
                   if (receipt.originalPaymentMethod) {
                     displayMethod = receipt.originalPaymentMethod;
                   }
-                  
+
                   // Map payment methods to display names
                   const methodNames = {
                     cash: t('common.cash'),
@@ -386,7 +397,7 @@ export function ReceiptModal({
                     grabpay: t('common.grabpay'),
                     einvoice: t('pos.eInvoice')
                   };
-                  
+
                   return methodNames[displayMethod] || displayMethod;
                 })()}
               </span>
