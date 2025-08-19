@@ -233,24 +233,19 @@ export function OrderDialog({
   const calculateTotal = () => {
     const cartTotal = cart.reduce(
       (total, item) => {
-        const product = products?.find((p: Product) => p.id === item.product.id);
-        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
         const itemSubtotal = item.product.price * item.quantity;
-        const itemTax = (itemSubtotal * taxRate) / 100;
         return total + itemSubtotal;
       },
       0,
     );
 
-    // In edit mode, also add existing items total
+    // In edit mode, also add existing items subtotal (pre-tax)
     const existingTotal =
       mode === "edit" && existingItems.length > 0
         ? existingItems.reduce((total, item) => {
-            // Handle different possible data structures
-            const itemTotal =
-              item.total ||
-              Number(item.unitPrice || 0) * Number(item.quantity || 0);
-            return total + Number(itemTotal);
+            // Use unitPrice * quantity for existing items (pre-tax amount)
+            const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
+            return total + itemSubtotal;
           }, 0)
         : 0;
 
@@ -670,11 +665,9 @@ export function OrderDialog({
                       <span className="font-medium">
                         {existingItems
                           .reduce((total, item) => {
-                            const itemTotal =
-                              item.total ||
-                              Number(item.unitPrice || 0) *
-                                Number(item.quantity || 0);
-                            return total + Number(itemTotal);
+                            // Use unitPrice * quantity for existing items (pre-tax amount)
+                            const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
+                            return total + itemSubtotal;
                           }, 0)
                           .toLocaleString()}{" "}
                         ₫
