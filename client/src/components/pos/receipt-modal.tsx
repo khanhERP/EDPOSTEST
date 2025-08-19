@@ -341,18 +341,45 @@ export function ReceiptModal({
           </div>
 
           <div className="border-t border-gray-300 pt-3 space-y-1">
-            <div className="flex justify-between text-sm">
-              <span>{t('pos.subtotal')}</span>
-              <span>{receipt.subtotal} ₫</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>Thuế</span>
-              <span>{receipt.tax} ₫</span>
-            </div>
-            <div className="flex justify-between font-bold">
-              <span>{t('pos.total')}</span>
-              <span>{receipt.total} ₫</span>
-            </div>
+            {(() => {
+              // Recalculate totals properly to avoid double taxation
+              let calculatedSubtotal = 0;
+              let calculatedTax = 0;
+
+              receipt.items.forEach((item) => {
+                // Use unitPrice * quantity for pre-tax subtotal
+                const itemPrice = parseFloat(item.price) || 0;
+                const itemQuantity = parseInt(item.quantity) || 0;
+                const itemSubtotal = itemPrice * itemQuantity;
+                
+                // Calculate tax based on the tax rate (default 10%)
+                const taxRate = parseFloat(item.taxRate) || 10;
+                const itemTax = (itemSubtotal * taxRate) / 100;
+                
+                calculatedSubtotal += itemSubtotal;
+                calculatedTax += itemTax;
+              });
+
+              const calculatedTotal = calculatedSubtotal + calculatedTax;
+
+              return (
+                <>
+                  <div className="flex justify-between text-sm">
+                    <span>{t('pos.subtotal')}</span>
+                    <span>{calculatedSubtotal.toFixed(0)} ₫</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Thuế</span>
+                    <span>{calculatedTax.toFixed(0)} ₫</span>
+                  </div>
+                  <div className="flex justify-between font-bold">
+                    <span>{t('pos.total')}</span>
+                    <span>{calculatedTotal.toFixed(0)} ₫</span>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
             <div className="flex justify-between text-sm mt-2">
               <span>{t('pos.paymentMethod')}</span>
               <span className="capitalize">
