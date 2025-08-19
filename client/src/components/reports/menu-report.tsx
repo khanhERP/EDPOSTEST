@@ -164,7 +164,7 @@ export function MenuReport() {
     return `${amount.toLocaleString()} ₫`;
   };
 
-  // Process data from transactions and orders like sales-chart-report
+  // Process data from transactions and orders exactly like sales-chart-report
   const getMenuAnalysisData = () => {
     if (!products || !Array.isArray(products)) return null;
 
@@ -182,8 +182,8 @@ export function MenuReport() {
       };
     } = {};
 
-    // Filter products based on search and category
-    const filteredProducts = products.filter((product: any) => {
+    // Filter products based on search and category - get ALL first
+    const allFilteredProducts = products.filter((product: any) => {
       const searchMatch =
         !productSearch ||
         product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
@@ -203,7 +203,7 @@ export function MenuReport() {
       return searchMatch && categoryMatch && typeMatch;
     });
 
-    // Process transaction items
+    // Process transaction items - EXACTLY like sales-chart-report
     if (transactions && Array.isArray(transactions)) {
       const filteredTransactions = transactions.filter((transaction: any) => {
         const transactionDate = new Date(
@@ -220,10 +220,13 @@ export function MenuReport() {
             const productId = item.productId?.toString();
             if (!productId) return;
 
-            const product = filteredProducts.find(
-              (p) => p.id.toString() === productId,
-            );
+            // Find product from ALL products, not just filtered ones for sales data
+            const product = products.find((p) => p.id.toString() === productId);
             if (!product) return;
+
+            // Check if this product matches our filters after finding sales data
+            const matchesFilter = allFilteredProducts.some((fp) => fp.id.toString() === productId);
+            if (!matchesFilter) return;
 
             if (!productSales[productId]) {
               productSales[productId] = {
@@ -250,7 +253,7 @@ export function MenuReport() {
       });
     }
 
-    // Process order items
+    // Process order items - EXACTLY like sales-chart-report
     if (orders && Array.isArray(orders)) {
       const filteredOrders = orders.filter((order: any) => {
         const orderDate = new Date(
@@ -271,10 +274,13 @@ export function MenuReport() {
             const productId = item.productId?.toString();
             if (!productId) return;
 
-            const product = filteredProducts.find(
-              (p) => p.id.toString() === productId,
-            );
+            // Find product from ALL products, not just filtered ones for sales data
+            const product = products.find((p) => p.id.toString() === productId);
             if (!product) return;
+
+            // Check if this product matches our filters after finding sales data
+            const matchesFilter = allFilteredProducts.some((fp) => fp.id.toString() === productId);
+            if (!matchesFilter) return;
 
             if (!productSales[productId]) {
               productSales[productId] = {
