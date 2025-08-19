@@ -85,44 +85,44 @@ export function CustomerDisplay({
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-8">
-        <div className="max-w-6xl mx-auto">
+      <div className="flex-1 p-4 flex flex-col">
+        <div className="max-w-6xl mx-auto flex-1 flex flex-col">
           {qrPayment ? (
-            // QR Payment Display
-            <div className="text-center py-12">
-              <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-2xl mx-auto">
-                <div className="mb-8">
-                  <div className="text-6xl mb-4">📱</div>
-                  <h2 className="text-3xl font-bold text-gray-800 mb-4">
+            // QR Payment Display - Optimized for no scrolling
+            <div className="flex flex-col items-center justify-center h-full py-4">
+              <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-lg mx-auto w-full max-h-[calc(100vh-200px)] flex flex-col">
+                <div className="text-center mb-4">
+                  <div className="text-4xl mb-2">📱</div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">
                     Quét mã QR để thanh toán
                   </h2>
-                  <p className="text-lg text-gray-600 mb-6">
+                  <p className="text-base text-gray-600">
                     Sử dụng ứng dụng ngân hàng để quét mã QR
                   </p>
                 </div>
 
-                <div className="bg-gray-50 rounded-2xl p-6 mb-6">
-                  <p className="text-sm text-gray-600 mb-2">Số tiền cần thanh toán</p>
-                  <p className="text-4xl font-bold text-green-600">
+                <div className="bg-gray-50 rounded-2xl p-4 mb-4">
+                  <p className="text-sm text-gray-600 mb-1">Số tiền cần thanh toán</p>
+                  <p className="text-2xl font-bold text-green-600">
                     {qrPayment.amount.toLocaleString('vi-VN')} ₫
                   </p>
                 </div>
 
-                <div className="flex justify-center mb-6">
-                  <div className="bg-white p-6 rounded-2xl border-4 border-green-200 shadow-xl">
+                <div className="flex justify-center mb-4 flex-1 flex items-center">
+                  <div className="bg-white p-4 rounded-2xl border-4 border-green-200 shadow-xl">
                     <img
                       src={qrPayment.qrCodeUrl}
                       alt="QR Code thanh toán"
-                      className="w-80 h-80"
+                      className="w-56 h-56 max-w-full max-h-full object-contain"
                     />
                   </div>
                 </div>
 
                 <div className="text-center">
-                  <p className="text-sm text-gray-500 mb-2">
+                  <p className="text-xs text-gray-500 mb-1">
                     Mã giao dịch: {qrPayment.transactionUuid}
                   </p>
-                  <p className="text-base text-blue-600 font-medium">
+                  <p className="text-sm text-blue-600 font-medium">
                     Vui lòng quét mã QR để hoàn tất thanh toán
                   </p>
                 </div>
