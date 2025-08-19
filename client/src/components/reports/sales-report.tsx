@@ -59,214 +59,229 @@ export function SalesReport() {
   const { data: transactions, isLoading: transactionsLoading, error: transactionsError, refetch } = useQuery({
     queryKey: ["/api/transactions", startDate, endDate],
     queryFn: async () => {
-      const response = await fetch(`/api/transactions/${startDate}/${endDate}`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch transactions: ${response.status}`);
+      try {
+        const response = await fetch("/api/transactions");
+        if (!response.ok) {
+          throw new Error(`Failed to fetch transactions: ${response.status}`);
+        }
+        const data = await response.json();
+        
+        // Ensure we always return an array
+        if (!Array.isArray(data)) {
+          console.warn("Transactions API returned non-array data:", data);
+          return [];
+        }
+        
+        return data;
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+        throw error;
       }
-      const data = await response.json();
-      return Array.isArray(data) ? data : [];
     },
     staleTime: 2 * 60 * 1000, // 2 minutes cache
     retry: 3,
+    refetchOnWindowFocus: false,
   });
 
   const getSalesData = () => {
-    if (!transactions || !Array.isArray(transactions)) {
-      return {
-        dailySales: [{
-          date: new Date().toISOString().split('T')[0],
-          revenue: 0,
-          orders: 0,
-          customers: 0,
-        }],
-        paymentMethods: [
-          { method: 'cash', count: 0, revenue: 0 },
-          { method: 'card', count: 0, revenue: 0 },
-          { method: 'qrCode', count: 0, revenue: 0 },
-        ],
-        hourlySales: { 12: 0 },
-        totalRevenue: 0,
-        totalOrders: 0,
-        totalCustomers: 0,
-        averageOrderValue: 0,
-      };
+    // Default return structure
+    const defaultData = {
+      dailySales: [],
+      paymentMethods: [],
+      hourlySales: {},
+      totalRevenue: 0,
+      totalOrders: 0,
+      totalCustomers: 0,
+      averageOrderValue: 0,
+    };
+
+    if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
+      return defaultData;
     }
 
-    // Filter transactions by date range
-    const filteredTransactions = transactions.filter((transaction: any) => {
-      if (!transaction) return false;
-      
-      const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at || transaction.date
-      );
+    try {
+      // Filter transactions by date range with better validation
+      const filteredTransactions = transactions.filter((transaction: any) => {
+        if (!transaction) return false;
+        
+        // Get transaction date
+        const transactionDate = transaction.createdAt || transaction.created_at || transaction.date;
+        if (!transactionDate) return false;
 
-      // Check if date is valid
-      if (isNaN(transactionDate.getTime())) return false;
+        const txDate = new Date(transactionDate);
+        
+        // Check if date is valid
+        if (isNaN(txDate.getTime())) return false;
 
-      // Normalize dates for comparison
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+        // Create date range for comparison
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
 
-      // Normalize transaction date to compare properly
-      const transactionDateOnly = new Date(transactionDate);
-      transactionDateOnly.setHours(0, 0, 0, 0);
+        // Normalize transaction date
+        const txDateOnly = new Date(txDate);
+        txDateOnly.setHours(0, 0, 0, 0);
 
-      const endDateOnly = new Date(end);
-      endDateOnly.setHours(0, 0, 0, 0);
+        return txDateOnly >= start && txDateOnly <= end;
+      });
 
-      return transactionDateOnly >= start && transactionDateOnly <= endDateOnly;
-    });
+      // Daily sales breakdown with error handling
+      const dailySales: {
+        [date: string]: { revenue: number; orders: number; customers: number };
+      } = {};
 
-    // Daily sales breakdown
-    const dailySales: {
-      [date: string]: { revenue: number; orders: number; customers: number };
-    } = {};
+      filteredTransactions.forEach((transaction: any) => {
+        try {
+          const transactionDate = new Date(
+            transaction.createdAt || transaction.created_at || transaction.date
+          );
 
-    filteredTransactions.forEach((transaction: any) => {
-      if (!transaction) return;
-      
-      const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at || transaction.date
-      );
+          if (isNaN(transactionDate.getTime())) return;
 
-      // Skip invalid dates
-      if (isNaN(transactionDate.getTime())) return;
+          const date = transactionDate.toISOString().split('T')[0];
 
-      // Use toISOString to get consistent date format
-      const date = transactionDate.toISOString().split('T')[0];
+          if (!dailySales[date]) {
+            dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
+          }
 
-      if (!dailySales[date]) {
-        dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
-      }
+          const amount = Number(transaction.total || transaction.amount || 0);
+          if (!isNaN(amount) && amount >= 0) {
+            dailySales[date].revenue += amount;
+            dailySales[date].orders += 1;
+            dailySales[date].customers += 1;
+          }
+        } catch (error) {
+          console.warn("Error processing transaction for daily sales:", error);
+        }
+      });
 
-      const amount = Number(transaction.total || transaction.amount || 0);
-      if (!isNaN(amount) && amount >= 0) {
-        dailySales[date].revenue += amount;
-        dailySales[date].orders += 1;
-        dailySales[date].customers += 1; // Assuming 1 customer per transaction
-      }
-    });
+      // Payment method breakdown with proper consolidation
+      const paymentMethods: {
+        [method: string]: { count: number; revenue: number };
+      } = {};
 
-    // Payment method breakdown with proper consolidation
-    const paymentMethods: {
-      [method: string]: { count: number; revenue: number };
-    } = {};
+      const consolidatePaymentMethod = (method: string): string => {
+        if (!method) return 'cash';
+        
+        const normalizedMethod = method.toLowerCase().trim();
+        switch (normalizedMethod) {
+          case 'credit_card':
+          case 'creditcard':
+          case 'credit card':
+            return 'credit_card';
+          case 'debit_card':
+          case 'debitcard':
+          case 'debit card':
+            return 'debit_card';
+          case 'qr_code':
+          case 'qrcode':
+          case 'qr code':
+            return 'qrCode';
+          case 'card':
+            return 'card';
+          case 'transfer':
+          case 'bank_transfer':
+          case 'bank transfer':
+            return 'transfer';
+          case 'cash':
+          case 'tiền mặt':
+            return 'cash';
+          case 'momo':
+            return 'momo';
+          case 'zalopay':
+            return 'zalopay';
+          case 'vnpay':
+            return 'vnpay';
+          case 'shopeepay':
+            return 'shopeepay';
+          case 'grabpay':
+            return 'grabpay';
+          default:
+            return normalizedMethod;
+        }
+      };
 
-    const consolidatePaymentMethod = (method: string): string => {
-      if (!method) return 'cash';
-      
-      const normalizedMethod = method.toLowerCase().trim();
-      switch (normalizedMethod) {
-        case 'credit_card':
-        case 'creditcard':
-        case 'credit card':
-          return 'credit_card';
-        case 'debit_card':
-        case 'debitcard':
-        case 'debit card':
-          return 'debit_card';
-        case 'qr_code':
-        case 'qrcode':
-        case 'qr code':
-          return 'qrCode';
-        case 'card':
-          return 'card';
-        case 'transfer':
-        case 'bank_transfer':
-        case 'bank transfer':
-          return 'transfer';
-        case 'cash':
-        case 'tiền mặt':
-          return 'cash';
-        case 'momo':
-          return 'momo';
-        case 'zalopay':
-          return 'zalopay';
-        case 'vnpay':
-          return 'vnpay';
-        case 'shopeepay':
-          return 'shopeepay';
-        case 'grabpay':
-          return 'grabpay';
-        default:
-          return normalizedMethod;
-      }
-    };
+      filteredTransactions.forEach((transaction: any) => {
+        try {
+          const rawMethod = transaction.paymentMethod || transaction.payment_method || "cash";
+          const method = consolidatePaymentMethod(rawMethod);
+          
+          if (!paymentMethods[method]) {
+            paymentMethods[method] = { count: 0, revenue: 0 };
+          }
+          
+          const amount = Number(transaction.total || transaction.amount || 0);
+          if (!isNaN(amount) && amount > 0) {
+            paymentMethods[method].revenue += amount;
+            paymentMethods[method].count += 1;
+          }
+        } catch (error) {
+          console.warn("Error processing transaction for payment methods:", error);
+        }
+      });
 
-    filteredTransactions.forEach((transaction: any) => {
-      if (!transaction) return;
-      
-      const rawMethod = transaction.paymentMethod || transaction.payment_method || "cash";
-      const method = consolidatePaymentMethod(rawMethod);
-      
-      if (!paymentMethods[method]) {
-        paymentMethods[method] = { count: 0, revenue: 0 };
-      }
-      
-      const amount = Number(transaction.total || transaction.amount || 0);
-      if (!isNaN(amount) && amount > 0) {
-        paymentMethods[method].revenue += amount;
-        paymentMethods[method].count += 1;
-      }
-    });
+      // Hourly breakdown with error handling
+      const hourlySales: { [hour: number]: number } = {};
+      filteredTransactions.forEach((transaction: any) => {
+        try {
+          const transactionDate = new Date(
+            transaction.createdAt || transaction.created_at || transaction.date
+          );
+          
+          if (isNaN(transactionDate.getTime())) return;
+          
+          const hour = transactionDate.getHours();
+          const amount = Number(transaction.total || transaction.amount || 0);
+          
+          if (!isNaN(amount) && amount > 0) {
+            hourlySales[hour] = (hourlySales[hour] || 0) + amount;
+          }
+        } catch (error) {
+          console.warn("Error processing transaction for hourly sales:", error);
+        }
+      });
 
-    // Hourly breakdown
-    const hourlySales: { [hour: number]: number } = {};
-    filteredTransactions.forEach((transaction: any) => {
-      if (!transaction) return;
-      
-      const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at || transaction.date
-      );
-      
-      if (isNaN(transactionDate.getTime())) return;
-      
-      const hour = transactionDate.getHours();
-      const amount = Number(transaction.total || transaction.amount || 0);
-      
-      if (!isNaN(amount) && amount > 0) {
-        hourlySales[hour] = (hourlySales[hour] || 0) + amount;
-      }
-    });
-
-    // Total stats with proper validation
-    const validTransactions = filteredTransactions.filter((transaction: any) => {
-      const amount = Number(transaction.total || transaction.amount || 0);
-      return transaction && !isNaN(amount) && amount >= 0;
-    });
-
-    const totalRevenue = validTransactions.reduce(
-      (sum: number, transaction: any) => {
+      // Calculate totals with validation
+      const validTransactions = filteredTransactions.filter((transaction: any) => {
         const amount = Number(transaction.total || transaction.amount || 0);
-        return sum + amount;
-      },
-      0,
-    );
-    
-    const totalOrders = validTransactions.length;
-    const totalCustomers = validTransactions.length; // Assuming 1 customer per transaction
-    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+        return transaction && !isNaN(amount) && amount >= 0;
+      });
 
-    return {
-      dailySales: Object.entries(dailySales)
-        .map(([date, data]) => ({
-          date,
+      const totalRevenue = validTransactions.reduce(
+        (sum: number, transaction: any) => {
+          const amount = Number(transaction.total || transaction.amount || 0);
+          return sum + amount;
+        },
+        0,
+      );
+      
+      const totalOrders = validTransactions.length;
+      const totalCustomers = validTransactions.length;
+      const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+      return {
+        dailySales: Object.entries(dailySales)
+          .map(([date, data]) => ({
+            date,
+            ...data,
+          }))
+          .sort((a, b) => a.date.localeCompare(b.date)),
+        paymentMethods: Object.entries(paymentMethods).map(([method, data]) => ({
+          method,
           ...data,
-        }))
-        .sort((a, b) => a.date.localeCompare(b.date)),
-      paymentMethods: Object.entries(paymentMethods).map(([method, data]) => ({
-        method,
-        ...data,
-      })),
-      hourlySales,
-      totalRevenue,
-      totalOrders,
-      totalCustomers,
-      averageOrderValue,
-    };
+        })),
+        hourlySales,
+        totalRevenue,
+        totalOrders,
+        totalCustomers,
+        averageOrderValue,
+      };
+    } catch (error) {
+      console.error("Error processing sales data:", error);
+      return defaultData;
+    }
   };
 
   const handleDateRangeChange = (range: string) => {
@@ -288,19 +303,17 @@ export function SalesReport() {
         break;
         
       case "week":
-        // Get last week (7 days ago to yesterday)
         const lastWeekEnd = new Date(today);
-        lastWeekEnd.setDate(today.getDate() - 1); // Yesterday
+        lastWeekEnd.setDate(today.getDate() - 1);
         
         const lastWeekStart = new Date(today);
-        lastWeekStart.setDate(today.getDate() - 7); // 7 days ago
+        lastWeekStart.setDate(today.getDate() - 7);
 
         setStartDate(formatDate(lastWeekStart));
         setEndDate(formatDate(lastWeekEnd));
         break;
         
       case "month":
-        // Get last month
         const lastMonth = new Date(today);
         lastMonth.setMonth(today.getMonth() - 1);
         
@@ -312,7 +325,6 @@ export function SalesReport() {
         break;
 
       case "thisWeek":
-        // Get current week (Monday to Sunday)
         const currentDayOfWeek = today.getDay();
         const daysToMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
 
@@ -327,7 +339,6 @@ export function SalesReport() {
         break;
 
       case "thisMonth":
-        // Get current month
         const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
         const thisMonthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
@@ -336,7 +347,6 @@ export function SalesReport() {
         break;
         
       case "custom":
-        // Default to today for custom range
         const customToday = formatDate(today);
         setStartDate(customToday);
         setEndDate(customToday);
@@ -355,11 +365,17 @@ export function SalesReport() {
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      
+      const day = date.getDate().toString().padStart(2, "0");
+      const month = (date.getMonth() + 1).toString().padStart(2, "0");
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch (error) {
+      return dateStr;
+    }
   };
 
   const getPaymentMethodLabel = (method: string) => {
@@ -390,11 +406,13 @@ export function SalesReport() {
   const salesData = getSalesData();
   const hasError = !!transactionsError;
 
-  const peakHour = salesData ? Object.entries(salesData.hourlySales).reduce(
-    (peak, [hour, revenue]) =>
-      revenue > (salesData.hourlySales[parseInt(peak)] || 0) ? hour : peak,
-    "12",
-  ) : "12";
+  const peakHour = salesData && Object.keys(salesData.hourlySales).length > 0 
+    ? Object.entries(salesData.hourlySales).reduce(
+        (peak, [hour, revenue]) =>
+          revenue > (salesData.hourlySales[parseInt(peak)] || 0) ? hour : peak,
+        "12",
+      )
+    : "12";
 
   // Loading state component
   const LoadingSkeleton = () => (
@@ -411,6 +429,9 @@ export function SalesReport() {
       <CardContent className="p-6">
         <div className="text-center text-red-600">
           <p className="mb-4">{t("common.errorLoadingData")}</p>
+          <p className="text-sm text-gray-600 mb-4">
+            {transactionsError?.message || "Không thể tải dữ liệu giao dịch"}
+          </p>
           <Button onClick={handleRefresh} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />
             {t("reports.refresh")}
@@ -499,7 +520,9 @@ export function SalesReport() {
       </Card>
 
       {/* Content */}
-      {hasError ? (
+      {transactionsLoading ? (
+        <LoadingSkeleton />
+      ) : hasError ? (
         <ErrorState />
       ) : (
         <>
@@ -590,21 +613,22 @@ export function SalesReport() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {salesData?.dailySales.map((day) => (
-                        <TableRow key={day.date} className="hover:bg-gray-50">
-                          <TableCell className="font-medium">{formatDate(day.date)}</TableCell>
-                          <TableCell className="font-medium text-green-600">
-                            {formatCurrency(day.revenue)}
-                          </TableCell>
-                          <TableCell>
-                            {day.orders} {t("common.items")}
-                          </TableCell>
-                          <TableCell>
-                            {day.customers} {t("common.items")}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {(!salesData?.dailySales || salesData.dailySales.length === 0) && (
+                      {salesData?.dailySales && salesData.dailySales.length > 0 ? (
+                        salesData.dailySales.map((day) => (
+                          <TableRow key={day.date} className="hover:bg-gray-50">
+                            <TableCell className="font-medium">{formatDate(day.date)}</TableCell>
+                            <TableCell className="font-medium text-green-600">
+                              {formatCurrency(day.revenue)}
+                            </TableCell>
+                            <TableCell>
+                              {day.orders} {t("common.items")}
+                            </TableCell>
+                            <TableCell>
+                              {day.customers} {t("common.items")}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center text-gray-500 py-8">
                             {t("reports.noSalesData")}
@@ -628,43 +652,43 @@ export function SalesReport() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {salesData?.paymentMethods.map((payment) => {
-                    const percentage =
-                      (salesData?.totalRevenue || 0) > 0
-                        ? (Number(payment.revenue) / Number(salesData?.totalRevenue || 1)) * 100
-                        : 0;
+                  {salesData?.paymentMethods && salesData.paymentMethods.length > 0 ? (
+                    salesData.paymentMethods.map((payment) => {
+                      const percentage =
+                        (salesData?.totalRevenue || 0) > 0
+                          ? (Number(payment.revenue) / Number(salesData?.totalRevenue || 1)) * 100
+                          : 0;
 
-                    return (
-                      <div key={payment.method} className="space-y-2 p-3 bg-gray-50 rounded-lg">
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="font-medium">
-                              {getPaymentMethodLabel(payment.method)}
-                            </Badge>
-                            <span className="text-sm text-gray-600">
-                              {payment.count} {t("common.items")}
-                            </span>
+                      return (
+                        <div key={payment.method} className="space-y-2 p-3 bg-gray-50 rounded-lg">
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="font-medium">
+                                {getPaymentMethodLabel(payment.method)}
+                              </Badge>
+                              <span className="text-sm text-gray-600">
+                                {payment.count} {t("common.items")}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold text-green-600">
+                                {formatCurrency(payment.revenue)}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-green-600">
-                              {formatCurrency(payment.revenue)}
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
-                            </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${Math.min(percentage, 100)}%` }}
+                            ></div>
                           </div>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${Math.min(percentage, 100)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                  {(!salesData?.paymentMethods || salesData.paymentMethods.length === 0) && (
+                      );
+                    })
+                  ) : (
                     <div className="text-center text-gray-500 py-8">
                       <div className="bg-gray-50 rounded-lg p-6">
                         <p className="text-gray-600 mb-2">{t("reports.noPaymentData")}</p>
