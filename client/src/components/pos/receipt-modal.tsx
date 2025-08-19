@@ -1,4 +1,3 @@
-
 import { X, Printer, Mail } from "lucide-react";
 import {
   Dialog,
@@ -84,7 +83,7 @@ export function ReceiptModal({
     if (isOpen && receipt && !isPreview && !hasAutoOpened) {
       console.log("✅ Initial conditions met for auto-print");
       setHasAutoOpened(true);
-      
+
       // Small delay to ensure DOM is ready
       setTimeout(() => {
         console.log("🖨️ Auto-triggering print dialog for completed payment");
@@ -180,7 +179,7 @@ export function ReceiptModal({
         // Auto close modals and print window after printing or saving
         const handlePrintComplete = () => {
           console.log("🖨️ Print/Save completed, auto-closing all popups and print window");
-          
+
           // Force close print window immediately
           if (!printWindow.closed) {
             printWindow.close();
@@ -195,7 +194,7 @@ export function ReceiptModal({
             }
             // Close the receipt modal
             onClose();
-            
+
             // Close any other modals that might be open
             setShowEInvoiceModal(false);
             setShowPaymentMethodModal(false);
@@ -207,7 +206,7 @@ export function ReceiptModal({
 
         // Handle browser's save dialog completion (when user saves or cancels)
         printWindow.addEventListener('beforeunload', handlePrintComplete);
-        
+
         // Handle when print dialog is dismissed without printing
         printWindow.addEventListener('focus', () => {
           // Check if print dialog was closed without printing after a short delay
@@ -256,6 +255,12 @@ export function ReceiptModal({
     if (onConfirm) {
       onConfirm();
     }
+  };
+
+  // Placeholder for handlePaymentMethodSelect, assuming it's defined elsewhere or will be implemented
+  const handlePaymentMethodSelect = (method: string) => {
+    console.log("Selected payment method:", method);
+    // Implement logic to handle payment method selection, possibly updating receipt or state
   };
 
   return (
@@ -351,11 +356,11 @@ export function ReceiptModal({
                 const itemPrice = parseFloat(item.price) || 0;
                 const itemQuantity = parseInt(item.quantity) || 0;
                 const itemSubtotal = itemPrice * itemQuantity;
-                
+
                 // Calculate tax based on the tax rate (default 10%)
                 const taxRate = parseFloat(item.taxRate) || 10;
                 const itemTax = (itemSubtotal * taxRate) / 100;
-                
+
                 calculatedSubtotal += itemSubtotal;
                 calculatedTax += itemTax;
               });
@@ -386,12 +391,12 @@ export function ReceiptModal({
                 {(() => {
                   // Always prioritize originalPaymentMethod for e-invoices
                   let displayMethod = receipt.paymentMethod;
-                  
+
                   // If this is an e-invoice transaction and we have originalPaymentMethod, use it
                   if (receipt.originalPaymentMethod) {
                     displayMethod = receipt.originalPaymentMethod;
                   }
-                  
+
                   // Map payment methods to display names
                   const methodNames = {
                     cash: t('common.cash'),
@@ -405,7 +410,7 @@ export function ReceiptModal({
                     grabpay: t('common.grabpay'),
                     einvoice: t('pos.eInvoice')
                   };
-                  
+
                   return methodNames[displayMethod] || displayMethod;
                 })()}
               </span>
