@@ -3514,7 +3514,7 @@ export function SalesChartReport() {
           [productId: string]: { quantity: number; revenue: number };
         } = {};
 
-        // Lấy dữ liệu từ orders và order_items
+        // Lấy dữ liệu từ orders có items sẵn có
         if (orders && Array.isArray(orders)) {
           // Filter orders theo ngày và status
           const filteredOrders = orders.filter((order: any) => {
@@ -3529,44 +3529,34 @@ export function SalesChartReport() {
             return orderDateOnly >= start && orderDateOnly <= end;
           });
 
-          // Xử lý từng order để lấy order items
-          for (const order of filteredOrders) {
-            try {
-              // Fetch order items cho từng order
-              const response = await fetch(`/api/order-items/${order.id}`);
-              if (response.ok) {
-                const orderItems = await response.json();
-                
-                if (orderItems && Array.isArray(orderItems)) {
-                  orderItems.forEach((item: any) => {
-                    const productId = item.productId?.toString();
-                    if (!productId) return;
+          // Xử lý từng order để lấy order items từ order.items nếu có
+          filteredOrders.forEach((order: any) => {
+            if (order.items && Array.isArray(order.items)) {
+              order.items.forEach((item: any) => {
+                const productId = item.productId?.toString();
+                if (!productId) return;
 
-                    // Kiểm tra product có tồn tại trong danh sách products không
-                    const product = products.find(
-                      (p) => p.id.toString() === productId,
-                    );
-                    if (!product) return;
+                // Kiểm tra product có tồn tại trong danh sách products không
+                const product = products.find(
+                  (p) => p.id.toString() === productId,
+                );
+                if (!product) return;
 
-                    if (!productSales[productId]) {
-                      productSales[productId] = {
-                        quantity: 0,
-                        revenue: 0,
-                      };
-                    }
-
-                    const quantity = Number(item.quantity || 0);
-                    const total = Number(item.total || 0);
-
-                    productSales[productId].quantity += quantity;
-                    productSales[productId].revenue += total;
-                  });
+                if (!productSales[productId]) {
+                  productSales[productId] = {
+                    quantity: 0,
+                    revenue: 0,
+                  };
                 }
-              }
-            } catch (error) {
-              console.warn(`Failed to fetch order items for order ${order.id}:`, error);
+
+                const quantity = Number(item.quantity || 0);
+                const total = Number(item.total || 0);
+
+                productSales[productId].quantity += quantity;
+                productSales[productId].revenue += total;
+              });
             }
-          }
+          });
         }
 
         // Fallback: Process transaction items from transactions if available
