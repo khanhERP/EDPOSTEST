@@ -376,7 +376,7 @@ export function PaymentMethodModal({
   const handleQRComplete = () => {
     setShowQRCode(false);
     setQrCodeUrl("");
-    
+
     // Return to parent with QR payment method
     onSelectMethod('qrCode');
   };
@@ -422,7 +422,7 @@ export function PaymentMethodModal({
     }
 
     setShowCashPayment(false);
-    
+
     // Return to parent with cash payment method and amount data
     onSelectMethod('cash', {
       amountReceived: receivedAmount,
@@ -449,7 +449,7 @@ export function PaymentMethodModal({
   const handleEInvoiceClose = () => {
     setShowEInvoice(false);
     setSelectedPaymentMethod("");
-    
+
     // Return to payment method selection instead of closing completely
     console.log('🔙 E-invoice modal closed, returning to payment method selection');
   };
@@ -597,8 +597,8 @@ export function PaymentMethodModal({
   }, [isOpen, currentTransactionUuid, removePaymentListener, showQRCode, qrCodeUrl, wasShowingQRCode]);
 
   return (
-    <Dialog 
-      open={isOpen} 
+    <Dialog
+      open={isOpen}
       onOpenChange={(open) => {
         if (!open) {
           // When dialog is closed via X button or outside click
@@ -652,10 +652,36 @@ export function PaymentMethodModal({
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600">{t("common.totalAmount")}</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {total.toLocaleString("vi-VN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
+                  {(() => {
+                    // Calculate total similar to order detail: base price + tax
+                    if (cartItems && cartItems.length > 0) {
+                      const baseSubtotal = cartItems.reduce((sum, item) => {
+                        const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                        const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
+                        return sum + (itemPrice * itemQuantity);
+                      }, 0);
+
+                      const totalTax = cartItems.reduce((sum, item) => {
+                        const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                        const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
+                        const itemTaxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "10") : (item.taxRate || 10);
+                        const itemSubtotal = itemPrice * itemQuantity;
+                        return sum + (itemSubtotal * itemTaxRate) / 100;
+                      }, 0);
+
+                      const calculatedTotal = baseSubtotal + totalTax;
+                      return calculatedTotal.toLocaleString("vi-VN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      });
+                    }
+
+                    // Fallback to passed total if no cart items
+                    return total.toLocaleString("vi-VN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    });
+                  })()}{" "}
                   ₫
                 </p>
               </div>
