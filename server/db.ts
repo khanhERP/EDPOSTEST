@@ -44,7 +44,9 @@ if (DATABASE_URL?.includes("1.55.212.135")) {
     DATABASE_URL = DATABASE_URL.replace(/\/[^\/\?]+(\?|$)/, "/postgres$1");
   }
   if (!DATABASE_URL.includes("sslmode=disable")) {
-    DATABASE_URL += DATABASE_URL.includes("?") ? "&sslmode=disable" : "?sslmode=disable";
+    DATABASE_URL += DATABASE_URL.includes("?")
+      ? "&sslmode=disable"
+      : "?sslmode=disable";
   }
 }
 
@@ -53,11 +55,6 @@ export const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
-  ssl: DATABASE_URL?.includes("1.55.212.135")
-    ? false  // Disable SSL for external server
-    : DATABASE_URL?.includes("neon")
-    ? { rejectUnauthorized: false }
-    : undefined,
 });
 
 // Log database connection info with detailed debugging
