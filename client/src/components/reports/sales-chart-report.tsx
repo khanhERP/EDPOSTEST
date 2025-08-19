@@ -2585,30 +2585,37 @@ export function SalesChartReport() {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    // Use sample data if no real data available
-    const sampleData = [];
-    const sampleEmployees = [
-      { id: 1, name: "John Smith" },
-      { id: 2, name: "김민수" },
-      { id: 3, name: "이정현" },
-      { id: 4, name: "이영희" },
-    ];
-    
-    const sampleCustomers = [
-      { id: "KH001", name: "Nguyễn Minh Tuấn" },
-      { id: "KH002", name: "Trần Thị Lan" },
-      { id: "KL-001", name: "Khách lẻ" },
-    ];
-    
-    const sampleProducts = [
-      { id: 1, sku: "BANH5591", name: "BÁNH QUY OREO MINI HƯƠNG VANI 61.3G", price: 1500000, categoryId: 1 },
-      { id: 2, sku: "FOOD-00122", name: "Bánh mì", price: 15000, categoryId: 2 },
-      { id: 3, sku: "FOOD-0017", name: "Bánh mì  test 8", price: 15000, categoryId: 2 },
-      { id: 4, sku: "FOOD-0018", name: "Bánh mì  test 8", price: 15000, categoryId: 2 },
-      { id: 5, sku: "FOOD-0016", name: "Bánh mì  test 8", price: 15000, categoryId: 2 },
-    ];
+    // Filter real transactions by date range
+    const filteredTransactions = transactions?.filter((transaction: any) => {
+      const transactionDate = new Date(
+        transaction.createdAt || transaction.created_at,
+      );
+      const transactionDateOnly = new Date(transactionDate);
+      transactionDateOnly.setHours(0, 0, 0, 0);
+      
+      const isInRange = transactionDateOnly >= start && transactionDateOnly <= end;
+      
+      // Filter by employee if specified
+      const employeeMatch =
+        selectedEmployee === "all" ||
+        transaction.cashierName === selectedEmployee ||
+        transaction.employeeId?.toString() === selectedEmployee ||
+        transaction.cashierName?.includes(selectedEmployee);
+        
+      // Filter by product if specified
+      const productMatch = !productSearch || 
+        (transaction.items && transaction.items.some((item: any) => {
+          const product = products?.find((p: any) => p.id.toString() === item.productId?.toString());
+          return product && (
+            product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+            (product.sku && product.sku.toLowerCase().includes(productSearch.toLowerCase()))
+          );
+        }));
+        
+      return isInRange && employeeMatch && productMatch;
+    }) || [];
 
-    // Create sample transactions grouped by date and customer
+    // Group transactions by date, customer, and employee for summary rows
     const groupedTransactions: {
       [key: string]: {
         date: string;
@@ -2627,101 +2634,51 @@ export function SalesChartReport() {
       };
     } = {};
 
-    // Generate sample grouped data
-    for (let day = 0; day < 1; day++) {
-      const orderDate = new Date(start.getTime() + day * 24 * 60 * 60 * 1000);
-      const dateStr = orderDate.toLocaleDateString("vi-VN");
-      
-      // Generate multiple transactions for each customer-employee combination
-      sampleCustomers.forEach((customer, custIndex) => {
-        sampleEmployees.forEach((employee, empIndex) => {
-          const numOrders = Math.floor(Math.random() * 3) + 2; // 2-4 orders per combination
-          const groupKey = `${dateStr}-${customer.id}-${employee.name}`;
-          
-          const transactions = [];
-          let totalAmount = 0;
-          let totalDiscount = 0;
-          let totalTax = 0;
-          
-          for (let orderIdx = 0; orderIdx < numOrders; orderIdx++) {
-            const orderTime = new Date(orderDate.getTime() + (custIndex * 4 + empIndex * 2 + orderIdx) * 60 * 60 * 1000);
-            const transactionId = `TXN-${Date.now().toString().slice(-10)}${orderIdx}`;
-            
-            // Generate items for this transaction
-            const numItems = Math.floor(Math.random() * 3) + 1; // 1-3 items per order
-            const items = [];
-            let transactionTotal = 0;
-            
-            for (let itemIdx = 0; itemIdx < numItems; itemIdx++) {
-              const product = sampleProducts[itemIdx % sampleProducts.length];
-              const quantity = Math.floor(Math.random() * 3) + 1;
-              const unitPrice = product.price;
-              const itemTotal = quantity * unitPrice;
-              
-              items.push({
-                productId: product.id,
-                productName: product.name,
-                productCode: product.sku,
-                quantity: quantity,
-                price: unitPrice,
-                unitPrice: unitPrice,
-                total: itemTotal,
-                group: "Snacks123"
-              });
-              
-              transactionTotal += itemTotal;
-            }
-            
-            const discount = transactionTotal * 0.05; // 5% discount
-            const tax = (transactionTotal - discount) * 0.1; // 10% tax
-            const finalTotal = transactionTotal - discount;
-            
-            totalAmount += finalTotal;
-            totalDiscount += discount;
-            totalTax += tax;
-            
-            transactions.push({
-              id: `tx-${orderIdx}`,
-              transactionId: transactionId,
-              total: finalTotal,
-              subtotal: transactionTotal,
-              tax: tax,
-              createdAt: orderTime.toISOString(),
-              created_at: orderTime.toISOString(),
-              cashierName: employee.name,
-              employeeId: employee.id,
-              paymentMethod: "cash",
-              customerId: customer.id,
-              customerName: customer.name,
-              tableNumber: `B${String(Math.floor(Math.random() * 10) + 1).padStart(2, "0")}`,
-              salesChannel: orderIdx % 2 === 0 ? "Trực tiếp" : "Mang về",
-              status: "Hoàn thành",
-              note: orderIdx % 3 === 0 ? "Ghi chú đặc biệt" : "",
-              items: items
-            });
-          }
-          
-          groupedTransactions[groupKey] = {
-            date: dateStr,
-            time: new Date(orderDate.getTime() + custIndex * 60 * 60 * 1000).toLocaleTimeString("vi-VN", {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            orderCount: numOrders,
-            customerId: customer.id,
-            customerName: customer.name,
-            employeeName: employee.name,
-            totalRevenue: totalAmount - totalTax,
-            totalDiscount: totalDiscount,
-            totalTax: totalTax,
-            totalAmount: totalAmount,
-            transactions: transactions,
-            salesChannel: "Trực tiếp",
-            tableNumber: `B${String(Math.floor(Math.random() * 10) + 1).padStart(2, "0")}`,
-          };
-        });
+    filteredTransactions.forEach((transaction: any) => {
+      const transactionDate = new Date(transaction.createdAt || transaction.created_at);
+      const dateStr = transactionDate.toLocaleDateString("vi-VN");
+      const timeStr = transactionDate.toLocaleTimeString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
       });
-    }
+      
+      const customerId = transaction.customerId || "KL-001";
+      const customerName = transaction.customerName || "Khách lẻ";
+      const employeeName = transaction.cashierName || transaction.employeeName || "Nhân viên";
+      
+      const groupKey = `${dateStr}-${customerId}-${employeeName}`;
+      
+      if (!groupedTransactions[groupKey]) {
+        groupedTransactions[groupKey] = {
+          date: dateStr,
+          time: timeStr,
+          orderCount: 0,
+          customerId: customerId,
+          customerName: customerName,
+          employeeName: employeeName,
+          totalRevenue: 0,
+          totalDiscount: 0,
+          totalTax: 0,
+          totalAmount: 0,
+          transactions: [],
+          salesChannel: transaction.salesChannel || "Trực tiếp",
+          tableNumber: transaction.tableNumber || "B01",
+        };
+      }
+      
+      const transactionTotal = Number(transaction.total || 0);
+      const transactionSubtotal = Number(transaction.subtotal || transactionTotal * 1.1);
+      const transactionDiscount = transactionSubtotal - transactionTotal;
+      const transactionTax = transactionTotal * 0.1;
+      const transactionRevenue = transactionTotal - transactionTax;
+      
+      groupedTransactions[groupKey].orderCount += 1;
+      groupedTransactions[groupKey].totalAmount += transactionTotal;
+      groupedTransactions[groupKey].totalDiscount += transactionDiscount;
+      groupedTransactions[groupKey].totalTax += transactionTax;
+      groupedTransactions[groupKey].totalRevenue += transactionRevenue;
+      groupedTransactions[groupKey].transactions.push(transaction);
+    });
 
     // Map grouped transactions to the detailed report format
     const salesDetailData = Object.values(groupedTransactions).map((group) => {
@@ -2965,10 +2922,10 @@ export function SalesChartReport() {
 
                         {/* Expanded Order Details */}
                         {isExpanded && item.transactions && item.transactions.map((transaction: any, txIndex: number) => {
-                          // Get all items for this transaction
+                          // Get all items for this transaction from database
                           const transactionItems = transaction.items || [];
                           
-                          // If no items, create a simple transaction row
+                          // If no items in database, show transaction summary
                           if (transactionItems.length === 0) {
                             return (
                               <TableRow key={`tx-${txIndex}`} className="bg-yellow-50/50 border-l-4 border-l-yellow-400">
@@ -3002,7 +2959,7 @@ export function SalesChartReport() {
                                   Giao dịch tổng hợp
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
-                                  ---
+                                  Đơn
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
                                   1
@@ -3011,10 +2968,10 @@ export function SalesChartReport() {
                                   {formatCurrency(Number(transaction.total))}
                                 </TableCell>
                                 <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
-                                  {formatCurrency(Number(transaction.total))}
+                                  {formatCurrency(Number(transaction.subtotal || Number(transaction.total) * 1.1))}
                                 </TableCell>
                                 <TableCell className="text-right border-r text-red-600 text-sm min-w-[100px] px-4">
-                                  {formatCurrency(0)}
+                                  {formatCurrency(Number(transaction.subtotal || Number(transaction.total) * 1.1) - Number(transaction.total))}
                                 </TableCell>
                                 <TableCell className="text-right border-r text-green-600 font-medium text-sm min-w-[120px] px-4">
                                   {formatCurrency(Number(transaction.total) * 0.9)}
@@ -3032,13 +2989,13 @@ export function SalesChartReport() {
                                   Giao dịch
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
-                                  {transaction.note || ""}
+                                  {transaction.note || transaction.notes || ""}
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
-                                  {transaction.salesChannel || "Trực tiếp"}
+                                  {transaction.salesChannel || transaction.deliveryMethod || "Trực tiếp"}
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
-                                  {transaction.tableNumber || "B01"}
+                                  {transaction.tableNumber || transaction.tableId || "B01"}
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
                                   {transaction.cashierName || transaction.employeeName || "Nhân viên"}
@@ -3050,20 +3007,21 @@ export function SalesChartReport() {
                             );
                           }
 
-                          // Show individual items for this transaction
+                          // Show individual items from database for this transaction
                           return transactionItems.map((txItem: any, itemIndex: number) => {
                             const product = products?.find(
                               (p: any) => p.id.toString() === txItem.productId?.toString(),
                             );
                             const productName = product?.name || txItem.productName || "Sản phẩm";
-                            const productCode = product?.sku || txItem.productCode || `PRD-${txItem.productId}`;
+                            const productCode = product?.sku || txItem.productCode || txItem.sku || `PRD-${txItem.productId}`;
                             const category = categories?.find((cat: any) => cat.id === product?.categoryId);
                             const group = category?.name || product?.categoryName || txItem.group || "Nhóm sản phẩm";
 
                             const itemTotal = Number(txItem.total || 0);
                             const itemUnitPrice = Number(txItem.price || txItem.unitPrice || 0);
                             const itemQuantity = Number(txItem.quantity || 0);
-                            const itemDiscount = (itemUnitPrice * itemQuantity) - itemTotal;
+                            const itemSubtotal = itemUnitPrice * itemQuantity;
+                            const itemDiscount = itemSubtotal - itemTotal;
                             const itemTax = itemTotal * 0.1;
                             const itemRevenue = itemTotal - itemTax;
 
@@ -3099,7 +3057,7 @@ export function SalesChartReport() {
                                   {productName}
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
-                                  Cái
+                                  {txItem.unit || product?.unit || "Cái"}
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
                                   {itemQuantity}
@@ -3108,7 +3066,7 @@ export function SalesChartReport() {
                                   {formatCurrency(itemUnitPrice)}
                                 </TableCell>
                                 <TableCell className="text-right border-r text-sm min-w-[120px] px-4">
-                                  {formatCurrency(itemUnitPrice * itemQuantity)}
+                                  {formatCurrency(itemSubtotal)}
                                 </TableCell>
                                 <TableCell className="text-right border-r text-red-600 text-sm min-w-[100px] px-4">
                                   {formatCurrency(itemDiscount)}
@@ -3117,7 +3075,7 @@ export function SalesChartReport() {
                                   {formatCurrency(itemRevenue)}
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
-                                  10%
+                                  {Number(txItem.taxRate || 10)}%
                                 </TableCell>
                                 <TableCell className="text-right border-r text-sm min-w-[100px] px-4">
                                   {formatCurrency(itemTax)}
@@ -3129,13 +3087,13 @@ export function SalesChartReport() {
                                   {group}
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
-                                  {itemIndex === 0 ? (transaction.note || "") : ""}
+                                  {itemIndex === 0 ? (transaction.note || transaction.notes || "") : ""}
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[100px] px-4">
-                                  {itemIndex === 0 ? (transaction.salesChannel || "Trực tiếp") : ""}
+                                  {itemIndex === 0 ? (transaction.salesChannel || transaction.deliveryMethod || "Trực tiếp") : ""}
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[80px] px-4">
-                                  {itemIndex === 0 ? (transaction.tableNumber || "B01") : ""}
+                                  {itemIndex === 0 ? (transaction.tableNumber || transaction.tableId || "B01") : ""}
                                 </TableCell>
                                 <TableCell className="text-center border-r text-sm min-w-[150px] px-4">
                                   {itemIndex === 0 ? (transaction.cashierName || transaction.employeeName || "Nhân viên") : ""}
