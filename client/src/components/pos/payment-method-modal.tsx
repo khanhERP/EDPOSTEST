@@ -653,21 +653,8 @@ export function PaymentMethodModal({
                 <p className="text-sm text-gray-600">{t("common.totalAmount")}</p>
                 <p className="text-2xl font-bold text-blue-600">
                   {(() => {
-                    // Calculate total without tax - just base price
-                    if (cartItems && cartItems.length > 0) {
-                      const baseSubtotal = cartItems.reduce((sum, item) => {
-                        const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-                        const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
-                        return sum + (itemPrice * itemQuantity);
-                      }, 0);
-
-                      return baseSubtotal.toLocaleString("vi-VN", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      });
-                    }
-
-                    // Fallback to passed total if no cart items
+                    // Use the passed total directly without any calculation
+                    // The total should already be calculated correctly by the parent component
                     return total.toLocaleString("vi-VN", {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
