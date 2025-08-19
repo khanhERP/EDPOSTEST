@@ -414,46 +414,8 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                             </span>
                           </button>
                         </Link>
-                        <Link href="/reports?tab=order">
-                          <button
-                            className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
-                              activeDropdown === "reports" &&
-                              window.location.search === "?tab=order"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                            }`}
-                            onClick={() => {
-                              setActiveDropdown(null);
-                              setPosMenuOpen(false);
-                              setReportsSubmenuOpen(false);
-                            }}
-                          >
-                            <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                            <span className="truncate">
-                              {t("reports.purchaseTab")}
-                            </span>
-                          </button>
-                        </Link>
-                        <Link href="/reports?tab=inventory">
-                          <button
-                            className={`w-full flex items-center px-2 py-1.5 text-xs sm:text-sm rounded transition-colors ${
-                              activeDropdown === "reports" &&
-                              window.location.search === "?tab=inventory"
-                                ? "text-blue-600 bg-blue-50"
-                                : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
-                            }`}
-                            onClick={() => {
-                              setActiveDropdown(null);
-                              setPosMenuOpen(false);
-                              setReportsSubmenuOpen(false);
-                            }}
-                          >
-                            <Package className="w-3 h-3 sm:w-4 sm:h-4 mr-2 sm:mr-3 flex-shrink-0" />
-                            <span className="truncate">
-                              {t("reports.warehouseReport")}
-                            </span>
-                          </button>
-                        </Link>
+                        
+                        
                       </div>
                     )}
                   </div>

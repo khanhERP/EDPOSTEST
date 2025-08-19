@@ -27,7 +27,7 @@ export default function ReportsPage() {
   useEffect(() => {
     const params = new URLSearchParams(search);
     const tab = params.get('tab');
-    if (tab && ['overview', 'sales', 'menu', 'table', 'saleschart', 'order', 'inventory'].includes(tab)) {
+    if (tab && ['overview', 'sales', 'menu', 'table', 'saleschart'].includes(tab)) {
       setActiveTab(tab);
     }
   }, [search]);
@@ -96,20 +96,7 @@ export default function ReportsPage() {
                   <BarChart3 className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span>{t('reports.salesReport')}</span>
                 </TabsTrigger>
-                <TabsTrigger
-                  value="order"
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
-                >
-                  <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{t("reports.orderReport")}</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="inventory"
-                  className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3 py-1.5 sm:py-2 whitespace-nowrap data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-green-100 transition-colors"
-                >
-                  <Package className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span>{t('reports.warehouseReport')}</span>
-                </TabsTrigger>
+                
                 
               </TabsList>
             </div>
@@ -134,13 +121,7 @@ export default function ReportsPage() {
               <SalesChartReport />
             </TabsContent>
 
-            <TabsContent value="order">
-              <OrderReport />
-            </TabsContent>
-
-            <TabsContent value="inventory">
-              <InventoryReport />
-            </TabsContent>
+            
 
             
           </Tabs>
