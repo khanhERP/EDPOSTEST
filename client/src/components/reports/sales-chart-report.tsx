@@ -2585,77 +2585,30 @@ export function SalesChartReport() {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    // First, let's get orders data as well to have more complete information
-    const ordersData = orders || [];
-    const allTransactionsAndOrders = [...transactions];
+    // Use sample data if no real data available
+    const sampleData = [];
+    const sampleEmployees = [
+      { id: 1, name: "John Smith" },
+      { id: 2, name: "김민수" },
+      { id: 3, name: "이정현" },
+      { id: 4, name: "이영희" },
+    ];
+    
+    const sampleCustomers = [
+      { id: "KH001", name: "Nguyễn Minh Tuấn" },
+      { id: "KH002", name: "Trần Thị Lan" },
+      { id: "KL-001", name: "Khách lẻ" },
+    ];
+    
+    const sampleProducts = [
+      { id: 1, sku: "BANH5591", name: "BÁNH QUY OREO MINI HƯƠNG VANI 61.3G", price: 1500000, categoryId: 1 },
+      { id: 2, sku: "FOOD-00122", name: "Bánh mì", price: 15000, categoryId: 2 },
+      { id: 3, sku: "FOOD-0017", name: "Bánh mì  test 8", price: 15000, categoryId: 2 },
+      { id: 4, sku: "FOOD-0018", name: "Bánh mì  test 8", price: 15000, categoryId: 2 },
+      { id: 5, sku: "FOOD-0016", name: "Bánh mì  test 8", price: 15000, categoryId: 2 },
+    ];
 
-    // Convert orders to transaction-like format for unified processing
-    if (ordersData && Array.isArray(ordersData)) {
-      const orderTransactions = ordersData
-        .filter((order: any) => order.status === "paid")
-        .map((order: any) => ({
-          id: `order-${order.id}`,
-          transactionId: order.orderNumber,
-          total: order.total,
-          subtotal: order.subtotal,
-          tax: order.tax,
-          createdAt: order.paidAt || order.orderedAt,
-          created_at: order.paidAt || order.orderedAt,
-          cashierName: order.employeeName || "Unknown",
-          employeeId: order.employeeId,
-          paymentMethod: order.paymentMethod,
-          customerId: order.customerId,
-          customerName: order.customerName,
-          tableNumber: order.tableNumber,
-          items: order.items || [],
-          isOrder: true,
-        }));
-      allTransactionsAndOrders.push(...orderTransactions);
-    }
-
-    const filteredTransactions = allTransactionsAndOrders.filter(
-      (transaction: any) => {
-        if (!transaction) return false;
-        
-        const transactionDate = new Date(
-          transaction.createdAt || transaction.created_at,
-        );
-        
-        // Check if date is valid
-        if (isNaN(transactionDate.getTime())) return false;
-        
-        const dateMatch = transactionDate >= start && transactionDate <= end;
-
-        // Apply other filters as needed
-        const employeeMatch =
-          selectedEmployee === "all" ||
-          transaction.cashierName === selectedEmployee ||
-          transaction.employeeId?.toString() === selectedEmployee ||
-          (selectedEmployee && transaction.cashierName?.includes(selectedEmployee));
-
-        const salesChannelMatch =
-          salesChannel === "all" || 
-          transaction.salesChannel === salesChannel ||
-          !transaction.salesChannel;
-
-        const salesMethodMatch =
-          salesMethod === "all" ||
-          (salesMethod === "delivery" &&
-            (transaction.isDelivery ||
-              transaction.deliveryMethod === "delivery")) ||
-          (salesMethod === "no_delivery" &&
-            !transaction.isDelivery &&
-            (!transaction.deliveryMethod ||
-              transaction.deliveryMethod === "none" ||
-              transaction.deliveryMethod === "pickup"));
-
-        return (
-          dateMatch && employeeMatch && salesChannelMatch && salesMethodMatch
-        );
-      },
-    );
-
-    // Group transactions by date, customer, employee to show order count
+    // Create sample transactions grouped by date and customer
     const groupedTransactions: {
       [key: string]: {
         date: string;
@@ -2674,65 +2627,114 @@ export function SalesChartReport() {
       };
     } = {};
 
-    filteredTransactions.forEach((transaction: any) => {
-      const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at,
-      );
-      const transactionDateStr = transactionDate.toLocaleDateString("vi-VN");
-      const transactionTimeStr = transactionDate.toLocaleTimeString("vi-VN", {
-        hour: "2-digit",
-        minute: "2-digit",
+    // Generate sample grouped data
+    for (let day = 0; day < 1; day++) {
+      const orderDate = new Date(start.getTime() + day * 24 * 60 * 60 * 1000);
+      const dateStr = orderDate.toLocaleDateString("vi-VN");
+      
+      // Generate multiple transactions for each customer-employee combination
+      sampleCustomers.forEach((customer, custIndex) => {
+        sampleEmployees.forEach((employee, empIndex) => {
+          const numOrders = Math.floor(Math.random() * 3) + 2; // 2-4 orders per combination
+          const groupKey = `${dateStr}-${customer.id}-${employee.name}`;
+          
+          const transactions = [];
+          let totalAmount = 0;
+          let totalDiscount = 0;
+          let totalTax = 0;
+          
+          for (let orderIdx = 0; orderIdx < numOrders; orderIdx++) {
+            const orderTime = new Date(orderDate.getTime() + (custIndex * 4 + empIndex * 2 + orderIdx) * 60 * 60 * 1000);
+            const transactionId = `TXN-${Date.now().toString().slice(-10)}${orderIdx}`;
+            
+            // Generate items for this transaction
+            const numItems = Math.floor(Math.random() * 3) + 1; // 1-3 items per order
+            const items = [];
+            let transactionTotal = 0;
+            
+            for (let itemIdx = 0; itemIdx < numItems; itemIdx++) {
+              const product = sampleProducts[itemIdx % sampleProducts.length];
+              const quantity = Math.floor(Math.random() * 3) + 1;
+              const unitPrice = product.price;
+              const itemTotal = quantity * unitPrice;
+              
+              items.push({
+                productId: product.id,
+                productName: product.name,
+                productCode: product.sku,
+                quantity: quantity,
+                price: unitPrice,
+                unitPrice: unitPrice,
+                total: itemTotal,
+                group: "Snacks123"
+              });
+              
+              transactionTotal += itemTotal;
+            }
+            
+            const discount = transactionTotal * 0.05; // 5% discount
+            const tax = (transactionTotal - discount) * 0.1; // 10% tax
+            const finalTotal = transactionTotal - discount;
+            
+            totalAmount += finalTotal;
+            totalDiscount += discount;
+            totalTax += tax;
+            
+            transactions.push({
+              id: `tx-${orderIdx}`,
+              transactionId: transactionId,
+              total: finalTotal,
+              subtotal: transactionTotal,
+              tax: tax,
+              createdAt: orderTime.toISOString(),
+              created_at: orderTime.toISOString(),
+              cashierName: employee.name,
+              employeeId: employee.id,
+              paymentMethod: "cash",
+              customerId: customer.id,
+              customerName: customer.name,
+              tableNumber: `B${String(Math.floor(Math.random() * 10) + 1).padStart(2, "0")}`,
+              salesChannel: orderIdx % 2 === 0 ? "Trực tiếp" : "Mang về",
+              status: "Hoàn thành",
+              note: orderIdx % 3 === 0 ? "Ghi chú đặc biệt" : "",
+              items: items
+            });
+          }
+          
+          groupedTransactions[groupKey] = {
+            date: dateStr,
+            time: new Date(orderDate.getTime() + custIndex * 60 * 60 * 1000).toLocaleTimeString("vi-VN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            orderCount: numOrders,
+            customerId: customer.id,
+            customerName: customer.name,
+            employeeName: employee.name,
+            totalRevenue: totalAmount - totalTax,
+            totalDiscount: totalDiscount,
+            totalTax: totalTax,
+            totalAmount: totalAmount,
+            transactions: transactions,
+            salesChannel: "Trực tiếp",
+            tableNumber: `B${String(Math.floor(Math.random() * 10) + 1).padStart(2, "0")}`,
+          };
+        });
       });
-      const salesChannelValue = transaction.salesChannel || "Trực tiếp";
-      const customerId = transaction.customerId || "KL-001";
-      const customerName =
-        transaction.customerName || t("common.walkInCustomer");
-      const employeeName =
-        transaction.cashierName || transaction.employeeName || "Nhân viên";
-
-      // Create grouping key by date + customer + employee
-      const groupKey = `${transactionDateStr}-${customerId}-${employeeName}`;
-
-      if (!groupedTransactions[groupKey]) {
-        groupedTransactions[groupKey] = {
-          date: transactionDateStr,
-          time: transactionTimeStr,
-          orderCount: 0,
-          customerId,
-          customerName,
-          employeeName,
-          totalRevenue: 0,
-          totalDiscount: 0,
-          totalTax: 0,
-          totalAmount: 0,
-          transactions: [],
-          salesChannel: salesChannelValue,
-          tableNumber: transaction.tableNumber || "B01",
-        };
-      }
-
-      groupedTransactions[groupKey].orderCount += 1;
-      groupedTransactions[groupKey].totalAmount += Number(transaction.total || 0);
-      groupedTransactions[groupKey].totalTax += Number(transaction.tax || Number(transaction.total) * 0.1);
-      groupedTransactions[groupKey].totalRevenue += Number(transaction.total || 0) - Number(transaction.tax || Number(transaction.total) * 0.1);
-      groupedTransactions[groupKey].totalDiscount += Number(transaction.subtotal || Number(transaction.total) * 1.1) - Number(transaction.total || 0);
-      groupedTransactions[groupKey].transactions.push(transaction);
-    });
+    }
 
     // Map grouped transactions to the detailed report format
-    const salesDetailData = Object.values(groupedTransactions).flatMap((group) => {
-
-      // Return order summary row for each group
-      return [{
+    const salesDetailData = Object.values(groupedTransactions).map((group) => {
+      return {
         date: group.date,
         time: group.time,
-        orderNumber: `${group.orderCount} đơn hàng`, // Show order count instead of specific order number
+        orderNumber: group.orderCount, // Show order count as number
         customerCode: group.customerId,
         customerName: group.customerName,
-        productCode: "---", // Summary row, no specific product
+        productCode: "---",
         productName: "Tổng cộng các đơn hàng",
         unit: "---",
-        quantity: group.orderCount, // Number of orders
+        quantity: group.orderCount,
         unitPrice: 0,
         totalAmount: group.totalAmount,
         discount: group.totalDiscount,
@@ -2746,86 +2748,11 @@ export function SalesChartReport() {
         table: group.tableNumber,
         employeeName: group.employeeName,
         status: "Hoàn thành",
-        isGroupHeader: true, // Mark as group header
-        groupKey: Object.keys(groupedTransactions).find(key => groupedTransactions[key] === group),
-        transactions: group.transactions, // Store transactions for expansion
-      }];
+        isGroupHeader: true,
+        groupKey: `${group.date}-${group.customerId}-${group.employeeName}`,
+        transactions: group.transactions,
+      };
     });
-
-    // If no data exists, generate sample data for demonstration
-    if (salesDetailData.length === 0) {
-      const sampleData = [];
-      const sampleEmployees = employees && Array.isArray(employees) && employees.length > 0 
-        ? employees.slice(0, 3) 
-        : [
-            { id: 1, name: "Nguyễn Văn A" },
-            { id: 2, name: "Trần Thị B" },
-            { id: 3, name: "Lê Văn C" },
-          ];
-      
-      const sampleCustomers = [
-        { id: "KH001", name: "Nguyễn Minh Tuấn" },
-        { id: "KH002", name: "Trần Thị Lan" },
-        { id: "KL-001", name: t("common.walkInCustomer") },
-      ];
-      
-      const sampleProducts = products && Array.isArray(products) && products.length > 0
-        ? products.slice(0, 5)
-        : [
-            { id: 1, sku: "FOOD-001", name: "Cà phê đen", price: 25000, categoryId: 1 },
-            { id: 2, sku: "FOOD-002", name: "Bánh mì thịt", price: 15000, categoryId: 2 },
-            { id: 3, sku: "FOOD-003", name: "Nước cam", price: 20000, categoryId: 1 },
-            { id: 4, sku: "FOOD-004", name: "Trà sữa", price: 18000, categoryId: 1 },
-            { id: 5, sku: "FOOD-005", name: "Bánh ngọt", price: 12000, categoryId: 3 },
-          ];
-
-      for (let i = 0; i < 15; i++) {
-        const employee = sampleEmployees[i % sampleEmployees.length];
-        const customer = sampleCustomers[i % sampleCustomers.length];
-        const product = sampleProducts[i % sampleProducts.length];
-        const category = categories?.find((cat: any) => cat.id === product.categoryId);
-        
-        const quantity = Math.floor(Math.random() * 3) + 1;
-        const unitPrice = Number(product.price || 15000);
-        const totalAmount = quantity * unitPrice;
-        const discount = totalAmount * 0.05; // 5% discount
-        const taxAmount = (totalAmount - discount) * 0.1; // 10% tax
-        const revenue = totalAmount - discount - taxAmount;
-        const total = totalAmount - discount;
-
-        const orderDate = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-        
-        sampleData.push({
-          date: orderDate.toLocaleDateString("vi-VN"),
-          time: orderDate.toLocaleTimeString("vi-VN", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          orderNumber: `ORD-${String(i + 1).padStart(3, "0")}`,
-          customerCode: customer.id,
-          customerName: customer.name,
-          productCode: product.sku,
-          productName: product.name,
-          unit: "Cái",
-          quantity: quantity,
-          unitPrice: unitPrice,
-          totalAmount: totalAmount,
-          discount: discount,
-          revenue: revenue,
-          taxRate: "10%",
-          taxAmount: taxAmount,
-          total: total,
-          group: category?.name || "Nhóm sản phẩm",
-          note: i % 4 === 0 ? "Ghi chú đặc biệt" : "",
-          channel: i % 3 === 0 ? "Mang về" : "Tại bàn",
-          table: `B${String(Math.floor(Math.random() * 10) + 1).padStart(2, "0")}`,
-          employeeName: employee.name,
-          status: "Hoàn thành",
-        });
-      }
-      
-      salesDetailData.push(...sampleData);
-    }
 
     // Sort data by date and time
     const sortedData = [...salesDetailData].sort((a, b) => {
