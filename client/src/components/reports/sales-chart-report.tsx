@@ -94,6 +94,11 @@ export function SalesChartReport() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: tables } = useQuery({
+    queryKey: ["/api/tables"],
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: employees } = useQuery({
     queryKey: ["/api/employees"],
     staleTime: 5 * 60 * 1000,
@@ -204,32 +209,27 @@ export function SalesChartReport() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(15);
 
-  // Legacy Sales Report Component Logic
-  const renderSalesReport = () => {
-    if (!orders || !Array.isArray(orders)) {
-      return (
-        <div className="flex justify-center py-8">
-          <div className="text-gray-500">{t("reports.loading")}...</div>
-        </div>
-      );
+  // EXACT same data processing logic as dashboard
+  const getDashboardStats = () => {
+    if (!orders || !tables || !Array.isArray(orders) || !Array.isArray(tables)) {
+      return null;
     }
 
-    // Use EXACT same filtering logic as dashboard
     const start = new Date(startDate);
     const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999);
+    end.setHours(23, 59, 59, 999); // Include the entire end date
 
-    // Filter completed orders EXACTLY like dashboard does
+    // Filter completed orders within date range - EXACT same as dashboard
     const filteredCompletedOrders = orders.filter((order: any) => {
-      // Check if order is completed/paid (EXACT same as dashboard)
+      // Check if order is completed/paid
       if (order.status !== 'completed' && order.status !== 'paid') return false;
 
-      // Try multiple possible date fields (EXACT same as dashboard)
+      // Try multiple possible date fields
       const orderDate = new Date(
         order.orderedAt || order.createdAt || order.created_at || order.paidAt
       );
 
-      // Skip if date is invalid (EXACT same as dashboard)
+      // Skip if date is invalid
       if (isNaN(orderDate.getTime())) {
         console.log('Invalid order date for order:', order.id, 'date fields:', {
           orderedAt: order.orderedAt,
@@ -243,10 +243,11 @@ export function SalesChartReport() {
       return orderDate >= start && orderDate <= end;
     });
 
-    console.log("Sales Chart Report Debug:", {
+    console.log("Sales Chart Dashboard Debug:", {
       totalOrders: orders.length,
       startDate,
       endDate,
+      firstOrder: orders[0],
       completedOrders: orders.filter((o: any) => o.status === 'completed' || o.status === 'paid').length,
       filteredCompletedOrders: filteredCompletedOrders.length,
       sampleOrderDates: orders.slice(0, 5).map((o: any) => ({
@@ -259,6 +260,103 @@ export function SalesChartReport() {
         parsedDate: new Date(o.orderedAt || o.createdAt || o.created_at || o.paidAt).toISOString()
       })),
     });
+
+    // Period revenue: total amount - discount for all completed orders - EXACT same as dashboard
+    const periodRevenue = filteredCompletedOrders.reduce(
+      (total: number, order: any) => {
+        const orderTotal = Number(order.total || 0);
+        const discount = Number(order.discount || 0);
+        return total + (orderTotal - discount);
+      },
+      0,
+    );
+
+    // Order count: count of completed orders in the filtered period - EXACT same as dashboard
+    const periodOrderCount = filteredCompletedOrders.length;
+
+    // Customer count: count unique customers from completed orders - EXACT same as dashboard
+    const uniqueCustomers = new Set();
+    filteredCompletedOrders.forEach((order: any) => {
+      if (order.customerId) {
+        uniqueCustomers.add(order.customerId);
+      } else {
+        // If no customer ID, count as unique customer per order
+        uniqueCustomers.add(`order_${order.id}`);
+      }
+    });
+    const periodCustomerCount = uniqueCustomers.size;
+
+    // Daily average for the period - EXACT same as dashboard
+    const daysDiff = Math.max(
+      1,
+      Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+    );
+    const dailyAverageRevenue = periodRevenue / daysDiff;
+
+    // Active orders (pending/in-progress orders) - EXACT same as dashboard
+    const activeOrders = orders.filter((order: any) => 
+      order.status === 'pending' || order.status === 'in_progress'
+    ).length;
+
+    const occupiedTables = tables.filter(
+      (table: any) => table.status === "occupied",
+    );
+
+    // Month revenue: same as period revenue for the selected date range - EXACT same as dashboard
+    const monthRevenue = periodRevenue;
+
+    // Average order value - EXACT same as dashboard
+    const averageOrderValue =
+      periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
+
+    // Peak hours analysis from filtered completed orders - EXACT same as dashboard
+    const hourlyOrders: { [key: number]: number } = {};
+    filteredCompletedOrders.forEach((order: any) => {
+      const orderDate = new Date(
+        order.orderedAt || order.createdAt || order.created_at || order.paidAt
+      );
+      if (!isNaN(orderDate.getTime())) {
+        const hour = orderDate.getHours();
+        hourlyOrders[hour] = (hourlyOrders[hour] || 0) + 1;
+      }
+    });
+
+    const peakHour = Object.keys(hourlyOrders).reduce(
+      (peak, hour) =>
+        hourlyOrders[parseInt(hour)] > hourlyOrders[parseInt(peak)]
+          ? hour
+          : peak,
+      "12",
+    );
+
+    return {
+      periodRevenue,
+      periodOrderCount,
+      periodCustomerCount,
+      dailyAverageRevenue,
+      activeOrders: activeOrders,
+      occupiedTables: occupiedTables.length,
+      monthRevenue,
+      averageOrderValue,
+      peakHour: parseInt(peakHour),
+      totalTables: tables.length,
+      filteredCompletedOrders, // Return filtered orders for further processing
+    };
+  };
+
+  // Legacy Sales Report Component Logic using dashboard stats
+  const renderSalesReport = () => {
+    const dashboardStats = getDashboardStats();
+    
+    if (!dashboardStats) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
+    }
+
+    const { filteredCompletedOrders } = dashboardStats;
 
     // Convert orders to transaction-like format for compatibility
     const filteredTransactions = filteredCompletedOrders.map((order: any) => ({
@@ -329,45 +427,28 @@ export function SalesChartReport() {
       paymentMethods[method].revenue += orderTotal - discount;
     });
 
-    // Calculate totals using EXACT same logic as dashboard
-    const totalRevenue = filteredCompletedOrders.reduce(
-      (total: number, order: any) => {
-        const orderTotal = Number(order.total || 0);
-        const discount = Number(order.discount || 0);
-        return total + (orderTotal - discount);
-      },
-      0,
-    );
-
-    const totalOrders = filteredCompletedOrders.length;
-
-    // Count unique customers EXACTLY like dashboard does
-    const uniqueCustomers = new Set();
-    filteredCompletedOrders.forEach((order: any) => {
-      if (order.customerId) {
-        uniqueCustomers.add(order.customerId);
-      } else {
-        // If no customer ID, count as unique customer per order
-        uniqueCustomers.add(`order_${order.id}`);
-      }
-    });
-    const totalCustomers = uniqueCustomers.size;
-
-    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    // Use dashboard stats directly for consistency
+    const totalRevenue = dashboardStats.periodRevenue;
+    const totalOrders = dashboardStats.periodOrderCount;
+    const totalCustomers = dashboardStats.periodCustomerCount;
+    const averageOrderValue = dashboardStats.averageOrderValue;
 
     return (
       <>
-        {/* Summary Stats */}
+        {/* Summary Stats - Using Dashboard Style */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    {t("reports.totalRevenue")}
+                    Tổng doanh thu
                   </p>
                   <p className="text-2xl font-bold text-green-600">
                     {formatCurrency(totalRevenue)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {startDate} ~ {endDate}
                   </p>
                 </div>
                 <DollarSign className="w-8 h-8 text-green-500" />
@@ -380,35 +461,57 @@ export function SalesChartReport() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">
-                    {t("reports.totalOrders")}
+                    Tổng đơn hàng
                   </p>
                   <p className="text-2xl font-bold">{totalOrders}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {t("reports.averageOrderValue")}{" "}
+                    {formatCurrency(averageOrderValue)}
+                  </p>
                 </div>
-                <Calendar className="w-8 h-8 text-blue-500" />
+                <ShoppingCart className="w-8 h-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="p-6">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("reports.averageOrderValue")}
-                </p>
-                <p className="text-2xl font-bold">
-                  {formatCurrency(averageOrderValue)}
-                </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    Tổng khách hàng
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {totalCustomers}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {t("reports.peakHour")} {dashboardStats.peakHour}{" "}
+                    <span>{t("reports.hour")}</span>
+                  </p>
+                </div>
+                <Users className="w-8 h-8 text-purple-500" />
               </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="p-6">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalCustomers")}
-                </p>
-                <p className="text-2xl font-bold">{totalCustomers}</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">
+                    {t("reports.monthRevenue")}
+                  </p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {formatCurrency(dashboardStats.monthRevenue)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {startDate === endDate 
+                      ? formatDate(startDate)
+                      : `${formatDate(startDate)} - ${formatDate(endDate)}`
+                    }
+                  </p>
+                </div>
+                <TrendingUp className="w-8 h-8 text-blue-500" />
               </div>
             </CardContent>
           </Card>
