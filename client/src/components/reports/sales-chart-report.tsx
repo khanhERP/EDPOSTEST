@@ -2808,6 +2808,7 @@ export function SalesChartReport() {
               </TableBody>
             </Table>
           </div>
+          {/* No pagination needed for sales channel report - it's a summary table */}
         </CardContent>
       </Card>
     );
@@ -3525,16 +3526,16 @@ export function SalesChartReport() {
             </Table>
           </div>
 
-          {/* Pagination Controls for Customer Report */}
-          {data.length > 0 && (
+          {/* Pagination Controls for Sales Detail Report */}
+          {sortedData.length > 0 && (
             <div className="flex items-center justify-between space-x-6 py-4">
               <div className="flex items-center space-x-2">
                 <p className="text-sm font-medium">{t("common.show")} </p>
                 <Select
-                  value={customerPageSize.toString()}
+                  value={pageSize.toString()}
                   onValueChange={(value) => {
-                    setCustomerPageSize(Number(value));
-                    setCustomerCurrentPage(1);
+                    setPageSize(Number(value));
+                    setCurrentPage(1);
                   }}
                 >
                   <SelectTrigger className="h-8 w-[70px]">
@@ -3553,39 +3554,39 @@ export function SalesChartReport() {
 
               <div className="flex items-center space-x-2">
                 <p className="text-sm font-medium">
-                  {t("common.page")} {customerCurrentPage} / {totalPages}
+                  {t("common.page")} {currentPage} / {totalPages}
                 </p>
                 <div className="flex items-center space-x-1">
                   <button
-                    onClick={() => setCustomerCurrentPage(1)}
-                    disabled={customerCurrentPage === 1}
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     «
                   </button>
                   <button
                     onClick={() =>
-                      setCustomerCurrentPage((prev) => Math.max(prev - 1, 1))
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
                     }
-                    disabled={customerCurrentPage === 1}
+                    disabled={currentPage === 1}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     ‹
                   </button>
                   <button
                     onClick={() =>
-                      setCustomerCurrentPage((prev) =>
+                      setCurrentPage((prev) =>
                         Math.min(prev + 1, totalPages),
                       )
                     }
-                    disabled={customerCurrentPage === totalPages}
+                    disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     ›
                   </button>
                   <button
-                    onClick={() => setCustomerCurrentPage(totalPages)}
-                    disabled={customerCurrentPage === totalPages}
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
                   >
                     »
