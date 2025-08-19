@@ -608,7 +608,7 @@ export function MenuReport() {
                          method}
                       </Badge>
                       <span className="text-sm text-gray-600">
-                        {data.count} {t("reports.transactions")}
+                        {data.count} {t("reports.orders")}
                       </span>
                     </div>
                     <div className="text-right">
