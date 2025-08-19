@@ -323,10 +323,10 @@ export function ReceiptModal({
 
           <div className="space-y-2 mb-3">
             {receipt.items.map((item) => {
-              // Calculate price without tax for display
-              const itemTaxRate = item.taxRate || 10;
-              const priceWithoutTax = parseFloat(item.price) / (1 + itemTaxRate / 100);
-              const displayTotal = priceWithoutTax * item.quantity;
+              // Use the original unit price directly (before tax calculation)
+              // item.price should be the base price without tax
+              const unitPrice = parseFloat(item.price);
+              const lineTotal = unitPrice * item.quantity;
               
               return (
                 <div key={item.id}>
@@ -337,10 +337,10 @@ export function ReceiptModal({
                         SKU: {`FOOD${String(item.productId || item.id).padStart(5, '0')}`}
                       </div>
                       <div className="text-xs text-gray-600">
-                        {item.quantity} x {priceWithoutTax.toFixed(2)} ₫
+                        {item.quantity} x {unitPrice.toFixed(2)} ₫
                       </div>
                     </div>
-                    <div>{displayTotal.toFixed(2)} ₫</div>
+                    <div>{lineTotal.toFixed(2)} ₫</div>
                   </div>
                 </div>
               );
