@@ -3378,7 +3378,7 @@ export function SalesChartReport() {
                               );
                             },
                           )}
-                        </Fragment>
+                        </>
                       );
                     })
                 ) : (
