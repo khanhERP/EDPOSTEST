@@ -248,16 +248,15 @@ export function ShoppingCart({
   };
 
   const handleReceiptConfirm = () => {
-    console.log("📄 Receipt confirmed - clearing cart and closing modal");
+    console.log("📄 Receipt confirmed - closing modal (cart already cleared)");
 
     // Close receipt modal
     setShowReceiptPreview(false);
     setPreviewReceipt(null);
+    setShowReceiptModal(false);
+    setSelectedReceipt(null);
 
-    // Clear cart after successful transaction
-    onClearCart();
-
-    console.log("✅ Transaction completed and cart cleared");
+    console.log("✅ Receipt modal closed");
   };
 
   const handlePaymentMethodSelect = (method: string, data?: any) => {
@@ -288,20 +287,22 @@ export function ShoppingCart({
 
     setShowEInvoiceModal(false);
 
-    // Step 5: Always show final receipt modal after invoice processing
+    // Auto clear cart after E-Invoice completion (both publish now and publish later)
+    console.log('🧹 Shopping cart: Auto clearing cart after E-Invoice completion');
+    onClearCart();
+
+    // Step 5: Show final receipt modal if receipt data exists
     if (eInvoiceData.receipt) {
       console.log('📄 Shopping cart: Step 5: Showing final receipt modal (not preview)');
       setSelectedReceipt(eInvoiceData.receipt);
       setShowReceiptModal(true);
-      // Don't clear cart yet - wait for receipt confirmation
     } else {
-      console.log('❌ Shopping cart: E-invoice completed but no receipt data');
+      console.log('✅ Shopping cart: E-invoice completed successfully, cart cleared');
       toast({
-        title: "Lỗi",
-        description: "Không có dữ liệu hóa đơn để hiển thị",
-        variant: "destructive",
+        title: "Thành công",
+        description: "Hóa đơn đã được xử lý thành công",
+        variant: "default",
       });
-      onClearCart();
     }
   };
 
