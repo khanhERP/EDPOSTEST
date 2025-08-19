@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -281,6 +280,20 @@ export function MenuReport() {
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
 
+    // Payment Method Analysis
+    const paymentMethods: { [key: string]: { revenue: number; count: number } } = {};
+    filteredCompletedOrders.forEach((order: any) => {
+      const paymentMethod = order.paymentMethod || "unknown";
+      const orderRevenue = Number(order.total || 0) - Number(order.discount || 0);
+
+      if (!paymentMethods[paymentMethod]) {
+        paymentMethods[paymentMethod] = { revenue: 0, count: 0 };
+      }
+      paymentMethods[paymentMethod].revenue += orderRevenue;
+      paymentMethods[paymentMethod].count += 1;
+    });
+
+
     return {
       totalRevenue,
       totalQuantity,
@@ -288,6 +301,7 @@ export function MenuReport() {
       productStats: Object.values(productSales),
       topSellingProducts,
       topRevenueProducts,
+      paymentMethods, // Add paymentMethods to the returned object
     };
   };
 
@@ -309,6 +323,7 @@ export function MenuReport() {
     productStats: [],
     topSellingProducts: [],
     topRevenueProducts: [],
+    paymentMethods: {}, // Initialize paymentMethods
   };
 
   return (
@@ -558,6 +573,66 @@ export function MenuReport() {
             {displayData.categoryStats.length === 0 && (
               <div className="text-center text-gray-500 py-4">
                 {t("reports.noCategoryData")}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Payment Method Analysis */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("reports.paymentMethodDistribution")}</CardTitle>
+          <CardDescription>{t("reports.paymentMethodBreakdown")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {Object.entries(displayData.paymentMethods).map(([method, data]: [string, any]) => {
+              const percentage = displayData.totalRevenue > 0 
+                ? (data.revenue / displayData.totalRevenue) * 100 
+                : 0;
+
+              return (
+                <div key={method} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">
+                        {method === 'cash' ? t("pos.cash") : 
+                         method === 'card' ? t("pos.card") : 
+                         method === 'creditCard' ? t("pos.creditCard") :
+                         method === 'debitCard' ? t("pos.debitCard") :
+                         method === 'momo' ? 'MoMo' :
+                         method === 'zalopay' ? 'ZaloPay' :
+                         method === 'vnpay' ? 'VNPay' :
+                         method === 'qrCode' ? t("pos.qrCode") :
+                         method}
+                      </Badge>
+                      <span className="text-sm text-gray-600">
+                        {data.count} {t("reports.transactions")}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-medium">
+                        {formatCurrency(data.revenue)}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
+                      </div>
+                    </div>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-500 h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min(Math.max(percentage, 0), 100)}%` }}
+                    ></div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {Object.keys(displayData.paymentMethods).length === 0 && (
+              <div className="text-center text-gray-500 py-4">
+                {t("reports.noPaymentData")}
               </div>
             )}
           </div>
