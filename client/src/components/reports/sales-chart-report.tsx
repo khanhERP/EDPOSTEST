@@ -1519,6 +1519,24 @@ export function SalesChartReport() {
       return dateMatch && employeeMatch;
     });
 
+    // Convert orders to transaction-like format for compatibility
+    const filteredTransactions = filteredCompletedOrders.map((order: any) => ({
+      id: order.id,
+      transactionId: `TXN-${order.id}`,
+      total: order.total,
+      subtotal: order.subtotal,
+      discount: order.discount || 0,
+      paymentMethod: order.paymentMethod || "cash",
+      createdAt: order.orderedAt || order.createdAt || order.created_at || order.paidAt,
+      created_at: order.orderedAt || order.createdAt || order.created_at || order.paidAt,
+      customerName: order.customerName,
+      customerId: order.customerId,
+      cashierName: order.employeeName || order.cashierName,
+      employeeId: order.employeeId,
+      items: order.items || [],
+      status: order.status,
+    }));
+
     console.log("Employee Report Debug:", {
       totalOrders: orders.length,
       startDate,
