@@ -347,7 +347,7 @@ export function SalesChartReport() {
   // Legacy Sales Report Component Logic using dashboard stats
   const renderSalesReport = () => {
     const dashboardStats = getDashboardStats();
-    
+
     if (!dashboardStats) {
       return (
         <div className="flex justify-center py-8">
@@ -897,7 +897,7 @@ export function SalesChartReport() {
                   {Object.entries(dailySales).length > 0 && (
                     <TableRow className="bg-gray-100 font-bold border-t-2">
                       <TableCell className="text-center border-r w-12"></TableCell>
-                      <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
+                      <TableCell className="text-center border-r bg-green-50 min-w-[120px] px-4">
                         {t("common.total")}
                       </TableCell>
                       <TableCell className="text-center border-r min-w-[100px] px-4">
@@ -996,7 +996,7 @@ export function SalesChartReport() {
               </Table>
             </div>
 
-            {/* Pagination Controls */}
+            {/* Pagination Controls for Daily Sales */}
             {Object.entries(dailySales).length > 0 && (
               <div className="flex items-center justify-between space-x-6 py-4">
                 <div className="flex items-center space-x-2">
@@ -2005,7 +2005,7 @@ export function SalesChartReport() {
                         data.reduce((sum, item) => sum + item.tax, 0),
                       )}
                     </TableCell>
-                    <TableCell className="text-right border-r text-blue-600 min-w-[140px] px-4">
+                    <TableCell className="text-right border-r font-bold text-blue-600 min-w-[140px] px-4">
                       {formatCurrency(
                         data.reduce((sum, item) => sum + item.total, 0),
                       )}
@@ -2235,7 +2235,7 @@ export function SalesChartReport() {
 
     filteredOrders.forEach((order: any) => {
       const customerId = order.customerId || "guest";
-      const customerName = order.customerName || t("common.walkInCustomer");
+      const customerName = order.customerName || "Khách lẻ";
 
       if (!customerData[customerId]) {
         customerData[customerId] = {
@@ -2585,7 +2585,7 @@ export function SalesChartReport() {
   // Legacy Sales Channel Report Component Logic
   const renderSalesChannelReport = () => {
     const dashboardStats = getDashboardStats();
-    
+
     if (!dashboardStats) {
       return (
         <div className="flex justify-center py-8">
@@ -2944,7 +2944,7 @@ export function SalesChartReport() {
       return {
         date: group.date,
         time: group.time,
-        orderNumber: group.orderCount, // Show order count as number
+        orderCount: group.orderCount, // Show order count as number
         customerId: group.customerId,
         customerName: group.customerName,
         productCode: "---",
@@ -3122,7 +3122,7 @@ export function SalesChartReport() {
                             {item.time}
                           </TableCell>
                           <TableCell className="text-center border-r min-w-[130px] px-4 font-bold text-blue-600">
-                            {item.orderNumber}
+                            {item.orderCount}
                           </TableCell>
                           <TableCell className="text-center border-r min-w-[120px] px-4">
                             {item.customerId}
@@ -3473,9 +3473,9 @@ export function SalesChartReport() {
                               );
                             },
                           )}
-                        </React.Fragment>
-                      );
-                    })
+                      </>
+                    );
+                  })
                 ) : (
                   <TableRow>
                     <TableCell
