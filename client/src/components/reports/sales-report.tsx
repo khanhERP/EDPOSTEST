@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -27,21 +26,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, Calendar, DollarSign, Users, RefreshCw, Filter } from "lucide-react";
-import type { Transaction } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-} from "recharts";
 import { Button } from "@/components/ui/button";
 
 export function SalesReport() {
@@ -55,32 +40,27 @@ export function SalesReport() {
     new Date().toISOString().split("T")[0],
   );
 
-  // Fetch orders with proper error handling (like dashboard)
-  const { data: orders, isLoading: ordersLoading, error: ordersError, refetch } = useQuery({
-    queryKey: ["/api/orders"],
+  // Sử dụng cùng API như sales-chart-report và dashboard
+  const { data: transactions, isLoading: transactionsLoading, error: transactionsError, refetch: refetchTransactions } = useQuery({
+    queryKey: [
+      "/api/transactions",
+      startDate,
+      endDate,
+      "all", // salesMethod
+      "all", // salesChannel
+      "time", // analysisType
+      "time", // concernType
+      "all", // selectedEmployee
+    ],
     queryFn: async () => {
-      try {
-        const response = await fetch("/api/orders");
-        if (!response.ok) {
-          throw new Error(`Failed to fetch orders: ${response.status}`);
-        }
-        const data = await response.json();
-        
-        // Ensure we always return an array
-        if (!Array.isArray(data)) {
-          console.warn("Orders API returned non-array data:", data);
-          return [];
-        }
-        
-        return data;
-      } catch (error) {
-        console.error("Error fetching orders:", error);
-        throw error;
-      }
+      const response = await fetch(
+        `/api/transactions/${startDate}/${endDate}/all/all/time/time/all`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch transactions");
+      return response.json();
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes cache
-    retry: 3,
-    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+    enabled: !!(startDate && endDate),
   });
 
   const getSalesData = () => {
@@ -95,7 +75,7 @@ export function SalesReport() {
       averageOrderValue: 0,
     };
 
-    if (!orders || !Array.isArray(orders) || orders.length === 0) {
+    if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
       return defaultData;
     }
 
@@ -104,176 +84,106 @@ export function SalesReport() {
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      // Filter completed orders by date range (like dashboard)
-      const filteredOrders = orders.filter((order: any) => {
-        // Check if order is completed/paid
-        if (order.status !== 'completed' && order.status !== 'paid') return false;
-
-        // Try multiple possible date fields
-        const orderDate = new Date(
-          order.orderedAt || order.createdAt || order.created_at || order.paidAt
+      // Filter transactions by date range (như sales-chart-report)
+      const filteredTransactions = transactions.filter((transaction: any) => {
+        const transactionDate = new Date(
+          transaction.createdAt || transaction.created_at,
         );
 
-        // Skip if date is invalid
-        if (isNaN(orderDate.getTime())) {
-          return false;
-        }
+        const transactionDateOnly = new Date(transactionDate);
+        transactionDateOnly.setHours(0, 0, 0, 0);
 
-        return orderDate >= start && orderDate <= end;
+        const isInRange = transactionDateOnly >= start && transactionDateOnly <= end;
+        return isInRange;
       });
 
-      // Daily sales breakdown with error handling
+      // Daily sales breakdown (như sales-chart-report)
       const dailySales: {
         [date: string]: { revenue: number; orders: number; customers: number };
       } = {};
 
-      filteredOrders.forEach((order: any) => {
+      filteredTransactions.forEach((transaction: any) => {
         try {
-          const orderDate = new Date(
-            order.orderedAt || order.createdAt || order.created_at || order.paidAt
+          const transactionDate = new Date(
+            transaction.createdAt || transaction.created_at,
           );
 
-          if (isNaN(orderDate.getTime())) return;
-
-          const date = orderDate.toISOString().split('T')[0];
+          const year = transactionDate.getFullYear();
+          const month = (transactionDate.getMonth() + 1)
+            .toString()
+            .padStart(2, "0");
+          const day = transactionDate.getDate().toString().padStart(2, "0");
+          const date = `${year}-${month}-${day}`;
 
           if (!dailySales[date]) {
             dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
           }
 
-          const orderTotal = Number(order.total || 0);
-          const discount = Number(order.discount || 0);
-          const revenue = orderTotal - discount;
-          
-          if (!isNaN(revenue) && revenue >= 0) {
-            dailySales[date].revenue += revenue;
+          const orderTotal = Number(transaction.total || 0);
+
+          if (!isNaN(orderTotal) && orderTotal >= 0) {
+            dailySales[date].revenue += orderTotal;
             dailySales[date].orders += 1;
-            // Count unique customers
-            if (order.customerId) {
-              dailySales[date].customers += 1;
-            } else {
-              dailySales[date].customers += 1; // Count as unique per order
-            }
+            dailySales[date].customers += 1;
           }
         } catch (error) {
-          console.warn("Error processing order for daily sales:", error);
+          console.warn("Error processing transaction for daily sales:", error);
         }
       });
 
-      // Payment method breakdown with proper consolidation
+      // Payment method breakdown (như sales-chart-report)
       const paymentMethods: {
         [method: string]: { count: number; revenue: number };
       } = {};
 
-      const consolidatePaymentMethod = (method: string): string => {
-        if (!method) return 'cash';
-        
-        const normalizedMethod = method.toLowerCase().trim();
-        switch (normalizedMethod) {
-          case 'credit_card':
-          case 'creditcard':
-          case 'credit card':
-            return 'credit_card';
-          case 'debit_card':
-          case 'debitcard':
-          case 'debit card':
-            return 'debit_card';
-          case 'qr_code':
-          case 'qrcode':
-          case 'qr code':
-            return 'qrCode';
-          case 'card':
-            return 'card';
-          case 'transfer':
-          case 'bank_transfer':
-          case 'bank transfer':
-            return 'transfer';
-          case 'cash':
-          case 'tiền mặt':
-            return 'cash';
-          case 'momo':
-            return 'momo';
-          case 'zalopay':
-            return 'zalopay';
-          case 'vnpay':
-            return 'vnpay';
-          case 'shopeepay':
-            return 'shopeepay';
-          case 'grabpay':
-            return 'grabpay';
-          default:
-            return normalizedMethod;
-        }
-      };
-
-      filteredOrders.forEach((order: any) => {
+      filteredTransactions.forEach((transaction: any) => {
         try {
-          const rawMethod = order.paymentMethod || order.payment_method || "cash";
-          const method = consolidatePaymentMethod(rawMethod);
-          
+          const method = transaction.paymentMethod || "cash";
+
           if (!paymentMethods[method]) {
             paymentMethods[method] = { count: 0, revenue: 0 };
           }
-          
-          const orderTotal = Number(order.total || 0);
-          const discount = Number(order.discount || 0);
-          const revenue = orderTotal - discount;
-          
-          if (!isNaN(revenue) && revenue > 0) {
-            paymentMethods[method].revenue += revenue;
+
+          const orderTotal = Number(transaction.total || 0);
+
+          if (!isNaN(orderTotal) && orderTotal > 0) {
+            paymentMethods[method].revenue += orderTotal;
             paymentMethods[method].count += 1;
           }
         } catch (error) {
-          console.warn("Error processing order for payment methods:", error);
+          console.warn("Error processing transaction for payment methods:", error);
         }
       });
 
-      // Hourly breakdown with error handling
+      // Hourly breakdown
       const hourlySales: { [hour: number]: number } = {};
-      filteredOrders.forEach((order: any) => {
+      filteredTransactions.forEach((transaction: any) => {
         try {
-          const orderDate = new Date(
-            order.orderedAt || order.createdAt || order.created_at || order.paidAt
+          const transactionDate = new Date(
+            transaction.createdAt || transaction.created_at,
           );
-          
-          if (isNaN(orderDate.getTime())) return;
-          
-          const hour = orderDate.getHours();
-          const orderTotal = Number(order.total || 0);
-          const discount = Number(order.discount || 0);
-          const revenue = orderTotal - discount;
-          
-          if (!isNaN(revenue) && revenue > 0) {
-            hourlySales[hour] = (hourlySales[hour] || 0) + revenue;
+
+          if (isNaN(transactionDate.getTime())) return;
+
+          const hour = transactionDate.getHours();
+          const orderTotal = Number(transaction.total || 0);
+
+          if (!isNaN(orderTotal) && orderTotal > 0) {
+            hourlySales[hour] = (hourlySales[hour] || 0) + orderTotal;
           }
         } catch (error) {
-          console.warn("Error processing order for hourly sales:", error);
+          console.warn("Error processing transaction for hourly sales:", error);
         }
       });
 
-      // Calculate totals with validation (like dashboard)
-      const totalRevenue = filteredOrders.reduce(
-        (sum: number, order: any) => {
-          const orderTotal = Number(order.total || 0);
-          const discount = Number(order.discount || 0);
-          return sum + (orderTotal - discount);
-        },
+      // Calculate totals (như sales-chart-report)
+      const totalRevenue = filteredTransactions.reduce(
+        (sum: number, transaction: any) => sum + Number(transaction.total || 0),
         0,
       );
-      
-      const totalOrders = filteredOrders.length;
-      
-      // Count unique customers
-      const uniqueCustomers = new Set();
-      filteredOrders.forEach((order: any) => {
-        if (order.customerId) {
-          uniqueCustomers.add(order.customerId);
-        } else {
-          uniqueCustomers.add(`order_${order.id}`);
-        }
-      });
-      const totalCustomers = uniqueCustomers.size;
-      
+
+      const totalOrders = filteredTransactions.length;
+      const totalCustomers = filteredTransactions.length; // Count each transaction as a customer
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
       return {
@@ -316,22 +226,22 @@ export function SalesReport() {
         setStartDate(todayStr);
         setEndDate(todayStr);
         break;
-        
+
       case "week":
         const lastWeekEnd = new Date(today);
         lastWeekEnd.setDate(today.getDate() - 1);
-        
+
         const lastWeekStart = new Date(today);
         lastWeekStart.setDate(today.getDate() - 7);
 
         setStartDate(formatDate(lastWeekStart));
         setEndDate(formatDate(lastWeekEnd));
         break;
-        
+
       case "month":
         const lastMonth = new Date(today);
         lastMonth.setMonth(today.getMonth() - 1);
-        
+
         const lastMonthStart = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
         const lastMonthEnd = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0);
 
@@ -360,13 +270,13 @@ export function SalesReport() {
         setStartDate(formatDate(thisMonthStart));
         setEndDate(formatDate(thisMonthEnd));
         break;
-        
+
       case "custom":
         const customToday = formatDate(today);
         setStartDate(customToday);
         setEndDate(customToday);
         break;
-        
+
       default:
         const defaultDate = formatDate(today);
         setStartDate(defaultDate);
@@ -383,7 +293,7 @@ export function SalesReport() {
     try {
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return dateStr;
-      
+
       const day = date.getDate().toString().padStart(2, "0");
       const month = (date.getMonth() + 1).toString().padStart(2, "0");
       const year = date.getFullYear();
@@ -395,31 +305,31 @@ export function SalesReport() {
 
   const getPaymentMethodLabel = (method: string) => {
     const labels = {
-      cash: t("reports.cash"),
-      card: t("reports.card"),
-      creditCard: t("reports.credit_card"),
-      credit_card: t("reports.credit_card"),
-      debitCard: t("pos.debitCard"),
-      debit_card: t("pos.debitCard"),
+      cash: t("common.cash"),
+      card: t("common.creditCard"),
+      creditCard: t("common.creditCard"),
+      credit_card: t("common.creditCard"),
+      debitCard: t("common.debitCard"),
+      debit_card: t("common.debitCard"),
       transfer: t("common.transfer"),
       einvoice: t("reports.einvoice"),
-      momo: t("pos.momo"),
-      zalopay: t("pos.zalopay"),
-      vnpay: t("pos.vnpay"),
-      qrCode: t("reports.qrbanking"),
-      shopeepay: t("pos.shopeepay"),
-      grabpay: t("pos.grabpay"),
+      momo: t("common.momo"),
+      zalopay: t("common.zalopay"),
+      vnpay: t("common.vnpay"),
+      qrCode: t("common.qrCode"),
+      shopeepay: t("common.shopeepay"),
+      grabpay: t("common.grabpay"),
       mobile: "Mobile",
     };
     return labels[method as keyof typeof labels] || method;
   };
 
   const handleRefresh = () => {
-    refetch();
+    refetchTransactions();
   };
 
   const salesData = getSalesData();
-  const hasError = !!ordersError;
+  const hasError = !!transactionsError;
 
   const peakHour = salesData && Object.keys(salesData.hourlySales).length > 0 
     ? Object.entries(salesData.hourlySales).reduce(
@@ -445,7 +355,7 @@ export function SalesReport() {
         <div className="text-center text-red-600">
           <p className="mb-4">{t("common.errorLoadingData")}</p>
           <p className="text-sm text-gray-600 mb-4">
-            {ordersError?.message || "Không thể tải dữ liệu đơn hàng"}
+            {transactionsError?.message || "Không thể tải dữ liệu giao dịch"}
           </p>
           <Button onClick={handleRefresh} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -465,13 +375,13 @@ export function SalesReport() {
             <div>
               <CardTitle className="text-xl font-bold text-green-700 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
-                {t('reports.salesAnalysis')}
+                {t('reports.salesReport')}
               </CardTitle>
               <CardDescription className="text-gray-600">
-                {t('reports.analyzeRevenue')}
+                {t('reports.salesReportDescription')}
               </CardDescription>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-gray-500" />
@@ -523,10 +433,10 @@ export function SalesReport() {
                 onClick={handleRefresh}
                 variant="outline"
                 size="sm"
-                disabled={ordersLoading}
+                disabled={transactionsLoading}
                 className="flex items-center gap-2"
               >
-                <RefreshCw className={`w-4 h-4 ${ordersLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${transactionsLoading ? 'animate-spin' : ''}`} />
                 {t("reports.refresh")}
               </Button>
             </div>
@@ -535,7 +445,7 @@ export function SalesReport() {
       </Card>
 
       {/* Content */}
-      {ordersLoading ? (
+      {transactionsLoading ? (
         <LoadingSkeleton />
       ) : hasError ? (
         <ErrorState />
@@ -614,7 +524,7 @@ export function SalesReport() {
                   <Calendar className="w-5 h-5" />
                   {t("reports.dailySales")}
                 </CardTitle>
-                <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+                <CardDescription>{t("reports.salesChartDescription")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="max-h-96 overflow-y-auto">
@@ -646,7 +556,7 @@ export function SalesReport() {
                       ) : (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center text-gray-500 py-8">
-                            {t("reports.noSalesData")}
+                            {t("reports.noDataDescription")}
                           </TableCell>
                         </TableRow>
                       )}
@@ -663,7 +573,7 @@ export function SalesReport() {
                   <DollarSign className="w-5 h-5" />
                   {t("reports.paymentMethods")}
                 </CardTitle>
-                <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+                <CardDescription>{t("reports.paymentMethodsDescription")}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4 max-h-96 overflow-y-auto">
