@@ -1447,12 +1447,11 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    );
-  };
+            )}
+          </CardContent>
+        </Card>
+      );
+    };
 
   // Employee Report with Pagination State
   const [employeeCurrentPage, setEmployeeCurrentPage] = useState(1);
@@ -3489,37 +3488,62 @@ export function SalesChartReport() {
                 )}
 
                 {/* Summary Row */}
-                {data.length > 0 && (
+                {sortedData.length > 0 && (
                   <TableRow className="bg-gray-100 font-bold border-t-2">
                     <TableCell className="text-center border-r w-12"></TableCell>
-                    <TableCell className="text-center border-r bg-green-100 min-w-[120px] px-4">
+                    <TableCell className="text-center border-r bg-green-100 min-w-[100px] px-4">
                       {t("common.total")}
                     </TableCell>
-                    <TableCell className="text-center border-r bg-green-100 min-w-[150px] px-4">
-                      {data.length} khách hàng
+                    <TableCell className="text-center border-r bg-green-100 min-w-[80px] px-4">
+                      {startDate} - {endDate}
                     </TableCell>
-                    <TableCell className="text-center border-r min-w-[100px] px-4">
-                      {data
-                        .reduce((sum, item) => sum + item.orders, 0)
-                        .toLocaleString()}
+                    <TableCell className="text-center border-r min-w-[130px] px-4">
+                      {totalOrderCount}
                     </TableCell>
-                    <TableCell className="text-center border-r min-w-[130px] px-4"></TableCell>
-                    <TableCell className="text-right border-r min-w-[140px] px-4">
+                    <TableCell className="text-center border-r min-w-[120px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[150px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[100px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[150px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[80px] px-4">
+                      {totalOrderCount}
+                    </TableCell>
+                    <TableCell className="text-right border-r min-w-[100px] px-4"></TableCell>
+                    <TableCell className="text-right border-r min-w-[120px] px-4">
                       {formatCurrency(
-                        data.reduce((sum, item) => sum + item.totalAmount, 0),
+                        paginatedData.reduce(
+                          (sum, item) => sum + item.totalAmount,
+                          0,
+                        ),
                       )}
                     </TableCell>
-                    <TableCell className="text-right border-r text-red-600 min-w-[120px] px-4">
-                      {formatCurrency(
-                        data.reduce((sum, item) => sum + item.discount, 0),
-                      )}
+                    <TableCell className="text-right border-r text-red-600 min-w-[100px] px-4">
+                      {formatCurrency(totalDiscount)}
                     </TableCell>
-                    <TableCell className="text-right border-r text-green-600 min-w-[140px] px-4">
-                      {formatCurrency(
-                        data.reduce((sum, item) => sum + item.revenue, 0),
-                      )}
+                    <TableCell className="text-right border-r text-green-600 font-medium min-w-[120px] px-4">
+                      {formatCurrency(totalRevenue)}
                     </TableCell>
-                    <TableCell className="text-center min-w-[100px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[80px] px-4">
+                      10%
+                    </TableCell>
+                    <TableCell className="text-right border-r min-w-[100px] px-4">
+                      {formatCurrency(totalTaxAmount)}
+                    </TableCell>
+                    <TableCell className="text-right border-r font-bold text-blue-600 min-w-[120px] px-4">
+                      {formatCurrency(grandTotal)}
+                    </TableCell>
+                    <TableCell className="text-center border-r min-w-[120px] px-4">
+                      Tổng hợp
+                    </TableCell>
+                    <TableCell className="text-center border-r min-w-[150px] px-4">
+                      {sortedData.length} nhóm đơn hàng
+                    </TableCell>
+                    <TableCell className="text-center border-r min-w-[100px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[80px] px-4"></TableCell>
+                    <TableCell className="text-center border-r min-w-[150px] px-4"></TableCell>
+                    <TableCell className="text-center min-w-[100px] px-4">
+                      Hoàn thành
+                    </TableCell>
                   </TableRow>
                 )}
               </TableBody>
