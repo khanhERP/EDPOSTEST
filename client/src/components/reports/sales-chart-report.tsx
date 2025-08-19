@@ -1357,14 +1357,15 @@ export function SalesChartReport() {
 
   // Legacy Employee Report Component Logic
   const renderEmployeeReport = () => {
+    if (!orders || !Array.isArray(orders)) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
+    }
+
     try {
-      if (!orders || !Array.isArray(orders)) {
-        return (
-          <div className="flex justify-center py-8">
-            <div className="text-gray-500">{t("reports.loading")}...</div>
-          </div>
-        );
-      }
 
       console.log("Employee Report - orders data:", {
         ordersLength: orders.length,
@@ -2019,7 +2020,7 @@ export function SalesChartReport() {
         <div className="flex justify-center py-8">
           <div className="text-red-500">
             <p>Có lỗi xảy ra khi hiển thị báo cáo nhân viên</p>
-            <p className="text-sm">{error.message}</p>
+            <p className="text-sm">{error?.message || 'Unknown error'}</p>
           </div>
         </div>
       );
@@ -3377,7 +3378,7 @@ export function SalesChartReport() {
                               );
                             },
                           )}
-                        </>
+                        </Fragment>
                       );
                     })
                 ) : (
@@ -3948,20 +3949,9 @@ export function SalesChartReport() {
           </div>
         );
       }
-    } catch (error) {
-      console.error("Error in renderChart:", error);
-      return (
-        <div className="flex justify-center py-8">
-          <div className="text-red-500">
-            <p>Lỗi khi hiển thị biểu đồ</p>
-            <p className="text-sm">{error.message}</p>
-          </div>
-        </div>
-      );
-    }
 
-    return (
-      <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
+      return (
+        <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-lg">
           <CardTitle className="flex items-center gap-3 text-lg font-semibold">
             <div className="p-2 bg-white/20 rounded-lg">
@@ -4132,7 +4122,18 @@ export function SalesChartReport() {
           </div>
         </CardContent>
       </Card>
-    );
+      );
+    } catch (error) {
+      console.error("Error in renderChart:", error);
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-red-500">
+            <p>Lỗi khi hiển thị biểu đồ</p>
+            <p className="text-sm">{error?.message || 'Unknown error'}</p>
+          </div>
+        </div>
+      );
+    }
   };
 
   // Main render component function
