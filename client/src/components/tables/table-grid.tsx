@@ -1026,13 +1026,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               {/* Tax and Total Summary */}
               <div className="space-y-2">
                 {(() => {
-                  // Calculate subtotal and tax from order items
+                  // Calculate subtotal (pre-tax) and tax from order items
                   let subtotal = 0;
                   let totalTax = 0;
 
                   if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
                     orderItems.forEach((item: any) => {
-                      const itemSubtotal = Number(item.total || 0);
+                      // Use unitPrice * quantity for pre-tax amount
+                      const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
                       subtotal += itemSubtotal;
 
                       const product = products.find((p: any) => p.id === item.productId);
@@ -1059,7 +1060,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       </div>
                     </>
                   );
-                })()}
+                })()}</div>
               </div>
 
               {/* Payment Buttons */}
