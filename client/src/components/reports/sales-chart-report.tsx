@@ -83,49 +83,15 @@ export function SalesChartReport() {
   const [customerCurrentPage, setCustomerCurrentPage] = useState(1);
   const [customerPageSize, setCustomerPageSize] = useState(15);
 
-  // Data queries with dynamic filtering
+  // Data queries - using same source as dashboard for consistency
   const { data: transactions, isLoading: transactionsLoading } = useQuery({
-    queryKey: [
-      "/api/transactions",
-      startDate,
-      endDate,
-      salesMethod,
-      salesChannel,
-      analysisType,
-      concernType,
-      selectedEmployee,
-    ],
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/transactions/${startDate}/${endDate}/${salesMethod}/${salesChannel}/${analysisType}/${concernType}/${selectedEmployee}`,
-      );
-      if (!response.ok) throw new Error("Failed to fetch transactions");
-      return response.json();
-    },
+    queryKey: ["/api/transactions"],
     staleTime: 5 * 60 * 1000,
-    enabled: !!(startDate && endDate), // Only fetch when dates are available
   });
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
-    queryKey: [
-      "/api/orders",
-      startDate,
-      endDate,
-      selectedEmployee,
-      salesChannel,
-      salesMethod,
-      analysisType,
-      concernType,
-    ],
-    queryFn: async () => {
-      const response = await fetch(
-        `/api/orders/${startDate}/${endDate}/${selectedEmployee}/${salesChannel}/${salesMethod}/${analysisType}/${concernType}`,
-      );
-      if (!response.ok) throw new Error("Failed to fetch orders");
-      return response.json();
-    },
+    queryKey: ["/api/orders"],
     staleTime: 5 * 60 * 1000,
-    enabled: !!(startDate && endDate), // Only fetch when dates are available
   });
 
   const { data: employees } = useQuery({
@@ -248,67 +214,122 @@ export function SalesChartReport() {
       );
     }
 
-    const filteredTransactions = transactions.filter((transaction: any) => {
-      const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at,
+    // Use same filtering logic as dashboard
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    // Filter completed orders like dashboard does
+    const filteredCompletedOrders = orders?.filter((order: any) => {
+      // Check if order is completed/paid (same as dashboard)
+      if (order.status !== 'completed' && order.status !== 'paid') return false;
+
+      // Try multiple possible date fields (same as dashboard)
+      const orderDate = new Date(
+        order.orderedAt || order.createdAt || order.created_at || order.paidAt
       );
 
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
+      // Skip if date is invalid
+      if (isNaN(orderDate.getTime())) {
+        return false;
+      }
 
-      const transactionDateOnly = new Date(transactionDate);
-      transactionDateOnly.setHours(0, 0, 0, 0);
+      return orderDate >= start && orderDate <= end;
+    }) || [];
 
-      const isInRange =
-        transactionDateOnly >= start && transactionDateOnly <= end;
-      return isInRange;
-    });
+    // Convert orders to transaction-like format for compatibility
+    const filteredTransactions = filteredCompletedOrders.map((order: any) => ({
+      id: order.id,
+      transactionId: `TXN-${order.id}`,
+      total: order.total,
+      subtotal: order.subtotal,
+      discount: order.discount || 0,
+      paymentMethod: order.paymentMethod || 'cash',
+      createdAt: order.orderedAt || order.createdAt || order.created_at || order.paidAt,
+      created_at: order.orderedAt || order.createdAt || order.created_at || order.paidAt,
+      customerName: order.customerName,
+      customerId: order.customerId,
+      cashierName: order.employeeName || order.cashierName,
+      employeeId: order.employeeId,
+      items: order.items || [],
+      status: order.status
+    }));
 
     const dailySales: {
       [date: string]: { revenue: number; orders: number; customers: number };
     } = {};
 
-    filteredTransactions.forEach((transaction: any) => {
-      const transactionDate = new Date(
-        transaction.createdAt || transaction.created_at,
+    filteredCompletedOrders.forEach((order: any) => {
+      const orderDate = new Date(
+        order.orderedAt || order.createdAt || order.created_at || order.paidAt
       );
 
-      const year = transactionDate.getFullYear();
-      const month = (transactionDate.getMonth() + 1)
+      const year = orderDate.getFullYear();
+      const month = (orderDate.getMonth() + 1)
         .toString()
         .padStart(2, "0");
-      const day = transactionDate.getDate().toString().padStart(2, "0");
+      const day = orderDate.getDate().toString().padStart(2, "0");
       const date = `${year}-${month}-${day}`;
 
       if (!dailySales[date]) {
         dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
       }
 
-      dailySales[date].revenue += Number(transaction.total || 0);
+      // Use same revenue calculation as dashboard
+      const orderTotal = Number(order.total || 0);
+      const discount = Number(order.discount || 0);
+      dailySales[date].revenue += (orderTotal - discount);
       dailySales[date].orders += 1;
-      dailySales[date].customers += 1;
+      
+      // Count unique customers per day
+      if (order.customerId) {
+        dailySales[date].customers += 1;
+      } else {
+        dailySales[date].customers += 1; // Count walk-in customers
+      }
     });
 
     const paymentMethods: {
       [method: string]: { count: number; revenue: number };
     } = {};
 
-    filteredTransactions.forEach((transaction: any) => {
-      const method = transaction.paymentMethod || "cash";
+    filteredCompletedOrders.forEach((order: any) => {
+      const method = order.paymentMethod || "cash";
       if (!paymentMethods[method]) {
         paymentMethods[method] = { count: 0, revenue: 0 };
       }
       paymentMethods[method].count += 1;
-      paymentMethods[method].revenue += Number(transaction.total);
+      
+      // Use same revenue calculation as dashboard
+      const orderTotal = Number(order.total || 0);
+      const discount = Number(order.discount || 0);
+      paymentMethods[method].revenue += (orderTotal - discount);
     });
 
-    const totalRevenue = filteredTransactions.reduce(
-      (sum: number, transaction: any) => sum + Number(transaction.total),
+    // Calculate totals using same logic as dashboard
+    const totalRevenue = filteredCompletedOrders.reduce(
+      (total: number, order: any) => {
+        const orderTotal = Number(order.total || 0);
+        const discount = Number(order.discount || 0);
+        return total + (orderTotal - discount);
+      },
       0,
     );
-    const totalOrders = filteredTransactions.length;
-    const totalCustomers = filteredTransactions.length;
+    
+    const totalOrders = filteredCompletedOrders.length;
+    
+    // Count unique customers like dashboard does
+    const uniqueCustomers = new Set();
+    filteredCompletedOrders.forEach((order: any) => {
+      if (order.customerId) {
+        uniqueCustomers.add(order.customerId);
+      } else {
+        // If no customer ID, count as unique customer per order
+        uniqueCustomers.add(`order_${order.id}`);
+      }
+    });
+    const totalCustomers = uniqueCustomers.size;
+    
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     return (
