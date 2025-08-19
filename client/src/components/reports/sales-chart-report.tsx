@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, Fragment } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Card,
@@ -3377,7 +3377,7 @@ export function SalesChartReport() {
                               );
                             },
                           )}
-                        </>
+                        </Fragment>
                       );
                     })
                 ) : (
