@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -47,31 +48,61 @@ export function MenuReport() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Use the new optimized API endpoint with filters
-  const { data: menuData, isLoading } = useQuery({
+  // Use same data sources as sales-chart-report
+  const { data: transactions, isLoading: transactionsLoading } = useQuery({
     queryKey: [
-      "/api/menu-analysis",
+      "/api/transactions",
       startDate,
       endDate,
-      productSearch,
-      selectedCategory,
-      productType,
+      "all", // salesMethod
+      "all", // salesChannel
+      "product", // analysisType
+      "sales", // concernType
+      "all", // selectedEmployee
     ],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        startDate,
-        endDate,
-        ...(productSearch && { search: productSearch }),
-        ...(selectedCategory !== "all" && { categoryId: selectedCategory }),
-        ...(productType !== "all" && { productType }),
-      });
-      const response = await fetch(`/api/menu-analysis?${params}`);
-      if (!response.ok) {
-        throw new Error("Failed to fetch menu analysis data");
-      }
+      const response = await fetch(
+        `/api/transactions/${startDate}/${endDate}/all/all/product/sales/all`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch transactions");
       return response.json();
     },
-    staleTime: 2 * 60 * 1000, // Cache for 2 minutes
+    staleTime: 5 * 60 * 1000,
+    enabled: !!(startDate && endDate),
+  });
+
+  const { data: orders, isLoading: ordersLoading } = useQuery({
+    queryKey: [
+      "/api/orders",
+      startDate,
+      endDate,
+      "all", // selectedEmployee
+      "all", // salesChannel
+      "all", // salesMethod
+      "product", // analysisType
+      "sales", // concernType
+    ],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/orders/${startDate}/${endDate}/all/all/all/product/sales`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch orders");
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!(startDate && endDate),
+  });
+
+  const { data: products } = useQuery({
+    queryKey: ["/api/products", selectedCategory, productType, productSearch],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/products/${selectedCategory}/${productType}/${productSearch || ""}`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch products");
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
   const handleDateRangeChange = (range: string) => {
@@ -133,6 +164,197 @@ export function MenuReport() {
     return `${amount.toLocaleString()} ₫`;
   };
 
+  // Process data from transactions and orders like sales-chart-report
+  const getMenuAnalysisData = () => {
+    if (!products || !Array.isArray(products)) return null;
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+
+    const productSales: {
+      [productId: string]: {
+        quantity: number;
+        totalAmount: number;
+        discount: number;
+        revenue: number;
+        product: any;
+      };
+    } = {};
+
+    // Filter products based on search and category
+    const filteredProducts = products.filter((product: any) => {
+      const searchMatch =
+        !productSearch ||
+        product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+        (product.sku &&
+          product.sku.toLowerCase().includes(productSearch.toLowerCase()));
+
+      const categoryMatch =
+        selectedCategory === "all" ||
+        product.categoryId?.toString() === selectedCategory;
+
+      const typeMatch =
+        productType === "all" ||
+        (productType === "combo" && product.productType === 3) ||
+        (productType === "product" && product.productType === 1) ||
+        (productType === "service" && product.productType === 2);
+
+      return searchMatch && categoryMatch && typeMatch;
+    });
+
+    // Process transaction items
+    if (transactions && Array.isArray(transactions)) {
+      const filteredTransactions = transactions.filter((transaction: any) => {
+        const transactionDate = new Date(
+          transaction.createdAt || transaction.created_at,
+        );
+        const transactionDateOnly = new Date(transactionDate);
+        transactionDateOnly.setHours(0, 0, 0, 0);
+        return transactionDateOnly >= start && transactionDateOnly <= end;
+      });
+
+      filteredTransactions.forEach((transaction: any) => {
+        if (transaction.items && Array.isArray(transaction.items)) {
+          transaction.items.forEach((item: any) => {
+            const productId = item.productId?.toString();
+            if (!productId) return;
+
+            const product = filteredProducts.find(
+              (p) => p.id.toString() === productId,
+            );
+            if (!product) return;
+
+            if (!productSales[productId]) {
+              productSales[productId] = {
+                quantity: 0,
+                totalAmount: 0,
+                discount: 0,
+                revenue: 0,
+                product: product,
+              };
+            }
+
+            const quantity = Number(item.quantity || 0);
+            const total = Number(item.total || 0);
+            const unitPrice = Number(item.price || 0);
+            const totalAmount = quantity * unitPrice;
+            const discount = totalAmount - total;
+
+            productSales[productId].quantity += quantity;
+            productSales[productId].totalAmount += totalAmount;
+            productSales[productId].discount += discount;
+            productSales[productId].revenue += total;
+          });
+        }
+      });
+    }
+
+    // Process order items
+    if (orders && Array.isArray(orders)) {
+      const filteredOrders = orders.filter((order: any) => {
+        const orderDate = new Date(
+          order.orderedAt || order.created_at || order.createdAt,
+        );
+        const orderDateOnly = new Date(orderDate);
+        orderDateOnly.setHours(0, 0, 0, 0);
+        return (
+          orderDateOnly >= start &&
+          orderDateOnly <= end &&
+          order.status === "paid"
+        );
+      });
+
+      filteredOrders.forEach((order: any) => {
+        if (order.items && Array.isArray(order.items)) {
+          order.items.forEach((item: any) => {
+            const productId = item.productId?.toString();
+            if (!productId) return;
+
+            const product = filteredProducts.find(
+              (p) => p.id.toString() === productId,
+            );
+            if (!product) return;
+
+            if (!productSales[productId]) {
+              productSales[productId] = {
+                quantity: 0,
+                totalAmount: 0,
+                discount: 0,
+                revenue: 0,
+                product: product,
+              };
+            }
+
+            const quantity = Number(item.quantity || 0);
+            const total = Number(item.total || 0);
+            const unitPrice = Number(item.unitPrice || 0);
+            const totalAmount = quantity * unitPrice;
+            const discount = totalAmount - total;
+
+            productSales[productId].quantity += quantity;
+            productSales[productId].totalAmount += totalAmount;
+            productSales[productId].discount += discount;
+            productSales[productId].revenue += total;
+          });
+        }
+      });
+    }
+
+    // Calculate totals
+    const totalRevenue = Object.values(productSales).reduce(
+      (sum, item) => sum + item.revenue,
+      0,
+    );
+    const totalQuantity = Object.values(productSales).reduce(
+      (sum, item) => sum + item.quantity,
+      0,
+    );
+
+    // Group by category
+    const categoryStats: { [categoryId: string]: any } = {};
+    Object.values(productSales).forEach((sale) => {
+      const categoryId = sale.product.categoryId || 0;
+      const categoryName =
+        categories?.find((cat: any) => cat.id === categoryId)?.name ||
+        "Uncategorized";
+
+      if (!categoryStats[categoryId]) {
+        categoryStats[categoryId] = {
+          category: { id: categoryId, name: categoryName },
+          revenue: 0,
+          quantity: 0,
+          productCount: 0,
+        };
+      }
+
+      categoryStats[categoryId].revenue += sale.revenue;
+      categoryStats[categoryId].quantity += sale.quantity;
+      categoryStats[categoryId].productCount += 1;
+    });
+
+    // Top selling products by quantity
+    const topSellingProducts = Object.values(productSales)
+      .sort((a, b) => b.quantity - a.quantity)
+      .slice(0, 10);
+
+    // Top revenue products
+    const topRevenueProducts = Object.values(productSales)
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 10);
+
+    return {
+      totalRevenue,
+      totalQuantity,
+      categoryStats: Object.values(categoryStats),
+      productStats: Object.values(productSales),
+      topSellingProducts,
+      topRevenueProducts,
+    };
+  };
+
+  const isLoading = transactionsLoading || ordersLoading;
+
   if (isLoading) {
     return (
       <div className="flex justify-center py-8">
@@ -141,8 +363,8 @@ export function MenuReport() {
     );
   }
 
-  // Initialize default empty data structure if no data or error
-  const defaultData = {
+  // Get processed data
+  const displayData = getMenuAnalysisData() || {
     totalRevenue: 0,
     totalQuantity: 0,
     categoryStats: [],
@@ -150,8 +372,6 @@ export function MenuReport() {
     topSellingProducts: [],
     topRevenueProducts: [],
   };
-
-  const displayData = menuData || defaultData;
 
   return (
     <div className="space-y-6">
