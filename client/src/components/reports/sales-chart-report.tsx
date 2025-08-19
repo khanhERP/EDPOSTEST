@@ -1382,8 +1382,14 @@ export function SalesChartReport() {
         order.orderedAt || order.createdAt || order.created_at || order.paidAt
       );
 
-      // Skip if date is invalid
+      // Skip if date is invalid (EXACT same as dashboard)
       if (isNaN(orderDate.getTime())) {
+        console.log('Invalid order date for order:', order.id, 'date fields:', {
+          orderedAt: order.orderedAt,
+          createdAt: order.createdAt,
+          created_at: order.created_at,
+          paidAt: order.paidAt
+        });
         return false;
       }
 
@@ -1398,6 +1404,24 @@ export function SalesChartReport() {
         order.cashierName?.includes(selectedEmployee);
 
       return dateMatch && employeeMatch;
+    });
+
+    console.log("Employee Report Debug:", {
+      totalOrders: orders.length,
+      startDate,
+      endDate,
+      completedOrders: orders.filter((o: any) => o.status === 'completed' || o.status === 'paid').length,
+      filteredCompletedOrders: filteredCompletedOrders.length,
+      selectedEmployee,
+      sampleOrderDates: orders.slice(0, 3).map((o: any) => ({
+        id: o.id,
+        status: o.status,
+        employeeName: o.employeeName || o.cashierName,
+        orderedAt: o.orderedAt,
+        createdAt: o.createdAt,
+        created_at: o.created_at,
+        paidAt: o.paidAt
+      })),
     });
 
     // Group orders by employee and extract payment methods
@@ -1446,7 +1470,7 @@ export function SalesChartReport() {
       // Use EXACT same calculation as dashboard: total - discount
       const orderTotal = Number(order.total || 0);
       const orderDiscount = Number(order.discount || 0);
-      const orderRevenue = orderTotal - orderDiscount; // Use same calculation as dashboard
+      const orderRevenue = orderTotal - orderDiscount; // EXACT same calculation as dashboard
       const orderTax = orderRevenue * 0.1; // 10% tax on revenue
 
       employeeData[employeeKey].orderCount += 1;
@@ -3652,35 +3676,58 @@ export function SalesChartReport() {
           .slice(0, 10);
 
       case "employee":
-        if (!transactions || !Array.isArray(transactions)) return [];
+        if (!orders || !Array.isArray(orders)) return [];
 
         const empStart = new Date(startDate);
         const empEnd = new Date(endDate);
         empEnd.setHours(23, 59, 59, 999);
 
-        const empFilteredTransactions = transactions.filter(
-          (transaction: any) => {
-            const transactionDate = new Date(
-              transaction.createdAt || transaction.created_at,
-            );
-            return transactionDate >= empStart && transactionDate <= empEnd;
-          },
-        );
+        // Use EXACT same filtering logic as dashboard for orders
+        const empFilteredOrders = orders.filter((order: any) => {
+          // Check if order is completed/paid (EXACT same as dashboard)
+          if (order.status !== 'completed' && order.status !== 'paid') return false;
+
+          // Try multiple possible date fields (EXACT same as dashboard)
+          const orderDate = new Date(
+            order.orderedAt || order.createdAt || order.created_at || order.paidAt
+          );
+
+          // Skip if date is invalid
+          if (isNaN(orderDate.getTime())) {
+            return false;
+          }
+
+          const dateMatch = orderDate >= empStart && orderDate <= empEnd;
+
+          const employeeMatch =
+            selectedEmployee === "all" ||
+            order.employeeName === selectedEmployee ||
+            order.cashierName === selectedEmployee ||
+            order.employeeId?.toString() === selectedEmployee ||
+            order.employeeName?.includes(selectedEmployee) ||
+            order.cashierName?.includes(selectedEmployee);
+
+          return dateMatch && employeeMatch;
+        });
 
         const employeeData: {
           [cashier: string]: { revenue: number; orders: number };
         } = {};
 
-        empFilteredTransactions.forEach((transaction: any) => {
+        empFilteredOrders.forEach((order: any) => {
           const cashier =
-            transaction.cashierName || transaction.employeeName || "Unknown";
+            order.cashierName || order.employeeName || "Unknown";
           if (!employeeData[cashier]) {
             employeeData[cashier] = { revenue: 0, orders: 0 };
           }
 
-          const amount = Number(transaction.total);
-          if (amount > 0) {
-            employeeData[cashier].revenue += amount;
+          // Use EXACT same calculation as dashboard: total - discount
+          const orderTotal = Number(order.total || 0);
+          const orderDiscount = Number(order.discount || 0);
+          const revenue = orderTotal - orderDiscount;
+
+          if (revenue > 0) {
+            employeeData[cashier].revenue += revenue;
             employeeData[cashier].orders += 1;
           }
         });
