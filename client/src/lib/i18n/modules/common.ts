@@ -169,6 +169,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     goldCustomer: "골드고객",
     customerGroup: "고객 그룹",
     walkInCustomer: "일반 고객",
+    backToPOS: "POS로 돌아가기",
 
     // Payment method modal
     selectPaymentMethod: "결제 방법 선택",
@@ -313,6 +314,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     goldCustomer: "Gold Customer",
     customerGroup: "Customer Group",
     walkInCustomer: "Walk-in Customer",
+    backToPOS: "Back to POS",
 
     // Payment method modal
     selectPaymentMethod: "Select Payment Method",
@@ -457,6 +459,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     goldCustomer: "Khách hàng vàng",
     customerGroup: "Nhóm khách hàng",
     walkInCustomer: "Khách lẻ",
+    backToPOS: "Quay lại POS",
 
     // Payment method modal translations (already exist above)
     selectPaymentMethod: "Chọn phương thức thanh toán",

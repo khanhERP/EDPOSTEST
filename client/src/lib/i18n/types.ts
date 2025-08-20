@@ -183,6 +183,7 @@ export interface CommonTranslations {
   walkInCustomer: string;
   transfer: string;
   view: string;
+  backToPOS: string;
   paid: string;
   login: string;
   register: string;
