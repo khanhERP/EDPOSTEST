@@ -2914,9 +2914,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("POS Login request:", { clientID, clientSecret, masterId, bankCode });
 
-      // Use external server URL for login
-      const apiBaseUrl = process.env.QR_API_BASE_URL || "http://1.55.212.135:9335";
-      const response = await fetch(`${apiBaseUrl}/api/pos/login`, {
+      // Use external server URL
+      const apiBaseUrl =
+        process.env.QR_API_BASE_URL || "http://1.55.212.135:9335";
+
+      console.log("🔍 POS Login API Debug:");
+      console.log("Environment QR_API_BASE_URL:", process.env.QR_API_BASE_URL);
+      console.log("Using apiBaseUrl:", apiBaseUrl);
+      console.log("Full URL:", `${apiBaseUrl}/api/PosLogin`);
+
+      const response = await fetch(`${apiBaseUrl}/api/PosLogin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -3728,7 +3735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("Database health check failed:", error);
-      
+
       res.status(500).json({ 
         status: "unhealthy", 
         error: errorMessage,
