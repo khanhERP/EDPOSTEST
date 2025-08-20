@@ -25,26 +25,25 @@ import path from "path";
 config({ path: path.resolve(".env.local") });
 config({ path: path.resolve(".env") });
 
-// Use EXTERNAL_DB_URL first, then fallback to DATABASE_URL from Replit's PostgreSQL service
-let DATABASE_URL = process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL;
+// Use EXTERNAL_DB_URL first, then fallback to CUSTOM_DATABASE_URL, then DATABASE_URL
+let DATABASE_URL =
+  process.env.EXTERNAL_DB_URL ||
+  process.env.CUSTOM_DATABASE_URL ||
+  process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
   throw new Error(
-    "DATABASE_URL or EXTERNAL_DB_URL must be set. Please create a PostgreSQL database in Replit or uncomment EXTERNAL_DB_URL in .env file.",
+    "DATABASE_URL must be set. Did you forget to provision a database?",
   );
 }
 
-// Configure SSL based on database provider
-if (DATABASE_URL.includes("neon.tech")) {
-  // Replit uses Neon for PostgreSQL - ensure SSL is enabled
-  if (!DATABASE_URL.includes("sslmode=")) {
-    DATABASE_URL += DATABASE_URL.includes("?")
-      ? "&sslmode=require"
-      : "?sslmode=require";
+// Ensure we're using the correct database and SSL settings for external server
+if (DATABASE_URL?.includes("1.55.212.135")) {
+  // Make sure we're using postgres database and sslmode=disable
+  if (!DATABASE_URL.includes("/postgres")) {
+    DATABASE_URL = DATABASE_URL.replace(/\/[^\/\?]+(\?|$)/, "/postgres$1");
   }
-} else if (DATABASE_URL.includes("1.55.212.135")) {
-  // External database - ensure sslmode=disable for local development
-  if (!DATABASE_URL.includes("sslmode=")) {
+  if (!DATABASE_URL.includes("sslmode=disable")) {
     DATABASE_URL += DATABASE_URL.includes("?")
       ? "&sslmode=disable"
       : "?sslmode=disable";
@@ -53,9 +52,14 @@ if (DATABASE_URL.includes("neon.tech")) {
 
 export const pool = new Pool({
   connectionString: DATABASE_URL,
-  max: 10,
+  max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
+  connectionTimeoutMillis: 2000,
+  ssl: DATABASE_URL?.includes("1.55.212.135")
+    ? false // Disable SSL for external server
+    : DATABASE_URL?.includes("neon")
+      ? { rejectUnauthorized: false }
+      : undefined,
 });
 
 // Log database connection info with detailed debugging
