@@ -124,6 +124,26 @@ export function SalesChartReport() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
+    queryKey: ["/api/invoices"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/invoices");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching invoices:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const { data: tables } = useQuery({
     queryKey: ["/api/tables"],
     staleTime: 5 * 60 * 1000,
@@ -258,7 +278,7 @@ export function SalesChartReport() {
         if (isNaN(orderDate.getTime())) return false;
 
         const dateMatch = orderDate >= start && orderDate <= end;
-        
+
         // Only include completed/paid orders (same as dashboard)
         const isCompleted = order.status === 'paid' || order.status === 'completed';
 
@@ -365,7 +385,7 @@ export function SalesChartReport() {
       averageOrderValue,
       peakHour: parseInt(peakHour),
       totalTables: tables.length,
-      filteredCompletedOrders, // Return filtered orders for further processing
+      filteredCompletedOrders: filteredCompletedOrders, // Return filtered orders for further processing
     };
   };
 
@@ -4693,7 +4713,7 @@ export function SalesChartReport() {
 
       {/* Report Content */}
       <div className="space-y-6">
-        {transactionsLoading || ordersLoading ? (
+        {(transactionsLoading || ordersLoading || invoicesLoading) ? (
           <div className="flex justify-center py-8">
             <div className="text-gray-500">{t("reports.loading")}...</div>
           </div>
