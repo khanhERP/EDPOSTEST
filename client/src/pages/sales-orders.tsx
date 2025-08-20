@@ -1398,7 +1398,7 @@ export default function SalesOrders() {
                                                       console.log('Publishing invoice:', selectedInvoice?.id);
                                                       // TODO: Implement publish invoice logic
                                                     }}
-                                                    disabled={selectedInvoice?.einvoiceStatus === 1}
+                                                    disabled={selectedInvoice?.einvoiceStatus !== 0}
                                                   >
                                                     <Mail className="w-4 h-4" />
                                                     Phát hành
