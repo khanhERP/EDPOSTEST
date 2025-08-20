@@ -42,6 +42,21 @@ export function TableReport() {
 
   const { data: orders = [] } = useQuery({
     queryKey: ["/api/orders"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/orders");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const { data: tables = [] } = useQuery({
@@ -51,33 +66,33 @@ export function TableReport() {
   const getTableData = () => {
     if (!orders || !tables) return null;
 
-    const filteredOrders = (orders as Order[]).filter((order: Order) => {
-      const orderDate = new Date(order.orderedAt);
+    // Use EXACT same filtering logic as dashboard-overview
+    const filteredOrders = Array.isArray(orders) ? orders.filter((order: any) => {
+      try {
+        if (!order || !order.orderedAt) return false;
 
-      // Sử dụng format ngày nhất quán như sales-report
-      const orderDateStr = `${orderDate.getFullYear()}-${(orderDate.getMonth() + 1).toString().padStart(2, "0")}-${orderDate.getDate().toString().padStart(2, "0")}`;
+        const orderDate = new Date(order.orderedAt);
+        if (isNaN(orderDate.getTime())) return false;
 
-      const isInDateRange = orderDateStr >= startDate && orderDateStr <= endDate;
+        const dateMatch = orderDate >= start && orderDate <= end;
+        
+        // Only include completed/paid orders (same as dashboard)
+        const isCompleted = order.status === 'paid' || order.status === 'completed';
 
-      // Chỉ loại bỏ đơn hàng bị hủy hoặc không có total
-      const isValidOrder = order.status && order.status !== "cancelled" && order.total && Number(order.total) > 0;
-
-      // Debug logging cho hôm nay
-      if (dateRange === "today") {
-        console.log("Table Report Debug:", {
-          orderId: order.id,
-          orderDateStr,
-          startDate,
-          endDate,
-          status: order.status,
-          tableId: order.tableId,
-          total: order.total,
-          isInDateRange,
-          isValidOrder
-        });
+        return dateMatch && isCompleted;
+      } catch (error) {
+        console.error('Error filtering order:', order, error);
+        return false;
       }
+    }) : [];
 
-      return isInDateRange && isValidOrder;
+    console.log("Table Report Debug (Dashboard Style):", {
+      dateRange,
+      startDate,
+      endDate,
+      totalOrders: orders.length,
+      filteredOrders: filteredOrders.length,
+      sampleOrder: filteredOrders[0] || null
     });
 
     // Table performance analysis
@@ -112,10 +127,8 @@ export function TableReport() {
         const stats = tableStats[order.tableId];
         stats.orderCount += 1;
         
-        // Revenue = subtotal - discount (excluding tax)
-        const subtotal = Number(order.subtotal || order.total);
-        const discount = Number(order.discount || 0);
-        const revenue = subtotal - discount;
+        // Use EXACT same revenue calculation as dashboard: total amount
+        const revenue = Number(order.total || 0);
         stats.revenue += revenue;
         
         stats.customerCount += order.customerCount || 0;

@@ -53,9 +53,24 @@ export function MenuReport() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: orders, isLoading: ordersLoading } = useQuery({
+  // Query orders - same as dashboard-overview
+  const { data: orders = [], isLoading: ordersLoading } = useQuery({
     queryKey: ["/api/orders"],
-    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/orders");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const { data: products } = useQuery({
