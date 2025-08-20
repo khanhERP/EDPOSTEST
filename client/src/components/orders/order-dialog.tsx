@@ -162,7 +162,7 @@ export function OrderDialog({
 
       toast({
         title: t("common.error"),
-        description: `Lỗi ${mode === "edit" ? "cập nhật" : "tạo"} đơn hàng: ${errorMessage}`,
+        description: mode === "edit" ? "Bạn chưa sửa đơn hàng" : `Lỗi tạo đơn hàng: ${errorMessage}`,
         variant: "destructive",
       });
     },
