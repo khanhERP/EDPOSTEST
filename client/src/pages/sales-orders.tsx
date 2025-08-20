@@ -11,6 +11,7 @@ import { Calendar, Search, FileText, Package, Printer, Mail, X, Download } from 
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "@/lib/i18n";
 import * as XLSX from 'xlsx';
+import { EInvoiceModal } from "@/components/pos/einvoice-modal";
 
 interface Invoice {
   id: number;
@@ -94,6 +95,8 @@ export default function SalesOrders() {
   const [showBulkCancelDialog, setShowBulkCancelDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
+  const [selectedInvoiceForPublish, setSelectedInvoiceForPublish] = useState<Invoice | null>(null);
 
 
   // Query invoices
@@ -281,6 +284,60 @@ export default function SalesOrders() {
       setShowBulkCancelDialog(false);
       alert(`Lỗi hủy đơn hàng: ${error.message}`);
     },
+  });
+
+  // Mutation for publishing invoice
+  const publishRequestMutation = useMutation({
+    mutationFn: async (invoiceData: any) => {
+      const response = await apiRequest("POST", "/api/einvoice/publish", invoiceData);
+      return response.json();
+    },
+    onSuccess: async (result, variables) => {
+      console.log('✅ E-invoice published successfully:', result);
+
+      if (result.success && selectedInvoice) {
+        try {
+          // Update invoice with published status and invoice number
+          const updateResponse = await apiRequest("PUT", `/api/invoices/${selectedInvoice.id}`, {
+            einvoiceStatus: 1, // Đã phát hành
+            invoiceStatus: 1, // Hoàn thành
+            status: 'published',
+            invoiceNumber: result.data?.invoiceNo || null,
+            tradeNumber: result.data?.invoiceNo || selectedInvoice.tradeNumber
+          });
+
+          if (updateResponse.ok) {
+            // Update local state
+            setSelectedInvoice({
+              ...selectedInvoice,
+              einvoiceStatus: 1,
+              invoiceStatus: 1,
+              status: 'published',
+              invoiceNumber: result.data?.invoiceNo || selectedInvoice.invoiceNumber,
+              tradeNumber: result.data?.invoiceNo || selectedInvoice.tradeNumber
+            });
+
+            // Refresh data
+            queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+
+            alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || 'N/A'}`);
+          }
+        } catch (error) {
+          console.error('❌ Error updating invoice after publish:', error);
+          alert('Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái');
+        }
+      }
+
+      setShowEInvoiceModal(false);
+      setSelectedInvoiceForPublish(null);
+    },
+    onError: (error) => {
+      console.error('❌ Error publishing invoice:', error);
+      alert(`Lỗi phát hành hóa đơn: ${error.message}`);
+      setShowEInvoiceModal(false);
+      setSelectedInvoiceForPublish(null);
+    }
   });
 
   // Mutation for canceling invoice or order
@@ -1394,9 +1451,10 @@ export default function SalesOrders() {
                                                     variant="outline" 
                                                     className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                                                     onClick={() => {
-                                                      // Handle publish invoice functionality
-                                                      console.log('Publishing invoice:', selectedInvoice?.id);
-                                                      // TODO: Implement publish invoice logic
+                                                      if (selectedInvoice) {
+                                                        setSelectedInvoiceForPublish(selectedInvoice);
+                                                        setShowEInvoiceModal(true);
+                                                      }
                                                     }}
                                                     disabled={selectedInvoice?.einvoiceStatus !== 0}
                                                   >
@@ -1574,6 +1632,139 @@ export default function SalesOrders() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* E-Invoice Modal */}
+      {showEInvoiceModal && selectedInvoiceForPublish && (
+        <EInvoiceModal
+          isOpen={showEInvoiceModal}
+          onClose={() => {
+            setShowEInvoiceModal(false);
+            setSelectedInvoiceForPublish(null);
+          }}
+          onConfirm={(invoiceData) => {
+            console.log('📧 Publishing invoice with data:', invoiceData);
+            
+            // Generate a new GUID for transactionID
+            const generateGuid = () => {
+              return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+                /[xy]/g,
+                function (c) {
+                  const r = (Math.random() * 16) | 0;
+                  const v = c === "x" ? r : (r & 0x3) | 0x8;
+                  return v.toString(16);
+                },
+              );
+            };
+
+            // Prepare cart items from invoice items
+            const items = selectedInvoice?.type === 'order' ? orderItems : invoiceItems;
+            const cartItems = items.map((item: any) => ({
+              id: item.productId,
+              name: item.productName,
+              price: parseFloat(item.unitPrice),
+              quantity: item.quantity,
+              sku: `SP${String(item.productId).padStart(3, '0')}`,
+              taxRate: parseFloat(item.taxRate || '10')
+            }));
+
+            // Calculate totals
+            const subtotal = parseFloat(selectedInvoiceForPublish.subtotal || '0');
+            const tax = parseFloat(selectedInvoiceForPublish.tax || '0');
+            const total = parseFloat(selectedInvoiceForPublish.total || '0');
+
+            // Find selected template (use first available template as fallback)
+            const selectedTemplate = {
+              templateNumber: "01GTKT0/001",
+              name: "1C25TYY",
+              templateCode: "1C25TYY",
+              symbol: "C11DTD"
+            };
+
+            // Prepare publish request
+            const publishRequest = {
+              login: {
+                providerId: 1,
+                url: "https://infoerpvn.com:9440",
+                ma_dvcs: "0316578736",
+                username: "0316578736",
+                password: "123456a@",
+                tenantId: "",
+              },
+              transactionID: generateGuid(),
+              invRef: `INV-${Date.now()}`,
+              invSubTotal: Math.round(subtotal),
+              invVatRate: 10,
+              invVatAmount: Math.round(tax),
+              invDiscAmount: 0,
+              invTotalAmount: Math.round(total),
+              paidTp: "TM",
+              note: "",
+              hdNo: "",
+              createdDate: new Date().toISOString(),
+              clsfNo: selectedTemplate.templateNumber,
+              spcfNo: selectedTemplate.name,
+              templateCode: selectedTemplate.templateCode,
+              buyerNotGetInvoice: 0,
+              exchCd: "VND",
+              exchRt: 1,
+              bankAccount: "",
+              bankName: "",
+              customer: {
+                custCd: invoiceData.taxCode || '',
+                custNm: invoiceData.customerName || 'Khách hàng lẻ',
+                custCompany: invoiceData.customerName || 'Khách hàng lẻ',
+                taxCode: invoiceData.taxCode || '',
+                custCity: "",
+                custDistrictName: "",
+                custAddrs: invoiceData.address || "",
+                custPhone: invoiceData.phoneNumber || "",
+                custBankAccount: "",
+                custBankName: "",
+                email: invoiceData.email || "",
+                emailCC: "",
+              },
+              products: cartItems.map((item, index) => {
+                const itemPrice = item.price;
+                const itemQuantity = item.quantity;
+                const itemTaxRate = item.taxRate;
+                const itemSubtotal = itemPrice * itemQuantity;
+                const itemTax = (itemSubtotal * itemTaxRate) / 100;
+                const itemTotal = itemSubtotal + itemTax;
+
+                return {
+                  itmCd: item.sku,
+                  itmName: item.name,
+                  itmKnd: 1,
+                  unitNm: "Cái",
+                  qty: itemQuantity,
+                  unprc: itemPrice,
+                  amt: Math.round(itemSubtotal),
+                  discRate: 0,
+                  discAmt: 0,
+                  vatRt: itemTaxRate.toString(),
+                  vatAmt: Math.round(itemTax),
+                  totalAmt: Math.round(itemTotal),
+                };
+              }),
+            };
+
+            publishRequestMutation.mutate(publishRequest);
+          }}
+          total={parseFloat(selectedInvoiceForPublish?.total || '0')}
+          cartItems={(() => {
+            const items = selectedInvoiceForPublish?.type === 'order' ? orderItems : invoiceItems;
+            return items.map((item: any) => ({
+              id: item.productId,
+              name: item.productName,
+              price: parseFloat(item.unitPrice),
+              quantity: item.quantity,
+              sku: `SP${String(item.productId).padStart(3, '0')}`,
+              taxRate: parseFloat(item.taxRate || '10')
+            }));
+          })()}
+          source="sales-orders"
+        />
+      )}
     </div>
   );
 }
