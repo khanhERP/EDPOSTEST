@@ -97,7 +97,6 @@ export interface CommonTranslations {
   momoWallet: string;
   zalopayWallet: string;
   vnpayWallet: string;
-  qrBanking: string;
   shopeepayWallet: string;
   grabpayWallet: string;
   paymentMethodGeneric: string;
@@ -139,6 +138,26 @@ export interface ReportsTranslations {
   periodRevenue: string;
   occupiedTables: string;
   monthRevenue: string;
+  inOutInventory: string;
+  detailedInOutInventory: string;
+  disposal: string;
+  profitReportByProduct: string;
+  inventoryValueReport: string;
+  inOutInventoryReport: string;
+  detailedInOutInventoryReport: string;
+  disposalReport: string;
+  supplierReportByProduct: string;
+  salePrice: string;
+  saleValue: string;
+  costPrice: string;
+  openingStock: string;
+  openingValue: string;
+  openingPrice: string;
+  closingStock: string;
+  closingValue: string;
+  inQuantity: string;
+  outQuantity: string;
+  outValue: string;
   realTimeStatus: string;
   pendingOrders: string;
   count: string;
@@ -487,11 +506,25 @@ export interface ReportsTranslations {
   service: string;
   newCustomer: string;
   customer: string;
+  customerCode: string;
   orderReportByTransaction: string;
   orderReportByProduct: string;
   orderCode: string;
   orderTime: string;
   inactive: string;
+  searchOrderCode: string;
+  searchTable: string;
+  pending: string;
+  table: string;
+  taxRate: string;
+  taxAmount: string;
+  group: string;
+  note: string;
+  channel: string;
+  totalCustomers: string;
+  tableAnalysisDescription: string;
+  inventoryReportOfInterestType: string;
+  inventoryValue: string;
   active: string;
   orderQuantity: string;
   orderValue: string;
@@ -670,7 +703,6 @@ export interface SettingsTranslations {
   categoryNamePlaceholder: string;
   categoryIcon: string;
   productName: string;
-  productNamePlaceholder: string;
   productSku: string;
   productSkuPlaceholder: string;
   productCategory: string;
@@ -789,7 +821,6 @@ export interface CustomersTranslations {
   processing: string;
   pointsPaymentTitle: string;
   pointsPaymentDesc: string;
-  customerSelection: string;
   availablePoints: string;
   pointsToUse: string;
   pointsToUsePlaceholder: string;
@@ -984,33 +1015,11 @@ export interface AttendanceTranslations {
   breakStartSuccess: string;
   breakStartSuccessDesc: string;
   breakStartError: string;
-  breakEndSuccess: string;
-  breakEndSuccessDesc: string;
-  breakEndError: string;
   hours: string;
   minutes: string;
   notesPlaceholder: string;
   workingTime: string;
-  monthlyStats: string;
-  monthlyStatsDesc: string;
-  selectMonth: string;
   monthPickerPlaceholder: string;
-  totalWorkDays: string;
-  totalAttendance: string;
-  totalWorkHours: string;
-  totalOvertime: string;
-  averageWorkHours: string;
-  dailyAverageWorkHours: string;
-  attendanceRate: string;
-  overallAttendanceRate: string;
-  employeeStats: string;
-  employeeStatsDesc: string;
-  workDays: string;
-  days: string;
-  overtimeHours: string;
-  lateCount: string;
-  absentCount: string;
-  times: string;
   monthlyStats: string;
   monthlyStatsDesc: string;
   selectMonth: string;
@@ -1080,8 +1089,6 @@ export interface OrdersTranslations {
   totalOrder: string;
   pointsPayment: string;
   remainingAmount: string;
-  selectPaymentMethod: string;
-  viewDetails: string;
   addMore: string;
   editOrder: string;
   editOrderTitle: string;
@@ -1120,7 +1127,6 @@ export interface OrdersTranslations {
     shopeepay: string;
     grabpay: string;
   };
-  noTableInfo: string;
   payment: string;
   tableOrder: string;
   tableCapacity: string;
@@ -1219,7 +1225,6 @@ export interface EInvoiceTranslations {
   billingAddress: string;
   shippingAddress: string;
   items: string;
-  description: string;
   quantity: string;
   unitPrice: string;
   amount: string;
@@ -1308,8 +1313,6 @@ export interface EInvoiceTranslations {
   invoiceDeletedError: string;
   filterOptions: string;
   selectDateRange: string;
-  selectStatus: string;
-  selectPaymentMethod: string;
   applyFilter: string;
   resetFilter: string;
   invalidInvoiceNumber: string;
@@ -1607,7 +1610,6 @@ export interface SuppliersTranslations {
 export type TranslationKey =
   | `common.${keyof CommonTranslations}`
   | `nav.${keyof NavigationTranslations}`
-  | `tables.${keyof TablesTranslations}`
   | `inventory.${keyof InventoryTranslations}`
   | `orders.${keyof OrdersTranslations}`
   | `employees.${keyof EmployeesTranslations}`
