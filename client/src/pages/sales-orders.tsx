@@ -11,6 +11,7 @@ import { Calendar, Search, FileText, Package, Printer, Mail, X, Download } from 
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "@/lib/i18n";
 import * as XLSX from 'xlsx';
+import { EInvoiceModal } from "@/components/pos/einvoice-modal";
 
 
 interface Invoice {
@@ -96,6 +97,7 @@ export default function SalesOrders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
+  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   
 
 
@@ -1449,9 +1451,9 @@ export default function SalesOrders() {
                                                     className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                                                     onClick={() => {
                                                       if (selectedInvoice) {
-                                                        console.log('Opening publish dialog for invoice:', selectedInvoice?.id);
+                                                        console.log('Opening E-invoice modal for invoice:', selectedInvoice?.id);
                                                         console.log('Selected invoice data:', selectedInvoice);
-                                                        setShowPublishDialog(true);
+                                                        setShowEInvoiceModal(true);
                                                       }
                                                     }}
                                                     disabled={selectedInvoice?.einvoiceStatus !== 0}
@@ -1600,6 +1602,79 @@ export default function SalesOrders() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* E-Invoice Modal */}
+      {selectedInvoice && showEInvoiceModal && (
+        <EInvoiceModal
+          isOpen={showEInvoiceModal}
+          onClose={() => setShowEInvoiceModal(false)}
+          onConfirm={async (invoiceResult) => {
+            console.log('E-invoice published successfully:', invoiceResult);
+            
+            if (invoiceResult.success && selectedInvoice) {
+              try {
+                // Update invoice with published status and invoice number
+                const updateResponse = await apiRequest("PUT", `/api/invoices/${selectedInvoice.id}`, {
+                  einvoiceStatus: 1, // Đã phát hành
+                  invoiceStatus: 1, // Hoàn thành
+                  status: 'published',
+                  invoiceNumber: invoiceResult.invoiceNumber || null,
+                  tradeNumber: invoiceResult.invoiceNumber || selectedInvoice.tradeNumber
+                });
+
+                if (updateResponse.ok) {
+                  // Update local state
+                  setSelectedInvoice({
+                    ...selectedInvoice,
+                    einvoiceStatus: 1,
+                    invoiceStatus: 1,
+                    status: 'published',
+                    invoiceNumber: invoiceResult.invoiceNumber || selectedInvoice.invoiceNumber,
+                    tradeNumber: invoiceResult.invoiceNumber || selectedInvoice.tradeNumber
+                  });
+
+                  // Refresh data
+                  queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+                  queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+
+                  alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${invoiceResult.invoiceNumber || 'N/A'}`);
+                }
+              } catch (error) {
+                console.error('❌ Error updating invoice after publish:', error);
+                alert('Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái');
+              }
+            }
+            
+            setShowEInvoiceModal(false);
+          }}
+          total={(() => {
+            if (!selectedInvoice) return 0;
+            
+            // Calculate total including tax
+            const subtotal = parseFloat(selectedInvoice.subtotal || '0');
+            const tax = parseFloat(selectedInvoice.tax || '0');
+            return Math.round(subtotal + tax);
+          })()}
+          cartItems={(() => {
+            // Get items for this invoice/order
+            const items = selectedInvoice?.type === 'order' ? orderItems : invoiceItems;
+            
+            if (!items || items.length === 0) {
+              return [];
+            }
+
+            return items.map((item: any) => ({
+              id: item.id,
+              name: item.productName,
+              price: parseFloat(item.unitPrice || '0'),
+              quantity: item.quantity,
+              sku: `SP${String(item.productId).padStart(3, '0')}`,
+              taxRate: parseFloat(item.taxRate || '10')
+            }));
+          })()}
+          selectedPaymentMethod="cash"
+        />
+      )}
 
       {/* Publish Invoice Dialog */}
       {selectedInvoice && (
