@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -23,6 +24,7 @@ import {
 } from "lucide-react";
 import type { Order, Table as TableType } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
+import { apiRequest } from "@/lib/queryClient";
 
 export function formatDateToYYYYMMDD(date: Date | string | number): string {
   const d = new Date(date); // Ensure input is a Date
@@ -30,6 +32,29 @@ export function formatDateToYYYYMMDD(date: Date | string | number): string {
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+interface Invoice {
+  id: number;
+  invoiceNumber: string;
+  tradeNumber: string;
+  templateNumber: string;
+  symbol: string;
+  customerName: string;
+  customerTaxCode: string;
+  customerAddress: string;
+  customerPhone: string;
+  customerEmail: string;
+  subtotal: string;
+  tax: string;
+  total: string;
+  paymentMethod: number;
+  invoiceDate: string;
+  status: string;
+  einvoiceStatus: number;
+  invoiceStatus: number;
+  notes: string;
+  createdAt: string;
 }
 
 export function DashboardOverview() {
@@ -47,8 +72,44 @@ export function DashboardOverview() {
     queryKey: ["/api/transactions"],
   });
 
-  const { data: orders } = useQuery({
+  // Query invoices - same as sales-orders page
+  const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError } = useQuery({
+    queryKey: ["/api/invoices"],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest("GET", `/api/invoices`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching invoices:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+  });
+
+  // Query orders - same as sales-orders page
+  const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
     queryKey: ["/api/orders"],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest("GET", `/api/orders`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const { data: tables } = useQuery({
@@ -62,13 +123,12 @@ export function DashboardOverview() {
     queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
     queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
     queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
   };
 
   const getDashboardStats = () => {
     if (
-      !orders ||
       !tables ||
-      !Array.isArray(orders) ||
       !Array.isArray(tables)
     )
       return null;
@@ -77,69 +137,99 @@ export function DashboardOverview() {
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999); // Include the entire end date
 
-    // Filter completed orders within date range
-    const filteredCompletedOrders = orders.filter((order: any) => {
-      // Check if order is completed/paid
-      if (order.status !== 'completed' && order.status !== 'paid') return false;
+    // Combine invoices and orders data - same logic as sales-orders page
+    const combinedData = [
+      ...(Array.isArray(invoices) ? invoices.map((invoice: Invoice) => ({
+        ...invoice,
+        type: 'invoice' as const,
+        date: invoice.invoiceDate,
+        displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
+        displayStatus: invoice.invoiceStatus || 1,
+        customerName: invoice.customerName || 'Khách hàng lẻ',
+        customerPhone: invoice.customerPhone || '',
+        customerAddress: invoice.customerAddress || '',
+        customerTaxCode: invoice.customerTaxCode || '',
+        symbol: invoice.symbol || 'C11DTD',
+        einvoiceStatus: invoice.einvoiceStatus || 0
+      })) : []),
+      ...(Array.isArray(orders) ? orders.map((order: Order) => ({
+        ...order,
+        type: 'order' as const,
+        date: order.orderedAt,
+        displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
+        displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+        customerName: order.customerName || 'Khách hàng lẻ',
+        invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+        customerPhone: '',
+        customerAddress: '',
+        customerTaxCode: '',
+        symbol: 'C11DTD',
+        invoiceNumber: order.orderNumber || `ORD-${String(order.id).padStart(8, '0')}`,
+        tradeNumber: order.orderNumber || '',
+        invoiceDate: order.orderedAt,
+        einvoiceStatus: order.einvoiceStatus || 0
+      })) : [])
+    ];
 
-      // Try multiple possible date fields
-      const orderDate = new Date(
-        order.orderedAt || order.createdAt || order.created_at || order.paidAt
-      );
+    // Filter completed items within date range - same logic as sales-orders page
+    const filteredCompletedItems = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
+      try {
+        if (!item || !item.date) return false;
 
-      // Skip if date is invalid
-      if (isNaN(orderDate.getTime())) {
-        console.log('Invalid order date for order:', order.id, 'date fields:', {
-          orderedAt: order.orderedAt,
-          createdAt: order.createdAt,
-          created_at: order.created_at,
-          paidAt: order.paidAt
-        });
+        const itemDate = new Date(item.date);
+        if (isNaN(itemDate.getTime())) return false;
+
+        const dateMatch = itemDate >= start && itemDate <= end;
+        
+        // Only include completed/paid items
+        const isCompleted = (item.type === 'invoice' && item.invoiceStatus === 1) ||
+                          (item.type === 'order' && (item.status === 'paid' || item.status === 'completed'));
+
+        return dateMatch && isCompleted;
+      } catch (error) {
+        console.error('Error filtering item:', item, error);
         return false;
       }
+    }) : [];
 
-      return orderDate >= start && orderDate <= end;
-    });
-
-    console.log("Dashboard Debug:", {
+    console.log("Dashboard Debug (Combined Data):", {
+      totalInvoices: invoices.length,
       totalOrders: orders.length,
+      combinedDataLength: combinedData.length,
       startDate,
       endDate,
-      firstOrder: orders[0],
-      completedOrders: orders.filter((o: any) => o.status === 'completed' || o.status === 'paid').length,
-      filteredCompletedOrders: filteredCompletedOrders.length,
-      sampleOrderDates: orders.slice(0, 5).map((o: any) => ({
-        id: o.id,
-        status: o.status,
-        orderedAt: o.orderedAt,
-        createdAt: o.createdAt,
-        created_at: o.created_at,
-        paidAt: o.paidAt,
-        parsedDate: new Date(o.orderedAt || o.createdAt || o.created_at || o.paidAt).toISOString()
+      filteredCompletedItems: filteredCompletedItems.length,
+      sampleItems: filteredCompletedItems.slice(0, 5).map((item: any) => ({
+        id: item.id,
+        type: item.type,
+        displayStatus: item.displayStatus,
+        date: item.date,
+        total: item.total
       })),
     });
 
-    // Period revenue: total amount - discount for all completed orders
-    const periodRevenue = filteredCompletedOrders.reduce(
-      (total: number, order: any) => {
-        const orderTotal = Number(order.total || 0);
-        const discount = Number(order.discount || 0);
-        return total + (orderTotal - discount);
+    // Period revenue: total amount for all completed items
+    const periodRevenue = filteredCompletedItems.reduce(
+      (total: number, item: any) => {
+        const itemTotal = Number(item.total || 0);
+        return total + itemTotal;
       },
       0,
     );
 
-    // Order count: count of completed orders in the filtered period
-    const periodOrderCount = filteredCompletedOrders.length;
+    // Order count: count of completed items in the filtered period
+    const periodOrderCount = filteredCompletedItems.length;
 
-    // Customer count: count unique customers from completed orders
+    // Customer count: count unique customers from completed items
     const uniqueCustomers = new Set();
-    filteredCompletedOrders.forEach((order: any) => {
-      if (order.customerId) {
-        uniqueCustomers.add(order.customerId);
+    filteredCompletedItems.forEach((item: any) => {
+      if (item.customerId) {
+        uniqueCustomers.add(item.customerId);
+      } else if (item.customerName && item.customerName !== 'Khách hàng lẻ') {
+        uniqueCustomers.add(item.customerName);
       } else {
-        // If no customer ID, count as unique customer per order
-        uniqueCustomers.add(`order_${order.id}`);
+        // If no customer info, count as unique customer per item
+        uniqueCustomers.add(`${item.type}_${item.id}`);
       }
     });
     const periodCustomerCount = uniqueCustomers.size;
@@ -151,14 +241,14 @@ export function DashboardOverview() {
     );
     const dailyAverageRevenue = periodRevenue / daysDiff;
 
-    // Active orders (pending/in-progress orders)
-    const activeOrders = orders.filter((order: any) => 
-      order.status === 'pending' || order.status === 'in_progress'
-    ).length;
+    // Active orders (pending/in-progress orders only)
+    const activeOrders = Array.isArray(orders) ? orders.filter((order: any) => 
+      order.status === 'pending' || order.status === 'in_progress' || order.status === 'confirmed' || order.status === 'preparing' || order.status === 'ready' || order.status === 'served'
+    ).length : 0;
 
-    const occupiedTables = tables.filter(
+    const occupiedTables = Array.isArray(tables) ? tables.filter(
       (table: TableType) => table.status === "occupied",
-    );
+    ) : [];
 
     // Month revenue: same as period revenue for the selected date range
     const monthRevenue = periodRevenue;
@@ -167,21 +257,19 @@ export function DashboardOverview() {
     const averageOrderValue =
       periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
 
-    // Peak hours analysis from filtered completed orders
-    const hourlyOrders: { [key: number]: number } = {};
-    filteredCompletedOrders.forEach((order: any) => {
-      const orderDate = new Date(
-        order.orderedAt || order.createdAt || order.created_at || order.paidAt
-      );
-      if (!isNaN(orderDate.getTime())) {
-        const hour = orderDate.getHours();
-        hourlyOrders[hour] = (hourlyOrders[hour] || 0) + 1;
+    // Peak hours analysis from filtered completed items
+    const hourlyItems: { [key: number]: number } = {};
+    filteredCompletedItems.forEach((item: any) => {
+      const itemDate = new Date(item.date);
+      if (!isNaN(itemDate.getTime())) {
+        const hour = itemDate.getHours();
+        hourlyItems[hour] = (hourlyItems[hour] || 0) + 1;
       }
     });
 
-    const peakHour = Object.keys(hourlyOrders).reduce(
+    const peakHour = Object.keys(hourlyItems).reduce(
       (peak, hour) =>
-        hourlyOrders[parseInt(hour)] > hourlyOrders[parseInt(peak)]
+        hourlyItems[parseInt(hour)] > hourlyItems[parseInt(peak)]
           ? hour
           : peak,
       "12",
@@ -197,7 +285,7 @@ export function DashboardOverview() {
       monthRevenue,
       averageOrderValue,
       peakHour: parseInt(peakHour),
-      totalTables: tables.length,
+      totalTables: Array.isArray(tables) ? tables.length : 0,
     };
   };
 
@@ -243,7 +331,7 @@ export function DashboardOverview() {
                 {t('reports.dashboardTab')}
               </CardTitle>
               <CardDescription>
-                {t("reports.dashboardDescription")}
+                {t("reports.dashboardDescription")} (Dữ liệu từ hóa đơn và đơn hàng)
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -394,7 +482,7 @@ export function DashboardOverview() {
                 {t("reports.tableUtilization")}
               </span>
               <Badge variant="secondary">
-                {Math.round((stats.occupiedTables / stats.totalTables) * 100)} %
+                {stats.totalTables > 0 ? Math.round((stats.occupiedTables / stats.totalTables) * 100) : 0} %
               </Badge>
             </div>
           </CardContent>
