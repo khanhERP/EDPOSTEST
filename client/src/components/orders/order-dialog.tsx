@@ -315,11 +315,11 @@ export function OrderDialog({
       const totalAmount = subtotalAmount + taxAmount;
 
       const order = {
-        orderNumber,
+        orderNumber: `ORD-${Date.now()}`,
         tableId: table.id,
-        employeeId: 1, // Default employee ID
+        employeeId: null, // Set to null since no employees exist
         customerName: customerName || null,
-        customerCount,
+        customerCount: parseInt(customerCount) || 1,
         subtotal: subtotalAmount.toString(),
         tax: taxAmount.toString(),
         total: totalAmount.toString(),
