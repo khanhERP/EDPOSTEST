@@ -42,7 +42,8 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     availablePoints: "사용 가능한 포인트",
     mixedPaymentTitle: "혼합 결제",
     mixedPaymentCancel: "취소",
-    mixedPaymentDesc: "포인트가 부족하여 현금 또는 이체로 추가 결제가 필요합니다",
+    mixedPaymentDesc:
+      "포인트가 부족하여 현금 또는 이체로 추가 결제가 필요합니다",
     mixedPaymentSummary: "결제 요약",
     totalOrder: "주문 총액",
     pointsPayment: "포인트 결제",
@@ -71,7 +72,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       searchCustomer: "고객 검색",
       searchPlaceholder: "이름, 전화번호 또는 고객 코드로 검색...",
       accumulatedPoints: "적립 포인트",
-      mixedPayment: "혼합 결제"
+      mixedPayment: "혼합 결제",
     },
     paymentMethods: {
       cash: "현금",
@@ -145,7 +146,8 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     availablePoints: "Available points",
     mixedPaymentTitle: "Mixed Payment",
     mixedPaymentCancel: "Cancel",
-    mixedPaymentDesc: "Insufficient points, need additional payment by cash or transfer",
+    mixedPaymentDesc:
+      "Insufficient points, need additional payment by cash or transfer",
     mixedPaymentSummary: "Payment Summary",
     totalOrder: "Order Total",
     pointsPayment: "Points Payment",
@@ -164,7 +166,8 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     updateOrder: "Update Order",
     updating: "Updating...",
     orderUpdateSuccess: "Order Updated",
-    orderUpdateSuccessDesc: "New items have been successfully added to the order",
+    orderUpdateSuccessDesc:
+      "New items have been successfully added to the order",
     pointsPaymentDialog: {
       title: "Points Payment",
       description: "Select customer and use points to pay for the order",
@@ -174,7 +177,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       searchCustomer: "Search Customer",
       searchPlaceholder: "Search by name, phone, or customer code...",
       accumulatedPoints: "Accumulated Points",
-      mixedPayment: "Mixed Payment"
+      mixedPayment: "Mixed Payment",
     },
     paymentMethods: {
       cash: "Cash",
@@ -249,7 +252,8 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     availablePoints: "Điểm có sẵn",
     mixedPaymentTitle: "Thanh toán hỗn hợp",
     mixedPaymentCancel: "Hủy",
-    mixedPaymentDesc: "Không đủ điểm, cần thanh toán thêm bằng tiền mặt hoặc chuyển khoản",
+    mixedPaymentDesc:
+      "Không đủ điểm, cần thanh toán thêm bằng tiền mặt hoặc chuyển khoản",
     mixedPaymentSummary: "Tóm tắt thanh toán",
     totalOrder: "Tổng đơn hàng",
     pointsPayment: "Thanh toán bằng điểm",
@@ -278,7 +282,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
       searchCustomer: "Tìm kiếm khách hàng",
       searchPlaceholder: "Tìm theo tên, số điện thoại hoặc mã khách hàng...",
       accumulatedPoints: "Điểm tích lũy",
-      mixedPayment: "Thanh toán hỗn hợp"
+      mixedPayment: "Thanh toán hỗn hợp",
     },
     paymentMethods: {
       cash: "Tiền mặt",

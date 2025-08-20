@@ -639,7 +639,15 @@ export interface SettingsTranslations {
   editCategory: string;
   searchCategoriesPlaceholder: string;
   productDescriptionPlaceholder: string;
+  productManagementDesc: string;
+  stockStatus: string;
+  updateProductInfo: string;
+  enterProductInfo: string;
+  trackInventory: string;
+  enableInventoryTracking: string;
+  usageStatus: string;
   goToEmployees: string;
+  yes: string;
   goToInventory: string;
   paymentMethodsDesc: string;
   availablePayments: string;
@@ -1089,6 +1097,7 @@ export interface OrdersTranslations {
   orderManagement: string;
   orderDetails: string;
   orderNumber: string;
+  orderFailed: string;
   orderInfo: string;
   orderItems: string;
   orderStatus: string;
@@ -1263,8 +1272,16 @@ export interface EInvoiceTranslations {
   title: string;
   description: string;
   invoiceNumber: string;
+  providerUnit: string;
+  providerInfo: string;
   invoiceDate: string;
   customerInfo: string;
+  selectProvider
+  invoiceTemplate
+  selectTemplate
+  customerInfo
+  taxCode
+  getInfo
   billingAddress: string;
   shippingAddress: string;
   items: string;
