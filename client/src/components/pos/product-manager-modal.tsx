@@ -870,10 +870,7 @@ export function ProductManagerModal({
                     )}
                   />
 
-                  <div className="flex justify-end space-x-3">
-                    <Button type="button" variant="outline" onClick={resetForm}>
-                      {t("tables.cancel")}
-                    </Button>
+                  <div className="flex justify-end">
                     <Button
                       type="submit"
                       disabled={
