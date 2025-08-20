@@ -279,7 +279,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     templateDefault: "Default",
     defaultConnection: "Default",
     setAsDefaultConnection: "Set as default connection",
-    templatesDesc: "Manage electronic invoice templates",
     notesLabel: "Notes",
     operations: "Operations",
     cancel: "Cancel",
@@ -331,7 +330,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     enterProductInfo: "Enter new product information",
     trackInventory: "Track Inventory",
     enableInventoryTracking: "Enable inventory tracking for this product",
-    usageStatus: "Usage Status",
     yes: "Yes",
   },
   vi: {
@@ -447,7 +445,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     templateDefault: "Mặc định",
     defaultConnection: "Mặc định",
     setAsDefaultConnection: "Đặt làm kết nối mặc định",
-    templatesDesc: "Quản lý các mẫu số hóa đơn điện tử",
     notesLabel: "Ghi chú",
     operations: "Hoạt động",
     cancel: "Hủy bỏ",
@@ -499,7 +496,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     enterProductInfo: "Nhập thông tin sản phẩm mới",
     trackInventory: "Theo dõi tồn kho",
     enableInventoryTracking: "Kích hoạt theo dõi tồn kho cho sản phẩm này",
-    usageStatus: "Trạng thái sử dụng",
     yes: "Có",
   },
 };

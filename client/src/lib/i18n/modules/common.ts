@@ -170,7 +170,6 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     customerGroup: "고객 그룹",
     walkInCustomer: "일반 고객",
     backToPOS: "POS로 돌아가기",
-    description: "설명",
 
     // Payment method modal
     selectPaymentMethod: "결제 방법 선택",
