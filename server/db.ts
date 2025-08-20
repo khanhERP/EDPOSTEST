@@ -56,11 +56,6 @@ export const pool = new Pool({
   max: 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
-  ssl: DATABASE_URL.includes("neon.tech")
-    ? { rejectUnauthorized: false }
-    : DATABASE_URL.includes("1.55.212.135")
-      ? false
-      : false,
 });
 
 // Log database connection info with detailed debugging
