@@ -98,7 +98,7 @@ export default function SalesOrders() {
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
-  
+
 
 
   // Query invoices
@@ -299,34 +299,59 @@ export default function SalesOrders() {
 
       if (result.success && selectedInvoice) {
         try {
-          // Update invoice with published status and invoice number
-          const updateResponse = await apiRequest("PUT", `/api/invoices/${selectedInvoice.id}`, {
-            einvoiceStatus: 1, // Đã phát hành
-            invoiceStatus: 1, // Hoàn thành
-            status: 'published',
-            invoiceNumber: result.data?.invoiceNo || null,
-            tradeNumber: result.data?.invoiceNo || selectedInvoice.tradeNumber
-          });
+          // Determine the correct API endpoint based on item type
+          const updateEndpoint = selectedInvoice.type === 'order' 
+            ? `/api/orders/${selectedInvoice.id}`
+            : `/api/invoices/${selectedInvoice.id}`;
+
+          // Prepare update data with all required fields from API response
+          const updateData = {
+            einvoiceStatus: result.einvoiceStatus || 1, // Đã phát hành
+            invoiceStatus: result.invoiceStatus || 1, // Hoàn thành
+            status: result.status || 'published',
+            invoiceNumber: result.invoiceNumber || null,
+            symbol: result.symbol || selectedInvoice.symbol,
+            templateNumber: result.templateNumber || selectedInvoice.templateNumber
+          };
+
+          // For orders, also update tradeNumber
+          if (selectedInvoice.type === 'order') {
+            updateData.tradeNumber = result.invoiceNumber || selectedInvoice.tradeNumber;
+          } else {
+            // For invoices, update tradeNumber as well
+            updateData.tradeNumber = result.invoiceNumber || selectedInvoice.tradeNumber;
+          }
+
+          console.log('🔄 Updating item with data:', updateData);
+
+          // Update invoice/order with published status and invoice details
+          const updateResponse = await apiRequest("PUT", updateEndpoint, updateData);
 
           if (updateResponse.ok) {
-            // Update local state
+            // Update local state (keep tradeNumber unchanged)
             setSelectedInvoice({
               ...selectedInvoice,
               einvoiceStatus: 1,
               invoiceStatus: 1,
               status: 'published',
-              invoiceNumber: result.data?.invoiceNo || selectedInvoice.invoiceNumber,
-              tradeNumber: result.data?.invoiceNo || selectedInvoice.tradeNumber
+              invoiceNumber: result.data?.invoiceNo || selectedInvoice.invoiceNumber
+              // tradeNumber giữ nguyên
             });
 
-            // Refresh data
+            // Refresh data to ensure consistency
             queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
             queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
 
-            alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || 'N/A'}`);
+            console.log('✅ Invoice/Order updated successfully with published status');
+
+            alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || 'N/A'}\nKý hiệu: ${updateData.symbol || 'N/A'}`);
+          } else {
+            const errorText = await updateResponse.text();
+            console.error('❌ Failed to update invoice/order:', errorText);
+            alert('Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái trong hệ thống');
           }
         } catch (error) {
-          console.error('❌ Error updating invoice after publish:', error);
+          console.error('❌ Error updating invoice/order after publish:', error);
           alert('Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái');
         }
       } else {
@@ -1610,7 +1635,7 @@ export default function SalesOrders() {
           onClose={() => setShowEInvoiceModal(false)}
           onConfirm={async (invoiceResult) => {
             console.log('E-invoice published successfully:', invoiceResult);
-            
+
             if (invoiceResult.success && selectedInvoice) {
               try {
                 // Determine the correct API endpoint based on item type
@@ -1642,17 +1667,14 @@ export default function SalesOrders() {
                 const updateResponse = await apiRequest("PUT", updateEndpoint, updateData);
 
                 if (updateResponse.ok) {
-                  // Update local state immediately to reflect changes
+                  // Update local state (keep tradeNumber unchanged)
                   setSelectedInvoice({
                     ...selectedInvoice,
-                    einvoiceStatus: updateData.einvoiceStatus,
-                    invoiceStatus: updateData.invoiceStatus,
-                    status: updateData.status,
-                    invoiceNumber: updateData.invoiceNumber,
-                    tradeNumber: updateData.tradeNumber,
-                    symbol: updateData.symbol,
-                    templateNumber: updateData.templateNumber,
-                    displayStatus: updateData.invoiceStatus // Update display status as well
+                    einvoiceStatus: 1,
+                    invoiceStatus: 1,
+                    status: 'published',
+                    invoiceNumber: result.data?.invoiceNo || selectedInvoice.invoiceNumber
+                    // tradeNumber giữ nguyên
                   });
 
                   // Refresh data to ensure consistency
@@ -1660,8 +1682,8 @@ export default function SalesOrders() {
                   queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
 
                   console.log('✅ Invoice/Order updated successfully with published status');
-                  
-                  alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${invoiceResult.invoiceNumber || 'N/A'}\nKý hiệu: ${updateData.symbol || 'N/A'}`);
+
+                  alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || 'N/A'}\nKý hiệu: ${updateData.symbol || 'N/A'}`);
                 } else {
                   const errorText = await updateResponse.text();
                   console.error('❌ Failed to update invoice/order:', errorText);
@@ -1672,12 +1694,12 @@ export default function SalesOrders() {
                 alert('Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái');
               }
             }
-            
+
             setShowEInvoiceModal(false);
           }}
           total={(() => {
             if (!selectedInvoice) return 0;
-            
+
             // Calculate total including tax
             const subtotal = parseFloat(selectedInvoice.subtotal || '0');
             const tax = parseFloat(selectedInvoice.tax || '0');
@@ -1686,7 +1708,7 @@ export default function SalesOrders() {
           cartItems={(() => {
             // Get items for this invoice/order
             const items = selectedInvoice?.type === 'order' ? orderItems : invoiceItems;
-            
+
             if (!items || items.length === 0) {
               return [];
             }
@@ -1847,7 +1869,7 @@ export default function SalesOrders() {
 
                       // Get items for this invoice/order
                       const items = selectedInvoice?.type === 'order' ? orderItems : invoiceItems;
-                      
+
                       if (!items || items.length === 0) {
                         alert('Không có sản phẩm nào để phát hành hóa đơn');
                         return;
@@ -1991,7 +2013,7 @@ export default function SalesOrders() {
         </AlertDialogContent>
       </AlertDialog>
 
-      
+
     </div>
   );
 }
