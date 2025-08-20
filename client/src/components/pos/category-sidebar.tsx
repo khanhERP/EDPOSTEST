@@ -39,7 +39,19 @@ export function CategorySidebar({
   });
 
   const { data: products = [] } = useQuery<Product[]>({
-    queryKey: ["/api/products/active"],
+    queryKey: ["/api/products"],
+    queryFn: async () => {
+      const response = await fetch(`/api/products`);
+      if (!response.ok) throw new Error('Failed to fetch products');
+      const allProducts = await response.json();
+
+      // Apply same filtering as ProductGrid - exclude raw materials and inactive products
+      return allProducts.filter((product: any) => {
+        const isNotRawMaterial = product.productType !== 2;
+        const isActive = product.isActive !== false;
+        return isNotRawMaterial && isActive;
+      });
+    },
   });
 
   const getProductCountForCategory = (categoryId: number | "all") => {
