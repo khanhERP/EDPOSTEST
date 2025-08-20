@@ -1832,7 +1832,18 @@ export type TranslationKey =
 
 // Language-specific translations type
 export interface LanguageTranslations {
-  ko: { [key: string]: any };
-  en: { [key: string]: any };
-  vi: { [key: string]: any };
+  common: CommonTranslations;
+  nav: NavigationTranslations;
+  attendance: AttendanceTranslations;
+  customers: CustomersTranslations;
+  employees: EmployeesTranslations;
+  inventory: InventoryTranslations;
+  notFound: NotFoundTranslations;
+  orders: OrdersTranslations;
+  pos: PosTranslations;
+  reports: ReportsTranslations;
+  settings: SettingsTranslations;
+  tables: TablesTranslations;
+  einvoice: EinvoiceTranslations;
+  suppliers: SuppliersTranslations;
 }
