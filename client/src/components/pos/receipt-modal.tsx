@@ -437,7 +437,36 @@ export function ReceiptModal({
             {receipt.amountReceived && (
               <div className="flex justify-between text-sm">
                 <span>{t('pos.amountReceived')}</span>
-                <span>{receipt.amountReceived} ₫</span>
+                <span>{(() => {
+                  // For e-invoice transactions, amount received should equal the total
+                  if (receipt.paymentMethod === 'einvoice' || receipt.originalPaymentMethod === 'einvoice') {
+                    const baseSubtotal = receipt.items.reduce((sum, item) => {
+                      return sum + (parseFloat(item.price) * item.quantity);
+                    }, 0);
+                    
+                    const totalTax = receipt.items.reduce((sum, item) => {
+                      const basePrice = parseFloat(item.price);
+                      const quantity = item.quantity;
+                      const itemTaxRate = parseFloat(item.taxRate || "10");
+                      
+                      const itemSubtotal = basePrice * quantity;
+                      const itemTax = (itemSubtotal * itemTaxRate) / 100;
+                      
+                      return sum + itemTax;
+                    }, 0);
+                    
+                    const total = baseSubtotal + totalTax;
+                    return total.toLocaleString("vi-VN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    });
+                  }
+                  // For other payment methods, use the original amount received
+                  return parseFloat(receipt.amountReceived).toLocaleString("vi-VN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  });
+                })()} ₫</span>
               </div>
             )}
             {receipt.change && parseFloat(receipt.change) > 0 && (
