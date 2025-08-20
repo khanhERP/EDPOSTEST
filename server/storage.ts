@@ -362,8 +362,10 @@ export class DatabaseStorage implements IStorage {
   async updateProduct(
     id: number,
     updateData: Partial<InsertProduct>,
+    tenantDb?: any,
   ): Promise<Product | undefined> {
-    const [product] = await db
+    const database = tenantDb || db;
+    const [product] = await database
       .update(products)
       .set({
         ...updateData,
@@ -374,10 +376,12 @@ export class DatabaseStorage implements IStorage {
     return product || undefined;
   }
 
-  async deleteProduct(id: number): Promise<boolean> {
+  async deleteProduct(id: number, tenantDb?: any): Promise<boolean> {
     try {
+      const database = tenantDb || db;
+      
       // Check if product exists in transactions
-      const transactionItemsCheck = await db
+      const transactionItemsCheck = await database
         .select()
         .from(transactionItems)
         .where(eq(transactionItems.productId, id))
@@ -390,7 +394,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Check if product exists in order items
-      const orderItemsCheck = await db
+      const orderItemsCheck = await database
         .select()
         .from(orderItems)
         .where(eq(orderItems.productId, id))
@@ -401,7 +405,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       // If no references found, delete the product
-      const result = await db
+      const result = await database
         .delete(products)
         .where(eq(products.id, id))
         .returning();
@@ -413,8 +417,9 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async deleteInactiveProducts(): Promise<number> {
-    const result = await db
+  async deleteInactiveProducts(tenantDb?: any): Promise<number> {
+    const database = tenantDb || db;
+    const result = await database
       .delete(products)
       .where(eq(products.isActive, false))
       .returning();
@@ -424,12 +429,14 @@ export class DatabaseStorage implements IStorage {
   async updateProductStock(
     id: number,
     quantity: number,
+    tenantDb?: any,
   ): Promise<Product | undefined> {
-    const product = await this.getProduct(id);
+    const database = tenantDb || db;
+    const product = await this.getProduct(id, tenantDb);
     if (!product) return undefined;
 
     const newStock = Math.max(0, product.stock + quantity);
-    const [updatedProduct] = await db
+    const [updatedProduct] = await database
       .update(products)
       .set({ stock: newStock })
       .where(eq(products.id, id))
