@@ -1379,15 +1379,31 @@ export default function SalesOrders() {
                                                 {cancelInvoiceMutation.isPending ? 'Đang hủy...' : 'Hủy đơn'}
                                               </Button>
                                               {!isEditing ? (
-                                                <Button 
-                                                  size="sm" 
-                                                  variant="outline" 
-                                                  className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
-                                                  onClick={handleEditInvoice}
-                                                >
-                                                  <FileText className="w-4 h-4" />
-                                                  Sửa đơn
-                                                </Button>
+                                                <>
+                                                  <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    className="flex items-center gap-2 border-green-500 text-green-600 hover:bg-green-50"
+                                                    onClick={handleEditInvoice}
+                                                  >
+                                                    <FileText className="w-4 h-4" />
+                                                    Sửa đơn
+                                                  </Button>
+                                                  <Button 
+                                                    size="sm" 
+                                                    variant="outline" 
+                                                    className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                                                    onClick={() => {
+                                                      // Handle publish invoice functionality
+                                                      console.log('Publishing invoice:', selectedInvoice?.id);
+                                                      // TODO: Implement publish invoice logic
+                                                    }}
+                                                    disabled={selectedInvoice?.einvoiceStatus === 1}
+                                                  >
+                                                    <Mail className="w-4 h-4" />
+                                                    Phát hành
+                                                  </Button>
+                                                </>
                                               ) : (
                                                 <>
                                                   <Button 
