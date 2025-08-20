@@ -177,24 +177,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { category, search, includeInactive } = req.query;
       let products;
 
+      console.log("=== PRODUCTS API DEBUG ===");
+      console.log("Query params:", { category, search, includeInactive });
+
       const shouldIncludeInactive = includeInactive === "true";
       const tenantDb = await getTenantDatabase(req);
 
       if (search) {
+        console.log("Searching products with term:", search);
         products = await storage.searchProducts(
           search as string,
           shouldIncludeInactive,
           tenantDb,
         );
       } else if (category && category !== "all") {
+        console.log("Getting products by category:", category);
         products = await storage.getProductsByCategory(
           parseInt(category as string),
           shouldIncludeInactive,
           tenantDb,
         );
       } else {
+        console.log("Getting all products, includeInactive:", shouldIncludeInactive);
         products = await storage.getAllProducts(shouldIncludeInactive, tenantDb);
       }
+
+      console.log("Products found:", products.length);
+      console.log("First few products:", products.slice(0, 3));
 
       res.json(products);
     } catch (error) {

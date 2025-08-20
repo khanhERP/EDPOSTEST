@@ -38,8 +38,21 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
       if (!response.ok) throw new Error('Failed to fetch products');
       const allProducts = await response.json();
 
-      // Filter out raw materials (productType = 2)
-      return allProducts.filter((product: any) => product.productType !== 2);
+      console.log("Raw products from API:", allProducts);
+      console.log("Total products received:", allProducts.length);
+
+      // Only filter out raw materials (productType = 2) and inactive products
+      const filteredProducts = allProducts.filter((product: any) => {
+        const isNotRawMaterial = product.productType !== 2;
+        const isActive = product.isActive !== false;
+        console.log(`Product ${product.name}: productType=${product.productType}, isActive=${product.isActive}, included=${isNotRawMaterial && isActive}`);
+        return isNotRawMaterial && isActive;
+      });
+
+      console.log("Filtered products for POS:", filteredProducts);
+      console.log("Products after filtering:", filteredProducts.length);
+
+      return filteredProducts;
     },
   });
 
