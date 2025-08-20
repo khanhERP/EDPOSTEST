@@ -86,11 +86,41 @@ export function SalesChartReport() {
   // Data queries - using same source as dashboard for consistency
   const { data: transactions, isLoading: transactionsLoading } = useQuery({
     queryKey: ["/api/transactions"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/transactions");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: orders, isLoading: ordersLoading } = useQuery({
+  const { data: orders = [], isLoading: ordersLoading } = useQuery({
     queryKey: ["/api/orders"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/orders");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -220,28 +250,24 @@ export function SalesChartReport() {
     end.setHours(23, 59, 59, 999); // Include the entire end date
 
     // Filter completed orders within date range - EXACT same as dashboard
-    const filteredCompletedOrders = orders.filter((order: any) => {
-      // Check if order is completed/paid
-      if (order.status !== 'completed' && order.status !== 'paid') return false;
+    const filteredCompletedOrders = Array.isArray(orders) ? orders.filter((order: any) => {
+      try {
+        if (!order || !order.orderedAt) return false;
 
-      // Try multiple possible date fields
-      const orderDate = new Date(
-        order.orderedAt || order.createdAt || order.created_at || order.paidAt
-      );
+        const orderDate = new Date(order.orderedAt);
+        if (isNaN(orderDate.getTime())) return false;
 
-      // Skip if date is invalid
-      if (isNaN(orderDate.getTime())) {
-        console.log('Invalid order date for order:', order.id, 'date fields:', {
-          orderedAt: order.orderedAt,
-          createdAt: order.createdAt,
-          created_at: order.created_at,
-          paidAt: order.paidAt
-        });
+        const dateMatch = orderDate >= start && orderDate <= end;
+        
+        // Only include completed/paid orders (same as dashboard)
+        const isCompleted = order.status === 'paid' || order.status === 'completed';
+
+        return dateMatch && isCompleted;
+      } catch (error) {
+        console.error('Error filtering order:', order, error);
         return false;
       }
-
-      return orderDate >= start && orderDate <= end;
-    });
+    }) : [];
 
     console.log("Sales Chart Dashboard Debug:", {
       totalOrders: orders.length,
@@ -261,12 +287,11 @@ export function SalesChartReport() {
       })),
     });
 
-    // Period revenue: total amount - discount for all completed orders - EXACT same as dashboard
+    // Period revenue: total amount for all completed orders - EXACT same as dashboard
     const periodRevenue = filteredCompletedOrders.reduce(
       (total: number, order: any) => {
         const orderTotal = Number(order.total || 0);
-        const discount = Number(order.discount || 0);
-        return total + (orderTotal - discount);
+        return total + orderTotal;
       },
       0,
     );
