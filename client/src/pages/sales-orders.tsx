@@ -95,6 +95,7 @@ export default function SalesOrders() {
   const [showBulkCancelDialog, setShowBulkCancelDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [showPublishDialog, setShowPublishDialog] = useState(false);
   
 
 
@@ -1447,105 +1448,8 @@ export default function SalesOrders() {
                                                     variant="outline" 
                                                     className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                                                     onClick={() => {
-                                                      console.log('Publishing invoice:', selectedInvoice?.id);
-                                                      // Implement publish request logic here
-                                                      if (selectedInvoice) {
-                                                        // Generate a new GUID for transactionID
-                                                        const generateGuid = () => {
-                                                          return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-                                                            /[xy]/g,
-                                                            function (c) {
-                                                              const r = (Math.random() * 16) | 0;
-                                                              const v = c === "x" ? r : (r & 0x3) | 0x8;
-                                                              return v.toString(16);
-                                                            },
-                                                          );
-                                                        };
-
-                                                        // Get items for this invoice/order
-                                                        const items = selectedInvoice?.type === 'order' ? orderItems : invoiceItems;
-                                                        
-                                                        if (!items || items.length === 0) {
-                                                          alert('Không có sản phẩm nào để phát hành hóa đơn');
-                                                          return;
-                                                        }
-
-                                                        // Calculate totals from items
-                                                        const subtotal = parseFloat(selectedInvoice.subtotal || '0');
-                                                        const tax = parseFloat(selectedInvoice.tax || '0');
-                                                        const total = parseFloat(selectedInvoice.total || '0');
-
-                                                        // Prepare publish request
-                                                        const publishRequest = {
-                                                          login: {
-                                                            providerId: 1,
-                                                            url: "https://infoerpvn.com:9440",
-                                                            ma_dvcs: "0316578736",
-                                                            username: "0316578736",
-                                                            password: "123456a@",
-                                                            tenantId: "",
-                                                          },
-                                                          transactionID: generateGuid(),
-                                                          invRef: `INV-${Date.now()}`,
-                                                          invSubTotal: Math.round(subtotal),
-                                                          invVatRate: 10,
-                                                          invVatAmount: Math.round(tax),
-                                                          invDiscAmount: 0,
-                                                          invTotalAmount: Math.round(total),
-                                                          paidTp: "TM",
-                                                          note: "",
-                                                          hdNo: "",
-                                                          createdDate: new Date().toISOString(),
-                                                          clsfNo: "01GTKT0/001",
-                                                          spcfNo: "1C25TYY",
-                                                          templateCode: "1C25TYY",
-                                                          buyerNotGetInvoice: 0,
-                                                          exchCd: "VND",
-                                                          exchRt: 1,
-                                                          bankAccount: "",
-                                                          bankName: "",
-                                                          customer: {
-                                                            custCd: selectedInvoice.customerTaxCode || "",
-                                                            custNm: selectedInvoice.customerName || "Khách hàng lẻ",
-                                                            custCompany: selectedInvoice.customerName || "Khách hàng lẻ",
-                                                            taxCode: selectedInvoice.customerTaxCode || "",
-                                                            custCity: "",
-                                                            custDistrictName: "",
-                                                            custAddrs: selectedInvoice.customerAddress || "",
-                                                            custPhone: selectedInvoice.customerPhone || "",
-                                                            custBankAccount: "",
-                                                            custBankName: "",
-                                                            email: selectedInvoice.customerEmail || "",
-                                                            emailCC: "",
-                                                          },
-                                                          products: items.map((item: any) => {
-                                                            const itemPrice = parseFloat(item.unitPrice);
-                                                            const itemQuantity = item.quantity;
-                                                            const itemTaxRate = parseFloat(item.taxRate || "10");
-                                                            const itemSubtotal = itemPrice * itemQuantity;
-                                                            const itemTax = (itemSubtotal * itemTaxRate) / 100;
-                                                            const itemTotal = itemSubtotal + itemTax;
-
-                                                            return {
-                                                              itmCd: `SP${String(item.productId).padStart(3, '0')}`,
-                                                              itmName: item.productName,
-                                                              itmKnd: 1,
-                                                              unitNm: "Cái",
-                                                              qty: itemQuantity,
-                                                              unprc: itemPrice,
-                                                              amt: Math.round(itemSubtotal),
-                                                              discRate: 0,
-                                                              discAmt: 0,
-                                                              vatRt: itemTaxRate.toString(),
-                                                              vatAmt: Math.round(itemTax),
-                                                              totalAmt: Math.round(itemTotal),
-                                                            };
-                                                          }),
-                                                        };
-
-                                                        // Call publish API directly
-                                                        publishRequestMutation.mutate(publishRequest);
-                                                      }
+                                                      console.log('Opening publish dialog for invoice:', selectedInvoice?.id);
+                                                      setShowPublishDialog(true);
                                                     }}
                                                     disabled={selectedInvoice?.einvoiceStatus !== 0}
                                                   >
@@ -1690,6 +1594,200 @@ export default function SalesOrders() {
             >
               {bulkCancelOrdersMutation.isPending ? 'Đang hủy...' : `Hủy ${selectedOrderIds.size} đơn`}
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Publish Invoice Dialog */}
+      <AlertDialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-blue-600">Phát hành hóa đơn điện tử</AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="space-y-4">
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <h4 className="font-medium mb-3">Thông tin nhà cung cấp hóa đơn điện tử</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Đơn vị HĐĐT</label>
+                  <div className="p-2 bg-white rounded border">EasyInvoice</div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Mẫu số Hóa đơn GTGT</label>
+                  <div className="p-2 bg-white rounded border">Chọn mẫu số hóa đơn</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="font-medium mb-3">Thông tin khách hàng</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Mã số thuế</label>
+                  <div className="p-2 bg-white rounded border">{selectedInvoice?.customerTaxCode || '0123456789'}</div>
+                </div>
+                <div className="flex items-center">
+                  <Button size="sm" variant="outline" className="text-blue-600 border-blue-500">
+                    Lấy thông tin
+                  </Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Tên đơn vị</label>
+                  <div className="p-2 bg-white rounded border">{selectedInvoice?.customerName || 'Khách hàng lẻ'}</div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Số CMND/CCCD</label>
+                  <div className="p-2 bg-white rounded border">{selectedInvoice?.customerTaxCode || '0123456789'}</div>
+                </div>
+              </div>
+              <div className="mt-3">
+                <label className="block text-sm font-medium mb-1">Địa chỉ</label>
+                <div className="p-2 bg-white rounded border">{selectedInvoice?.customerAddress || 'Cầu Giấy, Hà Nội'}</div>
+              </div>
+              <div className="mt-3">
+                <label className="block text-sm font-medium mb-1">Email</label>
+                <div className="p-2 bg-white rounded border">{selectedInvoice?.customerEmail || 'ngocnv@gmail.com'}</div>
+              </div>
+            </div>
+
+            <div className="bg-green-50 p-4 rounded-lg">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">Tổng tiền hóa đơn:</span>
+                <span className="text-xl font-bold text-blue-600">
+                  {formatCurrency(selectedInvoice?.total || 0)} ₫
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button size="sm" variant="outline" className="text-gray-600">
+                <Calendar className="w-4 h-4 mr-2" />
+                Hiện bản phím ảo
+              </Button>
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <div className="flex gap-2 w-full">
+              <Button 
+                className="flex-1 bg-green-600 hover:bg-green-700"
+                onClick={() => {
+                  if (selectedInvoice) {
+                    // Generate a new GUID for transactionID
+                    const generateGuid = () => {
+                      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+                        /[xy]/g,
+                        function (c) {
+                          const r = (Math.random() * 16) | 0;
+                          const v = c === "x" ? r : (r & 0x3) | 0x8;
+                          return v.toString(16);
+                        },
+                      );
+                    };
+
+                    // Get items for this invoice/order
+                    const items = selectedInvoice?.type === 'order' ? orderItems : invoiceItems;
+                    
+                    if (!items || items.length === 0) {
+                      alert('Không có sản phẩm nào để phát hành hóa đơn');
+                      return;
+                    }
+
+                    // Calculate totals from items
+                    const subtotal = parseFloat(selectedInvoice.subtotal || '0');
+                    const tax = parseFloat(selectedInvoice.tax || '0');
+                    const total = parseFloat(selectedInvoice.total || '0');
+
+                    // Prepare publish request
+                    const publishRequest = {
+                      login: {
+                        providerId: 1,
+                        url: "https://infoerpvn.com:9440",
+                        ma_dvcs: "0316578736",
+                        username: "0316578736",
+                        password: "123456a@",
+                        tenantId: "",
+                      },
+                      transactionID: generateGuid(),
+                      invRef: `INV-${Date.now()}`,
+                      invSubTotal: Math.round(subtotal),
+                      invVatRate: 10,
+                      invVatAmount: Math.round(tax),
+                      invDiscAmount: 0,
+                      invTotalAmount: Math.round(total),
+                      paidTp: "TM",
+                      note: "",
+                      hdNo: "",
+                      createdDate: new Date().toISOString(),
+                      clsfNo: "01GTKT0/001",
+                      spcfNo: "1C25TYY",
+                      templateCode: "1C25TYY",
+                      buyerNotGetInvoice: 0,
+                      exchCd: "VND",
+                      exchRt: 1,
+                      bankAccount: "",
+                      bankName: "",
+                      customer: {
+                        custCd: selectedInvoice.customerTaxCode || "",
+                        custNm: selectedInvoice.customerName || "Khách hàng lẻ",
+                        custCompany: selectedInvoice.customerName || "Khách hàng lẻ",
+                        taxCode: selectedInvoice.customerTaxCode || "",
+                        custCity: "",
+                        custDistrictName: "",
+                        custAddrs: selectedInvoice.customerAddress || "",
+                        custPhone: selectedInvoice.customerPhone || "",
+                        custBankAccount: "",
+                        custBankName: "",
+                        email: selectedInvoice.customerEmail || "",
+                        emailCC: "",
+                      },
+                      products: items.map((item: any) => {
+                        const itemPrice = parseFloat(item.unitPrice);
+                        const itemQuantity = item.quantity;
+                        const itemTaxRate = parseFloat(item.taxRate || "10");
+                        const itemSubtotal = itemPrice * itemQuantity;
+                        const itemTax = (itemSubtotal * itemTaxRate) / 100;
+                        const itemTotal = itemSubtotal + itemTax;
+
+                        return {
+                          itmCd: `SP${String(item.productId).padStart(3, '0')}`,
+                          itmName: item.productName,
+                          itmKnd: 1,
+                          unitNm: "Cái",
+                          qty: itemQuantity,
+                          unprc: itemPrice,
+                          amt: Math.round(itemSubtotal),
+                          discRate: 0,
+                          discAmt: 0,
+                          vatRt: itemTaxRate.toString(),
+                          vatAmt: Math.round(itemTax),
+                          totalAmt: Math.round(itemTotal),
+                        };
+                      }),
+                    };
+
+                    // Close dialog first
+                    setShowPublishDialog(false);
+
+                    // Call publish API
+                    publishRequestMutation.mutate(publishRequest);
+                  }
+                }}
+                disabled={publishRequestMutation.isPending}
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                {publishRequestMutation.isPending ? 'Đang phát hành...' : 'Phát hành'}
+              </Button>
+              <Button 
+                variant="outline"
+                className="flex-1 border-gray-500 text-gray-600"
+                onClick={() => setShowPublishDialog(false)}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Hủy bỏ
+              </Button>
+            </div>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
