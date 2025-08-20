@@ -49,7 +49,8 @@ class TenantManager {
       },
       {
         subdomain: "vitaly",
-        databaseUrl: process.env.EXTERNAL_DB_URL,
+        databaseUrl:
+          process.env.VITALY_DATABASE_URL || process.env.DATABASE_URL!,
         storeName: "Vitaly - Nhà hàng Vitaly",
         isActive: true,
       },
@@ -62,7 +63,7 @@ class TenantManager {
   }
 
   getTenantBySubdomain(subdomain: string): TenantConfig | null {
-    return this.tenants.get("vitaly") || null;
+    return this.tenants.get(subdomain) || null;
   }
 
   async getDatabaseConnection(subdomain: string) {
