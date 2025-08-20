@@ -82,9 +82,11 @@ class TenantManager {
       idleTimeoutMillis: 60000,
       connectionTimeoutMillis: 10000,
       acquireTimeoutMillis: 10000,
-      ssl: tenant.databaseUrl?.includes("1.55.212.138")
-        ? { rejectUnauthorized: false }
-        : undefined,
+      ssl: tenant.databaseUrl?.includes("1.55.212.135")
+        ? false // Disable SSL for external server
+        : tenant.databaseUrl?.includes("neon")
+          ? { rejectUnauthorized: false }
+          : undefined,
     });
 
     const db = drizzle({ client: pool, schema });

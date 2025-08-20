@@ -39,9 +39,9 @@ if (!DATABASE_URL) {
 
 // Ensure we're using the correct database and SSL settings for external server
 if (DATABASE_URL?.includes("1.55.212.135")) {
-  // Make sure we're using postgres database and sslmode=disable
-  if (!DATABASE_URL.includes("/postgres")) {
-    DATABASE_URL = DATABASE_URL.replace(/\/[^\/\?]+(\?|$)/, "/postgres$1");
+  // Make sure we're using the correct database and sslmode=disable
+  if (!DATABASE_URL.includes("/Freshway")) {
+    DATABASE_URL = DATABASE_URL.replace(/\/[^\/\?]+(\?|$)/, "/Freshway$1");
   }
   if (!DATABASE_URL.includes("sslmode=disable")) {
     DATABASE_URL += DATABASE_URL.includes("?")
