@@ -25,41 +25,42 @@ import path from "path";
 config({ path: path.resolve(".env.local") });
 config({ path: path.resolve(".env") });
 
-// Use EXTERNAL_DB_URL first, then fallback to CUSTOM_DATABASE_URL, then DATABASE_URL
-let DATABASE_URL = process.env.EXTERNAL_DB_URL;
+// Use EXTERNAL_DB_URL first, then fallback to DATABASE_URL from Replit's PostgreSQL service
+let DATABASE_URL = process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
   throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
+    "DATABASE_URL or EXTERNAL_DB_URL must be set. Please create a PostgreSQL database in Replit or uncomment EXTERNAL_DB_URL in .env file.",
   );
 }
 
-// Ensure we're using the correct database and SSL settings for external server
-if (DATABASE_URL?.includes("1.55.212.135")) {
-  // Make sure we're using postgres database and sslmode=disable
-  if (!DATABASE_URL.includes("/postgres")) {
-    DATABASE_URL = DATABASE_URL.replace(/\/[^\/\?]+(\?|$)/, "/postgres$1");
+// Configure SSL based on database provider
+if (DATABASE_URL.includes("neon.tech")) {
+  // Replit uses Neon for PostgreSQL - ensure SSL is enabled
+  if (!DATABASE_URL.includes("sslmode=")) {
+    DATABASE_URL += DATABASE_URL.includes("?")
+      ? "&sslmode=require"
+      : "?sslmode=require";
   }
-  if (!DATABASE_URL.includes("sslmode=disable")) {
+} else if (DATABASE_URL.includes("1.55.212.135")) {
+  // External database - ensure sslmode=disable for local development
+  if (!DATABASE_URL.includes("sslmode=")) {
     DATABASE_URL += DATABASE_URL.includes("?")
       ? "&sslmode=disable"
       : "?sslmode=disable";
   }
 }
 
-// Configure SSL options for PostgreSQL connection
-const connectionConfig = {
-  connectionString: DATABASE_URL,
-  ssl: DATABASE_URL.includes('localhost') || DATABASE_URL.includes('127.0.0.1') 
-    ? false 
-    : { rejectUnauthorized: false }
-};
-
 export const pool = new Pool({
   connectionString: DATABASE_URL,
-  max: 20,
+  max: 10,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000,
+  ssl: DATABASE_URL.includes("neon.tech")
+    ? { rejectUnauthorized: false }
+    : DATABASE_URL.includes("1.55.212.135")
+      ? false
+      : false,
 });
 
 // Log database connection info with detailed debugging
@@ -97,10 +98,7 @@ console.log(
   DATABASE_URL?.replace(/:[^:@]*@/, ":****@"),
 );
 
-export const db = drizzle(
-  new Pool(connectionConfig),
-  { schema }
-);
+export const db = drizzle(pool, { schema });
 
 // Initialize sample data function
 export async function initializeSampleData() {
@@ -279,7 +277,7 @@ export async function initializeSampleData() {
           ('CUST001', '김고객', '010-1234-5678', 'kim@customer.com', '서울시 강남구 테헤란로 123', '1985-05-15', 15, 1250000.00, 1250, 'Diamond', 'active', 'VIP 고객'),
           ('CUST002', '이단골', '010-2345-6789', 'lee@regular.com', '서울시 서초구 강남대로 456', '1990-08-20', 8, 680000.00, 680, 'Platinum', 'active', '단골 고객'),
           ('CUST003', '박회원', '010-3456-7890', 'park@member.com', '서울시 마포구 홍대로 789', '1988-12-10', 12, 340000.00, 340, 'Gold', 'active', '자주 방문하는 고객'),
-          ('CUST004', '정신규', '010-4567-8901', 'jung@newbie.com', '서울시 용산구 이태원로 101', '1992-03-25', 3, 150000.00, 150, 'Bronze', 'active', '새로 가입한 고객'),
+          ('CUST004', '정신규', '010-4567-8901', 'jung@newbie.com', '서울시 용산구 이태원로 101', '1992-03-25', 3, 150000.00, 150, 'Silver', 'active', '새로 가입한 고객'),
           ('CUST005', '최애용', '010-5678-9012', 'choi@regular.com', '서울시 송파구 잠실로 202', '1987-11-08', 7, 420000.00, 420, 'Gold', 'active', '주말 단골 고객'),
           ('CUST006', '한미영', '010-6789-0123', 'han@family.com', '경기도 성남시 분당구 정자로 303', '1975-07-12', 20, 980000.00, 980, 'Platinum', 'active', '가족 단위 단골'),
           ('CUST007', '오민수', '010-7890-1234', 'oh@student.com', '서울시 관악구 신림로 404', '1995-09-30', 5, 200000.00, 200, 'Bronze', 'active', '학생 고객'),
