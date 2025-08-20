@@ -22,7 +22,7 @@ class TenantManager {
     const tenantsConfig = [
       {
         subdomain: "demo",
-        databaseUrl: process.env.DEMO_DATABASE_URL || process.env.DATABASE_URL!,
+        databaseUrl: process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL!,
         storeName: "Demo Store - Cửa hàng demo",
         isActive: true,
       },
