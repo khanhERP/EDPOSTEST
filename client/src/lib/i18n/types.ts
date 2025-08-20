@@ -184,6 +184,7 @@ export interface CommonTranslations {
   transfer: string;
   view: string;
   backToPOS: string;
+  description: string;
   paid: string;
   login: string;
   register: string;
