@@ -97,7 +97,6 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     price: "가격",
     stock: "재고",
     loading: "로딩 중...",
-    actions: "작업",
   },
   en: {
     title: "Table Management",

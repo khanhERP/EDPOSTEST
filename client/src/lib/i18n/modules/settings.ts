@@ -113,7 +113,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     templateDefault: "기본값",
     defaultConnection: "기본값",
     setAsDefaultConnection: "기본 연결로 설정",
-    templatesDesc: "전자세금계산서 양식을 관리합니다",
     notesLabel: "메모",
     operations: "운영",
     cancel: "취소",

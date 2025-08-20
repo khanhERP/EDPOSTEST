@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Language, TranslationKey, Translations } from './types';
+import type { Language, TranslationKey } from './types';
 import { translations } from './translations';
 
 interface LanguageStore {

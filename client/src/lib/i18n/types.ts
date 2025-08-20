@@ -636,15 +636,23 @@ export interface SettingsTranslations {
   categoriesRedirect: string;
   employeeManagement: string;
   employeeManagementDesc: string;
+  editCategory: string;
+  searchCategoriesPlaceholder: string;
+  productDescriptionPlaceholder: string;
   goToEmployees: string;
   goToInventory: string;
   paymentMethodsDesc: string;
   availablePayments: string;
+  addCategory: string;
   addPayment: string;
   enabled: string;
   storeUpdated: string;
   updateError: string;
   paymentMethods: string;
+  businessType: string;
+  businessTypePlaceholder: string;
+  posRetail: string;
+  posRestaurant: string;
   payments: {
     cash: string;
     creditCard: string;
@@ -652,6 +660,7 @@ export interface SettingsTranslations {
     momo: string;
     zalopay: string;
     vnpay: string;
+    qrCode: string;
     banking: string;
     shopeepay: string;
     grabpay: string;
@@ -1640,10 +1649,13 @@ export interface SuppliersTranslations {
   deleteError: string;
 }
 
+export interface TablesTranslations {}
+
 // Type-safe translation keys
 export type TranslationKey =
   | `common.${keyof CommonTranslations}`
   | `nav.${keyof NavigationTranslations}`
+  | `nav.${keyof TablesTranslations}`
   | `inventory.${keyof InventoryTranslations}`
   | `orders.${keyof OrdersTranslations}`
   | `employees.${keyof EmployeesTranslations}`
