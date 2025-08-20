@@ -224,12 +224,14 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  async getCategories(): Promise<Category[]> {
-    return await db.select().from(categories);
+  async getCategories(tenantDb?: any): Promise<Category[]> {
+    const database = tenantDb || db;
+    return await database.select().from(categories);
   }
 
-  async createCategory(insertCategory: InsertCategory): Promise<Category> {
-    const [category] = await db
+  async createCategory(insertCategory: InsertCategory, tenantDb?: any): Promise<Category> {
+    const database = tenantDb || db;
+    const [category] = await database
       .insert(categories)
       .values(insertCategory)
       .returning();
@@ -239,8 +241,10 @@ export class DatabaseStorage implements IStorage {
   async updateCategory(
     id: number,
     updateData: Partial<InsertCategory>,
+    tenantDb?: any,
   ): Promise<Category> {
-    const [category] = await db
+    const database = tenantDb || db;
+    const [category] = await database
       .update(categories)
       .set(updateData)
       .where(eq(categories.id, id))
@@ -248,8 +252,9 @@ export class DatabaseStorage implements IStorage {
     return category;
   }
 
-  async deleteCategory(id: number): Promise<void> {
-    await db.delete(categories).where(eq(categories.id, id));
+  async deleteCategory(id: number, tenantDb?: any): Promise<void> {
+    const database = tenantDb || db;
+    await database.delete(categories).where(eq(categories.id, id));
   }
 
   async getProducts(tenantDb?: any): Promise<Product[]> {
@@ -506,9 +511,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Get next employee ID in sequence
-  async getNextEmployeeId(): Promise<string> {
+  async getNextEmployeeId(tenantDb?: any): Promise<string> {
+    const database = tenantDb || db;
     try {
-      const lastEmployee = await db
+      const lastEmployee = await database
         .select()
         .from(employees)
         .orderBy(desc(employees.id))
@@ -537,12 +543,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Generate next customer ID
-  async getNextCustomerId(database?: Database): Promise<string> {
+  async getNextCustomerId(tenantDb?: any): Promise<string> {
+    const database = tenantDb || db;
     try {
-      const dbToUse = database || db;
-      
       // Get all customer IDs that match the CUST pattern and extract numbers
-      const allCustomers = await dbToUse
+      const allCustomers = await database
         .select({ customerId: customers.customerId })
         .from(customers)
         .where(like(customers.customerId, "CUST%"));
@@ -572,15 +577,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Employee methods
-  async getEmployees(): Promise<Employee[]> {
-    return await db
+  async getEmployees(tenantDb?: any): Promise<Employee[]> {
+    const database = tenantDb || db;
+    return await database
       .select()
       .from(employees)
       .where(eq(employees.isActive, true));
   }
 
-  async getEmployee(id: number): Promise<Employee | undefined> {
-    const [employee] = await db
+  async getEmployee(id: number, tenantDb?: any): Promise<Employee | undefined> {
+    const database = tenantDb || db;
+    const [employee] = await database
       .select()
       .from(employees)
       .where(and(eq(employees.id, id), eq(employees.isActive, true)));
@@ -589,8 +596,10 @@ export class DatabaseStorage implements IStorage {
 
   async getEmployeeByEmployeeId(
     employeeId: string,
+    tenantDb?: any,
   ): Promise<Employee | undefined> {
-    const [employee] = await db
+    const database = tenantDb || db;
+    const [employee] = await database
       .select()
       .from(employees)
       .where(
@@ -599,8 +608,9 @@ export class DatabaseStorage implements IStorage {
     return employee || undefined;
   }
 
-  async createEmployee(insertEmployee: InsertEmployee): Promise<Employee> {
-    const [employee] = await db
+  async createEmployee(insertEmployee: InsertEmployee, tenantDb?: any): Promise<Employee> {
+    const database = tenantDb || db;
+    const [employee] = await database
       .insert(employees)
       .values(insertEmployee)
       .returning();
@@ -610,8 +620,10 @@ export class DatabaseStorage implements IStorage {
   async updateEmployee(
     id: number,
     updateData: Partial<InsertEmployee>,
+    tenantDb?: any,
   ): Promise<Employee | undefined> {
-    const [employee] = await db
+    const database = tenantDb || db;
+    const [employee] = await database
       .update(employees)
       .set(updateData)
       .where(and(eq(employees.id, id), eq(employees.isActive, true)))
@@ -619,10 +631,11 @@ export class DatabaseStorage implements IStorage {
     return employee || undefined;
   }
 
-  async deleteEmployee(id: number): Promise<boolean> {
+  async deleteEmployee(id: number, tenantDb?: any): Promise<boolean> {
+    const database = tenantDb || db;
     try {
       // Check if employee has attendance records
-      const attendanceCheck = await db
+      const attendanceCheck = await database
         .select()
         .from(attendanceRecords)
         .where(eq(attendanceRecords.employeeId, id))
@@ -633,7 +646,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Check if employee has orders
-      const orderCheck = await db
+      const orderCheck = await database
         .select()
         .from(orders)
         .where(eq(orders.employeeId, id))
@@ -644,7 +657,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       // If no references found, delete the employee
-      const result = await db
+      const result = await database
         .delete(employees)
         .where(eq(employees.id, id))
         .returning();
@@ -1046,12 +1059,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Store Settings
-  async getStoreSettings(): Promise<StoreSettings> {
-    const [settings] = await db.select().from(storeSettings).limit(1);
+  async getStoreSettings(tenantDb?: any): Promise<StoreSettings> {
+    const database = tenantDb || db;
+    const [settings] = await database.select().from(storeSettings).limit(1);
 
     // If no settings exist, create default settings
     if (!settings) {
-      const [newSettings] = await db
+      const [newSettings] = await database
         .insert(storeSettings)
         .values({
           storeName: "EDPOS 레스토랑",
@@ -1069,10 +1083,12 @@ export class DatabaseStorage implements IStorage {
 
   async updateStoreSettings(
     settings: Partial<InsertStoreSettings>,
+    tenantDb?: any,
   ): Promise<StoreSettings> {
-    const currentSettings = await this.getStoreSettings();
+    const database = tenantDb || db;
+    const currentSettings = await this.getStoreSettings(tenantDb);
 
-    const [updatedSettings] = await db
+    const [updatedSettings] = await database
       .update(storeSettings)
       .set({ ...settings, updatedAt: new Date() })
       .where(eq(storeSettings.id, currentSettings.id))
