@@ -50,6 +50,21 @@ export function MenuReport() {
   // Use same data sources as dashboard-overview
   const { data: transactions, isLoading: transactionsLoading } = useQuery({
     queryKey: ["/api/transactions"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/transactions");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching transactions:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -71,6 +86,28 @@ export function MenuReport() {
     },
     retry: 3,
     retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Query invoices - same as dashboard-overview
+  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
+    queryKey: ["/api/invoices"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/invoices");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching invoices:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: products } = useQuery({
@@ -146,27 +183,66 @@ export function MenuReport() {
 
   // Process data exactly like dashboard-overview
   const getMenuAnalysisData = () => {
-    if (!products || !Array.isArray(products) || !orders || !Array.isArray(orders)) return null;
+    if (!products || !Array.isArray(products)) return null;
 
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
 
-    // Filter completed orders within date range - same logic as dashboard
-    const filteredCompletedOrders = orders.filter((order: any) => {
-      // Check if order is completed/paid
-      if (order.status !== 'completed' && order.status !== 'paid') return false;
+    // Combine invoices and orders data - same logic as dashboard-overview
+    const combinedData = [
+      ...(Array.isArray(invoices) ? invoices.map((invoice: any) => ({
+        ...invoice,
+        type: 'invoice' as const,
+        date: invoice.invoiceDate,
+        displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
+        displayStatus: invoice.invoiceStatus || 1,
+        customerName: invoice.customerName || 'Khách hàng lẻ',
+        customerPhone: invoice.customerPhone || '',
+        customerAddress: invoice.customerAddress || '',
+        customerTaxCode: invoice.customerTaxCode || '',
+        symbol: invoice.symbol || 'C11DTD',
+        einvoiceStatus: invoice.einvoiceStatus || 0
+      })) : []),
+      ...(Array.isArray(orders) ? orders.map((order: any) => ({
+        ...order,
+        type: 'order' as const,
+        date: order.orderedAt,
+        displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
+        displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+        customerName: order.customerName || 'Khách hàng lẻ',
+        invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+        customerPhone: '',
+        customerAddress: '',
+        customerTaxCode: '',
+        symbol: 'C11DTD',
+        invoiceNumber: order.orderNumber || `ORD-${String(order.id).padStart(8, '0')}`,
+        tradeNumber: order.orderNumber || '',
+        invoiceDate: order.orderedAt,
+        einvoiceStatus: order.einvoiceStatus || 0
+      })) : [])
+    ];
 
-      // Try multiple possible date fields
-      const orderDate = new Date(
-        order.orderedAt || order.createdAt || order.created_at || order.paidAt
-      );
+    // Filter completed items within date range - same logic as dashboard
+    const filteredCompletedOrders = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
+      try {
+        if (!item || !item.date) return false;
 
-      // Skip if date is invalid
-      if (isNaN(orderDate.getTime())) return false;
+        const itemDate = new Date(item.date);
+        if (isNaN(itemDate.getTime())) return false;
 
-      return orderDate >= start && orderDate <= end;
-    });
+        const dateMatch = itemDate >= start && itemDate <= end;
+        
+        // Only include completed/paid items
+        const isCompleted = (item.type === 'invoice' && item.invoiceStatus === 1) ||
+                          (item.type === 'order' && (item.status === 'paid' || item.status === 'completed'));
+
+        return dateMatch && isCompleted;
+      } catch (error) {
+        console.error('Error filtering item:', item, error);
+        return false;
+      }
+    }) : [];
 
     const productSales: {
       [productId: string]: {
@@ -199,11 +275,10 @@ export function MenuReport() {
       return searchMatch && categoryMatch && typeMatch;
     });
 
-    // Process completed orders like dashboard-overview
-    filteredCompletedOrders.forEach((order: any) => {
-      const orderTotal = Number(order.total || 0);
-      const discount = Number(order.discount || 0);
-      const orderRevenue = orderTotal - discount;
+    // Process completed items like dashboard-overview
+    filteredCompletedOrders.forEach((item: any) => {
+      const itemTotal = Number(item.total || 0);
+      const itemRevenue = itemTotal;
 
       // Get available products with price
       const availableProducts = allFilteredProducts.filter((p) => p.price > 0);
@@ -238,7 +313,7 @@ export function MenuReport() {
           totalSelectedPrice > 0
             ? (product.price || 0) / totalSelectedPrice
             : 1 / selectedProducts.length;
-        const productRevenue = orderRevenue * proportion;
+        const productRevenue = itemRevenue * proportion;
         const quantity = Math.max(
           1,
           Math.floor(productRevenue / (product.price || 1)),
@@ -297,14 +372,14 @@ export function MenuReport() {
 
     // Payment Method Analysis
     const paymentMethods: { [key: string]: { revenue: number; count: number } } = {};
-    filteredCompletedOrders.forEach((order: any) => {
-      const paymentMethod = order.paymentMethod || "unknown";
-      const orderRevenue = Number(order.total || 0) - Number(order.discount || 0);
+    filteredCompletedOrders.forEach((item: any) => {
+      const paymentMethod = item.paymentMethod || "unknown";
+      const itemRevenue = Number(item.total || 0);
 
       if (!paymentMethods[paymentMethod]) {
         paymentMethods[paymentMethod] = { revenue: 0, count: 0 };
       }
-      paymentMethods[paymentMethod].revenue += orderRevenue;
+      paymentMethods[paymentMethod].revenue += itemRevenue;
       paymentMethods[paymentMethod].count += 1;
     });
 
@@ -320,7 +395,7 @@ export function MenuReport() {
     };
   };
 
-  const isLoading = transactionsLoading || ordersLoading;
+  const isLoading = transactionsLoading || ordersLoading || invoicesLoading;
 
   if (isLoading) {
     return (
