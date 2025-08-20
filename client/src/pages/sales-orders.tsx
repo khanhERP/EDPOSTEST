@@ -1613,34 +1613,62 @@ export default function SalesOrders() {
             
             if (invoiceResult.success && selectedInvoice) {
               try {
-                // Update invoice with published status and invoice number
-                const updateResponse = await apiRequest("PUT", `/api/invoices/${selectedInvoice.id}`, {
-                  einvoiceStatus: 1, // Đã phát hành
-                  invoiceStatus: 1, // Hoàn thành
-                  status: 'published',
+                // Determine the correct API endpoint based on item type
+                const updateEndpoint = selectedInvoice.type === 'order' 
+                  ? `/api/orders/${selectedInvoice.id}`
+                  : `/api/invoices/${selectedInvoice.id}`;
+
+                // Prepare update data with all required fields from API response
+                const updateData = {
+                  einvoiceStatus: invoiceResult.einvoiceStatus || 1, // Đã phát hành
+                  invoiceStatus: invoiceResult.invoiceStatus || 1, // Hoàn thành
+                  status: invoiceResult.status || 'published',
                   invoiceNumber: invoiceResult.invoiceNumber || null,
-                  tradeNumber: invoiceResult.invoiceNumber || selectedInvoice.tradeNumber
-                });
+                  symbol: invoiceResult.symbol || selectedInvoice.symbol,
+                  templateNumber: invoiceResult.templateNumber || selectedInvoice.templateNumber
+                };
+
+                // For orders, also update tradeNumber
+                if (selectedInvoice.type === 'order') {
+                  updateData.tradeNumber = invoiceResult.invoiceNumber || selectedInvoice.tradeNumber;
+                } else {
+                  // For invoices, update tradeNumber as well
+                  updateData.tradeNumber = invoiceResult.invoiceNumber || selectedInvoice.tradeNumber;
+                }
+
+                console.log('🔄 Updating item with data:', updateData);
+
+                // Update invoice/order with published status and invoice details
+                const updateResponse = await apiRequest("PUT", updateEndpoint, updateData);
 
                 if (updateResponse.ok) {
-                  // Update local state
+                  // Update local state immediately to reflect changes
                   setSelectedInvoice({
                     ...selectedInvoice,
-                    einvoiceStatus: 1,
-                    invoiceStatus: 1,
-                    status: 'published',
-                    invoiceNumber: invoiceResult.invoiceNumber || selectedInvoice.invoiceNumber,
-                    tradeNumber: invoiceResult.invoiceNumber || selectedInvoice.tradeNumber
+                    einvoiceStatus: updateData.einvoiceStatus,
+                    invoiceStatus: updateData.invoiceStatus,
+                    status: updateData.status,
+                    invoiceNumber: updateData.invoiceNumber,
+                    tradeNumber: updateData.tradeNumber,
+                    symbol: updateData.symbol,
+                    templateNumber: updateData.templateNumber,
+                    displayStatus: updateData.invoiceStatus // Update display status as well
                   });
 
-                  // Refresh data
+                  // Refresh data to ensure consistency
                   queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
                   queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
 
-                  alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${invoiceResult.invoiceNumber || 'N/A'}`);
+                  console.log('✅ Invoice/Order updated successfully with published status');
+                  
+                  alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${invoiceResult.invoiceNumber || 'N/A'}\nKý hiệu: ${updateData.symbol || 'N/A'}`);
+                } else {
+                  const errorText = await updateResponse.text();
+                  console.error('❌ Failed to update invoice/order:', errorText);
+                  alert('Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái trong hệ thống');
                 }
               } catch (error) {
-                console.error('❌ Error updating invoice after publish:', error);
+                console.error('❌ Error updating invoice/order after publish:', error);
                 alert('Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái');
               }
             }

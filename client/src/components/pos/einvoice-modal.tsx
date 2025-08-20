@@ -1157,10 +1157,23 @@ export function EInvoiceModal({
           customerTaxCode: formData.taxCode,
         };
 
+        // Return comprehensive result for parent component to handle updates
+        const publishResult = {
+          success: true,
+          invoiceNumber: result.data?.invoiceNo || null,
+          symbol: selectedTemplate.symbol || null,
+          templateNumber: selectedTemplate.templateNumber || null,
+          einvoiceStatus: 1, // Đã phát hành
+          invoiceStatus: 1, // Hoàn thành
+          status: 'published',
+          receipt: receiptDataToConfirm,
+          publishedImmediately: true
+        };
+
         console.log(
           "📧 Step 4: E-Invoice completed, going directly to final receipt",
         );
-        onConfirm({ receipt: receiptDataToConfirm });
+        onConfirm(publishResult);
         onClose();
         // --- CHANGE END ---
       } else {
