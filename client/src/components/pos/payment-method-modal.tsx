@@ -652,9 +652,9 @@ export function PaymentMethodModal({
               <div className="text-center p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600">{t("common.totalAmount")}</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {total.toLocaleString("vi-VN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
+                  {(typeof total === 'number' ? total : parseFloat(total || '0')).toLocaleString("vi-VN", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
                   })}{" "}
                   ₫
                 </p>
@@ -738,9 +738,9 @@ export function PaymentMethodModal({
                     {t("common.amountToPay")}
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {total.toLocaleString("vi-VN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
+                    {(typeof total === 'number' ? total : parseFloat(total || '0')).toLocaleString("vi-VN", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
                     })}{" "}
                     ₫
                   </p>
@@ -848,9 +848,9 @@ export function PaymentMethodModal({
                     {t("common.amountToPay")}
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {total.toLocaleString("vi-VN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
+                    {(typeof total === 'number' ? total : parseFloat(total || '0')).toLocaleString("vi-VN", {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: 0,
                     })}{" "}
                     ₫
                   </p>
