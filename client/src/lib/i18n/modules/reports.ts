@@ -1,4 +1,4 @@
-import { type ReportsTranslations } from '../types';
+import { type ReportsTranslations } from "../types";
 
 export const reportsTranslations: { [key: string]: ReportsTranslations } = {
   vi: {
@@ -36,7 +36,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     performanceMetrics: "Chỉ số hiệu suất",
     salesAchievementRate: "Tỷ lệ đạt mục tiêu bán hàng",
     tableTurnoverRate: "Tỷ lệ luân chuyển bàn",
-    targetAverageDailySales: "Mục tiêu doanh thu trung bình hàng ngày {amount}, luân chuyển {turnovers} lần/bàn",
+    targetAverageDailySales:
+      "Mục tiêu doanh thu trung bình hàng ngày {amount}, luân chuyển {turnovers} lần/bàn",
 
     // Filter options
     filterByDate: "Lọc theo ngày",
@@ -50,7 +51,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Payment methods
     paymentMethodBreakdown: "Phân tích phương thức thanh toán",
-    paymentMethodDetails: "Chi tiết phương thức thanh toán và phân tích doanh số hàng ngày",
+    paymentMethodDetails:
+      "Chi tiết phương thức thanh toán và phân tích doanh số hàng ngày",
 
     // Tab names for reports
     salesAnalysisTab: "Báo cáo phân tích bán hàng",
@@ -80,7 +82,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     salesMethod: "Phương thức bán hàng",
     salesChannel: "Kênh bán hàng",
     productFilter: "Sản phẩm",
-    productFilterPlaceholder: "Tìm theo mã, tên",
     customerFilter: "Khách hàng",
     customerFilterPlaceholder: "Tìm theo tên, số điện thoại hoặc mã",
     employeeFilter: "Tìm kiếm nhân viên",
@@ -95,14 +96,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Time analysis specific keys
     timeSalesReport: "Báo cáo bán hàng theo thời gian",
-    profitByInvoiceReport: "Báo cáo lợi nhuận theo hóa đơn",
     invoiceDiscountReport: "Báo cáo giảm giá hóa đơn",
     returnByInvoiceReport: "Báo cáo trả hàng theo hóa đơn",
 
     // Sales chart table columns
     date: "Ngày",
     orderNumber: "Số đơn hàng",
-    orderCode: "Mã đơn bán",
     subtotal: "Tạm tính",
     discount: "Giảm giá",
     revenue: "Doanh thu",
@@ -112,13 +111,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     amount: "Thành tiền",
     exportTax: "Thuế xuất",
     vatTax: "Thuế GTGT",
-    productGroup: "Nhóm hàng",
-    salesChannel: "Kênh bán",
     tableName: "Bàn",
     employeeName: "Tên nhân viên",
     totalCustomerPayment: "Tổng thanh toán khách hàng",
     productType: "Loại hàng",
-    productGroup: "Nhóm hàng",
     combo: "Combo",
     product: "Hàng hóa",
     service: "Dịch vụ",
@@ -134,12 +130,9 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     categoryName: "Danh mục",
 
     // Report titles
-    timeSalesReport: "Báo cáo bán hàng theo thời gian",
     inventoryReport: "Báo cáo kho",
     salesReportByProduct: "Báo cáo bán hàng theo sản phẩm",
     profitByInvoiceReport: "Báo cáo lợi nhuận theo hóa đơn",
-    invoiceDiscountReport: "Báo cáo giảm giá hóa đơn",
-    returnByInvoiceReport: "Báo cáo trả hàng theo hóa đơn",
 
     // End of day report
     endOfDayReport: "Báo cáo cuối ngày",
@@ -200,7 +193,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Sales chart report
     salesChart: "Biểu đồ bán hàng",
-    salesChartDescription: "Báo cáo chi tiết về doanh số và phân tích theo thời gian",
+    salesChartDescription:
+      "Báo cáo chi tiết về doanh số và phân tích theo thời gian",
     salesReport: "Báo cáo bán hàng",
 
     // Comprehensive sales report
@@ -263,8 +257,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     paymentMethodDistribution: "Phân bổ phương thức thanh toán",
     hourlyRevenue: "Doanh thu theo giờ",
     barChartDesc: "Phân tích xu hướng doanh thu theo thời gian",
-    pieChartDesc: "Phân tích phương thức thanh toán và phân tích doanh số hàng ngày",
-    lineChartDesc: "Phân tích xu hướng doanh thu theo thời gian với biểu đồ đường",
+    pieChartDesc:
+      "Phân tích phương thức thanh toán và phân tích doanh số hàng ngày",
+    lineChartDesc:
+      "Phân tích xu hướng doanh thu theo thời gian với biểu đồ đường",
 
     // Table headers for reports
     transactionCode: "Mã giao dịch",
@@ -305,7 +301,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cumulativeVisitors: "Khách tích lũy",
     totalByTable: "Tổng theo bàn",
     detailedTablePerformance: "Hiệu suất bàn chi tiết",
-    detailedTablePerformanceDesc: "Xem các chỉ số hoạt động chi tiết của từng bàn",
+    detailedTablePerformanceDesc:
+      "Xem các chỉ số hoạt động chi tiết của từng bàn",
     currentStatus: "Trạng thái hiện tại",
     orderCount: "Số đơn hàng",
     orders: "Đơn hàng",
@@ -427,14 +424,15 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     peakHours: "Giờ cao điểm",
     tableUtilization: "Tỷ lệ sử dụng bàn",
     revenuePerTable: "Doanh thu mỗi bàn",
-    ordersPerTable: "Đơn hàng mỗi bàn",
+    ordersPerTable: "Đ��n hàng mỗi bàn",
 
     // Sales report specific
     salesReportDescription: "Phân tích chi tiết về doanh số bán hàng",
     loading: "Đang tải",
     noData: "Không có dữ liệu",
     noPaymentData: "Không có dữ liệu thanh toán",
-    noPaymentDataDescription: "Chưa có giao dịch thanh toán nào trong khoảng thời gian được chọn",
+    noPaymentDataDescription:
+      "Chưa có giao dịch thanh toán nào trong khoảng thời gian được chọn",
     salesDetails: "Chi tiết bán hàng",
     revenueExpenseDetails: "Chi tiết thu chi",
     inventoryDetails: "Chi tiết hàng hóa",
@@ -494,7 +492,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     balanceSheet: "Bảng cân đối kế toán",
     cashFlow: "Dòng tiền",
 
-    // Customer reports  
+    // Customer reports
     customerSalesReport: "Báo cáo bán hàng khách hàng",
     channelSalesReport: "Báo cáo bán hàng kênh",
     employeeSalesReport: "Báo cáo bán hàng nhân viên",
@@ -526,7 +524,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Data display
     noDataAvailable: "Không có dữ liệu",
     loadingData: "Đang tải dữ liệu...",
-    errorLoadingData: "Lỗi khi tải dữ liệu"
+    errorLoadingData: "Lỗi khi tải dữ liệu",
   },
 
   ko: {
@@ -564,7 +562,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     performanceMetrics: "성과 지표",
     salesAchievementRate: "매출 달성률",
     tableTurnoverRate: "테이블 회전율",
-    targetAverageDailySales: "목표 일평균 매출 {amount}, 회전율 {turnovers}회/테이블",
+    targetAverageDailySales:
+      "목표 일평균 매출 {amount}, 회전율 {turnovers}회/테이블",
 
     // Filter options
     filterByDate: "날짜별 필터",
@@ -901,7 +900,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     categoryBreakdown: "카테고리별 분석",
     itemPerformance: "상품 성과",
     salesTrend: "판매 트렌드",
-    profitMargin: "이익률",
+    profitMargin: "이rt�률",
     costAnalysis: "비용 분석",
     stockMovement: "재고 움직임",
     menuAnalysisDescription: "메뉴 및 상품 성과에 대한 상세 분석",
@@ -1001,7 +1000,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     balanceSheet: "대차대조표",
     cashFlow: "현금 흐름",
 
-    // Customer reports  
+    // Customer reports
     customerSalesReport: "고객 매출 보고서",
     channelSalesReport: "채널 매출 보고서",
     employeeSalesReport: "직원 매출 보고서",
@@ -1029,7 +1028,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Data display
     noDataAvailable: "데이터 없음",
     loadingData: "데이터 로딩 중...",
-    errorLoadingData: "데이터 로딩 오류"
+    errorLoadingData: "데이터 로딩 오류",
   },
 
   en: {
@@ -1067,7 +1066,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     performanceMetrics: "Performance Metrics",
     salesAchievementRate: "Sales Achievement Rate",
     tableTurnoverRate: "Table Turnover Rate",
-    targetAverageDailySales: "Target daily average sales {amount}, turnovers {turnovers} times/table",
+    targetAverageDailySales:
+      "Target daily average sales {amount}, turnovers {turnovers} times/table",
 
     // Filter options
     filterByDate: "Filter by Date",
@@ -1081,7 +1081,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Payment methods
     paymentMethodBreakdown: "Payment Method Breakdown",
-    paymentMethodDetails: "Payment method detailed analysis and daily sales breakdown",
+    paymentMethodDetails:
+      "Payment method detailed analysis and daily sales breakdown",
 
     // Tab names for reports
     salesAnalysisTab: "Sales Analysis Report",
@@ -1191,7 +1192,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customer: "Customer",
     customerSearch: "Customer",
     customerSearchPlaceholder: "Search by name or phone",
-    productSearch: "Product Type",
     productSearchPlaceholder: "Search by name or code",
 
     // Additional order report keys
@@ -1305,7 +1305,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     customerCount: "Customer Count",
     totalCustomers: "Total Customers",
     turnoverRate: "Turnover Rate",
-    tableAnalysisDescription: "Detailed analysis of table performance and utilization",
+    tableAnalysisDescription:
+      "Detailed analysis of table performance and utilization",
     topRevenueTables: "Top Revenue Tables",
     topTurnoverTables: "Top Turnover Tables",
     topUtilizationTables: "Top Utilization Tables",
@@ -1315,10 +1316,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cumulativeVisitors: "Cumulative Visitors",
     totalByTable: "Total by Table",
     detailedTablePerformance: "Detailed Table Performance",
-    detailedTablePerformanceDesc: "View detailed operational metrics for each table",
+    detailedTablePerformanceDesc:
+      "View detailed operational metrics for each table",
     currentStatus: "Current Status",
     orderCount: "Order Count",
-    orders: "Orders",
     peakTime: "Peak Time",
     timesPerDay: " times/day",
     hourUnit: " hours",
@@ -1406,7 +1407,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     profitMargin: "Profit Margin",
     costAnalysis: "Cost Analysis",
     stockMovement: "Stock Movement",
-    menuAnalysisDescription: "Detailed analysis of menu and product performance",
+    menuAnalysisDescription:
+      "Detailed analysis of menu and product performance",
 
     // Table Analysis
 
@@ -1443,7 +1445,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     loading: "Loading",
     noData: "No Data",
     noPaymentData: "No Payment Data",
-    noPaymentDataDescription: "No payment transactions found in the selected period",
+    noPaymentDataDescription:
+      "No payment transactions found in the selected period",
     salesDetails: "Sales Details",
     revenueExpenseDetails: "Revenue Expense Details",
     inventoryDetails: "Inventory Details",
@@ -1469,7 +1472,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     transactionDetails: "Transaction Details",
     transactionId: "Transaction ID",
     method: "Method",
-    amount: "Amount",
     notes: "Notes",
     cashPayment: "Cash Payment",
     cardPayment: "Card Payment",
@@ -1501,10 +1503,8 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     balanceSheet: "Balance Sheet",
     cashFlow: "Cash Flow",
 
-    // Customer reports  
-    customerSalesReport: "Customer Sales Report",
+    // Customer reports
     channelSalesReport: "Channel Sales Report",
-    employeeSalesReport: "Employee Sales Report",
 
     // Supplier reports
     supplierReportDescription: "Detailed supplier report",
@@ -1518,7 +1518,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Additional menu items
     warehouseReport: "Warehouse Report",
-    warehouseReportDescription: "Detailed warehouse activity report",
 
     // Chart and filter labels
     selectDateRange: "Select Date Range",
@@ -1529,6 +1528,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     // Data display
     noDataAvailable: "No Data Available",
     loadingData: "Loading Data...",
-    errorLoadingData: "Error Loading Data"
+    errorLoadingData: "Error Loading Data",
   },
 };

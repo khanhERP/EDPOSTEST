@@ -136,6 +136,13 @@ export interface ReportsTranslations {
   dashboard: string;
   dashboardDescription: string;
   salesAnalysis: string;
+  periodRevenue: string;
+  occupiedTables: string;
+  monthRevenue: string;
+  realTimeStatus: string;
+  pendingOrders: string;
+  count: string;
+  performanceMetrics: string;
   menuAnalysis: string;
   tableAnalysis: string;
   backToTables: string;
@@ -211,8 +218,6 @@ export interface ReportsTranslations {
   totalCustomerPayment: string;
 
   // Product report columns
-  productCode: string;
-  productName: string;
   unit: string;
   quantitySold: string;
   totalAmount: string;
@@ -287,8 +292,6 @@ export interface ReportsTranslations {
   delivery: string;
   direct: string;
   other: string;
-  returnValue: string;
-  netRevenue: string;
   totalCost: string;
   grossProfit: string;
   totalInvoices: string;
@@ -452,7 +455,7 @@ export interface ReportsTranslations {
   balanceSheet: string;
   cashFlow: string;
 
-  // Customer reports  
+  // Customer reports
   customerSalesReport: string;
   channelSalesReport: string;
   employeeSalesReport: string;
@@ -461,16 +464,49 @@ export interface ReportsTranslations {
   supplierReportDescription: string;
   purchaseReport: string;
   supplierPerformance: string;
+  targetAverageDailySales: string;
 
   // Inventory reports
   inventoryReportDescription: string;
   stockLevel: string;
   stockMovementReport: string;
   lowStockAlert: string;
+  analyzeRevenue: string;
+  analyzeTableRevenueTrend: string;
+  employeeFilter: string;
+  employeeFilterPlaceholder: string;
+  employeeId: string;
+  customerId: string;
+  customerName: string;
+  vip: string;
+  tableName: string;
+  employeeName: string;
+  productType: string;
+  combo: string;
+  product: string;
+  service: string;
+  newCustomer: string;
+  customer: string;
+  orderReportByTransaction: string;
+  orderReportByProduct: string;
+  orderCode: string;
+  orderTime: string;
+  inactive: string;
+  active: string;
+  orderQuantity: string;
+  orderValue: string;
+  unitPrice: string;
+  exportTax: string;
+  vatTax: string;
+  purchaseReportTitle: string;
+  purchaseReportDescription: string;
+  salesDetailReport: string;
+  productGroup: string;
 
   // Additional menu items
   warehouseReport: string;
-  warehouseReportDescription: string;
+  salesAchievementRate: string;
+  tableTurnoverRate: string;
 
   // Chart and filter labels
   selectDateRange: string;
@@ -1330,7 +1366,6 @@ export interface EInvoiceTranslations {
   publishing: string;
   checkout: string;
 }
-
 
 // POS translations interface
 export interface POSTranslations {
