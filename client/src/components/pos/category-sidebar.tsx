@@ -55,8 +55,15 @@ export function CategorySidebar({
   });
 
   const getProductCountForCategory = (categoryId: number | "all") => {
-    if (categoryId === "all") return products.length;
-    return products.filter((p: Product) => p.categoryId === categoryId).length;
+    if (categoryId === "all") {
+      console.log("All products count:", products.length);
+      return products.length;
+    }
+    
+    const categoryProducts = products.filter((p: Product) => p.categoryId === categoryId);
+    console.log(`Category ${categoryId} products:`, categoryProducts.length, categoryProducts.map(p => p.name));
+    
+    return categoryProducts.length;
   };
 
   const handleBarcodeScan = () => {

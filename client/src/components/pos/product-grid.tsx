@@ -45,12 +45,27 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
       const filteredProducts = allProducts.filter((product: any) => {
         const isNotRawMaterial = product.productType !== 2;
         const isActive = product.isActive !== false;
-        console.log(`Product ${product.name}: productType=${product.productType}, isActive=${product.isActive}, included=${isNotRawMaterial && isActive}`);
-        return isNotRawMaterial && isActive;
+        const isIncluded = isNotRawMaterial && isActive;
+        
+        if (!isIncluded) {
+          console.log(`❌ Product ${product.name} excluded: productType=${product.productType}, isActive=${product.isActive}`);
+        } else {
+          console.log(`✅ Product ${product.name} included: category=${product.categoryId}`);
+        }
+        
+        return isIncluded;
       });
 
       console.log("Filtered products for POS:", filteredProducts);
       console.log("Products after filtering:", filteredProducts.length);
+      
+      // Group by category for debugging
+      const productsByCategory = filteredProducts.reduce((acc: any, product: any) => {
+        if (!acc[product.categoryId]) acc[product.categoryId] = [];
+        acc[product.categoryId].push(product.name);
+        return acc;
+      }, {});
+      console.log("Products grouped by category:", productsByCategory);
 
       return filteredProducts;
     },
