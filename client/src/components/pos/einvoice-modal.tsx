@@ -1363,10 +1363,34 @@ export function EInvoiceModal({
             <div className="flex justify-between items-center">
               <span className="font-medium">{t("einvoice.totalAmount")}</span>
               <span className="text-lg font-bold text-blue-600">
-                {total.toLocaleString("vi-VN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{" "}
+                {(() => {
+                  // Calculate correct total from cart items if available
+                  if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
+                    const subtotal = cartItems.reduce((sum, item) => {
+                      const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+                      const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+                      return sum + (itemPrice * itemQuantity);
+                    }, 0);
+
+                    const tax = cartItems.reduce((sum, item) => {
+                      const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+                      const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+                      const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+                      return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
+                    }, 0);
+
+                    return (subtotal + tax).toLocaleString("vi-VN", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    });
+                  }
+                  
+                  // Fallback to provided total
+                  return (typeof total === 'number' ? total : parseFloat(total || '0')).toLocaleString("vi-VN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  });
+                })()}{" "}
                 ₫
               </span>
             </div>
