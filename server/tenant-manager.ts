@@ -1,6 +1,5 @@
-
-import { Pool } from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "@shared/schema";
 
 interface TenantConfig {
@@ -22,39 +21,39 @@ class TenantManager {
     // Load tenant configurations from environment or main database
     const tenantsConfig = [
       {
-        subdomain: 'demo',
-        databaseUrl: process.env.DEMO_DATABASE_URL || process.env.DATABASE_URL!,
-        storeName: 'Demo Store - Cửa hàng demo',
-        isActive: true
+        subdomain: "demo",
+        databaseUrl: process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL!,
+        storeName: "Demo Store - Cửa hàng demo",
+        isActive: true,
       },
       {
-        subdomain: 'store1',
-        databaseUrl: process.env.STORE1_DATABASE_URL || process.env.DATABASE_URL!,
-        storeName: 'Store 1 - Cửa hàng số 1',
-        isActive: true
+        subdomain: "store1",
+        databaseUrl: process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL!,
+        storeName: "Store 1 - Cửa hàng số 1",
+        isActive: true,
       },
       {
-        subdomain: 'store2',
-        databaseUrl: process.env.STORE2_DATABASE_URL || process.env.DATABASE_URL!,
-        storeName: 'Store 2 - Cửa hàng số 2',
-        isActive: true
+        subdomain: "store2",
+        databaseUrl: process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL!,
+        storeName: "Store 2 - Cửa hàng số 2",
+        isActive: true,
       },
       {
-        subdomain: 'restaurant1',
-        databaseUrl: process.env.RESTAURANT1_DATABASE_URL || process.env.DATABASE_URL!,
-        storeName: 'Restaurant 1 - Nhà hàng số 1',
-        isActive: true
+        subdomain: "restaurant1",
+        databaseUrl: process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL!,
+        storeName: "Restaurant 1 - Nhà hàng số 1",
+        isActive: true,
       },
       {
-        subdomain: 'vitaly',
-        databaseUrl: process.env.VITALY_DATABASE_URL || process.env.DATABASE_URL!,
-        storeName: 'Vitaly - Nhà hàng Vitaly',
-        isActive: true
-      }
+        subdomain: "vitaly",
+        databaseUrl: process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL!,
+        storeName: "Vitaly - Nhà hàng Vitaly",
+        isActive: true,
+      },
       // Add more tenants as needed
     ];
 
-    tenantsConfig.forEach(config => {
+    tenantsConfig.forEach((config) => {
       this.tenants.set(config.subdomain, config);
     });
   }
@@ -73,18 +72,20 @@ class TenantManager {
       throw new Error(`Tenant not found: ${subdomain}`);
     }
 
-    const pool = new Pool({ 
+    const pool = new Pool({
       connectionString: tenant.databaseUrl,
       max: 10,
       idleTimeoutMillis: 60000,
       connectionTimeoutMillis: 10000,
       acquireTimeoutMillis: 10000,
-      ssl: tenant.databaseUrl?.includes('1.55.212.138') ? { rejectUnauthorized: false } : undefined,
+      ssl: tenant.databaseUrl?.includes("1.55.212.138")
+        ? { rejectUnauthorized: false }
+        : undefined,
     });
 
     const db = drizzle({ client: pool, schema });
     this.dbConnections.set(subdomain, db);
-    
+
     return db;
   }
 
