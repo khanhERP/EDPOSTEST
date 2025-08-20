@@ -11,7 +11,7 @@ import { Calendar, Search, FileText, Package, Printer, Mail, X, Download } from 
 import { Checkbox } from "@/components/ui/checkbox";
 import { useTranslation } from "@/lib/i18n";
 import * as XLSX from 'xlsx';
-import { EInvoiceModal } from "@/components/pos/einvoice-modal";
+
 
 interface Invoice {
   id: number;
@@ -95,8 +95,7 @@ export default function SalesOrders() {
   const [showBulkCancelDialog, setShowBulkCancelDialog] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-  const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
-  const [selectedInvoiceForPublish, setSelectedInvoiceForPublish] = useState<Invoice | null>(null);
+  
 
 
   // Query invoices
@@ -327,16 +326,13 @@ export default function SalesOrders() {
           console.error('❌ Error updating invoice after publish:', error);
           alert('Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái');
         }
+      } else {
+        alert(`Lỗi phát hành hóa đơn: ${result.message || 'Không xác định'}`);
       }
-
-      setShowEInvoiceModal(false);
-      setSelectedInvoiceForPublish(null);
     },
     onError: (error) => {
       console.error('❌ Error publishing invoice:', error);
       alert(`Lỗi phát hành hóa đơn: ${error.message}`);
-      setShowEInvoiceModal(false);
-      setSelectedInvoiceForPublish(null);
     }
   });
 
@@ -1451,9 +1447,104 @@ export default function SalesOrders() {
                                                     variant="outline" 
                                                     className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                                                     onClick={() => {
+                                                      console.log('Publishing invoice:', selectedInvoice?.id);
+                                                      // Implement publish request logic here
                                                       if (selectedInvoice) {
-                                                        setSelectedInvoiceForPublish(selectedInvoice);
-                                                        setShowEInvoiceModal(true);
+                                                        // Generate a new GUID for transactionID
+                                                        const generateGuid = () => {
+                                                          return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+                                                            /[xy]/g,
+                                                            function (c) {
+                                                              const r = (Math.random() * 16) | 0;
+                                                              const v = c === "x" ? r : (r & 0x3) | 0x8;
+                                                              return v.toString(16);
+                                                            },
+                                                          );
+                                                        };
+
+                                                        // Get items for this invoice/order
+                                                        const items = selectedInvoice?.type === 'order' ? orderItems : invoiceItems;
+                                                        
+                                                        if (!items || items.length === 0) {
+                                                          alert('Không có sản phẩm nào để phát hành hóa đơn');
+                                                          return;
+                                                        }
+
+                                                        // Calculate totals from items
+                                                        const subtotal = parseFloat(selectedInvoice.subtotal || '0');
+                                                        const tax = parseFloat(selectedInvoice.tax || '0');
+                                                        const total = parseFloat(selectedInvoice.total || '0');
+
+                                                        // Prepare publish request
+                                                        const publishRequest = {
+                                                          login: {
+                                                            providerId: 1,
+                                                            url: "https://infoerpvn.com:9440",
+                                                            ma_dvcs: "0316578736",
+                                                            username: "0316578736",
+                                                            password: "123456a@",
+                                                            tenantId: "",
+                                                          },
+                                                          transactionID: generateGuid(),
+                                                          invRef: `INV-${Date.now()}`,
+                                                          invSubTotal: Math.round(subtotal),
+                                                          invVatRate: 10,
+                                                          invVatAmount: Math.round(tax),
+                                                          invDiscAmount: 0,
+                                                          invTotalAmount: Math.round(total),
+                                                          paidTp: "TM",
+                                                          note: "",
+                                                          hdNo: "",
+                                                          createdDate: new Date().toISOString(),
+                                                          clsfNo: "01GTKT0/001",
+                                                          spcfNo: "1C25TYY",
+                                                          templateCode: "1C25TYY",
+                                                          buyerNotGetInvoice: 0,
+                                                          exchCd: "VND",
+                                                          exchRt: 1,
+                                                          bankAccount: "",
+                                                          bankName: "",
+                                                          customer: {
+                                                            custCd: selectedInvoice.customerTaxCode || "",
+                                                            custNm: selectedInvoice.customerName || "Khách hàng lẻ",
+                                                            custCompany: selectedInvoice.customerName || "Khách hàng lẻ",
+                                                            taxCode: selectedInvoice.customerTaxCode || "",
+                                                            custCity: "",
+                                                            custDistrictName: "",
+                                                            custAddrs: selectedInvoice.customerAddress || "",
+                                                            custPhone: selectedInvoice.customerPhone || "",
+                                                            custBankAccount: "",
+                                                            custBankName: "",
+                                                            email: selectedInvoice.customerEmail || "",
+                                                            emailCC: "",
+                                                          },
+                                                          products: items.map((item: any) => {
+                                                            const itemPrice = parseFloat(item.unitPrice);
+                                                            const itemQuantity = item.quantity;
+                                                            const itemTaxRate = parseFloat(item.taxRate || "10");
+                                                            const itemSubtotal = itemPrice * itemQuantity;
+                                                            const itemTax = (itemSubtotal * itemTaxRate) / 100;
+                                                            const itemTotal = itemSubtotal + itemTax;
+
+                                                            return {
+                                                              itmCd: `SP${String(item.productId).padStart(3, '0')}`,
+                                                              itmName: item.productName,
+                                                              itmKnd: 1,
+                                                              unitNm: "Cái",
+                                                              qty: itemQuantity,
+                                                              unprc: itemPrice,
+                                                              amt: Math.round(itemSubtotal),
+                                                              discRate: 0,
+                                                              discAmt: 0,
+                                                              vatRt: itemTaxRate.toString(),
+                                                              vatAmt: Math.round(itemTax),
+                                                              totalAmt: Math.round(itemTotal),
+                                                            };
+                                                          }),
+                                                        };
+
+                                                        // Call publish API directly
+                                                        publishRequestMutation.mutate(publishRequest);
                                                       }
                                                     }}
                                                     disabled={selectedInvoice?.einvoiceStatus !== 0}
@@ -1633,138 +1724,7 @@ export default function SalesOrders() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* E-Invoice Modal */}
-      {showEInvoiceModal && selectedInvoiceForPublish && (
-        <EInvoiceModal
-          isOpen={showEInvoiceModal}
-          onClose={() => {
-            setShowEInvoiceModal(false);
-            setSelectedInvoiceForPublish(null);
-          }}
-          onConfirm={(invoiceData) => {
-            console.log('📧 Publishing invoice with data:', invoiceData);
-            
-            // Generate a new GUID for transactionID
-            const generateGuid = () => {
-              return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-                /[xy]/g,
-                function (c) {
-                  const r = (Math.random() * 16) | 0;
-                  const v = c === "x" ? r : (r & 0x3) | 0x8;
-                  return v.toString(16);
-                },
-              );
-            };
-
-            // Prepare cart items from invoice items
-            const items = selectedInvoice?.type === 'order' ? orderItems : invoiceItems;
-            const cartItems = items.map((item: any) => ({
-              id: item.productId,
-              name: item.productName,
-              price: parseFloat(item.unitPrice),
-              quantity: item.quantity,
-              sku: `SP${String(item.productId).padStart(3, '0')}`,
-              taxRate: parseFloat(item.taxRate || '10')
-            }));
-
-            // Calculate totals
-            const subtotal = parseFloat(selectedInvoiceForPublish.subtotal || '0');
-            const tax = parseFloat(selectedInvoiceForPublish.tax || '0');
-            const total = parseFloat(selectedInvoiceForPublish.total || '0');
-
-            // Find selected template (use first available template as fallback)
-            const selectedTemplate = {
-              templateNumber: "01GTKT0/001",
-              name: "1C25TYY",
-              templateCode: "1C25TYY",
-              symbol: "C11DTD"
-            };
-
-            // Prepare publish request
-            const publishRequest = {
-              login: {
-                providerId: 1,
-                url: "https://infoerpvn.com:9440",
-                ma_dvcs: "0316578736",
-                username: "0316578736",
-                password: "123456a@",
-                tenantId: "",
-              },
-              transactionID: generateGuid(),
-              invRef: `INV-${Date.now()}`,
-              invSubTotal: Math.round(subtotal),
-              invVatRate: 10,
-              invVatAmount: Math.round(tax),
-              invDiscAmount: 0,
-              invTotalAmount: Math.round(total),
-              paidTp: "TM",
-              note: "",
-              hdNo: "",
-              createdDate: new Date().toISOString(),
-              clsfNo: selectedTemplate.templateNumber,
-              spcfNo: selectedTemplate.name,
-              templateCode: selectedTemplate.templateCode,
-              buyerNotGetInvoice: 0,
-              exchCd: "VND",
-              exchRt: 1,
-              bankAccount: "",
-              bankName: "",
-              customer: {
-                custCd: invoiceData.taxCode || '',
-                custNm: invoiceData.customerName || 'Khách hàng lẻ',
-                custCompany: invoiceData.customerName || 'Khách hàng lẻ',
-                taxCode: invoiceData.taxCode || '',
-                custCity: "",
-                custDistrictName: "",
-                custAddrs: invoiceData.address || "",
-                custPhone: invoiceData.phoneNumber || "",
-                custBankAccount: "",
-                custBankName: "",
-                email: invoiceData.email || "",
-                emailCC: "",
-              },
-              products: cartItems.map((item, index) => {
-                const itemPrice = item.price;
-                const itemQuantity = item.quantity;
-                const itemTaxRate = item.taxRate;
-                const itemSubtotal = itemPrice * itemQuantity;
-                const itemTax = (itemSubtotal * itemTaxRate) / 100;
-                const itemTotal = itemSubtotal + itemTax;
-
-                return {
-                  itmCd: item.sku,
-                  itmName: item.name,
-                  itmKnd: 1,
-                  unitNm: "Cái",
-                  qty: itemQuantity,
-                  unprc: itemPrice,
-                  amt: Math.round(itemSubtotal),
-                  discRate: 0,
-                  discAmt: 0,
-                  vatRt: itemTaxRate.toString(),
-                  vatAmt: Math.round(itemTax),
-                  totalAmt: Math.round(itemTotal),
-                };
-              }),
-            };
-
-            publishRequestMutation.mutate(publishRequest);
-          }}
-          total={parseFloat(selectedInvoiceForPublish?.total || '0')}
-          cartItems={(() => {
-            const items = selectedInvoiceForPublish?.type === 'order' ? orderItems : invoiceItems;
-            return items.map((item: any) => ({
-              id: item.productId,
-              name: item.productName,
-              price: parseFloat(item.unitPrice),
-              quantity: item.quantity,
-              sku: `SP${String(item.productId).padStart(3, '0')}`,
-              taxRate: parseFloat(item.taxRate || '10')
-            }));
-          })()}
-          source="sales-orders"
-        />
-      )}
+      
     </div>
   );
 }
