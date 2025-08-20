@@ -55,32 +55,44 @@ export function SalesReport() {
     new Date().toISOString().split("T")[0],
   );
 
-  // Fetch orders with proper error handling (like dashboard)
-  const { data: orders, isLoading: ordersLoading, error: ordersError, refetch } = useQuery({
+  // Query orders - same as dashboard-overview
+  const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
     queryKey: ["/api/orders"],
     queryFn: async () => {
       try {
         const response = await fetch("/api/orders");
         if (!response.ok) {
-          throw new Error(`Failed to fetch orders: ${response.status}`);
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        
-        // Ensure we always return an array
-        if (!Array.isArray(data)) {
-          console.warn("Orders API returned non-array data:", data);
-          return [];
-        }
-        
-        return data;
+        return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error("Error fetching orders:", error);
-        throw error;
+        console.error('Error fetching orders:', error);
+        return [];
       }
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes cache
     retry: 3,
-    refetchOnWindowFocus: false,
+    retryDelay: 1000,
+  });
+
+  // Query invoices - same as dashboard-overview
+  const { data: invoices = [], isLoading: invoicesLoading } = useQuery({
+    queryKey: ["/api/invoices"],
+    queryFn: async () => {
+      try {
+        const response = await fetch(`/api/invoices`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching invoices:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const getSalesData = () => {
@@ -95,59 +107,77 @@ export function SalesReport() {
       averageOrderValue: 0,
     };
 
-    if (!orders || !Array.isArray(orders) || orders.length === 0) {
-      return defaultData;
-    }
-
     try {
       const start = new Date(startDate);
       const end = new Date(endDate);
       end.setHours(23, 59, 59, 999);
 
-      console.log("Sales Report Debug:", {
-        totalOrders: orders.length,
-        startDate,
-        endDate,
-        firstOrder: orders[0],
-        completedOrders: orders.filter((o: any) => o.status === 'completed' || o.status === 'paid').length,
-        sampleOrderDates: orders.slice(0, 5).map((o: any) => ({
-          id: o.id,
-          status: o.status,
-          orderedAt: o.orderedAt,
-          createdAt: o.createdAt,
-          created_at: o.created_at,
-          paidAt: o.paidAt,
-          parsedDate: new Date(o.orderedAt || o.createdAt || o.created_at || o.paidAt).toISOString()
-        })),
-      });
+      // Combine invoices and orders data - same logic as dashboard-overview
+      const combinedData = [
+        ...(Array.isArray(invoices) ? invoices.map((invoice: any) => ({
+          ...invoice,
+          type: 'invoice' as const,
+          date: invoice.invoiceDate,
+          displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
+          displayStatus: invoice.invoiceStatus || 1,
+          customerName: invoice.customerName || 'Khách hàng lẻ',
+          customerPhone: invoice.customerPhone || '',
+          customerAddress: invoice.customerAddress || '',
+          customerTaxCode: invoice.customerTaxCode || '',
+          symbol: invoice.symbol || 'C11DTD',
+          einvoiceStatus: invoice.einvoiceStatus || 0
+        })) : []),
+        ...(Array.isArray(orders) ? orders.map((order: any) => ({
+          ...order,
+          type: 'order' as const,
+          date: order.orderedAt,
+          displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
+          displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+          customerName: order.customerName || 'Khách hàng lẻ',
+          invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+          customerPhone: '',
+          customerAddress: '',
+          customerTaxCode: '',
+          symbol: 'C11DTD',
+          einvoiceStatus: order.einvoiceStatus || 0
+        })) : [])
+      ];
 
-      // Filter completed orders by date range (EXACT same logic as dashboard)
-      const filteredOrders = orders.filter((order: any) => {
-        // Check if order is completed/paid
-        if (order.status !== 'completed' && order.status !== 'paid') return false;
+      // Filter completed items within date range - same logic as dashboard-overview
+      const filteredCompletedItems = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
+        try {
+          if (!item || !item.date) return false;
 
-        // Try multiple possible date fields
-        const orderDate = new Date(
-          order.orderedAt || order.createdAt || order.created_at || order.paidAt
-        );
+          const itemDate = new Date(item.date);
+          if (isNaN(itemDate.getTime())) return false;
 
-        // Skip if date is invalid
-        if (isNaN(orderDate.getTime())) {
-          console.log('Invalid order date for order:', order.id, 'date fields:', {
-            orderedAt: order.orderedAt,
-            createdAt: order.createdAt,
-            created_at: order.created_at,
-            paidAt: order.paidAt
-          });
+          const dateMatch = itemDate >= start && itemDate <= end;
+          
+          // Only include completed/paid items
+          const isCompleted = (item.type === 'invoice' && item.invoiceStatus === 1) ||
+                            (item.type === 'order' && (item.status === 'paid' || item.status === 'completed'));
+
+          return dateMatch && isCompleted;
+        } catch (error) {
+          console.error('Error filtering item:', item, error);
           return false;
         }
+      }) : [];
 
-        return orderDate >= start && orderDate <= end;
-      });
-
-      console.log("Sales Report Filtered:", {
-        filteredOrdersCount: filteredOrders.length,
-        dateRange: `${startDate} to ${endDate}`
+      console.log("Sales Report Debug (Combined Data):", {
+        totalInvoices: invoices.length,
+        totalOrders: orders.length,
+        combinedDataLength: combinedData.length,
+        startDate,
+        endDate,
+        filteredCompletedItems: filteredCompletedItems.length,
+        sampleItems: filteredCompletedItems.slice(0, 5).map((item: any) => ({
+          id: item.id,
+          type: item.type,
+          displayStatus: item.displayStatus,
+          date: item.date,
+          total: item.total
+        })),
       });
 
       // Daily sales breakdown with EXACT same logic as dashboard
@@ -155,17 +185,15 @@ export function SalesReport() {
         [date: string]: { revenue: number; orders: number; customers: number };
       } = {};
 
-      filteredOrders.forEach((order: any) => {
+      filteredCompletedItems.forEach((item: any) => {
         try {
-          const orderDate = new Date(
-            order.orderedAt || order.createdAt || order.created_at || order.paidAt
-          );
+          const itemDate = new Date(item.date);
 
-          if (isNaN(orderDate.getTime())) return;
+          if (isNaN(itemDate.getTime())) return;
 
-          const year = orderDate.getFullYear();
-          const month = (orderDate.getMonth() + 1).toString().padStart(2, "0");
-          const day = orderDate.getDate().toString().padStart(2, "0");
+          const year = itemDate.getFullYear();
+          const month = (itemDate.getMonth() + 1).toString().padStart(2, "0");
+          const day = itemDate.getDate().toString().padStart(2, "0");
           const date = `${year}-${month}-${day}`;
 
           if (!dailySales[date]) {
@@ -173,19 +201,19 @@ export function SalesReport() {
           }
 
           // Use EXACT same revenue calculation as dashboard: total - discount
-          const orderTotal = Number(order.total || 0);
-          const discount = Number(order.discount || 0);
-          dailySales[date].revenue += orderTotal - discount;
+          const itemTotal = Number(item.total || 0);
+          const discount = Number(item.discount || 0);
+          dailySales[date].revenue += itemTotal - discount;
           dailySales[date].orders += 1;
 
           // Count unique customers per day
-          if (order.customerId) {
+          if (item.customerId) {
             dailySales[date].customers += 1;
           } else {
             dailySales[date].customers += 1; // Count walk-in customers
           }
         } catch (error) {
-          console.warn("Error processing order for daily sales:", error);
+          console.warn("Error processing item for daily sales:", error);
         }
       });
 
@@ -194,9 +222,9 @@ export function SalesReport() {
         [method: string]: { count: number; revenue: number };
       } = {};
 
-      filteredOrders.forEach((order: any) => {
+      filteredCompletedItems.forEach((item: any) => {
         try {
-          const method = order.paymentMethod || "cash";
+          const method = item.paymentMethod || "cash";
           if (!paymentMethods[method]) {
             paymentMethods[method] = { count: 0, revenue: 0 };
           }
@@ -204,57 +232,55 @@ export function SalesReport() {
           paymentMethods[method].count += 1;
           
           // Use EXACT same revenue calculation as dashboard: total - discount
-          const orderTotal = Number(order.total || 0);
-          const discount = Number(order.discount || 0);
-          paymentMethods[method].revenue += orderTotal - discount;
+          const itemTotal = Number(item.total || 0);
+          const discount = Number(item.discount || 0);
+          paymentMethods[method].revenue += itemTotal - discount;
         } catch (error) {
-          console.warn("Error processing order for payment methods:", error);
+          console.warn("Error processing item for payment methods:", error);
         }
       });
 
       // Hourly breakdown with error handling
       const hourlySales: { [hour: number]: number } = {};
-      filteredOrders.forEach((order: any) => {
+      filteredCompletedItems.forEach((item: any) => {
         try {
-          const orderDate = new Date(
-            order.orderedAt || order.createdAt || order.created_at || order.paidAt
-          );
+          const itemDate = new Date(item.date);
           
-          if (isNaN(orderDate.getTime())) return;
+          if (isNaN(itemDate.getTime())) return;
           
-          const hour = orderDate.getHours();
-          const orderTotal = Number(order.total || 0);
-          const discount = Number(order.discount || 0);
-          const revenue = orderTotal - discount;
+          const hour = itemDate.getHours();
+          const itemTotal = Number(item.total || 0);
+          const discount = Number(item.discount || 0);
+          const revenue = itemTotal - discount;
           
           if (!isNaN(revenue) && revenue > 0) {
             hourlySales[hour] = (hourlySales[hour] || 0) + revenue;
           }
         } catch (error) {
-          console.warn("Error processing order for hourly sales:", error);
+          console.warn("Error processing item for hourly sales:", error);
         }
       });
 
       // Calculate totals using EXACT same logic as dashboard
-      const totalRevenue = filteredOrders.reduce(
-        (total: number, order: any) => {
-          const orderTotal = Number(order.total || 0);
-          const discount = Number(order.discount || 0);
-          return total + (orderTotal - discount);
+      const totalRevenue = filteredCompletedItems.reduce(
+        (total: number, item: any) => {
+          const itemTotal = Number(item.total || 0);
+          const discount = Number(item.discount || 0);
+          return total + (itemTotal - discount);
         },
         0,
       );
       
-      const totalOrders = filteredOrders.length;
+      const totalOrders = filteredCompletedItems.length;
       
       // Count unique customers EXACTLY like dashboard does
       const uniqueCustomers = new Set();
-      filteredOrders.forEach((order: any) => {
-        if (order.customerId) {
-          uniqueCustomers.add(order.customerId);
+      filteredCompletedItems.forEach((item: any) => {
+        if (item.customerId) {
+          uniqueCustomers.add(item.customerId);
         } else {
-          // If no customer ID, count as unique customer per order
-          uniqueCustomers.add(`order_${order.id}`);
+          // If no customer ID, count as unique customer per item
+          uniqueCustomers.add(`item_${item.id}`);
         }
       });
       const totalCustomers = uniqueCustomers.size;
@@ -405,6 +431,7 @@ export function SalesReport() {
 
   const salesData = getSalesData();
   const hasError = !!ordersError;
+  const isLoading = ordersLoading || invoicesLoading;
 
   const peakHour = salesData && Object.keys(salesData.hourlySales).length > 0 
     ? Object.entries(salesData.hourlySales).reduce(
@@ -432,7 +459,7 @@ export function SalesReport() {
           <p className="text-sm text-gray-600 mb-4">
             {ordersError?.message || "Không thể tải dữ liệu đơn hàng"}
           </p>
-          <Button onClick={handleRefresh} variant="outline" size="sm">
+          <Button onClick={() => window.location.reload()} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" />
             {t("reports.refresh")}
           </Button>
@@ -520,7 +547,7 @@ export function SalesReport() {
       </Card>
 
       {/* Content */}
-      {ordersLoading ? (
+      {isLoading ? (
         <LoadingSkeleton />
       ) : hasError ? (
         <ErrorState />
