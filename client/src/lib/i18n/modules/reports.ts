@@ -114,9 +114,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     tableName: "Bàn",
     employeeName: "Tên nhân viên",
     totalCustomerPayment: "Tổng thanh toán khách hàng",
-    productType: "Loại hàng",
     combo: "Combo",
-    product: "Hàng hóa",
     service: "Dịch vụ",
     productFilterPlaceholder: "Tìm theo tên hoặc mã",
 
@@ -199,30 +197,16 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Comprehensive sales report
     comprehensiveSalesReport: "Báo cáo bán hàng toàn diện",
-    concernType: "Loại quan tâm",
     timeReport: "Báo cáo thời gian",
     profitReport: "Báo cáo lợi nhuận",
     discountReport: "Báo cáo giảm giá",
     returnReport: "Báo cáo trả hàng",
     salesDetailReport: "Chi tiết bán hàng",
-    orderCode: "Mã đơn bán",
     customerCode: "Mã khách hàng",
     searchOrderCode: "Tìm theo mã đơn bán",
     searchTable: "Tìm theo bàn",
     pending: "Đang chờ",
-    discount: "Giảm giá",
-    revenue: "Doanh thu",
-    tax: "Thuế",
-    total: "Tổng cộng",
-    unitPrice: "Đơn giá",
-    amount: "Thành tiền",
-    exportTax: "Thuế xuất",
-    vatTax: "Thuế GTGT",
-    productGroup: "Nhóm hàng",
-    salesChannel: "Kênh bán",
-    tableName: "Bàn",
     table: "Bàn",
-    employeeName: "Tên nhân viên",
     taxRate: "Thuế suất",
     taxAmount: "Số tiền thuế",
     group: "Nhóm",
@@ -303,7 +287,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
       "Xem các chỉ số hoạt động chi tiết của từng bàn",
     currentStatus: "Trạng thái hiện tại",
     orderCount: "Số đơn hàng",
-    orders: "Đơn hàng",
     peakTime: "Giờ cao điểm",
     timesPerDay: " lần/ngày",
     hourUnit: " giờ",
@@ -318,7 +301,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Inventory report concern types
     concernType: "Phân tích theo",
-    inventoryValue: "Giá trị kho",
     inOutInventory: "Xuất nhập tồn",
     detailedInOutInventory: "Xuất nhập tồn chi tiết",
     disposal: "Xuất hủy",
@@ -360,7 +342,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     quantityPurchased: "Số lượng mua",
     supplierCount: "Số nhà cung cấp",
     inValue: "Giá trị nhập",
-    productSearch: "Tìm sản phẩm",
 
     // Additional missing keys
     period: "Kỳ",
@@ -392,9 +373,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     costAnalysis: "Phân tích chi phí",
     stockMovement: "Di chuyển tồn kho",
     menuAnalysisDescription: "Phân tích hiệu suất menu và sản phẩm bán chạy",
-
-    // Table Analysis
-
     // Missing keys for menu report
     menuItems: "Món ăn",
     itemsSold: "Đã bán",
@@ -411,16 +389,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noSalesData: "Không có dữ liệu bán hàng",
     noRevenueData: "Không có dữ liệu doanh thu",
     productType: "Loại sản phẩm",
-    combo: "Combo",
     product: "Sản phẩm",
-    service: "Dịch vụ",
-
     // Table analysis
     tablePerformance: "Hiệu suất bàn",
     utilizationRate: "Tỷ lệ sử dụng",
     averageRevenue: "Doanh thu trung bình",
     peakHours: "Giờ cao điểm",
-    tableUtilization: "Tỷ lệ sử dụng bàn",
     revenuePerTable: "Doanh thu mỗi bàn",
     ordersPerTable: "Đ��n hàng mỗi bàn",
 
@@ -456,18 +430,13 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     transactionDetails: "Chi tiết giao dịch",
     transactionId: "ID giao dịch",
     method: "Phương thức",
-    amount: "Số tiền",
     notes: "Ghi chú",
     cashPayment: "Thanh toán tiền mặt",
     cardPayment: "Thanh toán thẻ",
     transfer: "Chuyển khoản",
     wallet: "Ví điện tử",
-
     // Status
     status: "Trạng thái",
-    active: "Hoạt động",
-    inactive: "Không hoạt động",
-
     // Additional report sections
     detailedAnalysis: "Phân tích chi tiết",
     quickSummary: "Tóm tắt nhanh",
@@ -491,16 +460,10 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cashFlow: "Dòng tiền",
 
     // Customer reports
-    customerSalesReport: "Báo cáo bán hàng khách hàng",
     channelSalesReport: "Báo cáo bán hàng kênh",
-    employeeSalesReport: "Báo cáo bán hàng nhân viên",
-    employeeId: "Mã nhân viên",
-    customerId: "Mã khách hàng",
-    customerName: "Tên khách hàng",
 
     // Supplier reports
     supplierReportDescription: "Báo cáo chi tiết về nhà cung cấp",
-    purchaseReport: "Báo cáo mua hàng",
     supplierPerformance: "Hiệu suất nhà cung cấp",
 
     // Inventory reports
@@ -511,8 +474,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Additional menu items
     warehouseReport: "Báo cáo kho",
-    warehouseReportDescription: "Báo cáo chi tiết hoạt động kho",
-
     // Chart and filter labels
     selectDateRange: "Chọn khoảng thời gian",
     applyFilter: "Áp dụng bộ lọc",
@@ -628,7 +589,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     combo: "콤보",
     product: "상품",
     service: "서비스",
-    productFilterPlaceholder: "코드, 이름으로 검색",
 
     // Product report columns
     productCode: "상품 코드",
@@ -683,7 +643,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     draft: "임시저장",
     confirmed: "확인됨",
     delivering: "배송중",
-    completed: "완료",
     customer: "고객",
     customerSearch: "고객",
     customerSearchPlaceholder: "이름 또는 전화번호로 검색",
@@ -717,22 +676,14 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     discountReport: "할인 보고서",
     returnReport: "반품 보고서",
     salesDetailReport: "판매 세부사항",
-    orderCode: "판매 코드",
     searchOrderCode: "판매 코드로 검색",
     searchTable: "테이블로 검색",
     pending: "대기중",
     completed: "완료됨",
-    subtotal: "소계",
-    discount: "할인",
-    revenue: "매출",
-    tax: "세금",
-    total: "합계",
     unitPrice: "단가",
     amount: "금액",
     exportTax: "수출세",
     vatTax: "부가세",
-    productGroup: "상품 그룹",
-    salesChannel: "판매 채널",
     tableName: "테이블명",
     table: "테이블",
     employeeName: "직원명",
@@ -813,7 +764,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     detailedTablePerformanceDesc: "각 테이블의 상세 운영 지표 확인",
     currentStatus: "현재 상태",
     orderCount: "주문 수",
-    orders: "주문",
     peakTime: "피크 시간",
     timesPerDay: " 회/일",
     hourUnit: " 시간",
@@ -827,14 +777,12 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     warehouseReportDescription: "창고 활동에 대한 상세 보고서",
 
     // Inventory report concern types
-    concernType: "분석 기준",
     inventoryValue: "재고 가치",
     inOutInventory: "입출고",
     detailedInOutInventory: "상세 입출고",
     disposal: "폐기",
 
     // Inventory report additional keys
-    inventoryValue: "재고 가치",
     profitReportByProduct: "상품별 수익 보고서",
     inventoryValueReport: "재고 가치 보고서",
     inOutInventoryReport: "입출고 보고서",
@@ -870,7 +818,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     quantityPurchased: "구매 수량",
     supplierCount: "공급업체 수",
     inValue: "입고 가치",
-    productSearch: "상품 검색",
 
     // Additional missing keys
     period: "기간",
@@ -920,10 +867,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noCategoryData: "카테고리 데이터 없음",
     noSalesData: "판매 데이터 없음",
     noRevenueData: "매출 데이터 없음",
-    productType: "상품 유형",
-    combo: "콤보",
-    product: "상품",
-    service: "서비스",
 
     // Table analysis
     tablePerformance: "테이블 성과",
@@ -952,7 +895,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     summaryReportTitle: "요약 보고서",
 
     // Table detail headers
-    salesDetailsHeader: "매출 세부사항",
+    salesDetailsHeader: " ��출 세부사항",
     revenueExpenseDetailsHeader: "수입 지출 세부사항",
     inventoryDetailsHeader: "재고 세부사항",
 
@@ -964,7 +907,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     transactionDetails: "거래 세부사항",
     transactionId: "거래 ID",
     method: "방법",
-    amount: "금액",
     notes: "메모",
     cashPayment: "현금 결제",
     cardPayment: "카드 결제",
@@ -999,9 +941,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     cashFlow: "현금 흐름",
 
     // Customer reports
-    customerSalesReport: "고객 매출 보고서",
     channelSalesReport: "채널 매출 보고서",
-    employeeSalesReport: "직원 매출 보고서",
 
     // Supplier reports
     supplierReportDescription: "공급업체에 대한 상세 보고서",
@@ -1015,7 +955,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
 
     // Additional menu items
     warehouseReport: "창고 보고서",
-    warehouseReportDescription: "창고 활동에 대한 상세 보고서",
 
     // Chart and filter labels
     selectDateRange: "날짜 범위 선택",
