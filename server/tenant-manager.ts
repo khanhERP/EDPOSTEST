@@ -22,31 +22,34 @@ class TenantManager {
     const tenantsConfig = [
       {
         subdomain: "demo",
-        databaseUrl: process.env.EXTERNAL_DB_URL,
+        databaseUrl: process.env.DEMO_DATABASE_URL || process.env.DATABASE_URL!,
         storeName: "Demo Store - Cửa hàng demo",
         isActive: true,
       },
       {
         subdomain: "store1",
-        databaseUrl: process.env.EXTERNAL_DB_URL,
+        databaseUrl:
+          process.env.STORE1_DATABASE_URL || process.env.DATABASE_URL!,
         storeName: "Store 1 - Cửa hàng số 1",
         isActive: true,
       },
       {
         subdomain: "store2",
-        databaseUrl: process.env.EXTERNAL_DB_URL,
+        databaseUrl:
+          process.env.STORE2_DATABASE_URL || process.env.DATABASE_URL!,
         storeName: "Store 2 - Cửa hàng số 2",
         isActive: true,
       },
       {
         subdomain: "restaurant1",
-        databaseUrl: process.env.EXTERNAL_DB_URL,
+        databaseUrl:
+          process.env.RESTAURANT1_DATABASE_URL || process.env.DATABASE_URL!,
         storeName: "Restaurant 1 - Nhà hàng số 1",
         isActive: true,
       },
       {
         subdomain: "vitaly",
-        databaseUrl: process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL!,
+        databaseUrl: process.env.EXTERNAL_DB_URL,
         storeName: "Vitaly - Nhà hàng Vitaly",
         isActive: true,
       },
@@ -59,7 +62,7 @@ class TenantManager {
   }
 
   getTenantBySubdomain(subdomain: string): TenantConfig | null {
-    return this.tenants.get(subdomain) || null;
+    return this.tenants.get("vitaly") || null;
   }
 
   async getDatabaseConnection(subdomain: string) {
