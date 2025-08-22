@@ -1935,7 +1935,8 @@ export default function SalesOrders() {
                         products: items.map((item: any) => {
                           const itemPrice = parseFloat(item.unitPrice);
                           const itemQuantity = item.quantity;
-                          const itemTaxRate = parseFloat(item.taxRate || "10");
+                          // Use actual tax rate from product, default to 0 if not specified
+                          const itemTaxRate = parseFloat(item.taxRate || "0");
                           const itemSubtotal = itemPrice * itemQuantity;
                           const itemTax = (itemSubtotal * itemTaxRate) / 100;
                           const itemTotal = itemSubtotal + itemTax;
