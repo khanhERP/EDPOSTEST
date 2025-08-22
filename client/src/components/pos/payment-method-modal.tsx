@@ -227,13 +227,13 @@ export function PaymentMethodModal({
       try {
         setQrLoading(true);
         const transactionUuid = `TXN-${Date.now()}`;
-        
+
         // Calculate total including tax for QR payment
         const totalWithTax = cartItems && cartItems.length > 0 ? 
           cartItems.reduce((sum, item) => {
             const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
             const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-            const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+            const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
             return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
           }, 0) : 
           total;
@@ -343,7 +343,7 @@ export function PaymentMethodModal({
             cartItems.reduce((sum, item) => {
               const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
               const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-              const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+              const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
               return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
             }, 0) : 
             total;
@@ -373,7 +373,7 @@ export function PaymentMethodModal({
           cartItems.reduce((sum, item) => {
             const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
             const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-            const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+            const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
             return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
           }, 0) : 
           total;
@@ -441,13 +441,13 @@ export function PaymentMethodModal({
 
   const handleCashPaymentComplete = () => {
     const receivedAmount = parseFloat(amountReceived) || 0;
-    
+
     // Calculate total including tax for cash payment
     const totalWithTax = cartItems && cartItems.length > 0 ? 
       cartItems.reduce((sum, item) => {
         const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
         const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
         return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
       }, 0) : 
       total;
@@ -530,7 +530,7 @@ export function PaymentMethodModal({
       cartItems.reduce((sum, item) => {
         const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
         const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
         return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
       }, 0) : 
       total)) {
@@ -708,7 +708,7 @@ export function PaymentMethodModal({
                       const tax = cartItems.reduce((sum, item) => {
                         const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                         const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+                        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
                         return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
                       }, 0);
 
@@ -818,7 +818,7 @@ export function PaymentMethodModal({
                         const tax = cartItems.reduce((sum, item) => {
                           const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                           const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                          const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+                          const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
                           return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
                         }, 0);
 
@@ -952,7 +952,7 @@ export function PaymentMethodModal({
                         const tax = cartItems.reduce((sum, item) => {
                           const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                           const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                          const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+                          const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
                           return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
                         }, 0);
 
@@ -1006,7 +1006,7 @@ export function PaymentMethodModal({
                     cartItems.reduce((sum, item) => {
                       const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                       const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                      const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+                      const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
                       return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
                     }, 0) : 
                     total) && (
@@ -1020,7 +1020,7 @@ export function PaymentMethodModal({
                             cartItems.reduce((sum, item) => {
                               const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                               const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                              const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+                              const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
                               return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
                             }, 0) : 
                             total)).toLocaleString(
@@ -1040,7 +1040,7 @@ export function PaymentMethodModal({
                     cartItems.reduce((sum, item) => {
                       const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                       const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                      const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+                      const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
                       return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
                     }, 0) : 
                     total) && (
@@ -1054,7 +1054,7 @@ export function PaymentMethodModal({
                             cartItems.reduce((sum, item) => {
                               const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                               const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                              const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+                              const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
                               return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
                             }, 0) : 
                             total) - parseFloat(amountReceived)).toLocaleString(
@@ -1142,7 +1142,7 @@ export function PaymentMethodModal({
                       cartItems.reduce((sum, item) => {
                         const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                         const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+                        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
                         return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
                       }, 0) : 
                       total)
@@ -1175,7 +1175,7 @@ export function PaymentMethodModal({
               const tax = cartItems.reduce((sum, item) => {
                 const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                 const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+                const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
                 return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
               }, 0);
               return subtotal + tax;
@@ -1199,7 +1199,7 @@ export function PaymentMethodModal({
                 price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
                 quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
                 sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
-                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
+                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0)
               }));
               console.log("🔧 Processed cartItems for e-invoice:", processedCartItems);
               return processedCartItems;
