@@ -61,14 +61,20 @@ export function ShoppingCart({
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = Math.round(
     cart.reduce((sum, item) => {
-      if (item.taxRate && parseFloat(item.taxRate) > 0) {
-        return (
-          sum +
-          ((parseFloat(item.price) * parseFloat(item.taxRate)) / 100) *
-            item.quantity
-        );
-      }
-      return sum;
+      // Use actual tax rate from item
+      const itemTaxRate = (() => {
+        if (item.taxRate !== undefined && item.taxRate !== null) {
+          if (typeof item.taxRate === 'string') {
+            const parsed = parseFloat(item.taxRate);
+            return isNaN(parsed) ? 0 : parsed;
+          } else if (typeof item.taxRate === 'number') {
+            return isNaN(item.taxRate) ? 0 : item.taxRate;
+          }
+        }
+        return 0; // Use 0% if no tax rate specified
+      })();
+      
+      return sum + ((parseFloat(item.price) * itemTaxRate) / 100) * item.quantity;
     }, 0),
   );
   const total = Math.round(subtotal + tax);
@@ -83,14 +89,20 @@ export function ShoppingCart({
   const calculateTax = () =>
     Math.round(
       cart.reduce((sum, item) => {
-        if (item.taxRate && parseFloat(item.taxRate) > 0) {
-          return (
-            sum +
-            ((parseFloat(item.price) * parseFloat(item.taxRate)) / 100) *
-              item.quantity
-          );
-        }
-        return sum;
+        // Use actual tax rate from item
+        const itemTaxRate = (() => {
+          if (item.taxRate !== undefined && item.taxRate !== null) {
+            if (typeof item.taxRate === 'string') {
+              const parsed = parseFloat(item.taxRate);
+              return isNaN(parsed) ? 0 : parsed;
+            } else if (typeof item.taxRate === 'number') {
+              return isNaN(item.taxRate) ? 0 : item.taxRate;
+            }
+          }
+          return 0; // Use 0% if no tax rate specified
+        })();
+        
+        return sum + ((parseFloat(item.price) * itemTaxRate) / 100) * item.quantity;
       }, 0),
     );
   const calculateTotal = () => Math.round(calculateSubtotal() + calculateTax());

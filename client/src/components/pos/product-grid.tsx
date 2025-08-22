@@ -81,7 +81,13 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
       return;
     }
 
-    onAddToCart(product);
+    // Ensure product has correct tax rate from database
+    const productWithTax = {
+      ...product,
+      taxRate: product.taxRate || "0" // Use actual tax rate from product, default to 0 if not set
+    };
+
+    onAddToCart(productWithTax);
     // Trigger toast notification for successful add to cart
     toast({
       title: t('pos.addedToCartShort'),

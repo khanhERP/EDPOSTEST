@@ -233,7 +233,18 @@ export function PaymentMethodModal({
           cartItems.reduce((sum, item) => {
             const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
             const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-            const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
+            // Use actual tax rate from item, default to 0 if not specified
+            const itemTaxRate = (() => {
+              if (item.taxRate !== undefined && item.taxRate !== null) {
+                if (typeof item.taxRate === 'string') {
+                  const parsed = parseFloat(item.taxRate);
+                  return isNaN(parsed) ? 0 : parsed;
+                } else if (typeof item.taxRate === 'number') {
+                  return isNaN(item.taxRate) ? 0 : item.taxRate;
+                }
+              }
+              return 0; // Use 0% if no tax rate specified
+            })();
             return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
           }, 0) : 
           total;
