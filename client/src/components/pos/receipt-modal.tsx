@@ -409,13 +409,15 @@ export function ReceiptModal({
               <span>Thuế</span>
               <span>
                 {(() => {
-                  // Always calculate tax using individual product tax rates
+                  // Calculate tax using actual product tax rates from receipt items
                   const totalTax = receipt.items.reduce((sum, item) => {
                     const basePrice = parseFloat(item.price);
                     const quantity = item.quantity;
                     
-                    // Get the actual tax rate from the item, ensuring it uses the real taxRate from the product
+                    // Get the actual tax rate from the item - use actual taxRate from product
                     let itemTaxRate = 0;
+                    
+                    // Check if item has taxRate property (from the product)
                     if (item.taxRate !== undefined && item.taxRate !== null) {
                       if (typeof item.taxRate === 'string') {
                         const parsedRate = parseFloat(item.taxRate);
@@ -424,13 +426,14 @@ export function ReceiptModal({
                         itemTaxRate = item.taxRate;
                       }
                     }
-
+                    // If no taxRate in item, default to 0% not 10%
+                    
                     // Calculate tax for this item
                     const itemSubtotal = basePrice * quantity;
                     const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
-                    console.log(`Tax calculation for ${item.productName}: 
-                      - Price: ${basePrice} 
+                    console.log(`Receipt Tax display for ${item.productName}: 
+                      - Base Price: ${basePrice} 
                       - Quantity: ${quantity} 
                       - Tax Rate: ${itemTaxRate}% 
                       - Item Subtotal: ${itemSubtotal}
@@ -438,6 +441,8 @@ export function ReceiptModal({
 
                     return sum + itemTax;
                   }, 0);
+                  
+                  console.log(`Total tax calculated: ${totalTax}`);
                   return Math.round(totalTax).toLocaleString("vi-VN");
                 })()}{" "}
                 ₫
@@ -456,8 +461,10 @@ export function ReceiptModal({
                     const basePrice = parseFloat(item.price);
                     const quantity = item.quantity;
                     
-                    // Get the actual tax rate from the item, ensuring it uses the real taxRate from the product
+                    // Get the actual tax rate from the item - use actual taxRate from product
                     let itemTaxRate = 0;
+                    
+                    // Check if item has taxRate property (from the product)
                     if (item.taxRate !== undefined && item.taxRate !== null) {
                       if (typeof item.taxRate === 'string') {
                         const parsedRate = parseFloat(item.taxRate);
@@ -466,13 +473,14 @@ export function ReceiptModal({
                         itemTaxRate = item.taxRate;
                       }
                     }
+                    // If no taxRate in item, default to 0% not 10%
 
                     // Calculate tax for this item
                     const itemSubtotal = basePrice * quantity;
                     const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
-                    console.log(`Total calculation tax for ${item.productName}: 
-                      - Price: ${basePrice} 
+                    console.log(`Receipt Total calculation for ${item.productName}: 
+                      - Base Price: ${basePrice} 
                       - Quantity: ${quantity} 
                       - Tax Rate: ${itemTaxRate}% 
                       - Item Subtotal: ${itemSubtotal}
@@ -536,8 +544,10 @@ export function ReceiptModal({
                         const basePrice = parseFloat(item.price);
                         const quantity = item.quantity;
                         
-                        // Get the actual tax rate from the item, ensuring it uses the real taxRate from the product
+                        // Get the actual tax rate from the item - use actual taxRate from product
                         let itemTaxRate = 0;
+                        
+                        // Check if item has taxRate property (from the product)
                         if (item.taxRate !== undefined && item.taxRate !== null) {
                           if (typeof item.taxRate === 'string') {
                             const parsedRate = parseFloat(item.taxRate);
@@ -546,13 +556,14 @@ export function ReceiptModal({
                             itemTaxRate = item.taxRate;
                           }
                         }
+                        // If no taxRate in item, default to 0% not 10%
 
                         // Calculate tax for this item
                         const itemSubtotal = basePrice * quantity;
                         const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
-                        console.log(`Amount received tax calculation for ${item.productName}: 
-                          - Price: ${basePrice} 
+                        console.log(`Receipt Amount received calculation for ${item.productName}: 
+                          - Base Price: ${basePrice} 
                           - Quantity: ${quantity} 
                           - Tax Rate: ${itemTaxRate}% 
                           - Item Subtotal: ${itemSubtotal}
