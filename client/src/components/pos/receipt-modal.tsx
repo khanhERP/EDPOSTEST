@@ -409,34 +409,31 @@ export function ReceiptModal({
               <span>Thuế</span>
               <span>
                 {(() => {
-                  // Use tax from receipt data if available
-                  if (receipt.tax !== undefined && receipt.tax !== null) {
-                    const taxValue = typeof receipt.tax === 'string' ? parseFloat(receipt.tax) : receipt.tax;
-                    if (taxValue > 0) {
-                      return Math.round(taxValue).toLocaleString("vi-VN");
-                    }
-                  }
-
-                  // Fallback: Calculate tax using individual product tax rates
+                  // Always calculate tax using individual product tax rates
                   const totalTax = receipt.items.reduce((sum, item) => {
                     const basePrice = parseFloat(item.price);
                     const quantity = item.quantity;
-                    // Use the actual tax rate from the item - convert string to number properly
+                    
+                    // Get the actual tax rate from the item
                     let itemTaxRate = 0;
                     if (item.taxRate !== undefined && item.taxRate !== null) {
                       if (typeof item.taxRate === 'string') {
-                        itemTaxRate = parseFloat(item.taxRate);
+                        const parsedRate = parseFloat(item.taxRate);
+                        itemTaxRate = isNaN(parsedRate) ? 0 : parsedRate;
                       } else if (typeof item.taxRate === 'number') {
                         itemTaxRate = item.taxRate;
                       }
                     }
-                    // If taxRate is NaN or 0, don't apply tax
-                    if (isNaN(itemTaxRate)) {
-                      itemTaxRate = 0;
-                    }
 
+                    // Calculate tax for this item
                     const itemSubtotal = basePrice * quantity;
                     const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+                    console.log(`Tax calculation for ${item.productName}: 
+                      - Price: ${basePrice} 
+                      - Quantity: ${quantity} 
+                      - Tax Rate: ${itemTaxRate}% 
+                      - Item Tax: ${itemTax}`);
 
                     return sum + itemTax;
                   }, 0);
@@ -449,15 +446,7 @@ export function ReceiptModal({
               <span>{t("pos.total")}</span>
               <span>
                 {(() => {
-                  // Use total from receipt data if available
-                  if (receipt.total !== undefined && receipt.total !== null) {
-                    const totalValue = typeof receipt.total === 'string' ? parseFloat(receipt.total) : receipt.total;
-                    if (totalValue > 0) {
-                      return Math.round(totalValue).toLocaleString("vi-VN");
-                    }
-                  }
-
-                  // Fallback: Calculate total as base subtotal + tax using individual tax rates
+                  // Always calculate total using base subtotal + actual tax rates
                   const baseSubtotal = receipt.items.reduce((sum, item) => {
                     return sum + parseFloat(item.price) * item.quantity;
                   }, 0);
@@ -465,20 +454,19 @@ export function ReceiptModal({
                   const totalTax = receipt.items.reduce((sum, item) => {
                     const basePrice = parseFloat(item.price);
                     const quantity = item.quantity;
-                    // Use the actual tax rate from the item - convert string to number properly
+                    
+                    // Get the actual tax rate from the item
                     let itemTaxRate = 0;
                     if (item.taxRate !== undefined && item.taxRate !== null) {
                       if (typeof item.taxRate === 'string') {
-                        itemTaxRate = parseFloat(item.taxRate);
+                        const parsedRate = parseFloat(item.taxRate);
+                        itemTaxRate = isNaN(parsedRate) ? 0 : parsedRate;
                       } else if (typeof item.taxRate === 'number') {
                         itemTaxRate = item.taxRate;
                       }
                     }
-                    // If taxRate is NaN or 0, don't apply tax
-                    if (isNaN(itemTaxRate)) {
-                      itemTaxRate = 0;
-                    }
 
+                    // Calculate tax for this item
                     const itemSubtotal = basePrice * quantity;
                     const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
@@ -531,14 +519,7 @@ export function ReceiptModal({
                       receipt.paymentMethod === "einvoice" ||
                       receipt.originalPaymentMethod === "einvoice"
                     ) {
-                      // Use receipt total if available
-                      if (receipt.total !== undefined && receipt.total !== null) {
-                        const totalValue = typeof receipt.total === 'string' ? parseFloat(receipt.total) : receipt.total;
-                        if (totalValue > 0) {
-                          return Math.round(totalValue).toLocaleString("vi-VN");
-                        }
-                      }
-
+                      // Calculate using base subtotal + actual tax rates
                       const baseSubtotal = receipt.items.reduce((sum, item) => {
                         return sum + parseFloat(item.price) * item.quantity;
                       }, 0);
@@ -546,20 +527,19 @@ export function ReceiptModal({
                       const totalTax = receipt.items.reduce((sum, item) => {
                         const basePrice = parseFloat(item.price);
                         const quantity = item.quantity;
-                        // Use the actual tax rate from the item - convert string to number properly
+                        
+                        // Get the actual tax rate from the item
                         let itemTaxRate = 0;
                         if (item.taxRate !== undefined && item.taxRate !== null) {
                           if (typeof item.taxRate === 'string') {
-                            itemTaxRate = parseFloat(item.taxRate);
+                            const parsedRate = parseFloat(item.taxRate);
+                            itemTaxRate = isNaN(parsedRate) ? 0 : parsedRate;
                           } else if (typeof item.taxRate === 'number') {
                             itemTaxRate = item.taxRate;
                           }
                         }
-                        // If taxRate is NaN or 0, don't apply tax
-                        if (isNaN(itemTaxRate)) {
-                          itemTaxRate = 0;
-                        }
 
+                        // Calculate tax for this item
                         const itemSubtotal = basePrice * quantity;
                         const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
