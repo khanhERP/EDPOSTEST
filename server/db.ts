@@ -26,10 +26,7 @@ config({ path: path.resolve(".env.local") });
 config({ path: path.resolve(".env") });
 
 // Use EXTERNAL_DB_URL first, then fallback to CUSTOM_DATABASE_URL, then DATABASE_URL
-let DATABASE_URL =
-  process.env.EXTERNAL_DB_URL ||
-  process.env.CUSTOM_DATABASE_URL ||
-  process.env.DATABASE_URL;
+let DATABASE_URL = process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
   throw new Error(
