@@ -1388,7 +1388,7 @@ export function EInvoiceModal({
                     const tax = cartItems.reduce((sum, item) => {
                       const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                       const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                      const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '10') : (item.taxRate || 10);
+                      const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
                       return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
                     }, 0);
 
@@ -1397,15 +1397,14 @@ export function EInvoiceModal({
                       maximumFractionDigits: 2,
                     });
                   }
-                  
+
                   // Fallback to provided total
                   return (typeof total === 'number' ? total : parseFloat(total || '0')).toLocaleString("vi-VN", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   });
                 })()}{" "}
-                ₫
-              </span>
+                ₫</span>
             </div>
           </div>
 
