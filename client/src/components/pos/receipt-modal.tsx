@@ -421,8 +421,19 @@ export function ReceiptModal({
                   const totalTax = receipt.items.reduce((sum, item) => {
                     const basePrice = parseFloat(item.price);
                     const quantity = item.quantity;
-                    // Use the actual tax rate from the item, not the default 10%
-                    const itemTaxRate = parseFloat(item.taxRate || "0");
+                    // Use the actual tax rate from the item - convert string to number properly
+                    let itemTaxRate = 0;
+                    if (item.taxRate !== undefined && item.taxRate !== null) {
+                      if (typeof item.taxRate === 'string') {
+                        itemTaxRate = parseFloat(item.taxRate);
+                      } else if (typeof item.taxRate === 'number') {
+                        itemTaxRate = item.taxRate;
+                      }
+                    }
+                    // If taxRate is NaN or 0, don't apply tax
+                    if (isNaN(itemTaxRate)) {
+                      itemTaxRate = 0;
+                    }
 
                     const itemSubtotal = basePrice * quantity;
                     const itemTax = (itemSubtotal * itemTaxRate) / 100;
@@ -454,8 +465,19 @@ export function ReceiptModal({
                   const totalTax = receipt.items.reduce((sum, item) => {
                     const basePrice = parseFloat(item.price);
                     const quantity = item.quantity;
-                    // Use the actual tax rate from the item, not the default 10%
-                    const itemTaxRate = parseFloat(item.taxRate || "0");
+                    // Use the actual tax rate from the item - convert string to number properly
+                    let itemTaxRate = 0;
+                    if (item.taxRate !== undefined && item.taxRate !== null) {
+                      if (typeof item.taxRate === 'string') {
+                        itemTaxRate = parseFloat(item.taxRate);
+                      } else if (typeof item.taxRate === 'number') {
+                        itemTaxRate = item.taxRate;
+                      }
+                    }
+                    // If taxRate is NaN or 0, don't apply tax
+                    if (isNaN(itemTaxRate)) {
+                      itemTaxRate = 0;
+                    }
 
                     const itemSubtotal = basePrice * quantity;
                     const itemTax = (itemSubtotal * itemTaxRate) / 100;
@@ -524,8 +546,19 @@ export function ReceiptModal({
                       const totalTax = receipt.items.reduce((sum, item) => {
                         const basePrice = parseFloat(item.price);
                         const quantity = item.quantity;
-                        // Use the actual tax rate from the item, not the default 10%
-                        const itemTaxRate = parseFloat(item.taxRate || "0");
+                        // Use the actual tax rate from the item - convert string to number properly
+                        let itemTaxRate = 0;
+                        if (item.taxRate !== undefined && item.taxRate !== null) {
+                          if (typeof item.taxRate === 'string') {
+                            itemTaxRate = parseFloat(item.taxRate);
+                          } else if (typeof item.taxRate === 'number') {
+                            itemTaxRate = item.taxRate;
+                          }
+                        }
+                        // If taxRate is NaN or 0, don't apply tax
+                        if (isNaN(itemTaxRate)) {
+                          itemTaxRate = 0;
+                        }
 
                         const itemSubtotal = basePrice * quantity;
                         const itemTax = (itemSubtotal * itemTaxRate) / 100;
