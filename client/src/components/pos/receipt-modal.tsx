@@ -409,11 +409,16 @@ export function ReceiptModal({
               <span>Thuế</span>
               <span>
                 {(() => {
-                  // Calculate tax using individual product tax rates like in order details
+                  // Use tax from receipt data if available, otherwise calculate from cart
+                  if (receipt.tax && receipt.tax !== "0" && receipt.tax !== "0.00") {
+                    return Math.round(parseFloat(receipt.tax)).toLocaleString("vi-VN");
+                  }
+                  
+                  // Fallback: Calculate tax using individual product tax rates
                   const totalTax = receipt.items.reduce((sum, item) => {
                     const basePrice = parseFloat(item.price);
                     const quantity = item.quantity;
-                    const itemTaxRate = parseFloat(item.taxRate || "10"); // Use item's tax rate or default 10%
+                    const itemTaxRate = parseFloat(item.taxRate || "10");
 
                     const itemSubtotal = basePrice * quantity;
                     const itemTax = (itemSubtotal * itemTaxRate) / 100;
@@ -429,7 +434,12 @@ export function ReceiptModal({
               <span>{t("pos.total")}</span>
               <span>
                 {(() => {
-                  // Calculate total as base subtotal + tax using individual tax rates
+                  // Use total from receipt data if available, otherwise calculate
+                  if (receipt.total && receipt.total !== "0" && receipt.total !== "0.00") {
+                    return Math.round(parseFloat(receipt.total)).toLocaleString("vi-VN");
+                  }
+                  
+                  // Fallback: Calculate total as base subtotal + tax using individual tax rates
                   const baseSubtotal = receipt.items.reduce((sum, item) => {
                     return sum + parseFloat(item.price) * item.quantity;
                   }, 0);
@@ -491,6 +501,11 @@ export function ReceiptModal({
                       receipt.paymentMethod === "einvoice" ||
                       receipt.originalPaymentMethod === "einvoice"
                     ) {
+                      // Use receipt total if available, otherwise calculate
+                      if (receipt.total && receipt.total !== "0" && receipt.total !== "0.00") {
+                        return Math.round(parseFloat(receipt.total)).toLocaleString("vi-VN");
+                      }
+                      
                       const baseSubtotal = receipt.items.reduce((sum, item) => {
                         return sum + parseFloat(item.price) * item.quantity;
                       }, 0);
