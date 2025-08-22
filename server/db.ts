@@ -39,10 +39,6 @@ if (!DATABASE_URL) {
 
 // Ensure we're using the correct database and SSL settings for external server
 if (DATABASE_URL?.includes("1.55.212.135")) {
-  // Make sure we're using the correct database and sslmode=disable
-  if (!DATABASE_URL.includes("/Freshway")) {
-    DATABASE_URL = DATABASE_URL.replace(/\/[^\/\?]+(\?|$)/, "/Freshway$1");
-  }
   if (!DATABASE_URL.includes("sslmode=disable")) {
     DATABASE_URL += DATABASE_URL.includes("?")
       ? "&sslmode=disable"
@@ -99,7 +95,7 @@ console.log(
 
 // Test database connection immediately
 console.log("🔍 Testing database connection...");
-pool.query('SELECT current_database(), current_user, version()', (err, res) => {
+pool.query("SELECT current_database(), current_user, version()", (err, res) => {
   if (err) {
     console.error("❌ Database connection failed:", err.message);
   } else {
@@ -282,8 +278,10 @@ export async function initializeSampleData() {
     const customerCount = await db
       .select({ count: sql<number>`count(*)` })
       .from(customers);
-    console.log(`📊 Found ${customerCount[0]?.count || 0} customers in database`);
-    
+    console.log(
+      `📊 Found ${customerCount[0]?.count || 0} customers in database`,
+    );
+
     // Note: Sample data insertion disabled for external database
     console.log("ℹ️ Sample data insertion skipped - using external database");
 
