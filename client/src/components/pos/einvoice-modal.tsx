@@ -532,30 +532,40 @@ export function EInvoiceModal({
       const receiptData = {
         transactionId:
           savedInvoice.invoice?.invoiceNumber || `TXN-${Date.now()}`,
-        items: cartItems.map((item) => ({
-          id: item.id,
-          productId: item.id,
-          productName: item.name,
-          price:
-            typeof item.price === "string" ? item.price : item.price.toString(),
-          quantity:
+        items: cartItems.map((item) => {
+          const itemPrice =
+            typeof item.price === "string"
+              ? parseFloat(item.price)
+              : item.price;
+          const itemQuantity =
             typeof item.quantity === "string"
               ? parseInt(item.quantity)
-              : item.quantity,
-          total: (
-            (typeof item.price === "string"
-              ? parseFloat(item.price)
-              : item.price) *
-            (typeof item.quantity === "string"
-              ? parseInt(item.quantity)
-              : item.quantity)
-          ).toFixed(2),
-          sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-          taxRate:
-            typeof item.taxRate === "string"
-              ? parseFloat(item.taxRate || "10")
-              : item.taxRate || 10,
-        })),
+              : item.quantity;
+          const itemTaxRate = (() => {
+            if (item.taxRate !== undefined && item.taxRate !== null) {
+              if (typeof item.taxRate === "string") {
+                const parsed = parseFloat(item.taxRate);
+                return isNaN(parsed) ? 0 : parsed;
+              } else if (typeof item.taxRate === "number") {
+                return isNaN(item.taxRate) ? 0 : item.taxRate;
+              }
+            }
+            return 0; // Default to 0% if no tax rate specified
+          })();
+          const itemSubtotal = itemPrice * itemQuantity;
+          const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+          return {
+            id: item.id,
+            productId: item.id,
+            productName: item.name,
+            price: itemPrice.toFixed(2),
+            quantity: itemQuantity,
+            total: (itemSubtotal + itemTax).toFixed(2),
+            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+            taxRate: itemTaxRate,
+          };
+        }),
         subtotal: calculatedSubtotal.toFixed(2),
         tax: calculatedTax.toFixed(2),
         total: (typeof total === "number" && !isNaN(total)
@@ -776,11 +786,15 @@ export function EInvoiceModal({
         })();
 
         const itemTaxRate = (() => {
-          if (typeof item.taxRate === "string") {
-            const parsed = parseFloat(item.taxRate);
-            return isNaN(parsed) ? 10 : parsed;
+          if (item.taxRate !== undefined && item.taxRate !== null) {
+            if (typeof item.taxRate === "string") {
+              const parsed = parseFloat(item.taxRate);
+              return isNaN(parsed) ? 0 : parsed;
+            } else if (typeof item.taxRate === "number") {
+              return isNaN(item.taxRate) ? 0 : item.taxRate;
+            }
           }
-          return typeof item.taxRate === "number" ? item.taxRate : 10;
+          return 0; // Default to 0% if no tax rate specified
         })();
 
         // Calculate amounts
@@ -1057,10 +1071,17 @@ export function EInvoiceModal({
               typeof item.quantity === "string"
                 ? parseInt(item.quantity)
                 : item.quantity;
-            const itemTaxRate =
-              typeof item.taxRate === "string"
-                ? parseFloat(item.taxRate || "10")
-                : item.taxRate || 10;
+            const itemTaxRate = (() => {
+              if (item.taxRate !== undefined && item.taxRate !== null) {
+                if (typeof item.taxRate === "string") {
+                  const parsed = parseFloat(item.taxRate);
+                  return isNaN(parsed) ? 0 : parsed;
+                } else if (typeof item.taxRate === "number") {
+                  return isNaN(item.taxRate) ? 0 : item.taxRate;
+                }
+              }
+              return 0; // Default to 0% if no tax rate specified
+            })();
             const itemSubtotal = itemPrice * itemQuantity;
             const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
@@ -1125,10 +1146,17 @@ export function EInvoiceModal({
               typeof item.quantity === "string"
                 ? parseInt(item.quantity)
                 : item.quantity;
-            const itemTaxRate =
-              typeof item.taxRate === "string"
-                ? parseFloat(item.taxRate || "10")
-                : item.taxRate || 10;
+            const itemTaxRate = (() => {
+              if (item.taxRate !== undefined && item.taxRate !== null) {
+                if (typeof item.taxRate === "string") {
+                  const parsed = parseFloat(item.taxRate);
+                  return isNaN(parsed) ? 0 : parsed;
+                } else if (typeof item.taxRate === "number") {
+                  return isNaN(item.taxRate) ? 0 : item.taxRate;
+                }
+              }
+              return 0; // Default to 0% if no tax rate specified
+            })();
             const itemSubtotal = itemPrice * itemQuantity;
             const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
@@ -1388,7 +1416,17 @@ export function EInvoiceModal({
                     const tax = cartItems.reduce((sum, item) => {
                       const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                       const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                      const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
+                      const itemTaxRate = (() => {
+                        if (item.taxRate !== undefined && item.taxRate !== null) {
+                          if (typeof item.taxRate === "string") {
+                            const parsed = parseFloat(item.taxRate);
+                            return isNaN(parsed) ? 0 : parsed;
+                          } else if (typeof item.taxRate === "number") {
+                            return isNaN(item.taxRate) ? 0 : item.taxRate;
+                          }
+                        }
+                        return 0; // Default to 0% if no tax rate specified
+                      })();
                       return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
                     }, 0);
 
