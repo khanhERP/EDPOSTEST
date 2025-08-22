@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,9 +29,9 @@ export default function AttendanceQRPage() {
   });
 
   const clockInMutation = useMutation({
-    mutationFn: () => apiRequest('POST', '/api/attendance/clock-in', { 
-      employeeId: parseInt(selectedEmployeeId), 
-      notes 
+    mutationFn: () => apiRequest('POST', '/api/attendance/clock-in', {
+      employeeId: parseInt(selectedEmployeeId),
+      notes
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
@@ -64,8 +63,8 @@ export default function AttendanceQRPage() {
     },
     onError: () => {
       toast({
-        title: "오류",
-        description: "퇴근 기록에 실패했습니다.",
+        title: t('common.error'),
+        description: t('attendance.clockOutError'),
         variant: "destructive",
       });
     },
@@ -77,8 +76,8 @@ export default function AttendanceQRPage() {
       queryClient.invalidateQueries({ queryKey: ['/api/attendance'] });
       refetchTodayAttendance();
       toast({
-        title: "휴식 시작",
-        description: "휴식 시간이 시작되었습니다.",
+        title: t('attendance.breakStartSuccess'),
+        description: t('attendance.breakStartSuccessDesc'),
       });
     },
     onError: () => {
