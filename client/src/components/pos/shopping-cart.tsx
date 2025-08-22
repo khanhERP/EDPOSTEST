@@ -59,26 +59,7 @@ export function ShoppingCart({
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
-  const tax = cart.reduce((sum, item) => {
-    if (item.taxRate && parseFloat(item.taxRate) > 0) {
-      return (
-        sum +
-        ((parseFloat(item.price) * parseFloat(item.taxRate)) / 100) *
-          item.quantity
-      );
-    }
-    return sum;
-  }, 0);
-  const total = subtotal + tax;
-  const change =
-    paymentMethod === "cash"
-      ? Math.max(0, parseFloat(amountReceived || "0") - total)
-      : 0;
-
-  // Helper functions for receipt generation (used in handlePaymentMethodSelect)
-  const calculateSubtotal = () =>
-    cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
-  const calculateTax = () =>
+  const tax = Math.round(
     cart.reduce((sum, item) => {
       if (item.taxRate && parseFloat(item.taxRate) > 0) {
         return (
@@ -88,8 +69,31 @@ export function ShoppingCart({
         );
       }
       return sum;
-    }, 0);
-  const calculateTotal = () => calculateSubtotal() + calculateTax();
+    }, 0),
+  );
+  const total = Math.round(subtotal + tax);
+  const change =
+    paymentMethod === "cash"
+      ? Math.max(0, parseFloat(amountReceived || "0") - total)
+      : 0;
+
+  // Helper functions for receipt generation (used in handlePaymentMethodSelect)
+  const calculateSubtotal = () =>
+    cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
+  const calculateTax = () =>
+    Math.round(
+      cart.reduce((sum, item) => {
+        if (item.taxRate && parseFloat(item.taxRate) > 0) {
+          return (
+            sum +
+            ((parseFloat(item.price) * parseFloat(item.taxRate)) / 100) *
+              item.quantity
+          );
+        }
+        return sum;
+      }, 0),
+    );
+  const calculateTotal = () => Math.round(calculateSubtotal() + calculateTax());
 
   // WebSocket connection for broadcasting cart updates to customer display
   useEffect(() => {
@@ -260,14 +264,20 @@ export function ShoppingCart({
   };
 
   const handlePaymentMethodSelect = (method: string, data?: any) => {
-    console.log('🎯 Shopping cart: Step 3: Payment method selected:', method, data);
-    
+    console.log(
+      "🎯 Shopping cart: Step 3: Payment method selected:",
+      method,
+      data,
+    );
+
     // Step 3: Payment method selected, now go directly to Step 4: E-Invoice modal
     setShowPaymentMethodModal(false);
     setSelectedPaymentMethod(method);
-    
+
     // Go directly to E-invoice modal for invoice processing (no duplicate payment selection)
-    console.log('📧 Shopping cart: Going directly to E-invoice modal for invoice processing');
+    console.log(
+      "📧 Shopping cart: Going directly to E-invoice modal for invoice processing",
+    );
     setShowEInvoiceModal(true);
   };
 
@@ -283,21 +293,30 @@ export function ShoppingCart({
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
-    console.log('📧 Shopping cart: Step 4: E-Invoice processing completed:', eInvoiceData);
+    console.log(
+      "📧 Shopping cart: Step 4: E-Invoice processing completed:",
+      eInvoiceData,
+    );
 
     setShowEInvoiceModal(false);
 
     // Auto clear cart after E-Invoice completion (both publish now and publish later)
-    console.log('🧹 Shopping cart: Auto clearing cart after E-Invoice completion');
+    console.log(
+      "🧹 Shopping cart: Auto clearing cart after E-Invoice completion",
+    );
     onClearCart();
 
     // Step 5: Show final receipt modal if receipt data exists
     if (eInvoiceData.receipt) {
-      console.log('📄 Shopping cart: Step 5: Showing final receipt modal (not preview)');
+      console.log(
+        "📄 Shopping cart: Step 5: Showing final receipt modal (not preview)",
+      );
       setSelectedReceipt(eInvoiceData.receipt);
       setShowReceiptModal(true);
     } else {
-      console.log('✅ Shopping cart: E-invoice completed successfully, cart cleared');
+      console.log(
+        "✅ Shopping cart: E-invoice completed successfully, cart cleared",
+      );
       toast({
         title: "Thành công",
         description: "Hóa đơn đã được xử lý thành công",
@@ -482,8 +501,8 @@ export function ShoppingCart({
               <span className="pos-text-secondary">{t("tables.tax")}:</span>
               <span className="font-medium">
                 {tax.toLocaleString("vi-VN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
                 })}{" "}
                 ₫
               </span>
@@ -495,8 +514,8 @@ export function ShoppingCart({
                 </span>
                 <span className="text-lg font-bold text-blue-600">
                   {total.toLocaleString("vi-VN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
                   })}{" "}
                   ₫
                 </span>
@@ -547,13 +566,17 @@ export function ShoppingCart({
       <ReceiptModal
         isOpen={showReceiptPreview}
         onClose={() => {
-          console.log("🔴 Step 1: Closing receipt preview modal (Xem trước hóa đơn)");
+          console.log(
+            "🔴 Step 1: Closing receipt preview modal (Xem trước hóa đơn)",
+          );
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
         }}
         receipt={previewReceipt}
         onConfirm={() => {
-          console.log("📄 Step 1 → Step 2: Receipt preview confirmed, showing payment methods");
+          console.log(
+            "📄 Step 1 → Step 2: Receipt preview confirmed, showing payment methods",
+          );
           setShowReceiptPreview(false);
           setShowPaymentMethodModal(true);
         }}
@@ -572,7 +595,9 @@ export function ShoppingCart({
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log("🔴 Step 5: Closing final receipt modal (Receipt) from shopping cart");
+          console.log(
+            "🔴 Step 5: Closing final receipt modal (Receipt) from shopping cart",
+          );
           setShowReceiptModal(false);
           setSelectedReceipt(null);
         }}
@@ -621,13 +646,13 @@ export function ShoppingCart({
           onConfirm={handleEInvoiceConfirm}
           total={total}
           selectedPaymentMethod={selectedPaymentMethod}
-          cartItems={cart.map(item => ({
+          cartItems={cart.map((item) => ({
             id: item.id,
             name: item.name,
             price: parseFloat(item.price),
             quantity: item.quantity,
-            sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
-            taxRate: parseFloat(item.taxRate || "10")
+            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+            taxRate: parseFloat(item.taxRate || "10"),
           }))}
         />
       )}

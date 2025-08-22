@@ -27,9 +27,21 @@ class TenantManager {
         isActive: true,
       },
       {
-        subdomain: "store1",
+        subdomain: "freshway",
+        databaseUrl: process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL!,
+        storeName: "Demo Store - Cửa hàng demo",
+        isActive: true,
+      },
+      {
+        subdomain: "0110109031",
+        databaseUrl: process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL!,
+        storeName: "Demo Store - Cửa hàng demo",
+        isActive: true,
+      },
+      {
+        subdomain: "hazkitchen",
         databaseUrl:
-          process.env.STORE1_DATABASE_URL || process.env.DATABASE_URL!,
+          process.env.EXTERNAL_DB_URL_hazkitchen || process.env.DATABASE_URL!,
         storeName: "Store 1 - Cửa hàng số 1",
         isActive: true,
       },

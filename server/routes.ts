@@ -3728,7 +3728,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("Database health check failed:", error);
-      
+
       res.status(500).json({ 
         status: "unhealthy", 
         error: errorMessage,

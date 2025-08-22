@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OrderDialog } from "@/components/orders/order-dialog";
-import { Users, Clock, CheckCircle2, Eye, CreditCard, QrCode, Plus } from "lucide-react";
+import { Users, Clock, CheckCircle2, Eye, CreditCard, QrCode, Plus, Printer } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
@@ -916,7 +916,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
                 <div>
                   <p className="text-sm text-gray-600">{t('orders.table')} {t('orders.orderNumber').toLowerCase()}:</p>
-                  <p className="font-medium">T{selectedOrder.tableId}</p>
+                  <p className="font-medium">T{selectedTable?.tableNumber}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">{t('orders.customerCount')}:</p>
@@ -993,10 +993,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                   </div>
                                   <div className="text-right ml-4">
                                     <p className="font-bold text-lg text-green-600">
-                                      {Number(item.total || 0).toLocaleString('vi-VN')} ₫
+                                      {Math.round(Number(item.total || 0)).toLocaleString('vi-VN')} ₫
                                     </p>
                                     <p className="text-sm text-gray-500">
-                                      {Number(item.unitPrice || 0).toLocaleString('vi-VN')} ₫/món
+                                      {Math.round(Number(item.unitPrice || 0)).toLocaleString('vi-VN')} ₫/món
                                     </p>
                                   </div>
                                 </div>
@@ -1140,6 +1140,71 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <Users className="w-4 h-4 mr-2" />
                     {t('orders.pointsPaymentTitle')}
                   </Button>
+                  <Button
+                    onClick={() => {
+                      console.log('🖨️ Print bill button clicked for order:', selectedOrder?.orderNumber);
+
+                      if (!selectedOrder || !orderItems || !Array.isArray(orderItems)) {
+                        console.error('❌ Missing order data for print bill');
+                        toast({
+                          title: 'Lỗi',
+                          description: 'Không thể in hóa đơn. Vui lòng thử lại.',
+                          variant: 'destructive',
+                        });
+                        return;
+                      }
+
+                      // Calculate totals for bill
+                      let subtotal = 0;
+                      let totalTax = 0;
+
+                      const processedItems = orderItems.map((item: any) => {
+                        const itemSubtotal = Number(item.total || 0);
+                        const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+                        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
+                        const itemTax = (itemSubtotal * taxRate) / 100;
+
+                        subtotal += itemSubtotal;
+                        totalTax += itemTax;
+
+                        return {
+                          id: item.id,
+                          productId: item.productId,
+                          productName: item.productName || getProductName(item.productId),
+                          quantity: item.quantity,
+                          price: item.unitPrice,
+                          total: item.total,
+                          sku: item.productSku || `SP${item.productId}`,
+                          taxRate: taxRate
+                        };
+                      });
+
+                      const finalTotal = subtotal + totalTax;
+
+                      // Create bill receipt data (không phải preview)
+                      const billData = {
+                        ...selectedOrder,
+                        transactionId: `BILL-${Date.now()}`,
+                        items: processedItems,
+                        subtotal: subtotal.toFixed(2),
+                        tax: totalTax.toFixed(2),
+                        total: finalTotal.toFixed(2),
+                        paymentMethod: 'unpaid',
+                        cashierName: 'Table Service',
+                        createdAt: new Date().toISOString()
+                      };
+
+                      console.log('📄 Showing bill for printing');
+                      setSelectedReceipt(billData);
+                      setOrderDetailsOpen(false);
+                      setShowReceiptModal(true);
+                    }}
+                    className="w-full bg-gray-600 hover:bg-gray-700 text-white"
+                    size="lg"
+                  >
+                    <Printer className="w-4 h-4 mr-2" />
+                    In hóa đơn
+                  </Button>
                 </div>
               )}</div>
           )}
@@ -1157,7 +1222,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         receipt={previewReceipt}
         onConfirm={() => {
           console.log("📄 Table: Receipt preview confirmed, starting payment flow");
-          
+
           if (!previewReceipt) {
             console.error('❌ No preview receipt data available');
             return;
@@ -1171,7 +1236,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
           console.log('💾 Setting order for payment with complete data:', completeOrderData);
           setOrderForPayment(completeOrderData);
-          
+
           // Close preview and show payment method modal
           setShowReceiptPreview(false);
           setShowPaymentMethodModal(true);
@@ -1385,7 +1450,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>{t('orders.pointsPaymentDialog.totalAmount')}</span>
-                  <span className="font-medium">{Number(selectedOrder.total).toLocaleString()} ₫</span>
+                  <span className="font-medium">{Math.round(Number(selectedOrder.total)).toLocaleString()} ₫</span>
                 </div>
               </div>
             )}
@@ -1516,8 +1581,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <p className="text-sm text-gray-500 mb-2">Số tiền cần thanh toán:</p>
                 <p className="text-3xl font-bold text-green-600">
                   {mixedPaymentData ? 
-                    mixedPaymentData.remainingAmount.toLocaleString('vi-VN') :
-                    Number(selectedOrder?.total || 0).toLocaleString('vi-VN')
+                    Math.round(mixedPaymentData.remainingAmount).toLocaleString('vi-VN') :
+                    Math.round(Number(selectedOrder?.total || 0)).toLocaleString('vi-VN')
                   } ₫</p>
                 {mixedPaymentData && (
                   <div className="mt-2 pt-2 border-t border-gray-300">
@@ -1622,7 +1687,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <span className="text-2xl mr-3">💵</span>
                     <div className="text-left">
                       <p className="font-medium">Tiền mặt</p>
-                      <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
+                      <p className="text-sm text-gray-500">{Math.round(mixedPaymentData.remainingAmount).toLocaleString()} ₫</p>
                     </div>
                   </Button>
 
@@ -1711,7 +1776,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <span className="text-2xl mr-3">💳</span>
                     <div className="text-left">
                       <p className="font-medium">Chuyển khoản</p>
-                      <p className="text-sm text-gray-500">{mixedPaymentData.remainingAmount.toLocaleString()} ₫</p>
+                      <p className="text-sm text-gray-500">{Math.round(mixedPaymentData.remainingAmount).toLocaleString()} ₫</p>
                     </div>
                   </Button>
                 </div>

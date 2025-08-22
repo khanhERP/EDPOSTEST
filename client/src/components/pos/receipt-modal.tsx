@@ -53,7 +53,10 @@ export function ReceiptModal({
   const { t } = useTranslation();
 
   console.log("=== RECEIPT MODAL RENDERED ===");
-  console.log("Receipt Modal Mode:", isPreview ? "PREVIEW (Step 1)" : "FINAL RECEIPT (Step 5)");
+  console.log(
+    "Receipt Modal Mode:",
+    isPreview ? "PREVIEW (Step 1)" : "FINAL RECEIPT (Step 5)",
+  );
   console.log("Receipt Modal isOpen:", isOpen);
   console.log("Receipt Modal isPreview:", isPreview);
   console.log("Receipt Modal cartItems received:", cartItems);
@@ -117,9 +120,18 @@ export function ReceiptModal({
       // Add some padding for print margins and controls
       const windowHeight = Math.min(Math.max(contentHeight + 120, 300), 800);
 
-      console.log("Receipt content height:", contentHeight, "Window height:", windowHeight);
+      console.log(
+        "Receipt content height:",
+        contentHeight,
+        "Window height:",
+        windowHeight,
+      );
 
-      const printWindow = window.open("", "_blank", `width=${windowWidth},height=${windowHeight},scrollbars=yes,resizable=yes`);
+      const printWindow = window.open(
+        "",
+        "_blank",
+        `width=${windowWidth},height=${windowHeight},scrollbars=yes,resizable=yes`,
+      );
       if (printWindow) {
         printWindow.document.write(`
           <!DOCTYPE html>
@@ -168,8 +180,16 @@ export function ReceiptModal({
         // Wait for content to load then adjust window size
         printWindow.onload = () => {
           const actualContentHeight = printWindow.document.body.scrollHeight;
-          const newHeight = Math.min(Math.max(actualContentHeight + 100, 300), 800);
-          console.log("Actual content height:", actualContentHeight, "Resizing to:", newHeight);
+          const newHeight = Math.min(
+            Math.max(actualContentHeight + 100, 300),
+            800,
+          );
+          console.log(
+            "Actual content height:",
+            actualContentHeight,
+            "Resizing to:",
+            newHeight,
+          );
           printWindow.resizeTo(windowWidth, newHeight);
         };
 
@@ -178,7 +198,9 @@ export function ReceiptModal({
 
         // Auto close modals and print window after printing or saving
         const handlePrintComplete = () => {
-          console.log("🖨️ Print/Save completed, auto-closing all popups and print window");
+          console.log(
+            "🖨️ Print/Save completed, auto-closing all popups and print window",
+          );
 
           // Force close print window immediately
           if (!printWindow.closed) {
@@ -187,7 +209,9 @@ export function ReceiptModal({
 
           // Auto close receipt modal and complete payment flow immediately after print
           setTimeout(() => {
-            console.log("🔄 Auto-closing receipt modal and completing payment after print/save");
+            console.log(
+              "🔄 Auto-closing receipt modal and completing payment after print/save",
+            );
             if (onConfirm) {
               // Complete the payment flow first
               onConfirm();
@@ -205,14 +229,16 @@ export function ReceiptModal({
         printWindow.onafterprint = handlePrintComplete;
 
         // Handle browser's save dialog completion (when user saves or cancels)
-        printWindow.addEventListener('beforeunload', handlePrintComplete);
+        printWindow.addEventListener("beforeunload", handlePrintComplete);
 
         // Handle when print dialog is dismissed without printing
-        printWindow.addEventListener('focus', () => {
+        printWindow.addEventListener("focus", () => {
           // Check if print dialog was closed without printing after a short delay
           setTimeout(() => {
             if (printWindow.document.hasFocus() && !printWindow.closed) {
-              console.log("🖨️ Print dialog likely dismissed, auto-closing window");
+              console.log(
+                "🖨️ Print dialog likely dismissed, auto-closing window",
+              );
               handlePrintComplete();
             }
           }, 500);
@@ -221,7 +247,9 @@ export function ReceiptModal({
         // Handle manual close of print window
         const checkClosed = setInterval(() => {
           if (printWindow.closed) {
-            console.log("🖨️ Print window closed manually, auto-closing all popups");
+            console.log(
+              "🖨️ Print window closed manually, auto-closing all popups",
+            );
             clearInterval(checkClosed);
             handlePrintComplete();
           }
@@ -237,7 +265,9 @@ export function ReceiptModal({
 
         setTimeout(() => {
           if (!printWindow.closed) {
-            console.log("🖨️ Print window still open after 15s, clearing interval");
+            console.log(
+              "🖨️ Print window still open after 15s, clearing interval",
+            );
           }
           clearInterval(checkClosed);
         }, 15000);
@@ -268,7 +298,11 @@ export function ReceiptModal({
       <DialogContent className="max-w-md w-full max-h-screen overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEInvoice ? t('pos.eInvoice') : (isPreview ? t('pos.receiptPreview') : t('pos.receipt'))}
+            {isEInvoice
+              ? t("pos.eInvoice")
+              : isPreview
+                ? t("pos.receiptPreview")
+                : t("pos.receipt")}
           </DialogTitle>
         </DialogHeader>
 
@@ -281,12 +315,12 @@ export function ReceiptModal({
             <p className="text-xs font-semibold mb-1">
               {storeSettings?.storeName || "Easy Digital Point Of Sale Service"}
             </p>
-            <p className="text-xs mb-0.5">{t('pos.mainStoreLocation')}</p>
+            <p className="text-xs mb-0.5">{t("pos.mainStoreLocation")}</p>
             <p className="text-xs mb-0.5">
               {storeSettings?.address || "123 Commerce St, City, State 12345"}
             </p>
             <p className="text-xs mb-2">
-              {t('pos.phone')} {storeSettings?.phone || "(555) 123-4567"}
+              {t("pos.phone")} {storeSettings?.phone || "(555) 123-4567"}
             </p>
             <div className="flex items-center justify-center">
               <img src={logoPath} alt="EDPOS Logo" className="h-6" />
@@ -295,15 +329,15 @@ export function ReceiptModal({
 
           <div className="border-t border-b border-gray-300 py-3 mb-3">
             <div className="flex justify-between text-sm">
-              <span>{t('pos.transactionNumber')}</span>
+              <span>{t("pos.transactionNumber")}</span>
               <span>{receipt.transactionId}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>{t('pos.date')}</span>
+              <span>{t("pos.date")}</span>
               <span>{new Date(receipt.createdAt).toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>{t('pos.cashier')}</span>
+              <span>{t("pos.cashier")}</span>
               <span>{receipt.cashierName}</span>
             </div>
             {isEInvoice && customerName && (
@@ -318,10 +352,12 @@ export function ReceiptModal({
                 <span>{customerTaxCode}</span>
               </div>
             )}
-            {receipt.paymentMethod === 'einvoice' && (
+            {receipt.paymentMethod === "einvoice" && (
               <div className="flex justify-between text-sm text-blue-600">
                 <span>Trạng thái E-Invoice:</span>
-                <span>{receipt.invoiceNumber ? 'Đã phát hành' : 'Chờ phát hành'}</span>
+                <span>
+                  {receipt.invoiceNumber ? "Đã phát hành" : "Chờ phát hành"}
+                </span>
               </div>
             )}
           </div>
@@ -340,13 +376,15 @@ export function ReceiptModal({
                     <div className="flex-1">
                       <div>{item.productName}</div>
                       <div className="text-xs text-gray-600">
-                        SKU: {`FOOD${String(item.productId || item.id).padStart(5, '0')}`}
+                        SKU:{" "}
+                        {`FOOD${String(item.productId || item.id).padStart(5, "0")}`}
                       </div>
                       <div className="text-xs text-gray-600">
-                        {item.quantity} x {unitPrice.toFixed(2)} ₫
+                        {item.quantity} x{" "}
+                        {Math.round(unitPrice).toLocaleString("vi-VN")} ₫
                       </div>
                     </div>
-                    <div>{lineTotal.toFixed(2)} ₫</div>
+                    <div>{Math.round(lineTotal).toLocaleString("vi-VN")} ₫</div>
                   </div>
                 </div>
               );
@@ -356,56 +394,65 @@ export function ReceiptModal({
           <div className="border-t border-gray-300 pt-3 space-y-1">
             <div className="flex justify-between text-sm">
               <span>Tạm tính</span>
-              <span>{(() => {
-                // Calculate subtotal as sum of base prices (without tax)
-                const baseSubtotal = receipt.items.reduce((sum, item) => {
-                  return sum + (parseFloat(item.price) * item.quantity);
-                }, 0);
-                return baseSubtotal.toFixed(2);
-              })()} ₫</span>
+              <span>
+                {(() => {
+                  // Calculate subtotal as sum of base prices (without tax)
+                  const baseSubtotal = receipt.items.reduce((sum, item) => {
+                    return sum + parseFloat(item.price) * item.quantity;
+                  }, 0);
+                  return Math.round(baseSubtotal).toLocaleString("vi-VN");
+                })()}{" "}
+                ₫
+              </span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Thuế</span>
-              <span>{(() => {
-                // Calculate tax using individual product tax rates like in order details
-                const totalTax = receipt.items.reduce((sum, item) => {
-                  const basePrice = parseFloat(item.price);
-                  const quantity = item.quantity;
-                  const itemTaxRate = parseFloat(item.taxRate || "10"); // Use item's tax rate or default 10%
-                  
-                  const itemSubtotal = basePrice * quantity;
-                  const itemTax = (itemSubtotal * itemTaxRate) / 100;
-                  
-                  return sum + itemTax;
-                }, 0);
-                return totalTax.toFixed(2);
-              })()} ₫</span>
+              <span>
+                {(() => {
+                  // Calculate tax using individual product tax rates like in order details
+                  const totalTax = receipt.items.reduce((sum, item) => {
+                    const basePrice = parseFloat(item.price);
+                    const quantity = item.quantity;
+                    const itemTaxRate = parseFloat(item.taxRate || "10"); // Use item's tax rate or default 10%
+
+                    const itemSubtotal = basePrice * quantity;
+                    const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+                    return sum + itemTax;
+                  }, 0);
+                  return Math.round(totalTax).toLocaleString("vi-VN");
+                })()}{" "}
+                ₫
+              </span>
             </div>
             <div className="flex justify-between font-bold">
-              <span>{t('pos.total')}</span>
-              <span>{(() => {
-                // Calculate total as base subtotal + tax using individual tax rates
-                const baseSubtotal = receipt.items.reduce((sum, item) => {
-                  return sum + (parseFloat(item.price) * item.quantity);
-                }, 0);
-                
-                const totalTax = receipt.items.reduce((sum, item) => {
-                  const basePrice = parseFloat(item.price);
-                  const quantity = item.quantity;
-                  const itemTaxRate = parseFloat(item.taxRate || "10");
-                  
-                  const itemSubtotal = basePrice * quantity;
-                  const itemTax = (itemSubtotal * itemTaxRate) / 100;
-                  
-                  return sum + itemTax;
-                }, 0);
-                
-                const total = baseSubtotal + totalTax;
-                return total.toFixed(2);
-              })()} ₫</span>
+              <span>{t("pos.total")}</span>
+              <span>
+                {(() => {
+                  // Calculate total as base subtotal + tax using individual tax rates
+                  const baseSubtotal = receipt.items.reduce((sum, item) => {
+                    return sum + parseFloat(item.price) * item.quantity;
+                  }, 0);
+
+                  const totalTax = receipt.items.reduce((sum, item) => {
+                    const basePrice = parseFloat(item.price);
+                    const quantity = item.quantity;
+                    const itemTaxRate = parseFloat(item.taxRate || "10");
+
+                    const itemSubtotal = basePrice * quantity;
+                    const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+                    return sum + itemTax;
+                  }, 0);
+
+                  const total = baseSubtotal + totalTax;
+                  return Math.round(total).toLocaleString("vi-VN");
+                })()}{" "}
+                ₫
+              </span>
             </div>
             <div className="flex justify-between text-sm mt-2">
-              <span>{t('pos.paymentMethod')}</span>
+              <span>{t("pos.paymentMethod")}</span>
               <span className="capitalize">
                 {(() => {
                   // Always prioritize originalPaymentMethod for e-invoices
@@ -418,16 +465,16 @@ export function ReceiptModal({
 
                   // Map payment methods to display names
                   const methodNames = {
-                    cash: t('common.cash'),
-                    creditCard: t('common.creditCard'),
-                    debitCard: t('common.debitCard'),
-                    momo: t('common.momo'),
-                    zalopay: t('common.zalopay'),
-                    vnpay: t('common.vnpay'),
-                    qrCode: t('common.qrCode'),
-                    shopeepay: t('common.shopeepay'),
-                    grabpay: t('common.grabpay'),
-                    einvoice: t('pos.eInvoice')
+                    cash: t("common.cash"),
+                    creditCard: t("common.creditCard"),
+                    debitCard: t("common.debitCard"),
+                    momo: t("common.momo"),
+                    zalopay: t("common.zalopay"),
+                    vnpay: t("common.vnpay"),
+                    qrCode: t("common.qrCode"),
+                    shopeepay: t("common.shopeepay"),
+                    grabpay: t("common.grabpay"),
+                    einvoice: t("pos.eInvoice"),
                   };
 
                   return methodNames[displayMethod] || displayMethod;
@@ -436,37 +483,39 @@ export function ReceiptModal({
             </div>
             {receipt.amountReceived && (
               <div className="flex justify-between text-sm">
-                <span>{t('pos.amountReceived')}</span>
-                <span>{(() => {
-                  // For e-invoice transactions, amount received should equal the total
-                  if (receipt.paymentMethod === 'einvoice' || receipt.originalPaymentMethod === 'einvoice') {
-                    const baseSubtotal = receipt.items.reduce((sum, item) => {
-                      return sum + (parseFloat(item.price) * item.quantity);
-                    }, 0);
-                    
-                    const totalTax = receipt.items.reduce((sum, item) => {
-                      const basePrice = parseFloat(item.price);
-                      const quantity = item.quantity;
-                      const itemTaxRate = parseFloat(item.taxRate || "10");
-                      
-                      const itemSubtotal = basePrice * quantity;
-                      const itemTax = (itemSubtotal * itemTaxRate) / 100;
-                      
-                      return sum + itemTax;
-                    }, 0);
-                    
-                    const total = baseSubtotal + totalTax;
-                    return total.toLocaleString("vi-VN", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    });
-                  }
-                  // For other payment methods, use the original amount received
-                  return parseFloat(receipt.amountReceived).toLocaleString("vi-VN", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  });
-                })()} ₫</span>
+                <span>{t("pos.amountReceived")}</span>
+                <span>
+                  {(() => {
+                    // For e-invoice transactions, amount received should equal the total
+                    if (
+                      receipt.paymentMethod === "einvoice" ||
+                      receipt.originalPaymentMethod === "einvoice"
+                    ) {
+                      const baseSubtotal = receipt.items.reduce((sum, item) => {
+                        return sum + parseFloat(item.price) * item.quantity;
+                      }, 0);
+
+                      const totalTax = receipt.items.reduce((sum, item) => {
+                        const basePrice = parseFloat(item.price);
+                        const quantity = item.quantity;
+                        const itemTaxRate = parseFloat(item.taxRate || "10");
+
+                        const itemSubtotal = basePrice * quantity;
+                        const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+                        return sum + itemTax;
+                      }, 0);
+
+                      const total = baseSubtotal + totalTax;
+                      return Math.round(total).toLocaleString("vi-VN");
+                    }
+                    // For other payment methods, use the original amount received
+                    return Math.round(
+                      parseFloat(receipt.amountReceived),
+                    ).toLocaleString("vi-VN");
+                  })()}{" "}
+                  ₫
+                </span>
               </div>
             )}
             {receipt.change && parseFloat(receipt.change) > 0 && (
@@ -478,8 +527,8 @@ export function ReceiptModal({
           </div>
 
           <div className="text-center mt-4 text-xs text-gray-600">
-            <p>{t('pos.thankYouBusiness')}</p>
-            <p>{t('pos.keepReceiptRecords')}</p>
+            <p>{t("pos.thankYouBusiness")}</p>
+            <p>{t("pos.keepReceiptRecords")}</p>
           </div>
         </div>
 
@@ -487,13 +536,13 @@ export function ReceiptModal({
           {isPreview ? (
             <div className="flex space-x-3 w-full">
               <Button onClick={onClose} variant="outline" className="flex-1">
-                {t('pos.cancel')}
+                {t("pos.cancel")}
               </Button>
               <Button
                 onClick={handleConfirmAndSelectPayment}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
               >
-                {t('pos.confirmAndSelectPayment')}
+                {t("pos.confirmAndSelectPayment")}
               </Button>
             </div>
           ) : (
@@ -503,7 +552,7 @@ export function ReceiptModal({
                 className="bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200"
               >
                 <Printer className="mr-2" size={16} />
-                {t('pos.printReceipt')}
+                {t("pos.printReceipt")}
               </Button>
             </div>
           )}
@@ -516,7 +565,11 @@ export function ReceiptModal({
           isOpen={showPaymentMethodModal}
           onClose={() => setShowPaymentMethodModal(false)}
           onSelectMethod={handlePaymentMethodSelect}
-          total={typeof receipt?.total === 'string' ? parseFloat(receipt.total) : (receipt?.total || 0)}
+          total={
+            typeof receipt?.total === "string"
+              ? parseFloat(receipt.total)
+              : receipt?.total || 0
+          }
           cartItems={cartItems}
           onShowEInvoice={() => setShowEInvoiceModal(true)}
         />
@@ -528,15 +581,19 @@ export function ReceiptModal({
           isOpen={showEInvoiceModal}
           onClose={() => setShowEInvoiceModal(false)}
           onConfirm={(eInvoiceData) => {
-            console.log('📧 E-Invoice confirmed:', eInvoiceData);
+            console.log("📧 E-Invoice confirmed:", eInvoiceData);
             setShowEInvoiceModal(false);
 
             // Sau khi e-invoice xử lý xong (phát hành ngay hoặc phát hành sau),
             // hiển thị lại receipt modal để in hóa đơn
-            console.log('📄 Showing receipt modal after e-invoice processing');
+            console.log("📄 Showing receipt modal after e-invoice processing");
           }}
-          total={typeof receipt?.total === 'string' ? parseFloat(receipt.total) : (receipt?.total || 0)}
-          selectedPaymentMethod={receipt?.paymentMethod || 'cash'}
+          total={
+            typeof receipt?.total === "string"
+              ? parseFloat(receipt.total)
+              : receipt?.total || 0
+          }
+          selectedPaymentMethod={receipt?.paymentMethod || "cash"}
           cartItems={(() => {
             console.log("🔄 Receipt Modal - Preparing cartItems for EInvoice:");
             console.log("- cartItems prop:", cartItems);
@@ -545,27 +602,53 @@ export function ReceiptModal({
 
             // Always prefer cartItems prop since it has the most accurate data
             if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-              console.log("✅ Using cartItems prop for e-invoice (most accurate data)");
+              console.log(
+                "✅ Using cartItems prop for e-invoice (most accurate data)",
+              );
               // Ensure all cartItems have proper structure
-              const processedCartItems = cartItems.map(item => ({
+              const processedCartItems = cartItems.map((item) => ({
                 id: item.id,
                 name: item.name,
-                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-                quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-                sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
-                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "10") : (item.taxRate || 10)
+                price:
+                  typeof item.price === "string"
+                    ? parseFloat(item.price)
+                    : item.price,
+                quantity:
+                  typeof item.quantity === "string"
+                    ? parseInt(item.quantity)
+                    : item.quantity,
+                sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+                taxRate:
+                  typeof item.taxRate === "string"
+                    ? parseFloat(item.taxRate || "10")
+                    : item.taxRate || 10,
               }));
-              console.log("🔧 Processed cartItems for e-invoice:", processedCartItems);
+              console.log(
+                "🔧 Processed cartItems for e-invoice:",
+                processedCartItems,
+              );
               return processedCartItems;
-            } else if (receipt?.items && Array.isArray(receipt.items) && receipt.items.length > 0) {
+            } else if (
+              receipt?.items &&
+              Array.isArray(receipt.items) &&
+              receipt.items.length > 0
+            ) {
               console.log("⚠️ Fallback to receipt items for e-invoice");
-              return receipt.items.map(item => ({
+              return receipt.items.map((item) => ({
                 id: item.productId || item.id,
                 name: item.productName,
-                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-                quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-                sku: item.productId?.toString() || `FOOD${String(item.id).padStart(5, '0')}`,
-                taxRate: 10
+                price:
+                  typeof item.price === "string"
+                    ? parseFloat(item.price)
+                    : item.price,
+                quantity:
+                  typeof item.quantity === "string"
+                    ? parseInt(item.quantity)
+                    : item.quantity,
+                sku:
+                  item.productId?.toString() ||
+                  `FOOD${String(item.id).padStart(5, "0")}`,
+                taxRate: 10,
               }));
             } else {
               console.error("❌ No valid cart items found for e-invoice");
