@@ -742,17 +742,44 @@ export class DatabaseStorage implements IStorage {
   }
 
   async clockIn(employeeId: number, notes?: string): Promise<AttendanceRecord> {
-    const clockInTime = new Date();
-    const [record] = await db
-      .insert(attendanceRecords)
-      .values({
-        employeeId,
-        clockIn: clockInTime,
-        status: "present",
-        notes: notes || null,
-      })
-      .returning();
-    return record;
+    try {
+      // Check if employee exists
+      const [employee] = await db
+        .select()
+        .from(employees)
+        .where(eq(employees.id, employeeId))
+        .limit(1);
+        
+      if (!employee) {
+        throw new Error(`Employee with ID ${employeeId} not found`);
+      }
+
+      // Check if already clocked in today
+      const existingRecord = await this.getTodayAttendance(employeeId);
+      if (existingRecord) {
+        throw new Error('Employee already clocked in today');
+      }
+
+      const clockInTime = new Date();
+      const [record] = await db
+        .insert(attendanceRecords)
+        .values({
+          employeeId,
+          clockIn: clockInTime,
+          status: "present",
+          notes: notes || null,
+        })
+        .returning();
+        
+      if (!record) {
+        throw new Error('Failed to create attendance record');
+      }
+        
+      return record;
+    } catch (error) {
+      console.error('Clock-in error:', error);
+      throw error;
+    }
   }
 
   async clockOut(attendanceId: number): Promise<AttendanceRecord | undefined> {

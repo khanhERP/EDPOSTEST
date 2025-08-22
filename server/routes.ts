@@ -695,11 +695,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/attendance/clock-in", async (req: TenantRequest, res) => {
     try {
       const { employeeId, notes } = req.body;
+      
+      if (!employeeId) {
+        return res.status(400).json({ message: "Employee ID is required" });
+      }
+
       const tenantDb = await getTenantDatabase(req);
-      const record = await storage.clockIn(employeeId, notes, tenantDb);
+      const record = await storage.clockIn(parseInt(employeeId), notes, tenantDb);
       res.status(201).json(record);
     } catch (error) {
-      res.status(500).json({ message: "Failed to clock in" });
+      console.error("Clock-in API error:", error);
+      
+      let statusCode = 500;
+      let message = "Failed to clock in";
+      
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          statusCode = 404;
+          message = error.message;
+        } else if (error.message.includes('already clocked in')) {
+          statusCode = 400;
+          message = error.message;
+        } else if (error.message.includes('database')) {
+          message = "Database error occurred";
+        }
+      }
+      
+      res.status(statusCode).json({ 
+        message,
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
