@@ -414,7 +414,7 @@ export function ReceiptModal({
                     const basePrice = parseFloat(item.price);
                     const quantity = item.quantity;
                     
-                    // Get the actual tax rate from the item
+                    // Get the actual tax rate from the item, ensuring it uses the real taxRate from the product
                     let itemTaxRate = 0;
                     if (item.taxRate !== undefined && item.taxRate !== null) {
                       if (typeof item.taxRate === 'string') {
@@ -433,6 +433,7 @@ export function ReceiptModal({
                       - Price: ${basePrice} 
                       - Quantity: ${quantity} 
                       - Tax Rate: ${itemTaxRate}% 
+                      - Item Subtotal: ${itemSubtotal}
                       - Item Tax: ${itemTax}`);
 
                     return sum + itemTax;
@@ -455,7 +456,7 @@ export function ReceiptModal({
                     const basePrice = parseFloat(item.price);
                     const quantity = item.quantity;
                     
-                    // Get the actual tax rate from the item
+                    // Get the actual tax rate from the item, ensuring it uses the real taxRate from the product
                     let itemTaxRate = 0;
                     if (item.taxRate !== undefined && item.taxRate !== null) {
                       if (typeof item.taxRate === 'string') {
@@ -469,6 +470,13 @@ export function ReceiptModal({
                     // Calculate tax for this item
                     const itemSubtotal = basePrice * quantity;
                     const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+                    console.log(`Total calculation tax for ${item.productName}: 
+                      - Price: ${basePrice} 
+                      - Quantity: ${quantity} 
+                      - Tax Rate: ${itemTaxRate}% 
+                      - Item Subtotal: ${itemSubtotal}
+                      - Item Tax: ${itemTax}`);
 
                     return sum + itemTax;
                   }, 0);
@@ -528,7 +536,7 @@ export function ReceiptModal({
                         const basePrice = parseFloat(item.price);
                         const quantity = item.quantity;
                         
-                        // Get the actual tax rate from the item
+                        // Get the actual tax rate from the item, ensuring it uses the real taxRate from the product
                         let itemTaxRate = 0;
                         if (item.taxRate !== undefined && item.taxRate !== null) {
                           if (typeof item.taxRate === 'string') {
@@ -542,6 +550,13 @@ export function ReceiptModal({
                         // Calculate tax for this item
                         const itemSubtotal = basePrice * quantity;
                         const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+                        console.log(`Amount received tax calculation for ${item.productName}: 
+                          - Price: ${basePrice} 
+                          - Quantity: ${quantity} 
+                          - Tax Rate: ${itemTaxRate}% 
+                          - Item Subtotal: ${itemSubtotal}
+                          - Item Tax: ${itemTax}`);
 
                         return sum + itemTax;
                       }, 0);
