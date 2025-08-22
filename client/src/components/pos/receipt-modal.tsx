@@ -416,12 +416,13 @@ export function ReceiptModal({
                       return Math.round(taxValue).toLocaleString("vi-VN");
                     }
                   }
-                  
+
                   // Fallback: Calculate tax using individual product tax rates
                   const totalTax = receipt.items.reduce((sum, item) => {
                     const basePrice = parseFloat(item.price);
                     const quantity = item.quantity;
-                    const itemTaxRate = parseFloat(item.taxRate || "10");
+                    // Use the actual tax rate from the item, not the default 10%
+                    const itemTaxRate = parseFloat(item.taxRate || "0");
 
                     const itemSubtotal = basePrice * quantity;
                     const itemTax = (itemSubtotal * itemTaxRate) / 100;
@@ -444,7 +445,7 @@ export function ReceiptModal({
                       return Math.round(totalValue).toLocaleString("vi-VN");
                     }
                   }
-                  
+
                   // Fallback: Calculate total as base subtotal + tax using individual tax rates
                   const baseSubtotal = receipt.items.reduce((sum, item) => {
                     return sum + parseFloat(item.price) * item.quantity;
@@ -453,7 +454,8 @@ export function ReceiptModal({
                   const totalTax = receipt.items.reduce((sum, item) => {
                     const basePrice = parseFloat(item.price);
                     const quantity = item.quantity;
-                    const itemTaxRate = parseFloat(item.taxRate || "10");
+                    // Use the actual tax rate from the item, not the default 10%
+                    const itemTaxRate = parseFloat(item.taxRate || "0");
 
                     const itemSubtotal = basePrice * quantity;
                     const itemTax = (itemSubtotal * itemTaxRate) / 100;
@@ -514,7 +516,7 @@ export function ReceiptModal({
                           return Math.round(totalValue).toLocaleString("vi-VN");
                         }
                       }
-                      
+
                       const baseSubtotal = receipt.items.reduce((sum, item) => {
                         return sum + parseFloat(item.price) * item.quantity;
                       }, 0);
@@ -522,7 +524,8 @@ export function ReceiptModal({
                       const totalTax = receipt.items.reduce((sum, item) => {
                         const basePrice = parseFloat(item.price);
                         const quantity = item.quantity;
-                        const itemTaxRate = parseFloat(item.taxRate || "10");
+                        // Use the actual tax rate from the item, not the default 10%
+                        const itemTaxRate = parseFloat(item.taxRate || "0");
 
                         const itemSubtotal = basePrice * quantity;
                         const itemTax = (itemSubtotal * itemTaxRate) / 100;
