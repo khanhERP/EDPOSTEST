@@ -41,9 +41,9 @@ interface PrintDialogProps {
   };
 }
 
-export function PrintDialog({ 
-  isOpen, 
-  onClose, 
+export function PrintDialog({
+  isOpen,
+  onClose,
   receiptData,
   storeInfo = {
     storeName: "IDMC",
@@ -191,7 +191,7 @@ export function PrintDialog({
 
               receiptData.items.forEach(item => {
                 const itemSubtotal = parseFloat(item.price) * item.quantity;
-                const itemTaxRate = item.taxRate || 10; // Default 10% if not specified
+                const itemTaxRate = parseFloat(item.taxRate || "0"); // Use actual tax rate from item
                 const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
                 totalTaxableAmount += itemSubtotal;
@@ -335,7 +335,7 @@ export function PrintDialog({
 
                 receiptData.items.forEach(item => {
                   const itemSubtotal = parseFloat(item.price) * item.quantity;
-                  const itemTaxRate = item.taxRate || 10; // Default 10% if not specified
+                  const itemTaxRate = parseFloat(item.taxRate || "0"); // Use actual tax rate from item
                   const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
                   totalTaxableAmount += itemSubtotal;
