@@ -695,7 +695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/attendance/clock-in", async (req: TenantRequest, res) => {
     try {
       const { employeeId, notes } = req.body;
-      
+
       if (!employeeId) {
         return res.status(400).json({ message: "Employee ID is required" });
       }
@@ -705,10 +705,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(record);
     } catch (error) {
       console.error("Clock-in API error:", error);
-      
+
       let statusCode = 500;
       let message = "Failed to clock in";
-      
+
       if (error instanceof Error) {
         if (error.message.includes('not found')) {
           statusCode = 404;
@@ -720,7 +720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message = "Database error occurred";
         }
       }
-      
+
       res.status(statusCode).json({ 
         message,
         error: error instanceof Error ? error.message : "Unknown error"
@@ -3126,25 +3126,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (invoiceData.items && Array.isArray(invoiceData.items) && invoiceData.items.length > 0) {
         console.log("Processing invoice items:", invoiceData.items.length);
 
-        const invoiceItemsData = invoiceData.items.map((item: any, index: number) => {
-          console.log(`Processing item ${index + 1}:`, item);
+        // Create invoice items with proper tax calculation using actual product tax rates
+        const itemsData = invoiceData.items.map(item => {
+          const unitPrice = parseFloat(item.unitPrice);
+          const quantity = item.quantity;
+
+          // Use actual tax rate from product - DON'T default to 10%
+          let taxRate = 0;
+          if (item.taxRate !== undefined && item.taxRate !== null) {
+            if (typeof item.taxRate === 'string') {
+              const parsed = parseFloat(item.taxRate);
+              taxRate = isNaN(parsed) ? 0 : parsed;
+            } else if (typeof item.taxRate === 'number') {
+              taxRate = isNaN(item.taxRate) ? 0 : item.taxRate;
+            }
+          }
+
+          const subtotal = unitPrice * quantity;
+          const tax = (subtotal * taxRate) / 100;
+          const total = subtotal + tax;
+
+          console.log(`Invoice item ${item.productName}: taxRate=${taxRate}%, subtotal=${subtotal}, tax=${tax}, total=${total}`);
 
           return {
             invoiceId: savedInvoice.id,
-            productId: item.productId || 0,
-            productName: item.productName || `Product ${index + 1}`,
-            quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1),
-            unitPrice: typeof item.unitPrice === 'string' ? item.unitPrice : (item.unitPrice?.toString() || "0"),
-            total: typeof item.total === 'string' ? item.total : (item.total?.toString() || "0"),
-            taxRate: typeof item.taxRate === 'string' ? item.taxRate : ((item.taxRate || 10).toString())
+            productId: item.productId,
+            productName: item.productName,
+            quantity: quantity,
+            unitPrice: item.unitPrice,
+            total: total.toFixed(2),
+            taxRate: taxRate.toFixed(2)
           };
         });
 
-        console.log("Invoice items data:", JSON.stringify(invoiceItemsData, null, 2));
+        console.log("Invoice items data:", JSON.stringify(itemsData, null, 2));
 
         const savedItems = await db
           .insert(invoiceItems)
-          .values(invoiceItemsData)
+          .values(itemsData)
           .returning();
 
         console.log("Invoice items saved:", savedItems.length);
