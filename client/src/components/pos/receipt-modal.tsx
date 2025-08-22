@@ -417,18 +417,17 @@ export function ReceiptModal({
                     // Get the actual tax rate from the item - use actual taxRate from product
                     let itemTaxRate = 0;
                     
-                    // Check if item has taxRate property (from the product)
+                    // Priority: use taxRate from item if available, otherwise default to 0%
                     if (item.taxRate !== undefined && item.taxRate !== null) {
                       if (typeof item.taxRate === 'string') {
                         const parsedRate = parseFloat(item.taxRate);
                         itemTaxRate = isNaN(parsedRate) ? 0 : parsedRate;
                       } else if (typeof item.taxRate === 'number') {
-                        itemTaxRate = item.taxRate;
+                        itemTaxRate = isNaN(item.taxRate) ? 0 : item.taxRate;
                       }
                     }
-                    // If no taxRate in item, default to 0% not 10%
                     
-                    // Calculate tax for this item
+                    // Calculate tax for this item - if taxRate is 0%, tax will be 0
                     const itemSubtotal = basePrice * quantity;
                     const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
@@ -464,18 +463,17 @@ export function ReceiptModal({
                     // Get the actual tax rate from the item - use actual taxRate from product
                     let itemTaxRate = 0;
                     
-                    // Check if item has taxRate property (from the product)
+                    // Priority: use taxRate from item if available, otherwise default to 0%
                     if (item.taxRate !== undefined && item.taxRate !== null) {
                       if (typeof item.taxRate === 'string') {
                         const parsedRate = parseFloat(item.taxRate);
                         itemTaxRate = isNaN(parsedRate) ? 0 : parsedRate;
                       } else if (typeof item.taxRate === 'number') {
-                        itemTaxRate = item.taxRate;
+                        itemTaxRate = isNaN(item.taxRate) ? 0 : item.taxRate;
                       }
                     }
-                    // If no taxRate in item, default to 0% not 10%
 
-                    // Calculate tax for this item
+                    // Calculate tax for this item - if taxRate is 0%, tax will be 0
                     const itemSubtotal = basePrice * quantity;
                     const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
@@ -547,18 +545,17 @@ export function ReceiptModal({
                         // Get the actual tax rate from the item - use actual taxRate from product
                         let itemTaxRate = 0;
                         
-                        // Check if item has taxRate property (from the product)
+                        // Priority: use taxRate from item if available, otherwise default to 0%
                         if (item.taxRate !== undefined && item.taxRate !== null) {
                           if (typeof item.taxRate === 'string') {
                             const parsedRate = parseFloat(item.taxRate);
                             itemTaxRate = isNaN(parsedRate) ? 0 : parsedRate;
                           } else if (typeof item.taxRate === 'number') {
-                            itemTaxRate = item.taxRate;
+                            itemTaxRate = isNaN(item.taxRate) ? 0 : item.taxRate;
                           }
                         }
-                        // If no taxRate in item, default to 0% not 10%
 
-                        // Calculate tax for this item
+                        // Calculate tax for this item - if taxRate is 0%, tax will be 0
                         const itemSubtotal = basePrice * quantity;
                         const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
