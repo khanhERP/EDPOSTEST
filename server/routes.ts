@@ -923,17 +923,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
         JSON.stringify({ order, items }, null, 2),
       );
 
-      const orderData = insertOrderSchema.parse(order);
+      // Calculate correct subtotal and tax based on individual product tax rates
+      let correctSubtotal = 0;
+      let correctTax = 0;
+
+      // Fetch all products to get tax rates
+      const products = await storage.getAllProducts(true, tenantDb);
+
+      for (const item of items) {
+        const product = products.find((p) => p.id === item.productId);
+        if (!product) {
+          return res.status(400).json({ 
+            message: `Product with ID ${item.productId} not found` 
+          });
+        }
+
+        const unitPrice = parseFloat(item.unitPrice);
+        const quantity = item.quantity;
+        
+        // Get actual tax rate from product
+        let taxRate = 0;
+        if (product.taxRate !== undefined && product.taxRate !== null) {
+          if (typeof product.taxRate === 'string') {
+            const parsed = parseFloat(product.taxRate);
+            taxRate = isNaN(parsed) ? 0 : parsed;
+          } else if (typeof product.taxRate === 'number') {
+            taxRate = isNaN(product.taxRate) ? 0 : product.taxRate;
+          }
+        }
+
+        const itemSubtotal = unitPrice * quantity;
+        const itemTax = (itemSubtotal * taxRate) / 100;
+
+        correctSubtotal += itemSubtotal;
+        correctTax += itemTax;
+
+        console.log(`Order item ${product.name}: taxRate=${taxRate}%, subtotal=${itemSubtotal}, tax=${itemTax}`);
+      }
+
+      const correctTotal = correctSubtotal + correctTax;
+
+      // Update order data with correct calculated totals
+      const orderDataWithTotals = {
+        ...insertOrderSchema.parse(order),
+        subtotal: correctSubtotal.toFixed(2),
+        tax: correctTax.toFixed(2),
+        total: correctTotal.toFixed(2),
+      };
+
       const itemsData = items.map((item: any) =>
         insertOrderItemSchema.parse(item),
       );
 
       console.log(
-        "Parsed order data:",
-        JSON.stringify({ orderData, itemsData }, null, 2),
+        "Parsed order data with correct tax:",
+        JSON.stringify({ orderDataWithTotals, itemsData }, null, 2),
       );
 
-      const newOrder = await storage.createOrder(orderData, itemsData, tenantDb);
+      const newOrder = await storage.createOrder(orderDataWithTotals, itemsData, tenantDb);
 
       // Verify items were created
       const createdItems = await storage.getOrderItems(newOrder.id, tenantDb);
