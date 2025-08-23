@@ -538,7 +538,9 @@ export default function SalesOrders() {
     );
   };
 
-  // Combine invoices and orders data with safe array checks
+  // Only show invoices in sales orders list to avoid duplication
+  // When orders are created via POS, they automatically create invoices
+  // So we only need to display invoices as the primary sales records
   const combinedData = [
     ...(Array.isArray(invoices) ? invoices.map((invoice: Invoice) => ({
       ...invoice,
@@ -553,24 +555,6 @@ export default function SalesOrders() {
       customerTaxCode: invoice.customerTaxCode || '',
       symbol: invoice.symbol || 'C11DTD',
       einvoiceStatus: invoice.einvoiceStatus || 0
-    })) : []),
-    ...(Array.isArray(orders) ? orders.map((order: Order) => ({
-      ...order,
-      type: 'order' as const,
-      date: order.orderedAt,
-      displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
-      displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
-      customerName: order.customerName || 'Khách hàng lẻ',
-      invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
-      // Map order fields to invoice-like fields for consistency
-      customerPhone: '',
-      customerAddress: '',
-      customerTaxCode: '',
-      symbol: 'C11DTD',
-      invoiceNumber: order.orderNumber || `ORD-${String(order.id).padStart(8, '0')}`,
-      tradeNumber: order.orderNumber || '',
-      invoiceDate: order.orderedAt,
-      einvoiceStatus: order.einvoiceStatus || 0
     })) : [])
   ];
 
