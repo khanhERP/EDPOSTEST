@@ -82,10 +82,21 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
     }
 
     // Ensure product has correct tax rate from database
+    let actualTaxRate = "0";
+    if (product.taxRate !== undefined && product.taxRate !== null) {
+      if (typeof product.taxRate === 'string') {
+        actualTaxRate = product.taxRate;
+      } else if (typeof product.taxRate === 'number') {
+        actualTaxRate = product.taxRate.toString();
+      }
+    }
+
     const productWithTax = {
       ...product,
-      taxRate: product.taxRate || "0" // Use actual tax rate from product, default to 0 if not set
+      taxRate: actualTaxRate
     };
+
+    console.log(`Adding ${product.name} to cart with tax rate: ${actualTaxRate}%`);
 
     onAddToCart(productWithTax);
     // Trigger toast notification for successful add to cart

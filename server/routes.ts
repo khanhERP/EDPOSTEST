@@ -426,8 +426,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const itemSubtotal = parseFloat(item.price) * item.quantity;
-        const taxRate = product.taxRate ? parseFloat(product.taxRate) / 100 : 0.1; // Default 10%
-        const itemTax = itemSubtotal * taxRate;
+        
+        // Get actual tax rate from product with proper type handling
+        let taxRate = 0;
+        if (product.taxRate !== undefined && product.taxRate !== null) {
+          if (typeof product.taxRate === 'string') {
+            const parsed = parseFloat(product.taxRate);
+            taxRate = isNaN(parsed) ? 0 : parsed;
+          } else if (typeof product.taxRate === 'number') {
+            taxRate = isNaN(product.taxRate) ? 0 : product.taxRate;
+          }
+        }
+        
+        const itemTax = (itemSubtotal * taxRate) / 100;
+
+        console.log(`Transaction item ${product.name}: taxRate=${taxRate}%, subtotal=${itemSubtotal}, tax=${itemTax}`);
 
         subtotal += itemSubtotal;
         tax += itemTax;

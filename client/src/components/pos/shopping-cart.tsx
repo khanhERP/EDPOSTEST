@@ -58,26 +58,34 @@ export function ShoppingCart({
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
 
-  const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
-  const tax = Math.round(
-    cart.reduce((sum, item) => {
-      // Use actual tax rate from item
-      const itemTaxRate = (() => {
-        if (item.taxRate !== undefined && item.taxRate !== null) {
-          if (typeof item.taxRate === 'string') {
-            const parsed = parseFloat(item.taxRate);
-            return isNaN(parsed) ? 0 : parsed;
-          } else if (typeof item.taxRate === 'number') {
-            return isNaN(item.taxRate) ? 0 : item.taxRate;
-          }
-        }
-        return 0; // Use 0% if no tax rate specified
-      })();
-      
-      return sum + ((parseFloat(item.price) * itemTaxRate) / 100) * item.quantity;
-    }, 0),
+  // Calculate totals with individual product tax rates
+  const subtotal = cart.reduce(
+    (sum, item) => sum + parseFloat(item.price) * item.quantity,
+    0,
   );
-  const total = Math.round(subtotal + tax);
+
+  // Calculate tax using individual product tax rates
+  const tax = cart.reduce((sum, item) => {
+    const itemSubtotal = parseFloat(item.price) * item.quantity;
+    let itemTaxRate = 0;
+
+    // Get actual tax rate from item
+    if (item.taxRate !== undefined && item.taxRate !== null) {
+      if (typeof item.taxRate === 'string') {
+        const parsed = parseFloat(item.taxRate);
+        itemTaxRate = isNaN(parsed) ? 0 : parsed;
+      } else if (typeof item.taxRate === 'number') {
+        itemTaxRate = isNaN(item.taxRate) ? 0 : item.taxRate;
+      }
+    }
+
+    const itemTax = (itemSubtotal * itemTaxRate) / 100;
+    console.log(`Tax calculation for ${item.name}: rate=${itemTaxRate}%, subtotal=${itemSubtotal}, tax=${itemTax}`);
+
+    return sum + itemTax;
+  }, 0);
+
+  const total = subtotal + tax;
   const change =
     paymentMethod === "cash"
       ? Math.max(0, parseFloat(amountReceived || "0") - total)
@@ -101,7 +109,7 @@ export function ShoppingCart({
           }
           return 0; // Use 0% if no tax rate specified
         })();
-        
+
         return sum + ((parseFloat(item.price) * itemTaxRate) / 100) * item.quantity;
       }, 0),
     );
