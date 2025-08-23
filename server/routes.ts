@@ -2347,7 +2347,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             transaction.employeeId?.toString() === selectedEmployee ||
             (transaction.cashierName && transaction.cashierName.includes(selectedEmployee));
 
-          return dateMatch && methodMatch && channelMatch && employeeMatch;
+          return dateMatch && methodMatch && salesChannelMatch && employeeMatch;
         });
 
         res.json(filteredTransactions);
@@ -3126,47 +3126,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (invoiceData.items && Array.isArray(invoiceData.items) && invoiceData.items.length > 0) {
         console.log("Processing invoice items:", invoiceData.items.length);
 
-        // Create invoice items with proper tax calculation using actual product tax rates
-        const itemsData = invoiceData.items.map(item => {
-          const unitPrice = parseFloat(item.unitPrice);
-          const quantity = item.quantity;
+        // Calculate correct subtotal and tax based on individual product tax rates
+      let correctSubtotal = 0;
+      let correctTax = 0;
 
-          // Use actual tax rate from product - DON'T default to 10%
-          let taxRate = 0;
-          if (item.taxRate !== undefined && item.taxRate !== null) {
-            if (typeof item.taxRate === 'string') {
-              const parsed = parseFloat(item.taxRate);
-              taxRate = isNaN(parsed) ? 0 : parsed;
-            } else if (typeof item.taxRate === 'number') {
-              taxRate = isNaN(item.taxRate) ? 0 : item.taxRate;
-            }
+      const itemsData = invoiceData.items.map(item => {
+        const unitPrice = parseFloat(item.unitPrice);
+        const quantity = item.quantity;
+
+        // Get actual tax rate from product
+        let taxRate = 0;
+        if (item.taxRate !== undefined && item.taxRate !== null) {
+          if (typeof item.taxRate === 'string') {
+            const parsed = parseFloat(item.taxRate);
+            taxRate = isNaN(parsed) ? 0 : parsed;
+          } else if (typeof item.taxRate === 'number') {
+            taxRate = isNaN(item.taxRate) ? 0 : item.taxRate;
           }
+        }
 
-          const subtotal = unitPrice * quantity;
-          const tax = (subtotal * taxRate) / 100;
-          const total = subtotal + tax;
+        const itemSubtotal = unitPrice * quantity;
+        const itemTax = (itemSubtotal * taxRate) / 100;
+        const itemTotal = itemSubtotal + itemTax;
 
-          console.log(`Invoice item ${item.productName}: taxRate=${taxRate}%, subtotal=${subtotal}, tax=${tax}, total=${total}`);
+        // Accumulate totals
+        correctSubtotal += itemSubtotal;
+        correctTax += itemTax;
 
-          return {
-            invoiceId: savedInvoice.id,
-            productId: item.productId,
-            productName: item.productName,
-            quantity: quantity,
-            unitPrice: item.unitPrice,
-            total: total.toFixed(2),
-            taxRate: taxRate.toFixed(2)
-          };
-        });
+        console.log(`Invoice item ${item.productName}: taxRate=${taxRate}%, subtotal=${itemSubtotal}, tax=${itemTax}, total=${itemTotal}`);
 
-        console.log("Invoice items data:", JSON.stringify(itemsData, null, 2));
+        return {
+          invoiceId: savedInvoice.id,
+          productId: item.productId,
+          productName: item.productName,
+          quantity: quantity,
+          unitPrice: item.unitPrice,
+          total: itemTotal.toFixed(2),
+          taxRate: taxRate.toFixed(2)
+        };
+      });
 
-        const savedItems = await db
-          .insert(invoiceItems)
-          .values(itemsData)
-          .returning();
+      console.log("Invoice items data:", JSON.stringify(itemsData, null, 2));
 
-        console.log("Invoice items saved:", savedItems.length);
+      const savedItems = await db
+        .insert(invoiceItems)
+        .values(itemsData)
+        .returning();
+
+      console.log("Invoice items saved:", savedItems.length);
+
+      // Update invoice with correct calculated totals
+      const correctTotal = correctSubtotal + correctTax;
+      console.log(`Updating invoice totals: subtotal=${correctSubtotal}, tax=${correctTax}, total=${correctTotal}`);
+
+      await db
+        .update(invoices)
+        .set({
+          subtotal: correctSubtotal.toFixed(2),
+          tax: correctTax.toFixed(2),
+          total: correctTotal.toFixed(2),
+          updatedAt: new Date()
+        })
+        .where(eq(invoices.id, savedInvoice.id));
+
       } else {
         console.log("No invoice items to save");
       }
