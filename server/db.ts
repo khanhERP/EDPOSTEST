@@ -3,12 +3,20 @@ import { Pool } from "pg";
 import * as schema from "@shared/schema";
 import { sql } from "drizzle-orm";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is required");
+// Use EXTERNAL_DB_URL if available, fallback to DATABASE_URL
+const databaseUrl = process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL or EXTERNAL_DB_URL is required");
 }
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: databaseUrl,
+  ssl: databaseUrl.includes("1.55.212.135") 
+    ? false // Disable SSL for external server
+    : databaseUrl.includes("neon")
+      ? { rejectUnauthorized: false }
+      : undefined,
 });
 
 export const db = drizzle(pool, { schema });
