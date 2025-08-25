@@ -1,3 +1,6 @@
+import { config } from "dotenv";
+config(); // Load environment variables from .env file
+
 import { defineConfig } from "drizzle-kit";
 
 // Use EXTERNAL_DB_URL if available, fallback to DATABASE_URL
