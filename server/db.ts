@@ -1,4 +1,31 @@
-(migrationError) {
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import * as schema from "@shared/schema";
+import { sql } from "drizzle-orm";
+
+if (!process.env.DATABASE_URL) {
+  throw new Error("DATABASE_URL is required");
+}
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+export const db = drizzle(pool, { schema });
+
+export async function initializeDatabase() {
+  try {
+    // Run migration for product_type column
+    try {
+      await db.execute(sql`
+        ALTER TABLE products ADD COLUMN IF NOT EXISTS product_type INTEGER DEFAULT 1
+      `);
+      await db.execute(sql`
+        UPDATE products SET product_type = 1 WHERE product_type IS NULL
+      `);
+
+      console.log("Migration for product_type column completed successfully.");
+    } catch (migrationError) {
       console.log(
         "Product type migration already applied or error:",
         migrationError,
