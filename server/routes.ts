@@ -23,7 +23,7 @@ import {
   invoiceItems,
   customers,
 } from "@shared/schema";
-import { initializeSampleData, db } from "./db";
+import { initializeDatabase, db } from "./db";
 import { registerTenantRoutes } from "./tenant-routes";
 import { z } from "zod";
 import {
@@ -57,8 +57,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply tenant middleware to all API routes
   app.use('/api', tenantMiddleware);
 
-  // Initialize sample data
-  await initializeSampleData();
+  // Initialize database
+  await initializeDatabase();
 
   // Ensure inventory_transactions table exists
   try {
