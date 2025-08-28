@@ -3235,7 +3235,7 @@ export default function Settings() {
               </Label>
               <Select
                 value={productForm.categoryId}
-                onChange={(value) =>
+                onValueChange={(value) =>
                   setProductForm((prev) => ({ ...prev, categoryId: value }))
                 }
               >
