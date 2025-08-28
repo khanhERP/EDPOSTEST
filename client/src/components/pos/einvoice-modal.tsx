@@ -1078,8 +1078,8 @@ export function EInvoiceModal({
               taxRate: itemTaxRate,
             };
           }),
-          subtotal: calculatedSubtotal.toFixed(2),
-          tax: calculatedTax.toFixed(2),
+          subtotal: cartSubtotal.toFixed(2),
+          tax: cartTaxAmount.toFixed(2),
           total: cartTotal.toFixed(2),
           paymentMethod: "einvoice",
           amountReceived: cartTotal.toFixed(2),
@@ -1146,8 +1146,8 @@ export function EInvoiceModal({
               taxRate: itemTaxRate,
             };
           }),
-          subtotal: calculatedSubtotal.toFixed(2),
-          tax: calculatedTax.toFixed(2),
+          subtotal: cartSubtotal.toFixed(2),
+          tax: cartTaxAmount.toFixed(2),
           total: cartTotal.toFixed(2),
           paymentMethod: "einvoice",
           originalPaymentMethod: selectedPaymentMethod,
