@@ -1240,6 +1240,86 @@ export function EInvoiceModal({
   };
 
   const handleCancel = () => {
+    // Create receipt data for cancelled transaction
+    const calculatedSubtotal = cartItems.reduce((sum, item) => {
+      const itemPrice =
+        typeof item.price === "string" ? parseFloat(item.price) : item.price;
+      const itemQuantity =
+        typeof item.quantity === "string"
+          ? parseInt(item.quantity)
+          : item.quantity;
+      return sum + itemPrice * itemQuantity;
+    }, 0);
+
+    const calculatedTax = cartItems.reduce((sum, item) => {
+      const itemPrice =
+        typeof item.price === "string" ? parseFloat(item.price) : item.price;
+      const itemQuantity =
+        typeof item.quantity === "string"
+          ? parseInt(item.quantity)
+          : item.quantity;
+      const itemTaxRate =
+        typeof item.taxRate === "string"
+          ? parseFloat(item.taxRate || "10")
+          : item.taxRate || 10;
+      const itemTax = (itemPrice * itemQuantity * itemTaxRate) / 100;
+      return sum + itemTax;
+    }, 0);
+
+    // Create receipt data for cancelled e-invoice
+    const receiptData = {
+      transactionId: `CANCEL-${Date.now()}`,
+      items: cartItems.map((item) => ({
+        id: item.id,
+        productId: item.id,
+        productName: item.name,
+        price:
+          typeof item.price === "string" ? item.price : item.price.toString(),
+        quantity:
+          typeof item.quantity === "string"
+            ? parseInt(item.quantity)
+            : item.quantity,
+        total: (
+          (typeof item.price === "string"
+            ? parseFloat(item.price)
+            : item.price) *
+          (typeof item.quantity === "string"
+            ? parseInt(item.quantity)
+            : item.quantity)
+        ).toFixed(2),
+        sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+        taxRate:
+          typeof item.taxRate === "string"
+            ? parseFloat(item.taxRate || "10")
+            : item.taxRate || 10,
+      })),
+      subtotal: calculatedSubtotal.toFixed(2),
+      tax: calculatedTax.toFixed(2),
+      total: total.toFixed(2),
+      paymentMethod: "einvoice",
+      originalPaymentMethod: selectedPaymentMethod,
+      cashierName: "System User",
+      createdAt: new Date().toISOString(),
+      invoiceNumber: null,
+      customerName: formData.customerName || "Khách hàng lẻ",
+      customerTaxCode: formData.taxCode || "",
+    };
+
+    const cancelledInvoiceData = {
+      success: false,
+      invoiceNumber: null,
+      symbol: null,
+      templateNumber: null,
+      einvoiceStatus: -1, // Hủy bỏ
+      invoiceStatus: -1, // Hủy bỏ
+      status: 'cancelled',
+      receipt: receiptData,
+      publishedImmediately: false,
+      showReceiptModal: true,
+    };
+
+    console.log("📧 E-Invoice cancelled, showing receipt modal");
+    onConfirm(cancelledInvoiceData);
     onClose();
   };
 
