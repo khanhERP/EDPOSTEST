@@ -19,7 +19,7 @@ interface ReceiptModalProps {
   isOpen: boolean;
   onClose: () => void;
   receipt: Receipt | null;
-  onConfirm?: () => void;
+  onConfirm?: (data?: any) => void; // Modified to accept optional data
   isPreview?: boolean;
   cartItems?: Array<{
     id: number;
@@ -28,6 +28,7 @@ interface ReceiptModalProps {
     quantity: number;
     sku?: string;
     taxRate?: number;
+    afterTaxPrice?: number | string | null; // Added for precise calculations
   }>;
   total?: number;
   isEInvoice?: boolean;
@@ -235,19 +236,46 @@ export function ReceiptModal({
     // Pass complete receipt data to parent for payment flow
     if (onConfirm) {
       console.log('📄 Receipt Modal: Passing complete receipt data to payment flow');
-      console.log('🎯 Receipt data being passed:', {
+
+      // Use exact values from receipt for accurate calculation
+      const exactData = {
         receipt,
         cartItems,
         total,
-        subtotal: receipt?.subtotal,
-        tax: receipt?.tax,
-        exactTotal: receipt?.exactTotal,
-        exactSubtotal: receipt?.exactSubtotal,
-        exactTax: receipt?.exactTax
+        // Pass exact calculated values to ensure consistency
+        exactSubtotal: receipt?.exactSubtotal ?? parseFloat(receipt?.subtotal || "0"),
+        exactTax: receipt?.exactTax ?? parseFloat(receipt?.tax || "0"),
+        exactTotal: receipt?.exactTotal ?? parseFloat(receipt?.total || "0"),
+        // Map cart items with correct tax calculation
+        processedCartItems: cartItems?.map((item: any) => ({
+          ...item,
+          // Ensure proper tax calculation based on afterTaxPrice logic
+          calculatedTax: (() => {
+            if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+              const afterTax = typeof item.afterTaxPrice === 'string'
+                ? parseFloat(item.afterTaxPrice)
+                : item.afterTaxPrice;
+              const basePrice = typeof item.price === 'string'
+                ? parseFloat(item.price)
+                : item.price;
+              return (afterTax - basePrice) * item.quantity;
+            }
+            return 0;
+          })()
+        })) || []
+      };
+
+      console.log('🎯 Receipt data being passed with exact values:', {
+        exactSubtotal: exactData.exactSubtotal,
+        exactTax: exactData.exactTax,
+        exactTotal: exactData.exactTotal,
+        receiptSubtotal: receipt?.subtotal,
+        receiptTax: receipt?.tax,
+        receiptTotal: receipt?.total
       });
-      
-      // Call onConfirm with receipt data
-      onConfirm();
+
+      // Call onConfirm with exact receipt data
+      onConfirm(exactData);
     }
   };
 
@@ -356,19 +384,28 @@ export function ReceiptModal({
             <div className="flex justify-between text-sm">
               <span>Tạm tính</span>
               <span>
-                {Math.floor(parseFloat(receipt.subtotal || "0")).toLocaleString("vi-VN")} ₫
+                {Math.floor(
+                  receipt.exactSubtotal !== undefined ? receipt.exactSubtotal :
+                  parseFloat(receipt.subtotal || "0")
+                ).toLocaleString("vi-VN")} ₫
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Thuế:</span>
               <span>
-                {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
+                {Math.floor(
+                  receipt.exactTax !== undefined ? receipt.exactTax :
+                  parseFloat(receipt.tax || "0")
+                ).toLocaleString("vi-VN")} ₫
               </span>
             </div>
             <div className="flex justify-between font-bold">
               <span>{t("pos.total")}</span>
               <span>
-                {Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
+                {Math.floor(
+                  receipt.exactTotal !== undefined ? receipt.exactTotal :
+                  parseFloat(receipt.total || "0")
+                ).toLocaleString("vi-VN")} ₫
               </span>
             </div>
             <div className="flex justify-between text-sm mt-2">
