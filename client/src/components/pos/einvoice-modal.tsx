@@ -565,48 +565,12 @@ export function EInvoiceModal({
         if (transactionResponse.ok) {
           const transactionResult = await transactionResponse.json();
           console.log("✅ Transaction created successfully - inventory deducted:", transactionResult);
-
-          // Show success message for inventory deduction
-          toast({
-            title: "Thành công",
-            description: `Đã trừ tồn kho tự động cho ${cartItems.length} sản phẩm`,
-          });
         } else {
           const transactionError = await transactionResponse.text();
           console.error("❌ Error creating transaction for inventory:", transactionError);
-
-          // Parse error message if possible
-          let errorMessage = "Không thể trừ tồn kho tự động";
-          try {
-            const errorData = JSON.parse(transactionError);
-            if (errorData.message) {
-              errorMessage = errorData.message;
-            } else if (errorData.details) {
-              errorMessage = errorData.details;
-            }
-          } catch (parseError) {
-            // Use default error message
-          }
-
-          // Show detailed error message
-          toast({
-            title: "Cảnh báo - Lỗi trừ tồn kho",
-            description: errorMessage,
-            variant: "destructive",
-          });
         }
       } catch (transactionError) {
         console.error("❌ Error creating transaction for inventory:", transactionError);
-
-        const errorMessage = transactionError instanceof Error
-          ? transactionError.message
-          : "Có lỗi không xác định khi trừ tồn kho";
-
-        toast({
-          title: "Lỗi hệ thống - Trừ tồn kho",
-          description: errorMessage,
-          variant: "destructive",
-        });
       }
 
       // Create receipt data thực sự cho receipt modal
@@ -986,29 +950,12 @@ export function EInvoiceModal({
           if (transactionResponse.ok) {
             const transactionResult = await transactionResponse.json();
             console.log("✅ Transaction created successfully for published invoice:", transactionResult);
-
-            toast({
-              title: "Thành công",
-              description: `Đã trừ tồn kho cho ${cartItems.length} sản phẩm khi phát hành hóa đơn`,
-            });
           } else {
             const transactionError = await transactionResponse.text();
             console.error("❌ Failed to create transaction for published invoice:", transactionError);
-
-            toast({
-              title: "Cảnh báo",
-              description: "Hóa đơn đã phát hành nhưng không thể trừ tồn kho. Vui lòng kiểm tra lại.",
-              variant: "destructive",
-            });
           }
         } catch (transactionError) {
           console.error("❌ Error creating transaction for published invoice:", transactionError);
-
-          toast({
-            title: "Cảnh báo",
-            description: "Hóa đơn đã phát hành nhưng có lỗi khi trừ tồn kho.",
-            variant: "destructive",
-          });
         }
 
         console.log(
