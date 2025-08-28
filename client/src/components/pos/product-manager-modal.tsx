@@ -274,7 +274,7 @@ export function ProductManagerModal({
       imageUrl: data.imageUrl?.trim() || null,
       taxRate: data.taxRate.toString(),
       priceIncludesTax: data.priceIncludesTax || false,
-      afterTaxPrice: data.afterTaxPrice ? data.afterTaxPrice.toString() : null
+      afterTaxPrice: data.afterTaxPrice && data.afterTaxPrice.trim() !== "" ? data.afterTaxPrice.toString() : null
     };
 
     console.log("Transformed data:", transformedData);
