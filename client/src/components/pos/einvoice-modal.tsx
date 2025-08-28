@@ -592,14 +592,7 @@ export function EInvoiceModal({
         "🟡 Prepared invoice data for later publishing:",
         invoiceData,
       );
-      console.log("📄 Receipt data created:", receiptData);
-
-      // Show success message
-      toast({
-        title: "Thành công",
-        description:
-          "Thông tin hóa đơn điện tử đã được lưu. Đang hiển thị màn hình in hóa đơn...",
-      });
+      console.log("📄 Receipt data to display:", receiptData);
 
       // Prepare comprehensive invoice data với receipt để hiển thị modal in
       const completeInvoiceData = {

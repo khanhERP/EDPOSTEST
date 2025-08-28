@@ -300,6 +300,10 @@ export function ShoppingCart({
       subtotal: calculatedSubtotal.toFixed(2),
       tax: calculatedTax.toFixed(2),
       total: calculatedTotal.toFixed(2),
+      // Add exact values to ensure proper display
+      exactSubtotal: calculatedSubtotal,
+      exactTax: calculatedTax,
+      exactTotal: calculatedTotal,
       paymentMethod: "preview", // Special flag for preview mode
       amountReceived: calculatedTotal.toFixed(2),
       change: "0.00",

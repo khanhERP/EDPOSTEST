@@ -384,28 +384,40 @@ export function ReceiptModal({
             <div className="flex justify-between text-sm">
               <span>Tạm tính</span>
               <span>
-                {Math.floor(
-                  receipt.exactSubtotal !== undefined ? receipt.exactSubtotal :
-                  parseFloat(receipt.subtotal || "0")
-                ).toLocaleString("vi-VN")} ₫
+                {(() => {
+                  // Always prioritize exact values passed from parent component
+                  const subtotalValue = receipt.exactSubtotal !== undefined 
+                    ? receipt.exactSubtotal 
+                    : parseFloat(receipt.subtotal || "0");
+                  console.log('💰 Receipt Modal - Subtotal display:', subtotalValue, 'from exactSubtotal:', receipt.exactSubtotal, 'from subtotal:', receipt.subtotal);
+                  return Math.floor(subtotalValue).toLocaleString("vi-VN");
+                })()} ₫
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Thuế:</span>
               <span>
-                {Math.floor(
-                  receipt.exactTax !== undefined ? receipt.exactTax :
-                  parseFloat(receipt.tax || "0")
-                ).toLocaleString("vi-VN")} ₫
+                {(() => {
+                  // Always prioritize exact values passed from parent component
+                  const taxValue = receipt.exactTax !== undefined 
+                    ? receipt.exactTax 
+                    : parseFloat(receipt.tax || "0");
+                  console.log('💰 Receipt Modal - Tax display:', taxValue, 'from exactTax:', receipt.exactTax, 'from tax:', receipt.tax);
+                  return Math.floor(taxValue).toLocaleString("vi-VN");
+                })()} ₫
               </span>
             </div>
             <div className="flex justify-between font-bold">
               <span>{t("pos.total")}</span>
               <span>
-                {Math.floor(
-                  receipt.exactTotal !== undefined ? receipt.exactTotal :
-                  parseFloat(receipt.total || "0")
-                ).toLocaleString("vi-VN")} ₫
+                {(() => {
+                  // Always prioritize exact values passed from parent component
+                  const totalValue = receipt.exactTotal !== undefined 
+                    ? receipt.exactTotal 
+                    : parseFloat(receipt.total || "0");
+                  console.log('💰 Receipt Modal - Total display:', totalValue, 'from exactTotal:', receipt.exactTotal, 'from total:', receipt.total);
+                  return Math.floor(totalValue).toLocaleString("vi-VN");
+                })()} ₫
               </span>
             </div>
             <div className="flex justify-between text-sm mt-2">
