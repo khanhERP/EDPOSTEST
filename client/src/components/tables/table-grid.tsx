@@ -2950,7 +2950,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   variant="outline"
                   onClick={() => setMixedPaymentOpen(false)}
                 >
-                  {t("orders.mixedPaymentCancel")}
+                  {t("orders.cancel")}
                 </Button>
               </div>
             </div>

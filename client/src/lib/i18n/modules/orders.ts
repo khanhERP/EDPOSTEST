@@ -145,7 +145,9 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     searchCustomers: "Search customers",
     availablePoints: "Available points",
     mixedPaymentTitle: "Mixed Payment",
-    mixedPaymentCancel: "Cancel",
+    mixedPaymentCancel: "Cancel Mixed Payment",
+    mixedPaymentCompleted: "Mixed Payment Completed",
+    mixedPaymentError: "Mixed Payment Error",
     mixedPaymentDesc:
       "Insufficient points, need additional payment by cash or transfer",
     mixedPaymentSummary: "Payment Summary",
@@ -251,7 +253,9 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     searchCustomers: "Tìm kiếm khách hàng",
     availablePoints: "Điểm có sẵn",
     mixedPaymentTitle: "Thanh toán hỗn hợp",
-    mixedPaymentCancel: "Hủy",
+    mixedPaymentCancel: "Hủy thanh toán hỗn hợp",
+    mixedPaymentCompleted: "Thanh toán hỗn hợp hoàn tất",
+    mixedPaymentError: "Lỗi thanh toán hỗn hợp",
     mixedPaymentDesc:
       "Không đủ điểm, cần thanh toán thêm bằng tiền mặt hoặc chuyển khoản",
     mixedPaymentSummary: "Tóm tắt thanh toán",
