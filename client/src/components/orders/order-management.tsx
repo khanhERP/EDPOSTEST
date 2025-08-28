@@ -888,11 +888,30 @@ export function OrderManagement() {
                               <div className="text-xs text-gray-600 mt-1">
                                 {formatCurrency(Number(item.unitPrice || 0))}/món
                               </div>
-                              {product?.taxRate && parseFloat(product.taxRate) > 0 && (
-                                <div className="text-xs text-orange-600 mt-1">
-                                  Thuế: {formatCurrency(Number(item.unitPrice || 0) * parseFloat(product.taxRate) / 100 * item.quantity)} ({product.taxRate}%)
-                                </div>
-                              )}
+                              {(() => {
+                                // Calculate tax based on afterTaxPrice if available, otherwise use taxRate
+                                if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                                  const basePrice = Number(item.unitPrice || 0);
+                                  const taxPerUnit = afterTaxPrice - basePrice;
+                                  const totalTax = taxPerUnit * item.quantity;
+                                  const taxRate = basePrice > 0 ? ((taxPerUnit / basePrice) * 100).toFixed(2) : "0.00";
+                                  
+                                  return totalTax > 0 ? (
+                                    <div className="text-xs text-orange-600 mt-1">
+                                      Thuế: {formatCurrency(totalTax)} ({taxRate}%)
+                                    </div>
+                                  ) : null;
+                                } else if (product?.taxRate && parseFloat(product.taxRate) > 0) {
+                                  const taxAmount = Number(item.unitPrice || 0) * parseFloat(product.taxRate) / 100 * item.quantity;
+                                  return (
+                                    <div className="text-xs text-orange-600 mt-1">
+                                      Thuế: {formatCurrency(taxAmount)} ({product.taxRate}%)
+                                    </div>
+                                  );
+                                }
+                                return null;
+                              })()}
                               {item.notes && (
                                 <div className="text-xs text-blue-600 italic mt-1">
                                   Ghi chú: {item.notes}
@@ -922,36 +941,39 @@ export function OrderManagement() {
                   <h4 className="font-medium mb-2">{t('orders.totalAmount')}</h4>
                   <div className="space-y-1 text-sm">
                     {(() => {
-                      // Calculate totals based on item data
-                      let totalItemSubtotal = 0;
-                      let totalItemTax = 0;
+                      // Use EXACT same calculation logic as displayed in Order Details
+                      let orderDetailsSubtotal = 0;
+                      let orderDetailsTax = 0;
 
                       if (Array.isArray(orderItems) && Array.isArray(products)) {
                         orderItems.forEach((item: any) => {
+                          const basePrice = Number(item.unitPrice || 0);
+                          const quantity = Number(item.quantity || 0);
                           const product = products.find((p: any) => p.id === item.productId);
-                          const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 0;
-                          const itemUnitPrice = Number(item.unitPrice || 0);
-                          const itemQuantity = item.quantity;
 
-                          const itemSubtotal = itemUnitPrice * itemQuantity;
-                          const itemTax = taxRate > 0 ? (itemSubtotal * taxRate) / 100 : 0;
+                          // Calculate subtotal exactly as Order Details display
+                          orderDetailsSubtotal += basePrice * quantity;
 
-                          totalItemSubtotal += itemSubtotal;
-                          totalItemTax += itemTax;
+                          // Use EXACT same tax calculation logic as Order Details display
+                          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                            const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                            const taxPerUnit = afterTaxPrice - basePrice;
+                            orderDetailsTax += taxPerUnit * quantity;
+                          }
                         });
                       }
 
-                      const finalTotal = totalItemSubtotal + totalItemTax;
+                      const finalTotal = orderDetailsSubtotal + orderDetailsTax;
 
                       return (
                         <>
                           <div className="flex justify-between">
                             <span>{t('common.subtotalLabel')}</span>
-                            <span>{formatCurrency(totalItemSubtotal)}</span>
+                            <span>{formatCurrency(orderDetailsSubtotal)}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>{t('orders.tax')}</span>
-                            <span>{formatCurrency(totalItemTax)}</span>
+                            <span>{formatCurrency(orderDetailsTax)}</span>
                           </div>
                           <Separator />
                           <div className="flex justify-between font-medium">
