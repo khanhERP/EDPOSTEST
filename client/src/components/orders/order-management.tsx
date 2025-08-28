@@ -896,7 +896,7 @@ export function OrderManagement() {
                                   const taxPerUnit = afterTaxPrice - basePrice;
                                   const totalTax = taxPerUnit * item.quantity;
                                   const taxRate = basePrice > 0 ? ((taxPerUnit / basePrice) * 100).toFixed(2) : "0.00";
-                                  
+
                                   return totalTax > 0 ? (
                                     <div className="text-xs text-orange-600 mt-1">
                                       Thuế: {formatCurrency(totalTax)} ({taxRate}%)
@@ -1045,6 +1045,26 @@ export function OrderManagement() {
                         };
 
                         console.log('📄 Order Management: Showing receipt preview before payment');
+
+                        // Store the complete order data with proper field mapping for payment flow
+                        const completeOrderForPayment = {
+                          ...selectedOrder,
+                          orderItems: orderItems || [],
+                          calculatedSubtotal: subtotal,
+                          calculatedTax: totalTax,
+                          calculatedTotal: finalTotal,
+                          processedItems: processedItems
+                        };
+
+                        console.log('💾 Order Management: Storing complete order data for payment:', {
+                          orderId: selectedOrder.id,
+                          calculatedSubtotal: subtotal,
+                          calculatedTax: totalTax,
+                          calculatedTotal: finalTotal,
+                          processedItemsCount: processedItems.length
+                        });
+
+                        setOrderForPayment(completeOrderForPayment);
                         setPreviewReceipt(previewData);
                         setOrderDetailsOpen(false);
                         setShowReceiptPreview(true);
