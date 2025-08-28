@@ -459,18 +459,19 @@ export class DatabaseStorage implements IStorage {
         return product; // Return the original product without updating stock
       }
 
-      const oldStock = product.stock || 0;
-      const newStock = Math.max(0, oldStock + quantity);
+      const currentStock = product.stock || 0;
+      // Đơn giản: chỉ cần lấy tổng tồn kho hiện tại trừ đi số lượng bán
+      const newStock = currentStock - Math.abs(quantity);
 
       // Log the stock calculation
-      console.log(`📦 Stock calculation for ${product.name} (ID: ${id}):`);
-      console.log(`   - Old stock: ${oldStock}`);
-      console.log(`   - Quantity change: ${quantity}`);
-      console.log(`   - Calculated new stock: ${newStock}`);
+      console.log(`📦 Simple stock calculation for ${product.name} (ID: ${id}):`);
+      console.log(`   - Current stock: ${currentStock}`);
+      console.log(`   - Quantity to subtract: ${Math.abs(quantity)}`);
+      console.log(`   - New stock: ${newStock}`);
 
-      // Check if we have sufficient stock for negative quantities
-      if (quantity < 0 && oldStock < Math.abs(quantity)) {
-        const errorMsg = `Insufficient stock for ${product.name}. Available: ${oldStock}, Required: ${Math.abs(quantity)}`;
+      // Check if we have sufficient stock
+      if (newStock < 0) {
+        const errorMsg = `Insufficient stock for ${product.name}. Available: ${currentStock}, Required: ${Math.abs(quantity)}`;
         console.error(`❌ ${errorMsg}`);
         throw new Error(errorMsg);
       }
@@ -482,18 +483,17 @@ export class DatabaseStorage implements IStorage {
         .returning();
 
       if (updatedProduct) {
-        console.log(`✅ Stock updated successfully for ${product.name}: ${oldStock} → ${newStock}`);
+        console.log(`✅ Stock updated successfully for ${product.name}: ${currentStock} → ${newStock}`);
         
         // Create inventory transaction record
         try {
-          const transactionType = quantity > 0 ? 'add' : 'subtract';
           await database.execute(sql`
             INSERT INTO inventory_transactions 
             (product_id, type, quantity, previous_stock, new_stock, notes, created_at)
-            VALUES (${id}, ${transactionType}, ${Math.abs(quantity)}, ${oldStock}, ${newStock}, 
-                   'E-Invoice stock deduction', ${new Date().toISOString()})
+            VALUES (${id}, 'subtract', ${Math.abs(quantity)}, ${currentStock}, ${newStock}, 
+                   'Stock deduction from sale', ${new Date().toISOString()})
           `);
-          console.log(`📝 Inventory transaction recorded for ${product.name} (type: ${transactionType})`);
+          console.log(`📝 Inventory transaction recorded for ${product.name}`);
         } catch (invError) {
           console.error(`❌ Failed to record inventory transaction:`, invError);
           // Don't throw here as the stock update was successful
@@ -553,11 +553,11 @@ export class DatabaseStorage implements IStorage {
 
           console.log(`✅ Transaction item created with ID: ${transactionItem.id}`);
 
-          // Update product stock - this is the key part for inventory deduction
-          console.log(`🔢 Attempting to update stock for product ID ${item.productId}: -${item.quantity}`);
+          // Update product stock - trừ tồn kho đơn giản
+          console.log(`🔢 Updating stock for product ID ${item.productId}: subtract ${item.quantity}`);
           
           try {
-            const updatedProduct = await this.updateProductStock(item.productId, -item.quantity, tenantDb);
+            const updatedProduct = await this.updateProductStock(item.productId, item.quantity, tenantDb);
             
             if (updatedProduct) {
               console.log(`✅ Stock successfully updated for ${item.productName}: New stock = ${updatedProduct.stock}`);
