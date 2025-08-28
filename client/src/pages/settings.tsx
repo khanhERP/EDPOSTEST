@@ -3353,7 +3353,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productDescription" className="text-right">
-                {t("common.description")}
+                {t("settings.productDescriptionLabel")}
               </Label>
               <Textarea
                 id="productDescription"
@@ -3365,7 +3365,7 @@ export default function Settings() {
                   }))
                 }
                 className="col-span-3"
-                placeholder="품목 설명을 입력하세요 (선택사항)"
+                placeholder={t("settings.productDescriptionPlaceholder")}
                 rows={3}
               />
             </div>
