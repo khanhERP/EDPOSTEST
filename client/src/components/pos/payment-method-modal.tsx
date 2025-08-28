@@ -200,6 +200,22 @@ export function PaymentMethodModal({
   };
 
   const getPaymentMethodName = (nameKey: string) => {
+    // Get the saved payment methods from localStorage to use actual names
+    const savedPaymentMethods = localStorage.getItem("paymentMethods");
+    
+    if (savedPaymentMethods) {
+      try {
+        const paymentMethods = JSON.parse(savedPaymentMethods);
+        const method = paymentMethods.find((m: any) => m.nameKey === nameKey);
+        if (method && method.name) {
+          return method.name;
+        }
+      } catch (error) {
+        console.error("Error parsing saved payment methods:", error);
+      }
+    }
+
+    // Fallback to translation keys if no saved name found
     const names = {
       cash: t("common.cash"),
       creditCard: t("common.creditCard"),
@@ -217,6 +233,22 @@ export function PaymentMethodModal({
   };
 
   const getMethodDescription = (nameKey: string) => {
+    // Get the saved payment methods from localStorage to use actual names as descriptions
+    const savedPaymentMethods = localStorage.getItem("paymentMethods");
+    
+    if (savedPaymentMethods) {
+      try {
+        const paymentMethods = JSON.parse(savedPaymentMethods);
+        const method = paymentMethods.find((m: any) => m.nameKey === nameKey);
+        if (method && method.name) {
+          return method.name;
+        }
+      } catch (error) {
+        console.error("Error parsing saved payment methods:", error);
+      }
+    }
+
+    // Fallback to translation descriptions if no saved name found
     const descriptions = {
       cash: t("common.cash"),
       creditCard: t("common.visaMastercard"),
