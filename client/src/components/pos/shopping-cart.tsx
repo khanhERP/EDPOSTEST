@@ -83,10 +83,9 @@ export function ShoppingCart({
           console.log("  Tax for", item.quantity, "items:", (afterTaxPrice - basePrice) * item.quantity);
         }
 
-        // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
+        // Only calculate tax if afterTaxPrice exists in database
         if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          // Tax = afterTaxPrice - basePrice
           const taxPerItem = afterTaxPrice - basePrice;
           const totalItemTax = taxPerItem * item.quantity;
           console.log("✅ Using afterTaxPrice from database:");
@@ -94,20 +93,11 @@ export function ShoppingCart({
           console.log("  Tax per item:", taxPerItem, "₫");
           console.log("  Quantity:", item.quantity);
           console.log("  Total tax for this item:", totalItemTax, "₫");
-          console.log("  Verification: " + afterTaxPrice + " - " + basePrice + " = " + taxPerItem);
-          return sum + totalItemTax;
-        } else {
-          // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
-          const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
-          const taxPerItem = calculatedAfterTaxPrice - basePrice;
-          const totalItemTax = taxPerItem * item.quantity;
-          console.log("⚠️ Using calculated afterTaxPrice (fallback):");
-          console.log("  Calculated After Tax Price:", calculatedAfterTaxPrice, "₫");
-          console.log("  Tax per item:", taxPerItem, "₫");
-          console.log("  Quantity:", item.quantity);
-          console.log("  Total tax for this item:", totalItemTax, "₫");
           return sum + totalItemTax;
         }
+        // No tax calculation if no afterTaxPrice in database
+        console.log("⚠️ No afterTaxPrice in database - no tax applied");
+        return sum;
       }
       return sum;
     }, 0);
@@ -465,18 +455,14 @@ export function ShoppingCart({
                         {(() => {
                             const basePrice = parseFloat(item.price);
 
-                            // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
+                            // Only calculate tax if afterTaxPrice exists in database
                             if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
                               const afterTaxPrice = parseFloat(item.afterTaxPrice);
-                              // Tax = afterTaxPrice - basePrice
                               const taxPerItem = afterTaxPrice - basePrice;
                               return Math.round(taxPerItem * item.quantity);
-                            } else {
-                              // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
-                              const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
-                              const taxPerItem = calculatedAfterTaxPrice - basePrice;
-                              return Math.round(taxPerItem * item.quantity);
                             }
+                            // No tax if no afterTaxPrice in database
+                            return 0;
                           })().toLocaleString("vi-VN")} ₫ ({item.taxRate}%)
                       </p>
                     )}

@@ -647,7 +647,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           // Calculate subtotal
           newSubtotal += basePrice * quantity;
 
-          // Calculate tax using product info
+          // Only calculate tax if afterTaxPrice exists in database
           const product = Array.isArray(products)
             ? products.find((p: any) => p.id === item.productId)
             : null;
@@ -659,10 +659,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             const afterTaxPrice = parseFloat(product.afterTaxPrice);
             const taxPerUnit = afterTaxPrice - basePrice;
             newTax += taxPerUnit * quantity;
-          } else {
-            // No afterTaxPrice means no tax
-            newTax += 0;
           }
+          // No tax calculation if no afterTaxPrice in database
         });
       }
 
@@ -1671,7 +1669,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                               // Calculate subtotal (base price without tax)
                               subtotal += basePrice * quantity;
                               
-                              // Use same tax calculation logic as other screens
+                              // Only calculate tax if afterTaxPrice exists in database
                               if (
                                 product?.afterTaxPrice &&
                                 product.afterTaxPrice !== null &&
@@ -1680,10 +1678,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
                                 const taxPerUnit = afterTaxPrice - basePrice;
                                 totalTax += taxPerUnit * quantity;
-                              } else {
-                                // No afterTaxPrice means no tax (default 0)
-                                totalTax += 0;
                               }
+                              // No tax calculation if no afterTaxPrice in database
                             });
                             
                             const grandTotal = subtotal + totalTax;
@@ -1973,20 +1969,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       // Calculate subtotal (base price without tax)
                       subtotal += basePrice * quantity;
 
-                      // Use same tax calculation logic as shopping cart
+                      // Only calculate tax if afterTaxPrice exists in database
                       if (
                         product?.afterTaxPrice &&
                         product.afterTaxPrice !== null &&
                         product.afterTaxPrice !== ""
                       ) {
                         const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                        // Tax = afterTaxPrice - basePrice (per unit), then multiply by quantity
                         const taxPerUnit = afterTaxPrice - basePrice;
                         totalTax += taxPerUnit * quantity;
-                      } else {
-                        // No afterTaxPrice means no tax
-                        totalTax += 0;
                       }
+                      // No tax calculation if no afterTaxPrice in database
                     });
                   }
 

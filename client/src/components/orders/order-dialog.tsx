@@ -263,21 +263,16 @@ export function OrderDialog({
     cart.forEach((item) => {
       const product = products?.find((p: Product) => p.id === item.product.id);
       let itemTax = 0;
-      
+
+      // Only calculate tax if afterTaxPrice exists in database
       if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-        // Use afterTaxPrice - basePrice for accurate tax calculation
         const afterTaxPrice = parseFloat(product.afterTaxPrice);
         const basePrice = item.product.price;
         const taxPerUnit = afterTaxPrice - basePrice;
         itemTax = taxPerUnit * item.quantity;
-      } else if (product?.taxRate && parseFloat(product.taxRate) > 0) {
-        // Fallback to taxRate calculation if no afterTaxPrice
-        const taxRate = parseFloat(product.taxRate);
-        const itemSubtotal = item.product.price * item.quantity;
-        itemTax = (itemSubtotal * taxRate) / 100;
       }
-      // If neither afterTaxPrice nor taxRate available, tax remains 0
-      
+      // No tax if no afterTaxPrice in database
+
       totalTax += itemTax;
     });
 
@@ -286,21 +281,16 @@ export function OrderDialog({
       existingItems.forEach((item) => {
         const product = products?.find((p: Product) => p.id === item.productId);
         let itemTax = 0;
-        
+
+        // Only calculate tax if afterTaxPrice exists in database
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-          // Use afterTaxPrice - basePrice for accurate tax calculation
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const basePrice = Number(item.unitPrice || 0);
           const taxPerUnit = afterTaxPrice - basePrice;
           itemTax = taxPerUnit * Number(item.quantity || 0);
-        } else if (product?.taxRate && parseFloat(product.taxRate) > 0) {
-          // Fallback to taxRate calculation if no afterTaxPrice
-          const taxRate = parseFloat(product.taxRate);
-          const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
-          itemTax = (itemSubtotal * taxRate) / 100;
         }
-        // If neither afterTaxPrice nor taxRate available, tax remains 0
-        
+        // No tax if no afterTaxPrice in database
+
         totalTax += itemTax;
       });
     }
@@ -355,12 +345,13 @@ export function OrderDialog({
         const itemSubtotal = basePrice * quantity;
 
         let itemTax = 0;
-        // Use afterTaxPrice if available, otherwise no tax (default 0)
+        // Only calculate tax if afterTaxPrice exists in database
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const taxPerUnit = afterTaxPrice - basePrice;
           itemTax = taxPerUnit * quantity;
         }
+        // No tax if no afterTaxPrice in database
 
         const itemTotal = itemSubtotal + itemTax;
 
@@ -406,12 +397,13 @@ export function OrderDialog({
         const itemSubtotal = basePrice * quantity;
 
         let itemTax = 0;
-        // Use afterTaxPrice if available, otherwise no tax (default 0)
+        // Only calculate tax if afterTaxPrice exists in database
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const taxPerUnit = afterTaxPrice - basePrice;
           itemTax = taxPerUnit * quantity;
         }
+        // No tax if no afterTaxPrice in database
 
         const itemTotal = itemSubtotal + itemTax;
 
@@ -706,9 +698,9 @@ export function OrderDialog({
 
                                               const newTotal = newSubtotal + newTax;
 
-                                              console.log('💰 Order Dialog: Calculated new totals:', { 
-                                                newSubtotal, 
-                                                newTax, 
+                                              console.log('💰 Order Dialog: Calculated new totals:', {
+                                                newSubtotal,
+                                                newTax,
                                                 newTotal,
                                                 itemsCount: remainingItems?.length || 0
                                               });
