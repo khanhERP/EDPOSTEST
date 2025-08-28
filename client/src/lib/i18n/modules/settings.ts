@@ -171,7 +171,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     yes: "네",
     // Product form dialog
     addProductTitle: "상품 추가",
-    editProductTitle: "상품 수정",
     addProductDesc: "새 상품 정보를 입력하세요",
     editProductDesc: "상품 정보를 수정하세요",
     productDescriptionPlaceholder: "상품 설명을 입력하세요 (선택사항)",
@@ -360,7 +359,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     outOfStock: "Out of Stock",
     // Product form dialog
     addProductTitle: "Add Product",
-    editProductTitle: "Edit Product", 
     addProductDesc: "Enter new product information",
     editProductDesc: "Update product information",
     productDescriptionPlaceholder: "Enter product description (optional)",
@@ -549,7 +547,6 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     outOfStock: "Hết hàng",
     // Product form dialog
     addProductTitle: "Thêm sản phẩm",
-    editProductTitle: "Sửa sản phẩm",
     addProductDesc: "Nhập thông tin sản phẩm mới",
     editProductDesc: "Cập nhật thông tin sản phẩm",
     productDescriptionPlaceholder: "Nhập mô tả sản phẩm (tùy chọn)",

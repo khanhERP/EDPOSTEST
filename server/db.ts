@@ -501,38 +501,62 @@ export async function initializeSampleData() {
 
     // Initialize printer_configs table if it doesn't exist
     try {
-      await db.execute(sql`
-        CREATE TABLE IF NOT EXISTS printer_configs (
-          id SERIAL PRIMARY KEY,
-          name VARCHAR(100) NOT NULL,
-          printer_type VARCHAR(50) NOT NULL DEFAULT 'thermal',
-          connection_type VARCHAR(50) NOT NULL DEFAULT 'usb',
-          ip_address VARCHAR(45),
-          port INTEGER DEFAULT 9100,
-          mac_address VARCHAR(17),
-          paper_width INTEGER NOT NULL DEFAULT 80,
-          print_speed INTEGER DEFAULT 100,
-          is_primary BOOLEAN NOT NULL DEFAULT false,
-          is_secondary BOOLEAN NOT NULL DEFAULT false,
-          is_active BOOLEAN NOT NULL DEFAULT true,
-          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
-          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+      // Check if table exists first
+      const tableExists = await db.execute(sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'printer_configs'
         )
       `);
 
-      // Create indexes for better performance
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_printer_configs_primary ON printer_configs(is_primary)
-      `);
-      await db.execute(sql`
-        CREATE INDEX IF NOT EXISTS idx_printer_configs_active ON printer_configs(is_active)
-      `);
+      if (!tableExists.rows[0]?.exists) {
+        await db.execute(sql`
+          CREATE TABLE printer_configs (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            printer_type VARCHAR(50) NOT NULL DEFAULT 'thermal',
+            connection_type VARCHAR(50) NOT NULL DEFAULT 'usb',
+            ip_address VARCHAR(45),
+            port INTEGER DEFAULT 9100,
+            mac_address VARCHAR(17),
+            paper_width INTEGER NOT NULL DEFAULT 80,
+            print_speed INTEGER DEFAULT 100,
+            is_primary BOOLEAN NOT NULL DEFAULT false,
+            is_secondary BOOLEAN NOT NULL DEFAULT false,
+            is_active BOOLEAN NOT NULL DEFAULT true,
+            created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+            updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+          )
+        `);
 
-      console.log("Printer configs table initialized");
+        // Create indexes for better performance
+        await db.execute(sql`
+          CREATE INDEX idx_printer_configs_primary ON printer_configs(is_primary)
+        `);
+        await db.execute(sql`
+          CREATE INDEX idx_printer_configs_active ON printer_configs(is_active)
+        `);
+
+        console.log("Printer configs table created successfully");
+      } else {
+        // Add missing columns if table exists
+        try {
+          await db.execute(sql`
+            ALTER TABLE printer_configs ADD COLUMN IF NOT EXISTS is_primary BOOLEAN DEFAULT false
+          `);
+          await db.execute(sql`
+            ALTER TABLE printer_configs ADD COLUMN IF NOT EXISTS is_secondary BOOLEAN DEFAULT false
+          `);
+          console.log("Printer configs table columns updated");
+        } catch (columnError) {
+          console.log("Printer configs columns already exist:", columnError.message);
+        }
+      }
     } catch (error) {
       console.log(
-        "Printer configs table already exists or initialization failed:",
-        error,
+        "Printer configs table initialization error:",
+        error.message,
       );
     }
 
