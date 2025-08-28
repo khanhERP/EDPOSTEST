@@ -1183,7 +1183,7 @@ export default function SalesOrders() {
                                   </td>
                                   <td className="px-3 py-3">
                                     <div className="text-sm">
-                                      {(item.einvoiceStatus || 0) !== 0 ? symbol : '-'}
+                                      {symbol || '-'}
                                     </div>
                                   </td>
                                   <td className="px-3 py-3">
