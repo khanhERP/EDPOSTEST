@@ -986,26 +986,7 @@ export function ProductManagerModal({
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
-                      name="priceIncludesTax"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value || false}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>
-                              Giá đã bao gồm thuế
-                            </FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                    </div>
 
                   <div className="flex justify-end">
                     <Button
