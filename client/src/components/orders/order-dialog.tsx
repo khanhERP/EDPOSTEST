@@ -262,14 +262,22 @@ export function OrderDialog({
     // Calculate tax for items in the current cart
     cart.forEach((item) => {
       const product = products?.find((p: Product) => p.id === item.product.id);
-      // Default tax rate to 0 if afterTaxPrice is not available
       let itemTax = 0;
+      
       if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        // Use afterTaxPrice - basePrice for accurate tax calculation
         const afterTaxPrice = parseFloat(product.afterTaxPrice);
         const basePrice = item.product.price;
         const taxPerUnit = afterTaxPrice - basePrice;
-        itemTax += taxPerUnit * item.quantity;
+        itemTax = taxPerUnit * item.quantity;
+      } else if (product?.taxRate && parseFloat(product.taxRate) > 0) {
+        // Fallback to taxRate calculation if no afterTaxPrice
+        const taxRate = parseFloat(product.taxRate);
+        const itemSubtotal = item.product.price * item.quantity;
+        itemTax = (itemSubtotal * taxRate) / 100;
       }
+      // If neither afterTaxPrice nor taxRate available, tax remains 0
+      
       totalTax += itemTax;
     });
 
@@ -277,14 +285,22 @@ export function OrderDialog({
     if (mode === "edit" && existingItems.length > 0) {
       existingItems.forEach((item) => {
         const product = products?.find((p: Product) => p.id === item.productId);
-        // Default tax rate to 0 if afterTaxPrice is not available
         let itemTax = 0;
+        
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+          // Use afterTaxPrice - basePrice for accurate tax calculation
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const basePrice = Number(item.unitPrice || 0);
           const taxPerUnit = afterTaxPrice - basePrice;
-          itemTax += taxPerUnit * Number(item.quantity || 0);
+          itemTax = taxPerUnit * Number(item.quantity || 0);
+        } else if (product?.taxRate && parseFloat(product.taxRate) > 0) {
+          // Fallback to taxRate calculation if no afterTaxPrice
+          const taxRate = parseFloat(product.taxRate);
+          const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
+          itemTax = (itemSubtotal * taxRate) / 100;
         }
+        // If neither afterTaxPrice nor taxRate available, tax remains 0
+        
         totalTax += itemTax;
       });
     }
