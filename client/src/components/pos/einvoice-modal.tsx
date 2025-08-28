@@ -497,7 +497,7 @@ export function EInvoiceModal({
       };
 
       console.log(
-        "💾 Lưu hóa đơn vào bảng invoices và invoice_items:",
+        " Lưu hóa đơn vào bảng invoices và invoice_items:",
         JSON.stringify(invoicePayload, null, 2),
       );
 
@@ -506,13 +506,13 @@ export function EInvoiceModal({
 
       if (!invoiceResponse.ok) {
         const errorData = await invoiceResponse.json();
-        console.error("❌ Failed to save invoice:", errorData);
+        console.error("Failed to save invoice:", errorData);
         setIsPublishing(false);
         return;
       }
 
       const invoiceResult = await invoiceResponse.json();
-      console.log("✅ Hóa đơn đã được lưu vào bảng invoices và invoice_items:", invoiceResult);
+      console.log("Hóa đơn đã được lưu vào bảng invoices và invoice_items:", invoiceResult);
 
       // Create transaction to deduct inventory for "Phát hành sau"
       try {
@@ -537,20 +537,20 @@ export function EInvoiceModal({
           }))
         };
 
-        console.log("🔄 Creating transaction to deduct inventory:", transactionData);
+        console.log("Creating transaction to deduct inventory:", transactionData);
         const transactionResponse = await apiRequest("POST", "/api/transactions", transactionData);
 
         if (transactionResponse.ok) {
           const transactionResult = await transactionResponse.json();
-          console.log("✅ Transaction created successfully for inventory deduction:", transactionResult);
+          console.log("Transaction created successfully for inventory deduction:", transactionResult);
         } else {
-          console.error("❌ Failed to create transaction for inventory deduction");
+          console.error("Failed to create transaction for inventory deduction");
         }
       } catch (transactionError) {
-        console.error("❌ Error creating transaction for inventory:", transactionError);
+        console.error("Error creating transaction for inventory:", transactionError);
       }
 
-      // Tạo receipt data thực sự cho receipt modal
+      // Create receipt data thực sự cho receipt modal
       const receiptData = {
         transactionId:
           invoiceResult.invoice?.invoiceNumber || `TXN-${Date.now()}`,
@@ -586,6 +586,9 @@ export function EInvoiceModal({
         change: "0.00",
         cashierName: "System User",
         createdAt: new Date().toISOString(),
+        invoiceNumber: invoiceResult.invoice?.invoiceNumber || null,
+        customerName: formData.customerName,
+        customerTaxCode: formData.taxCode,
       };
 
       // Prepare data for invoice management redirect
@@ -597,12 +600,11 @@ export function EInvoiceModal({
         source: source || "pos",
         invoiceId: invoiceResult.invoice?.id,
         publishLater: true, // Flag to indicate this is for later publishing
-        redirectToInvoiceManagement: true, // Flag to redirect to invoice management
         savedInvoice: invoiceResult.invoice, // Pass saved invoice data
       };
 
       console.log(
-        "🟡 Prepared invoice data for later publishing - redirecting to invoice management:",
+        "Prepared invoice data for later publishing - redirecting to invoice management:",
         invoiceDataForConfirm,
       );
 
@@ -616,13 +618,13 @@ export function EInvoiceModal({
         savedInvoice: invoiceResult.invoice, // Pass saved invoice data
       };
 
-      console.log("✅ Calling onConfirm with publishLater data - redirecting to invoice management");
+      console.log("Calling onConfirm with publishLater data - redirecting to invoice management");
 
       // Close e-invoice modal and return data
       onClose();
       onConfirm(completeInvoiceData);
     } catch (error) {
-      console.error("❌ Error in handlePublishLater:", error);
+      console.error("Error in handlePublishLater:", error);
 
       let errorMessage = "Có lỗi xảy ra khi lưu hóa đơn";
       if (error instanceof Error) {
@@ -694,7 +696,7 @@ export function EInvoiceModal({
       console.log("CartItems length:", cartItems?.length);
 
       if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
-        console.error("❌ No valid cart items found:", {
+        console.error("No valid cart items found:", {
           cartItems,
           isArray: Array.isArray(cartItems),
           length: cartItems?.length,
@@ -726,20 +728,20 @@ export function EInvoiceModal({
           item.quantity > 0;
 
         if (!isValid) {
-          console.log("❌ Invalid item found:", item);
+          console.log("Invalid item found:", item);
         }
         return !isValid;
       });
 
       if (invalidItems.length > 0) {
-        console.error("❌ Invalid cart items found:", invalidItems);
+        console.error("Invalid cart items found:", invalidItems);
         alert(
           `Có ${invalidItems.length} sản phẩm trong giỏ hàng thiếu thông tin:\n${invalidItems.map((item) => `- ${item?.name || "Không có tên"}`).join("\n")}\n\nVui lòng kiểm tra lại giỏ hàng.`,
         );
         return;
       }
 
-      console.log("✅ All cart items are valid for e-invoice generation");
+      console.log("All cart items are valid for e-invoice generation");
 
       // Generate a new GUID for transactionID
       const generateGuid = () => {
@@ -828,7 +830,7 @@ export function EInvoiceModal({
 
       const cartTotal = cartSubtotal + cartTaxAmount;
 
-      console.log("💰 E-Invoice totals calculated from real cart data:", {
+      console.log("E-Invoice totals calculated from real cart data:", {
         subtotal: cartSubtotal,
         tax: cartTaxAmount,
         total: cartTotal,
@@ -1220,10 +1222,9 @@ export function EInvoiceModal({
         onConfirm(publishResultToConfirm);
         onClose();
         // --- CHANGE END ---
-      } else {
-        throw new Error(
-          publishResult.message || "Có lỗi xảy ra khi phát hành hóa đơn",
-        );
+      } catch (error) {
+        console.error("Error publishing invoice:", error);
+        alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error}`);
       }
     } catch (error) {
       console.error("Error publishing invoice:", error);
