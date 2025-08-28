@@ -3312,7 +3312,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="afterTaxPrice" className="text-right">
-                Giá sau thuế
+                {t("settings.afterTaxPrice")}
               </Label>
               <Input
                 id="afterTaxPrice"
