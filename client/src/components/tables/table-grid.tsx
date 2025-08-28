@@ -2079,7 +2079,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     {t("orders.pointsPaymentTitle")}
                   </Button>
                   <Button
-                    onClick={() => {
+                    onClick={async () => {
                       console.log(
                         "🖨️ Print bill button clicked for order:",
                         selectedOrder?.orderNumber,
@@ -2660,8 +2660,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     selectedOrder &&
                     (selectedCustomer.points || 0) * 1000 >=
                       Number(selectedOrder.total)
-                  ? "Thanh toán bằng điểm"
-                  : "Thanh toán hỗn hợp"}
+                  ? t("orders.pointsPaymentTitle")
+                  : t("orders.mixedPaymentButton")}
             </Button>
           </div>
         </DialogContent>
