@@ -437,15 +437,35 @@ export class DatabaseStorage implements IStorage {
     tenantDb?: any,
   ): Promise<Product | undefined> {
     const database = tenantDb || db;
-    const product = await this.getProduct(id, tenantDb);
-    if (!product) return undefined;
+    const [product] = await db
+      .select()
+      .from(products)
+      .where(eq(products.id, id));
+    if (!product) {
+      console.error(`❌ Product not found for stock update: ID ${id}`);
+      return undefined;
+    }
 
+    const oldStock = product.stock;
     const newStock = Math.max(0, product.stock + quantity);
-    const [updatedProduct] = await database
+
+    console.log(`📦 Stock update: ${product.name} (ID: ${id})`);
+    console.log(`   - Old stock: ${oldStock}`);
+    console.log(`   - Quantity change: ${quantity}`);
+    console.log(`   - New stock: ${newStock}`);
+
+    const [updatedProduct] = await db
       .update(products)
       .set({ stock: newStock })
       .where(eq(products.id, id))
       .returning();
+
+    if (updatedProduct) {
+      console.log(`✅ Stock updated successfully for ${product.name}: ${oldStock} → ${newStock}`);
+    } else {
+      console.error(`❌ Failed to update stock for ${product.name}`);
+    }
+
     return updatedProduct || undefined;
   }
 
@@ -1542,7 +1562,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(products.isActive, true))
         .orderBy(products.name);
     }
-    
+
     // Ensure afterTaxPrice is properly returned
     return result.map((product) => ({
       ...product,
