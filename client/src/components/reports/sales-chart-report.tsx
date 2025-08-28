@@ -2433,9 +2433,10 @@ export function SalesChartReport() {
         </CardContent>
       </Card>
     );
+  };
 
-    // Legacy Sales Channel Report Component Logic
-    const renderSalesChannelReport = () => {
+  // Legacy Sales Channel Report Component Logic
+  const renderSalesChannelReport = () => {
       const dashboardStats = getDashboardStats();
 
       if (!dashboardStats) {
