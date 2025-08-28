@@ -625,11 +625,11 @@ export function EInvoiceModal({
         console.error("❌ Error creating transaction for inventory:", transactionError);
       }
 
-      // Create receipt data if not already created
-      if (!shouldShowReceipt && cartItems && cartItems.length > 0) {
+      // Always create receipt data for "Phát hành sau"
+      if (cartItems && cartItems.length > 0) {
         receiptData = {
           transactionId:
-            invoiceResult?.invoice?.invoiceNumber || `TXN-${Date.now()}`,
+            invoiceResult?.invoice?.tradeNumber || `TXN-${Date.now()}`,
           items: cartItems.map((item) => {
             const itemPrice =
               typeof item.price === "string"
@@ -661,47 +661,56 @@ export function EInvoiceModal({
           tax: calculatedTax.toFixed(2),
           total: total.toFixed(2),
           paymentMethod: "einvoice",
+          originalPaymentMethod: selectedPaymentMethod,
+          amountReceived: total.toFixed(2),
+          change: "0.00",
           cashierName: "System User",
           createdAt: new Date().toISOString(),
-          invoiceNumber: invoiceResult?.invoice?.invoiceNumber || null,
+          invoiceNumber: invoiceResult?.invoice?.tradeNumber || null,
           customerName: formData.customerName,
           customerTaxCode: formData.taxCode,
         };
+        
+        console.log("📄 Receipt data created:", receiptData);
+      } else {
+        // Fallback receipt for empty cart
+        receiptData = {
+          transactionId: `EMPTY-${Date.now()}`,
+          items: [],
+          subtotal: "0.00",
+          tax: "0.00",
+          total: "0.00",
+          paymentMethod: "einvoice",
+          originalPaymentMethod: selectedPaymentMethod,
+          amountReceived: "0.00",
+          change: "0.00",
+          cashierName: "System User",
+          createdAt: new Date().toISOString(),
+          invoiceNumber: null,
+          customerName: formData.customerName || "Khách hàng",
+          customerTaxCode: formData.taxCode || "",
+        };
       }
 
-      // Always prepare data for invoice management
-      const invoiceDataForConfirm = {
+      // Prepare complete invoice data with receipt for immediate display
+      const completeInvoiceData = {
         ...formData,
         cartItems: cartItems || [],
         total: total || 0,
-        paymentMethod: selectedPaymentMethod, // Use original payment method
+        paymentMethod: selectedPaymentMethod,
         originalPaymentMethod: selectedPaymentMethod,
         source: source || "pos",
         invoiceId: invoiceResult?.invoice?.id || null,
         publishLater: true,
         savedInvoice: invoiceResult?.invoice || null,
-      };
-
-      console.log(
-        "✅ Prepared invoice data for later publishing:",
-        invoiceDataForConfirm,
-      );
-
-      // Always prepare data for receipt modal
-      const completeInvoiceData = {
-        ...invoiceDataForConfirm,
-        paymentMethod: selectedPaymentMethod,
-        originalPaymentMethod: selectedPaymentMethod,
-        showReceiptModal: true,
-        publishLater: true,
-        savedInvoice: invoiceResult?.invoice || null,
         receipt: receiptData,
+        showReceiptModal: true,
       };
 
-      console.log("✅ Calling onConfirm with publishLater data - ALWAYS showing receipt modal");
-      console.log("📄 Receipt data included:", receiptData);
+      console.log("✅ Calling onConfirm with publishLater data and receipt");
+      console.log("📄 Receipt data to display:", receiptData);
 
-      // Always close e-invoice modal and return data
+      // Close e-invoice modal and trigger receipt modal display
       onClose();
       onConfirm(completeInvoiceData);
     } catch (error) {
