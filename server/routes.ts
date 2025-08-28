@@ -497,7 +497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const itemSubtotal = parseFloat(item.price) * item.quantity;
-        const taxRate = product.taxRate ? parseFloat(product.taxRate) / 100 : 0.1; // Default 10%
+        const taxRate = product.taxRate ? parseFloat(product.taxRate) / 100 : 0; // Default 0%
         const itemTax = itemSubtotal * taxRate;
 
         subtotal += itemSubtotal;
@@ -2325,7 +2325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               imageUrl: productData.imageUrl || null,
               taxRate: productData.taxRate
                 ? productData.taxRate.toString()
-                : "8.00",
+                : "0.00",
             })
             .returning();
 

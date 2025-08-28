@@ -161,10 +161,10 @@ export async function initializeSampleData() {
     // Run migration for tax_rate column
     try {
       await db.execute(sql`
-        ALTER TABLE products ADD COLUMN IF NOT EXISTS tax_rate DECIMAL(5,2) DEFAULT 10.00
+        ALTER TABLE products ADD COLUMN IF NOT EXISTS tax_rate DECIMAL(5,2) DEFAULT 0.00
       `);
       await db.execute(sql`
-        UPDATE products SET tax_rate = 10.00 WHERE tax_rate IS NULL
+        UPDATE products SET tax_rate = 0.00 WHERE tax_rate IS NULL
       `);
 
       console.log("Migration for tax_rate column completed successfully.");

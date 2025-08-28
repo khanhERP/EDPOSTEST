@@ -35,7 +35,7 @@ export const products = pgTable("products", {
   trackInventory: boolean("track_inventory").notNull().default(true),
   taxRate: decimal("tax_rate", { precision: 5, scale: 2 })
     .notNull()
-    .default("10.00"),
+    .default("0.00"),
   priceIncludesTax: boolean("price_includes_tax").notNull().default(false),
   afterTaxPrice: decimal("after_tax_price", { precision: 10, scale: 2 }),
 });
@@ -405,7 +405,7 @@ export const invoiceItems = pgTable("invoice_items", {
   quantity: integer("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
-  taxRate: decimal("tax_rate", { precision: 5, scale: 2 }).notNull().default("10.00"),
+  taxRate: decimal("tax_rate", { precision: 5, scale: 2 }).notNull().default("0.00"),
 });
 
 export const eInvoiceConnections = pgTable("einvoice_connections", {

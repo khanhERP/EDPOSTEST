@@ -129,7 +129,7 @@ export function ProductManagerModal({
       }
 
       toast({
-        title: "Error", 
+        title: "Error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -206,7 +206,7 @@ export function ProductManagerModal({
       productType: 1,
       imageUrl: "",
       trackInventory: true,
-      taxRate: "8.00",
+      taxRate: "0.00",
       priceIncludesTax: false,
       afterTaxPrice: "",
     },
@@ -226,7 +226,7 @@ export function ProductManagerModal({
       if (isNaN(num)) return '';
       return num.toLocaleString('vi-VN');
     }
-    
+
     // If it's a number
     if (isNaN(value)) return '';
     return value.toLocaleString('vi-VN');
@@ -288,7 +288,7 @@ export function ProductManagerModal({
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
-    
+
     form.reset({
       name: product.name,
       sku: product.sku,
@@ -298,12 +298,12 @@ export function ProductManagerModal({
       productType: product.productType || 1,
       imageUrl: product.imageUrl || "",
       trackInventory: product.trackInventory !== false,
-      taxRate: product.taxRate || "8.00",
+      taxRate: product.taxRate || "0.00",
       priceIncludesTax: product.priceIncludesTax || false,
       // Use saved after-tax price if available, otherwise calculate
       afterTaxPrice: product.afterTaxPrice || (() => {
         const basePrice = parseFloat(product.price);
-        const taxRate = parseFloat(product.taxRate || "8.00");
+        const taxRate = parseFloat(product.taxRate || "0.00");
         return Math.round(basePrice + (basePrice * taxRate / 100)).toString();
       })(),
     });
@@ -328,7 +328,7 @@ export function ProductManagerModal({
       productType: 1,
       imageUrl: "",
       trackInventory: true,
-      taxRate: "8.00",
+      taxRate: "0.00",
       priceIncludesTax: false,
       afterTaxPrice: "",
     });
@@ -341,7 +341,7 @@ export function ProductManagerModal({
   const getProductTypeName = (productType: number) => {
     const types = {
       1: t("tables.goodsType"),
-      2: t("tables.materialType"), 
+      2: t("tables.materialType"),
       3: t("tables.finishedProductType")
     };
     return types[productType as keyof typeof types] || "Unknown";
@@ -376,7 +376,7 @@ export function ProductManagerModal({
         product.sku,
         getCategoryName(product.categoryId),
         parseFloat(product.price),
-        product.taxRate || "8.00",
+        product.taxRate || "0.00",
         product.stock,
         product.imageUrl || "",
       ]);
@@ -435,7 +435,7 @@ export function ProductManagerModal({
           productType: 1,
           imageUrl: "",
           trackInventory: true,
-          taxRate: "8.00",
+          taxRate: "0.00",
           priceIncludesTax: false,
           afterTaxPrice: "",
         });
@@ -473,7 +473,7 @@ export function ProductManagerModal({
       productType: 1,
       imageUrl: "",
       trackInventory: true,
-      taxRate: "8.00",
+      taxRate: "0.00",
       priceIncludesTax: false,
       afterTaxPrice: "",
     });
@@ -520,7 +520,7 @@ export function ProductManagerModal({
                     {t("tables.export")}
                   </Button>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <Input
                     placeholder="Tìm kiếm theo tên hoặc mã SKU..."
@@ -547,7 +547,7 @@ export function ProductManagerModal({
                 ) : filteredProducts.length === 0 ? (
                   <div className="p-8 text-center">
                     <p className="text-gray-500">
-                      {searchTerm 
+                      {searchTerm
                         ? `Không tìm thấy sản phẩm nào với từ khóa "${searchTerm}"`
                         : "Không có sản phẩm nào"
                       }
@@ -621,7 +621,7 @@ export function ProductManagerModal({
                             {Math.round(parseFloat(product.price)).toLocaleString("vi-VN")} ₫
                           </td>
                           <td className="py-3 px-4 pos-text-secondary">
-                            {product.taxRate || "8.00"}%
+                            {product.taxRate || "0.00"}%
                           </td>
                           <td className="py-3 px-4 font-medium">
                             {(() => {
@@ -630,7 +630,7 @@ export function ProductManagerModal({
                                 return Math.round(parseFloat(product.afterTaxPrice)).toLocaleString("vi-VN", { maximumFractionDigits: 0 });
                               } else {
                                 const basePrice = parseFloat(product.price);
-                                const taxRate = parseFloat(product.taxRate || "8.00");
+                                const taxRate = parseFloat(product.taxRate || "0.00");
                                 const afterTaxPrice = basePrice + (basePrice * taxRate / 100);
                                 return Math.round(afterTaxPrice).toLocaleString("vi-VN", { maximumFractionDigits: 0 });
                               }
@@ -748,25 +748,25 @@ export function ProductManagerModal({
                                 const value = e.target.value;
                                 // Only allow numbers
                                 const sanitized = value.replace(/[^0-9]/g, '');
-                                
+
                                 // Check if the number would exceed the limit
                                 const num = parseInt(sanitized);
                                 if (!isNaN(num) && num >= 100000000) {
                                   // Don't allow input that would exceed the limit
                                   return;
                                 }
-                                
+
                                 // Store the integer value
                                 field.onChange(sanitized);
-                                
+
                                 // Calculate after tax price from base price
                                 if (sanitized && !isNaN(parseInt(sanitized))) {
                                   const basePrice = parseInt(sanitized);
-                                  const taxRate = parseFloat(form.getValues("taxRate") || "8.00");
-                                  
+                                  const taxRate = parseFloat(form.getValues("taxRate") || "0.00");
+
                                   // Calculate after tax price: afterTaxPrice = basePrice + (basePrice * taxRate/100)
                                   const afterTaxPrice = Math.round(basePrice + (basePrice * taxRate / 100));
-                                  
+
                                   // Update the after tax price field
                                   form.setValue("afterTaxPrice", afterTaxPrice.toString());
                                 }
@@ -791,20 +791,20 @@ export function ProductManagerModal({
                               step="0.01"
                               min="0"
                               max="100"
-                              placeholder="8.00"
+                              placeholder="0.00"
                               onChange={(e) => {
                                 const taxRate = e.target.value;
                                 field.onChange(taxRate);
-                                
+
                                 // Calculate after tax price when tax rate changes
                                 const basePrice = form.getValues("price");
                                 if (basePrice && !isNaN(parseInt(basePrice)) && taxRate && !isNaN(parseFloat(taxRate))) {
                                   const basePriceNum = parseInt(basePrice);
                                   const taxRateNum = parseFloat(taxRate);
-                                  
+
                                   // Calculate after tax price: afterTaxPrice = basePrice + (basePrice * taxRate/100)
                                   const afterTaxPrice = Math.round(basePriceNum + (basePriceNum * taxRateNum / 100));
-                                  
+
                                   // Update the after tax price field
                                   form.setValue("afterTaxPrice", afterTaxPrice.toString());
                                 }
@@ -831,25 +831,25 @@ export function ProductManagerModal({
                                 const value = e.target.value;
                                 // Only allow numbers
                                 const sanitized = value.replace(/[^0-9]/g, '');
-                                
+
                                 // Check if the number would exceed the limit
                                 const num = parseInt(sanitized);
                                 if (!isNaN(num) && num >= 100000000) {
                                   // Don't allow input that would exceed the limit
                                   return;
                                 }
-                                
+
                                 // Store the integer value
                                 field.onChange(sanitized);
-                                
+
                                 // Calculate base price from after tax price
                                 if (sanitized && !isNaN(parseInt(sanitized))) {
                                   const afterTaxPrice = parseInt(sanitized);
-                                  const taxRate = parseFloat(form.getValues("taxRate") || "8.00");
-                                  
+                                  const taxRate = parseFloat(form.getValues("taxRate") || "0.00");
+
                                   // Calculate base price: basePrice = afterTaxPrice / (1 + taxRate/100)
                                   const basePrice = Math.round(afterTaxPrice / (1 + taxRate / 100));
-                                  
+
                                   // Update the price field
                                   form.setValue("price", basePrice.toString());
                                 }
