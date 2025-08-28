@@ -1016,7 +1016,8 @@ export function EInvoiceModal({
             einvoiceStatus: einvoiceStatus,
             templateNumber: selectedTemplate.templateNumber || null, // Lưu templateNumber từ selectedTemplate
             symbol: selectedTemplate.symbol || null, // Lưu symbol từ selectedTemplate
-            notes: `E-Invoice published - Tax Code: ${formData.taxCode || "N/A"}, Address: ${formData.address || "N/A"}, Template: ${selectedTemplate.templateNumber || "N/A"}, Symbol: ${selectedTemplate.symbol || "N/A"}`,
+            invoiceNumber: result.data?.invoiceNo || null, // Lưu invoiceNumber từ API response
+            notes: `E-Invoice published - Tax Code: ${formData.taxCode || "N/A"}, Address: ${formData.address || "N/A"}, Template: ${selectedTemplate.templateNumber || "N/A"}, Symbol: ${selectedTemplate.symbol || "N/A"}, Invoice No: ${result.data?.invoiceNo || "N/A"}`,
             orderedAt: new Date(),
             employeeId: null, // Can be set if employee info is available
             salesChannel: "pos",

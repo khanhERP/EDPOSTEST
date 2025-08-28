@@ -3514,6 +3514,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update invoice_number for both orders and invoices
+  app.put("/api/einvoice/update-invoice-number", async (req: TenantRequest, res) => {
+    try {
+      const { orderId, invoiceId, invoiceNumber } = req.body;
+      const tenantDb = await getTenantDatabase(req);
+
+      console.log("=== UPDATING INVOICE NUMBER ===");
+      console.log("Order ID:", orderId);
+      console.log("Invoice ID:", invoiceId);
+      console.log("Invoice Number:", invoiceNumber);
+
+      const updateResults: any = {};
+
+      // Update orders table if orderId is provided
+      if (orderId) {
+        try {
+          const [updatedOrder] = await db
+            .update(orders)
+            .set({ 
+              invoiceNumber: invoiceNumber,
+              updatedAt: new Date() 
+            })
+            .where(eq(orders.id, orderId))
+            .returning();
+
+          if (updatedOrder) {
+            updateResults.order = updatedOrder;
+            console.log("✅ Order invoice_number updated successfully:", updatedOrder);
+          } else {
+            console.error("❌ Order not found for ID:", orderId);
+            updateResults.orderError = "Order not found";
+          }
+        } catch (orderError) {
+          console.error("❌ Error updating order:", orderError);
+          updateResults.orderError = orderError.message;
+        }
+      }
+
+      // Update invoices table if invoiceId is provided
+      if (invoiceId) {
+        try {
+          const [updatedInvoice] = await db
+            .update(invoices)
+            .set({ 
+              invoiceNumber: invoiceNumber,
+              updatedAt: new Date() 
+            })
+            .where(eq(invoices.id, invoiceId))
+            .returning();
+
+          if (updatedInvoice) {
+            updateResults.invoice = updatedInvoice;
+            console.log("✅ Invoice invoice_number updated successfully:", updatedInvoice);
+          } else {
+            console.error("❌ Invoice not found for ID:", invoiceId);
+            updateResults.invoiceError = "Invoice not found";
+          }
+        } catch (invoiceError) {
+          console.error("❌ Error updating invoice:", invoiceError);
+          updateResults.invoiceError = invoiceError.message;
+        }
+      }
+
+      res.json({
+        success: true,
+        message: "Invoice number updated successfully",
+        results: updateResults
+      });
+
+    } catch (error) {
+      console.error("=== UPDATE INVOICE NUMBER ERROR ===");
+      console.error("Error:", error);
+
+      res.status(500).json({ 
+        error: "Failed to update invoice number",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // E-invoice publish proxy endpoint
   app.post("/api/einvoice/publish", async (req: TenantRequest, res) => {
     try {

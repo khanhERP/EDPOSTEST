@@ -302,6 +302,24 @@ export async function initializeSampleData() {
       console.log("Template number and symbol migration failed or already applied:", error);
     }
 
+    // Add invoice_number column to orders table
+    try {
+      await db.execute(sql`
+        ALTER TABLE orders ADD COLUMN IF NOT EXISTS invoice_number VARCHAR(50)
+      `);
+
+      // Create index for invoice_number
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_orders_invoice_number ON orders(invoice_number)
+      `);
+
+      console.log(
+        "Migration for invoice_number column in orders table completed successfully.",
+      );
+    } catch (error) {
+      console.log("Invoice number migration failed or already applied:", error);
+    }
+
     // Run migration for email constraint in employees table
     try {
       await db.execute(sql`
