@@ -180,7 +180,7 @@ export function SalesReport() {
         })),
       });
 
-      // Daily sales breakdown with EXACT same logic as dashboard
+      // Daily sales breakdown with tax subtraction
       const dailySales: {
         [date: string]: { revenue: number; orders: number; customers: number };
       } = {};
@@ -200,10 +200,14 @@ export function SalesReport() {
             dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
           }
 
-          // Use EXACT same revenue calculation as dashboard: total - discount
+          // Revenue calculation: Total Amount - Discount - Tax (using actual tax from database)
           const itemTotal = Number(item.total || 0);
           const discount = Number(item.discount || 0);
-          dailySales[date].revenue += itemTotal - discount;
+          // Use actual tax from database, default to 0 if not available
+          const actualTax = Number(item.tax || 0);
+          // Revenue = Total Amount - Discount - Actual Tax
+          const itemRevenue = itemTotal - discount - actualTax;
+          dailySales[date].revenue += itemRevenue;
           dailySales[date].orders += 1;
 
           // Count unique customers per day
@@ -217,30 +221,40 @@ export function SalesReport() {
         }
       });
 
-      // Payment method breakdown with EXACT same logic as dashboard
+      // Payment method breakdown with tax subtraction
       const paymentMethods: {
         [method: string]: { count: number; revenue: number };
       } = {};
 
       filteredCompletedItems.forEach((item: any) => {
         try {
-          const method = item.paymentMethod || "cash";
+          // Handle both string and numeric payment methods
+          let method = item.paymentMethod;
+          if (typeof method === 'number') {
+            method = method.toString();
+          }
+          method = method || "cash";
+
           if (!paymentMethods[method]) {
             paymentMethods[method] = { count: 0, revenue: 0 };
           }
           
           paymentMethods[method].count += 1;
           
-          // Use EXACT same revenue calculation as dashboard: total - discount
+          // Revenue calculation: Total Amount - Discount - Tax (using actual tax from database)
           const itemTotal = Number(item.total || 0);
           const discount = Number(item.discount || 0);
-          paymentMethods[method].revenue += itemTotal - discount;
+          // Use actual tax from database, default to 0 if not available
+          const actualTax = Number(item.tax || 0);
+          // Revenue = Total Amount - Discount - Actual Tax
+          const itemRevenue = itemTotal - discount - actualTax;
+          paymentMethods[method].revenue += itemRevenue;
         } catch (error) {
           console.warn("Error processing item for payment methods:", error);
         }
       });
 
-      // Hourly breakdown with error handling
+      // Hourly breakdown with actual tax from database
       const hourlySales: { [hour: number]: number } = {};
       filteredCompletedItems.forEach((item: any) => {
         try {
@@ -251,7 +265,10 @@ export function SalesReport() {
           const hour = itemDate.getHours();
           const itemTotal = Number(item.total || 0);
           const discount = Number(item.discount || 0);
-          const revenue = itemTotal - discount;
+          // Use actual tax from database, default to 0 if not available
+          const actualTax = Number(item.tax || 0);
+          // Revenue = Total Amount - Discount - Actual Tax
+          const revenue = itemTotal - discount - actualTax;
           
           if (!isNaN(revenue) && revenue > 0) {
             hourlySales[hour] = (hourlySales[hour] || 0) + revenue;
@@ -261,12 +278,16 @@ export function SalesReport() {
         }
       });
 
-      // Calculate totals using EXACT same logic as dashboard
+      // Calculate totals with actual tax from database
       const totalRevenue = filteredCompletedItems.reduce(
         (total: number, item: any) => {
           const itemTotal = Number(item.total || 0);
           const discount = Number(item.discount || 0);
-          return total + (itemTotal - discount);
+          // Use actual tax from database, default to 0 if not available
+          const actualTax = Number(item.tax || 0);
+          // Revenue = Total Amount - Discount - Actual Tax
+          const itemRevenue = itemTotal - discount - actualTax;
+          return total + itemRevenue;
         },
         0,
       );
@@ -287,6 +308,22 @@ export function SalesReport() {
       
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
+      const paymentMethodsArray = Object.entries(paymentMethods).map(([method, data]) => ({
+        method,
+        ...data,
+      }));
+
+      console.log("Payment Methods Debug:", {
+        totalItems: filteredCompletedItems.length,
+        paymentMethodsRaw: paymentMethods,
+        paymentMethodsArray,
+        sampleItems: filteredCompletedItems.slice(0, 3).map((item: any) => ({
+          id: item.id,
+          paymentMethod: item.paymentMethod,
+          total: item.total
+        }))
+      });
+
       return {
         dailySales: Object.entries(dailySales)
           .map(([date, data]) => ({
@@ -294,10 +331,7 @@ export function SalesReport() {
             ...data,
           }))
           .sort((a, b) => a.date.localeCompare(b.date)),
-        paymentMethods: Object.entries(paymentMethods).map(([method, data]) => ({
-          method,
-          ...data,
-        })),
+        paymentMethods: paymentMethodsArray,
         hourlySales,
         totalRevenue,
         totalOrders,
@@ -406,23 +440,30 @@ export function SalesReport() {
 
   const getPaymentMethodLabel = (method: string) => {
     const labels = {
-      cash: t("reports.cash"),
-      card: t("reports.card"),
-      creditCard: t("reports.credit_card"),
-      credit_card: t("reports.credit_card"),
-      debitCard: t("pos.debitCard"),
-      debit_card: t("pos.debitCard"),
-      transfer: t("common.transfer"),
-      einvoice: t("reports.einvoice"),
-      momo: t("pos.momo"),
-      zalopay: t("pos.zalopay"),
-      vnpay: t("pos.vnpay"),
-      qrCode: t("reports.qrbanking"),
-      shopeepay: t("pos.shopeepay"),
-      grabpay: t("pos.grabpay"),
-      mobile: "Mobile",
+      cash: "Tiền mặt",
+      card: "Thẻ",
+      creditCard: "Thẻ tín dụng",
+      credit_card: "Thẻ tín dụng", 
+      debitCard: "Thẻ ghi nợ",
+      debit_card: "Thẻ ghi nợ",
+      transfer: "Chuyển khoản",
+      einvoice: "Hóa đơn điện tử",
+      momo: "MoMo",
+      zalopay: "ZaloPay",
+      vnpay: "VNPay",
+      qrCode: "QR Banking",
+      shopeepay: "ShopeePay",
+      grabpay: "GrabPay",
+      mobile: "Di động",
+      1: "Tiền mặt",
+      2: "Thẻ",
+      3: "Chuyển khoản",
+      4: "MoMo",
+      5: "ZaloPay", 
+      6: "VNPay",
+      7: "QR Code"
     };
-    return labels[method as keyof typeof labels] || method;
+    return labels[method as keyof typeof labels] || `Phương thức ${method}`;
   };
 
   const handleRefresh = () => {
@@ -675,7 +716,14 @@ export function SalesReport() {
                   <DollarSign className="w-5 h-5" />
                   {t("reports.paymentMethods")}
                 </CardTitle>
-                <CardDescription>{t("reports.analyzeRevenue")}</CardDescription>
+                <CardDescription>
+                  {t("reports.analyzeRevenue")} 
+                  {salesData?.paymentMethods && salesData.paymentMethods.length > 0 && (
+                    <span className="ml-2 text-blue-600 font-medium">
+                      ({salesData.paymentMethods.length} phương thức • {salesData.totalOrders} đơn hàng)
+                    </span>
+                  )}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4 max-h-96 overflow-y-auto">
@@ -687,30 +735,54 @@ export function SalesReport() {
                           : 0;
 
                       return (
-                        <div key={payment.method} className="space-y-2 p-3 bg-gray-50 rounded-lg">
-                          <div className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="font-medium">
-                                {getPaymentMethodLabel(payment.method)}
-                              </Badge>
-                              <span className="text-sm text-gray-600">
-                                {payment.count} {t("common.items")}
-                              </span>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-semibold text-green-600">
-                                {formatCurrency(payment.revenue)}
+                        <div key={payment.method} className="space-y-3 p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <Badge variant="outline" className="font-semibold text-blue-700 border-blue-300 bg-blue-50">
+                                  {getPaymentMethodLabel(payment.method)}
+                                </Badge>
+                                <span className="text-sm font-medium text-gray-700 bg-white px-2 py-1 rounded">
+                                  Mã: {payment.method}
+                                </span>
                               </div>
-                              <div className="text-xs text-gray-500">
-                                {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
+                              
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="space-y-1">
+                                  <div className="text-gray-600">Số đơn hàng:</div>
+                                  <div className="font-semibold text-blue-600 text-lg">
+                                    {payment.count} đơn
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <div className="text-gray-600">Tổng tiền:</div>
+                                  <div className="font-bold text-green-600 text-lg">
+                                    {formatCurrency(payment.revenue)}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className="mt-2 flex items-center gap-2">
+                                <span className="text-xs text-gray-500">Tỷ lệ:</span>
+                                <span className="text-sm font-semibold text-purple-600">
+                                  {isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%
+                                </span>
+                                <span className="text-xs text-gray-500">tổng doanh thu</span>
                               </div>
                             </div>
                           </div>
-                          <div className="w-full bg-gray-200 rounded-full h-2">
-                            <div
-                              className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-300"
-                              style={{ width: `${Math.min(percentage, 100)}%` }}
-                            ></div>
+                          
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-xs text-gray-600">
+                              <span>Biểu đồ tỷ lệ</span>
+                              <span>{isFinite(percentage) ? percentage.toFixed(1) : '0.0'}%</span>
+                            </div>
+                            <div className="w-full bg-gray-300 rounded-full h-3 overflow-hidden">
+                              <div
+                                className="bg-gradient-to-r from-blue-500 via-blue-600 to-purple-600 h-3 rounded-full transition-all duration-500 ease-out"
+                                style={{ width: `${Math.min(percentage, 100)}%` }}
+                              ></div>
+                            </div>
                           </div>
                         </div>
                       );

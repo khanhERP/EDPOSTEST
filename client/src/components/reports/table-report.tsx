@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -26,7 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Utensils, Clock, Users, TrendingUp } from "lucide-react";
-import type { Order, Table as TableType, Invoice } from "@shared/schema";
+import type { Order, Table as TableType, Invoice, Transaction } from "@shared/schema";
 import { useTranslation } from "@/lib/i18n";
 
 export function TableReport() {
@@ -40,6 +41,7 @@ export function TableReport() {
     new Date().toISOString().split("T")[0],
   );
 
+  // Fetch data using EXACT same pattern as other reports
   const { data: orders = [], isLoading: ordersLoading } = useQuery({
     queryKey: ["/api/orders"],
     queryFn: async () => {
@@ -49,9 +51,10 @@ export function TableReport() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log("Table Report - Orders loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Error fetching orders:', error);
+        console.error('Table Report - Error fetching orders:', error);
         return [];
       }
     },
@@ -68,9 +71,10 @@ export function TableReport() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log("Table Report - Invoices loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Error fetching invoices:', error);
+        console.error('Table Report - Error fetching invoices:', error);
         return [];
       }
     },
@@ -78,64 +82,153 @@ export function TableReport() {
     retryDelay: 1000,
   });
 
-  const { data: tables = [] } = useQuery({
+  const { data: transactions = [], isLoading: transactionsLoading } = useQuery({
+    queryKey: ["/api/transactions"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/transactions");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Table Report - Transactions loaded:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Table Report - Error fetching transactions:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+  });
+
+  const { data: tables = [], isLoading: tablesLoading } = useQuery({
     queryKey: ["/api/tables"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/tables");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Table Report - Tables loaded:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Table Report - Error fetching tables:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+  });
+
+  // Fetch order items and transaction items for detailed analysis
+  const { data: orderItems = [], isLoading: orderItemsLoading } = useQuery({
+    queryKey: ["/api/order-items"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/order-items");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Table Report - Order items loaded:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Table Report - Error fetching order items:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
+  });
+
+  const { data: transactionItems = [], isLoading: transactionItemsLoading } = useQuery({
+    queryKey: ["/api/transaction-items"],
+    queryFn: async () => {
+      try {
+        const response = await fetch("/api/transaction-items");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log("Table Report - Transaction items loaded:", data?.length || 0);
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Table Report - Error fetching transaction items:', error);
+        return [];
+      }
+    },
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const getTableData = () => {
     if (!orders || !tables) return null;
 
-    // Use EXACT same filtering logic as dashboard-overview
-    const filteredOrders = Array.isArray(orders) ? orders.filter((order: any) => {
+    // Use EXACT same combined data filtering as other reports
+    const combinedData = [
+      ...(Array.isArray(orders) ? orders.map((order: any) => ({
+        ...order,
+        type: 'order',
+        date: order.orderedAt,
+        amount: parseFloat(order.total || 0)
+      })) : []),
+      ...(Array.isArray(invoices) ? invoices.map((invoice: any) => ({
+        ...invoice,
+        type: 'invoice', 
+        date: invoice.createdAt,
+        amount: parseFloat(invoice.total || 0)
+      })) : []),
+      ...(Array.isArray(transactions) ? transactions.map((transaction: any) => ({
+        ...transaction,
+        type: 'transaction',
+        date: transaction.transactionDate,
+        amount: parseFloat(transaction.amount || 0)
+      })) : [])
+    ];
+
+    // Filter by date and status - EXACT same logic as other reports
+    const filteredCompletedItems = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
       try {
-        if (!order || !order.orderedAt) return false;
+        if (!item || !item.date) return false;
 
-        const orderDate = new Date(order.orderedAt);
-        if (isNaN(orderDate.getTime())) return false;
+        const itemDate = new Date(item.date);
+        if (isNaN(itemDate.getTime())) return false;
 
+        // Normalize both dates to compare only date part (same as other reports)
+        const itemDateOnly = new Date(itemDate);
+        itemDateOnly.setHours(0, 0, 0, 0);
+        
         const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
         const end = new Date(endDate);
-        const dateMatch = orderDate >= start && orderDate <= end;
-
-        // Only include completed/paid orders (same as dashboard)
-        const isCompleted = order.status === 'paid' || order.status === 'completed';
+        end.setHours(23, 59, 59, 999);
+        
+        const dateMatch = itemDateOnly >= start && itemDateOnly <= end;
+        
+        // Use EXACT same status logic as dashboard and sales report
+        const isCompleted = (item.type === 'invoice' && (item.invoiceStatus === 1 || item.displayStatus === 1)) ||
+                          (item.type === 'order' && (item.status === 'paid' || item.status === 'completed')) ||
+                          (item.type === 'transaction' && (item.status === 'completed' || item.status === 'paid'));
 
         return dateMatch && isCompleted;
       } catch (error) {
-        console.error('Error filtering order:', order, error);
+        console.error('Table Report - Error filtering item:', item, error);
         return false;
       }
     }) : [];
 
-    const filteredInvoices = Array.isArray(invoices) ? invoices.filter((invoice: any) => {
-      try {
-        if (!invoice || !invoice.createdAt) return false;
-
-        const invoiceDate = new Date(invoice.createdAt);
-        if (isNaN(invoiceDate.getTime())) return false;
-
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const dateMatch = invoiceDate >= start && invoiceDate <= end;
-
-        // Only include paid invoices
-        const isPaid = invoice.status === 'paid';
-
-        return dateMatch && isPaid;
-      } catch (error) {
-        console.error('Error filtering invoice:', invoice, error);
-        return false;
-      }
-    }) : [];
-
-
-    console.log("Table Report Debug (Dashboard Style):", {
+    console.log("Table Report Debug (Combined Data):", {
       dateRange,
       startDate,
       endDate,
-      totalOrders: orders.length,
-      filteredOrders: filteredOrders.length,
-      sampleOrder: filteredOrders[0] || null
+      totalOrders: orders?.length || 0,
+      totalInvoices: invoices?.length || 0, 
+      totalTransactions: transactions?.length || 0,
+      combinedDataLength: combinedData.length,
+      filteredCompletedItems: filteredCompletedItems.length,
+      sampleItem: filteredCompletedItems[0] || null
     });
 
     // Table performance analysis
@@ -148,6 +241,7 @@ export function TableReport() {
         averageOrderValue: number;
         turnoverRate: number;
         peakHours: { [hour: number]: number };
+        itemsSold: number;
       };
     } = {};
 
@@ -161,31 +255,48 @@ export function TableReport() {
         averageOrderValue: 0,
         turnoverRate: 0,
         peakHours: {},
+        itemsSold: 0,
       };
     });
 
-    // Calculate stats from orders
-    filteredOrders.forEach((order: Order) => {
-      if (tableStats[order.tableId]) {
-        const stats = tableStats[order.tableId];
+    // Calculate stats from all completed items
+    filteredCompletedItems.forEach((item: any) => {
+      // For orders - direct table mapping
+      if (item.type === 'order' && item.tableId && tableStats[item.tableId]) {
+        const stats = tableStats[item.tableId];
         stats.orderCount += 1;
-
-        // Use EXACT same revenue calculation as dashboard: total amount
-        const revenue = Number(order.total || 0);
-        stats.revenue += revenue;
-
-        stats.customerCount += order.customerCount || 0;
+        stats.revenue += item.amount;
+        stats.customerCount += item.customerCount || 1;
 
         // Track peak hours
-        const hour = new Date(order.orderedAt).getHours();
+        const hour = new Date(item.date).getHours();
         stats.peakHours[hour] = (stats.peakHours[hour] || 0) + 1;
+
+        // Count items sold from order_items
+        const relatedOrderItems = orderItems.filter((oi: any) => oi.orderId === item.id);
+        const itemsCount = relatedOrderItems.reduce((sum, oi) => sum + (oi.quantity || 0), 0);
+        stats.itemsSold += itemsCount;
+      }
+      
+      // For transactions - if they have tableId, add to that table
+      if (item.type === 'transaction' && item.tableId && tableStats[item.tableId]) {
+        const stats = tableStats[item.tableId];
+        stats.revenue += item.amount;
+        stats.orderCount += 1; // Count as additional transaction
+
+        // Count items from transaction_items
+        const relatedTransactionItems = transactionItems.filter((ti: any) => ti.transactionId === item.id);
+        const itemsCount = relatedTransactionItems.reduce((sum, ti) => sum + (ti.quantity || 0), 0);
+        stats.itemsSold += itemsCount;
+      }
+      
+      // For invoices - if they have tableId, add to that table
+      if (item.type === 'invoice' && item.tableId && tableStats[item.tableId]) {
+        const stats = tableStats[item.tableId];
+        stats.revenue += item.amount;
+        stats.orderCount += 1;
       }
     });
-
-    // Calculate stats from invoices (assuming invoices are linked to tables via orderId or similar, if not, this part might need adjustment)
-    // For now, let's assume invoices don't directly map to tables in the same way orders do for table-specific stats.
-    // If invoices are meant to contribute to table revenue, a join logic would be needed.
-    // For the purpose of this refactor, we'll focus on order-based stats for tables.
 
     // Calculate derived metrics
     Object.values(tableStats).forEach((stats) => {
@@ -234,22 +345,6 @@ export function TableReport() {
           tableList.length
         : 0;
 
-    // Debug logging
-    console.log("Table Report Stats:", {
-      dateRange,
-      startDate,
-      endDate,
-      totalFilteredOrders: filteredOrders.length,
-      totalFilteredInvoices: filteredInvoices.length,
-      totalRevenue,
-      totalOrders,
-      averageUtilization,
-      tablesCount: tableList.length,
-      sampleOrder: filteredOrders[0] || null,
-      allOrdersCount: orders?.length || 0,
-      allInvoicesCount: invoices?.length || 0
-    });
-
     return {
       tableStats: tableList,
       topRevenueTables,
@@ -272,10 +367,9 @@ export function TableReport() {
         setEndDate(today.toISOString().split("T")[0]);
         break;
       case "week":
-        // Tuần trước: từ thứ 2 tuần trước đến chủ nhật tuần trước
-        const currentDayOfWeek = today.getDay(); // 0 = Chủ nhật, 1 = Thứ 2, ...
+        const currentDayOfWeek = today.getDay();
         const daysToLastMonday =
-          currentDayOfWeek === 0 ? 13 : currentDayOfWeek + 6; // Nếu hôm nay là CN thì lùi 13 ngày, không thì lùi (ngày hiện tại + 6)
+          currentDayOfWeek === 0 ? 13 : currentDayOfWeek + 6;
         const lastWeekMonday = new Date(
           today.getTime() - daysToLastMonday * 24 * 60 * 60 * 1000,
         );
@@ -287,21 +381,16 @@ export function TableReport() {
         setEndDate(lastWeekSunday.toISOString().split("T")[0]);
         break;
       case "month":
-        // Tháng trước: từ ngày 1 tháng trước đến ngày cuối tháng trước
         const currentDate = new Date();
         const year = currentDate.getFullYear();
         const month = currentDate.getMonth();
 
-        // Tính tháng trước
         const lastMonthYear = month === 0 ? year - 1 : year;
         const lastMonth = month === 0 ? 11 : month - 1;
 
-        // Ngày đầu tháng trước
         const lastMonthStart = new Date(lastMonthYear, lastMonth, 1);
-        // Ngày cuối tháng trước
         const lastMonthEnd = new Date(lastMonthYear, lastMonth + 1, 0);
 
-        // Format thành YYYY-MM-DD
         const startDateStr = `${lastMonthStart.getFullYear()}-${(lastMonthStart.getMonth() + 1).toString().padStart(2, "0")}-${lastMonthStart.getDate().toString().padStart(2, "0")}`;
         const endDateStr = `${lastMonthEnd.getFullYear()}-${(lastMonthEnd.getMonth() + 1).toString().padStart(2, "0")}-${lastMonthEnd.getDate().toString().padStart(2, "0")}`;
 
@@ -309,7 +398,6 @@ export function TableReport() {
         setEndDate(endDateStr);
         break;
       case "custom":
-        // Luôn set ngày hiện tại khi chọn tùy chỉnh
         const customCurrentDate = new Date().toISOString().split("T")[0];
         setStartDate(customCurrentDate);
         setEndDate(customCurrentDate);
@@ -353,348 +441,364 @@ export function TableReport() {
 
   const tableData = getTableData();
 
-  // Report Content
+  const isLoading = ordersLoading || invoicesLoading || transactionsLoading || tablesLoading || orderItemsLoading || transactionItemsLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="ml-3 text-gray-500">{t("reports.loading") || "Đang tải dữ liệu..."}</div>
+      </div>
+    );
+  }
+
+  if (!tableData) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="text-gray-500">Không có dữ liệu để hiển thị</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {(ordersLoading || invoicesLoading || !tables) ? (
-        <div className="flex justify-center py-8">
-          <div className="text-gray-500">{t("reports.loading")}</div>
-        </div>
-      ) : (
-        <>
-          {/* Filters */}
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Utensils className="w-5 h-5" />
-                    {t("reports.tableAnalysis")}
-                  </CardTitle>
-                  <CardDescription>{t("reports.analyzeTableRevenueTrend")}</CardDescription>
-                </div>
-                <div className="flex items-center gap-4">
-                  <Select value={dateRange} onValueChange={handleDateRangeChange}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="today">{t("reports.toDay")}</SelectItem>
-                      <SelectItem value="week">{t("reports.lastWeek")}</SelectItem>
-                      <SelectItem value="month">
-                        {t("reports.lastMonth")}
-                      </SelectItem>
-                      <SelectItem value="custom">{t("reports.custom")}</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  {dateRange === "custom" && (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <Label>{t("reports.startDate")}:</Label>
-                        <Input
-                          type="date"
-                          value={startDate}
-                          onChange={(e) => setStartDate(e.target.value)}
-                          className="w-auto"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Label>{t("reports.endDate")}:</Label>
-                        <Input
-                          type="date"
-                          value={endDate}
-                          onChange={(e) => setEndDate(e.target.value)}
-                          className="w-auto"
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
-
-          {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {t("reports.averageUtilization")}
-                    </p>
-                    <p className="text-2xl font-bold">
-                      {tableData.averageUtilization.toFixed(1)} {t("reports.times")}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {t("reports.averageOrdersPerTable")}
-                    </p>
-                  </div>
-                  <TrendingUp className="w-8 h-8 text-blue-500" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {t("reports.totalOrders")}
-                    </p>
-                    <p className="text-2xl font-bold">{tableData.totalOrders}</p>
-                    <p className="text-xs text-gray-500">
-                      {t("reports.allTables")}
-                    </p>
-                  </div>
-                  <Clock className="w-8 h-8 text-green-500" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {t("reports.totalCustomers")}
-                    </p>
-                    <p className="text-2xl font-bold">{tableData.totalCustomers}</p>
-                    <p className="text-xs text-gray-500">
-                      {t("reports.cumulativeVisitors")}
-                    </p>
-                  </div>
-                  <Users className="w-8 h-8 text-purple-500" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">
-                      {t("reports.totalRevenue")}
-                    </p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {formatCurrency(tableData.totalRevenue)}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {t("reports.totalByTable")}
-                    </p>
-                  </div>
-                  <Utensils className="w-8 h-8 text-green-500" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Detailed Table Performance */}
-          <Card>
-            <CardHeader>
+      {/* Filters */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
               <CardTitle className="flex items-center gap-2">
                 <Utensils className="w-5 h-5" />
                 {t("reports.tableAnalysis")}
               </CardTitle>
-              <CardDescription>
-                {t("reports.tableAnalysisDescription")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("common.table")}</TableHead>
-                    <TableHead>{t("reports.currentStatus")}</TableHead>
-                    <TableHead>{t("reports.orders")}</TableHead>
-                    <TableHead>{t("reports.revenue")}</TableHead>
-                    <TableHead>{t("reports.customerCount")}</TableHead>
-                    <TableHead>{t("reports.averageOrderValue")}</TableHead>
-                    <TableHead>{t("reports.turnoverRate")}</TableHead>
-                    <TableHead>{t("reports.peakTime")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {tableData.tableStats
-                    .sort((a, b) => b.revenue - a.revenue)
-                    .map((stats) => {
-                      const statusConfig = getTableStatusBadge(stats.table.status);
-                      const peakHour = getPeakHour(stats.peakHours);
+              <CardDescription>{t("reports.analyzeTableRevenueTrend")}</CardDescription>
+            </div>
+            <div className="flex items-center gap-4">
+              <Select value={dateRange} onValueChange={handleDateRangeChange}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">{t("reports.toDay")}</SelectItem>
+                  <SelectItem value="week">{t("reports.lastWeek")}</SelectItem>
+                  <SelectItem value="month">
+                    {t("reports.lastMonth")}
+                  </SelectItem>
+                  <SelectItem value="custom">{t("reports.custom")}</SelectItem>
+                </SelectContent>
+              </Select>
 
-                      return (
-                        <TableRow key={stats.table.id}>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className={`w-3 h-3 rounded-full ${
-                                  stats.table.status === "occupied"
-                                    ? "bg-red-500"
-                                    : "bg-green-500"
-                                }`}
-                              ></div>
-                              {stats.table.tableNumber}
-                              <span className="text-xs text-gray-500">
-                                ({stats.table.capacity} {t("common.people")})
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={statusConfig.variant}>
-                              {statusConfig.label}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {stats.orderCount} {t("common.count")}
-                          </TableCell>
-                          <TableCell className="font-semibold">
-                            {formatCurrency(stats.revenue)}
-                          </TableCell>
-                          <TableCell>
-                            {stats.customerCount} {t("common.people")}
-                          </TableCell>
-                          <TableCell>
-                            {stats.orderCount > 0
-                              ? formatCurrency(stats.averageOrderValue)
-                              : "-"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                stats.turnoverRate > 1 ? "default" : "outline"
-                              }
-                            >
-                              {stats.turnoverRate.toFixed(1)}{" "}
-                              {t("reports.timesPerDay")}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {peakHour !== null
-                              ? `${peakHour} ${t("reports.hour")}`
-                              : "-"}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Top Revenue Tables */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <TrendingUp className="w-4 h-4" />
-                  {t("reports.topRevenueTables")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {tableData.topRevenueTables
-                    .slice(0, 5)
-                    .map((stats: any, index: number) => (
-                      <div
-                        key={stats.table.id}
-                        className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant={index < 3 ? "default" : "outline"}
-                            className="text-xs"
-                          >
-                            {index + 1}
-                          </Badge>
-                          <span className="font-medium">
-                            {stats.table.tableNumber}
-                          </span>
-                        </div>
-                        <span className="text-sm font-semibold text-green-600">
-                          {formatCurrency(stats.revenue)}
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Top Turnover Tables */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Clock className="w-4 h-4" />
-                  {t("reports.topTurnoverTables")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {tableData.topTurnoverTables
-                    .slice(0, 5)
-                    .map((stats: any, index: number) => (
-                      <div
-                        key={stats.table.id}
-                        className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant={index < 3 ? "default" : "outline"}
-                            className="text-xs"
-                          >
-                            {index + 1}
-                          </Badge>
-                          <span className="font-medium">
-                            {stats.table.tableNumber}
-                          </span>
-                        </div>
-                        <span className="text-sm font-semibold">
-                          {stats.turnoverRate.toFixed(1)} {t("reports.timesPerDay")}
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Top Utilization Tables */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-sm">
-                  <Users className="w-4 h-4" />
-                  {t("reports.topUtilizationTables")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {tableData.topUtilizationTables
-                    .slice(0, 5)
-                    .map((stats: any, index: number) => (
-                      <div
-                        key={stats.table.id}
-                        className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant={index < 3 ? "default" : "outline"}
-                            className="text-xs"
-                          >
-                            {index + 1}
-                          </Badge>
-                          <span className="font-medium">
-                            {stats.table.tableNumber}
-                          </span>
-                        </div>
-                        <span className="text-sm font-semibold">
-                          {stats.orderCount} {t("common.count")}
-                        </span>
-                      </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
+              {dateRange === "custom" && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Label>{t("reports.startDate")}:</Label>
+                    <Input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-auto"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label>{t("reports.endDate")}:</Label>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-auto"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </>
-      )}
+        </CardHeader>
+      </Card>
+
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.averageUtilization")}
+                </p>
+                <p className="text-2xl font-bold">
+                  {tableData.averageUtilization.toFixed(1)} {t("reports.times")}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {t("reports.averageOrdersPerTable")}
+                </p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.totalOrders")}
+                </p>
+                <p className="text-2xl font-bold">{tableData.totalOrders}</p>
+                <p className="text-xs text-gray-500">
+                  {t("reports.allTables")}
+                </p>
+              </div>
+              <Clock className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.totalCustomers")}
+                </p>
+                <p className="text-2xl font-bold">{tableData.totalCustomers}</p>
+                <p className="text-xs text-gray-500">
+                  {t("reports.cumulativeVisitors")}
+                </p>
+              </div>
+              <Users className="w-8 h-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  {t("reports.totalRevenue")}
+                </p>
+                <p className="text-2xl font-bold text-green-600">
+                  {formatCurrency(tableData.totalRevenue)}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {t("reports.totalByTable")}
+                </p>
+              </div>
+              <Utensils className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Detailed Table Performance */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Utensils className="w-5 h-5" />
+            {t("reports.tableAnalysis")}
+          </CardTitle>
+          <CardDescription>
+            {t("reports.tableAnalysisDescription")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("common.table")}</TableHead>
+                <TableHead>{t("reports.currentStatus")}</TableHead>
+                <TableHead>{t("reports.orders")}</TableHead>
+                <TableHead>{t("reports.revenue")}</TableHead>
+                <TableHead>{t("reports.customerCount")}</TableHead>
+                <TableHead>{t("reports.averageOrderValue")}</TableHead>
+                <TableHead>{t("reports.turnoverRate")}</TableHead>
+                <TableHead>{t("reports.peakTime")}</TableHead>
+                <TableHead>Số món bán</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tableData.tableStats
+                .sort((a, b) => b.revenue - a.revenue)
+                .map((stats) => {
+                  const statusConfig = getTableStatusBadge(stats.table.status);
+                  const peakHour = getPeakHour(stats.peakHours);
+
+                  return (
+                    <TableRow key={stats.table.id}>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`w-3 h-3 rounded-full ${
+                              stats.table.status === "occupied"
+                                ? "bg-red-500"
+                                : "bg-green-500"
+                            }`}
+                          ></div>
+                          {stats.table.tableNumber}
+                          <span className="text-xs text-gray-500">
+                            ({stats.table.capacity} {t("common.people")})
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={statusConfig.variant}>
+                          {statusConfig.label}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {stats.orderCount} {t("common.count")}
+                      </TableCell>
+                      <TableCell className="font-semibold">
+                        {formatCurrency(stats.revenue)}
+                      </TableCell>
+                      <TableCell>
+                        {stats.customerCount} {t("common.people")}
+                      </TableCell>
+                      <TableCell>
+                        {stats.orderCount > 0
+                          ? formatCurrency(stats.averageOrderValue)
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            stats.turnoverRate > 1 ? "default" : "outline"
+                          }
+                        >
+                          {stats.turnoverRate.toFixed(1)}{" "}
+                          {t("reports.timesPerDay")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {peakHour !== null
+                          ? `${peakHour} ${t("reports.hour")}`
+                          : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary">
+                          {stats.itemsSold} món
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Top Revenue Tables */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <TrendingUp className="w-4 h-4" />
+              {t("reports.topRevenueTables")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {tableData.topRevenueTables
+                .slice(0, 5)
+                .map((stats: any, index: number) => (
+                  <div
+                    key={stats.table.id}
+                    className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={index < 3 ? "default" : "outline"}
+                        className="text-xs"
+                      >
+                        {index + 1}
+                      </Badge>
+                      <span className="font-medium">
+                        {stats.table.tableNumber}
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold text-green-600">
+                      {formatCurrency(stats.revenue)}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Turnover Tables */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Clock className="w-4 h-4" />
+              {t("reports.topTurnoverTables")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {tableData.topTurnoverTables
+                .slice(0, 5)
+                .map((stats: any, index: number) => (
+                  <div
+                    key={stats.table.id}
+                    className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={index < 3 ? "default" : "outline"}
+                        className="text-xs"
+                      >
+                        {index + 1}
+                      </Badge>
+                      <span className="font-medium">
+                        {stats.table.tableNumber}
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold">
+                      {stats.turnoverRate.toFixed(1)} {t("reports.timesPerDay")}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Utilization Tables */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Users className="w-4 h-4" />
+              {t("reports.topUtilizationTables")}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {tableData.topUtilizationTables
+                .slice(0, 5)
+                .map((stats: any, index: number) => (
+                  <div
+                    key={stats.table.id}
+                    className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant={index < 3 ? "default" : "outline"}
+                        className="text-xs"
+                      >
+                        {index + 1}
+                      </Badge>
+                      <span className="font-medium">
+                        {stats.table.tableNumber}
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold">
+                      {stats.orderCount} {t("common.count")}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

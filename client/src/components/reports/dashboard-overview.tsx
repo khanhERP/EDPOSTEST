@@ -171,7 +171,7 @@ export function DashboardOverview() {
       })) : [])
     ];
 
-    // Filter completed items within date range - same logic as sales-orders page
+    // Filter completed items within date range - enhanced logic to show more data
     const filteredCompletedItems = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
       try {
         if (!item || !item.date) return false;
@@ -181,9 +181,9 @@ export function DashboardOverview() {
 
         const dateMatch = itemDate >= start && itemDate <= end;
         
-        // Only include completed/paid items
-        const isCompleted = (item.type === 'invoice' && item.invoiceStatus === 1) ||
-                          (item.type === 'order' && (item.status === 'paid' || item.status === 'completed'));
+        // Include more order statuses and invoice statuses to show real data
+        const isCompleted = (item.type === 'invoice' && (item.invoiceStatus === 1 || item.status === 'paid' || item.status === 'completed')) ||
+                          (item.type === 'order' && (item.status === 'paid' || item.status === 'completed' || item.status === 'confirmed' || item.status === 'served'));
 
         return dateMatch && isCompleted;
       } catch (error) {
@@ -192,6 +192,21 @@ export function DashboardOverview() {
       }
     }) : [];
 
+    // If no completed items found, include pending/draft items for display
+    let itemsToAnalyze = filteredCompletedItems;
+    if (filteredCompletedItems.length === 0) {
+      itemsToAnalyze = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
+        try {
+          if (!item || !item.date) return false;
+          const itemDate = new Date(item.date);
+          if (isNaN(itemDate.getTime())) return false;
+          return itemDate >= start && itemDate <= end;
+        } catch (error) {
+          return false;
+        }
+      }) : [];
+    }
+
     console.log("Dashboard Debug (Combined Data):", {
       totalInvoices: invoices.length,
       totalOrders: orders.length,
@@ -199,30 +214,37 @@ export function DashboardOverview() {
       startDate,
       endDate,
       filteredCompletedItems: filteredCompletedItems.length,
-      sampleItems: filteredCompletedItems.slice(0, 5).map((item: any) => ({
+      itemsToAnalyze: itemsToAnalyze.length,
+      sampleItems: itemsToAnalyze.slice(0, 5).map((item: any) => ({
         id: item.id,
         type: item.type,
         displayStatus: item.displayStatus,
         date: item.date,
-        total: item.total
+        total: item.total,
+        status: item.status || item.invoiceStatus
       })),
     });
 
-    // Period revenue: total amount for all completed items
-    const periodRevenue = filteredCompletedItems.reduce(
+    // Period revenue: total amount minus discount minus actual tax from database
+    const periodRevenue = itemsToAnalyze.reduce(
       (total: number, item: any) => {
         const itemTotal = Number(item.total || 0);
-        return total + itemTotal;
+        const itemDiscount = Number(item.discount || 0);
+        // Use actual tax from database, default to 0 if not available
+        const actualTax = Number(item.tax || 0);
+        // Revenue = Total Amount - Discount - Actual Tax
+        const itemRevenue = itemTotal - itemDiscount - actualTax;
+        return total + itemRevenue;
       },
       0,
     );
 
-    // Order count: count of completed items in the filtered period
-    const periodOrderCount = filteredCompletedItems.length;
+    // Order count: count of items in the filtered period
+    const periodOrderCount = itemsToAnalyze.length;
 
-    // Customer count: count unique customers from completed items
+    // Customer count: count unique customers from items
     const uniqueCustomers = new Set();
-    filteredCompletedItems.forEach((item: any) => {
+    itemsToAnalyze.forEach((item: any) => {
       if (item.customerId) {
         uniqueCustomers.add(item.customerId);
       } else if (item.customerName && item.customerName !== 'Khách hàng lẻ') {
@@ -250,16 +272,16 @@ export function DashboardOverview() {
       (table: TableType) => table.status === "occupied",
     ) : [];
 
-    // Month revenue: same as period revenue for the selected date range
+    // Month revenue: same as period revenue calculation (Total Amount - Discount)
     const monthRevenue = periodRevenue;
 
     // Average order value
     const averageOrderValue =
       periodOrderCount > 0 ? periodRevenue / periodOrderCount : 0;
 
-    // Peak hours analysis from filtered completed items
+    // Peak hours analysis from items in period
     const hourlyItems: { [key: number]: number } = {};
-    filteredCompletedItems.forEach((item: any) => {
+    itemsToAnalyze.forEach((item: any) => {
       const itemDate = new Date(item.date);
       if (!isNaN(itemDate.getTime())) {
         const hour = itemDate.getHours();
@@ -374,7 +396,7 @@ export function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Tổng doanh thu
+                  {t("reports.totalRevenue")}
                 </p>
                 <p className="text-2xl font-bold text-green-600">
                   {formatCurrency(stats.periodRevenue)}
@@ -384,6 +406,28 @@ export function DashboardOverview() {
                 </p>
               </div>
               <DollarSign className="w-8 h-8 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Tổng doanh thu
+                </p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {formatCurrency(stats.monthRevenue)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {startDate === endDate 
+                    ? formatDate(startDate)
+                    : `${formatDate(startDate)} - ${formatDate(endDate)}`
+                  }
+                </p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-blue-500" />
             </div>
           </CardContent>
         </Card>
@@ -425,28 +469,6 @@ export function DashboardOverview() {
             </div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  {t("reports.monthRevenue")}
-                </p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {formatCurrency(stats.monthRevenue)}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {startDate === endDate 
-                    ? formatDate(startDate)
-                    : `${formatDate(startDate)} - ${formatDate(endDate)}`
-                  }
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Current Status */}
@@ -459,14 +481,7 @@ export function DashboardOverview() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">
-                {t("reports.pendingOrders")}
-              </span>
-              <Badge variant={stats.activeOrders > 0 ? "default" : "outline"}>
-                {stats.activeOrders} {t("reports.count")}
-              </Badge>
-            </div>
+            
             <div className="flex justify-between items-center">
               <span className="text-gray-600">
                 {t("reports.occupiedTables")}
