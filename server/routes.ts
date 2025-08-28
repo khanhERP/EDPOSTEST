@@ -315,6 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         trackInventory: req.body.trackInventory !== false,
         imageUrl: req.body.imageUrl || null,
         taxRate: req.body.taxRate.toString(),
+        afterTaxPrice: req.body.afterTaxPrice && req.body.afterTaxPrice.trim() !== "" ? req.body.afterTaxPrice.toString() : null,
       });
 
       console.log("Validated product data:", validatedData);
@@ -363,6 +364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...req.body,
         price: req.body.price ? req.body.price.toString() : undefined,
         taxRate: req.body.taxRate ? req.body.taxRate.toString() : undefined,
+        afterTaxPrice: req.body.afterTaxPrice && req.body.afterTaxPrice.trim() !== "" ? req.body.afterTaxPrice.toString() : null,
         priceIncludesTax: req.body.priceIncludesTax || false,
         trackInventory: req.body.trackInventory !== false
       };
