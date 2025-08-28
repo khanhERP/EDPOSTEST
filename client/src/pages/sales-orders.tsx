@@ -380,7 +380,7 @@ export default function SalesOrders() {
             message: error?.message,
             stack: error?.stack
           });
-          
+
           const errorMessage = error?.message || error?.toString() || 'Lỗi không xác định';
           alert(`Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái: ${errorMessage}`);
         }
@@ -1134,7 +1134,7 @@ export default function SalesOrders() {
 
                             // Lấy symbol từ dữ liệu gốc của item
                             const itemSymbol = item.symbol || item.templateNumber || '';
-                            
+
                             return (
                               <>
                                 <tr
@@ -1382,6 +1382,7 @@ export default function SalesOrders() {
                                               <div className="grid grid-cols-2 gap-4 text-sm">
                                                 <div className="space-y-2">
                                                   {(() => {
+                                                    // Calculate totals from items with actual tax rates
                                                     const subtotal = parseFloat(selectedInvoice.subtotal || '0');
                                                     const tax = parseFloat(selectedInvoice.tax || '0');
                                                     const discount = 0; 
@@ -1401,7 +1402,7 @@ export default function SalesOrders() {
                                                           <span>{formatCurrency(discount)}</span>
                                                         </div>
                                                         <div className="flex justify-between">
-                                                          <span>Thuế suất (10%) Thuế GTGT:</span>
+                                                          <span>Thuế GTGT:</span>
                                                           <span className="font-bold">{formatCurrency(tax)}</span>
                                                         </div>
                                                       </>
@@ -1653,10 +1654,10 @@ export default function SalesOrders() {
         <EInvoiceModal
           isOpen={showEInvoiceModal}
           onClose={() => setShowEInvoiceModal(false)}
-          onConfirm={async (invoiceResult) => {
-            console.log('E-invoice published successfully:', invoiceResult);
+          onConfirm={async (result) => { // Renamed invoiceResult to result for consistency
+            console.log('E-invoice published successfully:', result);
 
-            if (invoiceResult.success && selectedInvoice) {
+            if (result.success && selectedInvoice) {
               try {
                 // Determine the correct API endpoint based on item type
                 const updateEndpoint = getItemType(selectedInvoice) === 'order' 
@@ -1665,20 +1666,20 @@ export default function SalesOrders() {
 
                 // Prepare update data with all required fields from API response
                 const updateData = {
-                  einvoiceStatus: invoiceResult.einvoiceStatus || 1, // Đã phát hành
-                  invoiceStatus: invoiceResult.invoiceStatus || 1, // Hoàn thành
-                  status: invoiceResult.status || 'published',
-                  invoiceNumber: invoiceResult.invoiceNumber || null,
-                  symbol: invoiceResult.symbol || selectedInvoice.symbol,
-                  templateNumber: invoiceResult.templateNumber || selectedInvoice.templateNumber
+                  einvoiceStatus: result.einvoiceStatus || 1, // Đã phát hành
+                  invoiceStatus: result.invoiceStatus || 1, // Hoàn thành
+                  status: result.status || 'published',
+                  invoiceNumber: result.invoiceNumber || null,
+                  symbol: result.symbol || selectedInvoice.symbol,
+                  templateNumber: result.templateNumber || selectedInvoice.templateNumber
                 };
 
                 // For orders, also update tradeNumber
                 if (getItemType(selectedInvoice) === 'order') {
-                  updateData.tradeNumber = invoiceResult.invoiceNumber || selectedInvoice.tradeNumber;
+                  updateData.tradeNumber = result.invoiceNumber || selectedInvoice.tradeNumber;
                 } else {
                   // For invoices, update tradeNumber as well
-                  updateData.tradeNumber = invoiceResult.invoiceNumber || selectedInvoice.tradeNumber;
+                  updateData.tradeNumber = result.invoiceNumber || selectedInvoice.tradeNumber;
                 }
 
                 console.log('🔄 Updating item with data:', updateData);
@@ -1687,14 +1688,16 @@ export default function SalesOrders() {
                 const updateResponse = await apiRequest("PUT", updateEndpoint, updateData);
 
                 if (updateResponse.ok) {
-                  // Update local state (keep tradeNumber unchanged)
+                  // Update local state
                   setSelectedInvoice({
                     ...selectedInvoice,
                     einvoiceStatus: 1,
                     invoiceStatus: 1,
                     status: 'published',
-                    invoiceNumber: result.data?.invoiceNo || selectedInvoice.invoiceNumber
-                    // tradeNumber giữ nguyên
+                    invoiceNumber: result.invoiceNumber || selectedInvoice.invoiceNumber,
+                    symbol: updateData.symbol,
+                    templateNumber: updateData.templateNumber,
+                    tradeNumber: updateData.tradeNumber
                   });
 
                   // Refresh data to ensure consistency
@@ -1703,7 +1706,7 @@ export default function SalesOrders() {
 
                   console.log('✅ Invoice/Order updated successfully with published status');
 
-                  alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || 'N/A'}\nKý hiệu: ${updateData.symbol || 'N/A'}`);
+                  alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.invoiceNumber || 'N/A'}\nKý hiệu: ${updateData.symbol || 'N/A'}`);
                 } else {
                   const errorText = await updateResponse.text();
                   console.error('❌ Failed to update invoice/order:', errorText);
@@ -1713,6 +1716,8 @@ export default function SalesOrders() {
                 console.error('❌ Error updating invoice/order after publish:', error);
                 alert('Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái');
               }
+            } else {
+              alert(`Lỗi phát hành hóa đơn: ${result.message || 'Không xác định'}`);
             }
 
             setShowEInvoiceModal(false);
@@ -1739,7 +1744,7 @@ export default function SalesOrders() {
               price: parseFloat(item.unitPrice || '0'),
               quantity: item.quantity,
               sku: `SP${String(item.productId).padStart(3, '0')}`,
-              taxRate: parseFloat(item.taxRate || '10')
+              taxRate: parseFloat(item.taxRate || '10') // Default to 10% if not specified
             }));
           })()}
           selectedPaymentMethod="cash"
@@ -1850,7 +1855,7 @@ export default function SalesOrders() {
                     <span className="font-medium">{formatCurrency(selectedInvoice.subtotal || 0)} ₫</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Thuế GTGT (10%):</span>
+                    <span>Thuế GTGT:</span>
                     <span className="font-medium">{formatCurrency(selectedInvoice.tax || 0)} ₫</span>
                   </div>
                   <div className="flex justify-between border-t pt-2">
@@ -1895,10 +1900,11 @@ export default function SalesOrders() {
                         return;
                       }
 
-                      // Calculate totals from items
+                      // Calculate totals from items with actual tax rates
                       const subtotal = parseFloat(selectedInvoice.subtotal || '0');
                       const tax = parseFloat(selectedInvoice.tax || '0');
-                      const total = parseFloat(selectedInvoice.total || '0');
+                      const discount = 0; 
+                      const totalPayment = subtotal + tax - discount;
 
                       console.log('Publishing invoice with data:', {
                         invoiceId: selectedInvoice.id,
@@ -1922,10 +1928,10 @@ export default function SalesOrders() {
                         transactionID: generateGuid(),
                         invRef: selectedInvoice.displayNumber || `INV-${Date.now()}`,
                         invSubTotal: Math.round(subtotal),
-                        invVatRate: 10,
+                        invVatRate: 10, // This is a default, but the actual rate is used in product mapping
                         invVatAmount: Math.round(tax),
                         invDiscAmount: 0,
-                        invTotalAmount: Math.round(total),
+                        invTotalAmount: Math.round(totalPayment),
                         paidTp: "TM",
                         note: selectedInvoice.notes || "",
                         hdNo: "",
@@ -1953,25 +1959,45 @@ export default function SalesOrders() {
                           emailCC: "",
                         },
                         products: items.map((item: any) => {
-                          const itemPrice = parseFloat(item.unitPrice);
-                          const itemQuantity = item.quantity;
-                          const itemTaxRate = parseFloat(item.taxRate || "10");
-                          const itemSubtotal = itemPrice * itemQuantity;
-                          const itemTax = (itemSubtotal * itemTaxRate) / 100;
-                          const itemTotal = itemSubtotal + itemTax;
+                          const basePrice = parseFloat(item.unitPrice);
+                          const quantity = item.quantity;
+                          // Use actual tax rate from item or default to 10%
+                          const taxRate = parseFloat(item.taxRate || '10'); 
+                          const itemSubtotal = basePrice * quantity;
+                          
+                          let totalTax = 0;
+
+                          // Calculate tax based on product's actual tax configuration
+                          if (
+                            item?.afterTaxPrice &&
+                            item.afterTaxPrice !== null &&
+                            item.afterTaxPrice !== ""
+                          ) {
+                            // Use afterTaxPrice if available
+                            const afterTaxPrice = parseFloat(item.afterTaxPrice);
+                            const taxPerUnit = afterTaxPrice - basePrice;
+                            totalTax += taxPerUnit * quantity;
+                          } else if (item?.taxRate && parseFloat(item.taxRate) > 0) {
+                            // Fallback to taxRate if no afterTaxPrice but taxRate exists
+                            const taxPerUnit = basePrice * (taxRate / 100);
+                            totalTax += taxPerUnit * quantity;
+                          }
+                          // No tax if neither afterTaxPrice nor taxRate is available
+
+                          const itemTotal = itemSubtotal + totalTax;
 
                           return {
                             itmCd: `SP${String(item.productId).padStart(3, '0')}`,
                             itmName: item.productName,
                             itmKnd: 1,
                             unitNm: "Cái",
-                            qty: itemQuantity,
-                            unprc: itemPrice,
+                            qty: quantity,
+                            unprc: basePrice,
                             amt: Math.round(itemSubtotal),
                             discRate: 0,
                             discAmt: 0,
-                            vatRt: itemTaxRate.toString(),
-                            vatAmt: Math.round(itemTax),
+                            vatRt: taxRate.toString(), // Include the tax rate used
+                            vatAmt: Math.round(totalTax),
                             totalAmt: Math.round(itemTotal),
                           };
                         }),
