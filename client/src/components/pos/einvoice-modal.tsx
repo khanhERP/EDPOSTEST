@@ -903,8 +903,7 @@ export function EInvoiceModal({
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message ||
-            `API call failed: ${response.status} ${response.statusText}`,
+          errorData.message || `API call failed: ${response.status} ${response.statusText}`,
         );
       }
 
