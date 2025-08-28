@@ -26,10 +26,7 @@ config({ path: path.resolve(".env.local") });
 config({ path: path.resolve(".env") });
 
 // Use EXTERNAL_DB_URL first, then fallback to CUSTOM_DATABASE_URL, then DATABASE_URL
-let DATABASE_URL =
-  process.env.EXTERNAL_DB_URL_Freshway ||
-  process.env.EXTERNAL_DB_URL_hazkitchen ||
-  process.env.DATABASE_URL;
+let DATABASE_URL = process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL;
 
 if (!DATABASE_URL) {
   throw new Error(
@@ -184,7 +181,9 @@ export async function initializeSampleData() {
         UPDATE products SET price_includes_tax = false WHERE price_includes_tax IS NULL
       `);
 
-      console.log("Migration for price_includes_tax column completed successfully.");
+      console.log(
+        "Migration for price_includes_tax column completed successfully.",
+      );
     } catch (migrationError) {
       console.log(
         "Price includes tax migration already applied or error:",
@@ -198,7 +197,9 @@ export async function initializeSampleData() {
         ALTER TABLE products ADD COLUMN IF NOT EXISTS after_tax_price DECIMAL(10,2)
       `);
 
-      console.log("Migration for after_tax_price column completed successfully.");
+      console.log(
+        "Migration for after_tax_price column completed successfully.",
+      );
     } catch (migrationError) {
       console.log(
         "After tax price migration already applied or error:",
@@ -299,7 +300,10 @@ export async function initializeSampleData() {
         "Migration for template_number and symbol columns in orders table completed successfully.",
       );
     } catch (error) {
-      console.log("Template number and symbol migration failed or already applied:", error);
+      console.log(
+        "Template number and symbol migration failed or already applied:",
+        error,
+      );
     }
 
     // Add invoice_number column to orders table
@@ -494,8 +498,6 @@ export async function initializeSampleData() {
         error,
       );
     }
-
-    
 
     // Initialize printer_configs table if it doesn't exist
     try {
