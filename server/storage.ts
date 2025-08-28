@@ -437,36 +437,62 @@ export class DatabaseStorage implements IStorage {
     tenantDb?: any,
   ): Promise<Product | undefined> {
     const database = tenantDb || db;
-    const [product] = await db
-      .select()
-      .from(products)
-      .where(eq(products.id, id));
-    if (!product) {
-      console.error(`❌ Product not found for stock update: ID ${id}`);
+    
+    try {
+      const [product] = await database
+        .select()
+        .from(products)
+        .where(eq(products.id, id));
+        
+      if (!product) {
+        console.error(`❌ Product not found for stock update: ID ${id}`);
+        return undefined;
+      }
+
+      // Check if product tracks inventory before updating
+      if (!product.trackInventory) {
+        console.log(`📦 Product ${product.name} does not track inventory - skipping stock update`);
+        return product; // Return the original product without updating stock
+      }
+
+      const oldStock = product.stock || 0;
+      const newStock = Math.max(0, oldStock + quantity);
+
+      console.log(`📦 Stock update: ${product.name} (ID: ${id})`);
+      console.log(`   - Old stock: ${oldStock}`);
+      console.log(`   - Quantity change: ${quantity}`);
+      console.log(`   - New stock: ${newStock}`);
+
+      const [updatedProduct] = await database
+        .update(products)
+        .set({ stock: newStock })
+        .where(eq(products.id, id))
+        .returning();
+
+      if (updatedProduct) {
+        console.log(`✅ Stock updated successfully for ${product.name}: ${oldStock} → ${newStock}`);
+        
+        // Create inventory transaction record
+        try {
+          await database.execute(sql`
+            INSERT INTO inventory_transactions 
+            (product_id, type, quantity, previous_stock, new_stock, notes, created_at)
+            VALUES (${id}, 'subtract', ${Math.abs(quantity)}, ${oldStock}, ${newStock}, 
+                   'E-Invoice transaction deduction', ${new Date().toISOString()})
+          `);
+          console.log(`📝 Inventory transaction recorded for ${product.name}`);
+        } catch (invError) {
+          console.error(`❌ Failed to record inventory transaction:`, invError);
+        }
+      } else {
+        console.error(`❌ Failed to update stock for ${product.name}`);
+      }
+
+      return updatedProduct || undefined;
+    } catch (error) {
+      console.error(`❌ Error updating stock for product ID ${id}:`, error);
       return undefined;
     }
-
-    const oldStock = product.stock;
-    const newStock = Math.max(0, product.stock + quantity);
-
-    console.log(`📦 Stock update: ${product.name} (ID: ${id})`);
-    console.log(`   - Old stock: ${oldStock}`);
-    console.log(`   - Quantity change: ${quantity}`);
-    console.log(`   - New stock: ${newStock}`);
-
-    const [updatedProduct] = await db
-      .update(products)
-      .set({ stock: newStock })
-      .where(eq(products.id, id))
-      .returning();
-
-    if (updatedProduct) {
-      console.log(`✅ Stock updated successfully for ${product.name}: ${oldStock} → ${newStock}`);
-    } else {
-      console.error(`❌ Failed to update stock for ${product.name}`);
-    }
-
-    return updatedProduct || undefined;
   }
 
   async createTransaction(

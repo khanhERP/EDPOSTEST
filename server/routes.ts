@@ -485,6 +485,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate stock availability and calculate totals
       let subtotal = 0;
       let tax = 0;
+      const stockValidationErrors = [];
+      
       for (const item of validatedItems) {
         const product = products.find((p) => p.id === item.productId);
         if (!product) {
@@ -495,10 +497,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Check stock availability only for products that track inventory
         if (product.trackInventory && product.stock < item.quantity) {
-          console.log(`❌ Insufficient stock for ${product.name}: Available=${product.stock}, Requested=${item.quantity}`);
-          return res.status(400).json({
-            message: `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
-          });
+          const errorMsg = `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`;
+          console.log(`❌ ${errorMsg}`);
+          stockValidationErrors.push(errorMsg);
+          continue; // Continue checking other items
         }
 
         console.log(`✅ Stock check passed for ${product.name}: Available=${product.stock}, Requested=${item.quantity}`);
@@ -506,18 +508,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const itemSubtotal = parseFloat(item.price) * item.quantity;
         let itemTax = 0;
         
-        // Use afterTaxPrice if available, otherwise no tax (default 0)
+        // Use afterTaxPrice if available, otherwise calculate based on taxRate
         if (product.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
           const taxPerUnit = afterTaxPrice - parseFloat(item.price);
           itemTax = taxPerUnit * item.quantity;
-        } else {
-          // No afterTaxPrice means no tax (default 0)
-          itemTax = 0;
+        } else if (product.taxRate && parseFloat(product.taxRate) > 0) {
+          // Calculate tax based on taxRate if no afterTaxPrice
+          itemTax = (itemSubtotal * parseFloat(product.taxRate)) / 100;
         }
 
         subtotal += itemSubtotal;
         tax += itemTax;
+      }
+      
+      // Return all stock validation errors if any
+      if (stockValidationErrors.length > 0) {
+        return res.status(400).json({
+          message: "Stock validation failed for multiple products",
+          errors: stockValidationErrors,
+          details: stockValidationErrors.join("; ")
+        });
       }
 
       const total = subtotal + tax;

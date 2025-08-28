@@ -531,9 +531,9 @@ export function EInvoiceModal({
           },
           items: cartItems.map((item) => ({
             productId: item.id,
-            quantity: item.quantity,
+            quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
             price: (typeof item.price === 'string' ? parseFloat(item.price) : item.price).toString(),
-            total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * item.quantity).toFixed(2),
+            total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * (typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity)).toFixed(2),
             productName: item.name
           }))
         };
@@ -545,45 +545,63 @@ export function EInvoiceModal({
         if (transactionResponse.ok) {
           const transactionResult = await transactionResponse.json();
           console.log("✅ Transaction created successfully - inventory deducted:", transactionResult);
+
+          // Show success message for inventory deduction
+          toast({
+            title: "Thành công",
+            description: "Đã trừ tồn kho tự động cho các sản phẩm",
+          });
         } else {
           const transactionError = await transactionResponse.text();
           console.error("❌ Error creating transaction for inventory:", transactionError);
-          // Show error to user but don't block the flow
-          alert("Cảnh báo: Không thể trừ tồn kho tự động. Vui lòng kiểm tra lại.");
+
+          // Show error message but don't block the flow
+          toast({
+            title: "Cảnh báo",
+            description: "Không thể trừ tồn kho tự động. Vui lòng kiểm tra lại tồn kho sản phẩm.",
+            variant: "destructive",
+          });
         }
       } catch (transactionError) {
         console.error("❌ Error creating transaction for inventory:", transactionError);
-        alert("Cảnh báo: Không thể trừ tồn kho tự động. Vui lòng kiểm tra lại.");
+        toast({
+          title: "Cảnh báo",
+          description: "Có lỗi xảy ra khi trừ tồn kho. Vui lòng kiểm tra lại tồn kho sản phẩm.",
+          variant: "destructive",
+        });
       }
 
       // Create receipt data thực sự cho receipt modal
       const receiptData = {
         transactionId:
           invoiceResult.invoice?.invoiceNumber || `TXN-${Date.now()}`,
-        items: cartItems.map((item) => ({
-          id: item.id,
-          productId: item.id,
-          productName: item.name,
-          price:
-            typeof item.price === "string" ? item.price : item.price.toString(),
-          quantity:
+        items: cartItems.map((item) => {
+          const itemPrice =
+            typeof item.price === "string"
+              ? parseFloat(item.price)
+              : item.price;
+          const itemQuantity =
             typeof item.quantity === "string"
               ? parseInt(item.quantity)
-              : item.quantity,
-          total: (
-            (typeof item.price === "string"
-              ? parseFloat(item.price)
-              : item.price) *
-            (typeof item.quantity === "string"
-              ? parseInt(item.quantity)
-              : item.quantity)
-          ).toFixed(2),
-          sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-          taxRate:
+              : item.quantity;
+          const itemTaxRate =
             typeof item.taxRate === "string"
               ? parseFloat(item.taxRate || "10")
-              : item.taxRate || 10,
-        })),
+              : item.taxRate || 10;
+          const itemSubtotal = itemPrice * itemQuantity;
+          const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+          return {
+            id: item.id,
+            productId: item.id,
+            productName: item.name,
+            price: itemPrice.toFixed(2),
+            quantity: itemQuantity,
+            total: (itemSubtotal + itemTax).toFixed(2),
+            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+            taxRate: itemTaxRate,
+          };
+        }),
         subtotal: calculatedSubtotal.toFixed(2),
         tax: calculatedTax.toFixed(2),
         total: total.toFixed(2),
@@ -1240,86 +1258,6 @@ export function EInvoiceModal({
   };
 
   const handleCancel = () => {
-    // Create receipt data for cancelled transaction
-    const calculatedSubtotal = cartItems.reduce((sum, item) => {
-      const itemPrice =
-        typeof item.price === "string" ? parseFloat(item.price) : item.price;
-      const itemQuantity =
-        typeof item.quantity === "string"
-          ? parseInt(item.quantity)
-          : item.quantity;
-      return sum + itemPrice * itemQuantity;
-    }, 0);
-
-    const calculatedTax = cartItems.reduce((sum, item) => {
-      const itemPrice =
-        typeof item.price === "string" ? parseFloat(item.price) : item.price;
-      const itemQuantity =
-        typeof item.quantity === "string"
-          ? parseInt(item.quantity)
-          : item.quantity;
-      const itemTaxRate =
-        typeof item.taxRate === "string"
-          ? parseFloat(item.taxRate || "10")
-          : item.taxRate || 10;
-      const itemTax = (itemPrice * itemQuantity * itemTaxRate) / 100;
-      return sum + itemTax;
-    }, 0);
-
-    // Create receipt data for cancelled e-invoice
-    const receiptData = {
-      transactionId: `CANCEL-${Date.now()}`,
-      items: cartItems.map((item) => ({
-        id: item.id,
-        productId: item.id,
-        productName: item.name,
-        price:
-          typeof item.price === "string" ? item.price : item.price.toString(),
-        quantity:
-          typeof item.quantity === "string"
-            ? parseInt(item.quantity)
-            : item.quantity,
-        total: (
-          (typeof item.price === "string"
-            ? parseFloat(item.price)
-            : item.price) *
-          (typeof item.quantity === "string"
-            ? parseInt(item.quantity)
-            : item.quantity)
-        ).toFixed(2),
-        sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-        taxRate:
-          typeof item.taxRate === "string"
-            ? parseFloat(item.taxRate || "10")
-            : item.taxRate || 10,
-      })),
-      subtotal: calculatedSubtotal.toFixed(2),
-      tax: calculatedTax.toFixed(2),
-      total: total.toFixed(2),
-      paymentMethod: "einvoice",
-      originalPaymentMethod: selectedPaymentMethod,
-      cashierName: "System User",
-      createdAt: new Date().toISOString(),
-      invoiceNumber: null,
-      customerName: formData.customerName || "Khách hàng lẻ",
-      customerTaxCode: formData.taxCode || "",
-    };
-
-    const cancelledInvoiceData = {
-      success: false,
-      invoiceNumber: null,
-      symbol: null,
-      templateNumber: null,
-      einvoiceStatus: -1, // Hủy bỏ
-      invoiceStatus: -1, // Hủy bỏ
-      status: 'cancelled',
-      receipt: receiptData,
-      publishedImmediately: false,
-      showReceiptModal: true,
-    };
-
-    console.log("📧 E-Invoice cancelled, showing receipt modal");
-    onConfirm(cancelledInvoiceData);
     onClose();
   };
 
