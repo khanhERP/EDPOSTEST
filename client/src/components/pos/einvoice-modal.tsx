@@ -609,17 +609,17 @@ export function EInvoiceModal({
         invoiceDataForConfirm,
       );
 
-      // Prepare data for invoice management redirect
+      // Prepare data for receipt modal
       const completeInvoiceData = {
         ...invoiceDataForConfirm,
         paymentMethod: selectedPaymentMethod, // Use original payment method
         originalPaymentMethod: selectedPaymentMethod,
-        redirectToInvoiceManagement: true, // Always redirect to invoice management after payment
+        showReceiptModal: true, // Show receipt modal directly
         publishLater: true, // Flag to indicate this is for later publishing
         savedInvoice: invoiceResult.invoice, // Pass saved invoice data
       };
 
-      console.log("Calling onConfirm with publishLater data - redirecting to invoice management");
+      console.log("Calling onConfirm with publishLater data - showing receipt modal");
 
       // Close e-invoice modal and return data
       onClose();
@@ -1215,7 +1215,7 @@ export function EInvoiceModal({
           status: 'published',
           receipt: receiptDataToConfirm,
           publishedImmediately: true,
-          redirectToInvoiceManagement: true, // Always redirect to invoice management after payment
+          showReceiptModal: true, // Show receipt modal directly instead of invoice management
         };
 
         console.log(

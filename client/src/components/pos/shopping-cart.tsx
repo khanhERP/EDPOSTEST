@@ -366,25 +366,10 @@ export function ShoppingCart({
     console.log('🧹 Shopping cart: Auto clearing cart after E-Invoice completion');
     onClearCart();
 
-    if (eInvoiceData.redirectToInvoiceManagement) {
-      // For any payment that requires invoice management - redirect to invoice management
-      console.log('📄 Shopping cart: Step 5: Redirecting to invoice management after payment');
-      setShowInvoiceManagementModal(true);
-    } else if (eInvoiceData.publishLater && eInvoiceData.redirectToInvoiceManagement) {
-      // For "Phát hành sau" - redirect to invoice management
-      console.log('📄 Shopping cart: Step 5: Redirecting to invoice management for later publishing');
-      setShowInvoiceManagementModal(true);
-    } else if (eInvoiceData.publishLater) {
-      // For "Phát hành sau" without redirect flag - show final receipt modal (backward compatibility)
-      console.log('📄 Shopping cart: Step 5: Showing final receipt modal (not preview)');
-      setSelectedReceipt(eInvoiceData.receipt);
-      setShowReceiptModal(true);
-    } else {
-      // For immediate publishing - show final receipt modal
-      console.log('📄 Shopping cart: Step 5: Showing final receipt modal for immediate publishing');
-      setSelectedReceipt(eInvoiceData.receipt);
-      setShowReceiptModal(true);
-    }
+    // Always show receipt modal after E-Invoice completion
+    console.log('📄 Shopping cart: Step 5: Showing final receipt modal');
+    setSelectedReceipt(eInvoiceData.receipt);
+    setShowReceiptModal(true);
   };
 
   const canCheckout = cart.length > 0;
