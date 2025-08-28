@@ -60,7 +60,9 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     qrCodeLabel: "QR 코드",
     createdDate: "생성일",
     none: "없음",
-    im
+    imageUrl: "이미지 URL",
+    productNamePlaceholder: "상품명을 입력하세요",
+    skuPlaceholder: "SKU를 입력하세요",
     // Payment related
     subtotal: "소계",
     tax: "세금",
@@ -139,6 +141,9 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     customerName: "Customer Name",
     optional: "Optional",
     customerNamePlaceholder: "Enter customer name",
+    imageUrl: "Image URL",
+    productNamePlaceholder: "Enter product name",
+    skuPlaceholder: "Enter SKU",
     customerCount: "Customer Count",
     allCategories: "All Categories",
     stockCount: "Stock",
