@@ -260,7 +260,31 @@ export function ShoppingCart({
     console.log("🛒 Starting checkout process - Step 1: Preview Receipt");
     console.log("Cart items:", cart.length);
 
-    // Generate preview receipt data first
+    // Use EXACT same calculation logic as cart display
+    const calculatedSubtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
+    const calculatedTax = cart.reduce((sum, item) => {
+      if (item.taxRate && parseFloat(item.taxRate) > 0) {
+        const basePrice = parseFloat(item.price);
+        
+        // Only calculate tax if afterTaxPrice exists in database
+        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(item.afterTaxPrice);
+          const taxPerItem = afterTaxPrice - basePrice;
+          return sum + (taxPerItem * item.quantity);
+        }
+        // No tax if no afterTaxPrice in database
+        return sum;
+      }
+      return sum;
+    }, 0);
+    const calculatedTotal = Math.round(calculatedSubtotal + calculatedTax);
+
+    console.log("🧾 Receipt preview calculations:");
+    console.log("- Subtotal:", calculatedSubtotal);
+    console.log("- Tax:", calculatedTax);
+    console.log("- Total:", calculatedTotal);
+
+    // Generate preview receipt data using exact cart calculations
     const previewReceiptData = {
       transactionId: `TXN-${Date.now()}`,
       items: cart.map((item) => ({
@@ -273,11 +297,11 @@ export function ShoppingCart({
         sku: `FOOD${String(item.id).padStart(5, "0")}`,
         taxRate: parseFloat(item.taxRate || "10"),
       })),
-      subtotal: subtotal.toFixed(2),
-      tax: tax.toFixed(2),
-      total: total.toFixed(2),
+      subtotal: calculatedSubtotal.toFixed(2),
+      tax: calculatedTax.toFixed(2),
+      total: calculatedTotal.toFixed(2),
       paymentMethod: "preview", // Special flag for preview mode
-      amountReceived: total.toFixed(2),
+      amountReceived: calculatedTotal.toFixed(2),
       change: "0.00",
       cashierName: "System User",
       createdAt: new Date().toISOString(),
@@ -612,6 +636,7 @@ export function ShoppingCart({
           quantity: item.quantity,
           sku: `ITEM${String(item.id).padStart(3, "0")}`,
           taxRate: parseFloat(item.taxRate || "10"),
+          afterTaxPrice: item.afterTaxPrice, // Pass afterTaxPrice for exact calculation
         }))}
       />
 
@@ -635,6 +660,7 @@ export function ShoppingCart({
           quantity: item.quantity,
           sku: `ITEM${String(item.id).padStart(3, "0")}`,
           taxRate: parseFloat(item.taxRate || "10"),
+          afterTaxPrice: item.afterTaxPrice, // Pass afterTaxPrice for exact calculation
         }))}
       />
 
