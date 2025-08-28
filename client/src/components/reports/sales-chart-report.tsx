@@ -4121,4 +4121,3 @@ export function SalesChartReport() {
       );
     }
   }
-}
