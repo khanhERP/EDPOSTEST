@@ -103,46 +103,61 @@ export default function SalesOrders() {
 
   // Query invoices
   const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError } = useQuery({
-    queryKey: ["/api/invoices", currentPage, itemsPerPage],
+    queryKey: ["/api/invoices"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", `/api/invoices?page=${currentPage}&limit=${itemsPerPage}`);
+        const response = await apiRequest("GET", `/api/invoices`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log('Invoices response:', data);
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching invoices:', error);
         return [];
       }
     },
-    retry: 3,
+    retry: 2,
     retryDelay: 1000,
+    staleTime: 30000, // 30 seconds
   });
 
   // Query orders
   const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
-    queryKey: ["/api/orders", currentPage, itemsPerPage],
+    queryKey: ["/api/orders"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", `/api/orders?page=${currentPage}&limit=${itemsPerPage}`);
+        const response = await apiRequest("GET", `/api/orders`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log('Orders response:', data);
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching orders:', error);
         return [];
       }
     },
-    retry: 3,
+    retry: 2,
     retryDelay: 1000,
+    staleTime: 30000, // 30 seconds
   });
 
   const isLoading = invoicesLoading || ordersLoading;
   const hasError = invoicesError || ordersError;
+
+  // Debug logging
+  console.log('Sales Orders Debug:', {
+    invoicesLoading,
+    ordersLoading,
+    invoicesError: invoicesError?.message,
+    ordersError: ordersError?.message,
+    invoicesCount: invoices?.length,
+    ordersCount: orders?.length,
+    hasError
+  });
 
   // Query invoice items for selected invoice
   const { data: invoiceItems = [] } = useQuery({
@@ -1034,15 +1049,28 @@ export default function SalesOrders() {
                   <div className="text-center py-8">
                     <div className="text-red-500 mb-4">
                       <X className="w-8 h-8 mx-auto mb-2" />
-                      <p className="font-medium">Lỗi kết nối cơ sở dữ liệu</p>
+                      <p className="font-medium">Lỗi tải dữ liệu</p>
                     </div>
-                    <p className="text-gray-500 mb-4">Không thể tải dữ liệu đơn hàng. Vui lòng thử lại.</p>
-                    <Button onClick={() => {
-                      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-                      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-                    }}>
-                      Thử lại
-                    </Button>
+                    <div className="text-gray-500 mb-4 space-y-2">
+                      <p>Không thể tải dữ liệu đơn hàng. Chi tiết lỗi:</p>
+                      {invoicesError && (
+                        <p className="text-sm text-red-600">• Hóa đơn: {invoicesError.message}</p>
+                      )}
+                      {ordersError && (
+                        <p className="text-sm text-red-600">• Đơn hàng: {ordersError.message}</p>
+                      )}
+                    </div>
+                    <div className="space-x-2">
+                      <Button onClick={() => {
+                        queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+                        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                      }}>
+                        Thử lại
+                      </Button>
+                      <Button variant="outline" onClick={() => window.location.reload()}>
+                        Tải lại trang
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div>
