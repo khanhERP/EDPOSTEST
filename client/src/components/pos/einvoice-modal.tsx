@@ -1265,23 +1265,6 @@ export function EInvoiceModal({
 
         console.log("✅ Prepared comprehensive invoice result:", invoiceResultForConfirm);
 
-        // Prepare comprehensive invoice data with receipt for final printing step
-        const invoiceResultForConfirm = {
-          ...formData,
-          invoiceData: publishResult.data,
-          cartItems: cartItems,
-          total: total,
-          paymentMethod: selectedPaymentMethod,
-          originalPaymentMethod: selectedPaymentMethod,
-          source: source || "pos",
-          orderId: orderId,
-          publishedImmediately: true,
-          receipt: receiptData,
-          customerName: formData.customerName,
-          taxCode: formData.taxCode,
-          invoiceNumber: publishResult.data?.invoiceNo || null,
-        };
-
         console.log("✅ Prepared comprehensive invoice result with receipt:", invoiceResultForConfirm);
 
         // Close e-invoice modal and return data with receipt for printing
