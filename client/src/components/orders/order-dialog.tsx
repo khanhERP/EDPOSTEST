@@ -262,18 +262,30 @@ export function OrderDialog({
     // Calculate tax for items in the current cart
     cart.forEach((item) => {
       const product = products?.find((p: Product) => p.id === item.product.id);
-      const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10; // Default 10%
-      const itemSubtotal = item.product.price * item.quantity;
-      totalTax += (itemSubtotal * taxRate) / 100;
+      // Default tax rate to 0 if afterTaxPrice is not available
+      let itemTax = 0;
+      if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+        const afterTaxPrice = parseFloat(product.afterTaxPrice);
+        const basePrice = item.product.price;
+        const taxPerUnit = afterTaxPrice - basePrice;
+        itemTax += taxPerUnit * item.quantity;
+      }
+      totalTax += itemTax;
     });
 
     // Calculate tax for existing items in edit mode
     if (mode === "edit" && existingItems.length > 0) {
       existingItems.forEach((item) => {
         const product = products?.find((p: Product) => p.id === item.productId);
-        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10; // Default 10%
-        const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
-        totalTax += (itemSubtotal * taxRate) / 100;
+        // Default tax rate to 0 if afterTaxPrice is not available
+        let itemTax = 0;
+        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+          const basePrice = Number(item.unitPrice || 0);
+          const taxPerUnit = afterTaxPrice - basePrice;
+          itemTax += taxPerUnit * Number(item.quantity || 0);
+        }
+        totalTax += itemTax;
       });
     }
 
@@ -295,16 +307,16 @@ export function OrderDialog({
       if (cart.length === 0) {
         // No new items to add, but still need to refresh data and invalidate queries
         console.log('No new items to add, refreshing data and closing dialog');
-        
+
         // Invalidate and refetch all related queries to ensure data is fresh
         queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
         queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
         queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
-        
+
         // Force immediate refetch to update UI
         queryClient.refetchQueries({ queryKey: ["/api/tables"] });
         queryClient.refetchQueries({ queryKey: ["/api/orders"] });
-        
+
         toast({
           title: t('orders.orderUpdateSuccess'),
           description: 'Dữ liệu đã được làm mới thành công',
@@ -322,9 +334,18 @@ export function OrderDialog({
       // For edit mode, only send the new items to be added
       const items = cart.map((item) => {
         const product = products?.find((p: Product) => p.id === item.product.id);
-        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10; // Default 10%
-        const itemSubtotal = item.product.price * item.quantity;
-        const itemTax = (itemSubtotal * taxRate) / 100;
+        const basePrice = item.product.price;
+        const quantity = item.quantity;
+        const itemSubtotal = basePrice * quantity;
+
+        let itemTax = 0;
+        // Use afterTaxPrice if available, otherwise no tax (default 0)
+        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+          const taxPerUnit = afterTaxPrice - basePrice;
+          itemTax = taxPerUnit * quantity;
+        }
+
         const itemTotal = itemSubtotal + itemTax;
 
         return {
@@ -364,9 +385,18 @@ export function OrderDialog({
 
       const items = cart.map((item) => {
         const product = products?.find((p: Product) => p.id === item.product.id);
-        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10; // Default 10%
-        const itemSubtotal = item.product.price * item.quantity;
-        const itemTax = (itemSubtotal * taxRate) / 100;
+        const basePrice = item.product.price;
+        const quantity = item.quantity;
+        const itemSubtotal = basePrice * quantity;
+
+        let itemTax = 0;
+        // Use afterTaxPrice if available, otherwise no tax (default 0)
+        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+          const taxPerUnit = afterTaxPrice - basePrice;
+          itemTax = taxPerUnit * quantity;
+        }
+
         const itemTotal = itemSubtotal + itemTax;
 
         return {
@@ -613,7 +643,7 @@ export function OrderDialog({
                                       apiRequest('DELETE', `/api/order-items/${item.id}`)
                                         .then(async () => {
                                           console.log('🗑️ Order Dialog: Successfully deleted item:', item.productName);
-                                          
+
                                           toast({
                                             title: "Xóa món thành công",
                                             description: `Đã xóa "${item.productName}" khỏi đơn hàng`,
@@ -623,7 +653,7 @@ export function OrderDialog({
                                           if (existingOrder?.id) {
                                             try {
                                               console.log('🧮 Order Dialog: Starting order total recalculation for order:', existingOrder.id);
-                                              
+
                                               // Fetch current order items after deletion
                                               const response = await apiRequest('GET', `/api/order-items/${existingOrder.id}`);
                                               const remainingItems = await response.json();
