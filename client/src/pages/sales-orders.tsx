@@ -77,6 +77,11 @@ interface Order {
 export default function SalesOrders() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  // Early return for critical errors
+  if (typeof window === 'undefined') {
+    return <div>Loading...</div>;
+  }
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -115,12 +120,12 @@ export default function SalesOrders() {
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching invoices:', error);
-        return [];
+        throw error; // Re-throw error so useQuery can handle it properly
       }
     },
-    retry: 2,
+    retry: 1,
     retryDelay: 1000,
-    staleTime: 30000, // 30 seconds
+    staleTime: 10000,
   });
 
   // Query orders
@@ -137,12 +142,12 @@ export default function SalesOrders() {
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching orders:', error);
-        return [];
+        throw error; // Re-throw error so useQuery can handle it properly
       }
     },
-    retry: 2,
+    retry: 1,
     retryDelay: 1000,
-    staleTime: 30000, // 30 seconds
+    staleTime: 10000,
   });
 
   const isLoading = invoicesLoading || ordersLoading;
@@ -593,67 +598,97 @@ export default function SalesOrders() {
     );
   };
 
-  // Combine invoices and orders data with safe array checks
-  const combinedData = [
-    ...(Array.isArray(invoices) ? invoices.map((invoice: Invoice) => ({
-      ...invoice,
-      type: 'invoice' as const,
-      date: invoice.invoiceDate,
-      displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
-      displayStatus: invoice.invoiceStatus || 1,
-      // Ensure all required fields are present
-      customerName: invoice.customerName || 'Khách hàng lẻ',
-      customerPhone: invoice.customerPhone || '',
-      customerAddress: invoice.customerAddress || '',
-      customerTaxCode: invoice.customerTaxCode || '',
-      symbol: invoice.symbol || invoice.templateNumber || '',
-      einvoiceStatus: invoice.einvoiceStatus || 0
-    })) : []),
-    ...(Array.isArray(orders) ? orders.map((order: Order) => ({
-      ...order,
-      type: 'order' as const,
-      date: order.orderedAt,
-      displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
-      displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
-      customerName: order.customerName || 'Khách hàng lẻ',
-      invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
-      // Map order fields to invoice-like fields for consistency
-      customerPhone: '',
-      customerAddress: '',
-      customerTaxCode: '',
-      symbol: order.symbol || order.templateNumber || '',
-      invoiceNumber: order.invoiceNumber || '',
-      tradeNumber: order.orderNumber || '',
-      invoiceDate: order.orderedAt,
-      einvoiceStatus: order.einvoiceStatus || 0
-    })) : [])
-  ];
+  // Safely combine invoices and orders data
+  const combinedData = React.useMemo(() => {
+    const invoiceData = Array.isArray(invoices) ? invoices.map((invoice: Invoice) => {
+      try {
+        return {
+          ...invoice,
+          type: 'invoice' as const,
+          date: invoice.invoiceDate || invoice.createdAt,
+          displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
+          displayStatus: invoice.invoiceStatus || 1,
+          customerName: invoice.customerName || 'Khách hàng lẻ',
+          customerPhone: invoice.customerPhone || '',
+          customerAddress: invoice.customerAddress || '',
+          customerTaxCode: invoice.customerTaxCode || '',
+          symbol: invoice.symbol || invoice.templateNumber || '',
+          einvoiceStatus: invoice.einvoiceStatus || 0
+        };
+      } catch (error) {
+        console.error('Error processing invoice:', invoice, error);
+        return null;
+      }
+    }).filter(Boolean) : [];
 
-  const filteredInvoices = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
-    try {
-      if (!item || !item.date) return false;
+    const orderData = Array.isArray(orders) ? orders.map((order: Order) => {
+      try {
+        return {
+          ...order,
+          type: 'order' as const,
+          date: order.orderedAt || order.createdAt,
+          displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
+          displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+          customerName: order.customerName || 'Khách hàng lẻ',
+          invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+          customerPhone: order.customerPhone || '',
+          customerAddress: '',
+          customerTaxCode: '',
+          symbol: order.symbol || order.templateNumber || '',
+          invoiceNumber: order.invoiceNumber || '',
+          tradeNumber: order.orderNumber || '',
+          invoiceDate: order.orderedAt || order.createdAt,
+          einvoiceStatus: order.einvoiceStatus || 0
+        };
+      } catch (error) {
+        console.error('Error processing order:', order, error);
+        return null;
+      }
+    }).filter(Boolean) : [];
 
-      const itemDate = new Date(item.date);
-      if (isNaN(itemDate.getTime())) return false;
+    return [...invoiceData, ...orderData];
+  }, [invoices, orders]);
 
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-
-      const dateMatch = itemDate >= start && itemDate <= end;
-      const customerMatch = !customerSearch || 
-        (item.customerName && item.customerName.toLowerCase().includes(customerSearch.toLowerCase()));
-      const orderMatch = !orderNumberSearch || 
-        (item.displayNumber && item.displayNumber.toLowerCase().includes(orderNumberSearch.toLowerCase()));
-      const customerCodeMatch = !customerCodeSearch || 
-        (item.customerTaxCode && item.customerTaxCode.toLowerCase().includes(customerCodeSearch.toLowerCase()));
-
-      return dateMatch && customerMatch && orderMatch && customerCodeMatch;
-    } catch (error) {
-      console.error('Error filtering item:', item, error);
-      return false;
+  const filteredInvoices = React.useMemo(() => {
+    if (!Array.isArray(combinedData) || combinedData.length === 0) {
+      return [];
     }
-  }) : [];
+
+    return combinedData.filter((item: any) => {
+      try {
+        if (!item || !item.id) return false;
+
+        // Date filtering
+        let dateMatch = true;
+        if (startDate && endDate) {
+          const itemDate = new Date(item.date || item.createdAt);
+          if (!isNaN(itemDate.getTime())) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            dateMatch = itemDate >= start && itemDate <= end;
+          }
+        }
+
+        // Customer name filtering
+        const customerMatch = !customerSearch || 
+          (item.customerName && item.customerName.toLowerCase().includes(customerSearch.toLowerCase()));
+
+        // Order number filtering
+        const orderMatch = !orderNumberSearch || 
+          (item.displayNumber && item.displayNumber.toLowerCase().includes(orderNumberSearch.toLowerCase()));
+
+        // Customer code filtering
+        const customerCodeMatch = !customerCodeSearch || 
+          (item.customerTaxCode && item.customerTaxCode.toLowerCase().includes(customerCodeSearch.toLowerCase()));
+
+        return dateMatch && customerMatch && orderMatch && customerCodeMatch;
+      } catch (error) {
+        console.error('Error filtering item:', item, error);
+        return false;
+      }
+    });
+  }, [combinedData, startDate, endDate, customerSearch, orderNumberSearch, customerCodeSearch]);
 
   const formatCurrency = (amount: string | number | undefined | null): string => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
