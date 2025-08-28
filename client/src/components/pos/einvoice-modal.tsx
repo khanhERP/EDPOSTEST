@@ -583,8 +583,8 @@ export function EInvoiceModal({
             amountReceived: total.toFixed(2),
             change: "0.00",
             cashierName: "E-Invoice System",
-            notes: `E-Invoice Draft - Trừ tồn kho: ${invoiceResult.invoice.tradeNumber}`,
-            invoiceId: invoiceResult.invoice.id,
+            notes: `E-Invoice Draft - Trừ tồn kho: ${invoiceResult?.invoice?.tradeNumber || 'N/A'}`,
+            invoiceId: invoiceResult?.invoice?.id || null,
             createdAt: new Date().toISOString()
           },
           items: cartItems.map((item) => {
@@ -596,7 +596,7 @@ export function EInvoiceModal({
 
             return {
               productId: item.id,
-              quantity: item.quantity,
+              quantity: itemQuantity,
               price: itemPrice.toFixed(2),
               total: itemTotal.toFixed(2),
               productName: item.name
@@ -674,7 +674,8 @@ export function EInvoiceModal({
         ...formData,
         cartItems: cartItems || [],
         total: total || 0,
-        paymentMethod: "einvoice",
+        paymentMethod: selectedPaymentMethod, // Use original payment method
+        originalPaymentMethod: selectedPaymentMethod,
         source: source || "pos",
         invoiceId: invoiceResult?.invoice?.id || null,
         publishLater: true,
