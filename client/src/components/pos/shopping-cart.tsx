@@ -14,6 +14,7 @@ import { useTranslation } from "@/lib/i18n";
 import { PaymentMethodModal } from "./payment-method-modal";
 import { ReceiptModal } from "./receipt-modal";
 import { EInvoiceModal } from "./einvoice-modal";
+import { InvoiceManagementModal } from "./invoice-management-modal";
 import type { CartItem } from "@shared/schema";
 import { toast } from "@/hooks/use-toast";
 
@@ -57,6 +58,7 @@ export function ShoppingCart({
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+  const [showInvoiceManagementModal, setShowInvoiceManagementModal] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
@@ -95,7 +97,7 @@ export function ShoppingCart({
           console.log("  Total tax for this item:", totalItemTax, "₫");
           return sum + totalItemTax;
         }
-        // No tax calculation if no afterTaxPrice in database
+        // No tax calculation if afterTaxPrice in database
         console.log("⚠️ No afterTaxPrice in database - no tax applied");
         return sum;
       }
@@ -265,7 +267,7 @@ export function ShoppingCart({
     const calculatedTax = cart.reduce((sum, item) => {
       if (item.taxRate && parseFloat(item.taxRate) > 0) {
         const basePrice = parseFloat(item.price);
-        
+
         // Only calculate tax if afterTaxPrice exists in database
         if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(item.afterTaxPrice);
@@ -358,35 +360,26 @@ export function ShoppingCart({
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
-    console.log(
-      "📧 Shopping cart: Step 4: E-Invoice processing completed:",
-      eInvoiceData,
-    );
+    console.log('📧 Shopping cart: Step 4: E-Invoice processing completed:', eInvoiceData);
 
-    setShowEInvoiceModal(false);
-
-    // Auto clear cart after E-Invoice completion (both publish now and publish later)
-    console.log(
-      "🧹 Shopping cart: Auto clearing cart after E-Invoice completion",
-    );
+    // Always clear cart after E-Invoice completion (both immediate and later publishing)
+    console.log('🧹 Shopping cart: Auto clearing cart after E-Invoice completion');
     onClearCart();
 
-    // Step 5: Show final receipt modal if receipt data exists
-    if (eInvoiceData.receipt) {
-      console.log(
-        "📄 Shopping cart: Step 5: Showing final receipt modal (not preview)",
-      );
+    if (eInvoiceData.publishLater && eInvoiceData.redirectToInvoiceManagement) {
+      // For "Phát hành sau" - redirect to invoice management
+      console.log('📄 Shopping cart: Step 5: Redirecting to invoice management for later publishing');
+      setShowInvoiceManagementModal(true);
+    } else if (eInvoiceData.publishLater) {
+      // For "Phát hành sau" without redirect flag - show final receipt modal (backward compatibility)
+      console.log('📄 Shopping cart: Step 5: Showing final receipt modal (not preview)');
       setSelectedReceipt(eInvoiceData.receipt);
       setShowReceiptModal(true);
     } else {
-      console.log(
-        "✅ Shopping cart: E-invoice completed successfully, cart cleared",
-      );
-      toast({
-        title: "Thành công",
-        description: "Hóa đơn đã được xử lý thành công",
-        variant: "default",
-      });
+      // For immediate publishing - show final receipt modal
+      console.log('📄 Shopping cart: Step 5: Showing final receipt modal for immediate publishing');
+      setSelectedReceipt(eInvoiceData.receipt);
+      setShowReceiptModal(true);
     }
   };
 
@@ -710,6 +703,15 @@ export function ShoppingCart({
           }))}
         />
       )}
+
+      {/* Invoice Management Modal */}
+      <InvoiceManagementModal
+        isOpen={showInvoiceManagementModal}
+        onClose={() => {
+          console.log('🔴 Closing invoice management modal from shopping cart');
+          setShowInvoiceManagementModal(false);
+        }}
+      />
     </aside>
   );
 }

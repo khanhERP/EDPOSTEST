@@ -576,7 +576,7 @@ export function EInvoiceModal({
         createdAt: new Date().toISOString(),
       };
 
-      // Prepare the invoice data to be returned
+      // Prepare the invoice data to be returned - redirect to invoice management
       const invoiceData = {
         ...formData,
         cartItems: cartItems,
@@ -585,29 +585,28 @@ export function EInvoiceModal({
         source: source || "pos",
         invoiceId: savedInvoice.invoice?.id,
         publishLater: true, // Flag to indicate this is for later publishing
-        receipt: receiptData, // Truyền receipt data thực sự
+        redirectToInvoiceManagement: true, // Flag to redirect to invoice management
+        savedInvoice: savedInvoice.invoice, // Pass saved invoice data
       };
 
       console.log(
-        "🟡 Prepared invoice data for later publishing:",
+        "🟡 Prepared invoice data for later publishing - redirecting to invoice management:",
         invoiceData,
       );
-      console.log("📄 Receipt data to display:", receiptData);
 
-      // Prepare comprehensive invoice data với receipt để hiển thị modal in
+      // Prepare data for invoice management redirect
       const completeInvoiceData = {
         ...invoiceData,
         paymentMethod: selectedPaymentMethod, // Use original payment method
         originalPaymentMethod: selectedPaymentMethod,
         publishLater: true,
-        receipt: receiptData, // Receipt data để hiển thị modal in
         customerName: formData.customerName,
         taxCode: formData.taxCode,
-        showReceiptModal: true, // Flag để parent component biết cần hiển thị receipt modal
+        redirectToInvoiceManagement: true, // Flag để parent component biết cần chuyển đến invoice management
+        savedInvoice: savedInvoice.invoice, // Truyền thông tin hóa đơn đã lưu
       };
 
-      console.log("✅ Calling onConfirm with publishLater data and receipt");
-      console.log("📄 Receipt data to display:", receiptData);
+      console.log("✅ Calling onConfirm with publishLater data - redirecting to invoice management");
 
       // Close e-invoice modal and return data
       onClose();
