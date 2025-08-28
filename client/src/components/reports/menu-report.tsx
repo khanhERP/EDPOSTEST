@@ -60,7 +60,7 @@ interface MenuAnalysisData {
   }>;
 }
 
-export default function MenuReport() {
+function MenuReport() {
   const { t } = useTranslation();
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
@@ -564,3 +564,6 @@ export default function MenuReport() {
     </div>
   );
 }
+
+export default MenuReport;
+export { MenuReport };
