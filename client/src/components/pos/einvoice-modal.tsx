@@ -922,8 +922,8 @@ export function EInvoiceModal({
 
           const invoicePayload = {
             invoiceNumber: result.data?.invoiceNo || null, // Số hóa đơn từ API response
-            templateNumber: selectedTemplate.templateNumber || null, // Mẫu số hóa đơn
-            symbol: selectedTemplate.symbol || null, // Ký hiệu hóa đơn
+            templateNumber: selectedTemplate.templateNumber || null, // Mẫu số hóa đơn từ selectedTemplate
+            symbol: selectedTemplate.symbol || null, // Ký hiệu hóa đơn từ selectedTemplate
             customerName: formData.customerName || "Khách hàng",
             customerTaxCode: formData.taxCode || null,
             customerAddress: formData.address || null,
@@ -1000,7 +1000,7 @@ export function EInvoiceModal({
           const publishType = "publish"; // Indicate that this is a direct publish
           const einvoiceStatus = 1; // 1 = Đã phát hành
 
-          // Create order data
+          // Create order data với thông tin template từ selectedTemplate
           const orderData = {
             orderNumber: `ORD-${Date.now()}`,
             tableId: null, // No table for POS orders
@@ -1014,7 +1014,9 @@ export function EInvoiceModal({
             paymentMethod: publishType === "publish" ? "cash" : null, // Use 'cash' for published, null for draft
             paymentStatus: publishType === "publish" ? "paid" : "pending",
             einvoiceStatus: einvoiceStatus,
-            notes: `E-Invoice published - Tax Code: ${formData.taxCode || "N/A"}, Address: ${formData.address || "N/A"}`,
+            templateNumber: selectedTemplate.templateNumber || null, // Lưu templateNumber từ selectedTemplate
+            symbol: selectedTemplate.symbol || null, // Lưu symbol từ selectedTemplate
+            notes: `E-Invoice published - Tax Code: ${formData.taxCode || "N/A"}, Address: ${formData.address || "N/A"}, Template: ${selectedTemplate.templateNumber || "N/A"}, Symbol: ${selectedTemplate.symbol || "N/A"}`,
             orderedAt: new Date(),
             employeeId: null, // Can be set if employee info is available
             salesChannel: "pos",
