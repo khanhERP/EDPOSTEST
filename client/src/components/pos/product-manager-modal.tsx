@@ -364,12 +364,24 @@ export function ProductManagerModal({
         "Danh mục",
         "Giá bán",
         "% Thuế",
+        "Giá sau thuế",
         "Tồn kho",
         "Hình ảnh (URL)",
       ],
     ];
 
     products.forEach((product, index) => {
+      // Calculate after tax price using same logic as display
+      const afterTaxPrice = (() => {
+        if (product.afterTaxPrice) {
+          return parseFloat(product.afterTaxPrice);
+        } else {
+          const basePrice = parseFloat(product.price);
+          const taxRate = parseFloat(product.taxRate || "0.00");
+          return Math.round(basePrice + (basePrice * taxRate / 100));
+        }
+      })();
+
       exportData.push([
         index + 1,
         product.name,
@@ -377,6 +389,7 @@ export function ProductManagerModal({
         getCategoryName(product.categoryId),
         parseFloat(product.price),
         product.taxRate || "0.00",
+        afterTaxPrice,
         product.stock,
         product.imageUrl || "",
       ]);
@@ -392,6 +405,7 @@ export function ProductManagerModal({
       { wch: 15 }, // Danh mục
       { wch: 12 }, // Giá bán
       { wch: 10 }, // % Thuế
+      { wch: 12 }, // Giá sau thuế
       { wch: 10 }, // Tồn kho
       { wch: 30 }, // Hình ảnh URL
     ];
