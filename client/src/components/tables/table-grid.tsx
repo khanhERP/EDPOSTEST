@@ -2451,7 +2451,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             );
 
             return itemsToMap.map((item: any) => ({
-              id: item.id,
+              id: item.productId,
               name: item.productName || getProductName(item.productId),
               price: parseFloat(item.unitPrice || "0"),
               quantity: item.quantity,
@@ -2643,7 +2643,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               variant="outline"
               onClick={() => setPointsPaymentOpen(false)}
             >
-              Hủy
+              {t("orders.cancel")}
             </Button>
             <Button
               onClick={handlePointsPayment}
