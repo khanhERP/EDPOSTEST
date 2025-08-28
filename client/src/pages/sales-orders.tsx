@@ -304,25 +304,29 @@ export default function SalesOrders() {
             ? `/api/orders/${selectedInvoice.id}`
             : `/api/invoices/${selectedInvoice.id}`;
 
-          // Prepare update data with all required fields from API response
+          // Map API response data properly
+          const invoiceNo = result.data?.invoiceNo || result.invoiceNumber || null;
+          const symbol = result.data?.symbol || result.symbol || 'AA/25E';
+          const templateNumber = result.data?.templateNumber || result.templateNumber || '1C25TYY';
+
+          // Prepare update data with proper field mapping
           const updateData = {
-            einvoiceStatus: result.einvoiceStatus || 1, // Đã phát hành
-            invoiceStatus: result.invoiceStatus || 1, // Hoàn thành
-            status: result.status || 'published',
-            invoiceNumber: result.invoiceNumber || null,
-            symbol: result.data?.symbol || result.symbol || selectedInvoice.symbol,
-            templateNumber: result.data?.templateNumber || result.templateNumber || selectedInvoice.templateNumber
+            einvoiceStatus: 1, // Đã phát hành
+            invoiceStatus: 1, // Hoàn thành
+            status: 'published',
+            invoiceNumber: invoiceNo,
+            symbol: symbol,
+            templateNumber: templateNumber,
+            tradeNumber: invoiceNo || selectedInvoice.tradeNumber || selectedInvoice.displayNumber
           };
 
-          // For orders, also update tradeNumber, templateNumber and symbol
-          if (getItemType(selectedInvoice) === 'order') {
-            updateData.tradeNumber = result.data?.invoiceNo || result.invoiceNumber || selectedInvoice.tradeNumber;
-            updateData.templateNumber = result.data?.templateNumber || result.templateNumber || '1C25TYY';
-            updateData.symbol = result.data?.symbol || result.symbol || 'AA/25E';
-          } else {
-            // For invoices, update tradeNumber as well
-            updateData.tradeNumber = result.data?.invoiceNo || result.invoiceNumber || selectedInvoice.tradeNumber;
-          }
+          console.log('🔄 API Response data:', {
+            success: result.success,
+            data: result.data,
+            invoiceNo: result.data?.invoiceNo,
+            symbol: result.data?.symbol,
+            templateNumber: result.data?.templateNumber
+          });
 
           console.log('🔄 Updating item with data:', updateData);
 
@@ -330,14 +334,19 @@ export default function SalesOrders() {
           const updateResponse = await apiRequest("PUT", updateEndpoint, updateData);
 
           if (updateResponse.ok) {
-            // Update local state (keep tradeNumber unchanged)
+            const updatedItem = await updateResponse.json();
+            console.log('✅ Update response:', updatedItem);
+
+            // Update local state
             setSelectedInvoice({
               ...selectedInvoice,
               einvoiceStatus: 1,
               invoiceStatus: 1,
               status: 'published',
-              invoiceNumber: result.data?.invoiceNo || selectedInvoice.invoiceNumber
-              // tradeNumber giữ nguyên
+              invoiceNumber: invoiceNo || selectedInvoice.invoiceNumber,
+              symbol: symbol,
+              templateNumber: templateNumber,
+              tradeNumber: invoiceNo || selectedInvoice.tradeNumber
             });
 
             // Refresh data to ensure consistency
@@ -346,15 +355,34 @@ export default function SalesOrders() {
 
             console.log('✅ Invoice/Order updated successfully with published status');
 
-            alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${result.data?.invoiceNo || 'N/A'}\nKý hiệu: ${updateData.symbol || 'N/A'}`);
+            alert(`Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${invoiceNo || 'N/A'}\nKý hiệu: ${symbol || 'N/A'}`);
           } else {
             const errorText = await updateResponse.text();
-            console.error('❌ Failed to update invoice/order:', errorText);
-            alert('Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái trong hệ thống');
+            console.error('❌ Failed to update invoice/order:', {
+              status: updateResponse.status,
+              statusText: updateResponse.statusText,
+              error: errorText,
+              updateData: updateData
+            });
+
+            // Try to parse error as JSON for more details
+            try {
+              const errorJson = JSON.parse(errorText);
+              console.error('❌ Detailed error:', errorJson);
+              alert(`Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái: ${errorJson.error || errorJson.message || 'Lỗi không xác định'}`);
+            } catch (parseError) {
+              alert(`Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái: ${errorText || 'Lỗi kết nối database'}`);
+            }
           }
         } catch (error) {
-          console.error('❌ Error updating invoice/order after publish:', error);
-          alert('Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái');
+          console.error('❌ Error updating invoice/order after publish:', {
+            error: error,
+            message: error?.message,
+            stack: error?.stack
+          });
+          
+          const errorMessage = error?.message || error?.toString() || 'Lỗi không xác định';
+          alert(`Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái: ${errorMessage}`);
         }
       } else {
         alert(`Lỗi phát hành hóa đơn: ${result.message || 'Không xác định'}`);

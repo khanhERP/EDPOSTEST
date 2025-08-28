@@ -3350,15 +3350,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateData = req.body;
       const tenantDb = await getTenantDatabase(req);
 
-      console.log("Updating invoice:", id, "with data:", updateData);
+      console.log("=== UPDATING INVOICE ===");
+      console.log("Invoice ID:", id);
+      console.log("Update data:", JSON.stringify(updateData, null, 2));
 
       if (isNaN(id)) {
+        console.error("Invalid invoice ID:", req.params.id);
         return res.status(400).json({ error: "Invalid invoice ID" });
       }
 
-      // Ensure both invoiceStatus and invoice_status are updated if provided
+      // Check if invoice exists first
+      const [existingInvoice] = await db
+        .select()
+        .from(invoices)
+        .where(eq(invoices.id, id))
+        .limit(1);
+
+      if (!existingInvoice) {
+        console.error("Invoice not found:", id);
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+
+      console.log("Existing invoice:", existingInvoice);
+
+      // Prepare fields to update with proper mapping
       const fieldsToUpdate: any = {};
 
+      // Handle invoiceStatus mapping
       if (updateData.invoiceStatus !== undefined) {
         fieldsToUpdate.invoiceStatus = updateData.invoiceStatus;
       }
@@ -3367,18 +3385,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fieldsToUpdate.invoiceStatus = updateData.invoice_status; // Map to the correct database field
       }
 
-      if (updateData.status !== undefined) {
-        fieldsToUpdate.status = updateData.status;
-      }
+      // Handle other standard fields
+      const standardFields = ['status', 'einvoiceStatus', 'invoiceNumber', 'symbol', 'templateNumber', 'tradeNumber'];
+      standardFields.forEach(field => {
+        if (updateData[field] !== undefined) {
+          fieldsToUpdate[field] = updateData[field];
+        }
+      });
 
-      // Add other fields from updateData
+      // Add any other fields from updateData (excluding already processed ones)
       Object.keys(updateData).forEach(key => {
-        if (key !== 'invoiceStatus' && key !== 'invoice_status') {
-          fieldsToUpdate[key] = updateData[key];
+        if (!['invoiceStatus', 'invoice_status', ...standardFields].includes(key)) {
+          if (updateData[key] !== undefined) {
+            fieldsToUpdate[key] = updateData[key];
+          }
         }
       });
 
       fieldsToUpdate.updatedAt = new Date();
+
+      console.log("Fields to update:", JSON.stringify(fieldsToUpdate, null, 2));
 
       const [updatedInvoice] = await db
         .update(invoices)
@@ -3387,16 +3413,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       if (!updatedInvoice) {
-        return res.status(404).json({ error: "Invoice not found" });
+        console.error("Failed to update invoice - no result returned");
+        return res.status(500).json({ error: "Failed to update invoice - no result returned" });
       }
 
-      console.log("Invoice updated successfully:", updatedInvoice);
+      console.log("✅ Invoice updated successfully:", updatedInvoice);
       res.json(updatedInvoice);
     } catch (error) {
-      console.error("Error updating invoice:", error);
+      console.error("=== INVOICE UPDATE ERROR ===");
+      console.error("Error type:", error?.constructor?.name);
+      console.error("Error message:", error?.message);
+      console.error("Error details:", error);
+      console.error("Invoice ID:", req.params.id);
+      console.error("Update data:", req.body);
+
       res.status(500).json({ 
         error: "Failed to update invoice",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
+        invoiceID: req.params.id,
+        updateData: req.body
       });
     }
   });
@@ -3408,19 +3443,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updateData = req.body;
       const tenantDb = await getTenantDatabase(req);
 
-      console.log("Updating order:", id, "with data:", updateData);
+      console.log("=== UPDATING ORDER ===");
+      console.log("Order ID:", id);
+      console.log("Update data:", JSON.stringify(updateData, null, 2));
 
       if (isNaN(id)) {
+        console.error("Invalid order ID:", req.params.id);
         return res.status(400).json({ error: "Invalid order ID" });
       }
 
-      // Prepare fields to update
+      // Check if order exists first
+      const [existingOrder] = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.id, id))
+        .limit(1);
+
+      if (!existingOrder) {
+        console.error("Order not found:", id);
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      console.log("Existing order:", existingOrder);
+
+      // Prepare fields to update with validation
       const fieldsToUpdate: any = {};
 
-      // Handle all possible fields from updateData
+      // Map and validate each field
       Object.keys(updateData).forEach(key => {
-        fieldsToUpdate[key] = updateData[key];
+        const value = updateData[key];
+        if (value !== undefined && value !== null) {
+          fieldsToUpdate[key] = value;
+        }
       });
+
+      // Add updatedAt timestamp
+      fieldsToUpdate.updatedAt = new Date();
+
+      console.log("Fields to update:", JSON.stringify(fieldsToUpdate, null, 2));
 
       const [updatedOrder] = await db
         .update(orders)
@@ -3429,16 +3489,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       if (!updatedOrder) {
-        return res.status(404).json({ error: "Order not found" });
+        console.error("Failed to update order - no result returned");
+        return res.status(500).json({ error: "Failed to update order - no result returned" });
       }
 
-      console.log("Order updated successfully:", updatedOrder);
+      console.log("✅ Order updated successfully:", updatedOrder);
       res.json(updatedOrder);
     } catch (error) {
-      console.error("Error updating order:", error);
+      console.error("=== ORDER UPDATE ERROR ===");
+      console.error("Error type:", error?.constructor?.name);
+      console.error("Error message:", error?.message);
+      console.error("Error details:", error);
+      console.error("Order ID:", req.params.id);
+      console.error("Update data:", req.body);
+
       res.status(500).json({ 
         error: "Failed to update order",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
+        orderID: req.params.id,
+        updateData: req.body
       });
     }
   });
