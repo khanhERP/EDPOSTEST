@@ -137,7 +137,7 @@ export function OrderManagement() {
             const basePrice = Number(item.unitPrice || 0);
             const quantity = Number(item.quantity || 0);
             const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-            
+
             // Calculate subtotal exactly as Order Details display
             const itemSubtotal = basePrice * quantity;
             subtotal += itemSubtotal;
@@ -1016,20 +1016,22 @@ export function OrderManagement() {
                         let subtotal = 0;
                         let totalTax = 0;
 
-                        const processedItems = orderItems.map((item: any) => {
+                        const processedItems = Array.isArray(orderItems) ? orderItems.map((item: any) => {
                           const basePrice = Number(item.unitPrice || 0);
                           const quantity = Number(item.quantity || 0);
                           const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-                          
+
                           // Calculate subtotal exactly as Order Details display
                           const itemSubtotal = basePrice * quantity;
                           subtotal += itemSubtotal;
 
                           // Use EXACT same tax calculation logic as Order Details display
+                          let itemTax = 0;
                           if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                             const afterTaxPrice = parseFloat(product.afterTaxPrice);
                             const taxPerUnit = afterTaxPrice - basePrice;
-                            totalTax += taxPerUnit * quantity;
+                            itemTax = taxPerUnit * quantity;
+                            totalTax += itemTax;
                           }
 
                           return {
@@ -1042,11 +1044,11 @@ export function OrderManagement() {
                             sku: item.productSku || `SP${item.productId}`,
                             taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10
                           };
-                        });
+                        }) : [];
 
                         const finalTotal = subtotal + totalTax;
 
-                        // Create preview receipt data
+                        // Create preview receipt data using EXACT values from Order Details
                         const previewData = {
                           ...selectedOrder,
                           transactionId: `PREVIEW-${Date.now()}`,
@@ -1058,13 +1060,18 @@ export function OrderManagement() {
                           exactSubtotal: subtotal,
                           exactTax: totalTax,
                           exactTotal: finalTotal,
-                          paymentMethod: 'preview',
+                          paymentMethod: 'preview', // Special flag for preview mode
                           cashierName: 'Order Management',
                           createdAt: new Date().toISOString(),
                           orderItems: orderItems // Keep original order items for payment flow
                         };
 
                         console.log('📄 Order Management: Showing receipt preview before payment');
+                        console.log('💰 Exact values passed:', {
+                          subtotal: subtotal,
+                          tax: totalTax,
+                          total: finalTotal,
+                        });
 
                         // Store the complete order data with proper field mapping for payment flow
                         const completeOrderForPayment = {
@@ -1579,7 +1586,6 @@ export function OrderManagement() {
           setShowReceiptPreview(false);
           setPreviewReceipt(null);
         }}
-        receipt={previewReceipt}
         onConfirm={() => {
           console.log("📄 Order Management: Receipt preview confirmed, starting payment flow");
 
