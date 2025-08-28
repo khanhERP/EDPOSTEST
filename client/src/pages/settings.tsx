@@ -3235,7 +3235,7 @@ export default function Settings() {
               </Label>
               <Select
                 value={productForm.categoryId}
-                onValueChange={(value) =>
+                onChange={(value) =>
                   setProductForm((prev) => ({ ...prev, categoryId: value }))
                 }
               >
@@ -3312,7 +3312,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="afterTaxPrice" className="text-right">
-                {t("settings.afterTaxPrice")}
+                Giá sau thuế
               </Label>
               <Input
                 id="afterTaxPrice"
@@ -3353,7 +3353,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productDescription" className="text-right">
-                {t("settings.productDescriptionLabel")}
+                {t("common.description")}
               </Label>
               <Textarea
                 id="productDescription"
@@ -3365,7 +3365,7 @@ export default function Settings() {
                   }))
                 }
                 className="col-span-3"
-                placeholder={t("settings.productDescriptionPlaceholder")}
+                placeholder="품목 설명을 입력하세요 (선택사항)"
                 rows={3}
               />
             </div>

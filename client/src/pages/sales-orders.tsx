@@ -77,11 +77,6 @@ interface Order {
 export default function SalesOrders() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-
-  // Early return for critical errors
-  if (typeof window === 'undefined') {
-    return <div>Loading...</div>;
-  }
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     return today.toISOString().split('T')[0];
@@ -108,61 +103,46 @@ export default function SalesOrders() {
 
   // Query invoices
   const { data: invoices = [], isLoading: invoicesLoading, error: invoicesError } = useQuery({
-    queryKey: ["/api/invoices"],
+    queryKey: ["/api/invoices", currentPage, itemsPerPage],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", `/api/invoices`);
+        const response = await apiRequest("GET", `/api/invoices?page=${currentPage}&limit=${itemsPerPage}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log('Invoices response:', data);
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching invoices:', error);
-        throw error; // Re-throw error so useQuery can handle it properly
+        return [];
       }
     },
-    retry: 1,
+    retry: 3,
     retryDelay: 1000,
-    staleTime: 10000,
   });
 
   // Query orders
   const { data: orders = [], isLoading: ordersLoading, error: ordersError } = useQuery({
-    queryKey: ["/api/orders"],
+    queryKey: ["/api/orders", currentPage, itemsPerPage],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", `/api/orders`);
+        const response = await apiRequest("GET", `/api/orders?page=${currentPage}&limit=${itemsPerPage}`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log('Orders response:', data);
         return Array.isArray(data) ? data : [];
       } catch (error) {
         console.error('Error fetching orders:', error);
-        throw error; // Re-throw error so useQuery can handle it properly
+        return [];
       }
     },
-    retry: 1,
+    retry: 3,
     retryDelay: 1000,
-    staleTime: 10000,
   });
 
   const isLoading = invoicesLoading || ordersLoading;
   const hasError = invoicesError || ordersError;
-
-  // Debug logging
-  console.log('Sales Orders Debug:', {
-    invoicesLoading,
-    ordersLoading,
-    invoicesError: invoicesError?.message,
-    ordersError: ordersError?.message,
-    invoicesCount: invoices?.length,
-    ordersCount: orders?.length,
-    hasError
-  });
 
   // Query invoice items for selected invoice
   const { data: invoiceItems = [] } = useQuery({
@@ -400,7 +380,7 @@ export default function SalesOrders() {
             message: error?.message,
             stack: error?.stack
           });
-
+          
           const errorMessage = error?.message || error?.toString() || 'Lỗi không xác định';
           alert(`Hóa đơn đã phát hành nhưng không thể cập nhật trạng thái: ${errorMessage}`);
         }
@@ -573,7 +553,7 @@ export default function SalesOrders() {
 
     return (
       <Badge className={statusColors[status as keyof typeof statusColors] || statusColors[0]}>
-        {statusLabels[status as keyof typeof statusColors] || "Không xác định"}
+        {statusLabels[status as keyof typeof statusLabels] || "Không xác định"}
       </Badge>
     );
   };
@@ -598,97 +578,67 @@ export default function SalesOrders() {
     );
   };
 
-  // Safely combine invoices and orders data
-  const combinedData = React.useMemo(() => {
-    const invoiceData = Array.isArray(invoices) ? invoices.map((invoice: Invoice) => {
-      try {
-        return {
-          ...invoice,
-          type: 'invoice' as const,
-          date: invoice.invoiceDate || invoice.createdAt,
-          displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
-          displayStatus: invoice.invoiceStatus || 1,
-          customerName: invoice.customerName || 'Khách hàng lẻ',
-          customerPhone: invoice.customerPhone || '',
-          customerAddress: invoice.customerAddress || '',
-          customerTaxCode: invoice.customerTaxCode || '',
-          symbol: invoice.symbol || invoice.templateNumber || '',
-          einvoiceStatus: invoice.einvoiceStatus || 0
-        };
-      } catch (error) {
-        console.error('Error processing invoice:', invoice, error);
-        return null;
-      }
-    }).filter(Boolean) : [];
+  // Combine invoices and orders data with safe array checks
+  const combinedData = [
+    ...(Array.isArray(invoices) ? invoices.map((invoice: Invoice) => ({
+      ...invoice,
+      type: 'invoice' as const,
+      date: invoice.invoiceDate,
+      displayNumber: invoice.tradeNumber || invoice.invoiceNumber || `INV-${String(invoice.id).padStart(13, '0')}`,
+      displayStatus: invoice.invoiceStatus || 1,
+      // Ensure all required fields are present
+      customerName: invoice.customerName || 'Khách hàng lẻ',
+      customerPhone: invoice.customerPhone || '',
+      customerAddress: invoice.customerAddress || '',
+      customerTaxCode: invoice.customerTaxCode || '',
+      symbol: invoice.symbol || invoice.templateNumber || '',
+      einvoiceStatus: invoice.einvoiceStatus || 0
+    })) : []),
+    ...(Array.isArray(orders) ? orders.map((order: Order) => ({
+      ...order,
+      type: 'order' as const,
+      date: order.orderedAt,
+      displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
+      displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+      customerName: order.customerName || 'Khách hàng lẻ',
+      invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
+      // Map order fields to invoice-like fields for consistency
+      customerPhone: '',
+      customerAddress: '',
+      customerTaxCode: '',
+      symbol: order.symbol || order.templateNumber || '',
+      invoiceNumber: order.orderNumber || `ORD-${String(order.id).padStart(8, '0')}`,
+      tradeNumber: order.orderNumber || '',
+      invoiceDate: order.orderedAt,
+      einvoiceStatus: order.einvoiceStatus || 0
+    })) : [])
+  ];
 
-    const orderData = Array.isArray(orders) ? orders.map((order: Order) => {
-      try {
-        return {
-          ...order,
-          type: 'order' as const,
-          date: order.orderedAt || order.createdAt,
-          displayNumber: order.orderNumber || `ORD-${String(order.id).padStart(13, '0')}`,
-          displayStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
-          customerName: order.customerName || 'Khách hàng lẻ',
-          invoiceStatus: order.status === 'paid' ? 1 : order.status === 'pending' ? 2 : order.status === 'cancelled' ? 3 : 2,
-          customerPhone: order.customerPhone || '',
-          customerAddress: '',
-          customerTaxCode: '',
-          symbol: order.symbol || order.templateNumber || '',
-          invoiceNumber: order.invoiceNumber || '',
-          tradeNumber: order.orderNumber || '',
-          invoiceDate: order.orderedAt || order.createdAt,
-          einvoiceStatus: order.einvoiceStatus || 0
-        };
-      } catch (error) {
-        console.error('Error processing order:', order, error);
-        return null;
-      }
-    }).filter(Boolean) : [];
+  const filteredInvoices = Array.isArray(combinedData) ? combinedData.filter((item: any) => {
+    try {
+      if (!item || !item.date) return false;
 
-    return [...invoiceData, ...orderData];
-  }, [invoices, orders]);
+      const itemDate = new Date(item.date);
+      if (isNaN(itemDate.getTime())) return false;
 
-  const filteredInvoices = React.useMemo(() => {
-    if (!Array.isArray(combinedData) || combinedData.length === 0) {
-      return [];
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
+      const dateMatch = itemDate >= start && itemDate <= end;
+      const customerMatch = !customerSearch || 
+        (item.customerName && item.customerName.toLowerCase().includes(customerSearch.toLowerCase()));
+      const orderMatch = !orderNumberSearch || 
+        (item.displayNumber && item.displayNumber.toLowerCase().includes(orderNumberSearch.toLowerCase()));
+      const customerCodeMatch = !customerCodeSearch || 
+        (item.customerTaxCode && item.customerTaxCode.toLowerCase().includes(customerCodeSearch.toLowerCase()));
+
+      return dateMatch && customerMatch && orderMatch && customerCodeMatch;
+    } catch (error) {
+      console.error('Error filtering item:', item, error);
+      return false;
     }
-
-    return combinedData.filter((item: any) => {
-      try {
-        if (!item || !item.id) return false;
-
-        // Date filtering
-        let dateMatch = true;
-        if (startDate && endDate) {
-          const itemDate = new Date(item.date || item.createdAt);
-          if (!isNaN(itemDate.getTime())) {
-            const start = new Date(startDate);
-            const end = new Date(endDate);
-            end.setHours(23, 59, 59, 999);
-            dateMatch = itemDate >= start && itemDate <= end;
-          }
-        }
-
-        // Customer name filtering
-        const customerMatch = !customerSearch || 
-          (item.customerName && item.customerName.toLowerCase().includes(customerSearch.toLowerCase()));
-
-        // Order number filtering
-        const orderMatch = !orderNumberSearch || 
-          (item.displayNumber && item.displayNumber.toLowerCase().includes(orderNumberSearch.toLowerCase()));
-
-        // Customer code filtering
-        const customerCodeMatch = !customerCodeSearch || 
-          (item.customerTaxCode && item.customerTaxCode.toLowerCase().includes(customerCodeSearch.toLowerCase()));
-
-        return dateMatch && customerMatch && orderMatch && customerCodeMatch;
-      } catch (error) {
-        console.error('Error filtering item:', item, error);
-        return false;
-      }
-    });
-  }, [combinedData, startDate, endDate, customerSearch, orderNumberSearch, customerCodeSearch]);
+  }) : [];
 
   const formatCurrency = (amount: string | number | undefined | null): string => {
     const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -1084,28 +1034,15 @@ export default function SalesOrders() {
                   <div className="text-center py-8">
                     <div className="text-red-500 mb-4">
                       <X className="w-8 h-8 mx-auto mb-2" />
-                      <p className="font-medium">Lỗi tải dữ liệu</p>
+                      <p className="font-medium">Lỗi kết nối cơ sở dữ liệu</p>
                     </div>
-                    <div className="text-gray-500 mb-4 space-y-2">
-                      <p>Không thể tải dữ liệu đơn hàng. Chi tiết lỗi:</p>
-                      {invoicesError && (
-                        <p className="text-sm text-red-600">• Hóa đơn: {invoicesError.message}</p>
-                      )}
-                      {ordersError && (
-                        <p className="text-sm text-red-600">• Đơn hàng: {ordersError.message}</p>
-                      )}
-                    </div>
-                    <div className="space-x-2">
-                      <Button onClick={() => {
-                        queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
-                        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-                      }}>
-                        Thử lại
-                      </Button>
-                      <Button variant="outline" onClick={() => window.location.reload()}>
-                        Tải lại trang
-                      </Button>
-                    </div>
+                    <p className="text-gray-500 mb-4">Không thể tải dữ liệu đơn hàng. Vui lòng thử lại.</p>
+                    <Button onClick={() => {
+                      queryClient.invalidateQueries({ queryKey: ["/api/invoices"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                    }}>
+                      Thử lại
+                    </Button>
                   </div>
                 ) : (
                   <div>
@@ -1197,7 +1134,7 @@ export default function SalesOrders() {
 
                             // Lấy symbol từ dữ liệu gốc của item
                             const itemSymbol = item.symbol || item.templateNumber || '';
-
+                            
                             return (
                               <>
                                 <tr
@@ -1282,10 +1219,7 @@ export default function SalesOrders() {
                                   </td>
                                   <td className="px-3 py-3">
                                     <div className="text-sm font-mono">
-                                      {/* Hiển thị invoice_number từ bảng orders nếu có, nếu không có thì để trống */}
-                                      {item.type === 'order' 
-                                        ? (item.invoiceNumber || '') 
-                                        : invoiceNumber}
+                                      {invoiceNumber}
                                     </div>
                                   </td>
                                   <td className="px-3 py-3">
@@ -1813,259 +1747,261 @@ export default function SalesOrders() {
       )}
 
       {/* Publish Invoice Dialog */}
-      <AlertDialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
-        <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-blue-600">Phát hành hóa đơn điện tử</AlertDialogTitle>
-            <div className="text-sm text-gray-600">
-              Đơn hàng: {selectedInvoice?.displayNumber} - {selectedInvoice?.customerName}
-            </div>
-          </AlertDialogHeader>
-          <div className="space-y-4">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-3">Thông tin nhà cung cấp hóa đơn điện tử</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Đơn vị HĐĐT</label>
-                  <div className="p-2 bg-white rounded border">EasyInvoice</div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Mẫu số Hóa đơn GTGT</label>
-                  <div className="p-2 bg-white rounded border">1C25TYY</div>
+      {selectedInvoice && (
+        <AlertDialog open={showPublishDialog} onOpenChange={setShowPublishDialog}>
+          <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-blue-600">Phát hành hóa đơn điện tử</AlertDialogTitle>
+              <div className="text-sm text-gray-600">
+                Đơn hàng: {selectedInvoice.displayNumber} - {selectedInvoice.customerName}
+              </div>
+            </AlertDialogHeader>
+            <div className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-medium mb-3">Thông tin nhà cung cấp hóa đơn điện tử</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Đơn vị HĐĐT</label>
+                    <div className="p-2 bg-white rounded border">EasyInvoice</div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Mẫu số Hóa đơn GTGT</label>
+                    <div className="p-2 bg-white rounded border">1C25TYY</div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h4 className="font-medium mb-3">Thông tin khách hàng</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Mã số thuế</label>
-                  <div className="p-2 bg-white rounded border">{selectedInvoice.customerTaxCode || '0123456789'}</div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h4 className="font-medium mb-3">Thông tin khách hàng</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Mã số thuế</label>
+                    <div className="p-2 bg-white rounded border">{selectedInvoice.customerTaxCode || '0123456789'}</div>
+                  </div>
+                  <div className="flex items-center">
+                    <Button size="sm" variant="outline" className="text-blue-600 border-blue-500">
+                      Lấy thông tin
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex items-center">
-                  <Button size="sm" variant="outline" className="text-blue-600 border-blue-500">
-                    Lấy thông tin
-                  </Button>
+                <div className="grid grid-cols-2 gap-4 mt-3">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Tên đơn vị</label>
+                    <div className="p-2 bg-white rounded border">{selectedInvoice.customerName || 'Khách hàng lẻ'}</div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Số CMND/CCCD</label>
+                    <div className="p-2 bg-white rounded border">{selectedInvoice.customerPhone || selectedInvoice.customerTaxCode || '0123456789'}</div>
+                  </div>
+                </div>
+                <div className="mt-3">
+                  <label className="block text-sm font-medium mb-1">Địa chỉ</label>
+                  <div className="p-2 bg-white rounded border">{selectedInvoice.customerAddress || 'Cầu Giấy, Hà Nội'}</div>
+                </div>
+                <div className="mt-3">
+                  <label className="block text-sm font-medium mb-1">Email</label>
+                  <div className="p-2 bg-white rounded border">{selectedInvoice.customerEmail || 'ngocnv@gmail.com'}</div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 mt-3">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Tên đơn vị</label>
-                  <div className="p-2 bg-white rounded border">{selectedInvoice.customerName || 'Khách hàng lẻ'}</div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Số CMND/CCCD</label>
-                  <div className="p-2 bg-white rounded border">{selectedInvoice.customerPhone || selectedInvoice.customerTaxCode || '0123456789'}</div>
-                </div>
-              </div>
-              <div className="mt-3">
-                <label className="block text-sm font-medium mb-1">Địa chỉ</label>
-                <div className="p-2 bg-white rounded border">{selectedInvoice.customerAddress || 'Cầu Giấy, Hà Nội'}</div>
-              </div>
-              <div className="mt-3">
-                <label className="block text-sm font-medium mb-1">Email</label>
-                <div className="p-2 bg-white rounded border">{selectedInvoice.customerEmail || 'ngocnv@gmail.com'}</div>
-              </div>
-            </div>
 
-            {/* Invoice Items */}
-            <div className="bg-white p-4 rounded-lg border">
-              <h4 className="font-medium mb-3">Danh sách sản phẩm</h4>
-              <div className="max-h-40 overflow-y-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="text-left p-2">Tên sản phẩm</th>
-                      <th className="text-center p-2">SL</th>
-                      <th className="text-right p-2">Đơn giá</th>
-                      <th className="text-right p-2">Thành tiền</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(() => {
-                      const items = getItemType(selectedInvoice) === 'order' ? orderItems : invoiceItems;
-                      if (!items || items.length === 0) {
-                        return (
-                          <tr>
-                            <td colSpan={4} className="text-center p-4 text-gray-500">
-                              Không có sản phẩm nào
-                            </td>
+              {/* Invoice Items */}
+              <div className="bg-white p-4 rounded-lg border">
+                <h4 className="font-medium mb-3">Danh sách sản phẩm</h4>
+                <div className="max-h-40 overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="text-left p-2">Tên sản phẩm</th>
+                        <th className="text-center p-2">SL</th>
+                        <th className="text-right p-2">Đơn giá</th>
+                        <th className="text-right p-2">Thành tiền</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(() => {
+                        const items = getItemType(selectedInvoice) === 'order' ? orderItems : invoiceItems;
+                        if (!items || items.length === 0) {
+                          return (
+                            <tr>
+                              <td colSpan={4} className="text-center p-4 text-gray-500">
+                                Không có sản phẩm nào
+                              </td>
+                            </tr>
+                          );
+                        }
+                        return items.map((item: any, index: number) => (
+                          <tr key={item.id} className="border-t">
+                            <td className="p-2">{item.productName}</td>
+                            <td className="p-2 text-center">{item.quantity}</td>
+                            <td className="p-2 text-right">{formatCurrency(item.unitPrice)}</td>
+                            <td className="p-2 text-right">{formatCurrency(item.total)}</td>
                           </tr>
+                        ));
+                      })()}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="bg-green-50 p-4 rounded-lg">
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Thành tiền:</span>
+                    <span className="font-medium">{formatCurrency(selectedInvoice.subtotal || 0)} ₫</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Thuế GTGT (10%):</span>
+                    <span className="font-medium">{formatCurrency(selectedInvoice.tax || 0)} ₫</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-2">
+                    <span className="font-medium">Tổng tiền hóa đơn:</span>
+                    <span className="text-xl font-bold text-blue-600">
+                      {formatCurrency(selectedInvoice.total || 0)} ₫
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button size="sm" variant="outline" className="text-gray-600">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  Hiện bản phím ảo
+                </Button>
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <div className="flex gap-2 w-full">
+                <Button 
+                  className="flex-1 bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    if (selectedInvoice) {
+                      // Generate a new GUID for transactionID
+                      const generateGuid = () => {
+                        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+                          /[xy]/g,
+                          function (c) {
+                            const r = (Math.random() * 16) | 0;
+                            const v = c === "x" ? r : (r & 0x3) | 0x8;
+                            return v.toString(16);
+                          },
                         );
+                      };
+
+                      // Get items for this invoice/order
+                      const items = getItemType(selectedInvoice) === 'order' ? orderItems : invoiceItems;
+
+                      if (!items || items.length === 0) {
+                        alert('Không có sản phẩm nào để phát hành hóa đơn');
+                        return;
                       }
-                      return items.map((item: any, index: number) => (
-                        <tr key={item.id} className="border-t">
-                          <td className="p-2">{item.productName}</td>
-                          <td className="p-2 text-center">{item.quantity}</td>
-                          <td className="p-2 text-right">{formatCurrency(item.unitPrice)}</td>
-                          <td className="p-2 text-right">{formatCurrency(item.total)}</td>
-                        </tr>
-                      ));
-                    })()}
-                  </tbody>
-                </table>
-              </div>
-            </div>
 
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Thành tiền:</span>
-                  <span className="font-medium">{formatCurrency(selectedInvoice.subtotal || 0)} ₫</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Thuế GTGT (10%):</span>
-                  <span className="font-medium">{formatCurrency(selectedInvoice.tax || 0)} ₫</span>
-                </div>
-                <div className="flex justify-between border-t pt-2">
-                  <span className="font-medium">Tổng tiền hóa đơn:</span>
-                  <span className="text-xl font-bold text-blue-600">
-                    {formatCurrency(selectedInvoice.total || 0)} ₫
-                  </span>
-                </div>
-              </div>
-            </div>
+                      // Calculate totals from items
+                      const subtotal = parseFloat(selectedInvoice.subtotal || '0');
+                      const tax = parseFloat(selectedInvoice.tax || '0');
+                      const total = parseFloat(selectedInvoice.total || '0');
 
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" className="text-gray-600">
-                <Calendar className="w-4 h-4 mr-2" />
-                Hiện bản phím ảo
-              </Button>
-            </div>
-          </div>
-          <AlertDialogFooter>
-            <div className="flex gap-2 w-full">
-              <Button 
-                className="flex-1 bg-green-600 hover:bg-green-700"
-                onClick={() => {
-                  if (selectedInvoice) {
-                    // Generate a new GUID for transactionID
-                    const generateGuid = () => {
-                      return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
-                        /[xy]/g,
-                        function (c) {
-                          const r = (Math.random() * 16) | 0;
-                          const v = c === "x" ? r : (r & 0x3) | 0x8;
-                          return v.toString(16);
+                      console.log('Publishing invoice with data:', {
+                        invoiceId: selectedInvoice.id,
+                        type: selectedInvoice.type,
+                        subtotal,
+                        tax,
+                        total,
+                        itemsCount: items.length
+                      });
+
+                      // Prepare publish request
+                      const publishRequest = {
+                        login: {
+                          providerId: 1,
+                          url: "https://infoerpvn.com:9440",
+                          ma_dvcs: "0316578736",
+                          username: "0316578736",
+                          password: "123456a@",
+                          tenantId: "",
                         },
-                      );
-                    };
+                        transactionID: generateGuid(),
+                        invRef: selectedInvoice.displayNumber || `INV-${Date.now()}`,
+                        invSubTotal: Math.round(subtotal),
+                        invVatRate: 10,
+                        invVatAmount: Math.round(tax),
+                        invDiscAmount: 0,
+                        invTotalAmount: Math.round(total),
+                        paidTp: "TM",
+                        note: selectedInvoice.notes || "",
+                        hdNo: "",
+                        createdDate: new Date().toISOString(),
+                        clsfNo: "01GTKT0/001",
+                        spcfNo: "1C25TYY",
+                        templateCode: "1C25TYY",
+                        buyerNotGetInvoice: 0,
+                        exchCd: "VND",
+                        exchRt: 1,
+                        bankAccount: "",
+                        bankName: "",
+                        customer: {
+                          custCd: selectedInvoice.customerTaxCode || "",
+                          custNm: selectedInvoice.customerName || "Khách hàng lẻ",
+                          custCompany: selectedInvoice.customerName || "Khách hàng lẻ",
+                          taxCode: selectedInvoice.customerTaxCode || "",
+                          custCity: "",
+                          custDistrictName: "",
+                          custAddrs: selectedInvoice.customerAddress || "",
+                          custPhone: selectedInvoice.customerPhone || "",
+                          custBankAccount: "",
+                          custBankName: "",
+                          email: selectedInvoice.customerEmail || "",
+                          emailCC: "",
+                        },
+                        products: items.map((item: any) => {
+                          const itemPrice = parseFloat(item.unitPrice);
+                          const itemQuantity = item.quantity;
+                          const itemTaxRate = parseFloat(item.taxRate || "10");
+                          const itemSubtotal = itemPrice * itemQuantity;
+                          const itemTax = (itemSubtotal * itemTaxRate) / 100;
+                          const itemTotal = itemSubtotal + itemTax;
 
-                    // Get items for this invoice/order
-                    const items = getItemType(selectedInvoice) === 'order' ? orderItems : invoiceItems;
+                          return {
+                            itmCd: `SP${String(item.productId).padStart(3, '0')}`,
+                            itmName: item.productName,
+                            itmKnd: 1,
+                            unitNm: "Cái",
+                            qty: itemQuantity,
+                            unprc: itemPrice,
+                            amt: Math.round(itemSubtotal),
+                            discRate: 0,
+                            discAmt: 0,
+                            vatRt: itemTaxRate.toString(),
+                            vatAmt: Math.round(itemTax),
+                            totalAmt: Math.round(itemTotal),
+                          };
+                        }),
+                      };
 
-                    if (!items || items.length === 0) {
-                      alert('Không có sản phẩm nào để phát hành hóa đơn');
-                      return;
+                      // Close dialog first
+                      setShowPublishDialog(false);
+
+                      // Call publish API
+                      publishRequestMutation.mutate(publishRequest);
                     }
-
-                    // Calculate totals from items
-                    const subtotal = parseFloat(selectedInvoice.subtotal || '0');
-                    const tax = parseFloat(selectedInvoice.tax || '0');
-                    const total = parseFloat(selectedInvoice.total || '0');
-
-                    console.log('Publishing invoice with data:', {
-                      invoiceId: selectedInvoice.id,
-                      type: selectedInvoice.type,
-                      subtotal,
-                      tax,
-                      total,
-                      itemsCount: items.length
-                    });
-
-                    // Prepare publish request
-                    const publishRequest = {
-                      login: {
-                        providerId: 1,
-                        url: "https://infoerpvn.com:9440",
-                        ma_dvcs: "0316578736",
-                        username: "0316578736",
-                        password: "123456a@",
-                        tenantId: "",
-                      },
-                      transactionID: generateGuid(),
-                      invRef: selectedInvoice.displayNumber || `INV-${Date.now()}`,
-                      invSubTotal: Math.round(subtotal),
-                      invVatRate: 10,
-                      invVatAmount: Math.round(tax),
-                      invDiscAmount: 0,
-                      invTotalAmount: Math.round(total),
-                      paidTp: "TM",
-                      note: selectedInvoice.notes || "",
-                      hdNo: "",
-                      createdDate: new Date().toISOString(),
-                      clsfNo: "01GTKT0/001",
-                      spcfNo: "1C25TYY",
-                      templateCode: "1C25TYY",
-                      buyerNotGetInvoice: 0,
-                      exchCd: "VND",
-                      exchRt: 1,
-                      bankAccount: "",
-                      bankName: "",
-                      customer: {
-                        custCd: selectedInvoice.customerTaxCode || "",
-                        custNm: selectedInvoice.customerName || "Khách hàng lẻ",
-                        custCompany: selectedInvoice.customerName || "Khách hàng lẻ",
-                        taxCode: selectedInvoice.customerTaxCode || "",
-                        custCity: "",
-                        custDistrictName: "",
-                        custAddrs: selectedInvoice.customerAddress || "",
-                        custPhone: selectedInvoice.customerPhone || "",
-                        custBankAccount: "",
-                        custBankName: "",
-                        email: selectedInvoice.customerEmail || "",
-                        emailCC: "",
-                      },
-                      products: items.map((item: any) => {
-                        const itemPrice = parseFloat(item.unitPrice);
-                        const itemQuantity = item.quantity;
-                        const itemTaxRate = parseFloat(item.taxRate || "10");
-                        const itemSubtotal = itemPrice * itemQuantity;
-                        const itemTax = (itemSubtotal * itemTaxRate) / 100;
-                        const itemTotal = itemSubtotal + itemTax;
-
-                        return {
-                          itmCd: `SP${String(item.productId).padStart(3, '0')}`,
-                          itmName: item.productName,
-                          itmKnd: 1,
-                          unitNm: "Cái",
-                          qty: itemQuantity,
-                          unprc: itemPrice,
-                          amt: Math.round(itemSubtotal),
-                          discRate: 0,
-                          discAmt: 0,
-                          vatRt: itemTaxRate.toString(),
-                          vatAmt: Math.round(itemTax),
-                          totalAmt: Math.round(itemTotal),
-                        };
-                      }),
-                    };
-
-                    // Close dialog first
-                    setShowPublishDialog(false);
-
-                    // Call publish API
-                    publishRequestMutation.mutate(publishRequest);
-                  }
-                }}
-                disabled={publishRequestMutation.isPending}
-              >
-                <Mail className="w-4 h-4 mr-2" />
-                {publishRequestMutation.isPending ? 'Đang phát hành...' : 'Phát hành'}
-              </Button>
-              <Button 
-                variant="outline"
-                className="flex-1 border-gray-500 text-gray-600"
-                onClick={() => setShowPublishDialog(false)}
-              >
-                <X className="w-4 h-4 mr-2" />
-                Hủy bỏ
-              </Button>
-            </div>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+                  }}
+                  disabled={publishRequestMutation.isPending}
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  {publishRequestMutation.isPending ? 'Đang phát hành...' : 'Phát hành'}
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="flex-1 border-gray-500 text-gray-600"
+                  onClick={() => setShowPublishDialog(false)}
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Hủy bỏ
+                </Button>
+              </div>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
 
       {/* Cancel Order Confirmation Dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>

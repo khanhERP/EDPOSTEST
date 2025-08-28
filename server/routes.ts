@@ -42,9 +42,9 @@ import {
 } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import {
-  orders as ordersTable, // Alias to avoid naming conflict
+  orders,
   orderItems,
-  products as productsTable, // Alias to avoid naming conflict
+  products,
   categories,
   transactions as transactionsTable,
   transactionItems as transactionItemsTable,
@@ -247,24 +247,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const [product] = await db
         .select({
-          id: productsTable.id,
-          name: productsTable.name,
-          sku: productsTable.sku,
-          price: productsTable.price,
-          stock: productsTable.stock,
-          categoryId: productsTable.categoryId,
+          id: products.id,
+          name: products.name,
+          sku: products.sku,
+          price: products.price,
+          stock: products.stock,
+          categoryId: products.categoryId,
           categoryName: categories.name,
-          imageUrl: productsTable.imageUrl,
-          isActive: productsTable.isActive,
-          productType: productsTable.productType,
-          trackInventory: productsTable.trackInventory,
-          taxRate: productsTable.taxRate,
-          priceIncludesTax: productsTable.priceIncludesTax,
-          afterTaxPrice: productsTable.afterTaxPrice,
+          imageUrl: products.imageUrl,
+          isActive: products.isActive,
+          productType: products.productType,
+          trackInventory: products.trackInventory,
+          taxRate: products.taxRate,
+          priceIncludesTax: products.priceIncludesTax,
+          afterTaxPrice: products.afterTaxPrice,
         })
-        .from(productsTable)
-        .leftJoin(categories, eq(productsTable.categoryId, categories.id))
-        .where(and(eq(productsTable.id, productId), eq(productsTable.isActive, true)))
+        .from(products)
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .where(and(eq(products.id, productId), eq(products.isActive, true)))
         .limit(1);
 
       if (!product) {
@@ -323,8 +323,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if SKU already exists (including inactive products)
       const [existingProduct] = await db
         .select()
-        .from(productsTable)
-        .where(eq(productsTable.sku, validatedData.sku));
+        .from(products)
+        .where(eq(products.sku, validatedData.sku));
 
       if (existingProduct) {
         console.log("SKU already exists:", validatedData.sku);
@@ -500,7 +500,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const itemSubtotal = parseFloat(item.price) * item.quantity;
         let itemTax = 0;
-
+        
         // Use afterTaxPrice if available, otherwise no tax (default 0)
         if (product.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
@@ -547,7 +547,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all transactions
   app.get("/api/transactions", async (req: TenantRequest, res) => {
     try {
       const tenantDb = await getTenantDatabase(req);
@@ -965,30 +964,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Orders
-  // Get all orders with pagination
-  app.get('/api/orders', async (req, res) => {
+  app.get("/api/orders", async (req: TenantRequest, res) => {
     try {
-      console.log('=== FETCHING ORDERS ===');
-      const { page, limit } = req.query;
-
-      let query = db.select().from(ordersTable).orderBy(desc(ordersTable.orderedAt));
-
-      if (page && limit) {
-        const offset = (Number(page) - 1) * Number(limit);
-        query = query.limit(Number(limit)).offset(offset);
-      }
-
-      const orders = await query;
-      console.log(`Found ${orders.length} orders`);
-
+      const { tableId, status } = req.query;
+      const tenantDb = await getTenantDatabase(req);
+      const orders = await storage.getOrders(
+        tableId ? parseInt(tableId as string) : undefined,
+        status as string,
+        tenantDb,
+      );
       res.json(orders);
     } catch (error) {
-      console.error('Error fetching orders:', error);
-      res.status(500).json({ 
-        error: 'Failed to fetch orders',
-        message: error instanceof Error ? error.message : 'Unknown error',
-        details: error 
-      });
+      res.status(500).json({ message: "Failed to fetch orders" });
     }
   });
 
@@ -1193,8 +1180,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if order exists
       const [existingOrder] = await db
         .select()
-        .from(ordersTable)
-        .where(eq(ordersTable.id, orderId));
+        .from(orders)
+        .where(eq(orders.id, orderId));
 
       if (!existingOrder) {
         console.error("Order not found:", orderId);
@@ -1222,8 +1209,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Get product info to include in the order item
         const [product] = await db
           .select()
-          .from(productsTable)
-          .where(eq(productsTable.id, item.productId));
+          .from(products)
+          .where(eq(products.id, item.productId));
 
         if (!product) {
           console.error("Product not found:", item.productId);
@@ -1277,13 +1264,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         await db
-          .update(ordersTable)
+          .update(orders)
           .set({
             total: totalAmount.toFixed(2),
             subtotal: subtotalAmount.toFixed(2),
             tax: taxAmount.toFixed(2),
           })
-          .where(eq(ordersTable.id, orderId));
+          .where(eq(orders.id, orderId));
 
         console.log("Updated order totals successfully");
       } catch (updateError) {
@@ -1320,8 +1307,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get current product
       const [product] = await db
         .select()
-        .from(productsTable)
-        .where(eq(productsTable.id, productId))
+        .from(products)
+        .where(eq(products.id, productId))
         .limit(1);
       if (!product) {
         return res.status(404).json({ error: "Product not found" });
@@ -1347,9 +1334,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       await db
-        .update(productsTable)
+        .update(products)
         .set(updateData)
-        .where(eq(productsTable.id, productId));
+        .where(eq(products.id, productId));
 
       // Create inventory transaction record
       await db.insert(inventoryTransactions).values({
@@ -2078,20 +2065,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Base query for transaction items with product and category joins
       let query = db
         .select({
-          product: productsTable,
+          product: products,
           category: categories,
           quantity: sql<number>`sum(${transactionItemsTable.quantity})`.as('quantity'),
           revenue: sql<number>`sum(${transactionItemsTable.total})`.as('revenue'),
         })
         .from(transactionItemsTable)
-        .leftJoin(productsTable, eq(transactionItemsTable.productId, productsTable.id))
-        .leftJoin(categories, eq(productsTable.categoryId, categories.id))
+        .leftJoin(products, eq(transactionItemsTable.productId, products.id))
+        .leftJoin(categories, eq(products.categoryId, categories.id))
         .leftJoin(transactionsTable, eq(transactionItemsTable.transactionId, transactionsTable.id))
-        .groupBy(productsTable.id, categories.id)
+        .groupBy(products.id, categories.id)
         .orderBy(desc(sql`sum(${transactionItemsTable.total})`));
 
       // Apply filters
-      const conditions: any[] = [eq(productsTable.isActive, true)];
+      const conditions: any[] = [eq(products.isActive, true)];
 
       // Date range filter - IMPORTANT: Apply to transactions table
       if (startDate && endDate) {
@@ -2108,18 +2095,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (search) {
-        conditions.push(ilike(productsTable.name, `%${search}%`));
+        conditions.push(ilike(products.name, `%${search}%`));
       }
 
       if (categoryId && categoryId !== 'all') {
-        conditions.push(eq(productsTable.categoryId, parseInt(categoryId as string)));
+        conditions.push(eq(products.categoryId, parseInt(categoryId as string)));
       }
 
       if (productType !== "all" && productType) {
         const typeMap = { combo: 3, product: 1, service: 2 };
         const typeValue = typeMap[productType as keyof typeof typeMap];
         if (typeValue) {
-          conditions.push(eq(productsTable.productType, typeValue));
+          conditions.push(eq(products.productType, typeValue));
         }
       }
 
@@ -2339,7 +2326,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
 
           const [product] = await db
-            .insert(productsTable)
+            .insert(products)
             .values({
               name: productData.name,
               sku: productData.sku,
@@ -2447,11 +2434,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           startDate, endDate, salesMethod, salesChannel, analysisType, concernType, selectedEmployee
         });
 
-        // Get transactions data
         const transactions = await storage.getTransactions(tenantDb);
 
-        // Filter transactions based on parameters
-        const filteredTransactions = transactions.filter((transaction: any) => {
+        const filteredTransactions = transactions.filter((transaction) => {
           const transactionDate = new Date(transaction.createdAt);
           const start = new Date(startDate);
           const end = new Date(endDate);
@@ -2459,51 +2444,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           const dateMatch = transactionDate >= start && transactionDate <= end;
 
-          // Enhanced sales method filtering
-          let salesMethodMatch = true;
-          if (salesMethod !== 'all') {
-            const paymentMethod = transaction.paymentMethod || 'cash';
-            switch (salesMethod) {
-              case 'no_delivery':
-                salesMethodMatch = !transaction.deliveryMethod || transaction.deliveryMethod === 'pickup' || transaction.deliveryMethod === 'takeaway';
-                break;
-              case 'delivery':
-                salesMethodMatch = transaction.deliveryMethod === 'delivery';
-                break;
-              default:
-                salesMethodMatch = paymentMethod.toLowerCase() === salesMethod.toLowerCase();
-            }
-          }
+          // Enhanced filtering logic based on actual transaction data
+          const methodMatch =
+            salesMethod === "all" ||
+            (salesMethod === "no_delivery" && 
+              (!transaction.deliveryMethod || transaction.deliveryMethod === "pickup")) ||
+            (salesMethod === "delivery" && 
+              transaction.deliveryMethod === "delivery");
 
-          // Enhanced sales channel filtering
-          let salesChannelMatch = true;
-          if (salesChannel !== 'all') {
-            const channel = transaction.salesChannel || 'direct';
-            switch (salesChannel) {
-              case 'direct':
-                salesChannelMatch = !transaction.salesChannel || transaction.salesChannel === 'direct' || transaction.salesChannel === 'pos';
-                break;
-              case 'other':
-                salesChannelMatch = transaction.salesChannel && transaction.salesChannel !== 'direct' && transaction.salesChannel !== 'pos';
-                break;
-              default:
-                salesChannelMatch = channel.toLowerCase() === salesChannel.toLowerCase();
-            }
-          }
+          const channelMatch =
+            salesChannel === "all" ||
+            (salesChannel === "direct" && 
+              (!transaction.salesChannel || transaction.salesChannel === "direct" || transaction.salesChannel === "pos")) ||
+            (salesChannel === "other" && 
+              transaction.salesChannel && transaction.salesChannel !== "direct" && transaction.salesChannel !== "pos");
 
-          // Enhanced employee filtering
-          let employeeMatch = true;
-          if (selectedEmployee !== 'all') {
-            employeeMatch = 
-              transaction.cashierName === selectedEmployee ||
-              transaction.employeeId?.toString() === selectedEmployee ||
-              (transaction.cashierName && transaction.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
-          }
+          // Employee filter
+          const employeeMatch =
+            selectedEmployee === "all" ||
+            transaction.cashierName === selectedEmployee ||
+            transaction.employeeId?.toString() === selectedEmployee ||
+            (transaction.cashierName && transaction.cashierName.includes(selectedEmployee));
 
-          return dateMatch && salesMethodMatch && salesChannelMatch && employeeMatch;
+          return dateMatch && methodMatch && salesChannelMatch && employeeMatch;
         });
 
-        console.log(`Found ${filteredTransactions.length} filtered transactions out of ${transactions.length} total`);
         res.json(filteredTransactions);
       } catch (error) {
         console.error("Error in transactions API:", error);
@@ -2512,78 +2477,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   );
 
-  app.get("/api/orders/:startDate/:endDate/:selectedEmployee/:salesChannel/:salesMethod/:analysisType/:concernType", async (req: TenantRequest, res) => {
-    try {
-      const { startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType } = req.params;
-      const tenantDb = await getTenantDatabase(req);
+  app.get(
+    "/api/orders/:startDate/:endDate/:selectedEmployee/:salesChannel/:salesMethod/:analysisType/:concernType",
+    async (req: TenantRequest, res) => {
+      try {
+        const { startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType } = req.params;
+        const tenantDb = await getTenantDatabase(req);
 
-      console.log("Orders API called with params:", { startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType });
+        console.log("Orders API called with params:", {
+          startDate, endDate, selectedEmployee, salesChannel, salesMethod, analysisType, concernType
+        });
 
-      // Get orders data
-      const orders = await storage.getOrders(undefined, undefined, tenantDb);
+        const orders = await storage.getOrders(undefined, undefined, tenantDb);
 
-      // Filter orders based on parameters with enhanced logic
-      const filteredOrders = orders.filter((order: any) => {
-        const orderDate = new Date(order.orderedAt || order.createdAt);
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
+        const filteredOrders = orders.filter((order) => {
+          const orderDate = new Date(order.orderedAt);
+          const start = new Date(startDate);
+          const end = new Date(endDate);
+          end.setHours(23, 59, 59, 999);
 
-        const dateMatch = orderDate >= start && orderDate <= end;
+          const dateMatch = orderDate >= start && orderDate <= end;
+          const statusMatch = order.status === "paid";
 
-        // Enhanced employee filtering
-        let employeeMatch = true;
-        if (selectedEmployee !== 'all') {
-          employeeMatch = 
-            order.employeeId?.toString() === selectedEmployee ||
-            (order.employeeName && order.employeeName.toLowerCase().includes(selectedEmployee.toLowerCase()));
-        }
+          const employeeMatch =
+            selectedEmployee === "all" || 
+            order.employeeId?.toString() === selectedEmployee;
 
-        // Enhanced sales channel filtering
-        let salesChannelMatch = true;
-        if (salesChannel !== 'all') {
-          const channel = order.salesChannel || 'direct';
-          switch (salesChannel) {
-            case 'direct':
-              salesChannelMatch = !order.salesChannel || order.salesChannel === 'direct' || order.salesChannel === 'pos';
-              break;
-            case 'other':
-              salesChannelMatch = order.salesChannel && order.salesChannel !== 'direct' && order.salesChannel !== 'pos';
-              break;
-            default:
-              salesChannelMatch = channel.toLowerCase() === salesChannel.toLowerCase();
-          }
-        }
+          const channelMatch =
+            salesChannel === "all" ||
+            (salesChannel === "direct" && 
+              (!order.salesChannel || order.salesChannel === "direct")) ||
+            (salesChannel === "other" && 
+              order.salesChannel && order.salesChannel !== "direct");
 
-        // Enhanced sales method filtering
-        let salesMethodMatch = true;
-        if (salesMethod !== 'all') {
-          switch (salesMethod) {
-            case 'no_delivery':
-              salesMethodMatch = !order.deliveryMethod || order.deliveryMethod === 'pickup' || order.deliveryMethod === 'takeaway';
-              break;
-            case 'delivery':
-              salesMethodMatch = order.deliveryMethod === 'delivery';
-              break;
-            default:
-              const paymentMethod = order.paymentMethod || 'cash';
-              salesMethodMatch = paymentMethod.toLowerCase() === salesMethod.toLowerCase();
-          }
-        }
+          const methodMatch =
+            salesMethod === "all" ||
+            (salesMethod === "no_delivery" && 
+              (!order.deliveryMethod || order.deliveryMethod === "pickup")) ||
+            (salesMethod === "delivery" && 
+              order.deliveryMethod === "delivery");
 
-        // Only include paid orders for analysis
-        const statusMatch = order.status === 'paid';
+          return dateMatch && statusMatch && employeeMatch && channelMatch && methodMatch;
+        });
 
-        return dateMatch && employeeMatch && salesChannelMatch && salesMethodMatch && statusMatch;
-      });
-
-      console.log(`Found ${filteredOrders.length} filtered orders out of ${orders.length} total`);
-      res.json(filteredOrders);
-    } catch (error) {
-      console.error("Error in orders API:", error);
-      res.status(500).json({ error: "Failed to fetch orders data" });
-    }
-  });
+        res.json(filteredOrders);
+      } catch (error) {
+        console.error("Error in orders API:", error);
+        res.status(500).json({ error: "Failed to fetch orders data" });
+      }
+    },
+  );
 
   // Sales channel sales data
   // Sales Channel Sales API
@@ -3365,30 +3308,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all invoices with pagination
-  app.get('/api/invoices', async (req, res) => {
+  app.get("/api/invoices", async (req: TenantRequest, res) => {
     try {
-      console.log('=== FETCHING INVOICES ===');
-      const { page, limit } = req.query;
+      const tenantDb = await getTenantDatabase(req);
+      const invoicesList = await db
+        .select()
+        .from(invoices)
+        .orderBy(desc(invoices.createdAt));
 
-      let query = db.select().from(invoices).orderBy(desc(invoices.invoiceDate));
-
-      if (page && limit) {
-        const offset = (Number(page) - 1) * Number(limit);
-        query = query.limit(Number(limit)).offset(offset);
-      }
-
-      const invoices = await query;
-      console.log(`Found ${invoices.length} invoices`);
-
-      res.json(invoices);
+      res.json(invoicesList);
     } catch (error) {
-      console.error('Error fetching invoices:', error);
-      res.status(500).json({ 
-        error: 'Failed to fetch invoices',
-        message: error instanceof Error ? error.message : 'Unknown error',
-        details: error 
-      });
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({ error: "Failed to fetch invoices" });
     }
   });
 
@@ -3526,8 +3457,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if order exists first
       const [existingOrder] = await db
         .select()
-        .from(ordersTable)
-        .where(eq(ordersTable.id, id))
+        .from(orders)
+        .where(eq(orders.id, id))
         .limit(1);
 
       if (!existingOrder) {
@@ -3554,9 +3485,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Fields to update:", JSON.stringify(fieldsToUpdate, null, 2));
 
       const [updatedOrder] = await db
-        .update(ordersTable)
+        .update(orders)
         .set(fieldsToUpdate)
-        .where(eq(ordersTable.id, id))
+        .where(eq(orders.id, id))
         .returning();
 
       if (!updatedOrder) {
@@ -3600,12 +3531,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (orderId) {
         try {
           const [updatedOrder] = await db
-            .update(ordersTable)
+            .update(orders)
             .set({ 
               invoiceNumber: invoiceNumber,
               updatedAt: new Date() 
             })
-            .where(eq(ordersTable.id, orderId))
+            .where(eq(orders.id, orderId))
             .returning();
 
           if (updatedOrder) {
@@ -3794,7 +3725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { type } = req.query; // 'employee', 'kitchen', or 'all'
       const tenantDb = await getTenantDatabase(req);
-
+      
       let whereClause = 'WHERE is_active = true';
       if (type === 'employee') {
         whereClause += ' AND is_employee = true';
@@ -4113,7 +4044,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Save order
       const [savedOrder] = await db
-        .insert(ordersTable)
+        .insert(orders)
         .values(orderData)
         .returning();
 
@@ -4431,7 +4362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user: dbInfo.user_name,
         version: dbInfo.postgres_version,
         serverTime: dbInfo.server_time,
-        connectionString: process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@'),
+        connectionString: DATABASE_URL?.replace(/:[^:@]*@/, ':****@'),
         usingExternalDb: !!process.env.EXTERNAL_DB_URL
       });
     } catch (error) {
@@ -4441,7 +4372,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         status: "unhealthy", 
         error: errorMessage,
-        connectionString: process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@'),
+        connectionString: DATABASE_URL?.replace(/:[^:@]*@/, ':****@'),
         usingExternalDb: !!process.env.EXTERNAL_DB_URL,
         details: error
       });
