@@ -3333,7 +3333,7 @@ export default function Settings() {
                   }
                 }}
                 className="col-span-3"
-                placeholder="Tính tự động từ giá bán + thuế suất"
+                placeholder={t("settings.afterTaxPricePlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">

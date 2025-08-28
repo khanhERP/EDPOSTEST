@@ -158,22 +158,16 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     total: "총",
     productsShowing: "상품이 표시됩니다",
     productDescriptionPlaceholder: "상품 설명을 입력하세요 (선택사항)",
+    productDescriptionLabel: "상품 설명",
+    afterTaxPrice: "세금 포함 가격",
+    afterTaxPricePlaceholder: "세금 포함 가격을 입력하세요",
     productManagementDesc: "상품 정보와 가격을 관리합니다",
     stockStatus: "재고 상태",
     usageStatus: "사용 상태",
-    inStock: "재고 있음",
-    outOfStock: "재고 없음",
-
-    // usageStatus: {
-    //   ko: "사용 상태",
-    //   en: "Usage Status",
-    //   vi: "Trạng thái sử dụng"
-    // },
-    // addProduct: {
-    //   ko: "상품 추가",
-    //   en: "Add Product",
-    //   vi: "Thêm sản phẩm"
-    // }
+    updateProductInfo: "Update product information",
+    enterProductInfo: "Enter new product information",
+    trackInventory: "Track Inventory",
+    enableInventoryTracking: "Enable inventory tracking for this product",
     yes: "네",
   },
   en: {
@@ -334,6 +328,9 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     total: "Total",
     productsShowing: "products showing",
     productDescriptionPlaceholder: "Enter product description (optional)",
+    productDescriptionLabel: "Product Description",
+    afterTaxPrice: "After Tax Price",
+    afterTaxPricePlaceholder: "Enter after tax price",
     productManagementDesc: "Manage product information and pricing",
     stockStatus: "Stock Status",
     usageStatus: "Usage Status",
@@ -503,6 +500,9 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     total: "Tổng cộng",
     productsShowing: "sản phẩm đang hiển thị",
     productDescriptionPlaceholder: "Nhập mô tả sản phẩm (tùy chọn)",
+    productDescriptionLabel: "Mô tả sản phẩm",
+    afterTaxPrice: "Giá sau thuế",
+    afterTaxPricePlaceholder: "Nhập giá sau thuế",
     productManagementDesc: "Quản lý thông tin sản phẩm và giá cả",
     stockStatus: "Trạng thái kho",
     usageStatus: "Trạng thái sử dụng",
