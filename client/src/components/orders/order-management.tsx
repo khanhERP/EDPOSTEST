@@ -129,18 +129,27 @@ export function OrderManagement() {
         if (completedOrder && orderItemsData) {
           console.log('✅ Order Management payment completed - preparing receipt data');
 
-          // Calculate totals including tax for receipt
+          // Use EXACT same calculation logic as Order Details display
           let subtotal = 0;
           let totalTax = 0;
 
           const processedItems = Array.isArray(orderItemsData) ? orderItemsData.map((item: any) => {
-            const itemSubtotal = Number(item.total || 0);
+            const basePrice = Number(item.unitPrice || 0);
+            const quantity = Number(item.quantity || 0);
             const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-            const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
-            const itemTax = (itemSubtotal * taxRate) / 100;
-
+            
+            // Calculate subtotal exactly as Order Details display
+            const itemSubtotal = basePrice * quantity;
             subtotal += itemSubtotal;
-            totalTax += itemTax;
+
+            // Use EXACT same tax calculation logic as Order Details display
+            let itemTax = 0;
+            if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+              const afterTaxPrice = parseFloat(product.afterTaxPrice);
+              const taxPerUnit = afterTaxPrice - basePrice;
+              itemTax = taxPerUnit * quantity;
+              totalTax += itemTax;
+            }
 
             return {
               id: item.id,
@@ -150,7 +159,7 @@ export function OrderManagement() {
               price: item.unitPrice,
               total: item.total,
               sku: item.productSku || `SP${item.productId}`,
-              taxRate: taxRate
+              taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10
             };
           }) : [];
 
@@ -1003,18 +1012,25 @@ export function OrderManagement() {
                           return;
                         }
 
-                        // Calculate totals for preview
+                        // Use EXACT same calculation logic as Order Details display
                         let subtotal = 0;
                         let totalTax = 0;
 
                         const processedItems = orderItems.map((item: any) => {
-                          const itemSubtotal = Number(item.total || 0);
+                          const basePrice = Number(item.unitPrice || 0);
+                          const quantity = Number(item.quantity || 0);
                           const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-                          const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
-                          const itemTax = (itemSubtotal * taxRate) / 100;
-
+                          
+                          // Calculate subtotal exactly as Order Details display
+                          const itemSubtotal = basePrice * quantity;
                           subtotal += itemSubtotal;
-                          totalTax += itemTax;
+
+                          // Use EXACT same tax calculation logic as Order Details display
+                          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                            const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                            const taxPerUnit = afterTaxPrice - basePrice;
+                            totalTax += taxPerUnit * quantity;
+                          }
 
                           return {
                             id: item.id,
@@ -1024,7 +1040,7 @@ export function OrderManagement() {
                             price: item.unitPrice,
                             total: item.total,
                             sku: item.productSku || `SP${item.productId}`,
-                            taxRate: taxRate
+                            taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10
                           };
                         });
 
@@ -1038,6 +1054,10 @@ export function OrderManagement() {
                           subtotal: subtotal.toFixed(2),
                           tax: totalTax.toFixed(2),
                           total: finalTotal.toFixed(2),
+                          // Add exact values to ensure proper display
+                          exactSubtotal: subtotal,
+                          exactTax: totalTax,
+                          exactTotal: finalTotal,
                           paymentMethod: 'preview',
                           cashierName: 'Order Management',
                           createdAt: new Date().toISOString(),
