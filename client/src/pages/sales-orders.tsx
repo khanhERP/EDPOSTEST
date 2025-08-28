@@ -310,16 +310,18 @@ export default function SalesOrders() {
             invoiceStatus: result.invoiceStatus || 1, // Hoàn thành
             status: result.status || 'published',
             invoiceNumber: result.invoiceNumber || null,
-            symbol: result.symbol || selectedInvoice.symbol,
-            templateNumber: result.templateNumber || selectedInvoice.templateNumber
+            symbol: result.data?.symbol || result.symbol || selectedInvoice.symbol,
+            templateNumber: result.data?.templateNumber || result.templateNumber || selectedInvoice.templateNumber
           };
 
-          // For orders, also update tradeNumber
+          // For orders, also update tradeNumber, templateNumber and symbol
           if (getItemType(selectedInvoice) === 'order') {
-            updateData.tradeNumber = result.invoiceNumber || selectedInvoice.tradeNumber;
+            updateData.tradeNumber = result.data?.invoiceNo || result.invoiceNumber || selectedInvoice.tradeNumber;
+            updateData.templateNumber = result.data?.templateNumber || result.templateNumber || '1C25TYY';
+            updateData.symbol = result.data?.symbol || result.symbol || 'AA/25E';
           } else {
             // For invoices, update tradeNumber as well
-            updateData.tradeNumber = result.invoiceNumber || selectedInvoice.tradeNumber;
+            updateData.tradeNumber = result.data?.invoiceNo || result.invoiceNumber || selectedInvoice.tradeNumber;
           }
 
           console.log('🔄 Updating item with data:', updateData);

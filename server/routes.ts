@@ -3392,6 +3392,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update order (including template_number and symbol fields)
+  app.put("/api/orders/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updateData = req.body;
+      const tenantDb = await getTenantDatabase(req);
+
+      console.log("Updating order:", id, "with data:", updateData);
+
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid order ID" });
+      }
+
+      // Prepare fields to update
+      const fieldsToUpdate: any = {};
+
+      // Handle all possible fields from updateData
+      Object.keys(updateData).forEach(key => {
+        fieldsToUpdate[key] = updateData[key];
+      });
+
+      const [updatedOrder] = await db
+        .update(orders)
+        .set(fieldsToUpdate)
+        .where(eq(orders.id, id))
+        .returning();
+
+      if (!updatedOrder) {
+        return res.status(404).json({ error: "Order not found" });
+      }
+
+      console.log("Order updated successfully:", updatedOrder);
+      res.json(updatedOrder);
+    } catch (error) {
+      console.error("Error updating order:", error);
+      res.status(500).json({ 
+        error: "Failed to update order",
+        details: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // E-invoice publish proxy endpoint
   app.post("/api/einvoice/publish", async (req: TenantRequest, res) => {
     try {
