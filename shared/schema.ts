@@ -366,6 +366,8 @@ export const inventoryTransactions = pgTable("inventory_transactions", {
   previousStock: integer("previous_stock").notNull(),
   newStock: integer("new_stock").notNull(),
   notes: text("notes"),
+  invoiceId: integer("invoice_id"),
+  invoiceNumber: varchar("invoice_number", { length: 50 }),
   createdAt: varchar("created_at", { length: 50 }).notNull(),
 });
 

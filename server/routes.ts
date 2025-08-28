@@ -523,6 +523,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
         total: total.toFixed(2),
+        invoiceId: validatedTransaction.invoiceId || null,
+        invoiceNumber: validatedTransaction.invoiceNumber || null,
       };
 
       const receipt = await storage.createTransaction(
