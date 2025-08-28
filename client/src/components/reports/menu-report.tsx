@@ -187,10 +187,10 @@ export default function MenuReport() {
 
   const getProductTypeName = (type: number): string => {
     switch (type) {
-      case 1: return t("reports.product");
-      case 2: return t("reports.service");
-      case 3: return t("reports.combo");
-      default: return t("reports.product");
+      case 1: return t("reports.product") || "Sản phẩm";
+      case 2: return t("reports.service") || "Dịch vụ";
+      case 3: return t("reports.combo") || "Combo";
+      default: return t("reports.product") || "Sản phẩm";
     }
   };
 
@@ -225,14 +225,14 @@ export default function MenuReport() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <BarChart3 className="w-5 h-5" />
-            {t("reports.menuAnalysis")}
+            {t("reports.menuAnalysis") || "Phân tích menu"}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">
-                {t("reports.fromDate")}
+                {t("reports.fromDate") || "Từ ngày"}
               </label>
               <Input
                 type="date"
@@ -242,7 +242,7 @@ export default function MenuReport() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">
-                {t("reports.toDate")}
+                {t("reports.toDate") || "Đến ngày"}
               </label>
               <Input
                 type="date"
@@ -252,14 +252,14 @@ export default function MenuReport() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">
-                {t("common.category")}
+                {t("common.category") || "Danh mục"}
               </label>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("common.selectCategory")} />
+                  <SelectValue placeholder={t("common.selectCategory") || "Chọn danh mục"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t("common.all")}</SelectItem>
+                  <SelectItem value="all">{t("common.all") || "Tất cả"}</SelectItem>
                   {categories.map((category: Category) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
@@ -270,28 +270,28 @@ export default function MenuReport() {
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">
-                {t("reports.productType")}
+                {t("reports.productType") || "Loại sản phẩm"}
               </label>
               <Select value={productType} onValueChange={setProductType}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("common.selectType")} />
+                  <SelectValue placeholder={t("common.selectType") || "Chọn loại"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t("common.all")}</SelectItem>
-                  <SelectItem value="product">{t("reports.product")}</SelectItem>
-                  <SelectItem value="combo">{t("reports.combo")}</SelectItem>
-                  <SelectItem value="service">{t("reports.service")}</SelectItem>
+                  <SelectItem value="all">{t("common.all") || "Tất cả"}</SelectItem>
+                  <SelectItem value="product">{t("reports.product") || "Sản phẩm"}</SelectItem>
+                  <SelectItem value="combo">{t("reports.combo") || "Combo"}</SelectItem>
+                  <SelectItem value="service">{t("reports.service") || "Dịch vụ"}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
               <label className="block text-sm font-medium mb-2">
-                {t("common.search")}
+                {t("common.search") || "Tìm kiếm"}
               </label>
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
                 <Input
-                  placeholder={t("common.searchProduct")}
+                  placeholder={t("common.searchProduct") || "Tìm kiếm sản phẩm"}
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
                   className="pl-8"
@@ -315,10 +315,10 @@ export default function MenuReport() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalRevenue")}
+                  {t("reports.totalRevenue") || "Tổng doanh thu"}
                 </p>
                 <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(menuAnalysis?.totalRevenue || 0)}
+                  {formatCurrency(menuAnalysis?.totalRevenue || 0)} ₫
                 </p>
               </div>
               <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
@@ -333,7 +333,7 @@ export default function MenuReport() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.totalSales")}
+                  {t("reports.totalSales") || "Tổng bán"}
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
                   {(menuAnalysis?.totalQuantity || 0).toLocaleString('vi-VN')}
@@ -351,14 +351,14 @@ export default function MenuReport() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.averagePrice")}
+                  {t("reports.averagePrice") || "Giá trung bình"}
                 </p>
                 <p className="text-2xl font-bold text-orange-600">
                   {formatCurrency(
                     menuAnalysis?.totalQuantity && menuAnalysis.totalQuantity > 0
                       ? menuAnalysis.totalRevenue / menuAnalysis.totalQuantity
                       : 0
-                  )}
+                  )} ₫
                 </p>
               </div>
               <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
@@ -373,7 +373,7 @@ export default function MenuReport() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  {t("reports.uniqueProducts")}
+                  {t("reports.uniqueProducts") || "Sản phẩm"}
                 </p>
                 <p className="text-2xl font-bold text-purple-600">
                   {filteredProducts.length.toLocaleString('vi-VN')}
@@ -391,24 +391,24 @@ export default function MenuReport() {
       {menuAnalysis?.categoryStats && menuAnalysis.categoryStats.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>{t("reports.categoryPerformance")}</CardTitle>
+            <CardTitle>{t("reports.categoryPerformance") || "Hiệu suất danh mục"}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[600px]">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2 px-4">{t("common.category")}</th>
-                    <th className="text-right py-2 px-4">{t("reports.productCount")}</th>
-                    <th className="text-right py-2 px-4">{t("reports.quantity")}</th>
-                    <th className="text-right py-2 px-4">{t("reports.revenue")}</th>
+                    <th className="text-left py-2 px-4">{t("common.category") || "Danh mục"}</th>
+                    <th className="text-right py-2 px-4">{t("reports.productCount") || "Số sản phẩm"}</th>
+                    <th className="text-right py-2 px-4">{t("reports.quantity") || "Số lượng"}</th>
+                    <th className="text-right py-2 px-4">{t("reports.revenue") || "Doanh thu"}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {menuAnalysis.categoryStats.map((category, index) => (
                     <tr key={category.categoryId || index} className="border-b">
                       <td className="py-2 px-4 font-medium">
-                        {category.categoryName || `Category ${category.categoryId}`}
+                        {category.categoryName || `Danh mục ${category.categoryId}`}
                       </td>
                       <td className="py-2 px-4 text-right">
                         {(category.productCount || 0).toLocaleString('vi-VN')}
@@ -417,7 +417,7 @@ export default function MenuReport() {
                         {(category.totalQuantity || 0).toLocaleString('vi-VN')}
                       </td>
                       <td className="py-2 px-4 text-right font-medium">
-                        {formatCurrency(category.totalRevenue || 0)}
+                        {formatCurrency(category.totalRevenue || 0)} ₫
                       </td>
                     </tr>
                   ))}
@@ -434,7 +434,7 @@ export default function MenuReport() {
         {menuAnalysis?.topSellingProducts && menuAnalysis.topSellingProducts.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>{t("reports.topSellingItems")}</CardTitle>
+              <CardTitle>{t("reports.topSellingItems") || "Sản phẩm bán chạy"}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -445,14 +445,14 @@ export default function MenuReport() {
                         <span className="text-sm font-bold text-blue-600">{index + 1}</span>
                       </div>
                       <div>
-                        <p className="font-medium">{product.productName || `Product ${product.productId}`}</p>
+                        <p className="font-medium">{product.productName || `Sản phẩm ${product.productId}`}</p>
                         <p className="text-sm text-gray-500">
-                          {(product.totalQuantity || 0).toLocaleString('vi-VN')} {t("common.sold")}
+                          {(product.totalQuantity || 0).toLocaleString('vi-VN')} {t("common.sold") || "đã bán"}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">{formatCurrency(product.totalRevenue || 0)}</p>
+                      <p className="font-medium">{formatCurrency(product.totalRevenue || 0)} ₫</p>
                     </div>
                   </div>
                 ))}
@@ -465,7 +465,7 @@ export default function MenuReport() {
         {menuAnalysis?.topRevenueProducts && menuAnalysis.topRevenueProducts.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>{t("reports.topRevenueItems")}</CardTitle>
+              <CardTitle>{t("reports.topRevenueItems") || "Sản phẩm doanh thu cao"}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
@@ -476,14 +476,14 @@ export default function MenuReport() {
                         <span className="text-sm font-bold text-green-600">{index + 1}</span>
                       </div>
                       <div>
-                        <p className="font-medium">{product.productName || `Product ${product.productId}`}</p>
+                        <p className="font-medium">{product.productName || `Sản phẩm ${product.productId}`}</p>
                         <p className="text-sm text-gray-500">
-                          {(product.totalQuantity || 0).toLocaleString('vi-VN')} {t("common.sold")}
+                          {(product.totalQuantity || 0).toLocaleString('vi-VN')} {t("common.sold") || "đã bán"}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-green-600">{formatCurrency(product.totalRevenue || 0)}</p>
+                      <p className="font-medium text-green-600">{formatCurrency(product.totalRevenue || 0)} ₫</p>
                     </div>
                   </div>
                 ))}
@@ -496,7 +496,7 @@ export default function MenuReport() {
       {/* Product List */}
       <Card>
         <CardHeader>
-          <CardTitle>{t("reports.menuItemAnalysis")}</CardTitle>
+          <CardTitle>{t("reports.menuItemAnalysis") || "Phân tích sản phẩm"}</CardTitle>
         </CardHeader>
         <CardContent>
           {analysisLoading ? (
@@ -507,7 +507,7 @@ export default function MenuReport() {
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-8">
               <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">{t("common.noData")}</p>
+              <p className="text-gray-500">{t("common.noData") || "Không có dữ liệu"}</p>
               <p className="text-sm text-gray-400 mt-2">
                 Thử thay đổi bộ lọc để xem kết quả khác
               </p>
@@ -517,13 +517,13 @@ export default function MenuReport() {
               <table className="w-full min-w-[800px]">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-2 px-4">{t("common.product")}</th>
-                    <th className="text-left py-2 px-4">{t("common.sku")}</th>
-                    <th className="text-left py-2 px-4">{t("common.category")}</th>
-                    <th className="text-left py-2 px-4">{t("common.type")}</th>
-                    <th className="text-right py-2 px-4">{t("common.price")}</th>
-                    <th className="text-right py-2 px-4">{t("common.stock")}</th>
-                    <th className="text-center py-2 px-4">{t("common.status")}</th>
+                    <th className="text-left py-2 px-4">{t("common.product") || "Sản phẩm"}</th>
+                    <th className="text-left py-2 px-4">{t("common.sku") || "SKU"}</th>
+                    <th className="text-left py-2 px-4">{t("common.category") || "Danh mục"}</th>
+                    <th className="text-left py-2 px-4">{t("common.type") || "Loại"}</th>
+                    <th className="text-right py-2 px-4">{t("common.price") || "Giá"}</th>
+                    <th className="text-right py-2 px-4">{t("common.stock") || "Tồn kho"}</th>
+                    <th className="text-center py-2 px-4">{t("common.status") || "Trạng thái"}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -540,7 +540,7 @@ export default function MenuReport() {
                           </Badge>
                         </td>
                         <td className="py-2 px-4 text-right font-medium">
-                          {formatCurrency(product.price)}
+                          {formatCurrency(product.price)} ₫
                         </td>
                         <td className="py-2 px-4 text-right">
                           <span className={`${product.stock <= 10 ? 'text-red-600' : 'text-gray-900'}`}>
@@ -549,7 +549,7 @@ export default function MenuReport() {
                         </td>
                         <td className="py-2 px-4 text-center">
                           <Badge variant={product.isActive ? "default" : "secondary"}>
-                            {product.isActive ? t("common.active") : t("common.inactive")}
+                            {product.isActive ? t("common.active") || "Hoạt động" : t("common.inactive") || "Không hoạt động"}
                           </Badge>
                         </td>
                       </tr>
