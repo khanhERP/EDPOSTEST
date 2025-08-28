@@ -2239,7 +2239,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     size="lg"
                   >
                     <Printer className="w-4 h-4 mr-2" />
-                    In hóa đơn
+                    {t("orders.printBill")}
                   </Button>
                 </div>
               )}

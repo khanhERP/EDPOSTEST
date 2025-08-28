@@ -46,6 +46,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     mixedPaymentDesc:
       "포인트가 부족하여 현금 또는 이체로 추가 결제가 필요합니다",
     mixedPaymentSummary: "결제 요약",
+    printBill: "청구서 인쇄",
     totalOrder: "주문 총액",
     pointsPayment: "포인트 결제",
     remainingAmount: "남은 금액",
@@ -153,6 +154,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     mixedPaymentDesc:
       "Insufficient points, need additional payment by cash or transfer",
     mixedPaymentSummary: "Payment Summary",
+    printBill: "Print Bill",
     totalOrder: "Order Total",
     pointsPayment: "Points Payment",
     remainingAmount: "Remaining Amount",
@@ -262,6 +264,7 @@ export const ordersTranslations: { [key: string]: OrdersTranslations } = {
     mixedPaymentDesc:
       "Không đủ điểm, cần thanh toán thêm bằng tiền mặt hoặc chuyển khoản",
     mixedPaymentSummary: "Tóm tắt thanh toán",
+    printBill: "In hóa đơn",
     totalOrder: "Tổng đơn hàng",
     pointsPayment: "Thanh toán bằng điểm",
     remainingAmount: "Cần thanh toán thêm",
