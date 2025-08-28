@@ -526,7 +526,7 @@ export function EInvoiceModal({
             amountReceived: total.toFixed(2),
             change: "0.00",
             cashierName: "System User",
-            notes: `E-Invoice: ${invoiceResult.invoice.tradeNumber}`,
+            notes: `E-Invoice Draft: ${invoiceResult.invoice.tradeNumber} - Phát hành sau`,
             invoiceId: invoiceResult.invoice.id
           },
           items: cartItems.map((item) => ({
@@ -538,17 +538,22 @@ export function EInvoiceModal({
           }))
         };
 
-        console.log("Creating transaction to deduct inventory:", transactionData);
+        console.log("💾 Creating transaction to deduct inventory for 'Phát hành sau':", transactionData);
+
         const transactionResponse = await apiRequest("POST", "/api/transactions", transactionData);
 
         if (transactionResponse.ok) {
           const transactionResult = await transactionResponse.json();
-          console.log("Transaction created successfully for inventory deduction:", transactionResult);
+          console.log("✅ Transaction created successfully - inventory deducted:", transactionResult);
         } else {
-          console.error("Failed to create transaction for inventory deduction");
+          const transactionError = await transactionResponse.text();
+          console.error("❌ Error creating transaction for inventory:", transactionError);
+          // Show error to user but don't block the flow
+          alert("Cảnh báo: Không thể trừ tồn kho tự động. Vui lòng kiểm tra lại.");
         }
       } catch (transactionError) {
-        console.error("Error creating transaction for inventory:", transactionError);
+        console.error("❌ Error creating transaction for inventory:", transactionError);
+        alert("Cảnh báo: Không thể trừ tồn kho tự động. Vui lòng kiểm tra lại.");
       }
 
       // Create receipt data thực sự cho receipt modal
@@ -583,8 +588,6 @@ export function EInvoiceModal({
         tax: calculatedTax.toFixed(2),
         total: total.toFixed(2),
         paymentMethod: "einvoice",
-        amountReceived: total.toFixed(2),
-        change: "0.00",
         cashierName: "System User",
         createdAt: new Date().toISOString(),
         invoiceNumber: invoiceResult.invoice?.invoiceNumber || null,

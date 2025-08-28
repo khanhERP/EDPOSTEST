@@ -495,10 +495,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Check stock availability only for products that track inventory
         if (product.trackInventory && product.stock < item.quantity) {
+          console.log(`❌ Insufficient stock for ${product.name}: Available=${product.stock}, Requested=${item.quantity}`);
           return res.status(400).json({
             message: `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
           });
         }
+
+        console.log(`✅ Stock check passed for ${product.name}: Available=${product.stock}, Requested=${item.quantity}`);
 
         const itemSubtotal = parseFloat(item.price) * item.quantity;
         let itemTax = 0;

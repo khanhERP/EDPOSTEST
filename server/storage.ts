@@ -472,8 +472,13 @@ export class DatabaseStorage implements IStorage {
   async createTransaction(
     insertTransaction: InsertTransaction,
     items: InsertTransactionItem[],
+    tenantDb?: any,
   ): Promise<Receipt> {
-    const [transaction] = await db
+    const database = tenantDb || db;
+    console.log(`🔄 Creating transaction: ${insertTransaction.transactionId}`);
+    console.log(`📦 Processing ${items.length} items for inventory deduction`);
+
+    const [transaction] = await database
       .insert(transactions)
       .values({
         ...insertTransaction,
@@ -484,7 +489,9 @@ export class DatabaseStorage implements IStorage {
 
     const transactionItemsWithIds: TransactionItem[] = [];
     for (const item of items) {
-      const [transactionItem] = await db
+      console.log(`📝 Processing item: ${item.productName} (ID: ${item.productId}) - Qty: ${item.quantity}`);
+      
+      const [transactionItem] = await database
         .insert(transactionItems)
         .values({
           ...item,
@@ -492,11 +499,20 @@ export class DatabaseStorage implements IStorage {
         })
         .returning();
 
-      // Update product stock
-      await this.updateProductStock(item.productId, -item.quantity);
+      // Update product stock - this is the key part for inventory deduction
+      console.log(`🔢 Updating stock for product ID ${item.productId}: -${item.quantity}`);
+      const updatedProduct = await this.updateProductStock(item.productId, -item.quantity, tenantDb);
+      
+      if (updatedProduct) {
+        console.log(`✅ Stock updated for ${item.productName}: New stock = ${updatedProduct.stock}`);
+      } else {
+        console.error(`❌ Failed to update stock for ${item.productName} (ID: ${item.productId})`);
+      }
+      
       transactionItemsWithIds.push(transactionItem);
     }
 
+    console.log(`✅ Transaction created successfully: ${transaction.transactionId}`);
     return {
       ...transaction,
       items: transactionItemsWithIds,
