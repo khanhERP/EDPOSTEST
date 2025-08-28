@@ -86,6 +86,33 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     refetchOnMount: true,
   });
 
+  // Get all active orders' items for proper total calculation
+  const activeOrders = Array.isArray(orders) ? orders.filter(
+    (order: any) => !["paid", "cancelled"].includes(order.status)
+  ) : [];
+  
+  const { data: allOrderItems } = useQuery({
+    queryKey: ["/api/all-order-items", activeOrders.map(o => o.id).join(",")],
+    enabled: activeOrders.length > 0,
+    staleTime: 0,
+    queryFn: async () => {
+      const itemsMap = new Map();
+      
+      for (const order of activeOrders) {
+        try {
+          const response = await apiRequest("GET", `/api/order-items/${order.id}`);
+          const items = await response.json();
+          itemsMap.set(order.id, Array.isArray(items) ? items : []);
+        } catch (error) {
+          console.error(`Error fetching items for order ${order.id}:`, error);
+          itemsMap.set(order.id, []);
+        }
+      }
+      
+      return itemsMap;
+    },
+  });
+
   const {
     data: orderItems,
     isLoading: orderItemsLoading,
@@ -1606,51 +1633,77 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           className={`font-medium ${Number(activeOrder.total) <= 0 ? "text-gray-400" : "text-gray-900"}`}
                         >
                           {(() => {
-                            // Force fresh data by checking both string and number values
-                            const rawTotal = activeOrder.total;
-                            const orderTotal = Number(rawTotal || 0);
-
-                            console.log(
-                              `💰 Table ${table.tableNumber} - Order ${activeOrder.id} total display:`,
-                              {
-                                rawTotal,
-                                numberTotal: orderTotal,
-                                isZero: orderTotal <= 0,
-                                stringValue: rawTotal?.toString(),
-                                formatted:
-                                  orderTotal <= 0
-                                    ? "0"
-                                    : Math.floor(orderTotal).toLocaleString(
-                                        "vi-VN",
-                                      ),
-                                timestamp: Date.now(),
-                              },
-                            );
-
-                            // Handle zero, null, undefined, or negative values with additional checks
-                            if (
-                              rawTotal === null ||
-                              rawTotal === undefined ||
-                              rawTotal === "" ||
-                              rawTotal === "0" ||
-                              rawTotal === "0.00" ||
-                              orderTotal <= 0 ||
-                              (typeof rawTotal === "string" &&
-                                parseFloat(rawTotal) <= 0)
-                            ) {
+                            // Get order items for this specific order
+                            const currentOrderItems = allOrderItems?.get(activeOrder.id) || [];
+                            
+                            // If we don't have order items loaded or it's empty, use the stored total
+                            if (!currentOrderItems || currentOrderItems.length === 0) {
+                              const rawTotal = activeOrder.total;
+                              const orderTotal = Number(rawTotal || 0);
+                              
                               console.log(
-                                `🟡 Table ${table.tableNumber} showing zero total for order ${activeOrder.id}`,
+                                `💰 Table ${table.tableNumber} - Order ${activeOrder.id} using stored total:`,
+                                {
+                                  rawTotal,
+                                  orderTotal,
+                                  hasItems: false,
+                                }
                               );
+                              
+                              if (orderTotal <= 0) {
+                                return "0";
+                              }
+                              
+                              return Math.floor(orderTotal).toLocaleString("vi-VN");
+                            }
+                            
+                            // Recalculate using same logic as Order Details and Shopping Cart
+                            let subtotal = 0;
+                            let totalTax = 0;
+                            
+                            currentOrderItems.forEach((item: any) => {
+                              const basePrice = Number(item.unitPrice || 0);
+                              const quantity = Number(item.quantity || 0);
+                              const product = Array.isArray(products)
+                                ? products.find((p: any) => p.id === item.productId)
+                                : null;
+                              
+                              // Calculate subtotal (base price without tax)
+                              subtotal += basePrice * quantity;
+                              
+                              // Use same tax calculation logic as other screens
+                              if (
+                                product?.afterTaxPrice &&
+                                product.afterTaxPrice !== null &&
+                                product.afterTaxPrice !== ""
+                              ) {
+                                const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                                const taxPerUnit = afterTaxPrice - basePrice;
+                                totalTax += taxPerUnit * quantity;
+                              } else {
+                                // No afterTaxPrice means no tax (default 0)
+                                totalTax += 0;
+                              }
+                            });
+                            
+                            const grandTotal = subtotal + totalTax;
+                            
+                            console.log(
+                              `💰 Table ${table.tableNumber} - Order ${activeOrder.id} recalculated total:`,
+                              {
+                                subtotal,
+                                totalTax,
+                                grandTotal,
+                                itemsCount: currentOrderItems.length,
+                                storedTotal: Number(activeOrder.total || 0),
+                              }
+                            );
+                            
+                            if (grandTotal <= 0) {
                               return "0";
                             }
-
-                            // Format number with Vietnamese locale
-                            const formatted =
-                              Math.floor(orderTotal).toLocaleString("vi-VN");
-                            console.log(
-                              `💵 Table ${table.tableNumber} showing formatted total: ${formatted} ₫ for order ${activeOrder.id}`,
-                            );
-                            return formatted;
+                            
+                            return Math.floor(grandTotal).toLocaleString("vi-VN");
                           })()}{" "}
                           ₫
                         </div>
