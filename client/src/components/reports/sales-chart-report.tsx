@@ -2429,10 +2429,10 @@ export function SalesChartReport() {
                 </div>
               </div>
             )}
-          </CardContent>
-        </Card>
-      );
-    };
+          </div>
+        </CardContent>
+      </Card>
+    );
 
     // Legacy Sales Channel Report Component Logic
     const renderSalesChannelReport = () => {
