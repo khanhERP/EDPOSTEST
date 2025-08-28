@@ -200,6 +200,8 @@ export default function Settings() {
     description: "",
     isActive: "true",
     trackInventory: true,
+    taxRate: "",
+    afterTaxPrice: "",
   });
 
   // Fetch store settings
@@ -569,6 +571,8 @@ export default function Settings() {
       description: "",
       isActive: "true",
       trackInventory: true,
+      taxRate: "",
+      afterTaxPrice: "",
     });
     setEditingProduct(null);
   };
@@ -758,6 +762,8 @@ export default function Settings() {
         categoryId: parseInt(productForm.categoryId),
         isActive: productForm.isActive === "true",
         trackInventory: productForm.trackInventory,
+        taxRate: productForm.taxRate ? parseFloat(productForm.taxRate).toString() : "0",
+        afterTaxPrice: productForm.afterTaxPrice || null,
       };
 
       const response = await apiRequest("POST", "/api/products", productData);
@@ -794,6 +800,8 @@ export default function Settings() {
         categoryId: parseInt(productForm.categoryId),
         isActive: productForm.isActive === "true",
         trackInventory: productForm.trackInventory,
+        taxRate: productForm.taxRate ? parseFloat(productForm.taxRate).toString() : "0",
+        afterTaxPrice: productForm.afterTaxPrice || null,
       };
 
       const response = await apiRequest(
@@ -869,6 +877,8 @@ export default function Settings() {
       description: product.description || "",
       isActive: product.isActive ? "true" : "false",
       trackInventory: product.trackInventory !== undefined ? product.trackInventory : true,
+      taxRate: product.taxRate ? parseFloat(product.taxRate).toString() : "",
+      afterTaxPrice: product.afterTaxPrice ? product.afterTaxPrice.toString() : "",
     });
     setEditingProduct(product);
     setShowProductForm(true);
@@ -3253,11 +3263,77 @@ export default function Settings() {
                 type="number"
                 step="0.01"
                 value={productForm.price}
-                onChange={(e) =>
-                  setProductForm((prev) => ({ ...prev, price: e.target.value }))
-                }
+                onChange={(e) => {
+                  const basePrice = e.target.value;
+                  setProductForm((prev) => ({ ...prev, price: basePrice }));
+                  
+                  // Auto calculate after tax price when base price changes
+                  if (basePrice && productForm.taxRate) {
+                    const basePriceNum = parseFloat(basePrice);
+                    const taxRateNum = parseFloat(productForm.taxRate);
+                    if (!isNaN(basePriceNum) && !isNaN(taxRateNum)) {
+                      const afterTaxPrice = basePriceNum * (1 + taxRateNum / 100);
+                      setProductForm((prev) => ({ ...prev, afterTaxPrice: Math.round(afterTaxPrice).toString() }));
+                    }
+                  }
+                }}
                 className="col-span-3"
                 placeholder={t("settings.productPricePlaceholder")}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="taxRate" className="text-right">
+                Thuế suất (%)
+              </Label>
+              <Input
+                id="taxRate"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                value={productForm.taxRate || ""}
+                onChange={(e) => {
+                  const taxRate = e.target.value;
+                  setProductForm((prev) => ({ ...prev, taxRate }));
+                  
+                  // Auto calculate after tax price when tax rate changes
+                  if (taxRate && productForm.price) {
+                    const basePriceNum = parseFloat(productForm.price);
+                    const taxRateNum = parseFloat(taxRate);
+                    if (!isNaN(basePriceNum) && !isNaN(taxRateNum)) {
+                      const afterTaxPrice = basePriceNum * (1 + taxRateNum / 100);
+                      setProductForm((prev) => ({ ...prev, afterTaxPrice: Math.round(afterTaxPrice).toString() }));
+                    }
+                  }
+                }}
+                className="col-span-3"
+                placeholder="0.00"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="afterTaxPrice" className="text-right">
+                Giá sau thuế
+              </Label>
+              <Input
+                id="afterTaxPrice"
+                type="number"
+                value={productForm.afterTaxPrice || ""}
+                onChange={(e) => {
+                  const afterTaxPrice = e.target.value;
+                  setProductForm((prev) => ({ ...prev, afterTaxPrice }));
+                  
+                  // Auto calculate base price from after tax price
+                  if (afterTaxPrice && productForm.taxRate) {
+                    const afterTaxPriceNum = parseFloat(afterTaxPrice);
+                    const taxRateNum = parseFloat(productForm.taxRate);
+                    if (!isNaN(afterTaxPriceNum) && !isNaN(taxRateNum)) {
+                      const basePrice = afterTaxPriceNum / (1 + taxRateNum / 100);
+                      setProductForm((prev) => ({ ...prev, price: Math.round(basePrice).toString() }));
+                    }
+                  }
+                }}
+                className="col-span-3"
+                placeholder="Tính tự động từ giá bán + thuế suất"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
