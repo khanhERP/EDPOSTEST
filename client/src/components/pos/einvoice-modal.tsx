@@ -1265,23 +1265,28 @@ export function EInvoiceModal({
 
         console.log("✅ Prepared comprehensive invoice result:", invoiceResultForConfirm);
 
-        // Prepare data for receipt modal with proper receipt data
-        const completeInvoiceData = {
-          ...invoiceDataForConfirm,
-          paymentMethod: selectedPaymentMethod, // Use original payment method
+        // Prepare comprehensive invoice data with receipt for final printing step
+        const invoiceResultForConfirm = {
+          ...formData,
+          invoiceData: publishResult.data,
+          cartItems: cartItems,
+          total: total,
+          paymentMethod: selectedPaymentMethod,
           originalPaymentMethod: selectedPaymentMethod,
-          showReceiptModal: true, // Show receipt modal directly
-          publishLater: true, // Flag to indicate this is for later publishing
-          savedInvoice: invoiceResult.invoice, // Pass saved invoice data
-          receipt: receiptData, // Include receipt data for final modal
+          source: source || "pos",
+          orderId: orderId,
+          publishedImmediately: true,
+          receipt: receiptData,
+          customerName: formData.customerName,
+          taxCode: formData.taxCode,
+          invoiceNumber: publishResult.data?.invoiceNo || null,
         };
 
-        console.log("Calling onConfirm with publishLater data - showing receipt modal");
-        console.log("Receipt data included:", receiptData);
+        console.log("✅ Prepared comprehensive invoice result with receipt:", invoiceResultForConfirm);
 
-        // Close e-invoice modal and return data
+        // Close e-invoice modal and return data with receipt for printing
         onClose();
-        onConfirm(completeInvoiceData);
+        onConfirm(invoiceResultForConfirm);
       } catch (error) {
         console.error("Error publishing invoice:", error);
         alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error}`);

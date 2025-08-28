@@ -340,13 +340,13 @@ export function ShoppingCart({
       data,
     );
 
-    // Step 3: Payment method selected, now go directly to Step 4: E-Invoice modal
+    // Step 3: Payment method selected, now go to Step 4: E-Invoice modal
     setShowPaymentMethodModal(false);
     setSelectedPaymentMethod(method);
 
-    // Go directly to E-invoice modal for invoice processing (no duplicate payment selection)
+    // Go to E-invoice modal for invoice processing
     console.log(
-      "📧 Shopping cart: Going directly to E-invoice modal for invoice processing",
+      "📧 Shopping cart: Going to E-invoice modal for invoice processing",
     );
     setShowEInvoiceModal(true);
   };
@@ -372,15 +372,17 @@ export function ShoppingCart({
     console.log('🧹 Shopping cart: Auto clearing cart after E-Invoice completion');
     onClearCart();
 
-    // Always show final receipt modal after E-Invoice completion
-    console.log('📄 Shopping cart: Step 5: Showing final receipt modal');
+    // Step 5: Always show final receipt modal for printing
+    console.log('📄 Shopping cart: Step 5: Showing final receipt modal for printing');
     
-    // Ensure we have receipt data to show
+    // Ensure we have receipt data to show - prioritize receipt from eInvoiceData
     if (eInvoiceData.receipt) {
+      console.log('✅ Using receipt data from E-Invoice response');
       setSelectedReceipt(eInvoiceData.receipt);
       setShowReceiptModal(true);
-    } else if (eInvoiceData.publishedImmediately && eInvoiceData.invoiceNumber) {
-      // For immediate publishing, create receipt data from eInvoiceData
+    } else {
+      console.log('⚠️ No receipt in eInvoiceData, creating receipt from cart data');
+      // Fallback: create receipt data from current cart and eInvoiceData
       const receiptData = {
         transactionId: eInvoiceData.invoiceNumber || `TXN-${Date.now()}`,
         items: cart.map((item) => ({
@@ -402,14 +404,12 @@ export function ShoppingCart({
         change: "0.00",
         cashierName: "System User",
         createdAt: new Date().toISOString(),
-        invoiceNumber: eInvoiceData.invoiceNumber,
+        invoiceNumber: eInvoiceData.invoiceNumber || null,
         customerName: eInvoiceData.customerName || "Khách hàng",
-        customerTaxCode: eInvoiceData.taxCode,
+        customerTaxCode: eInvoiceData.taxCode || "",
       };
       setSelectedReceipt(receiptData);
       setShowReceiptModal(true);
-    } else {
-      console.error('❌ No receipt data found in eInvoiceData:', eInvoiceData);
     }
   };
 
@@ -667,30 +667,6 @@ export function ShoppingCart({
         }))}
       />
 
-      {/* Step 5: Final Receipt Modal - "Receipt" after all processing complete */}
-      <ReceiptModal
-        isOpen={showReceiptModal}
-        onClose={() => {
-          console.log(
-            "🔴 Step 5: Closing final receipt modal (Receipt) from shopping cart",
-          );
-          setShowReceiptModal(false);
-          setSelectedReceipt(null);
-        }}
-        receipt={selectedReceipt}
-        onConfirm={handleReceiptConfirm}
-        isPreview={false} // This is the final receipt - "Receipt"
-        cartItems={cart.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: parseFloat(item.price),
-          quantity: item.quantity,
-          sku: `ITEM${String(item.id).padStart(3, "0")}`,
-          taxRate: parseFloat(item.taxRate || "10"),
-          afterTaxPrice: item.afterTaxPrice, // Pass afterTaxPrice for exact calculation
-        }))}
-      />
-
       {/* Step 2: Payment Method Selection Modal */}
       <PaymentMethodModal
         isOpen={showPaymentMethodModal}
@@ -712,12 +688,12 @@ export function ShoppingCart({
         }))}
       />
 
-      {/* Step 4: E-Invoice Modal for invoice processing */}
+      {/* Step 3: E-Invoice Modal for invoice processing */}
       {showEInvoiceModal && (
         <EInvoiceModal
           isOpen={showEInvoiceModal}
           onClose={() => {
-            console.log("🔴 Step 4: Closing E-invoice modal");
+            console.log("🔴 Step 3: Closing E-invoice modal");
             setShowEInvoiceModal(false);
           }}
           onConfirm={handleEInvoiceConfirm}
@@ -733,6 +709,30 @@ export function ShoppingCart({
           }))}
         />
       )}
+
+      {/* Step 4: Final Receipt Modal - "In hóa đơn" for printing */}
+      <ReceiptModal
+        isOpen={showReceiptModal}
+        onClose={() => {
+          console.log(
+            "🔴 Step 4: Closing final receipt modal (In hóa đơn)",
+          );
+          setShowReceiptModal(false);
+          setSelectedReceipt(null);
+        }}
+        receipt={selectedReceipt}
+        onConfirm={handleReceiptConfirm}
+        isPreview={false} // This is the final receipt for printing
+        cartItems={cart.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: `ITEM${String(item.id).padStart(3, "0")}`,
+          taxRate: parseFloat(item.taxRate || "10"),
+          afterTaxPrice: item.afterTaxPrice, // Pass afterTaxPrice for exact calculation
+        }))}
+      />
 
       {/* Invoice Management Modal */}
       <InvoiceManagementModal
