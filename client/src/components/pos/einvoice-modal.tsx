@@ -384,6 +384,8 @@ export function EInvoiceModal({
     // Placeholder for subtotal, tax, total calculation if needed within this scope
     let subtotal = 0;
     let tax = 0;
+    let shouldShowReceipt = false;
+    let receiptData = null;
 
     try {
       console.log(
@@ -401,12 +403,29 @@ export function EInvoiceModal({
       // Validate cart items first
       if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
         console.error("❌ No valid cart items found for later publishing");
+        
+        // Create dummy receipt data for empty cart case
+        receiptData = {
+          transactionId: `EMPTY-${Date.now()}`,
+          items: [],
+          subtotal: "0.00",
+          tax: "0.00", 
+          total: "0.00",
+          paymentMethod: "einvoice",
+          cashierName: "System User",
+          createdAt: new Date().toISOString(),
+          customerName: formData.customerName || "Khách hàng",
+          customerTaxCode: formData.taxCode || "",
+        };
+        shouldShowReceipt = true;
+        
         toast({
-          title: "Lỗi",
-          description: "Không có sản phẩm nào trong giỏ hàng để lưu thông tin.",
+          title: "Cảnh báo",
+          description: "Không có sản phẩm trong giỏ hàng, hiển thị hóa đơn trống.",
           variant: "destructive",
         });
-        return;
+        
+        // Don't return early, continue to show receipt modal
       }
 
       // Calculate subtotal and tax with proper type conversion
@@ -507,17 +526,50 @@ export function EInvoiceModal({
       );
 
       // Save invoice data to database for later publishing
-      const invoiceResponse = await apiRequest("POST", "/api/invoices", invoicePayload);
+      let invoiceResult = null;
+      
+      if (!shouldShowReceipt) {
+        const invoiceResponse = await apiRequest("POST", "/api/invoices", invoicePayload);
 
-      if (!invoiceResponse.ok) {
-        const errorData = await invoiceResponse.json();
-        console.error("Failed to save invoice:", errorData);
-        setIsPublishing(false);
-        return;
+        if (!invoiceResponse.ok) {
+          const errorData = await invoiceResponse.json();
+          console.error("❌ Failed to save invoice:", errorData);
+          
+          // Create error receipt data instead of returning early
+          receiptData = {
+            transactionId: `ERROR-${Date.now()}`,
+            items: cartItems.map((item) => ({
+              id: item.id,
+              productId: item.id,
+              productName: item.name,
+              price: (typeof item.price === "string" ? parseFloat(item.price) : item.price).toFixed(2),
+              quantity: typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity,
+              total: ((typeof item.price === "string" ? parseFloat(item.price) : item.price) * (typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity)).toFixed(2),
+              sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+              taxRate: typeof item.taxRate === "string" ? parseFloat(item.taxRate || "10") : item.taxRate || 10,
+            })),
+            subtotal: calculatedSubtotal.toFixed(2),
+            tax: calculatedTax.toFixed(2), 
+            total: total.toFixed(2),
+            paymentMethod: "einvoice",
+            cashierName: "System User",
+            createdAt: new Date().toISOString(),
+            customerName: formData.customerName || "Khách hàng",
+            customerTaxCode: formData.taxCode || "",
+            error: "Lỗi lưu hóa đơn",
+          };
+          shouldShowReceipt = true;
+          
+          toast({
+            title: "Lỗi lưu hóa đơn",
+            description: "Không thể lưu hóa đơn nhưng vẫn hiển thị để in.",
+            variant: "destructive",
+          });
+        } else {
+          invoiceResult = await invoiceResponse.json();
+          console.log("✅ Hóa đơn đã được lưu vào bảng invoices và invoice_items:", invoiceResult);
+        }
       }
-
-      const invoiceResult = await invoiceResponse.json();
-      console.log("Hóa đơn đã được lưu vào bảng invoices và invoice_items:", invoiceResult);
 
       // Create transaction to deduct inventory for "Phát hành sau"
       try {
@@ -573,84 +625,86 @@ export function EInvoiceModal({
         console.error("❌ Error creating transaction for inventory:", transactionError);
       }
 
-      // Create receipt data thực sự cho receipt modal
-      const receiptData = {
-        transactionId:
-          invoiceResult.invoice?.invoiceNumber || `TXN-${Date.now()}`,
-        items: cartItems.map((item) => {
-          const itemPrice =
-            typeof item.price === "string"
-              ? parseFloat(item.price)
-              : item.price;
-          const itemQuantity =
-            typeof item.quantity === "string"
-              ? parseInt(item.quantity)
-              : item.quantity;
-          const itemTaxRate =
-            typeof item.taxRate === "string"
-              ? parseFloat(item.taxRate || "10")
-              : item.taxRate || 10;
-          const itemSubtotal = itemPrice * itemQuantity;
-          const itemTax = (itemSubtotal * itemTaxRate) / 100;
+      // Create receipt data if not already created
+      if (!shouldShowReceipt && cartItems && cartItems.length > 0) {
+        receiptData = {
+          transactionId:
+            invoiceResult?.invoice?.invoiceNumber || `TXN-${Date.now()}`,
+          items: cartItems.map((item) => {
+            const itemPrice =
+              typeof item.price === "string"
+                ? parseFloat(item.price)
+                : item.price;
+            const itemQuantity =
+              typeof item.quantity === "string"
+                ? parseInt(item.quantity)
+                : item.quantity;
+            const itemTaxRate =
+              typeof item.taxRate === "string"
+                ? parseFloat(item.taxRate || "10")
+                : item.taxRate || 10;
+            const itemSubtotal = itemPrice * itemQuantity;
+            const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
-          return {
-            id: item.id,
-            productId: item.id,
-            productName: item.name,
-            price: itemPrice.toFixed(2),
-            quantity: itemQuantity,
-            total: (itemSubtotal + itemTax).toFixed(2),
-            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-            taxRate: itemTaxRate,
-          };
-        }),
-        subtotal: calculatedSubtotal.toFixed(2),
-        tax: calculatedTax.toFixed(2),
-        total: total.toFixed(2),
-        paymentMethod: "einvoice",
-        cashierName: "System User",
-        createdAt: new Date().toISOString(),
-        invoiceNumber: invoiceResult.invoice?.invoiceNumber || null,
-        customerName: formData.customerName,
-        customerTaxCode: formData.taxCode,
-      };
+            return {
+              id: item.id,
+              productId: item.id,
+              productName: item.name,
+              price: itemPrice.toFixed(2),
+              quantity: itemQuantity,
+              total: (itemSubtotal + itemTax).toFixed(2),
+              sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+              taxRate: itemTaxRate,
+            };
+          }),
+          subtotal: calculatedSubtotal.toFixed(2),
+          tax: calculatedTax.toFixed(2),
+          total: total.toFixed(2),
+          paymentMethod: "einvoice",
+          cashierName: "System User",
+          createdAt: new Date().toISOString(),
+          invoiceNumber: invoiceResult?.invoice?.invoiceNumber || null,
+          customerName: formData.customerName,
+          customerTaxCode: formData.taxCode,
+        };
+      }
 
-      // Prepare data for invoice management redirect
+      // Always prepare data for invoice management
       const invoiceDataForConfirm = {
         ...formData,
-        cartItems: cartItems,
-        total: total,
+        cartItems: cartItems || [],
+        total: total || 0,
         paymentMethod: "einvoice",
         source: source || "pos",
-        invoiceId: invoiceResult.invoice?.id,
-        publishLater: true, // Flag to indicate this is for later publishing
-        savedInvoice: invoiceResult.invoice, // Pass saved invoice data
+        invoiceId: invoiceResult?.invoice?.id || null,
+        publishLater: true,
+        savedInvoice: invoiceResult?.invoice || null,
       };
 
       console.log(
-        "Prepared invoice data for later publishing - redirecting to invoice management:",
+        "✅ Prepared invoice data for later publishing:",
         invoiceDataForConfirm,
       );
 
-      // Prepare data for receipt modal
+      // Always prepare data for receipt modal
       const completeInvoiceData = {
         ...invoiceDataForConfirm,
-        paymentMethod: selectedPaymentMethod, // Use original payment method
+        paymentMethod: selectedPaymentMethod,
         originalPaymentMethod: selectedPaymentMethod,
-        showReceiptModal: true, // Show receipt modal directly
-        publishLater: true, // Flag to indicate this is for later publishing
-        savedInvoice: invoiceResult.invoice, // Pass saved invoice data
-        receipt: receiptData, // Include receipt data for final modal
+        showReceiptModal: true,
+        publishLater: true,
+        savedInvoice: invoiceResult?.invoice || null,
+        receipt: receiptData,
       };
 
-      console.log("Calling onConfirm with publishLater data - showing receipt modal");
-      console.log("Receipt data included:", receiptData);
+      console.log("✅ Calling onConfirm with publishLater data - ALWAYS showing receipt modal");
+      console.log("📄 Receipt data included:", receiptData);
 
-      // Close e-invoice modal and return data
+      // Always close e-invoice modal and return data
       onClose();
       onConfirm(completeInvoiceData);
     } catch (error) {
-      console.error("Error in handlePublishLater:", error);
+      console.error("❌ Error in handlePublishLater:", error);
 
       let errorMessage = "Có lỗi xảy ra khi lưu hóa đơn";
       if (error instanceof Error) {
@@ -661,12 +715,56 @@ export function EInvoiceModal({
         errorMessage = `Có lỗi xảy ra khi lưu hóa đơn: ${JSON.stringify(error)}`;
       }
 
+      // Create error receipt data for exception case
+      if (!receiptData) {
+        receiptData = {
+          transactionId: `EXCEPTION-${Date.now()}`,
+          items: cartItems?.map((item) => ({
+            id: item.id,
+            productId: item.id,
+            productName: item.name,
+            price: (typeof item.price === "string" ? parseFloat(item.price) : item.price).toFixed(2),
+            quantity: typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity,
+            total: ((typeof item.price === "string" ? parseFloat(item.price) : item.price) * (typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity)).toFixed(2),
+            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+            taxRate: typeof item.taxRate === "string" ? parseFloat(item.taxRate || "10") : item.taxRate || 10,
+          })) || [],
+          subtotal: (cartItems?.reduce((sum, item) => sum + ((typeof item.price === "string" ? parseFloat(item.price) : item.price) * (typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity)), 0) || 0).toFixed(2),
+          tax: "0.00",
+          total: total?.toFixed(2) || "0.00",
+          paymentMethod: "einvoice",
+          cashierName: "System User",
+          createdAt: new Date().toISOString(),
+          customerName: formData.customerName || "Khách hàng",
+          customerTaxCode: formData.taxCode || "",
+          error: errorMessage,
+        };
+      }
+
       toast({
         variant: "destructive",
         title: "Lỗi",
-        description: errorMessage,
+        description: `${errorMessage}. Hiển thị hóa đơn để in.`,
       });
-      return;
+
+      // Still show receipt modal even on error
+      const errorInvoiceData = {
+        ...formData,
+        cartItems: cartItems || [],
+        total: total || 0,
+        paymentMethod: selectedPaymentMethod,
+        originalPaymentMethod: selectedPaymentMethod,
+        showReceiptModal: true,
+        publishLater: true,
+        receipt: receiptData,
+        error: errorMessage,
+      };
+
+      console.log("🚨 Exception caught - still showing receipt modal with error data");
+      console.log("📄 Error receipt data:", receiptData);
+
+      onClose();
+      onConfirm(errorInvoiceData);
     } finally {
       setIsPublishing(false);
     }
