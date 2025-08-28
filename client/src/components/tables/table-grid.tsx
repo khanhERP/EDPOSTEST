@@ -3,12 +3,28 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OrderDialog } from "@/components/orders/order-dialog";
-import { Users, Clock, CheckCircle2, Eye, CreditCard, QrCode, Plus, Printer, X } from "lucide-react";
+import {
+  Users,
+  Clock,
+  CheckCircle2,
+  Eye,
+  CreditCard,
+  QrCode,
+  Plus,
+  Printer,
+  X,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
@@ -55,44 +71,57 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const queryClient = useQueryClient();
 
   const { data: tables, isLoading } = useQuery({
-    queryKey: ['/api/tables'],
+    queryKey: ["/api/tables"],
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Remove from cache immediately after unmount
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   const { data: orders } = useQuery({
-    queryKey: ['/api/orders'],
+    queryKey: ["/api/orders"],
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Remove from cache immediately after unmount
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
-  const { data: orderItems, isLoading: orderItemsLoading, refetch: refetchOrderItems } = useQuery({
-    queryKey: ['/api/order-items', selectedOrder?.id],
+  const {
+    data: orderItems,
+    isLoading: orderItemsLoading,
+    refetch: refetchOrderItems,
+  } = useQuery({
+    queryKey: ["/api/order-items", selectedOrder?.id],
     enabled: !!selectedOrder?.id && orderDetailsOpen,
     refetchOnWindowFocus: false,
     staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Remove from cache immediately after unmount
     queryFn: async () => {
       const orderId = selectedOrder.id;
       if (!orderId) {
-        console.log('No order ID available for fetching items');
+        console.log("No order ID available for fetching items");
         return [];
       }
 
-      console.log('=== FETCHING ORDER ITEMS ===');
-      console.log('Fetching order items for order ID:', orderId);
-      console.log('API URL will be:', `/api/order-items/${orderId}`);
-      console.log('Query enabled conditions:', {
+      console.log("=== FETCHING ORDER ITEMS ===");
+      console.log("Fetching order items for order ID:", orderId);
+      console.log("API URL will be:", `/api/order-items/${orderId}`);
+      console.log("Query enabled conditions:", {
         hasOrderId: !!selectedOrder?.id,
         dialogOpen: orderDetailsOpen,
-        bothTrue: !!selectedOrder?.id && orderDetailsOpen
+        bothTrue: !!selectedOrder?.id && orderDetailsOpen,
       });
 
-      const response = await apiRequest('GET', `/api/order-items/${orderId}`);
+      const response = await apiRequest("GET", `/api/order-items/${orderId}`);
       const data = await response.json();
 
-      console.log('Raw order items response for order', orderId, ':', data);
-      console.log('Response type:', typeof data, 'Length:', data?.length);
-      console.log('Is array?', Array.isArray(data));
+      console.log("Raw order items response for order", orderId, ":", data);
+      console.log("Response type:", typeof data, "Length:", data?.length);
+      console.log("Is array?", Array.isArray(data));
 
       // Log each item in detail
       if (Array.isArray(data) && data.length > 0) {
-        console.log('Order items details:');
+        console.log("Order items details:");
         data.forEach((item, index) => {
           console.log(`  Item ${index + 1}:`, {
             id: item.id,
@@ -101,135 +130,180 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             productName: item.productName,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
-            total: item.total
+            total: item.total,
           });
         });
       } else {
-        console.log('No items found or response is not an array');
+        console.log("No items found or response is not an array");
       }
 
       // Ensure we return an array
       const items = Array.isArray(data) ? data : [];
-      console.log('Final processed items count:', items.length);
-      console.log('About to return items:', items);
-      console.log('=== END FETCHING ORDER ITEMS ===');
+      console.log("Final processed items count:", items.length);
+      console.log("About to return items:", items);
+      console.log("=== END FETCHING ORDER ITEMS ===");
 
       return items;
     },
   });
 
   const { data: products } = useQuery({
-    queryKey: ['/api/products'],
+    queryKey: ["/api/products"],
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Remove from cache immediately after unmount
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   const { data: storeSettings } = useQuery({
-    queryKey: ['/api/store-settings'],
+    queryKey: ["/api/store-settings"],
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Remove from cache immediately after unmount
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   const { data: customers } = useQuery({
-    queryKey: ['/api/customers'],
+    queryKey: ["/api/customers"],
     enabled: pointsPaymentOpen,
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Remove from cache immediately after unmount
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
   // Force refetch order items when dialog opens
   useEffect(() => {
     if (orderDetailsOpen && selectedOrder?.id) {
-      console.log('Dialog opened, refetching order items for order:', selectedOrder.id);
+      console.log(
+        "Dialog opened, refetching order items for order:",
+        selectedOrder.id,
+      );
       refetchOrderItems();
     }
   }, [orderDetailsOpen, selectedOrder?.id, refetchOrderItems]);
 
   const updateTableStatusMutation = useMutation({
     mutationFn: ({ tableId, status }: { tableId: number; status: string }) =>
-      apiRequest('PUT', `/api/tables/${tableId}/status`, { status }),
+      apiRequest("PUT", `/api/tables/${tableId}/status`, { status }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] }); // Invalidate orders as table status might affect them
       toast({
-        title: t('tables.title'),
-        description: t('common.success'),
+        title: t("tables.title"),
+        description: t("common.success"),
       });
     },
     onError: () => {
       toast({
-        title: t('common.error'),
-        description: t('common.error'),
+        title: t("common.error"),
+        description: t("common.error"),
         variant: "destructive",
       });
     },
   });
 
   const completePaymentMutation = useMutation({
-    mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) =>
-      apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod }),
+    mutationFn: ({
+      orderId,
+      paymentMethod,
+    }: {
+      orderId: number;
+      paymentMethod: string;
+    }) =>
+      apiRequest("PUT", `/api/orders/${orderId}/status`, {
+        status: "paid",
+        paymentMethod,
+      }),
     onSuccess: async (data, variables) => {
-      console.log('🎯 Table completePaymentMutation.onSuccess called');
+      console.log("🎯 Table completePaymentMutation.onSuccess called");
 
       // Invalidate queries first
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/order-items", variables.orderId],
+      }); // Invalidate items for the paid order
 
       toast({
-        title: 'Thanh toán thành công',
-        description: 'Đơn hàng đã được thanh toán',
+        title: "Thanh toán thành công",
+        description: "Đơn hàng đã được thanh toán",
       });
 
       // Fetch the completed order and its items for receipt
       try {
         const [completedOrder, orderItemsData] = await Promise.all([
           queryClient.fetchQuery({
-            queryKey: ['/api/orders', variables.orderId],
+            queryKey: ["/api/orders", variables.orderId],
             queryFn: async () => {
-              const response = await apiRequest('GET', `/api/orders/${variables.orderId}`);
+              const response = await apiRequest(
+                "GET",
+                `/api/orders/${variables.orderId}`,
+              );
               return response.json();
-            }
+            },
           }),
           queryClient.fetchQuery({
-            queryKey: ['/api/order-items', variables.orderId],
+            queryKey: ["/api/order-items", variables.orderId],
             queryFn: async () => {
-              const response = await apiRequest('GET', `/api/order-items/${variables.orderId}`);
+              const response = await apiRequest(
+                "GET",
+                `/api/order-items/${variables.orderId}`,
+              );
               return response.json();
-            }
-          })
+            },
+          }),
         ]);
 
         if (completedOrder && orderItemsData) {
-          console.log('✅ Table payment completed - preparing receipt data');
+          console.log("✅ Table payment completed - preparing receipt data");
 
           // Use same calculation logic as Order Details display to get exact values
           let subtotal = 0;
           let totalTax = 0;
 
-          const processedItems = Array.isArray(orderItemsData) ? orderItemsData.map((item: any) => {
-            const basePrice = Number(item.unitPrice || 0);
-            const quantity = Number(item.quantity || 0);
-            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-            const itemTaxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
+          const processedItems = Array.isArray(orderItemsData)
+            ? orderItemsData.map((item: any) => {
+                const basePrice = Number(item.unitPrice || 0);
+                const quantity = Number(item.quantity || 0);
+                const product = Array.isArray(products)
+                  ? products.find((p: any) => p.id === item.productId)
+                  : null;
+                const itemTaxRate = product?.taxRate
+                  ? parseFloat(product.taxRate)
+                  : 10;
 
-            // Calculate subtotal (base price without tax) - same as Order Details
-            subtotal += basePrice * quantity;
+                // Calculate subtotal (base price without tax) - same as Order Details
+                subtotal += basePrice * quantity;
 
-            // Use same tax calculation logic as Order Details
-            if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-              const afterTaxPrice = parseFloat(product.afterTaxPrice);
-              // Tax = afterTaxPrice - basePrice (per unit), then multiply by quantity
-              const taxPerUnit = afterTaxPrice - basePrice;
-              totalTax += taxPerUnit * quantity;
-            } else {
-              // No afterTaxPrice means no tax
-              totalTax += 0;
-            }
+                // Use same tax calculation logic as Order Details
+                if (
+                  product?.afterTaxPrice &&
+                  product.afterTaxPrice !== null &&
+                  product.afterTaxPrice !== ""
+                ) {
+                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                  // Tax = afterTaxPrice - basePrice (per unit), then multiply by quantity
+                  const taxPerUnit = afterTaxPrice - basePrice;
+                  totalTax += taxPerUnit * quantity;
+                } else {
+                  // No afterTaxPrice means no tax
+                  totalTax += 0;
+                }
 
-            return {
-              id: item.id,
-              productId: item.productId,
-              productName: item.productName || getProductName(item.productId),
-              quantity: item.quantity,
-              price: item.unitPrice,
-              total: item.total,
-              sku: item.productSku || `SP${item.productId}`,
-              taxRate: itemTaxRate
-            };
-          }) : [];
+                return {
+                  id: item.id,
+                  productId: item.productId,
+                  productName:
+                    item.productName || getProductName(item.productId),
+                  quantity: item.quantity,
+                  price: item.unitPrice,
+                  total: item.total,
+                  sku: item.productSku || `SP${item.productId}`,
+                  taxRate: itemTaxRate,
+                };
+              })
+            : [];
 
           // Use EXACT same calculation logic as Order Details display to ensure consistency
           let orderDetailsSubtotal = 0;
@@ -239,13 +313,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             orderItemsData.forEach((item: any) => {
               const basePrice = Number(item.unitPrice || 0);
               const quantity = Number(item.quantity || 0);
-              const product = products.find((p: any) => p.id === item.productId);
+              const product = products.find(
+                (p: any) => p.id === item.productId,
+              );
 
               // Calculate subtotal exactly as Order Details
               orderDetailsSubtotal += basePrice * quantity;
 
               // Use EXACT same tax calculation logic as Order Details
-              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+              if (
+                product?.afterTaxPrice &&
+                product.afterTaxPrice !== null &&
+                product.afterTaxPrice !== ""
+              ) {
                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
                 // Tax = afterTaxPrice - basePrice (per unit), then multiply by quantity
                 const taxPerUnit = afterTaxPrice - basePrice;
@@ -265,14 +345,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             subtotal: orderDetailsSubtotal.toString(),
             tax: orderDetailsTax.toString(),
             total: (orderDetailsSubtotal + orderDetailsTax).toString(),
-            paymentMethod: variables.paymentMethod || 'cash',
+            paymentMethod: variables.paymentMethod || "cash",
             amountReceived: (orderDetailsSubtotal + orderDetailsTax).toString(),
-            change: '0.00',
-            cashierName: 'Table Service',
-            createdAt: new Date().toISOString()
+            change: "0.00",
+            cashierName: "Table Service",
+            createdAt: new Date().toISOString(),
           };
 
-          console.log('📄 Table receipt data prepared:', receiptData);
+          console.log("📄 Table receipt data prepared:", receiptData);
 
           // Close all dialogs first
           setOrderDetailsOpen(false);
@@ -286,19 +366,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setShowReceiptModal(true);
         }
       } catch (error) {
-        console.error('Error fetching order details for receipt:', error);
+        console.error("Error fetching order details for receipt:", error);
         toast({
-          title: 'Cảnh báo',
-          description: 'Thanh toán thành công nhưng không thể hiển thị hóa đơn',
-          variant: 'destructive',
+          title: "Cảnh báo",
+          description: "Thanh toán thành công nhưng không thể hiển thị hóa đơn",
+          variant: "destructive",
         });
       }
     },
     onError: () => {
-      console.log('❌ Table completePaymentMutation.onError called');
+      console.log("❌ Table completePaymentMutation.onError called");
       toast({
-        title: 'Lỗi',
-        description: 'Không thể hoàn tất thanh toán',
+        title: "Lỗi",
+        description: "Không thể hoàn tất thanh toán",
         variant: "destructive",
       });
       setOrderForPayment(null);
@@ -306,82 +386,106 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   });
 
   const pointsPaymentMutation = useMutation({
-    mutationFn: async ({ customerId, points, orderId }: { customerId: number; points: number; orderId: number }) => {
+    mutationFn: async ({
+      customerId,
+      points,
+      orderId,
+    }: {
+      customerId: number;
+      points: number;
+      orderId: number;
+    }) => {
       // First redeem points
-      await apiRequest('POST', '/api/customers/redeem-points', {
+      await apiRequest("POST", "/api/customers/redeem-points", {
         customerId,
-        points
+        points,
       });
 
       // Then mark order as paid
-      await apiRequest('PUT', `/api/orders/${orderId}/status`, {
-        status: 'paid',
-        paymentMethod: 'points',
-        customerId
+      await apiRequest("PUT", `/api/orders/${orderId}/status`, {
+        status: "paid",
+        paymentMethod: "points",
+        customerId,
       });
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/order-items", variables.orderId],
+      });
       setOrderDetailsOpen(false);
       setPointsPaymentOpen(false);
       setSelectedCustomer(null);
       setPointsAmount("");
       setSearchTerm("");
       toast({
-        title: 'Thanh toán thành công',
-        description: 'Đơn hàng đã được thanh toán bằng điểm',
+        title: "Thanh toán thành công",
+        description: "Đơn hàng đã được thanh toán bằng điểm",
       });
 
       // Fetch the completed order to get its details for receipt
-      queryClient.fetchQuery({
-        queryKey: ['/api/orders', variables.orderId],
-        queryFn: async () => {
-          const response = await apiRequest('GET', `/api/orders/${variables.orderId}`);
-          return response.json();
-        }
-      }).then((completedOrder) => {
-        if (completedOrder) {
-          console.log('Completed order for receipt:', completedOrder);
-          setSelectedReceipt(completedOrder); // Set the order for the receipt modal
-          setShowReceiptModal(true); // Show the receipt modal
-        }
-      });
+      queryClient
+        .fetchQuery({
+          queryKey: ["/api/orders", variables.orderId],
+          queryFn: async () => {
+            const response = await apiRequest(
+              "GET",
+              `/api/orders/${variables.orderId}`,
+            );
+            return response.json();
+          },
+        })
+        .then((completedOrder) => {
+          if (completedOrder) {
+            console.log("Completed order for receipt:", completedOrder);
+            setSelectedReceipt(completedOrder); // Set the order for the receipt modal
+            setShowReceiptModal(true); // Show the receipt modal
+          }
+        });
     },
     onError: () => {
       toast({
-        title: 'Lỗi',
-        description: 'Không thể hoàn tất thanh toán bằng điểm',
+        title: "Lỗi",
+        description: "Không thể hoàn tất thanh toán bằng điểm",
         variant: "destructive",
       });
     },
   });
 
   const mixedPaymentMutation = useMutation({
-    mutationFn: async ({ customerId, points, orderId, paymentMethod }: {
+    mutationFn: async ({
+      customerId,
+      points,
+      orderId,
+      paymentMethod,
+    }: {
       customerId: number;
       points: number;
       orderId: number;
       paymentMethod: string;
     }) => {
       // First redeem all available points
-      await apiRequest('POST', '/api/customers/redeem-points', {
+      await apiRequest("POST", "/api/customers/redeem-points", {
         customerId,
-        points
+        points,
       });
 
       // Then mark order as paid with mixed payment
-      await apiRequest('PUT', `/api/orders/${orderId}/status`, {
-        status: 'paid',
+      await apiRequest("PUT", `/api/orders/${orderId}/status`, {
+        status: "paid",
         paymentMethod: `points + ${paymentMethod}`,
-        customerId
+        customerId,
       });
     },
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/customers'] });
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/order-items", variables.orderId],
+      });
       setOrderDetailsOpen(false);
       setMixedPaymentOpen(false);
       setMixedPaymentData(null);
@@ -389,30 +493,36 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       setPointsAmount("");
       setSearchTerm("");
       toast({
-        title: 'Thanh toán thành công',
-        description: 'Đơn hàng đã được thanh toán bằng điểm + tiền mặt/chuyển khoản',
+        title: "Thanh toán thành công",
+        description:
+          "Đơn hàng đã được thanh toán bằng điểm + tiền mặt/chuyển khoản",
       });
 
       // Fetch the completed order to get its details for receipt
-      queryClient.fetchQuery({
-        queryKey: ['/api/orders', variables.orderId],
-        queryFn: async () => {
-          const response = await apiRequest('GET', `/api/orders/${variables.orderId}`);
-          return response.json();
-        }
-      }).then((completedOrder) => {
-        if (completedOrder) {
-          console.log('Completed order for receipt:', completedOrder);
-          setSelectedReceipt(completedOrder); // Set the order for the receipt modal
-          setShowReceiptModal(true); // Show the receipt modal
-        }
-      });
+      queryClient
+        .fetchQuery({
+          queryKey: ["/api/orders", variables.orderId],
+          queryFn: async () => {
+            const response = await apiRequest(
+              "GET",
+              `/api/orders/${variables.orderId}`,
+            );
+            return response.json();
+          },
+        })
+        .then((completedOrder) => {
+          if (completedOrder) {
+            console.log("Completed order for receipt:", completedOrder);
+            setSelectedReceipt(completedOrder); // Set the order for the receipt modal
+            setShowReceiptModal(true); // Show the receipt modal
+          }
+        });
     },
     onError: () => {
       toast({
-        title: 'Lỗi',
-        description: 'Không thể hoàn tất thanh toán hỗn hợp',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: "Không thể hoàn tất thanh toán hỗn hợp",
+        variant: "destructive",
       });
     },
   });
@@ -420,39 +530,48 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const deleteOrderMutation = useMutation({
     mutationFn: async (orderId: number) => {
       // First cancel the order
-      const response = await apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'cancelled' });
+      const response = await apiRequest(
+        "PUT",
+        `/api/orders/${orderId}/status`,
+        { status: "cancelled" },
+      );
 
       // Find the order to get its table ID
       const order = orders?.find((o: any) => o.id === orderId);
       if (order?.tableId) {
         // Check if there are any other active orders on this table
-        const otherActiveOrders = orders?.filter((o: any) =>
-          o.tableId === order.tableId &&
-          o.id !== orderId &&
-          !["paid", "cancelled"].includes(o.status)
+        const otherActiveOrders = orders?.filter(
+          (o: any) =>
+            o.tableId === order.tableId &&
+            o.id !== orderId &&
+            !["paid", "cancelled"].includes(o.status),
         );
 
         // If no other active orders, update table status to available
         if (!otherActiveOrders || otherActiveOrders.length === 0) {
-          await apiRequest('PUT', `/api/tables/${order.tableId}/status`, { status: 'available' });
+          await apiRequest("PUT", `/api/tables/${order.tableId}/status`, {
+            status: "available",
+          });
         }
       }
 
       return response;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/order-items'] });
+    onSuccess: (data, orderId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/order-items", orderId],
+      }); // Invalidate items for the deleted order
       toast({
-        title: 'Xóa đơn hàng thành công',
-        description: 'Đơn hàng đã được hủy và bàn đã được cập nhật',
+        title: "Xóa đơn hàng thành công",
+        description: "Đơn hàng đã được hủy và bàn đã được cập nhật",
       });
     },
     onError: () => {
       toast({
-        title: 'Lỗi',
-        description: 'Không thể xóa đơn hàng',
+        title: "Lỗi",
+        description: "Không thể xóa đơn hàng",
         variant: "destructive",
       });
     },
@@ -461,26 +580,31 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   // Add mutation to recalculate order totals
   const recalculateOrderMutation = useMutation({
     mutationFn: async (orderId: number) => {
-      console.log('🧮 Recalculating order total for order:', orderId);
-      
+      console.log("🧮 Recalculating order total for order:", orderId);
+
       // Fetch current order items after deletion
-      const response = await apiRequest('GET', `/api/order-items/${orderId}`);
+      const response = await apiRequest("GET", `/api/order-items/${orderId}`);
       const remainingItems = await response.json();
-      
-      console.log('📦 Remaining items after deletion:', remainingItems?.length || 0);
+
+      console.log(
+        "📦 Remaining items after deletion:",
+        remainingItems?.length || 0,
+      );
 
       // Keep order even if no items remain - just recalculate totals to zero
       if (!remainingItems || remainingItems.length === 0) {
-        console.log('📝 No items left, setting order totals to zero but keeping order');
-        
+        console.log(
+          "📝 No items left, setting order totals to zero but keeping order",
+        );
+
         // Set totals to zero instead of deleting the order
-        const updateResult = await apiRequest('PUT', `/api/orders/${orderId}`, {
-          subtotal: '0',
-          tax: '0',
-          total: '0'
+        const updateResult = await apiRequest("PUT", `/api/orders/${orderId}`, {
+          subtotal: "0",
+          tax: "0",
+          total: "0",
         });
-        
-        console.log('✅ Order totals reset to zero successfully');
+
+        console.log("✅ Order totals reset to zero successfully");
         return updateResult;
       }
 
@@ -492,13 +616,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         remainingItems.forEach((item: any) => {
           const basePrice = Number(item.unitPrice || 0);
           const quantity = Number(item.quantity || 0);
-          
+
           // Calculate subtotal
           newSubtotal += basePrice * quantity;
 
           // Calculate tax using product info
-          const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+          const product = Array.isArray(products)
+            ? products.find((p: any) => p.id === item.productId)
+            : null;
+          if (
+            product?.afterTaxPrice &&
+            product.afterTaxPrice !== null &&
+            product.afterTaxPrice !== ""
+          ) {
             const afterTaxPrice = parseFloat(product.afterTaxPrice);
             const taxPerUnit = afterTaxPrice - basePrice;
             newTax += taxPerUnit * quantity;
@@ -510,85 +640,106 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       }
 
       const newTotal = newSubtotal + newTax;
-      
-      console.log('💰 Calculated new totals:', {
+
+      console.log("💰 Calculated new totals:", {
         subtotal: newSubtotal,
         tax: newTax,
         total: newTotal,
-        hasItems: remainingItems?.length > 0
+        hasItems: remainingItems?.length > 0,
       });
 
       // Update order with new totals
-      const updateResult = await apiRequest('PUT', `/api/orders/${orderId}`, {
+      const updateResult = await apiRequest("PUT", `/api/orders/${orderId}`, {
         subtotal: newSubtotal.toString(),
         tax: newTax.toString(),
-        total: newTotal.toString()
+        total: newTotal.toString(),
       });
-      
-      console.log('✅ Order totals updated successfully');
+
+      console.log("✅ Order totals updated successfully");
       return updateResult;
     },
     onSuccess: (data, orderId) => {
-      console.log('🔄 Refreshing UI after order total recalculation for order:', orderId);
-      
-      // Force immediate invalidation and refetch to ensure UI updates
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/order-items'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/order-items', orderId] });
-      
-      // Force component re-render by updating the orders cache immediately
-      queryClient.setQueryData(['/api/orders'], (oldData: any) => {
-        if (!oldData || !Array.isArray(oldData)) return oldData;
-        
-        console.log('💾 Updating orders cache for immediate UI refresh');
-        return oldData.map((order: any) => {
-          if (order.id === orderId) {
-            console.log(`🔄 Order ${orderId} total updated in cache: ${order.total} -> updated`);
-            // This will trigger a re-render with the latest data from the server
-            return { ...order, __forceUpdate: Date.now() };
-          }
-          return order;
-        });
-      });
-      
-      // Use Promise.all to ensure all refetches complete before continuing
+      console.log(
+        "🔄 Refreshing UI after order total recalculation for order:",
+        orderId,
+      );
+
+      // Clear all cache and force fresh data fetch
+      queryClient.clear(); // Clear entire cache
+      queryClient.removeQueries(); // Remove all queries
+
+      // Force immediate fresh fetch without cache
       Promise.all([
-        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
-        queryClient.refetchQueries({ queryKey: ['/api/tables'] }),
-      ]).then(() => {
-        console.log('✅ All queries refetched successfully, UI should now show updated totals');
-        
-        // Force one more invalidation to ensure the UI is completely up to date
-        setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-          queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-        }, 100);
-      }).catch((error) => {
-        console.error('❌ Error during query refetch:', error);
-      });
+        fetch("/api/orders", { cache: "no-store" }).then((r) => r.json()),
+        fetch("/api/tables", { cache: "no-store" }).then((r) => r.json()),
+        fetch(`/api/order-items/${orderId}`, { cache: "no-store" }).then((r) =>
+          r.json(),
+        ),
+      ])
+        .then(() => {
+          console.log(
+            "✅ All queries refetched successfully, UI should now show updated totals",
+          );
+
+          // Force component re-render by setting a timestamp
+          queryClient.setQueryData(["/api/orders"], (oldData: any) => {
+            if (!oldData || !Array.isArray(oldData)) return oldData;
+
+            return oldData.map((order: any) => {
+              if (order.id === orderId) {
+                console.log(
+                  `🔄 Forcing UI refresh for order ${orderId} with total: ${order.total}`,
+                );
+                return { ...order, _lastUpdated: Date.now() };
+              }
+              return order;
+            });
+          });
+        })
+        .catch((error) => {
+          console.error("❌ Error during query refetch:", error);
+        });
     },
     onError: (error) => {
-      console.error('❌ Error recalculating order total:', error);
-    }
+      console.error("❌ Error recalculating order total:", error);
+    },
   });
 
   const getTableStatus = (status: string) => {
     const statusConfig = {
-      available: { label: t('tables.available'), variant: "default" as const, color: "bg-green-500" },
-      occupied: { label: t('tables.occupied'), variant: "destructive" as const, color: "bg-red-500" },
-      reserved: { label: t('tables.reserved'), variant: "secondary" as const, color: "bg-yellow-500" },
-      maintenance: { label: t('tables.outOfService'), variant: "outline" as const, color: "bg-gray-500" },
+      available: {
+        label: t("tables.available"),
+        variant: "default" as const,
+        color: "bg-green-500",
+      },
+      occupied: {
+        label: t("tables.occupied"),
+        variant: "destructive" as const,
+        color: "bg-red-500",
+      },
+      reserved: {
+        label: t("tables.reserved"),
+        variant: "secondary" as const,
+        color: "bg-yellow-500",
+      },
+      maintenance: {
+        label: t("tables.outOfService"),
+        variant: "outline" as const,
+        color: "bg-gray-500",
+      },
     };
 
-    return statusConfig[status as keyof typeof statusConfig] || statusConfig.available;
+    return (
+      statusConfig[status as keyof typeof statusConfig] ||
+      statusConfig.available
+    );
   };
 
   // Mutation to recalculate order total after item changes
   const recalculateOrderTotalMutation = useMutation({
     mutationFn: async (orderId: number) => {
       // Fetch current order items
-      const response = await apiRequest('GET', `/api/order-items/${orderId}`);
+      const response = await apiRequest("GET", `/api/order-items/${orderId}`);
       const items = await response.json();
 
       // Calculate new total based on remaining items
@@ -605,7 +756,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           newSubtotal += basePrice * quantity;
 
           // Calculate tax using same logic as order details
-          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+          if (
+            product?.afterTaxPrice &&
+            product.afterTaxPrice !== null &&
+            product.afterTaxPrice !== ""
+          ) {
             const afterTaxPrice = parseFloat(product.afterTaxPrice);
             const taxPerUnit = afterTaxPrice - basePrice;
             newTax += taxPerUnit * quantity;
@@ -616,46 +771,55 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       const newTotal = newSubtotal + newTax;
 
       // Update order with new totals
-      return apiRequest('PUT', `/api/orders/${orderId}`, {
+      return apiRequest("PUT", `/api/orders/${orderId}`, {
         subtotal: newSubtotal.toString(),
         tax: newTax.toString(),
-        total: newTotal.toString()
+        total: newTotal.toString(),
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-    }
+    onSuccess: (data, orderId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/order-items", orderId],
+      });
+    },
   });
 
   const getActiveOrder = (tableId: number) => {
     if (!orders || !Array.isArray(orders)) return null;
 
     // Get all active orders for this table and sort by orderedAt descending to get the latest
-    const activeOrders = orders.filter((order: Order) =>
-      order.tableId === tableId && !["paid", "cancelled"].includes(order.status)
+    const activeOrders = orders.filter(
+      (order: Order) =>
+        order.tableId === tableId &&
+        !["paid", "cancelled"].includes(order.status),
     );
 
-    console.log(`Active orders for table ${tableId}:`, activeOrders.map(o => ({
-      id: o.id,
-      orderNumber: o.orderNumber,
-      orderedAt: o.orderedAt,
-      status: o.status,
-      total: o.total
-    })));
+    console.log(
+      `Active orders for table ${tableId}:`,
+      activeOrders.map((o) => ({
+        id: o.id,
+        orderNumber: o.orderNumber,
+        orderedAt: o.orderedAt,
+        status: o.status,
+        total: o.total,
+      })),
+    );
 
     if (activeOrders.length === 0) return null;
 
     // Sort by orderedAt descending and return the most recent order
-    const latestOrder = activeOrders.sort((a: Order, b: Order) =>
-      new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
+    const latestOrder = activeOrders.sort(
+      (a: Order, b: Order) =>
+        new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime(),
     )[0];
 
     console.log(`Latest order for table ${tableId}:`, {
       id: latestOrder.id,
       orderNumber: latestOrder.orderNumber,
       orderedAt: latestOrder.orderedAt,
-      total: latestOrder.total
+      total: latestOrder.total,
     });
 
     return latestOrder;
@@ -675,11 +839,23 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   };
 
   const handleViewOrderDetails = (order: Order) => {
-    console.log('=== VIEWING ORDER DETAILS ===');
-    console.log('Selected order for details:', order);
-    console.log('Order ID:', order.id, 'Table ID:', order.tableId, 'Ordered at:', order.orderedAt);
-    console.log('Order status:', order.status, 'Order number:', order.orderNumber);
-    console.log('=== END ORDER DETAILS ===');
+    console.log("=== VIEWING ORDER DETAILS ===");
+    console.log("Selected order for details:", order);
+    console.log(
+      "Order ID:",
+      order.id,
+      "Table ID:",
+      order.tableId,
+      "Ordered at:",
+      order.orderedAt,
+    );
+    console.log(
+      "Order status:",
+      order.status,
+      "Order number:",
+      order.orderNumber,
+    );
+    console.log("=== END ORDER DETAILS ===");
 
     // Set the selected order first
     setSelectedOrder(order);
@@ -693,12 +869,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const handlePayment = async (paymentMethodKey: string) => {
     if (!selectedOrder) return;
 
-    const method = getPaymentMethods().find(m => m.nameKey === paymentMethodKey);
+    const method = getPaymentMethods().find(
+      (m) => m.nameKey === paymentMethodKey,
+    );
     if (!method) return;
 
     // If cash payment, proceed directly
     if (paymentMethodKey === "cash") {
-      completePaymentMutation.mutate({ orderId: selectedOrder.id, paymentMethod: paymentMethodKey });
+      completePaymentMutation.mutate({
+        orderId: selectedOrder.id,
+        paymentMethod: paymentMethodKey,
+      });
       return;
     }
 
@@ -706,7 +887,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     if (paymentMethodKey === "qrCode") {
       try {
         setQrLoading(true);
-        const { createQRPosAsync, CreateQRPosRequest } = await import("@/lib/api");
+        const { createQRPosAsync, CreateQRPosRequest } = await import(
+          "@/lib/api"
+        );
 
         const transactionUuid = `TXN-${Date.now()}`;
         const depositAmt = Number(selectedOrder.total);
@@ -718,17 +901,25 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           accntNo: "0900993023",
           posfranchiseeName: "DOOKI-HANOI",
           posCompanyName: "HYOJUNG",
-          posBillNo: `BILL-${Date.now()}`
+          posBillNo: `BILL-${Date.now()}`,
         };
 
         const bankCode = "79616001";
         const clientID = "91a3a3668724e631e1baf4f8526524f3";
 
-        console.log('Calling CreateQRPos API with:', { qrRequest, bankCode, clientID });
+        console.log("Calling CreateQRPos API with:", {
+          qrRequest,
+          bankCode,
+          clientID,
+        });
 
-        const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
+        const qrResponse = await createQRPosAsync(
+          qrRequest,
+          bankCode,
+          clientID,
+        );
 
-        console.log('CreateQRPos API response:', qrResponse);
+        console.log("CreateQRPos API response:", qrResponse);
 
         // Generate QR code from the received QR data
         if (qrResponse.qrData) {
@@ -739,32 +930,32 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             qrContent = atob(qrResponse.qrData);
           } catch (e) {
             // If decode fails, use the raw qrData
-            console.log('Using raw qrData as it is not base64 encoded');
+            console.log("Using raw qrData as it is not base64 encoded");
           }
 
           const qrUrl = await QRCodeLib.toDataURL(qrContent, {
             width: 256,
             margin: 2,
             color: {
-              dark: '#000000',
-              light: '#FFFFFF'
-            }
+              dark: "#000000",
+              light: "#FFFFFF",
+            },
           });
           setQrCodeUrl(qrUrl);
           setSelectedPaymentMethod({ key: paymentMethodKey, method });
           setShowQRPayment(true);
           setPaymentMethodsOpen(false);
         } else {
-          console.error('No QR data received from API');
+          console.error("No QR data received from API");
           // Fallback to mock QR code
-          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
+          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString("vi-VN")}`;
           const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
             width: 256,
             margin: 2,
             color: {
-              dark: '#000000',
-              light: '#FFFFFF'
-            }
+              dark: "#000000",
+              light: "#FFFFFF",
+            },
           });
           setQrCodeUrl(qrUrl);
           setSelectedPaymentMethod({ key: paymentMethodKey, method });
@@ -772,28 +963,28 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setPaymentMethodsOpen(false);
         }
       } catch (error) {
-        console.error('Error calling CreateQRPos API:', error);
+        console.error("Error calling CreateQRPos API:", error);
         // Fallback to mock QR code on error
         try {
-          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
+          const fallbackData = `Payment via QR\nAmount: ${selectedOrder.total.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString("vi-VN")}`;
           const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
             width: 256,
             margin: 2,
             color: {
-              dark: '#000000',
-              light: '#FFFFFF'
-            }
+              dark: "#000000",
+              light: "#FFFFFF",
+            },
           });
           setQrCodeUrl(qrUrl);
           setSelectedPaymentMethod({ key: paymentMethodKey, method });
           setShowQRPayment(true);
           setPaymentMethodsOpen(false);
         } catch (fallbackError) {
-          console.error('Error generating fallback QR code:', fallbackError);
+          console.error("Error generating fallback QR code:", fallbackError);
           toast({
-            title: 'Lỗi',
-            description: 'Không thể tạo mã QR',
-            variant: 'destructive',
+            title: "Lỗi",
+            description: "Không thể tạo mã QR",
+            variant: "destructive",
           });
         }
       } finally {
@@ -804,52 +995,54 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
     // For other non-cash payments, show mock QR code
     try {
-      const qrData = `${method.name} Payment\nAmount: ${selectedOrder.total.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString('vi-VN')}`;
+      const qrData = `${method.name} Payment\nAmount: ${selectedOrder.total.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nOrder: ${selectedOrder.orderNumber}\nTime: ${new Date().toLocaleString("vi-VN")}`;
       const qrUrl = await QRCodeLib.toDataURL(qrData, {
         width: 256,
         margin: 2,
         color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        }
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
       });
       setQrCodeUrl(qrUrl);
       setSelectedPaymentMethod({ key: paymentMethodKey, method });
       setShowQRPayment(true);
       setPaymentMethodsOpen(false);
     } catch (error) {
-      console.error('Error generating QR code:', error);
+      console.error("Error generating QR code:", error);
       toast({
-        title: 'Lỗi',
-        description: 'Không thể tạo mã QR',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: "Không thể tạo mã QR",
+        variant: "destructive",
       });
     }
   };
 
   // Define handlePaymentMethodSelect here
   const handlePaymentMethodSelect = (method: any, data?: any) => {
-    console.log('🎯 Table payment method selected:', method, data);
+    console.log("🎯 Table payment method selected:", method, data);
     setShowPaymentMethodModal(false);
 
     // If payment method returns e-invoice data (like from "phát hành sau"), handle it
     if (data && data.receipt) {
-      console.log('📄 Table: Payment method returned receipt data, showing receipt');
+      console.log(
+        "📄 Table: Payment method returned receipt data, showing receipt",
+      );
       setSelectedReceipt(data.receipt);
       setShowReceiptModal(true);
       setOrderForPayment(null);
     } else {
       // Otherwise continue to E-invoice modal
-      console.log('🔄 Table: Continuing to E-invoice modal');
+      console.log("🔄 Table: Continuing to E-invoice modal");
       // If method.nameKey is 'einvoice', show E-invoice modal directly
-      if (method.nameKey === 'einvoice') {
+      if (method.nameKey === "einvoice") {
         setShowEInvoiceModal(true);
       } else {
         // For other payment methods, proceed with payment completion
         if (selectedOrder) {
           completePaymentMutation.mutate({
             orderId: selectedOrder.id,
-            paymentMethod: method.nameKey
+            paymentMethod: method.nameKey,
           });
         }
       }
@@ -859,18 +1052,18 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const handleQRPaymentConfirm = () => {
     if (selectedOrder && selectedPaymentMethod) {
       // Check if this is a mixed payment (from mixed payment modal)
-      if (mixedPaymentData && selectedPaymentMethod.key === 'transfer') {
+      if (mixedPaymentData && selectedPaymentMethod.key === "transfer") {
         mixedPaymentMutation.mutate({
           customerId: mixedPaymentData.customerId,
           points: mixedPaymentData.pointsToUse,
           orderId: mixedPaymentData.orderId,
-          paymentMethod: 'transfer'
+          paymentMethod: "transfer",
         });
       } else {
         // Regular payment
         completePaymentMutation.mutate({
           orderId: selectedOrder.id,
-          paymentMethod: selectedPaymentMethod.key
+          paymentMethod: selectedPaymentMethod.key,
         });
       }
       setShowQRPayment(false);
@@ -899,23 +1092,27 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   };
 
   const handleDeleteOrder = (order: Order) => {
-    if (window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${order.orderNumber}?`)) {
+    if (
+      window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${order.orderNumber}?`)
+    ) {
       deleteOrderMutation.mutate(order.id);
     }
   };
 
-  const filteredCustomers = customers?.filter((customer: any) =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone?.includes(searchTerm) ||
-    customer.customerId?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  const filteredCustomers =
+    customers?.filter(
+      (customer: any) =>
+        customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        customer.phone?.includes(searchTerm) ||
+        customer.customerId?.toLowerCase().includes(searchTerm.toLowerCase()),
+    ) || [];
 
   const handlePointsPayment = () => {
     if (!selectedCustomer || !selectedOrder) {
       toast({
-        title: 'Lỗi',
-        description: 'Vui lòng chọn khách hàng',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: "Vui lòng chọn khách hàng",
+        variant: "destructive",
       });
       return;
     }
@@ -930,7 +1127,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       pointsPaymentMutation.mutate({
         customerId: selectedCustomer.id,
         points: pointsNeeded,
-        orderId: selectedOrder.id
+        orderId: selectedOrder.id,
       });
     } else if (currentPoints > 0) {
       // Không đủ điểm, thanh toán hỗn hợp
@@ -941,23 +1138,23 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         customerId: selectedCustomer.id,
         pointsToUse: currentPoints,
         remainingAmount: remainingAmount,
-        orderId: selectedOrder.id
+        orderId: selectedOrder.id,
       });
       setPointsPaymentOpen(false);
       setMixedPaymentOpen(true);
     } else {
       toast({
-        title: 'Không có điểm',
-        description: 'Khách hàng không có điểm để thanh toán',
-        variant: 'destructive',
+        title: "Không có điểm",
+        description: "Khách hàng không có điểm để thanh toán",
+        variant: "destructive",
       });
     }
   };
 
   const getProductName = (productId: number) => {
-    if (!products || !Array.isArray(products)) return 'Unknown Product';
+    if (!products || !Array.isArray(products)) return "Unknown Product";
     const product = products.find((p: any) => p.id === productId);
-    return product ? product.name : 'Unknown Product';
+    return product ? product.name : "Unknown Product";
   };
 
   const getTableInfo = (tableId: number) => {
@@ -967,28 +1164,34 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
   // Handle E-invoice confirmation and complete payment
   const handleEInvoiceConfirm = async (invoiceData: any) => {
-    console.log('🎯 Table handleEInvoiceConfirm called with data:', invoiceData);
+    console.log(
+      "🎯 Table handleEInvoiceConfirm called with data:",
+      invoiceData,
+    );
 
     if (!orderForPayment) {
-      console.error('❌ No order for payment found');
+      console.error("❌ No order for payment found");
       toast({
-        title: 'Lỗi',
-        description: 'Không tìm thấy đơn hàng để thanh toán',
-        variant: 'destructive',
+        title: "Lỗi",
+        description: "Không tìm thấy đơn hàng để thanh toán",
+        variant: "destructive",
       });
       return;
     }
 
     try {
-      console.log('🔄 Starting payment completion for order:', orderForPayment.id);
+      console.log(
+        "🔄 Starting payment completion for order:",
+        orderForPayment.id,
+      );
 
       // Complete payment after e-invoice is created
       await completePaymentMutation.mutateAsync({
         orderId: orderForPayment.id,
-        paymentMethod: 'einvoice'
+        paymentMethod: "einvoice",
       });
 
-      console.log('✅ Table payment completed successfully');
+      console.log("✅ Table payment completed successfully");
 
       // Close E-invoice modal first
       setShowEInvoiceModal(false);
@@ -996,36 +1199,107 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
       // Always show receipt modal after invoice processing
       if (invoiceData.receipt) {
-        console.log('📄 Showing receipt modal after E-invoice processing');
+        console.log("📄 Showing receipt modal after E-invoice processing");
         setSelectedReceipt(invoiceData.receipt);
         setShowReceiptModal(true);
       }
     } catch (error) {
-      console.error('❌ Error completing payment from table:', error);
+      console.error("❌ Error completing payment from table:", error);
       toast({
-        title: 'Lỗi',
-        description: 'Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán',
-        variant: 'destructive',
+        title: "Lỗi",
+        description:
+          "Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán",
+        variant: "destructive",
       });
     }
   };
 
   const getPaymentMethods = () => {
     // Get payment methods from localStorage (saved from settings)
-    const savedPaymentMethods = localStorage.getItem('paymentMethods');
+    const savedPaymentMethods = localStorage.getItem("paymentMethods");
 
     // Default payment methods if none saved
     const defaultPaymentMethods = [
-      { id: 1, name: "Tiền mặt", nameKey: "cash", type: "cash", enabled: true, icon: "💵" },
-      { id: 2, name: "Thẻ tín dụng", nameKey: "creditCard", type: "card", enabled: true, icon: "💳" },
-      { id: 3, name: "Thẻ ghi nợ", nameKey: "debitCard", type: "debit", enabled: true, icon: "💳" },
-      { id: 4, name: "MoMo", nameKey: "momo", type: "digital", enabled: true, icon: "📱" },
-      { id: 5, name: "ZaloPay", nameKey: "zalopay", type: "digital", enabled: true, icon: "📱" },
-      { id: 6, name: "VNPay", nameKey: "vnpay", type: "digital", enabled: true, icon: "💳" },
-      { id: 7, name: "QR Code", nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
-      { id: 8, name: "ShopeePay", nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
-      { id: 9, name: "GrabPay", nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
-      { id: 10, name: "Hóa đơn điện tử", nameKey: "einvoice", type: "invoice", enabled: true, icon: "📄" },
+      {
+        id: 1,
+        name: "Tiền mặt",
+        nameKey: "cash",
+        type: "cash",
+        enabled: true,
+        icon: "💵",
+      },
+      {
+        id: 2,
+        name: "Thẻ tín dụng",
+        nameKey: "creditCard",
+        type: "card",
+        enabled: true,
+        icon: "💳",
+      },
+      {
+        id: 3,
+        name: "Thẻ ghi nợ",
+        nameKey: "debitCard",
+        type: "debit",
+        enabled: true,
+        icon: "💳",
+      },
+      {
+        id: 4,
+        name: "MoMo",
+        nameKey: "momo",
+        type: "digital",
+        enabled: true,
+        icon: "📱",
+      },
+      {
+        id: 5,
+        name: "ZaloPay",
+        nameKey: "zalopay",
+        type: "digital",
+        enabled: true,
+        icon: "📱",
+      },
+      {
+        id: 6,
+        name: "VNPay",
+        nameKey: "vnpay",
+        type: "digital",
+        enabled: true,
+        icon: "💳",
+      },
+      {
+        id: 7,
+        name: "QR Code",
+        nameKey: "qrCode",
+        type: "qr",
+        enabled: true,
+        icon: "📱",
+      },
+      {
+        id: 8,
+        name: "ShopeePay",
+        nameKey: "shopeepay",
+        type: "digital",
+        enabled: false,
+        icon: "🛒",
+      },
+      {
+        id: 9,
+        name: "GrabPay",
+        nameKey: "grabpay",
+        type: "digital",
+        enabled: false,
+        icon: "🚗",
+      },
+      {
+        id: 10,
+        name: "Hóa đơn điện tử",
+        nameKey: "einvoice",
+        type: "invoice",
+        enabled: true,
+        icon: "📄",
+      },
     ];
 
     const paymentMethods = savedPaymentMethods
@@ -1033,42 +1307,66 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       : defaultPaymentMethods;
 
     // Filter to only return enabled payment methods
-    return paymentMethods.filter(method => method.enabled);
+    return paymentMethods.filter((method) => method.enabled);
   };
 
   const getOrderStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { label: t('orders.status.pending'), variant: "secondary" as const },
-      confirmed: { label: t('orders.status.confirmed'), variant: "default" as const },
-      preparing: { label: t('orders.status.preparing'), variant: "secondary" as const },
-      ready: { label: t('orders.status.ready'), variant: "outline" as const },
-      served: { label: t('orders.status.served'), variant: "outline" as const },
-      delivering: { label: t('orders.status.delivering'), variant: "secondary" as const },
-      completed: { label: t('orders.status.completed'), variant: "default" as const },
-      paid: { label: t('orders.status.paid'), variant: "default" as const },
-      cancelled: { label: t('orders.status.cancelled'), variant: "destructive" as const },
+      pending: {
+        label: t("orders.status.pending"),
+        variant: "secondary" as const,
+      },
+      confirmed: {
+        label: t("orders.status.confirmed"),
+        variant: "default" as const,
+      },
+      preparing: {
+        label: t("orders.status.preparing"),
+        variant: "secondary" as const,
+      },
+      ready: { label: t("orders.status.ready"), variant: "outline" as const },
+      served: { label: t("orders.status.served"), variant: "outline" as const },
+      delivering: {
+        label: t("orders.status.delivering"),
+        variant: "secondary" as const,
+      },
+      completed: {
+        label: t("orders.status.completed"),
+        variant: "default" as const,
+      },
+      paid: { label: t("orders.status.paid"), variant: "default" as const },
+      cancelled: {
+        label: t("orders.status.cancelled"),
+        variant: "destructive" as const,
+      },
     };
 
-    return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+    return (
+      statusConfig[status as keyof typeof statusConfig] || statusConfig.pending
+    );
   };
 
   // Function to handle auto-print for orders
   const handlePrintOrder = async (order: any) => {
-    console.log('🖨️ Starting auto-print for table order:', order.id);
+    console.log("🖨️ Starting auto-print for table order:", order.id);
 
     try {
       const orderItems = await queryClient.fetchQuery({
         queryKey: [`/api/order-items/${order.id}`],
         queryFn: async () => {
-          const response = await apiRequest('GET', `/api/order-items/${order.id}`);
+          const response = await apiRequest(
+            "GET",
+            `/api/order-items/${order.id}`,
+          );
           return response.json();
-        }
+        },
       });
 
       // Create receipt data
       const receiptData = {
         transactionId: order.orderNumber || `ORD-${order.id}`,
-        items: order.items.map((item: any) => ({ // Assuming order.items is available and structured
+        items: order.items.map((item: any) => ({
+          // Assuming order.items is available and structured
           id: item.id,
           productId: item.productId,
           productName: item.productName || getProductName(item.productId),
@@ -1077,22 +1375,24 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           total: item.total,
           sku: item.productSku || `SP${item.productId}`,
           taxRate: (() => {
-            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+            const product = Array.isArray(products)
+              ? products.find((p: any) => p.id === item.productId)
+              : null;
             return product?.taxRate ? parseFloat(product.taxRate) : 10;
-          })()
+          })(),
         })),
         subtotal: order.subtotal,
         tax: order.tax,
         total: order.total,
-        paymentMethod: order.paymentMethod || 'cash',
+        paymentMethod: order.paymentMethod || "cash",
         amountReceived: order.total,
-        change: '0.00',
-        cashierName: order.employeeName || 'System User',
+        change: "0.00",
+        cashierName: order.employeeName || "System User",
         createdAt: order.orderedAt || new Date().toISOString(),
         customerName: order.customerName,
         customerTaxCode: null,
         invoiceNumber: null,
-        tableNumber: getTableInfo(order.tableId)?.tableNumber || 'N/A'
+        tableNumber: getTableInfo(order.tableId)?.tableNumber || "N/A",
       };
 
       // Call auto-print API for both employee and kitchen printers
@@ -1103,7 +1403,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         },
         body: JSON.stringify({
           receiptData,
-          printerType: "both" // Print to both employee and kitchen printers
+          printerType: "both", // Print to both employee and kitchen printers
         }),
       });
 
@@ -1117,22 +1417,27 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         });
 
         // Show detailed results for each printer
-        const successfulPrints = result.results.filter(r => r.status === 'success');
-        const failedPrints = result.results.filter(r => r.status === 'error');
+        const successfulPrints = result.results.filter(
+          (r) => r.status === "success",
+        );
+        const failedPrints = result.results.filter((r) => r.status === "error");
 
         if (successfulPrints.length > 0) {
-          console.log(`✅ Printed successfully on ${successfulPrints.length} printers:`,
-            successfulPrints.map(p => p.printerName));
+          console.log(
+            `✅ Printed successfully on ${successfulPrints.length} printers:`,
+            successfulPrints.map((p) => p.printerName),
+          );
         }
 
         if (failedPrints.length > 0) {
           toast({
             title: "Một số máy in gặp lỗi",
-            description: failedPrints.map(r => `• ${r.printerName}: ${r.message}`).join('\n'),
+            description: failedPrints
+              .map((r) => `• ${r.printerName}: ${r.message}`)
+              .join("\n"),
             variant: "destructive",
           });
         }
-
       } else {
         console.log("⚠️ Auto-print failed, falling back to receipt modal");
         // Fallback to showing receipt modal for manual print
@@ -1141,18 +1446,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
         toast({
           title: "Không tìm thấy máy in",
-          description: "Không tìm thấy máy in hoặc không có cấu hình máy in. Sử dụng chức năng in thủ công.",
+          description:
+            "Không tìm thấy máy in hoặc không có cấu hình máy in. Sử dụng chức năng in thủ công.",
           variant: "destructive",
         });
       }
-
     } catch (error) {
-      console.error('❌ Auto-print error:', error);
+      console.error("❌ Auto-print error:", error);
 
       toast({
-        title: 'Lỗi in tự động',
-        description: 'Có lỗi xảy ra khi in tự động. Sử dụng chức năng in thủ công.',
-        variant: 'destructive',
+        title: "Lỗi in tự động",
+        description:
+          "Có lỗi xảy ra khi in tự động. Sử dụng chức năng in thủ công.",
+        variant: "destructive",
       });
 
       // Fallback to manual print - try to show receipt modal
@@ -1160,9 +1466,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         const orderItems = await queryClient.fetchQuery({
           queryKey: [`/api/order-items/${order.id}`],
           queryFn: async () => {
-            const response = await apiRequest('GET', `/api/order-items/${order.id}`);
+            const response = await apiRequest(
+              "GET",
+              `/api/order-items/${order.id}`,
+            );
             return response.json();
-          }
+          },
         });
 
         const receiptData = {
@@ -1176,28 +1485,30 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             total: item.total,
             sku: item.productSku || `SP${item.productId}`,
             taxRate: (() => {
-              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+              const product = Array.isArray(products)
+                ? products.find((p: any) => p.id === item.productId)
+                : null;
               return product?.taxRate ? parseFloat(product.taxRate) : 10;
-            })()
+            })(),
           })),
           subtotal: order.subtotal,
           tax: order.tax,
           total: order.total,
-          paymentMethod: order.paymentMethod || 'cash',
+          paymentMethod: order.paymentMethod || "cash",
           amountReceived: order.total,
-          change: '0.00',
-          cashierName: order.employeeName || 'System User',
+          change: "0.00",
+          cashierName: order.employeeName || "System User",
           createdAt: order.orderedAt || new Date().toISOString(),
           customerName: order.customerName,
           customerTaxCode: null,
           invoiceNumber: null,
-          tableNumber: getTableInfo(order.tableId)?.tableNumber || 'N/A'
+          tableNumber: getTableInfo(order.tableId)?.tableNumber || "N/A",
         };
 
         setSelectedReceipt(receiptData);
         setShowReceiptModal(true);
       } catch (fallbackError) {
-        console.error('Error preparing fallback receipt:', fallbackError);
+        console.error("Error preparing fallback receipt:", fallbackError);
       }
     }
   };
@@ -1217,139 +1528,189 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   return (
     <>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {Array.isArray(tables) && tables.map((table: Table) => {
-          const statusConfig = getTableStatus(table.status);
-          const activeOrder = getActiveOrder(table.id);
-          const isSelected = selectedTableId === table.id;
+        {Array.isArray(tables) &&
+          tables.map((table: Table) => {
+            const statusConfig = getTableStatus(table.status);
+            const activeOrder = getActiveOrder(table.id);
+            const isSelected = selectedTableId === table.id;
 
-          return (
-            <Card
-              key={table.id}
-              className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                isSelected ? "ring-2 ring-blue-500" : ""
-              } ${table.status === "occupied" ? "bg-red-50" : "bg-white"}`}
-              onClick={() => handleTableClick(table)}
-            >
-              <CardContent className="p-4">
-                <div className="flex flex-col items-center text-center space-y-3">
-                  {/* Table Number */}
-                  <div className="relative">
-                    <div className={`w-12 h-12 rounded-full ${statusConfig.color} flex items-center justify-center text-white font-bold text-lg`}>
-                      {table.tableNumber}
-                    </div>
-                    {activeOrder && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full animate-pulse"></div>
-                    )}
-                  </div>
-
-                  {/* Table Info */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-center text-sm text-gray-600">
-                      <Users className="w-3 h-3 mr-1" />
-                      {activeOrder ? (
-                        <span>
-                          {activeOrder.customerCount || 1}/{table.capacity} {t('orders.people')}
-                        </span>
-                      ) : (
-                        <span>{table.capacity} {t('orders.people')}</span>
+            return (
+              <Card
+                key={table.id}
+                className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
+                  isSelected ? "ring-2 ring-blue-500" : ""
+                } ${table.status === "occupied" ? "bg-red-50" : "bg-white"}`}
+                onClick={() => handleTableClick(table)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex flex-col items-center text-center space-y-3">
+                    {/* Table Number */}
+                    <div className="relative">
+                      <div
+                        className={`w-12 h-12 rounded-full ${statusConfig.color} flex items-center justify-center text-white font-bold text-lg`}
+                      >
+                        {table.tableNumber}
+                      </div>
+                      {activeOrder && (
+                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full animate-pulse"></div>
                       )}
                     </div>
-                    <Badge variant={table.status === "occupied" && activeOrder ? getOrderStatusBadge(activeOrder.status).variant : statusConfig.variant} className="text-xs">
-                      {table.status === "occupied" && activeOrder ? getOrderStatusBadge(activeOrder.status).label : statusConfig.label}
-                    </Badge>
-                  </div>
 
-                  {/* Order Info */}
-                  {activeOrder && (
-                    <div className="space-y-1 text-xs text-gray-600">
-                      <div className="flex items-center justify-center">
-                        <Clock className="w-3 h-3 mr-1" />
-                        {new Date(activeOrder.orderedAt).toLocaleTimeString(
-                          currentLanguage === 'ko' ? 'ko-KR' :
-                          currentLanguage === 'en' ? 'en-US' :
-                          'vi-VN',
-                          {
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          }
+                    {/* Table Info */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-center text-sm text-gray-600">
+                        <Users className="w-3 h-3 mr-1" />
+                        {activeOrder ? (
+                          <span>
+                            {activeOrder.customerCount || 1}/{table.capacity}{" "}
+                            {t("orders.people")}
+                          </span>
+                        ) : (
+                          <span>
+                            {table.capacity} {t("orders.people")}
+                          </span>
                         )}
                       </div>
-                      <div className={`font-medium ${Number(activeOrder.total) < 1 ? 'text-gray-400' : 'text-gray-900'}`}>
-                        {(() => {
-                          const orderTotal = Number(activeOrder.total || 0);
-                          
-                          console.log(`💰 Table ${table.tableNumber} - Order ${activeOrder.id} total display:`, {
-                            rawTotal: activeOrder.total,
-                            numberTotal: orderTotal,
-                            formatted: orderTotal < 1 ? '0' : Math.floor(orderTotal).toLocaleString('vi-VN')
-                          });
-                          
-                          // If order total is 0 or very small, show 0
-                          if (orderTotal < 1) {
-                            return '0';
-                          }
-                          
-                          // Format number with Vietnamese locale
-                          return Math.floor(orderTotal).toLocaleString('vi-VN');
-                        })()} ₫
+                      <Badge
+                        variant={
+                          table.status === "occupied" && activeOrder
+                            ? getOrderStatusBadge(activeOrder.status).variant
+                            : statusConfig.variant
+                        }
+                        className="text-xs"
+                      >
+                        {table.status === "occupied" && activeOrder
+                          ? getOrderStatusBadge(activeOrder.status).label
+                          : statusConfig.label}
+                      </Badge>
+                    </div>
+
+                    {/* Order Info */}
+                    {activeOrder && (
+                      <div className="space-y-1 text-xs text-gray-600">
+                        <div className="flex items-center justify-center">
+                          <Clock className="w-3 h-3 mr-1" />
+                          {new Date(activeOrder.orderedAt).toLocaleTimeString(
+                            currentLanguage === "ko"
+                              ? "ko-KR"
+                              : currentLanguage === "en"
+                                ? "en-US"
+                                : "vi-VN",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
+                        </div>
+                        <div
+                          className={`font-medium ${Number(activeOrder.total) <= 0 ? "text-gray-400" : "text-gray-900"}`}
+                        >
+                          {(() => {
+                            // Force fresh data by checking both string and number values
+                            const rawTotal = activeOrder.total;
+                            const orderTotal = Number(rawTotal || 0);
+
+                            console.log(
+                              `💰 Table ${table.tableNumber} - Order ${activeOrder.id} total display:`,
+                              {
+                                rawTotal,
+                                numberTotal: orderTotal,
+                                isZero: orderTotal <= 0,
+                                stringValue: rawTotal?.toString(),
+                                formatted:
+                                  orderTotal <= 0
+                                    ? "0"
+                                    : Math.floor(orderTotal).toLocaleString(
+                                        "vi-VN",
+                                      ),
+                                timestamp: Date.now(),
+                              },
+                            );
+
+                            // Handle zero, null, undefined, or negative values with additional checks
+                            if (
+                              rawTotal === null ||
+                              rawTotal === undefined ||
+                              rawTotal === "" ||
+                              rawTotal === "0" ||
+                              rawTotal === "0.00" ||
+                              orderTotal <= 0 ||
+                              (typeof rawTotal === "string" &&
+                                parseFloat(rawTotal) <= 0)
+                            ) {
+                              console.log(
+                                `🟡 Table ${table.tableNumber} showing zero total for order ${activeOrder.id}`,
+                              );
+                              return "0";
+                            }
+
+                            // Format number with Vietnamese locale
+                            const formatted =
+                              Math.floor(orderTotal).toLocaleString("vi-VN");
+                            console.log(
+                              `💵 Table ${table.tableNumber} showing formatted total: ${formatted} ₫ for order ${activeOrder.id}`,
+                            );
+                            return formatted;
+                          })()}{" "}
+                          ₫
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Quick Actions */}
-                  {table.status === "occupied" && (
-                    <div className="space-y-1 w-full">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full text-xs"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (activeOrder) {
-                            handleViewOrderDetails(activeOrder);
-                          }
-                        }}
-                      >
-                        <Eye className="w-3 h-3 mr-1" />
-                        {t('orders.viewDetails')}
-                      </Button>
+                    {/* Quick Actions */}
+                    {table.status === "occupied" && (
+                      <div className="space-y-1 w-full">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (activeOrder) {
+                              handleViewOrderDetails(activeOrder);
+                            }
+                          }}
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          {t("orders.viewDetails")}
+                        </Button>
 
-                      <Button
-                        size="sm"
-                        variant="default"
-                        className="w-full text-xs bg-blue-600 hover:bg-blue-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (activeOrder) {
-                            handleEditOrder(activeOrder, table);
-                          }
-                        }}
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        {t('orders.addMore')}
-                      </Button>
+                        <Button
+                          size="sm"
+                          variant="default"
+                          className="w-full text-xs bg-blue-600 hover:bg-blue-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (activeOrder) {
+                              handleEditOrder(activeOrder, table);
+                            }
+                          }}
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          {t("orders.addMore")}
+                        </Button>
 
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="w-full text-xs"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (activeOrder) {
-                            handleDeleteOrder(activeOrder);
-                          }
-                        }}
-                      >
-                        <X className="w-3 h-3 mr-1" />
-                        Xóa đơn
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="w-full text-xs"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (activeOrder) {
+                              handleDeleteOrder(activeOrder);
+                            }
+                          }}
+                        >
+                          <X className="w-3 h-3 mr-1" />
+                          Xóa đơn
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
       </div>
 
       {/* Order Dialog */}
@@ -1363,9 +1724,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       <Dialog open={orderDetailsOpen} onOpenChange={setOrderDetailsOpen}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{t('orders.orderDetails')}</DialogTitle>
+            <DialogTitle>{t("orders.orderDetails")}</DialogTitle>
             <DialogDescription>
-              {selectedOrder && `${t('orders.orderNumber')}: ${selectedOrder.orderNumber}`}
+              {selectedOrder &&
+                `${t("orders.orderNumber")}: ${selectedOrder.orderNumber}`}
             </DialogDescription>
           </DialogHeader>
 
@@ -1374,41 +1736,61 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               {/* Order Info */}
               <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
                 <div>
-                  <p className="text-sm text-gray-600">{t('orders.table')} {t('orders.orderNumber').toLowerCase()}:</p>
+                  <p className="text-sm text-gray-600">
+                    {t("orders.table")} {t("orders.orderNumber").toLowerCase()}:
+                  </p>
                   <p className="font-medium">T{selectedTable?.tableNumber}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">{t('orders.customerCount')}:</p>
-                  <p className="font-medium">{selectedOrder.customerCount} {t('orders.people')}</p>
+                  <p className="text-sm text-gray-600">
+                    {t("orders.customerCount")}:
+                  </p>
+                  <p className="font-medium">
+                    {selectedOrder.customerCount} {t("orders.people")}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">{t('orders.orderTime')}:</p>
+                  <p className="text-sm text-gray-600">
+                    {t("orders.orderTime")}:
+                  </p>
                   <p className="font-medium">
                     {new Date(selectedOrder.orderedAt).toLocaleTimeString(
-                      currentLanguage === 'ko' ? 'ko-KR' :
-                      currentLanguage === 'en' ? 'en-US' :
-                      'vi-VN',
+                      currentLanguage === "ko"
+                        ? "ko-KR"
+                        : currentLanguage === "en"
+                          ? "en-US"
+                          : "vi-VN",
                       {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      }
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      },
                     )}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">{t('orders.orderStatus')}:</p>
-                  <Badge variant={selectedOrder.status === 'paid' ? 'default' : 'secondary'}>
-                    {selectedOrder.status === 'paid' ? t('orders.status.paid') : t('orders.status.pending')}
+                  <p className="text-sm text-gray-600">
+                    {t("orders.orderStatus")}:
+                  </p>
+                  <Badge
+                    variant={
+                      selectedOrder.status === "paid" ? "default" : "secondary"
+                    }
+                  >
+                    {selectedOrder.status === "paid"
+                      ? t("orders.status.paid")
+                      : t("orders.status.pending")}
                   </Badge>
                 </div>
               </div>
 
               {/* Order Items */}
               <div>
-                <h4 className="font-medium mb-3">{t('orders.orderItems')}:</h4>
+                <h4 className="font-medium mb-3">{t("orders.orderItems")}:</h4>
                 <div className="space-y-2">
                   {orderItemsLoading ? (
-                    <p className="text-gray-500 text-center py-4">{t('common.loading')}</p>
+                    <p className="text-gray-500 text-center py-4">
+                      {t("common.loading")}
+                    </p>
                   ) : (
                     <>
                       {(() => {
@@ -1417,13 +1799,26 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                         if (Array.isArray(orderItems)) {
                           itemsToRender = orderItems;
-                        } else if (orderItems && (orderItems as any).data && Array.isArray((orderItems as any).data)) {
+                        } else if (
+                          orderItems &&
+                          (orderItems as any).data &&
+                          Array.isArray((orderItems as any).data)
+                        ) {
                           itemsToRender = (orderItems as any).data;
-                        } else if (orderItems && (orderItems as any).items && Array.isArray((orderItems as any).items)) {
+                        } else if (
+                          orderItems &&
+                          (orderItems as any).items &&
+                          Array.isArray((orderItems as any).items)
+                        ) {
                           itemsToRender = (orderItems as any).items;
-                        } else if (orderItems && typeof orderItems === 'object') {
+                        } else if (
+                          orderItems &&
+                          typeof orderItems === "object"
+                        ) {
                           try {
-                            itemsToRender = Object.values(orderItems).filter(item => item && typeof item === 'object');
+                            itemsToRender = Object.values(orderItems).filter(
+                              (item) => item && typeof item === "object",
+                            );
                           } catch (e) {
                             itemsToRender = [];
                           }
@@ -1433,16 +1828,25 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           return (
                             <div className="space-y-2">
                               <p className="text-sm font-medium text-green-600 mb-3">
-                                ✅ Hiển thị {itemsToRender.length} món trong đơn hàng {selectedOrder?.orderNumber}
+                                ✅ Hiển thị {itemsToRender.length} món trong đơn
+                                hàng {selectedOrder?.orderNumber}
                               </p>
                               {itemsToRender.map((item: any, index: number) => (
-                                <div key={`item-${item.id || index}`} className="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm">
+                                <div
+                                  key={`item-${item.id || index}`}
+                                  className="flex justify-between items-center p-3 bg-white border rounded-lg shadow-sm"
+                                >
                                   <div className="flex-1">
                                     <p className="font-medium text-gray-900">
-                                      {item.productName || getProductName(item.productId) || `Sản phẩm #${item.productId}`}
+                                      {item.productName ||
+                                        getProductName(item.productId) ||
+                                        `Sản phẩm #${item.productId}`}
                                     </p>
                                     <p className="text-sm text-gray-600">
-                                      Số lượng: <span className="font-medium">{item.quantity}</span>
+                                      Số lượng:{" "}
+                                      <span className="font-medium">
+                                        {item.quantity}
+                                      </span>
                                     </p>
                                     {item.notes && (
                                       <p className="text-xs text-blue-600 italic mt-1">
@@ -1452,10 +1856,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                   </div>
                                   <div className="text-right ml-4">
                                     <p className="font-bold text-lg text-green-600">
-                                      {Math.floor(Number(item.total || 0)).toLocaleString('vi-VN')} ₫
+                                      {Math.floor(
+                                        Number(item.total || 0),
+                                      ).toLocaleString("vi-VN")}{" "}
+                                      ₫
                                     </p>
                                     <p className="text-sm text-gray-500">
-                                      {Math.floor(Number(item.unitPrice || 0)).toLocaleString('vi-VN')} ₫/món
+                                      {Math.floor(
+                                        Number(item.unitPrice || 0),
+                                      ).toLocaleString("vi-VN")}{" "}
+                                      ₫/món
                                     </p>
                                   </div>
                                 </div>
@@ -1466,10 +1876,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           return (
                             <div className="text-center py-6 bg-gray-50 rounded-lg border">
                               <p className="text-gray-600">
-                                Không có món nào trong đơn hàng {selectedOrder?.orderNumber}
+                                Không có món nào trong đơn hàng{" "}
+                                {selectedOrder?.orderNumber}
                               </p>
                               {orderItemsLoading && (
-                                <p className="text-sm text-gray-500 mt-2">Đang tải...</p>
+                                <p className="text-sm text-gray-500 mt-2">
+                                  Đang tải...
+                                </p>
                               )}
                             </div>
                           );
@@ -1489,18 +1902,30 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   let subtotal = 0;
                   let totalTax = 0;
 
-                  if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
+                  if (
+                    Array.isArray(orderItems) &&
+                    orderItems.length > 0 &&
+                    Array.isArray(products)
+                  ) {
                     orderItems.forEach((item: any) => {
                       const basePrice = Number(item.unitPrice || 0);
                       const quantity = Number(item.quantity || 0);
-                      const product = products.find((p: any) => p.id === item.productId);
-                      const itemTaxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
+                      const product = products.find(
+                        (p: any) => p.id === item.productId,
+                      );
+                      const itemTaxRate = product?.taxRate
+                        ? parseFloat(product.taxRate)
+                        : 10;
 
                       // Calculate subtotal (base price without tax)
                       subtotal += basePrice * quantity;
 
                       // Use same tax calculation logic as shopping cart
-                      if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                      if (
+                        product?.afterTaxPrice &&
+                        product.afterTaxPrice !== null &&
+                        product.afterTaxPrice !== ""
+                      ) {
                         const afterTaxPrice = parseFloat(product.afterTaxPrice);
                         // Tax = afterTaxPrice - basePrice (per unit), then multiply by quantity
                         const taxPerUnit = afterTaxPrice - basePrice;
@@ -1517,16 +1942,24 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   return (
                     <>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">{t('pos.subtotal')}:</span>
-                        <span className="font-medium">{Math.floor(subtotal).toLocaleString('vi-VN')} ₫</span>
+                        <span className="text-gray-600">
+                          {t("pos.subtotal")}:
+                        </span>
+                        <span className="font-medium">
+                          {Math.floor(subtotal).toLocaleString("vi-VN")} ₫
+                        </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Thuế:</span>
-                        <span className="font-medium">{Math.floor(totalTax).toLocaleString('vi-VN')} ₫</span>
+                        <span className="font-medium">
+                          {Math.floor(totalTax).toLocaleString("vi-VN")} ₫
+                        </span>
                       </div>
                       <div className="flex justify-between text-lg font-bold border-t pt-2">
-                        <span>{t('orders.totalAmount')}:</span>
-                        <span className="text-green-600">{Math.floor(grandTotal).toLocaleString('vi-VN')} ₫</span>
+                        <span>{t("orders.totalAmount")}:</span>
+                        <span className="text-green-600">
+                          {Math.floor(grandTotal).toLocaleString("vi-VN")} ₫
+                        </span>
                       </div>
                     </>
                   );
@@ -1534,18 +1967,25 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               </div>
 
               {/* Payment Buttons */}
-              {selectedOrder.status !== 'paid' && (
+              {selectedOrder.status !== "paid" && (
                 <div className="pt-4 space-y-3">
                   <Button
                     onClick={() => {
-                      console.log('🎯 Table: Starting payment flow - using exact Order Details values');
+                      console.log(
+                        "🎯 Table: Starting payment flow - using exact Order Details values",
+                      );
 
-                      if (!selectedOrder || !orderItems || !Array.isArray(orderItems)) {
-                        console.error('❌ Missing order data for preview');
+                      if (
+                        !selectedOrder ||
+                        !orderItems ||
+                        !Array.isArray(orderItems)
+                      ) {
+                        console.error("❌ Missing order data for preview");
                         toast({
-                          title: 'Lỗi',
-                          description: 'Không thể tạo xem trước hóa đơn. Vui lòng thử lại.',
-                          variant: 'destructive',
+                          title: "Lỗi",
+                          description:
+                            "Không thể tạo xem trước hóa đơn. Vui lòng thử lại.",
+                          variant: "destructive",
                         });
                         return;
                       }
@@ -1557,14 +1997,22 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       const processedItems = orderItems.map((item: any) => {
                         const basePrice = Number(item.unitPrice || 0);
                         const quantity = Number(item.quantity || 0);
-                        const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+                        const product = Array.isArray(products)
+                          ? products.find((p: any) => p.id === item.productId)
+                          : null;
 
                         // Calculate subtotal exactly as Order Details display
                         orderDetailsSubtotal += basePrice * quantity;
 
                         // Use EXACT same tax calculation logic as Order Details display
-                        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-                          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                        if (
+                          product?.afterTaxPrice &&
+                          product.afterTaxPrice !== null &&
+                          product.afterTaxPrice !== ""
+                        ) {
+                          const afterTaxPrice = parseFloat(
+                            product.afterTaxPrice,
+                          );
                           const taxPerUnit = afterTaxPrice - basePrice;
                           orderDetailsTax += taxPerUnit * quantity;
                         }
@@ -1572,12 +2020,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         return {
                           id: item.id,
                           productId: item.productId,
-                          productName: item.productName || getProductName(item.productId),
+                          productName:
+                            item.productName || getProductName(item.productId),
                           quantity: item.quantity,
                           price: item.unitPrice,
                           total: item.total,
                           sku: item.productSku || `SP${item.productId}`,
-                          taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10
+                          taxRate: product?.taxRate
+                            ? parseFloat(product.taxRate)
+                            : 10,
                         };
                       });
 
@@ -1588,22 +2039,26 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         items: processedItems,
                         subtotal: orderDetailsSubtotal.toString(),
                         tax: orderDetailsTax.toString(),
-                        total: (orderDetailsSubtotal + orderDetailsTax).toString(),
-                        paymentMethod: 'preview',
-                        cashierName: 'Table Service',
+                        total: (
+                          orderDetailsSubtotal + orderDetailsTax
+                        ).toString(),
+                        paymentMethod: "preview",
+                        cashierName: "Table Service",
                         createdAt: new Date().toISOString(),
                         orderItems: orderItems, // Keep original order items for payment flow
                         // Pass exact calculated values for next screens
                         exactSubtotal: orderDetailsSubtotal,
                         exactTax: orderDetailsTax,
-                        exactTotal: orderDetailsSubtotal + orderDetailsTax
+                        exactTotal: orderDetailsSubtotal + orderDetailsTax,
                       };
 
-                      console.log('📄 Table: Showing receipt preview with exact Order Details values');
-                      console.log('💰 Exact values passed:', {
+                      console.log(
+                        "📄 Table: Showing receipt preview with exact Order Details values",
+                      );
+                      console.log("💰 Exact values passed:", {
                         subtotal: orderDetailsSubtotal,
                         tax: orderDetailsTax,
-                        total: orderDetailsSubtotal + orderDetailsTax
+                        total: orderDetailsSubtotal + orderDetailsTax,
                       });
                       setPreviewReceipt(previewData);
                       setOrderDetailsOpen(false);
@@ -1613,7 +2068,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     size="lg"
                   >
                     <CreditCard className="w-4 h-4 mr-2" />
-                    {t('orders.payment')}
+                    {t("orders.payment")}
                   </Button>
                   <Button
                     onClick={() => setPointsPaymentOpen(true)}
@@ -1621,18 +2076,26 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     size="lg"
                   >
                     <Users className="w-4 h-4 mr-2" />
-                    {t('orders.pointsPaymentTitle')}
+                    {t("orders.pointsPaymentTitle")}
                   </Button>
                   <Button
                     onClick={() => {
-                      console.log('🖨️ Print bill button clicked for order:', selectedOrder?.orderNumber);
+                      console.log(
+                        "🖨️ Print bill button clicked for order:",
+                        selectedOrder?.orderNumber,
+                      );
 
-                      if (!selectedOrder || !orderItems || !Array.isArray(orderItems)) {
-                        console.error('❌ Missing order data for print bill');
+                      if (
+                        !selectedOrder ||
+                        !orderItems ||
+                        !Array.isArray(orderItems)
+                      ) {
+                        console.error("❌ Missing order data for print bill");
                         toast({
-                          title: 'Lỗi',
-                          description: 'Không thể tạo hóa đơn. Vui lòng thử lại.',
-                          variant: 'destructive',
+                          title: "Lỗi",
+                          description:
+                            "Không thể tạo hóa đơn. Vui lòng thử lại.",
+                          variant: "destructive",
                         });
                         return;
                       }
@@ -1642,18 +2105,29 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         let subtotal = 0;
                         let totalTax = 0;
 
-                        if (Array.isArray(orderItems) && Array.isArray(products)) {
+                        if (
+                          Array.isArray(orderItems) &&
+                          Array.isArray(products)
+                        ) {
                           orderItems.forEach((item: any) => {
                             const basePrice = Number(item.unitPrice || 0);
                             const quantity = Number(item.quantity || 0);
-                            const product = products.find((p: any) => p.id === item.productId);
+                            const product = products.find(
+                              (p: any) => p.id === item.productId,
+                            );
 
                             // Calculate subtotal exactly as Order Details
                             subtotal += basePrice * quantity;
 
                             // Use EXACT same tax calculation logic as Order Details
-                            if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-                              const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                            if (
+                              product?.afterTaxPrice &&
+                              product.afterTaxPrice !== null &&
+                              product.afterTaxPrice !== ""
+                            ) {
+                              const afterTaxPrice = parseFloat(
+                                product.afterTaxPrice,
+                              );
                               const taxPerUnit = afterTaxPrice - basePrice;
                               totalTax += taxPerUnit * quantity;
                             } else {
@@ -1669,33 +2143,51 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         const processedItems = orderItems.map((item: any) => ({
                           id: item.id,
                           productId: item.productId,
-                          productName: item.productName || getProductName(item.productId),
+                          productName:
+                            item.productName || getProductName(item.productId),
                           quantity: item.quantity,
                           price: item.unitPrice,
                           total: item.total,
                           sku: item.productSku || `SP${item.productId}`,
                           taxRate: (() => {
-                            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-                            return product?.taxRate ? parseFloat(product.taxRate) : 10;
-                          })()
+                            const product = Array.isArray(products)
+                              ? products.find(
+                                  (p: any) => p.id === item.productId,
+                                )
+                              : null;
+                            return product?.taxRate
+                              ? parseFloat(product.taxRate)
+                              : 10;
+                          })(),
                         }));
 
                         // Use exact same calculation values as displayed in Order Details
                         let orderDetailsSubtotal = 0;
                         let orderDetailsTax = 0;
 
-                        if (Array.isArray(orderItems) && Array.isArray(products)) {
+                        if (
+                          Array.isArray(orderItems) &&
+                          Array.isArray(products)
+                        ) {
                           orderItems.forEach((item: any) => {
                             const basePrice = Number(item.unitPrice || 0);
                             const quantity = Number(item.quantity || 0);
-                            const product = products.find((p: any) => p.id === item.productId);
+                            const product = products.find(
+                              (p: any) => p.id === item.productId,
+                            );
 
                             // Calculate subtotal exactly as Order Details
                             orderDetailsSubtotal += basePrice * quantity;
 
                             // Use EXACT same tax calculation logic as Order Details
-                            if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
-                              const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                            if (
+                              product?.afterTaxPrice &&
+                              product.afterTaxPrice !== null &&
+                              product.afterTaxPrice !== ""
+                            ) {
+                              const afterTaxPrice = parseFloat(
+                                product.afterTaxPrice,
+                              );
                               const taxPerUnit = afterTaxPrice - basePrice;
                               orderDetailsTax += taxPerUnit * quantity;
                             }
@@ -1704,35 +2196,42 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                         const billData = {
                           ...selectedOrder,
-                          transactionId: selectedOrder.orderNumber || `BILL-${selectedOrder.id}`,
+                          transactionId:
+                            selectedOrder.orderNumber ||
+                            `BILL-${selectedOrder.id}`,
                           items: processedItems,
                           subtotal: orderDetailsSubtotal.toString(),
                           tax: orderDetailsTax.toString(),
-                          total: (orderDetailsSubtotal + orderDetailsTax).toString(),
-                          paymentMethod: 'unpaid',
-                          amountReceived: '0',
-                          change: '0',
-                          cashierName: 'Table Service',
-                          createdAt: selectedOrder.orderedAt || new Date().toISOString(),
+                          total: (
+                            orderDetailsSubtotal + orderDetailsTax
+                          ).toString(),
+                          paymentMethod: "unpaid",
+                          amountReceived: "0",
+                          change: "0",
+                          cashierName: "Table Service",
+                          createdAt:
+                            selectedOrder.orderedAt || new Date().toISOString(),
                           customerName: selectedOrder.customerName,
                           customerTaxCode: null,
-                          invoiceNumber: null
+                          invoiceNumber: null,
                         };
 
-                        console.log('📄 Table: Showing receipt modal for bill printing');
-                        console.log('📊 Bill data:', billData);
+                        console.log(
+                          "📄 Table: Showing receipt modal for bill printing",
+                        );
+                        console.log("📊 Bill data:", billData);
 
                         // Show receipt modal without auto-printing
                         setSelectedReceipt(billData);
                         setOrderDetailsOpen(false);
                         setShowReceiptModal(true);
-
                       } catch (error) {
-                        console.error('❌ Error preparing bill:', error);
+                        console.error("❌ Error preparing bill:", error);
                         toast({
-                          title: 'Lỗi',
-                          description: 'Không thể tạo hóa đơn. Vui lòng thử lại.',
-                          variant: 'destructive',
+                          title: "Lỗi",
+                          description:
+                            "Không thể tạo hóa đơn. Vui lòng thử lại.",
+                          variant: "destructive",
                         });
                       }
                     }}
@@ -1743,7 +2242,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     In hóa đơn
                   </Button>
                 </div>
-              )}</div>
+              )}
+            </div>
           )}
         </DialogContent>
       </Dialog>
@@ -1758,10 +2258,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         }}
         receipt={previewReceipt}
         onConfirm={() => {
-          console.log("📄 Table: Receipt preview confirmed, starting payment flow");
+          console.log(
+            "📄 Table: Receipt preview confirmed, starting payment flow",
+          );
 
           if (!previewReceipt) {
-            console.error('❌ No preview receipt data available');
+            console.error("❌ No preview receipt data available");
             return;
           }
 
@@ -1771,10 +2273,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             orderItems: previewReceipt.orderItems || orderItems || [],
             exactSubtotal: previewReceipt.exactSubtotal,
             exactTax: previewReceipt.exactTax,
-            exactTotal: previewReceipt.exactTotal
+            exactTotal: previewReceipt.exactTotal,
           };
 
-          console.log('💾 Setting order for payment with complete data:', completeOrderData);
+          console.log(
+            "💾 Setting order for payment with complete data:",
+            completeOrderData,
+          );
           setOrderForPayment(completeOrderData);
 
           // Close preview and show payment method modal
@@ -1782,14 +2287,16 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setShowPaymentMethodModal(true);
         }}
         isPreview={true}
-        cartItems={previewReceipt?.items?.map((item: any) => ({
-          id: item.productId || item.id,
-          name: item.productName || item.name,
-          price: parseFloat(item.price || item.unitPrice || '0'),
-          quantity: item.quantity,
-          sku: item.sku || `SP${item.productId}`,
-          taxRate: item.taxRate || 10
-        })) || []}
+        cartItems={
+          previewReceipt?.items?.map((item: any) => ({
+            id: item.productId || item.id,
+            name: item.productName || item.name,
+            price: parseFloat(item.price || item.unitPrice || "0"),
+            quantity: item.quantity,
+            sku: item.sku || `SP${item.productId}`,
+            taxRate: item.taxRate || 10,
+          })) || []
+        }
         total={previewReceipt ? parseFloat(previewReceipt.total) : 0}
       />
 
@@ -1798,54 +2305,75 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         <PaymentMethodModal
           isOpen={showPaymentMethodModal}
           onClose={() => {
-            console.log('🔴 Table: Closing payment method modal and clearing states');
+            console.log(
+              "🔴 Table: Closing payment method modal and clearing states",
+            );
             setShowPaymentMethodModal(false);
             setOrderForPayment(null);
           }}
           onSelectMethod={handlePaymentMethodSelect}
           total={(() => {
-            console.log('💰 Table payment modal total calculation:', {
+            console.log("💰 Table payment modal total calculation:", {
               orderForPayment,
               hasExactTotal: orderForPayment?.exactTotal !== undefined,
               exactTotal: orderForPayment?.exactTotal,
-              fallbackTotal: orderForPayment?.orderItems?.reduce((sum: number, item: any) => {
-                const itemTotal = parseFloat(item.total || '0');
-                return sum + itemTotal;
-              }, 0) || 0
+              fallbackTotal:
+                orderForPayment?.orderItems?.reduce(
+                  (sum: number, item: any) => {
+                    const itemTotal = parseFloat(item.total || "0");
+                    return sum + itemTotal;
+                  },
+                  0,
+                ) || 0,
             });
 
-            if (orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null) {
+            if (
+              orderForPayment?.exactTotal !== undefined &&
+              orderForPayment.exactTotal !== null
+            ) {
               return orderForPayment.exactTotal;
             }
 
             // Fallback to calculating from order items
-            const calculatedTotal = orderForPayment?.orderItems?.reduce((sum: number, item: any) => {
-              const itemTotal = parseFloat(item.total || '0');
-              return sum + itemTotal;
-            }, 0) || 0;
+            const calculatedTotal =
+              orderForPayment?.orderItems?.reduce((sum: number, item: any) => {
+                const itemTotal = parseFloat(item.total || "0");
+                return sum + itemTotal;
+              }, 0) || 0;
 
-            console.log('⚠️ Using calculated total as fallback:', calculatedTotal);
+            console.log(
+              "⚠️ Using calculated total as fallback:",
+              calculatedTotal,
+            );
             return calculatedTotal;
           })()}
           cartItems={(() => {
-            console.log('📦 Table: Preparing cartItems for payment modal using exact Order Details data:', orderForPayment?.orderItems?.length || 0);
+            console.log(
+              "📦 Table: Preparing cartItems for payment modal using exact Order Details data:",
+              orderForPayment?.orderItems?.length || 0,
+            );
 
-            if (!orderForPayment?.orderItems || !Array.isArray(orderForPayment.orderItems)) {
-              console.warn('⚠️ No order items found in orderForPayment');
+            if (
+              !orderForPayment?.orderItems ||
+              !Array.isArray(orderForPayment.orderItems)
+            ) {
+              console.warn("⚠️ No order items found in orderForPayment");
               return [];
             }
 
             return orderForPayment.orderItems.map((item: any) => {
-              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+              const product = Array.isArray(products)
+                ? products.find((p: any) => p.id === item.productId)
+                : null;
 
               return {
                 id: item.productId,
                 name: item.productName || getProductName(item.productId),
-                price: parseFloat(item.unitPrice || '0'),
+                price: parseFloat(item.unitPrice || "0"),
                 quantity: item.quantity,
                 sku: item.productSku || `SP${item.productId}`,
                 taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10,
-                afterTaxPrice: product?.afterTaxPrice || null // Pass afterTaxPrice for exact calculation
+                afterTaxPrice: product?.afterTaxPrice || null, // Pass afterTaxPrice for exact calculation
               };
             });
           })()}
@@ -1869,10 +2397,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             if (!orderForPayment) return 0;
 
             // Sử dụng orderItems từ orderForPayment nếu có
-            const itemsToCalculate = orderForPayment.orderItems || orderItems || [];
-            console.log('💰 E-invoice calculating total from items:', itemsToCalculate.length);
+            const itemsToCalculate =
+              orderForPayment.orderItems || orderItems || [];
+            console.log(
+              "💰 E-invoice calculating total from items:",
+              itemsToCalculate.length,
+            );
 
-            if (!Array.isArray(itemsToCalculate) || itemsToCalculate.length === 0) {
+            if (
+              !Array.isArray(itemsToCalculate) ||
+              itemsToCalculate.length === 0
+            ) {
               // Fallback to order total if no items
               return Math.round(Number(orderForPayment.total || 0));
             }
@@ -1885,37 +2420,48 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 const itemSubtotal = Number(item.total || 0);
                 itemsTotal += itemSubtotal;
 
-                const product = products.find((p: any) => p.id === item.productId);
-                const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
+                const product = products.find(
+                  (p: any) => p.id === item.productId,
+                );
+                const taxRate = product?.taxRate
+                  ? parseFloat(product.taxRate)
+                  : 10;
                 itemsTax += (itemSubtotal * taxRate) / 100;
               });
             }
 
             const calculatedTotal = Math.round(itemsTotal + itemsTax);
-            console.log('💰 E-invoice total calculation result:', {
+            console.log("💰 E-invoice total calculation result:", {
               itemsTotal,
               itemsTax,
               calculatedTotal,
-              fallbackTotal: Math.round(Number(orderForPayment.total || 0))
+              fallbackTotal: Math.round(Number(orderForPayment.total || 0)),
             });
 
-            return calculatedTotal > 0 ? calculatedTotal : Math.round(Number(orderForPayment.total || 0));
+            return calculatedTotal > 0
+              ? calculatedTotal
+              : Math.round(Number(orderForPayment.total || 0));
           })()}
           cartItems={(() => {
             // Sử dụng orderItems từ orderForPayment nếu có
             const itemsToMap = orderForPayment?.orderItems || orderItems || [];
-            console.log('📦 Mapping cart items for E-invoice modal:', itemsToMap.length);
+            console.log(
+              "📦 Mapping cart items for E-invoice modal:",
+              itemsToMap.length,
+            );
 
             return itemsToMap.map((item: any) => ({
               id: item.id,
               name: item.productName || getProductName(item.productId),
-              price: parseFloat(item.unitPrice || '0'),
+              price: parseFloat(item.unitPrice || "0"),
               quantity: item.quantity,
               sku: item.productSku || `SP${item.productId}`,
               taxRate: (() => {
-                const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+                const product = Array.isArray(products)
+                  ? products.find((p: any) => p.id === item.productId)
+                  : null;
                 return product?.taxRate ? parseFloat(product.taxRate) : 10;
-              })()
+              })(),
             }));
           })()}
           source="table"
@@ -1927,7 +2473,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       <ReceiptModal
         isOpen={showReceiptModal}
         onClose={() => {
-          console.log('🔴 Table: Closing final receipt modal and clearing all states');
+          console.log(
+            "🔴 Table: Closing final receipt modal and clearing all states",
+          );
           setShowReceiptModal(false);
           setSelectedReceipt(null);
           setOrderForPayment(null);
@@ -1939,27 +2487,30 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setSelectedOrder(null);
         }}
         receipt={selectedReceipt}
-        cartItems={selectedReceipt?.items?.map((item: any) => ({
-          id: item.productId || item.id,
-          name: item.productName || item.name,
-          price: parseFloat(item.price || item.unitPrice || '0'),
-          quantity: item.quantity,
-          sku: item.sku || `SP${item.productId}`,
-          taxRate: (() => {
-            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-            return product?.taxRate ? parseFloat(product.taxRate) : 10;
-          })()
-        })) || []}
+        cartItems={
+          selectedReceipt?.items?.map((item: any) => ({
+            id: item.productId || item.id,
+            name: item.productName || item.name,
+            price: parseFloat(item.price || item.unitPrice || "0"),
+            quantity: item.quantity,
+            sku: item.sku || `SP${item.productId}`,
+            taxRate: (() => {
+              const product = Array.isArray(products)
+                ? products.find((p: any) => p.id === item.productId)
+                : null;
+              return product?.taxRate ? parseFloat(product.taxRate) : 10;
+            })(),
+          })) || []
+        }
       />
-
 
       {/* Points Payment Dialog */}
       <Dialog open={pointsPaymentOpen} onOpenChange={setPointsPaymentOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{t('orders.pointsPaymentDialog.title')}</DialogTitle>
+            <DialogTitle>{t("orders.pointsPaymentDialog.title")}</DialogTitle>
             <DialogDescription>
-              {t('orders.pointsPaymentDialog.description')}
+              {t("orders.pointsPaymentDialog.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -1967,23 +2518,29 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             {/* Order Summary */}
             {selectedOrder && (
               <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium mb-2">{t('orders.pointsPaymentDialog.orderInfo')}</h4>
+                <h4 className="font-medium mb-2">
+                  {t("orders.pointsPaymentDialog.orderInfo")}
+                </h4>
                 <div className="flex justify-between text-sm">
-                  <span>{t('orders.pointsPaymentDialog.orderCode')}</span>
-                  <span className="font-medium">{selectedOrder.orderNumber}</span>
+                  <span>{t("orders.pointsPaymentDialog.orderCode")}</span>
+                  <span className="font-medium">
+                    {selectedOrder.orderNumber}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>{t('orders.pointsPaymentDialog.totalAmount')}</span>
-                  <span className="font-medium">{Math.floor(Number(selectedOrder.total)).toLocaleString()} ₫</span>
+                  <span>{t("orders.pointsPaymentDialog.totalAmount")}</span>
+                  <span className="font-medium">
+                    {Math.floor(Number(selectedOrder.total)).toLocaleString()} ₫
+                  </span>
                 </div>
               </div>
             )}
 
             {/* Customer Selection */}
             <div className="space-y-3">
-              <Label>{t('orders.pointsPaymentDialog.searchCustomer')}</Label>
+              <Label>{t("orders.pointsPaymentDialog.searchCustomer")}</Label>
               <Input
-                placeholder={t('orders.pointsPaymentDialog.searchPlaceholder')}
+                placeholder={t("orders.pointsPaymentDialog.searchPlaceholder")}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -1993,30 +2550,38 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   <div
                     key={customer.id}
                     className={`p-3 cursor-pointer hover:bg-gray-50 border-b ${
-                      selectedCustomer?.id === customer.id ? 'bg-blue-50 border-blue-200' : ''
+                      selectedCustomer?.id === customer.id
+                        ? "bg-blue-50 border-blue-200"
+                        : ""
                     }`}
                     onClick={() => setSelectedCustomer(customer)}
                   >
                     <div className="flex justify-between items-center">
                       <div>
                         <p className="font-medium">{customer.name}</p>
-                        <p className="text-sm text-gray-600">{customer.customerId}</p>
+                        <p className="text-sm text-gray-600">
+                          {customer.customerId}
+                        </p>
                         {customer.phone && (
-                          <p className="text-sm text-gray-600">{customer.phone}</p>
+                          <p className="text-sm text-gray-600">
+                            {customer.phone}
+                          </p>
                         )}
                       </div>
                       <div className="text-right">
                         <p className="font-medium text-green-600">
                           {(customer.points || 0).toLocaleString()}P
                         </p>
-                        <p className="text-xs text-gray-500">{t('orders.pointsPaymentDialog.accumulatedPoints')}</p>
+                        <p className="text-xs text-gray-500">
+                          {t("orders.pointsPaymentDialog.accumulatedPoints")}
+                        </p>
                       </div>
                     </div>
                   </div>
                 ))}
                 {filteredCustomers.length === 0 && searchTerm && (
                   <div className="p-4 text-center text-gray-500">
-                    {t('common.noData')}
+                    {t("common.noData")}
                   </div>
                 )}
               </div>
@@ -2029,14 +2594,18 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <div className="flex justify-between items-center mb-3">
                   <div>
                     <p className="font-medium">{selectedCustomer.name}</p>
-                    <p className="text-sm text-gray-600">{selectedCustomer.customerId}</p>
+                    <p className="text-sm text-gray-600">
+                      {selectedCustomer.customerId}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-medium text-green-600">
                       {(selectedCustomer.points || 0).toLocaleString()}P
                     </p>
                     <p className="text-xs text-gray-500">
-                      ≈ {((selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
+                      ≈{" "}
+                      {((selectedCustomer.points || 0) * 1000).toLocaleString()}{" "}
+                      ₫
                     </p>
                   </div>
                 </div>
@@ -2045,26 +2614,35 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <div className="pt-2 border-t border-green-200">
                   <div className="flex justify-between text-sm mb-1">
                     <span>Tổng đơn hàng:</span>
-                    <span className="font-medium">{Number(selectedOrder.total).toLocaleString()} ₫</span>
+                    <span className="font-medium">
+                      {Number(selectedOrder.total).toLocaleString()} ₫
+                    </span>
                   </div>
-                  {((selectedCustomer.points || 0) * 1000) >= Number(selectedOrder.total) ? (
+                  {(selectedCustomer.points || 0) * 1000 >=
+                  Number(selectedOrder.total) ? (
                     <div className="text-green-600 text-sm">
                       ✓ Đủ điểm để thanh toán toàn bộ
                     </div>
                   ) : (
                     <div className="text-orange-600 text-sm">
-                      ⚠ Cần thanh toán thêm: {(Number(selectedOrder.total) - (selectedCustomer.points || 0) * 1000).toLocaleString()} ₫
+                      ⚠ Cần thanh toán thêm:{" "}
+                      {(
+                        Number(selectedOrder.total) -
+                        (selectedCustomer.points || 0) * 1000
+                      ).toLocaleString()}{" "}
+                      ₫
                     </div>
                   )}
                 </div>
               </div>
             )}
-
-
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => setPointsPaymentOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setPointsPaymentOpen(false)}
+            >
               Hủy
             </Button>
             <Button
@@ -2076,9 +2654,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               }
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {pointsPaymentMutation.isPending ? 'Đang xử lý...' :
-               selectedCustomer && selectedOrder && ((selectedCustomer.points || 0) * 1000) >= Number(selectedOrder.total) ?
-               'Thanh toán bằng điểm' : 'Thanh toán hỗn hợp'}
+              {pointsPaymentMutation.isPending
+                ? "Đang xử lý..."
+                : selectedCustomer &&
+                    selectedOrder &&
+                    (selectedCustomer.points || 0) * 1000 >=
+                      Number(selectedOrder.total)
+                  ? "Thanh toán bằng điểm"
+                  : "Thanh toán hỗn hợp"}
             </Button>
           </div>
         </DialogContent>
@@ -2101,18 +2684,29 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             {/* Payment Amount Summary */}
             {selectedOrder && (
               <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">Đơn hàng: {selectedOrder.orderNumber}</p>
-                <p className="text-sm text-gray-500 mb-2">Số tiền cần thanh toán:</p>
+                <p className="text-sm text-gray-600">
+                  Đơn hàng: {selectedOrder.orderNumber}
+                </p>
+                <p className="text-sm text-gray-500 mb-2">
+                  Số tiền cần thanh toán:
+                </p>
                 <p className="text-3xl font-bold text-green-600">
-                  {mixedPaymentData ?
-                    Math.floor(mixedPaymentData.remainingAmount).toLocaleString('vi-VN') :
-                    Math.floor(Number(selectedOrder?.total || 0)).toLocaleString('vi-VN')
-                  } ₫</p>
+                  {mixedPaymentData
+                    ? Math.floor(
+                        mixedPaymentData.remainingAmount,
+                      ).toLocaleString("vi-VN")
+                    : Math.floor(
+                        Number(selectedOrder?.total || 0),
+                      ).toLocaleString("vi-VN")}{" "}
+                  ₫
+                </p>
                 {mixedPaymentData && (
                   <div className="mt-2 pt-2 border-t border-gray-300">
                     <p className="text-xs text-blue-600">
-                      Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}P
-                      (-{(mixedPaymentData.pointsToUse * 1000).toLocaleString()} ₫)
+                      Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}
+                      P (-
+                      {(mixedPaymentData.pointsToUse * 1000).toLocaleString()}{" "}
+                      ₫)
                     </p>
                   </div>
                 )}
@@ -2133,7 +2727,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             )}
 
             <p className="text-sm text-gray-600 text-center">
-              Sử dụng ứng dụng {selectedPaymentMethod?.method?.name} để quét mã QR và thực hiện thanh toán
+              Sử dụng ứng dụng {selectedPaymentMethod?.method?.name} để quét mã
+              QR và thực hiện thanh toán
             </p>
 
             {/* Action Buttons */}
@@ -2177,41 +2772,61 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Tổng đơn hàng:</span>
-                    <span className="font-medium">{Number(selectedOrder?.total || 0).toLocaleString()} ₫</span>
+                    <span className="font-medium">
+                      {Number(selectedOrder?.total || 0).toLocaleString()} ₫
+                    </span>
                   </div>
                   <div className="flex justify-between text-blue-600">
                     <span>Thanh toán bằng điểm:</span>
                     <span className="font-medium">
                       {mixedPaymentData.pointsToUse.toLocaleString()}P
-                      <span className="ml-1">(-{(mixedPaymentData.pointsToUse * 1000).toLocaleString()} ₫)</span>
+                      <span className="ml-1">
+                        (-
+                        {(mixedPaymentData.pointsToUse * 1000).toLocaleString()}{" "}
+                        ₫)
+                      </span>
                     </span>
                   </div>
                   <div className="border-t pt-2 flex justify-between font-medium text-orange-600">
                     <span>Cần thanh toán thêm:</span>
-                    <p className="text-sm text-gray-500">{Math.floor(mixedPaymentData.remainingAmount).toLocaleString()} ₫</p>
+                    <p className="text-sm text-gray-500">
+                      {Math.floor(
+                        mixedPaymentData.remainingAmount,
+                      ).toLocaleString()}{" "}
+                      ₫
+                    </p>
                   </div>
                 </div>
               </div>
 
               {/* Payment Methods */}
               <div className="space-y-3">
-                <h4 className="font-medium">Chọn phương thức thanh toán cho phần còn lại:</h4>
+                <h4 className="font-medium">
+                  Chọn phương thức thanh toán cho phần còn lại:
+                </h4>
                 <div className="grid grid-cols-1 gap-2">
                   <Button
                     variant="outline"
                     className="justify-start h-auto p-4"
-                    onClick={() => mixedPaymentMutation.mutate({
-                      customerId: mixedPaymentData.customerId,
-                      points: mixedPaymentData.pointsToUse,
-                      orderId: mixedPaymentData.orderId,
-                      paymentMethod: 'cash'
-                    })}
+                    onClick={() =>
+                      mixedPaymentMutation.mutate({
+                        customerId: mixedPaymentData.customerId,
+                        points: mixedPaymentData.pointsToUse,
+                        orderId: mixedPaymentData.orderId,
+                        paymentMethod: "cash",
+                      })
+                    }
                     disabled={mixedPaymentMutation.isPending}
                   >
                     <span className="text-2xl mr-3">💵</span>
                     <div className="text-left">
                       <p className="font-medium">Tiền mặt</p>
-                      <p className="text-sm text-gray-500">{Math.floor(mixedPaymentData.remainingAmount).toLocaleString()} ₫</p>
+                      <p className="text-sm text-gray-500">
+                        {Math.floor(
+                          mixedPaymentData.remainingAmount,
+                        ).toLocaleString()}{" "}
+                        ₫
+                      </p>
                     </div>
                   </Button>
 
@@ -2223,7 +2838,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       try {
                         setQrLoading(true);
                         const transactionUuid = `TXN-TRANSFER-${Date.now()}`;
-                        const depositAmt = Number(mixedPaymentData.remainingAmount);
+                        const depositAmt = Number(
+                          mixedPaymentData.remainingAmount,
+                        );
 
                         const qrRequest: CreateQRPosRequest = {
                           transactionUuid,
@@ -2232,17 +2849,27 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           accntNo: "0900993023",
                           posfranchiseeName: "DOOKI-HANOI",
                           posCompanyName: "HYOJUNG",
-                          posBillNo: `TRANSFER-${Date.now()}`
+                          posBillNo: `TRANSFER-${Date.now()}`,
                         };
 
                         const bankCode = "79616001";
                         const clientID = "91a3a3668724e631e1baf4f8526524f3";
 
-                        console.log('Calling CreateQRPos API for transfer payment:', { qrRequest, bankCode, clientID });
+                        console.log(
+                          "Calling CreateQRPos API for transfer payment:",
+                          { qrRequest, bankCode, clientID },
+                        );
 
-                        const qrResponse = await createQRPosAsync(qrRequest, bankCode, clientID);
+                        const qrResponse = await createQRPosAsync(
+                          qrRequest,
+                          bankCode,
+                          clientID,
+                        );
 
-                        console.log('CreateQRPos API response for transfer:', qrResponse);
+                        console.log(
+                          "CreateQRPos API response for transfer:",
+                          qrResponse,
+                        );
 
                         // Generate QR code from the received QR data and show QR modal
                         if (qrResponse.qrData) {
@@ -2252,44 +2879,51 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                             qrContent = atob(qrResponse.qrData);
                           } catch (e) {
                             // If decode fails, use the raw qrData
-                            console.log('Using raw qrData for transfer as it is not base64 encoded');
+                            console.log(
+                              "Using raw qrData for transfer as it is not base64 encoded",
+                            );
                           }
 
                           const qrUrl = await QRCodeLib.toDataURL(qrContent, {
                             width: 256,
                             margin: 2,
                             color: {
-                              dark: '#000000',
-                              light: '#FFFFFF'
-                            }
+                              dark: "#000000",
+                              light: "#FFFFFF",
+                            },
                           });
 
                           // Set QR code data and show QR payment modal
                           setQrCodeUrl(qrUrl);
                           setSelectedPaymentMethod({
-                            key: 'transfer',
-                            method: { name: 'Chuyển khoản', icon: '💳' }
+                            key: "transfer",
+                            method: { name: "Chuyển khoản", icon: "💳" },
                           });
                           setShowQRPayment(true);
                           setMixedPaymentOpen(false);
                         } else {
-                          console.error('No QR data received from API for transfer');
+                          console.error(
+                            "No QR data received from API for transfer",
+                          );
                           // Fallback to direct payment
                           mixedPaymentMutation.mutate({
                             customerId: mixedPaymentData.customerId,
                             points: mixedPaymentData.pointsToUse,
                             orderId: mixedPaymentData.orderId,
-                            paymentMethod: 'transfer'
+                            paymentMethod: "transfer",
                           });
                         }
                       } catch (error) {
-                        console.error('Error calling CreateQRPos API for transfer:', error);
+                        console.error(
+                          "Error calling CreateQRPos API for transfer:",
+                          error,
+                        );
                         // Fallback to direct payment on error
                         mixedPaymentMutation.mutate({
                           customerId: mixedPaymentData.customerId,
                           points: mixedPaymentData.pointsToUse,
                           orderId: mixedPaymentData.orderId,
-                          paymentMethod: 'transfer'
+                          paymentMethod: "transfer",
                         });
                       } finally {
                         setQrLoading(false);
@@ -2300,15 +2934,23 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <span className="text-2xl mr-3">💳</span>
                     <div className="text-left">
                       <p className="font-medium">Chuyển khoản</p>
-                      <p className="text-sm text-gray-500">{Math.floor(mixedPaymentData.remainingAmount).toLocaleString()} ₫</p>
+                      <p className="text-sm text-gray-500">
+                        {Math.floor(
+                          mixedPaymentData.remainingAmount,
+                        ).toLocaleString()}{" "}
+                        ₫
+                      </p>
                     </div>
                   </Button>
                 </div>
               </div>
 
               <div className="flex justify-end gap-2 pt-4">
-                <Button variant="outline" onClick={() => setMixedPaymentOpen(false)}>
-                  {t('orders.mixedPaymentCancel')}
+                <Button
+                  variant="outline"
+                  onClick={() => setMixedPaymentOpen(false)}
+                >
+                  {t("orders.mixedPaymentCancel")}
                 </Button>
               </div>
             </div>
@@ -2323,14 +2965,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           setEditOrderOpen(open);
           // When dialog closes after editing, refresh all data
           if (!open && editingOrder) {
-            console.log('🔄 Edit dialog closed, triggering recalculation for order:', editingOrder.id);
-            
+            console.log(
+              "🔄 Edit dialog closed, triggering recalculation for order:",
+              editingOrder.id,
+            );
+
             // Add a small delay to ensure any pending API calls complete
             setTimeout(() => {
               // Recalculate order total first - this will also handle the data refresh
               recalculateOrderMutation.mutate(editingOrder.id);
             }, 100);
-            
+
             // Clear editing states
             setEditingOrder(null);
             setEditingTable(null);
