@@ -60,6 +60,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     qrCodeLabel: "QR 코드",
     createdDate: "생성일",
     none: "없음",
+    im
     // Payment related
     subtotal: "소계",
     tax: "세금",
