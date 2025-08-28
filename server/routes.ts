@@ -492,7 +492,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .status(400)
             .json({ message: `Product with ID ${item.productId} not found` });
         }
-        if (product.stock < item.quantity) {
+        
+        // Check stock availability only for products that track inventory
+        if (product.trackInventory && product.stock < item.quantity) {
           return res.status(400).json({
             message: `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`,
           });

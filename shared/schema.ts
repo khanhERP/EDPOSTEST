@@ -50,6 +50,9 @@ export const transactions = pgTable("transactions", {
   amountReceived: decimal("amount_received", { precision: 10, scale: 2 }),
   change: decimal("change", { precision: 10, scale: 2 }),
   cashierName: text("cashier_name").notNull(),
+  notes: text("notes"),
+  invoiceId: integer("invoice_id").references(() => invoices.id),
+  invoiceNumber: varchar("invoice_number", { length: 50 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -205,6 +208,9 @@ export const insertProductSchema = createInsertSchema(products)
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
   id: true,
   createdAt: true,
+}).extend({
+  invoiceId: z.number().optional(),
+  invoiceNumber: z.string().optional(),
 });
 
 export const insertTransactionItemSchema = createInsertSchema(

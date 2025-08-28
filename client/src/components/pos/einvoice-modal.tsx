@@ -533,7 +533,8 @@ export function EInvoiceModal({
             productId: item.id,
             quantity: item.quantity,
             price: (typeof item.price === 'string' ? parseFloat(item.price) : item.price).toString(),
-            total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * item.quantity).toFixed(2)
+            total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * item.quantity).toFixed(2),
+            productName: item.name
           }))
         };
 
@@ -932,7 +933,8 @@ export function EInvoiceModal({
               productId: item.id,
               quantity: item.quantity,
               price: (typeof item.price === 'string' ? parseFloat(item.price) : item.price).toString(),
-              total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * item.quantity).toFixed(2)
+              total: ((typeof item.price === 'string' ? parseFloat(item.price) : item.price) * item.quantity).toFixed(2),
+              productName: item.name
             }))
           };
 
