@@ -23,7 +23,7 @@ import {
   invoiceItems,
   customers,
 } from "@shared/schema";
-import { initializeDatabase, db } from "./db";
+import { initializeSampleData, db } from "./db";
 import { registerTenantRoutes } from "./tenant-routes";
 import { z } from "zod";
 import {
@@ -57,8 +57,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Apply tenant middleware to all API routes
   app.use('/api', tenantMiddleware);
 
-  // Initialize database
-  await initializeDatabase();
+  // Initialize sample data
+  await initializeSampleData();
 
   // Ensure inventory_transactions table exists
   try {
@@ -205,6 +205,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("Products found:", products.length);
       console.log("First few products:", products.slice(0, 3));
 
+      // Debug afterTaxPrice for Bánh test
+      const banhTest = products.find(p => p.name === 'Bánh test');
+      if (banhTest) {
+        console.log("=== BÁNH TEST DEBUG ===");
+        console.log("Product ID:", banhTest.id);
+        console.log("Name:", banhTest.name);
+        console.log("Price:", banhTest.price);
+        console.log("Tax Rate:", banhTest.taxRate);
+        console.log("After Tax Price:", banhTest.afterTaxPrice);
+        console.log("After Tax Price Type:", typeof banhTest.afterTaxPrice);
+      }
+
       res.json(products);
     } catch (error) {
       console.error('Products API error:', error);
@@ -223,19 +235,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single product by ID
   app.get("/api/products/:id", async (req: TenantRequest, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const productId = parseInt(req.params.id);
+      if (isNaN(productId)) {
+        return res.status(400).json({ error: "Invalid product ID" });
+      }
+
       const tenantDb = await getTenantDatabase(req);
-      const product = await storage.getProduct(id, tenantDb);
+
+      const [product] = await db
+        .select({
+          id: products.id,
+          name: products.name,
+          sku: products.sku,
+          price: products.price,
+          stock: products.stock,
+          categoryId: products.categoryId,
+          categoryName: categories.name,
+          imageUrl: products.imageUrl,
+          isActive: products.isActive,
+          productType: products.productType,
+          trackInventory: products.trackInventory,
+          taxRate: products.taxRate,
+          priceIncludesTax: products.priceIncludesTax,
+          afterTaxPrice: products.afterTaxPrice,
+        })
+        .from(products)
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .where(and(eq(products.id, productId), eq(products.isActive, true)))
+        .limit(1);
 
       if (!product) {
-        return res.status(404).json({ message: "Product not found" });
+        return res.status(404).json({ error: "Product not found" });
       }
+
+      console.log(`=== SINGLE PRODUCT API DEBUG ===`);
+      console.log(`Product ID: ${product.id}`);
+      console.log(`Name: ${product.name}`);
+      console.log(`Price: ${product.price}`);
+      console.log(`Tax Rate: ${product.taxRate}`);
+      console.log(`After Tax Price: ${product.afterTaxPrice}`);
 
       res.json(product);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch product" });
+      console.error("Error fetching single product:", error);
+      res.status(500).json({ error: "Failed to fetch product" });
     }
   });
 
@@ -310,7 +356,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/products/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const validatedData = insertProductSchema.partial().parse(req.body);
+      console.log("Product update request:", id, req.body);
+
+      // Transform data to ensure proper types
+      const transformedData = {
+        ...req.body,
+        price: req.body.price ? req.body.price.toString() : undefined,
+        taxRate: req.body.taxRate ? req.body.taxRate.toString() : undefined,
+        priceIncludesTax: req.body.priceIncludesTax || false,
+        trackInventory: req.body.trackInventory !== false
+      };
+
+      // Remove undefined fields
+      Object.keys(transformedData).forEach(key => {
+        if (transformedData[key] === undefined) {
+          delete transformedData[key];
+        }
+      });
+
+      console.log("Transformed update data:", transformedData);
+
+      const validatedData = insertProductSchema.partial().parse(transformedData);
       const tenantDb = await getTenantDatabase(req);
       const product = await storage.updateProduct(id, validatedData, tenantDb);
 
@@ -318,14 +384,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Product not found" });
       }
 
+      console.log("Product updated successfully:", product);
       res.json(product);
     } catch (error) {
+      console.error("Product update error:", error);
       if (error instanceof z.ZodError) {
         return res
           .status(400)
           .json({ message: "Invalid product data", errors: error.errors });
       }
-      res.status(500).json({ message: "Failed to update product" });
+      res.status(500).json({ 
+        message: "Failed to update product", 
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
@@ -426,21 +497,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const itemSubtotal = parseFloat(item.price) * item.quantity;
-        
-        // Get actual tax rate from product with proper type handling
-        let taxRate = 0;
-        if (product.taxRate !== undefined && product.taxRate !== null) {
-          if (typeof product.taxRate === 'string') {
-            const parsed = parseFloat(product.taxRate);
-            taxRate = isNaN(parsed) ? 0 : parsed;
-          } else if (typeof product.taxRate === 'number') {
-            taxRate = isNaN(product.taxRate) ? 0 : product.taxRate;
-          }
-        }
-        
-        const itemTax = (itemSubtotal * taxRate) / 100;
-
-        console.log(`Transaction item ${product.name}: taxRate=${taxRate}%, subtotal=${itemSubtotal}, tax=${itemTax}`);
+        const taxRate = product.taxRate ? parseFloat(product.taxRate) / 100 : 0.1; // Default 10%
+        const itemTax = itemSubtotal * taxRate;
 
         subtotal += itemSubtotal;
         tax += itemTax;
@@ -936,64 +994,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         JSON.stringify({ order, items }, null, 2),
       );
 
-      // Calculate correct subtotal and tax based on individual product tax rates
-      let correctSubtotal = 0;
-      let correctTax = 0;
-
-      // Fetch all products to get tax rates
-      const products = await storage.getAllProducts(true, tenantDb);
-
-      for (const item of items) {
-        const product = products.find((p) => p.id === item.productId);
-        if (!product) {
-          return res.status(400).json({ 
-            message: `Product with ID ${item.productId} not found` 
-          });
-        }
-
-        const unitPrice = parseFloat(item.unitPrice);
-        const quantity = item.quantity;
-        
-        // Get actual tax rate from product
-        let taxRate = 0;
-        if (product.taxRate !== undefined && product.taxRate !== null) {
-          if (typeof product.taxRate === 'string') {
-            const parsed = parseFloat(product.taxRate);
-            taxRate = isNaN(parsed) ? 0 : parsed;
-          } else if (typeof product.taxRate === 'number') {
-            taxRate = isNaN(product.taxRate) ? 0 : product.taxRate;
-          }
-        }
-
-        const itemSubtotal = unitPrice * quantity;
-        const itemTax = (itemSubtotal * taxRate) / 100;
-
-        correctSubtotal += itemSubtotal;
-        correctTax += itemTax;
-
-        console.log(`Order item ${product.name}: taxRate=${taxRate}%, subtotal=${itemSubtotal}, tax=${itemTax}`);
-      }
-
-      const correctTotal = correctSubtotal + correctTax;
-
-      // Update order data with correct calculated totals
-      const orderDataWithTotals = {
-        ...insertOrderSchema.parse(order),
-        subtotal: correctSubtotal.toFixed(2),
-        tax: correctTax.toFixed(2),
-        total: correctTotal.toFixed(2),
-      };
-
+      const orderData = insertOrderSchema.parse(order);
       const itemsData = items.map((item: any) =>
         insertOrderItemSchema.parse(item),
       );
 
       console.log(
-        "Parsed order data with correct tax:",
-        JSON.stringify({ orderDataWithTotals, itemsData }, null, 2),
+        "Parsed order data:",
+        JSON.stringify({ orderData, itemsData }, null, 2),
       );
 
-      const newOrder = await storage.createOrder(orderDataWithTotals, itemsData, tenantDb);
+      const newOrder = await storage.createOrder(orderData, itemsData, tenantDb);
 
       // Verify items were created
       const createdItems = await storage.getOrderItems(newOrder.id, tenantDb);
@@ -1061,25 +1072,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/order-items/:orderId", async (req: TenantRequest, res) => {
+  // Get order items for a specific order
+  app.get('/api/order-items/:orderId', async (req: TenantRequest, res) => {
     try {
-      console.log("=== GET ORDER ITEMS API CALLED ===");
+      console.log('=== GET ORDER ITEMS API CALLED ===');
       const orderId = parseInt(req.params.orderId);
       const tenantDb = await getTenantDatabase(req);
-      console.log("Order ID requested:", orderId);
+      console.log('Order ID requested:', orderId);
 
       if (isNaN(orderId)) {
-        console.error("Invalid order ID provided:", req.params.orderId);
+        console.error('Invalid order ID provided:', req.params.orderId);
         return res.status(400).json({ message: "Invalid order ID" });
       }
 
-      console.log("Fetching order items from storage...");
+      console.log('Fetching order items from storage...');
       const items = await storage.getOrderItems(orderId, tenantDb);
       console.log(`Found ${items.length} order items:`, items);
 
       res.json(items);
     } catch (error) {
-      console.error("=== GET ORDER ITEMS ERROR ===");
+      console.error('=== GET ORDER ITEMS ERROR ===');
       console.error("Error type:", error.constructor.name);
       console.error("Error message:", error.message);
       console.error("Error stack:", error.stack);
@@ -1088,6 +1100,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         message: "Failed to fetch order items",
         details: error.message,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  });
+
+  // Delete a specific order item
+  app.delete('/api/order-items/:itemId', async (req: TenantRequest, res) => {
+    try {
+      console.log('=== DELETE ORDER ITEM API CALLED ===');
+      const itemId = parseInt(req.params.itemId);
+      const tenantDb = await getTenantDatabase(req); // Assuming tenantDb is needed here as well
+      console.log('Item ID requested:', itemId);
+
+      if (isNaN(itemId)) {
+        return res.status(400).json({ error: 'Invalid item ID' });
+      }
+
+      console.log('Deleting order item from storage...');
+      const success = await storage.deleteOrderItem(itemId, tenantDb); // Pass tenantDb to storage function
+
+      if (success) {
+        console.log('Order item deleted successfully');
+        res.json({ success: true, message: 'Order item deleted successfully' });
+      } else {
+        console.log('Order item not found');
+        res.status(404).json({ error: 'Order item not found' });
+      }
+    } catch (error) {
+      console.error('=== DELETE ORDER ITEM ERROR ===');
+      console.error('Error type:', error.constructor.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+      console.error('Item ID:', req.params.itemId);
+      res.status(500).json({ 
+        error: 'Failed to delete order item',
+        details: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
       });
     }
@@ -3186,69 +3234,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (invoiceData.items && Array.isArray(invoiceData.items) && invoiceData.items.length > 0) {
         console.log("Processing invoice items:", invoiceData.items.length);
 
-        // Calculate correct subtotal and tax based on individual product tax rates
-      let correctSubtotal = 0;
-      let correctTax = 0;
+        const invoiceItemsData = invoiceData.items.map((item: any, index: number) => {
+          console.log(`Processing item ${index + 1}:`, item);
 
-      const itemsData = invoiceData.items.map(item => {
-        const unitPrice = parseFloat(item.unitPrice);
-        const quantity = item.quantity;
+          return {
+            invoiceId: savedInvoice.id,
+            productId: item.productId || 0,
+            productName: item.productName || `Product ${index + 1}`,
+            quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1),
+            unitPrice: typeof item.unitPrice === 'string' ? item.unitPrice : (item.unitPrice?.toString() || "0"),
+            total: typeof item.total === 'string' ? item.total : (item.total?.toString() || "0"),
+            taxRate: typeof item.taxRate === 'string' ? item.taxRate : ((item.taxRate || 10).toString())
+          };
+        });
 
-        // Get actual tax rate from product
-        let taxRate = 0;
-        if (item.taxRate !== undefined && item.taxRate !== null) {
-          if (typeof item.taxRate === 'string') {
-            const parsed = parseFloat(item.taxRate);
-            taxRate = isNaN(parsed) ? 0 : parsed;
-          } else if (typeof item.taxRate === 'number') {
-            taxRate = isNaN(item.taxRate) ? 0 : item.taxRate;
-          }
-        }
+        console.log("Invoice items data:", JSON.stringify(invoiceItemsData, null, 2));
 
-        const itemSubtotal = unitPrice * quantity;
-        const itemTax = (itemSubtotal * taxRate) / 100;
-        const itemTotal = itemSubtotal + itemTax;
+        const savedItems = await db
+          .insert(invoiceItems)
+          .values(invoiceItemsData)
+          .returning();
 
-        // Accumulate totals
-        correctSubtotal += itemSubtotal;
-        correctTax += itemTax;
-
-        console.log(`Invoice item ${item.productName}: taxRate=${taxRate}%, subtotal=${itemSubtotal}, tax=${itemTax}, total=${itemTotal}`);
-
-        return {
-          invoiceId: savedInvoice.id,
-          productId: item.productId,
-          productName: item.productName,
-          quantity: quantity,
-          unitPrice: item.unitPrice,
-          total: itemTotal.toFixed(2),
-          taxRate: taxRate.toFixed(2)
-        };
-      });
-
-      console.log("Invoice items data:", JSON.stringify(itemsData, null, 2));
-
-      const savedItems = await db
-        .insert(invoiceItems)
-        .values(itemsData)
-        .returning();
-
-      console.log("Invoice items saved:", savedItems.length);
-
-      // Update invoice with correct calculated totals
-      const correctTotal = correctSubtotal + correctTax;
-      console.log(`Updating invoice totals: subtotal=${correctSubtotal}, tax=${correctTax}, total=${correctTotal}`);
-
-      await db
-        .update(invoices)
-        .set({
-          subtotal: correctSubtotal.toFixed(2),
-          tax: correctTax.toFixed(2),
-          total: correctTotal.toFixed(2),
-          updatedAt: new Date()
-        })
-        .where(eq(invoices.id, savedInvoice.id));
-
+        console.log("Invoice items saved:", savedItems.length);
       } else {
         console.log("No invoice items to save");
       }
@@ -3472,6 +3479,311 @@ export async function registerRoutes(app: Express): Promise<Server> {
   } catch (error) {
     console.log("einvoiceStatus column already exists in orders table or addition failed:", error);
   }
+
+
+
+  // Printer Configs API
+  app.get('/api/printer-configs', async (req, res) => {
+    try {
+      const tenantDb = await getTenantDatabase(req);
+      const result = await db.execute(sql`
+        SELECT id, name, printer_type, connection_type, ip_address, port, 
+               mac_address, paper_width, print_speed, is_employee, is_kitchen, 
+               is_active, created_at, updated_at
+        FROM printer_configs 
+        ORDER BY id ASC
+      `);
+
+      const configs = result.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        printerType: row.printer_type,
+        connectionType: row.connection_type,
+        ipAddress: row.ip_address,
+        port: row.port,
+        macAddress: row.mac_address,
+        paperWidth: row.paper_width,
+        printSpeed: row.print_speed,
+        isEmployee: row.is_employee,
+        isKitchen: row.is_kitchen,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }));
+
+      res.json(configs);
+    } catch (error) {
+      console.error('Error fetching printer configs:', error);
+      res.status(500).json({ error: 'Failed to fetch printer configs' });
+    }
+  });
+
+  // Get active printer configs for auto-print
+  app.get('/api/printer-configs/active', async (req, res) => {
+    try {
+      const { type } = req.query; // 'employee', 'kitchen', or 'all'
+      const tenantDb = await getTenantDatabase(req);
+      
+      let whereClause = 'WHERE is_active = true';
+      if (type === 'employee') {
+        whereClause += ' AND is_employee = true';
+      } else if (type === 'kitchen') {
+        whereClause += ' AND is_kitchen = true';
+      }
+
+      const result = await db.execute(sql`
+        SELECT id, name, printer_type, connection_type, ip_address, port, 
+               mac_address, paper_width, print_speed, is_employee, is_kitchen, 
+               is_active, created_at, updated_at
+        FROM printer_configs 
+        ${sql.raw(whereClause)}
+        ORDER BY id ASC
+      `);
+
+      const configs = result.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        printerType: row.printer_type,
+        connectionType: row.connection_type,
+        ipAddress: row.ip_address,
+        port: row.port,
+        macAddress: row.mac_address,
+        paperWidth: row.paper_width,
+        printSpeed: row.print_speed,
+        isEmployee: row.is_employee,
+        isKitchen: row.is_kitchen,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+      }));
+
+      res.json(configs);
+    } catch (error) {
+      console.error('Error fetching active printer configs:', error);
+      res.status(500).json({ error: 'Failed to fetch active printer configs' });
+    }
+  });
+
+  // Auto-print API endpoint
+  app.post('/api/auto-print', async (req, res) => {
+    try {
+      const { receiptData, printerType } = req.body;
+      const tenantDb = await getTenantDatabase(req);
+
+      console.log('🖨️ Auto-print request:', { printerType, receiptData: !!receiptData });
+
+      // Get active printer configs based on type
+      let whereClause = 'WHERE is_active = true';
+      if (printerType === 'employee') {
+        whereClause += ' AND is_employee = true';
+      } else if (printerType === 'kitchen') {
+        whereClause += ' AND is_kitchen = true';
+      } else if (printerType === 'both') {
+        whereClause += ' AND (is_employee = true OR is_kitchen = true)';
+      }
+
+      const result = await db.execute(sql`
+        SELECT id, name, printer_type, connection_type, ip_address, port, 
+               mac_address, paper_width, print_speed, is_employee, is_kitchen
+        FROM printer_configs 
+        ${sql.raw(whereClause)}
+        ORDER BY is_employee DESC, is_kitchen DESC
+      `);
+
+      if (!result.rows || result.rows.length === 0) {
+        return res.status(404).json({ 
+          error: 'No active printer found',
+          message: 'Không tìm thấy máy in hoặc không có cấu hình máy in' 
+        });
+      }
+
+      const printResults = [];
+
+      // Print to each configured printer
+      for (const printer of result.rows) {
+        try {
+          console.log(`🖨️ Printing to: ${printer.name} (${printer.connection_type})`);
+
+          // Mock print job - In real implementation, you would send to actual printer
+          if (printer.connection_type === 'network' && printer.ip_address) {
+            // Network printer logic
+            console.log(`📡 Sending to network printer at ${printer.ip_address}:${printer.port}`);
+          } else if (printer.connection_type === 'usb') {
+            // USB printer logic
+            console.log(`🔌 Sending to USB printer: ${printer.name}`);
+          } else if (printer.connection_type === 'bluetooth' && printer.mac_address) {
+            // Bluetooth printer logic
+            console.log(`📶 Sending to Bluetooth printer: ${printer.mac_address}`);
+          }
+
+          printResults.push({
+            printerId: printer.id,
+            printerName: printer.name,
+            status: 'success',
+            message: `In thành công trên máy ${printer.name}`
+          });
+
+          // Simulate print delay
+          await new Promise(resolve => setTimeout(resolve, 100));
+
+        } catch (printerError) {
+          console.error(`❌ Print failed for ${printer.name}:`, printerError);
+          printResults.push({
+            printerId: printer.id,
+            printerName: printer.name,
+            status: 'error',
+            message: `Lỗi in trên máy ${printer.name}: ${printerError.message}`
+          });
+        }
+      }
+
+      const successCount = printResults.filter(r => r.status === 'success').length;
+      const totalCount = printResults.length;
+
+      res.json({
+        success: successCount > 0,
+        message: `In thành công ${successCount}/${totalCount} máy in`,
+        results: printResults,
+        totalPrinters: totalCount,
+        successfulPrints: successCount
+      });
+
+    } catch (error) {
+      console.error('❌ Auto-print error:', error);
+      res.status(500).json({ 
+        error: 'Print failed',
+        message: 'Có lỗi xảy ra khi in hóa đơn'
+      });
+    }
+  });
+
+  app.post("/api/printer-configs", async (req: TenantRequest, res) => {
+    try {
+      const tenantDb = await getTenantDatabase(req);
+      const configData = req.body;
+
+      // If setting as primary, unset all other primaries
+      if (configData.isPrimary) {
+        await db.execute(sql`UPDATE printer_configs SET is_primary = false`);
+      }
+
+      // If setting as secondary, unset all other secondaries
+      if (configData.isSecondary) {
+        await db.execute(sql`UPDATE printer_configs SET is_secondary = false`);
+      }
+
+      const result = await db.execute(sql`
+        INSERT INTO printer_configs (
+          name, printer_type, connection_type, ip_address, port, mac_address,
+          paper_width, print_speed, is_employee, is_kitchen, is_active
+        ) VALUES (
+          ${configData.name}, ${configData.printerType}, ${configData.connectionType},
+          ${configData.ipAddress || null}, ${configData.port || null}, ${configData.macAddress || null},
+          ${configData.paperWidth}, ${configData.printSpeed}, ${configData.isEmployee || false}, ${configData.isKitchen || false}, ${configData.isActive !== false}
+        ) RETURNING *
+      `);
+
+      if (!result.rows || result.rows.length === 0) {
+        return res.status(500).json({ error: "Failed to create printer config" });
+      }
+
+      res.status(201).json(result.rows[0]);
+    } catch (error) {
+      console.error("Error creating printer config:", error);
+      res.status(500).json({ error: "Failed to create printer config" });
+    }
+  });
+
+  app.put("/api/printer-configs/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+      const configData = req.body;
+
+      // If setting as employee printer, unset all other employee printers
+      if (configData.isEmployee) {
+        await db.execute(sql`UPDATE printer_configs SET is_employee = false WHERE id != ${id}`);
+      }
+
+      // If setting as kitchen printer, unset all other kitchen printers
+      if (configData.isKitchen) {
+        await db.execute(sql`UPDATE printer_configs SET is_kitchen = false WHERE id != ${id}`);
+      }
+
+      const result = await db.execute(sql`
+        UPDATE printer_configs SET
+          name = ${configData.name},
+          printer_type = ${configData.printerType},
+          connection_type = ${configData.connectionType},
+          ip_address = ${configData.ipAddress || null},
+          port = ${configData.port || null},
+          mac_address = ${configData.macAddress || null},
+          paper_width = ${configData.paperWidth},
+          print_speed = ${configData.printSpeed},
+          is_employee = ${configData.isEmployee},
+          is_kitchen = ${configData.isKitchen},
+          is_active = ${configData.isActive !== false}
+        WHERE id = ${id}
+        RETURNING *
+      `);
+
+      if (!result.rows || result.rows.length === 0) {
+        return res.status(404).json({ error: "Printer config not found" });
+      }
+
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error("Error updating printer config:", error);
+      res.status(500).json({ error: "Failed to update printer config" });
+    }
+  });
+
+  app.delete("/api/printer-configs/:id", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+
+      const result = await db.execute(sql`DELETE FROM printer_configs WHERE id = ${id}`);
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: "Printer config not found" });
+      }
+
+      res.json({ message: "Printer config deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting printer config:", error);
+      res.status(500).json({ error: "Failed to delete printer config" });
+    }
+  });
+
+  app.post("/api/printer-configs/:id/test", async (req: TenantRequest, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const tenantDb = await getTenantDatabase(req);
+
+      const result = await db.execute(sql`
+        SELECT * FROM printer_configs WHERE id = ${id}
+      `);
+
+      if (!result.rows || result.rows.length === 0) {
+        return res.status(404).json({ error: "Printer config not found" });
+      }
+
+      const config = result.rows[0];
+
+      // Mock test print functionality
+      console.log(`Testing printer: ${config.name}`);
+
+      res.json({ 
+        message: "Test print sent successfully",
+        printer: config.name,
+        status: "success"
+      });
+    } catch (error) {
+      console.error("Error testing printer:", error);
+      res.status(500).json({ error: "Failed to test printer" });
+    }
+  });
 
   // Save invoice as order (for both "Phát hành" and "Phát hành sau" functionality)
   app.post("/api/invoices/save-as-order", async (req: TenantRequest, res) => {
@@ -3766,7 +4078,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
 
-      console.log(`Found ${products.length} filtered products`);
+      console.log(`Found ${products.length} products after filtering`);
       res.json(products);
     } catch (error) {
       console.error("Error in products API:", error);

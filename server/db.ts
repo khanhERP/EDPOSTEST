@@ -1,31 +1,143 @@
-import { config } from "dotenv";
-config(); // Load environment variables from .env file
-
-import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "@shared/schema";
+import {
+  categories,
+  products,
+  employees,
+  tables,
+  orders,
+  orderItems,
+  transactions,
+  transactionItems,
+  attendanceRecords,
+  storeSettings,
+  suppliers,
+  customers,
+} from "@shared/schema";
 import { sql } from "drizzle-orm";
 
-// Use EXTERNAL_DB_URL if available, fallback to DATABASE_URL
-const databaseUrl = process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL;
+// Load environment variables from .env file with higher priority
+import { config } from "dotenv";
+import path from "path";
 
-if (!databaseUrl) {
-  throw new Error("DATABASE_URL or EXTERNAL_DB_URL is required");
+// Load .env.local first, then override with .env to ensure .env has priority
+config({ path: path.resolve(".env.local") });
+config({ path: path.resolve(".env") });
+
+// Use EXTERNAL_DB_URL first, then fallback to CUSTOM_DATABASE_URL, then DATABASE_URL
+let DATABASE_URL =
+  process.env.EXTERNAL_DB_URL_Freshway ||
+  process.env.EXTERNAL_DB_URL_hazkitchen ||
+  process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?",
+  );
 }
 
-const pool = new Pool({
-  connectionString: databaseUrl,
-  ssl: databaseUrl.includes("1.55.212.135") 
+// Ensure we're using the correct database and SSL settings for external server
+if (DATABASE_URL?.includes("1.55.212.135")) {
+  if (!DATABASE_URL.includes("sslmode=disable")) {
+    DATABASE_URL += DATABASE_URL.includes("?")
+      ? "&sslmode=disable"
+      : "?sslmode=disable";
+  }
+}
+
+export const pool = new Pool({
+  connectionString: DATABASE_URL,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+  ssl: DATABASE_URL?.includes("1.55.212.135")
     ? false // Disable SSL for external server
-    : databaseUrl.includes("neon")
+    : DATABASE_URL?.includes("neon")
       ? { rejectUnauthorized: false }
       : undefined,
 });
 
+// Log database connection info with detailed debugging
+console.log("🔍 Environment check:");
+console.log("  - NODE_ENV:", process.env.NODE_ENV);
+console.log(
+  "  - CUSTOM_DATABASE_URL exists:",
+  !!process.env.CUSTOM_DATABASE_URL,
+);
+console.log("  - DATABASE_URL exists:", !!process.env.DATABASE_URL);
+console.log("  - EXTERNAL_DB_URL exists:", !!process.env.EXTERNAL_DB_URL);
+console.log(
+  "  - Using URL:",
+  process.env.EXTERNAL_DB_URL
+    ? "EXTERNAL_DB_URL"
+    : process.env.CUSTOM_DATABASE_URL
+      ? "CUSTOM_DATABASE_URL"
+      : "DATABASE_URL",
+);
+console.log(
+  "  - DATABASE_URL preview:",
+  DATABASE_URL?.substring(0, 50) + "...",
+);
+console.log(
+  "  - DATABASE_URL full (masked):",
+  DATABASE_URL?.replace(/:[^:@]*@/, ":****@"),
+);
+console.log(
+  "  - Contains 1.55.212.135:",
+  DATABASE_URL?.includes("1.55.212.135"),
+);
+console.log("  - Contains neon:", DATABASE_URL?.includes("neon"));
+console.log(
+  "🔗 Database connection string:",
+  DATABASE_URL?.replace(/:[^:@]*@/, ":****@"),
+);
+
+// Test database connection immediately
+console.log("🔍 Testing database connection...");
+pool.query("SELECT current_database(), current_user, version()", (err, res) => {
+  if (err) {
+    console.error("❌ Database connection failed:", err.message);
+  } else {
+    console.log("✅ Database connection successful:");
+    console.log("  - Database:", res.rows[0]?.current_database);
+    console.log("  - User:", res.rows[0]?.current_user);
+    console.log("  - Version:", res.rows[0]?.version?.substring(0, 50) + "...");
+  }
+});
+
 export const db = drizzle(pool, { schema });
 
-export async function initializeDatabase() {
+// Initialize sample data function
+export async function initializeSampleData() {
   try {
+    console.log("Running database migrations...");
+
+    // Run migration for membership thresholds
+    try {
+      await db.execute(sql`
+        ALTER TABLE store_settings 
+        ADD COLUMN IF NOT EXISTS gold_threshold TEXT DEFAULT '300000'
+      `);
+      await db.execute(sql`
+        ALTER TABLE store_settings 
+        ADD COLUMN IF NOT EXISTS vip_threshold TEXT DEFAULT '1000000'
+      `);
+
+      // Update existing records
+      await db.execute(sql`
+        UPDATE store_settings 
+        SET gold_threshold = COALESCE(gold_threshold, '300000'), 
+            vip_threshold = COALESCE(vip_threshold, '1000000')
+      `);
+
+      console.log(
+        "Migration for membership thresholds completed successfully.",
+      );
+    } catch (migrationError) {
+      console.log("Migration already applied or error:", migrationError);
+    }
+
     // Run migration for product_type column
     try {
       await db.execute(sql`
@@ -33,6 +145,9 @@ export async function initializeDatabase() {
       `);
       await db.execute(sql`
         UPDATE products SET product_type = 1 WHERE product_type IS NULL
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_products_product_type ON products(product_type)
       `);
 
       console.log("Migration for product_type column completed successfully.");
@@ -56,6 +171,37 @@ export async function initializeDatabase() {
     } catch (migrationError) {
       console.log(
         "Tax rate migration already applied or error:",
+        migrationError,
+      );
+    }
+
+    // Run migration for price_includes_tax column
+    try {
+      await db.execute(sql`
+        ALTER TABLE products ADD COLUMN IF NOT EXISTS price_includes_tax BOOLEAN DEFAULT false
+      `);
+      await db.execute(sql`
+        UPDATE products SET price_includes_tax = false WHERE price_includes_tax IS NULL
+      `);
+
+      console.log("Migration for price_includes_tax column completed successfully.");
+    } catch (migrationError) {
+      console.log(
+        "Price includes tax migration already applied or error:",
+        migrationError,
+      );
+    }
+
+    // Run migration for after_tax_price column
+    try {
+      await db.execute(sql`
+        ALTER TABLE products ADD COLUMN IF NOT EXISTS after_tax_price DECIMAL(10,2)
+      `);
+
+      console.log("Migration for after_tax_price column completed successfully.");
+    } catch (migrationError) {
+      console.log(
+        "After tax price migration already applied or error:",
         migrationError,
       );
     }
@@ -130,6 +276,30 @@ export async function initializeDatabase() {
       );
     } catch (error) {
       console.log("Invoice status migration failed or already applied:", error);
+    }
+
+    // Add template_number and symbol columns to orders table
+    try {
+      await db.execute(sql`
+        ALTER TABLE orders ADD COLUMN IF NOT EXISTS template_number VARCHAR(50)
+      `);
+      await db.execute(sql`
+        ALTER TABLE orders ADD COLUMN IF NOT EXISTS symbol VARCHAR(20)
+      `);
+
+      // Create indexes for template_number and symbol
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_orders_template_number ON orders(template_number)
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_orders_symbol ON orders(symbol)
+      `);
+
+      console.log(
+        "Migration for template_number and symbol columns in orders table completed successfully.",
+      );
+    } catch (error) {
+      console.log("Template number and symbol migration failed or already applied:", error);
     }
 
     // Run migration for email constraint in employees table
@@ -303,6 +473,45 @@ export async function initializeDatabase() {
     } catch (error) {
       console.log(
         "Invoices table already exists or initialization failed:",
+        error,
+      );
+    }
+
+    
+
+    // Initialize printer_configs table if it doesn't exist
+    try {
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS printer_configs (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(100) NOT NULL,
+          printer_type VARCHAR(50) NOT NULL DEFAULT 'thermal',
+          connection_type VARCHAR(50) NOT NULL DEFAULT 'usb',
+          ip_address VARCHAR(45),
+          port INTEGER DEFAULT 9100,
+          mac_address VARCHAR(17),
+          paper_width INTEGER NOT NULL DEFAULT 80,
+          print_speed INTEGER DEFAULT 100,
+          is_primary BOOLEAN NOT NULL DEFAULT false,
+          is_secondary BOOLEAN NOT NULL DEFAULT false,
+          is_active BOOLEAN NOT NULL DEFAULT true,
+          created_at TIMESTAMP DEFAULT NOW() NOT NULL,
+          updated_at TIMESTAMP DEFAULT NOW() NOT NULL
+        )
+      `);
+
+      // Create indexes for better performance
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_printer_configs_primary ON printer_configs(is_primary)
+      `);
+      await db.execute(sql`
+        CREATE INDEX IF NOT EXISTS idx_printer_configs_active ON printer_configs(is_active)
+      `);
+
+      console.log("Printer configs table initialized");
+    } catch (error) {
+      console.log(
+        "Printer configs table already exists or initialization failed:",
         error,
       );
     }

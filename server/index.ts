@@ -1,6 +1,3 @@
-import { config } from "dotenv";
-config(); // Load environment variables from .env file
-
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -51,7 +48,7 @@ app.use((req, res, next) => {
       message = "Database connection failed. Please check database server.";
       console.error("❌ Database connection error:", err);
     }
-    
+
     // Handle database lock errors
     if (message.includes('INDEX_LOCKED') || message.includes('database is locked')) {
       message = "Database temporarily unavailable. Please try again.";
@@ -138,5 +135,26 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+
+    // Initialize WebSocket server after HTTP server is running
+    import('./websocket-server').then((wsModule) => {
+      wsModule.initializeWebSocketServer(server);
+      log('WebSocket server initialized on same port as HTTP server');
+    });
+  });
+
+  // Handle server errors
+  server.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`Port ${port} is busy, trying port ${port + 1}`);
+      server.listen(port + 1, "0.0.0.0", () => {
+        console.log(`🚀 Server running on http://0.0.0.0:${port + 1}`);
+        import('./websocket-server').then((wsModule) => {
+          wsModule.initializeWebSocketServer(server);
+        });
+      });
+    } else {
+      console.error('Server error:', err);
+    }
   });
 })();

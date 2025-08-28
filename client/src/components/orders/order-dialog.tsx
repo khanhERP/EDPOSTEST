@@ -129,6 +129,10 @@ export function OrderDialog({
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
       queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
 
+      // Force refetch table data to ensure immediate UI update
+      queryClient.refetchQueries({ queryKey: ["/api/tables"] });
+      queryClient.refetchQueries({ queryKey: ["/api/orders"] });
+
       // Reset form state
       setCart([]);
       setCustomerName("");
@@ -282,9 +286,39 @@ export function OrderDialog({
   };
 
   const handlePlaceOrder = () => {
-    if (!table || (cart.length === 0 && (mode !== "edit" || existingItems.length === 0))) return;
+    // In edit mode, allow update even with empty cart
+    // In create mode, require items in cart
+    if (!table || (mode !== "edit" && cart.length === 0)) return;
 
     if (mode === "edit" && existingOrder) {
+      // Check if there are new items to add
+      if (cart.length === 0) {
+        // No new items to add, but still need to refresh data and invalidate queries
+        console.log('No new items to add, refreshing data and closing dialog');
+        
+        // Invalidate and refetch all related queries to ensure data is fresh
+        queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
+        
+        // Force immediate refetch to update UI
+        queryClient.refetchQueries({ queryKey: ["/api/tables"] });
+        queryClient.refetchQueries({ queryKey: ["/api/orders"] });
+        
+        toast({
+          title: t('orders.orderUpdateSuccess'),
+          description: 'Dữ liệu đã được làm mới thành công',
+        });
+
+        // Reset form state and close dialog
+        setCart([]);
+        setCustomerName("");
+        setCustomerCount(1);
+        setExistingItems([]);
+        onOpenChange(false);
+        return;
+      }
+
       // For edit mode, only send the new items to be added
       const items = cart.map((item) => {
         const product = products?.find((p: Product) => p.id === item.product.id);
@@ -551,20 +585,143 @@ export function OrderDialog({
                       {existingItems.map((item, index) => (
                         <Card key={`existing-${index}`} className="bg-gray-50">
                           <CardContent className="p-3">
-                            <div className="flex justify-between items-center">
-                              <div>
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
                                 <h4 className="font-medium text-sm">
                                   {item.productName}
                                 </h4>
                                 <p className="text-xs text-gray-500">{t("orders.alreadyOrdered")}</p>
                               </div>
-                              <div className="text-right">
-                                <span className="text-sm font-bold">
-                                  {Number(item.total).toLocaleString()} ₫
-                                </span>
-                                <p className="text-xs text-gray-500">
-                                  x{item.quantity}
-                                </p>
+                              <div className="flex items-center gap-2">
+                                <div className="text-right">
+                                  <span className="text-sm font-bold">
+                                    {Math.floor(Number(item.total)).toLocaleString()} ₫
+                                  </span>
+                                  <p className="text-xs text-gray-500">
+                                    x{item.quantity}
+                                  </p>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    if (window.confirm(`Bạn có chắc chắn muốn xóa "${item.productName}" khỏi đơn hàng?`)) {
+                                      // Remove item from existing items list
+                                      setExistingItems(prev => prev.filter((_, i) => i !== index));
+
+                                      // Call API to delete the order item
+                                      apiRequest('DELETE', `/api/order-items/${item.id}`)
+                                        .then(async () => {
+                                          console.log('🗑️ Order Dialog: Successfully deleted item:', item.productName);
+                                          
+                                          toast({
+                                            title: "Xóa món thành công",
+                                            description: `Đã xóa "${item.productName}" khỏi đơn hàng`,
+                                          });
+
+                                          // Recalculate order total if this is an existing order
+                                          if (existingOrder?.id) {
+                                            try {
+                                              console.log('🧮 Order Dialog: Starting order total recalculation for order:', existingOrder.id);
+                                              
+                                              // Fetch current order items after deletion
+                                              const response = await apiRequest('GET', `/api/order-items/${existingOrder.id}`);
+                                              const remainingItems = await response.json();
+
+                                              console.log('📦 Order Dialog: Remaining items after deletion:', remainingItems?.length || 0);
+
+                                              // Calculate new total based on remaining items
+                                              let newSubtotal = 0;
+                                              let newTax = 0;
+
+                                              if (Array.isArray(remainingItems) && remainingItems.length > 0) {
+                                                remainingItems.forEach((remainingItem: any) => {
+                                                  const basePrice = Number(remainingItem.unitPrice || 0);
+                                                  const quantity = Number(remainingItem.quantity || 0);
+
+                                                  // Calculate subtotal
+                                                  newSubtotal += basePrice * quantity;
+
+                                                  // Calculate tax using same logic as shopping cart
+                                                  const productResponse = products?.find((p: any) => p.id === remainingItem.productId);
+                                                  if (productResponse?.afterTaxPrice && productResponse.afterTaxPrice !== null && productResponse.afterTaxPrice !== "") {
+                                                    const afterTaxPrice = parseFloat(productResponse.afterTaxPrice);
+                                                    const taxPerUnit = afterTaxPrice - basePrice;
+                                                    newTax += taxPerUnit * quantity;
+                                                  }
+                                                });
+                                              }
+                                              // If no items left, totals should be 0
+                                              else {
+                                                console.log('📝 Order Dialog: No items left, setting totals to zero');
+                                                newSubtotal = 0;
+                                                newTax = 0;
+                                              }
+
+                                              const newTotal = newSubtotal + newTax;
+
+                                              console.log('💰 Order Dialog: Calculated new totals:', { 
+                                                newSubtotal, 
+                                                newTax, 
+                                                newTotal,
+                                                itemsCount: remainingItems?.length || 0
+                                              });
+
+                                              // Update order with new totals
+                                              await apiRequest('PUT', `/api/orders/${existingOrder.id}`, {
+                                                subtotal: newSubtotal.toString(),
+                                                tax: newTax.toString(),
+                                                total: newTotal.toString()
+                                              });
+
+                                              console.log('✅ Order Dialog: Order totals updated successfully');
+
+                                              // Force refresh of all related data to ensure UI updates immediately
+                                              await Promise.all([
+                                                queryClient.invalidateQueries({ queryKey: ["/api/orders"] }),
+                                                queryClient.invalidateQueries({ queryKey: ["/api/tables"] }),
+                                                queryClient.invalidateQueries({ queryKey: ["/api/order-items"] }),
+                                                queryClient.invalidateQueries({ queryKey: ["/api/order-items", existingOrder.id] })
+                                              ]);
+
+                                              // Force immediate refetch to update table grid display
+                                              await Promise.all([
+                                                queryClient.refetchQueries({ queryKey: ["/api/orders"] }),
+                                                queryClient.refetchQueries({ queryKey: ["/api/tables"] })
+                                              ]);
+
+                                              console.log('🔄 Order Dialog: All queries refreshed successfully');
+
+                                            } catch (error) {
+                                              console.error('❌ Order Dialog: Error recalculating order total:', error);
+                                              toast({
+                                                title: "Cảnh báo",
+                                                description: "Món đã được xóa nhưng có lỗi khi cập nhật tổng tiền",
+                                                variant: "destructive",
+                                              });
+                                            }
+                                          }
+
+                                          // Invalidate queries to refresh data
+                                          queryClient.invalidateQueries({ queryKey: ["/api/order-items"] });
+                                          queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+                                        })
+                                        .catch((error) => {
+                                          console.error('Error deleting order item:', error);
+                                          // Restore the item if deletion failed
+                                          setExistingItems(prev => [...prev.slice(0, index), item, ...prev.slice(index)]);
+                                          toast({
+                                            title: "Lỗi xóa món",
+                                            description: "Không thể xóa món khỏi đơn hàng",
+                                            variant: "destructive",
+                                          });
+                                        });
+                                    }
+                                  }}
+                                  className="h-6 w-6 p-0"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </Button>
                               </div>
                             </div>
                           </CardContent>
@@ -599,7 +756,7 @@ export function OrderDialog({
                               {item.product.name}
                             </h4>
                             <span className="text-sm font-bold">
-                              {(
+                              {Math.floor(
                                 Number(item.product.price) * item.quantity
                               ).toLocaleString()}{" "}
                               ₫
@@ -653,7 +810,7 @@ export function OrderDialog({
         </div>
 
         {/* DialogFooter with Summary and Order Button */}
-        {(cart.length > 0 || (mode === "edit" && existingItems.length > 0)) && (
+        {(cart.length > 0 || (mode === "edit" && existingItems.length > 0) || (mode === "edit")) && (
           <DialogFooter className="pt-4 pb-2 flex-shrink-0 border-t bg-white">
             <div className="flex items-center justify-between w-full">
               {/* Summary items in horizontal layout */}
@@ -663,13 +820,14 @@ export function OrderDialog({
                     <div className="flex items-center gap-2">
                       <span className="text-gray-600">{t("orders.previousItems")}</span>
                       <span className="font-medium">
-                        {existingItems
-                          .reduce((total, item) => {
-                            // Use unitPrice * quantity for existing items (pre-tax amount)
-                            const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
-                            return total + itemSubtotal;
-                          }, 0)
-                          .toLocaleString()}{" "}
+                        {Math.floor(
+                          existingItems
+                            .reduce((total, item) => {
+                              // Use unitPrice * quantity for existing items (pre-tax amount)
+                              const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
+                              return total + itemSubtotal;
+                            }, 0)
+                        ).toLocaleString()}{" "}
                         ₫
                       </span>
                     </div>
@@ -683,14 +841,15 @@ export function OrderDialog({
                     <div className="flex items-center gap-2">
                       <span className="text-gray-600">{t("orders.newItems")}</span>
                       <span className="font-medium">
-                        {cart
-                          .reduce(
-                            (total, item) =>
-                              total +
-                              Number(item.product.price) * item.quantity,
-                            0,
-                          )
-                          .toLocaleString()}{" "}
+                        {Math.floor(
+                          cart
+                            .reduce(
+                              (total, item) =>
+                                total +
+                                Number(item.product.price) * item.quantity,
+                              0,
+                            )
+                        ).toLocaleString()}{" "}
                         ₫
                       </span>
                     </div>
@@ -700,14 +859,14 @@ export function OrderDialog({
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600">{t("tables.subtotalLabel")}</span>
                   <span className="font-medium">
-                    {calculateTotal().toLocaleString()} ₫
+                    {Math.floor(calculateTotal()).toLocaleString()} ₫
                   </span>
                 </div>
                 <div className="w-px h-4 bg-gray-300"></div>
                 <div className="flex items-center gap-2">
                   <span className="text-gray-600">{t("tables.taxLabel")}</span>
                   <span className="font-medium">
-                    {Math.round(calculateTax()).toLocaleString()} ₫
+                    {Math.floor(calculateTax()).toLocaleString()} ₫
                   </span>
                 </div>
                 <div className="w-px h-4 bg-gray-300"></div>
@@ -716,7 +875,7 @@ export function OrderDialog({
                     {t("tables.totalLabel")}
                   </span>
                   <span className="font-bold text-lg text-blue-600">
-                    {Math.round(calculateGrandTotal()).toLocaleString()} ₫
+                    {Math.floor(calculateGrandTotal()).toLocaleString()} ₫
                   </span>
                 </div>
               </div>
@@ -733,7 +892,7 @@ export function OrderDialog({
                     ? t("orders.updating")
                     : t("tables.placing")
                   : mode === "edit"
-                    ? t("orders.updateOrder")
+                    ? (cart.length === 0 ? "Cập nhật & Làm mới" : t("orders.updateOrder"))
                     : t("tables.placeOrder")}
               </Button>
             </div>

@@ -73,45 +73,36 @@ export function ReceiptModal({
     },
   });
 
-  // Auto-open print dialog for non-preview receipts that have items
+  // Log receipt modal state for debugging
   useEffect(() => {
-    console.log("🔍 Receipt Modal useEffect triggered with:", {
+    console.log("🔍 Receipt Modal state:", {
       isOpen,
       hasReceipt: !!receipt,
       isPreview,
-      hasAutoOpened,
     });
+  }, [isOpen, receipt, isPreview]);
 
-    // Only auto-print for non-preview receipts that are opened and haven't been auto-opened yet
-    if (isOpen && receipt && !isPreview && !hasAutoOpened) {
-      console.log("✅ Initial conditions met for auto-print");
-      setHasAutoOpened(true);
+  // Debug: Log all props
+  console.log("🔍 ReceiptModal Props Debug:", {
+    isOpen,
+    isPreview,
+    receipt,
+    cartItems,
+    total,
+    onConfirm: !!onConfirm
+  });
 
-      // Small delay to ensure DOM is ready
-      setTimeout(() => {
-        console.log("🖨️ Auto-triggering print dialog for completed payment");
-        handlePrint();
-      }, 500);
-    } else {
-      console.log("❌ Initial conditions not met for auto-print:", {
-        isOpen,
-        hasReceipt: !!receipt,
-        isPreview,
-        hasAutoOpened,
-      });
-    }
-  }, [isOpen, receipt, isPreview, hasAutoOpened]);
+  if (!receipt) {
+    console.log("❌ Receipt Modal: No receipt data provided");
+    return null;
+  }
 
-  // Reset auto-opened flag when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setHasAutoOpened(false);
-    }
-  }, [isOpen]);
+  const handlePrint = async () => {
+    console.log("🖨️ Starting browser print process");
+    await handleBrowserPrint();
+  };
 
-  if (!receipt) return null;
-
-  const handlePrint = () => {
+  const handleBrowserPrint = async () => {
     const printContent = document.getElementById("receipt-content");
     if (printContent) {
       // Calculate content height dynamically
@@ -139,18 +130,18 @@ export function ReceiptModal({
             <head>
               <title>Receipt</title>
               <style>
-                body { 
-                  font-family: monospace; 
-                  margin: 0; 
-                  padding: 10px; 
-                  font-size: 12px; 
+                body {
+                  font-family: monospace;
+                  margin: 0;
+                  padding: 10px;
+                  font-size: 12px;
                   line-height: 1.4;
                   background: white;
                 }
-                .receipt-container { 
-                  max-width: 300px; 
-                  margin: 0 auto; 
-                  background: white; 
+                .receipt-container {
+                  max-width: 300px;
+                  margin: 0 auto;
+                  background: white;
                 }
                 .text-center { text-align: center; }
                 .text-right { text-align: right; }
@@ -196,33 +187,14 @@ export function ReceiptModal({
         // Trigger print dialog
         printWindow.print();
 
-        // Auto close modals and print window after printing or saving
+        // Handle print completion - just close the print window, don't auto-close modals
         const handlePrintComplete = () => {
-          console.log(
-            "🖨️ Print/Save completed, auto-closing all popups and print window",
-          );
+          console.log("🖨️ Print/Save completed, closing print window");
 
-          // Force close print window immediately
+          // Close print window
           if (!printWindow.closed) {
             printWindow.close();
           }
-
-          // Auto close receipt modal and complete payment flow immediately after print
-          setTimeout(() => {
-            console.log(
-              "🔄 Auto-closing receipt modal and completing payment after print/save",
-            );
-            if (onConfirm) {
-              // Complete the payment flow first
-              onConfirm();
-            }
-            // Close the receipt modal
-            onClose();
-
-            // Close any other modals that might be open
-            setShowEInvoiceModal(false);
-            setShowPaymentMethodModal(false);
-          }, 200);
         };
 
         // Handle print completion
@@ -231,27 +203,11 @@ export function ReceiptModal({
         // Handle browser's save dialog completion (when user saves or cancels)
         printWindow.addEventListener("beforeunload", handlePrintComplete);
 
-        // Handle when print dialog is dismissed without printing
-        printWindow.addEventListener("focus", () => {
-          // Check if print dialog was closed without printing after a short delay
-          setTimeout(() => {
-            if (printWindow.document.hasFocus() && !printWindow.closed) {
-              console.log(
-                "🖨️ Print dialog likely dismissed, auto-closing window",
-              );
-              handlePrintComplete();
-            }
-          }, 500);
-        });
-
         // Handle manual close of print window
         const checkClosed = setInterval(() => {
           if (printWindow.closed) {
-            console.log(
-              "🖨️ Print window closed manually, auto-closing all popups",
-            );
+            console.log("🖨️ Print window closed manually");
             clearInterval(checkClosed);
-            handlePrintComplete();
           }
         }, 500);
 
@@ -264,11 +220,6 @@ export function ReceiptModal({
         }, 10000);
 
         setTimeout(() => {
-          if (!printWindow.closed) {
-            console.log(
-              "🖨️ Print window still open after 15s, clearing interval",
-            );
-          }
           clearInterval(checkClosed);
         }, 15000);
       }
@@ -281,8 +232,21 @@ export function ReceiptModal({
   };
 
   const handleConfirmAndSelectPayment = () => {
-    // Close preview modal and trigger payment method selection in parent
+    // Pass complete receipt data to parent for payment flow
     if (onConfirm) {
+      console.log('📄 Receipt Modal: Passing complete receipt data to payment flow');
+      console.log('🎯 Receipt data being passed:', {
+        receipt,
+        cartItems,
+        total,
+        subtotal: receipt?.subtotal,
+        tax: receipt?.tax,
+        exactTotal: receipt?.exactTotal,
+        exactSubtotal: receipt?.exactSubtotal,
+        exactTax: receipt?.exactTax
+      });
+      
+      // Call onConfirm with receipt data
       onConfirm();
     }
   };
@@ -364,11 +328,8 @@ export function ReceiptModal({
 
           <div className="space-y-2 mb-3">
             {receipt.items.map((item) => {
-              // item.price is the base price (15,000)
-              // item.total is the price with tax included (16,500)
-              // For display, show base price without tax
+              // For receipt display, show the unit price (base price without tax) and total from order details
               const unitPrice = parseFloat(item.price);
-              const lineTotal = unitPrice * item.quantity;
 
               return (
                 <div key={item.id}>
@@ -381,10 +342,10 @@ export function ReceiptModal({
                       </div>
                       <div className="text-xs text-gray-600">
                         {item.quantity} x{" "}
-                        {Math.round(unitPrice).toLocaleString("vi-VN")} ₫
+                        {Math.floor(parseFloat(item.total) / item.quantity).toLocaleString("vi-VN")} ₫
                       </div>
                     </div>
-                    <div>{Math.round(lineTotal).toLocaleString("vi-VN")} ₫</div>
+                    <div>{Math.floor(parseFloat(item.total)).toLocaleString("vi-VN")} ₫</div>
                   </div>
                 </div>
               );
@@ -395,102 +356,19 @@ export function ReceiptModal({
             <div className="flex justify-between text-sm">
               <span>Tạm tính</span>
               <span>
-                {(() => {
-                  // Calculate subtotal as sum of base prices (without tax)
-                  const baseSubtotal = receipt.items.reduce((sum, item) => {
-                    return sum + parseFloat(item.price) * item.quantity;
-                  }, 0);
-                  return Math.round(baseSubtotal).toLocaleString("vi-VN");
-                })()}{" "}
-                ₫
+                {Math.floor(parseFloat(receipt.subtotal || "0")).toLocaleString("vi-VN")} ₫
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span>Thuế</span>
+              <span>Thuế:</span>
               <span>
-                {(() => {
-                  // Calculate tax using actual product tax rates from receipt items
-                  const totalTax = receipt.items.reduce((sum, item) => {
-                    const basePrice = parseFloat(item.price);
-                    const quantity = item.quantity;
-                    
-                    // Get the actual tax rate from the item - use actual taxRate from product
-                    let itemTaxRate = 0;
-                    
-                    // Priority: use taxRate from item if available, otherwise default to 0%
-                    if (item.taxRate !== undefined && item.taxRate !== null) {
-                      if (typeof item.taxRate === 'string') {
-                        const parsedRate = parseFloat(item.taxRate);
-                        itemTaxRate = isNaN(parsedRate) ? 0 : parsedRate;
-                      } else if (typeof item.taxRate === 'number') {
-                        itemTaxRate = isNaN(item.taxRate) ? 0 : item.taxRate;
-                      }
-                    }
-                    
-                    // Calculate tax for this item - if taxRate is 0%, tax will be 0
-                    const itemSubtotal = basePrice * quantity;
-                    const itemTax = (itemSubtotal * itemTaxRate) / 100;
-
-                    console.log(`Receipt Tax display for ${item.productName}: 
-                      - Base Price: ${basePrice} 
-                      - Quantity: ${quantity} 
-                      - Tax Rate: ${itemTaxRate}% 
-                      - Item Subtotal: ${itemSubtotal}
-                      - Item Tax: ${itemTax}`);
-
-                    return sum + itemTax;
-                  }, 0);
-                  
-                  console.log(`Total tax calculated: ${totalTax}`);
-                  return Math.round(totalTax).toLocaleString("vi-VN");
-                })()}{" "}
-                ₫
+                {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
               </span>
             </div>
             <div className="flex justify-between font-bold">
               <span>{t("pos.total")}</span>
               <span>
-                {(() => {
-                  // Always calculate total using base subtotal + actual tax rates
-                  const baseSubtotal = receipt.items.reduce((sum, item) => {
-                    return sum + parseFloat(item.price) * item.quantity;
-                  }, 0);
-
-                  const totalTax = receipt.items.reduce((sum, item) => {
-                    const basePrice = parseFloat(item.price);
-                    const quantity = item.quantity;
-                    
-                    // Get the actual tax rate from the item - use actual taxRate from product
-                    let itemTaxRate = 0;
-                    
-                    // Priority: use taxRate from item if available, otherwise default to 0%
-                    if (item.taxRate !== undefined && item.taxRate !== null) {
-                      if (typeof item.taxRate === 'string') {
-                        const parsedRate = parseFloat(item.taxRate);
-                        itemTaxRate = isNaN(parsedRate) ? 0 : parsedRate;
-                      } else if (typeof item.taxRate === 'number') {
-                        itemTaxRate = isNaN(item.taxRate) ? 0 : item.taxRate;
-                      }
-                    }
-
-                    // Calculate tax for this item - if taxRate is 0%, tax will be 0
-                    const itemSubtotal = basePrice * quantity;
-                    const itemTax = (itemSubtotal * itemTaxRate) / 100;
-
-                    console.log(`Receipt Total calculation for ${item.productName}: 
-                      - Base Price: ${basePrice} 
-                      - Quantity: ${quantity} 
-                      - Tax Rate: ${itemTaxRate}% 
-                      - Item Subtotal: ${itemSubtotal}
-                      - Item Tax: ${itemTax}`);
-
-                    return sum + itemTax;
-                  }, 0);
-
-                  const total = baseSubtotal + totalTax;
-                  return Math.round(total).toLocaleString("vi-VN");
-                })()}{" "}
-                ₫
+                {Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
               </span>
             </div>
             <div className="flex justify-between text-sm mt-2">
@@ -533,47 +411,11 @@ export function ReceiptModal({
                       receipt.paymentMethod === "einvoice" ||
                       receipt.originalPaymentMethod === "einvoice"
                     ) {
-                      // Calculate using base subtotal + actual tax rates
-                      const baseSubtotal = receipt.items.reduce((sum, item) => {
-                        return sum + parseFloat(item.price) * item.quantity;
-                      }, 0);
-
-                      const totalTax = receipt.items.reduce((sum, item) => {
-                        const basePrice = parseFloat(item.price);
-                        const quantity = item.quantity;
-                        
-                        // Get the actual tax rate from the item - use actual taxRate from product
-                        let itemTaxRate = 0;
-                        
-                        // Priority: use taxRate from item if available, otherwise default to 0%
-                        if (item.taxRate !== undefined && item.taxRate !== null) {
-                          if (typeof item.taxRate === 'string') {
-                            const parsedRate = parseFloat(item.taxRate);
-                            itemTaxRate = isNaN(parsedRate) ? 0 : parsedRate;
-                          } else if (typeof item.taxRate === 'number') {
-                            itemTaxRate = isNaN(item.taxRate) ? 0 : item.taxRate;
-                          }
-                        }
-
-                        // Calculate tax for this item - if taxRate is 0%, tax will be 0
-                        const itemSubtotal = basePrice * quantity;
-                        const itemTax = (itemSubtotal * itemTaxRate) / 100;
-
-                        console.log(`Receipt Amount received calculation for ${item.productName}: 
-                          - Base Price: ${basePrice} 
-                          - Quantity: ${quantity} 
-                          - Tax Rate: ${itemTaxRate}% 
-                          - Item Subtotal: ${itemSubtotal}
-                          - Item Tax: ${itemTax}`);
-
-                        return sum + itemTax;
-                      }, 0);
-
-                      const total = baseSubtotal + totalTax;
-                      return Math.round(total).toLocaleString("vi-VN");
+                      // For e-invoice, use the total from receipt
+                      return Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN");
                     }
                     // For other payment methods, use the original amount received
-                    return Math.round(
+                    return Math.floor(
                       parseFloat(receipt.amountReceived),
                     ).toLocaleString("vi-VN");
                   })()}{" "}

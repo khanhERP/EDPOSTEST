@@ -53,13 +53,22 @@ export function ProductManagerModal({
 
   const productFormSchema = insertProductSchema.extend({
     categoryId: z.number().min(1, t("tables.categoryRequired")),
-    price: z.string().min(1, "Price is required").refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) > 0, "Price must be a valid positive number"),
+    price: z.string().min(1, "Price is required").refine((val) => {
+      const num = parseFloat(val.replace(/\./g, ''));
+      return !isNaN(num) && num > 0 && num < 100000000; // Max 99,999,999 (8 digits)
+    }, "Price must be a valid positive number and less than 100,000,000"),
     sku: z.string().min(1, t("tables.skuRequired")),
     name: z.string().min(1, t("tables.productNameRequired")),
     productType: z.number().min(1, t("tables.productTypeRequired")),
     trackInventory: z.boolean().optional(),
     stock: z.number().min(0, "Stock must be 0 or greater"),
     taxRate: z.string().min(1, "Tax rate is required").refine((val) => !isNaN(parseFloat(val)) && parseFloat(val) >= 0 && parseFloat(val) <= 100, "Tax rate must be between 0 and 100"),
+    priceIncludesTax: z.boolean().optional(),
+    afterTaxPrice: z.string().optional().refine((val) => {
+      if (!val) return true; // Optional field
+      const num = parseFloat(val.replace(/\./g, ''));
+      return !isNaN(num) && num > 0 && num < 100000000;
+    }, "After tax price must be a valid positive number and less than 100,000,000"),
   });
   const [showAddForm, setShowAddForm] = useState(false);
   const [showBulkImport, setShowBulkImport] = useState(false);
@@ -198,13 +207,15 @@ export function ProductManagerModal({
       imageUrl: "",
       trackInventory: true,
       taxRate: "8.00",
+      priceIncludesTax: false,
+      afterTaxPrice: "",
     },
   });
 
   // Helper functions for currency formatting
   const formatCurrency = (value: string | number): string => {
     if (typeof value === 'string') {
-      // If it's already formatted, just return it
+      // If it's already formatted with dots, parse and reformat
       if (value.includes('.')) {
         const num = parseFloat(value.replace(/\./g, ''));
         if (isNaN(num)) return '';
@@ -240,17 +251,30 @@ export function ProductManagerModal({
       return;
     }
 
+    // Validate price limit
+    const priceNum = parseFloat(data.price);
+    if (priceNum >= 100000000) {
+      toast({
+        title: "Error",
+        description: "Price cannot exceed 99,999,999 VND",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Transform data to ensure proper types
     const transformedData = {
       name: data.name.trim(),
       sku: data.sku.trim().toUpperCase(),
-      price: parseCurrency(data.price).toString(),
+      price: data.price.toString(), // Use direct value without parsing
       stock: Number(data.stock) || 0,
       categoryId: Number(data.categoryId),
       productType: Number(data.productType) || 1,
       trackInventory: data.trackInventory !== false,
       imageUrl: data.imageUrl?.trim() || null,
-      taxRate: data.taxRate.toString()
+      taxRate: data.taxRate.toString(),
+      priceIncludesTax: data.priceIncludesTax || false,
+      afterTaxPrice: data.afterTaxPrice ? data.afterTaxPrice.toString() : null
     };
 
     console.log("Transformed data:", transformedData);
@@ -264,16 +288,24 @@ export function ProductManagerModal({
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
+    
     form.reset({
       name: product.name,
       sku: product.sku,
-      price: formatCurrency(product.price),
+      price: product.price, // Show actual price value without formatting
       stock: product.stock,
       categoryId: product.categoryId,
       productType: product.productType || 1,
       imageUrl: product.imageUrl || "",
       trackInventory: product.trackInventory !== false,
       taxRate: product.taxRate || "8.00",
+      priceIncludesTax: product.priceIncludesTax || false,
+      // Use saved after-tax price if available, otherwise calculate
+      afterTaxPrice: product.afterTaxPrice || (() => {
+        const basePrice = parseFloat(product.price);
+        const taxRate = parseFloat(product.taxRate || "8.00");
+        return Math.round(basePrice + (basePrice * taxRate / 100)).toString();
+      })(),
     });
     setShowAddForm(true);
   };
@@ -297,6 +329,8 @@ export function ProductManagerModal({
       imageUrl: "",
       trackInventory: true,
       taxRate: "8.00",
+      priceIncludesTax: false,
+      afterTaxPrice: "",
     });
   };
 
@@ -402,6 +436,8 @@ export function ProductManagerModal({
           imageUrl: "",
           trackInventory: true,
           taxRate: "8.00",
+          priceIncludesTax: false,
+          afterTaxPrice: "",
         });
       }
     }
@@ -438,6 +474,8 @@ export function ProductManagerModal({
       imageUrl: "",
       trackInventory: true,
       taxRate: "8.00",
+      priceIncludesTax: false,
+      afterTaxPrice: "",
     });
     onClose();
   };
@@ -448,16 +486,8 @@ export function ProductManagerModal({
         className="max-w-4xl w-full max-h-screen overflow-y-auto"
       >
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
+          <DialogTitle>
             {t("tables.productManagement")}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleModalClose}
-              className="h-6 w-6 p-0"
-            >
-              <X size={16} />
-            </Button>
           </DialogTitle>
         </DialogHeader>
 
@@ -546,6 +576,9 @@ export function ProductManagerModal({
                           {t("tables.taxRate")}
                         </th>
                         <th className="text-left py-3 px-4 font-medium pos-text-primary">
+                          Giá sau thuế
+                        </th>
+                        <th className="text-left py-3 px-4 font-medium pos-text-primary">
                           {t("tables.stock")}
                         </th>
                         <th className="text-left py-3 px-4 font-medium pos-text-primary">
@@ -585,13 +618,23 @@ export function ProductManagerModal({
                             {getProductTypeName(product.productType || 1)}
                           </td>
                           <td className="py-3 px-4 font-medium">
-                            {new Intl.NumberFormat("vi-VN", {
-                              style: "currency",
-                              currency: "VND",
-                            }).format(parseFloat(product.price))}
+                            {Math.round(parseFloat(product.price)).toLocaleString("vi-VN")} ₫
                           </td>
                           <td className="py-3 px-4 pos-text-secondary">
                             {product.taxRate || "8.00"}%
+                          </td>
+                          <td className="py-3 px-4 font-medium">
+                            {(() => {
+                              // Use saved after-tax price if available, otherwise calculate
+                              if (product.afterTaxPrice) {
+                                return Math.round(parseFloat(product.afterTaxPrice)).toLocaleString("vi-VN", { maximumFractionDigits: 0 });
+                              } else {
+                                const basePrice = parseFloat(product.price);
+                                const taxRate = parseFloat(product.taxRate || "8.00");
+                                const afterTaxPrice = basePrice + (basePrice * taxRate / 100);
+                                return Math.round(afterTaxPrice).toLocaleString("vi-VN", { maximumFractionDigits: 0 });
+                              }
+                            })()} ₫
                           </td>
                           <td className="py-3 px-4">
                             <span
@@ -689,7 +732,7 @@ export function ProductManagerModal({
                     />
                   </div>
 
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-5 gap-4">
                     <FormField
                       control={form.control}
                       name="price"
@@ -700,22 +743,32 @@ export function ProductManagerModal({
                             <Input
                               {...field}
                               type="text"
-                              placeholder="100.000"
+                              placeholder="4000"
                               onChange={(e) => {
                                 const value = e.target.value;
-                                // Only allow numbers and dots
-                                const sanitized = value.replace(/[^0-9.]/g, '');
+                                // Only allow numbers
+                                const sanitized = value.replace(/[^0-9]/g, '');
                                 
-                                // Just update with sanitized value, format on blur
+                                // Check if the number would exceed the limit
+                                const num = parseInt(sanitized);
+                                if (!isNaN(num) && num >= 100000000) {
+                                  // Don't allow input that would exceed the limit
+                                  return;
+                                }
+                                
+                                // Store the integer value
                                 field.onChange(sanitized);
-                              }}
-                              onBlur={() => {
-                                const value = field.value;
-                                if (value && value.trim() !== '') {
-                                  const num = parseCurrency(value);
-                                  if (!isNaN(num) && num >= 0) {
-                                    field.onChange(formatCurrency(num));
-                                  }
+                                
+                                // Calculate after tax price from base price
+                                if (sanitized && !isNaN(parseInt(sanitized))) {
+                                  const basePrice = parseInt(sanitized);
+                                  const taxRate = parseFloat(form.getValues("taxRate") || "8.00");
+                                  
+                                  // Calculate after tax price: afterTaxPrice = basePrice + (basePrice * taxRate/100)
+                                  const afterTaxPrice = Math.round(basePrice + (basePrice * taxRate / 100));
+                                  
+                                  // Update the after tax price field
+                                  form.setValue("afterTaxPrice", afterTaxPrice.toString());
                                 }
                               }}
                             />
@@ -739,6 +792,68 @@ export function ProductManagerModal({
                               min="0"
                               max="100"
                               placeholder="8.00"
+                              onChange={(e) => {
+                                const taxRate = e.target.value;
+                                field.onChange(taxRate);
+                                
+                                // Calculate after tax price when tax rate changes
+                                const basePrice = form.getValues("price");
+                                if (basePrice && !isNaN(parseInt(basePrice)) && taxRate && !isNaN(parseFloat(taxRate))) {
+                                  const basePriceNum = parseInt(basePrice);
+                                  const taxRateNum = parseFloat(taxRate);
+                                  
+                                  // Calculate after tax price: afterTaxPrice = basePrice + (basePrice * taxRate/100)
+                                  const afterTaxPrice = Math.round(basePriceNum + (basePriceNum * taxRateNum / 100));
+                                  
+                                  // Update the after tax price field
+                                  form.setValue("afterTaxPrice", afterTaxPrice.toString());
+                                }
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="afterTaxPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Giá sau thuế</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="text"
+                              placeholder="4320"
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                // Only allow numbers
+                                const sanitized = value.replace(/[^0-9]/g, '');
+                                
+                                // Check if the number would exceed the limit
+                                const num = parseInt(sanitized);
+                                if (!isNaN(num) && num >= 100000000) {
+                                  // Don't allow input that would exceed the limit
+                                  return;
+                                }
+                                
+                                // Store the integer value
+                                field.onChange(sanitized);
+                                
+                                // Calculate base price from after tax price
+                                if (sanitized && !isNaN(parseInt(sanitized))) {
+                                  const afterTaxPrice = parseInt(sanitized);
+                                  const taxRate = parseFloat(form.getValues("taxRate") || "8.00");
+                                  
+                                  // Calculate base price: basePrice = afterTaxPrice / (1 + taxRate/100)
+                                  const basePrice = Math.round(afterTaxPrice / (1 + taxRate / 100));
+                                  
+                                  // Update the price field
+                                  form.setValue("price", basePrice.toString());
+                                }
+                              }}
                             />
                           </FormControl>
                           <FormMessage />
@@ -850,25 +965,47 @@ export function ProductManagerModal({
                     )}
                   />
 
-                  <FormField
-                    control={form.control}
-                    name="trackInventory"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value !== false}
-                            onCheckedChange={field.onChange}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            {t("inventory.trackInventory")}
-                          </FormLabel>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="trackInventory"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value !== false}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              {t("inventory.trackInventory")}
+                            </FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="priceIncludesTax"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value || false}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel>
+                              Giá đã bao gồm thuế
+                            </FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <div className="flex justify-end">
                     <Button

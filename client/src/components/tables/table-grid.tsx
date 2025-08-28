@@ -8,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OrderDialog } from "@/components/orders/order-dialog";
-import { Users, Clock, CheckCircle2, Eye, CreditCard, QrCode, Plus, Printer } from "lucide-react";
+import { Users, Clock, CheckCircle2, Eye, CreditCard, QrCode, Plus, Printer, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/lib/i18n";
 import { apiRequest } from "@/lib/queryClient";
@@ -68,7 +68,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     refetchOnWindowFocus: false,
     staleTime: 0, // Always fetch fresh data
     queryFn: async () => {
-      const orderId = selectedOrder?.id;
+      const orderId = selectedOrder.id;
       if (!orderId) {
         console.log('No order ID available for fetching items');
         return [];
@@ -97,7 +97,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           console.log(`  Item ${index + 1}:`, {
             id: item.id,
             orderId: item.orderId,
-            productId: item.productId, 
+            productId: item.productId,
             productName: item.productName,
             quantity: item.quantity,
             unitPrice: item.unitPrice,
@@ -195,18 +195,29 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         if (completedOrder && orderItemsData) {
           console.log('✅ Table payment completed - preparing receipt data');
 
-          // Calculate totals including tax for receipt
+          // Use same calculation logic as Order Details display to get exact values
           let subtotal = 0;
           let totalTax = 0;
 
           const processedItems = Array.isArray(orderItemsData) ? orderItemsData.map((item: any) => {
-            const itemSubtotal = Number(item.total || 0);
+            const basePrice = Number(item.unitPrice || 0);
+            const quantity = Number(item.quantity || 0);
             const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-            const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
-            const itemTax = (itemSubtotal * taxRate) / 100;
+            const itemTaxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
 
-            subtotal += itemSubtotal;
-            totalTax += itemTax;
+            // Calculate subtotal (base price without tax) - same as Order Details
+            subtotal += basePrice * quantity;
+
+            // Use same tax calculation logic as Order Details
+            if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+              const afterTaxPrice = parseFloat(product.afterTaxPrice);
+              // Tax = afterTaxPrice - basePrice (per unit), then multiply by quantity
+              const taxPerUnit = afterTaxPrice - basePrice;
+              totalTax += taxPerUnit * quantity;
+            } else {
+              // No afterTaxPrice means no tax
+              totalTax += 0;
+            }
 
             return {
               id: item.id,
@@ -216,22 +227,46 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               price: item.unitPrice,
               total: item.total,
               sku: item.productSku || `SP${item.productId}`,
-              taxRate: taxRate
+              taxRate: itemTaxRate
             };
           }) : [];
 
-          const finalTotal = subtotal + totalTax;
+          // Use EXACT same calculation logic as Order Details display to ensure consistency
+          let orderDetailsSubtotal = 0;
+          let orderDetailsTax = 0;
 
-          // Create comprehensive receipt object
+          if (Array.isArray(orderItemsData) && Array.isArray(products)) {
+            orderItemsData.forEach((item: any) => {
+              const basePrice = Number(item.unitPrice || 0);
+              const quantity = Number(item.quantity || 0);
+              const product = products.find((p: any) => p.id === item.productId);
+
+              // Calculate subtotal exactly as Order Details
+              orderDetailsSubtotal += basePrice * quantity;
+
+              // Use EXACT same tax calculation logic as Order Details
+              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                // Tax = afterTaxPrice - basePrice (per unit), then multiply by quantity
+                const taxPerUnit = afterTaxPrice - basePrice;
+                orderDetailsTax += taxPerUnit * quantity;
+              } else {
+                // No afterTaxPrice means no tax
+                orderDetailsTax += 0;
+              }
+            });
+          }
+
+          // Use exact calculated values from Order Details display
           const receiptData = {
             ...completedOrder,
             transactionId: `TXN-${Date.now()}`,
             items: processedItems,
-            subtotal: subtotal.toFixed(2),
-            tax: totalTax.toFixed(2),
-            total: finalTotal.toFixed(2),
+            subtotal: orderDetailsSubtotal.toString(),
+            tax: orderDetailsTax.toString(),
+            total: (orderDetailsSubtotal + orderDetailsTax).toString(),
             paymentMethod: variables.paymentMethod || 'cash',
-            amountReceived: finalTotal.toFixed(2),
+            amountReceived: (orderDetailsSubtotal + orderDetailsTax).toString(),
             change: '0.00',
             cashierName: 'Table Service',
             createdAt: new Date().toISOString()
@@ -279,10 +314,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       });
 
       // Then mark order as paid
-      await apiRequest('PUT', `/api/orders/${orderId}/status`, { 
-        status: 'paid', 
+      await apiRequest('PUT', `/api/orders/${orderId}/status`, {
+        status: 'paid',
         paymentMethod: 'points',
-        customerId 
+        customerId
       });
     },
     onSuccess: (data, variables) => {
@@ -324,10 +359,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   });
 
   const mixedPaymentMutation = useMutation({
-    mutationFn: async ({ customerId, points, orderId, paymentMethod }: { 
-      customerId: number; 
-      points: number; 
-      orderId: number; 
+    mutationFn: async ({ customerId, points, orderId, paymentMethod }: {
+      customerId: number;
+      points: number;
+      orderId: number;
       paymentMethod: string;
     }) => {
       // First redeem all available points
@@ -337,10 +372,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       });
 
       // Then mark order as paid with mixed payment
-      await apiRequest('PUT', `/api/orders/${orderId}/status`, { 
-        status: 'paid', 
+      await apiRequest('PUT', `/api/orders/${orderId}/status`, {
+        status: 'paid',
         paymentMethod: `points + ${paymentMethod}`,
-        customerId 
+        customerId
       });
     },
     onSuccess: (data, variables) => {
@@ -382,6 +417,162 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     },
   });
 
+  const deleteOrderMutation = useMutation({
+    mutationFn: async (orderId: number) => {
+      // First cancel the order
+      const response = await apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'cancelled' });
+
+      // Find the order to get its table ID
+      const order = orders?.find((o: any) => o.id === orderId);
+      if (order?.tableId) {
+        // Check if there are any other active orders on this table
+        const otherActiveOrders = orders?.filter((o: any) =>
+          o.tableId === order.tableId &&
+          o.id !== orderId &&
+          !["paid", "cancelled"].includes(o.status)
+        );
+
+        // If no other active orders, update table status to available
+        if (!otherActiveOrders || otherActiveOrders.length === 0) {
+          await apiRequest('PUT', `/api/tables/${order.tableId}/status`, { status: 'available' });
+        }
+      }
+
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/order-items'] });
+      toast({
+        title: 'Xóa đơn hàng thành công',
+        description: 'Đơn hàng đã được hủy và bàn đã được cập nhật',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể xóa đơn hàng',
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Add mutation to recalculate order totals
+  const recalculateOrderMutation = useMutation({
+    mutationFn: async (orderId: number) => {
+      console.log('🧮 Recalculating order total for order:', orderId);
+      
+      // Fetch current order items after deletion
+      const response = await apiRequest('GET', `/api/order-items/${orderId}`);
+      const remainingItems = await response.json();
+      
+      console.log('📦 Remaining items after deletion:', remainingItems?.length || 0);
+
+      // Keep order even if no items remain - just recalculate totals to zero
+      if (!remainingItems || remainingItems.length === 0) {
+        console.log('📝 No items left, setting order totals to zero but keeping order');
+        
+        // Set totals to zero instead of deleting the order
+        const updateResult = await apiRequest('PUT', `/api/orders/${orderId}`, {
+          subtotal: '0',
+          tax: '0',
+          total: '0'
+        });
+        
+        console.log('✅ Order totals reset to zero successfully');
+        return updateResult;
+      }
+
+      // Calculate new totals based on remaining items
+      let newSubtotal = 0;
+      let newTax = 0;
+
+      if (Array.isArray(remainingItems) && remainingItems.length > 0) {
+        remainingItems.forEach((item: any) => {
+          const basePrice = Number(item.unitPrice || 0);
+          const quantity = Number(item.quantity || 0);
+          
+          // Calculate subtotal
+          newSubtotal += basePrice * quantity;
+
+          // Calculate tax using product info
+          const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+            const afterTaxPrice = parseFloat(product.afterTaxPrice);
+            const taxPerUnit = afterTaxPrice - basePrice;
+            newTax += taxPerUnit * quantity;
+          } else {
+            // No afterTaxPrice means no tax
+            newTax += 0;
+          }
+        });
+      }
+
+      const newTotal = newSubtotal + newTax;
+      
+      console.log('💰 Calculated new totals:', {
+        subtotal: newSubtotal,
+        tax: newTax,
+        total: newTotal,
+        hasItems: remainingItems?.length > 0
+      });
+
+      // Update order with new totals
+      const updateResult = await apiRequest('PUT', `/api/orders/${orderId}`, {
+        subtotal: newSubtotal.toString(),
+        tax: newTax.toString(),
+        total: newTotal.toString()
+      });
+      
+      console.log('✅ Order totals updated successfully');
+      return updateResult;
+    },
+    onSuccess: (data, orderId) => {
+      console.log('🔄 Refreshing UI after order total recalculation for order:', orderId);
+      
+      // Force immediate invalidation and refetch to ensure UI updates
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/order-items'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/order-items', orderId] });
+      
+      // Force component re-render by updating the orders cache immediately
+      queryClient.setQueryData(['/api/orders'], (oldData: any) => {
+        if (!oldData || !Array.isArray(oldData)) return oldData;
+        
+        console.log('💾 Updating orders cache for immediate UI refresh');
+        return oldData.map((order: any) => {
+          if (order.id === orderId) {
+            console.log(`🔄 Order ${orderId} total updated in cache: ${order.total} -> updated`);
+            // This will trigger a re-render with the latest data from the server
+            return { ...order, __forceUpdate: Date.now() };
+          }
+          return order;
+        });
+      });
+      
+      // Use Promise.all to ensure all refetches complete before continuing
+      Promise.all([
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/tables'] }),
+      ]).then(() => {
+        console.log('✅ All queries refetched successfully, UI should now show updated totals');
+        
+        // Force one more invalidation to ensure the UI is completely up to date
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+        }, 100);
+      }).catch((error) => {
+        console.error('❌ Error during query refetch:', error);
+      });
+    },
+    onError: (error) => {
+      console.error('❌ Error recalculating order total:', error);
+    }
+  });
+
   const getTableStatus = (status: string) => {
     const statusConfig = {
       available: { label: t('tables.available'), variant: "default" as const, color: "bg-green-500" },
@@ -393,11 +584,55 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.available;
   };
 
+  // Mutation to recalculate order total after item changes
+  const recalculateOrderTotalMutation = useMutation({
+    mutationFn: async (orderId: number) => {
+      // Fetch current order items
+      const response = await apiRequest('GET', `/api/order-items/${orderId}`);
+      const items = await response.json();
+
+      // Calculate new total based on remaining items
+      let newSubtotal = 0;
+      let newTax = 0;
+
+      if (Array.isArray(items) && Array.isArray(products)) {
+        items.forEach((item: any) => {
+          const basePrice = Number(item.unitPrice || 0);
+          const quantity = Number(item.quantity || 0);
+          const product = products.find((p: any) => p.id === item.productId);
+
+          // Calculate subtotal
+          newSubtotal += basePrice * quantity;
+
+          // Calculate tax using same logic as order details
+          if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+            const afterTaxPrice = parseFloat(product.afterTaxPrice);
+            const taxPerUnit = afterTaxPrice - basePrice;
+            newTax += taxPerUnit * quantity;
+          }
+        });
+      }
+
+      const newTotal = newSubtotal + newTax;
+
+      // Update order with new totals
+      return apiRequest('PUT', `/api/orders/${orderId}`, {
+        subtotal: newSubtotal.toString(),
+        tax: newTax.toString(),
+        total: newTotal.toString()
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+    }
+  });
+
   const getActiveOrder = (tableId: number) => {
     if (!orders || !Array.isArray(orders)) return null;
 
     // Get all active orders for this table and sort by orderedAt descending to get the latest
-    const activeOrders = orders.filter((order: Order) => 
+    const activeOrders = orders.filter((order: Order) =>
       order.tableId === tableId && !["paid", "cancelled"].includes(order.status)
     );
 
@@ -405,20 +640,22 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       id: o.id,
       orderNumber: o.orderNumber,
       orderedAt: o.orderedAt,
-      status: o.status
+      status: o.status,
+      total: o.total
     })));
 
     if (activeOrders.length === 0) return null;
 
     // Sort by orderedAt descending and return the most recent order
-    const latestOrder = activeOrders.sort((a: Order, b: Order) => 
+    const latestOrder = activeOrders.sort((a: Order, b: Order) =>
       new Date(b.orderedAt).getTime() - new Date(a.orderedAt).getTime()
     )[0];
 
     console.log(`Latest order for table ${tableId}:`, {
       id: latestOrder.id,
       orderNumber: latestOrder.orderNumber,
-      orderedAt: latestOrder.orderedAt
+      orderedAt: latestOrder.orderedAt,
+      total: latestOrder.total
     });
 
     return latestOrder;
@@ -590,6 +827,35 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     }
   };
 
+  // Define handlePaymentMethodSelect here
+  const handlePaymentMethodSelect = (method: any, data?: any) => {
+    console.log('🎯 Table payment method selected:', method, data);
+    setShowPaymentMethodModal(false);
+
+    // If payment method returns e-invoice data (like from "phát hành sau"), handle it
+    if (data && data.receipt) {
+      console.log('📄 Table: Payment method returned receipt data, showing receipt');
+      setSelectedReceipt(data.receipt);
+      setShowReceiptModal(true);
+      setOrderForPayment(null);
+    } else {
+      // Otherwise continue to E-invoice modal
+      console.log('🔄 Table: Continuing to E-invoice modal');
+      // If method.nameKey is 'einvoice', show E-invoice modal directly
+      if (method.nameKey === 'einvoice') {
+        setShowEInvoiceModal(true);
+      } else {
+        // For other payment methods, proceed with payment completion
+        if (selectedOrder) {
+          completePaymentMutation.mutate({
+            orderId: selectedOrder.id,
+            paymentMethod: method.nameKey
+          });
+        }
+      }
+    }
+  };
+
   const handleQRPaymentConfirm = () => {
     if (selectedOrder && selectedPaymentMethod) {
       // Check if this is a mixed payment (from mixed payment modal)
@@ -602,9 +868,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         });
       } else {
         // Regular payment
-        completePaymentMutation.mutate({ 
-          orderId: selectedOrder.id, 
-          paymentMethod: selectedPaymentMethod.key 
+        completePaymentMutation.mutate({
+          orderId: selectedOrder.id,
+          paymentMethod: selectedPaymentMethod.key
         });
       }
       setShowQRPayment(false);
@@ -630,6 +896,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     setEditingOrder(order);
     setEditingTable(table);
     setEditOrderOpen(true);
+  };
+
+  const handleDeleteOrder = (order: Order) => {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${order.orderNumber}?`)) {
+      deleteOrderMutation.mutate(order.id);
+    }
   };
 
   const filteredCustomers = customers?.filter((customer: any) =>
@@ -686,6 +958,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     if (!products || !Array.isArray(products)) return 'Unknown Product';
     const product = products.find((p: any) => p.id === productId);
     return product ? product.name : 'Unknown Product';
+  };
+
+  const getTableInfo = (tableId: number) => {
+    if (!tables || !Array.isArray(tables)) return null;
+    return tables.find((t: Table) => t.id === tableId);
   };
 
   // Handle E-invoice confirmation and complete payment
@@ -748,17 +1025,18 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       { id: 7, name: "QR Code", nameKey: "qrCode", type: "qr", enabled: true, icon: "📱" },
       { id: 8, name: "ShopeePay", nameKey: "shopeepay", type: "digital", enabled: false, icon: "🛒" },
       { id: 9, name: "GrabPay", nameKey: "grabpay", type: "digital", enabled: false, icon: "🚗" },
+      { id: 10, name: "Hóa đơn điện tử", nameKey: "einvoice", type: "invoice", enabled: true, icon: "📄" },
     ];
 
-    const paymentMethods = savedPaymentMethods 
-      ? JSON.parse(savedPaymentMethods) 
+    const paymentMethods = savedPaymentMethods
+      ? JSON.parse(savedPaymentMethods)
       : defaultPaymentMethods;
 
     // Filter to only return enabled payment methods
     return paymentMethods.filter(method => method.enabled);
   };
 
-    const getOrderStatusBadge = (status: string) => {
+  const getOrderStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { label: t('orders.status.pending'), variant: "secondary" as const },
       confirmed: { label: t('orders.status.confirmed'), variant: "default" as const },
@@ -772,6 +1050,156 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     };
 
     return statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
+  };
+
+  // Function to handle auto-print for orders
+  const handlePrintOrder = async (order: any) => {
+    console.log('🖨️ Starting auto-print for table order:', order.id);
+
+    try {
+      const orderItems = await queryClient.fetchQuery({
+        queryKey: [`/api/order-items/${order.id}`],
+        queryFn: async () => {
+          const response = await apiRequest('GET', `/api/order-items/${order.id}`);
+          return response.json();
+        }
+      });
+
+      // Create receipt data
+      const receiptData = {
+        transactionId: order.orderNumber || `ORD-${order.id}`,
+        items: order.items.map((item: any) => ({ // Assuming order.items is available and structured
+          id: item.id,
+          productId: item.productId,
+          productName: item.productName || getProductName(item.productId),
+          price: item.unitPrice,
+          quantity: item.quantity,
+          total: item.total,
+          sku: item.productSku || `SP${item.productId}`,
+          taxRate: (() => {
+            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+            return product?.taxRate ? parseFloat(product.taxRate) : 10;
+          })()
+        })),
+        subtotal: order.subtotal,
+        tax: order.tax,
+        total: order.total,
+        paymentMethod: order.paymentMethod || 'cash',
+        amountReceived: order.total,
+        change: '0.00',
+        cashierName: order.employeeName || 'System User',
+        createdAt: order.orderedAt || new Date().toISOString(),
+        customerName: order.customerName,
+        customerTaxCode: null,
+        invoiceNumber: null,
+        tableNumber: getTableInfo(order.tableId)?.tableNumber || 'N/A'
+      };
+
+      // Call auto-print API for both employee and kitchen printers
+      const response = await fetch("/api/auto-print", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          receiptData,
+          printerType: "both" // Print to both employee and kitchen printers
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        console.log("✅ Auto-print successful:", result.message);
+        toast({
+          title: "In hóa đơn thành công",
+          description: `${result.message}`,
+        });
+
+        // Show detailed results for each printer
+        const successfulPrints = result.results.filter(r => r.status === 'success');
+        const failedPrints = result.results.filter(r => r.status === 'error');
+
+        if (successfulPrints.length > 0) {
+          console.log(`✅ Printed successfully on ${successfulPrints.length} printers:`,
+            successfulPrints.map(p => p.printerName));
+        }
+
+        if (failedPrints.length > 0) {
+          toast({
+            title: "Một số máy in gặp lỗi",
+            description: failedPrints.map(r => `• ${r.printerName}: ${r.message}`).join('\n'),
+            variant: "destructive",
+          });
+        }
+
+      } else {
+        console.log("⚠️ Auto-print failed, falling back to receipt modal");
+        // Fallback to showing receipt modal for manual print
+        setSelectedReceipt(receiptData);
+        setShowReceiptModal(true);
+
+        toast({
+          title: "Không tìm thấy máy in",
+          description: "Không tìm thấy máy in hoặc không có cấu hình máy in. Sử dụng chức năng in thủ công.",
+          variant: "destructive",
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ Auto-print error:', error);
+
+      toast({
+        title: 'Lỗi in tự động',
+        description: 'Có lỗi xảy ra khi in tự động. Sử dụng chức năng in thủ công.',
+        variant: 'destructive',
+      });
+
+      // Fallback to manual print - try to show receipt modal
+      try {
+        const orderItems = await queryClient.fetchQuery({
+          queryKey: [`/api/order-items/${order.id}`],
+          queryFn: async () => {
+            const response = await apiRequest('GET', `/api/order-items/${order.id}`);
+            return response.json();
+          }
+        });
+
+        const receiptData = {
+          transactionId: order.orderNumber || `ORD-${order.id}`,
+          items: orderItems.map((item: any) => ({
+            id: item.id,
+            productId: item.productId,
+            productName: item.productName || getProductName(item.productId),
+            price: item.unitPrice,
+            quantity: item.quantity,
+            total: item.total,
+            sku: item.productSku || `SP${item.productId}`,
+            taxRate: (() => {
+              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+              return product?.taxRate ? parseFloat(product.taxRate) : 10;
+            })()
+          })),
+          subtotal: order.subtotal,
+          tax: order.tax,
+          total: order.total,
+          paymentMethod: order.paymentMethod || 'cash',
+          amountReceived: order.total,
+          change: '0.00',
+          cashierName: order.employeeName || 'System User',
+          createdAt: order.orderedAt || new Date().toISOString(),
+          customerName: order.customerName,
+          customerTaxCode: null,
+          invoiceNumber: null,
+          tableNumber: getTableInfo(order.tableId)?.tableNumber || 'N/A'
+        };
+
+        setSelectedReceipt(receiptData);
+        setShowReceiptModal(true);
+      } catch (fallbackError) {
+        console.error('Error preparing fallback receipt:', fallbackError);
+      }
+    }
   };
 
   if (isLoading) {
@@ -795,8 +1223,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           const isSelected = selectedTableId === table.id;
 
           return (
-            <Card 
-              key={table.id} 
+            <Card
+              key={table.id}
               className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
                 isSelected ? "ring-2 ring-blue-500" : ""
               } ${table.status === "occupied" ? "bg-red-50" : "bg-white"}`}
@@ -846,8 +1274,24 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           }
                         )}
                       </div>
-                      <div className="font-medium">
-                        {Number(activeOrder.total).toLocaleString()} ₫
+                      <div className={`font-medium ${Number(activeOrder.total) < 1 ? 'text-gray-400' : 'text-gray-900'}`}>
+                        {(() => {
+                          const orderTotal = Number(activeOrder.total || 0);
+                          
+                          console.log(`💰 Table ${table.tableNumber} - Order ${activeOrder.id} total display:`, {
+                            rawTotal: activeOrder.total,
+                            numberTotal: orderTotal,
+                            formatted: orderTotal < 1 ? '0' : Math.floor(orderTotal).toLocaleString('vi-VN')
+                          });
+                          
+                          // If order total is 0 or very small, show 0
+                          if (orderTotal < 1) {
+                            return '0';
+                          }
+                          
+                          // Format number with Vietnamese locale
+                          return Math.floor(orderTotal).toLocaleString('vi-VN');
+                        })()} ₫
                       </div>
                     </div>
                   )}
@@ -884,6 +1328,21 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         <Plus className="w-3 h-3 mr-1" />
                         {t('orders.addMore')}
                       </Button>
+
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="w-full text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (activeOrder) {
+                            handleDeleteOrder(activeOrder);
+                          }
+                        }}
+                      >
+                        <X className="w-3 h-3 mr-1" />
+                        Xóa đơn
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -894,7 +1353,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       </div>
 
       {/* Order Dialog */}
-      <OrderDialog 
+      <OrderDialog
         open={orderDialogOpen}
         onOpenChange={setOrderDialogOpen}
         table={selectedTable}
@@ -993,10 +1452,10 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                   </div>
                                   <div className="text-right ml-4">
                                     <p className="font-bold text-lg text-green-600">
-                                      {Math.round(Number(item.total || 0)).toLocaleString('vi-VN')} ₫
+                                      {Math.floor(Number(item.total || 0)).toLocaleString('vi-VN')} ₫
                                     </p>
                                     <p className="text-sm text-gray-500">
-                                      {Math.round(Number(item.unitPrice || 0)).toLocaleString('vi-VN')} ₫/món
+                                      {Math.floor(Number(item.unitPrice || 0)).toLocaleString('vi-VN')} ₫/món
                                     </p>
                                   </div>
                                 </div>
@@ -1026,19 +1485,30 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
               {/* Tax and Total Summary */}
               <div className="space-y-2">
                 {(() => {
-                  // Calculate subtotal (pre-tax) and tax from order items
+                  // Use same tax calculation logic as shopping cart
                   let subtotal = 0;
                   let totalTax = 0;
 
                   if (Array.isArray(orderItems) && orderItems.length > 0 && Array.isArray(products)) {
                     orderItems.forEach((item: any) => {
-                      // Use unitPrice * quantity for pre-tax amount
-                      const itemSubtotal = Number(item.unitPrice || 0) * Number(item.quantity || 0);
-                      subtotal += itemSubtotal;
-
+                      const basePrice = Number(item.unitPrice || 0);
+                      const quantity = Number(item.quantity || 0);
                       const product = products.find((p: any) => p.id === item.productId);
-                      const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
-                      totalTax += (itemSubtotal * taxRate) / 100;
+                      const itemTaxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
+
+                      // Calculate subtotal (base price without tax)
+                      subtotal += basePrice * quantity;
+
+                      // Use same tax calculation logic as shopping cart
+                      if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                        const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                        // Tax = afterTaxPrice - basePrice (per unit), then multiply by quantity
+                        const taxPerUnit = afterTaxPrice - basePrice;
+                        totalTax += taxPerUnit * quantity;
+                      } else {
+                        // No afterTaxPrice means no tax
+                        totalTax += 0;
+                      }
                     });
                   }
 
@@ -1048,15 +1518,15 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">{t('pos.subtotal')}:</span>
-                        <span className="font-medium">{Math.round(subtotal).toLocaleString('vi-VN')} ₫</span>
+                        <span className="font-medium">{Math.floor(subtotal).toLocaleString('vi-VN')} ₫</span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Thuế:</span>
-                        <span className="font-medium">{Math.round(totalTax).toLocaleString('vi-VN')} ₫</span>
+                        <span className="font-medium">{Math.floor(totalTax).toLocaleString('vi-VN')} ₫</span>
                       </div>
                       <div className="flex justify-between text-lg font-bold border-t pt-2">
                         <span>{t('orders.totalAmount')}:</span>
-                        <span className="text-green-600">{Math.round(grandTotal).toLocaleString('vi-VN')} ₫</span>
+                        <span className="text-green-600">{Math.floor(grandTotal).toLocaleString('vi-VN')} ₫</span>
                       </div>
                     </>
                   );
@@ -1068,7 +1538,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <div className="pt-4 space-y-3">
                   <Button
                     onClick={() => {
-                      console.log('🎯 Table: Starting payment flow - showing receipt preview first');
+                      console.log('🎯 Table: Starting payment flow - using exact Order Details values');
 
                       if (!selectedOrder || !orderItems || !Array.isArray(orderItems)) {
                         console.error('❌ Missing order data for preview');
@@ -1080,18 +1550,24 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         return;
                       }
 
-                      // Calculate totals for preview
-                      let subtotal = 0;
-                      let totalTax = 0;
+                      // Use EXACT same calculation logic as displayed in Order Details
+                      let orderDetailsSubtotal = 0;
+                      let orderDetailsTax = 0;
 
                       const processedItems = orderItems.map((item: any) => {
-                        const itemSubtotal = Number(item.total || 0);
+                        const basePrice = Number(item.unitPrice || 0);
+                        const quantity = Number(item.quantity || 0);
                         const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-                        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
-                        const itemTax = (itemSubtotal * taxRate) / 100;
 
-                        subtotal += itemSubtotal;
-                        totalTax += itemTax;
+                        // Calculate subtotal exactly as Order Details display
+                        orderDetailsSubtotal += basePrice * quantity;
+
+                        // Use EXACT same tax calculation logic as Order Details display
+                        if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                          const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                          const taxPerUnit = afterTaxPrice - basePrice;
+                          orderDetailsTax += taxPerUnit * quantity;
+                        }
 
                         return {
                           id: item.id,
@@ -1101,27 +1577,34 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           price: item.unitPrice,
                           total: item.total,
                           sku: item.productSku || `SP${item.productId}`,
-                          taxRate: taxRate
+                          taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10
                         };
                       });
 
-                      const finalTotal = subtotal + totalTax;
-
-                      // Create preview receipt data
+                      // Create preview receipt data using EXACT values from Order Details
                       const previewData = {
                         ...selectedOrder,
                         transactionId: `PREVIEW-${Date.now()}`,
                         items: processedItems,
-                        subtotal: subtotal.toFixed(2),
-                        tax: totalTax.toFixed(2),
-                        total: finalTotal.toFixed(2),
+                        subtotal: orderDetailsSubtotal.toString(),
+                        tax: orderDetailsTax.toString(),
+                        total: (orderDetailsSubtotal + orderDetailsTax).toString(),
                         paymentMethod: 'preview',
                         cashierName: 'Table Service',
                         createdAt: new Date().toISOString(),
-                        orderItems: orderItems // Keep original order items for payment flow
+                        orderItems: orderItems, // Keep original order items for payment flow
+                        // Pass exact calculated values for next screens
+                        exactSubtotal: orderDetailsSubtotal,
+                        exactTax: orderDetailsTax,
+                        exactTotal: orderDetailsSubtotal + orderDetailsTax
                       };
 
-                      console.log('📄 Table: Showing receipt preview before payment');
+                      console.log('📄 Table: Showing receipt preview with exact Order Details values');
+                      console.log('💰 Exact values passed:', {
+                        subtotal: orderDetailsSubtotal,
+                        tax: orderDetailsTax,
+                        total: orderDetailsSubtotal + orderDetailsTax
+                      });
                       setPreviewReceipt(previewData);
                       setOrderDetailsOpen(false);
                       setShowReceiptPreview(true);
@@ -1148,26 +1631,42 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         console.error('❌ Missing order data for print bill');
                         toast({
                           title: 'Lỗi',
-                          description: 'Không thể in hóa đơn. Vui lòng thử lại.',
+                          description: 'Không thể tạo hóa đơn. Vui lòng thử lại.',
                           variant: 'destructive',
                         });
                         return;
                       }
 
-                      // Calculate totals for bill
-                      let subtotal = 0;
-                      let totalTax = 0;
+                      try {
+                        // Use exact same calculation logic as Order Details display
+                        let subtotal = 0;
+                        let totalTax = 0;
 
-                      const processedItems = orderItems.map((item: any) => {
-                        const itemSubtotal = Number(item.total || 0);
-                        const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-                        const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
-                        const itemTax = (itemSubtotal * taxRate) / 100;
+                        if (Array.isArray(orderItems) && Array.isArray(products)) {
+                          orderItems.forEach((item: any) => {
+                            const basePrice = Number(item.unitPrice || 0);
+                            const quantity = Number(item.quantity || 0);
+                            const product = products.find((p: any) => p.id === item.productId);
 
-                        subtotal += itemSubtotal;
-                        totalTax += itemTax;
+                            // Calculate subtotal exactly as Order Details
+                            subtotal += basePrice * quantity;
 
-                        return {
+                            // Use EXACT same tax calculation logic as Order Details
+                            if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                              const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                              const taxPerUnit = afterTaxPrice - basePrice;
+                              totalTax += taxPerUnit * quantity;
+                            } else {
+                              // No afterTaxPrice means no tax
+                              totalTax += 0;
+                            }
+                          });
+                        }
+
+                        const grandTotal = subtotal + totalTax;
+
+                        // Create receipt data using EXACT same values as Order Details display
+                        const processedItems = orderItems.map((item: any) => ({
                           id: item.id,
                           productId: item.productId,
                           productName: item.productName || getProductName(item.productId),
@@ -1175,29 +1674,67 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           price: item.unitPrice,
                           total: item.total,
                           sku: item.productSku || `SP${item.productId}`,
-                          taxRate: taxRate
+                          taxRate: (() => {
+                            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+                            return product?.taxRate ? parseFloat(product.taxRate) : 10;
+                          })()
+                        }));
+
+                        // Use exact same calculation values as displayed in Order Details
+                        let orderDetailsSubtotal = 0;
+                        let orderDetailsTax = 0;
+
+                        if (Array.isArray(orderItems) && Array.isArray(products)) {
+                          orderItems.forEach((item: any) => {
+                            const basePrice = Number(item.unitPrice || 0);
+                            const quantity = Number(item.quantity || 0);
+                            const product = products.find((p: any) => p.id === item.productId);
+
+                            // Calculate subtotal exactly as Order Details
+                            orderDetailsSubtotal += basePrice * quantity;
+
+                            // Use EXACT same tax calculation logic as Order Details
+                            if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                              const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                              const taxPerUnit = afterTaxPrice - basePrice;
+                              orderDetailsTax += taxPerUnit * quantity;
+                            }
+                          });
+                        }
+
+                        const billData = {
+                          ...selectedOrder,
+                          transactionId: selectedOrder.orderNumber || `BILL-${selectedOrder.id}`,
+                          items: processedItems,
+                          subtotal: orderDetailsSubtotal.toString(),
+                          tax: orderDetailsTax.toString(),
+                          total: (orderDetailsSubtotal + orderDetailsTax).toString(),
+                          paymentMethod: 'unpaid',
+                          amountReceived: '0',
+                          change: '0',
+                          cashierName: 'Table Service',
+                          createdAt: selectedOrder.orderedAt || new Date().toISOString(),
+                          customerName: selectedOrder.customerName,
+                          customerTaxCode: null,
+                          invoiceNumber: null
                         };
-                      });
 
-                      const finalTotal = subtotal + totalTax;
+                        console.log('📄 Table: Showing receipt modal for bill printing');
+                        console.log('📊 Bill data:', billData);
 
-                      // Create bill receipt data (không phải preview)
-                      const billData = {
-                        ...selectedOrder,
-                        transactionId: `BILL-${Date.now()}`,
-                        items: processedItems,
-                        subtotal: subtotal.toFixed(2),
-                        tax: totalTax.toFixed(2),
-                        total: finalTotal.toFixed(2),
-                        paymentMethod: 'unpaid',
-                        cashierName: 'Table Service',
-                        createdAt: new Date().toISOString()
-                      };
+                        // Show receipt modal without auto-printing
+                        setSelectedReceipt(billData);
+                        setOrderDetailsOpen(false);
+                        setShowReceiptModal(true);
 
-                      console.log('📄 Showing bill for printing');
-                      setSelectedReceipt(billData);
-                      setOrderDetailsOpen(false);
-                      setShowReceiptModal(true);
+                      } catch (error) {
+                        console.error('❌ Error preparing bill:', error);
+                        toast({
+                          title: 'Lỗi',
+                          description: 'Không thể tạo hóa đơn. Vui lòng thử lại.',
+                          variant: 'destructive',
+                        });
+                      }
                     }}
                     className="w-full bg-gray-600 hover:bg-gray-700 text-white"
                     size="lg"
@@ -1232,6 +1769,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           const completeOrderData = {
             ...selectedOrder,
             orderItems: previewReceipt.orderItems || orderItems || [],
+            exactSubtotal: previewReceipt.exactSubtotal,
+            exactTax: previewReceipt.exactTax,
+            exactTotal: previewReceipt.exactTotal
           };
 
           console.log('💾 Setting order for payment with complete data:', completeOrderData);
@@ -1254,83 +1794,67 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       />
 
       {/* Payment Method Modal */}
-      <PaymentMethodModal
-        isOpen={showPaymentMethodModal}
-        onClose={() => {
-          setShowPaymentMethodModal(false);
-          setOrderForPayment(null);
-        }}
-        onSelectMethod={(method, data) => {
-          console.log('🎯 Table payment method selected:', method, data);
-          setShowPaymentMethodModal(false);
-
-          // If payment method returns e-invoice data (like from "phát hành sau"), handle it
-          if (data && data.receipt) {
-            console.log('📄 Table: Payment method returned receipt data, showing receipt');
-            setSelectedReceipt(data.receipt);
-            setShowReceiptModal(true);
+      {showPaymentMethodModal && orderForPayment && (
+        <PaymentMethodModal
+          isOpen={showPaymentMethodModal}
+          onClose={() => {
+            console.log('🔴 Table: Closing payment method modal and clearing states');
+            setShowPaymentMethodModal(false);
             setOrderForPayment(null);
-          } else {
-            // Otherwise continue to E-invoice modal
-            console.log('🔄 Table: Continuing to E-invoice modal');
-            setShowEInvoiceModal(true);
-          }
-        }}
-        total={(() => {
-          if (!orderForPayment) return 0;
-
-          // Sử dụng orderItems từ orderForPayment nếu có
-          const itemsToCalculate = orderForPayment.orderItems || orderItems || [];
-          console.log('💰 Calculating total from items:', itemsToCalculate.length);
-
-          if (!Array.isArray(itemsToCalculate) || itemsToCalculate.length === 0) {
-            // Fallback to order total if no items
-            return Number(orderForPayment.total || 0);
-          }
-
-          let itemsTotal = 0;
-          let itemsTax = 0;
-
-          if (Array.isArray(products)) {
-            itemsToCalculate.forEach((item: any) => {
-              const itemSubtotal = Number(item.total || 0);
-              itemsTotal += itemSubtotal;
-
-              const product = products.find((p: any) => p.id === item.productId);
-              const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
-              itemsTax += (itemSubtotal * taxRate) / 100;
+          }}
+          onSelectMethod={handlePaymentMethodSelect}
+          total={(() => {
+            console.log('💰 Table payment modal total calculation:', {
+              orderForPayment,
+              hasExactTotal: orderForPayment?.exactTotal !== undefined,
+              exactTotal: orderForPayment?.exactTotal,
+              fallbackTotal: orderForPayment?.orderItems?.reduce((sum: number, item: any) => {
+                const itemTotal = parseFloat(item.total || '0');
+                return sum + itemTotal;
+              }, 0) || 0
             });
-          }
 
-          const calculatedTotal = itemsTotal + itemsTax;
-          console.log('💰 Total calculation result:', {
-            itemsTotal,
-            itemsTax,
-            calculatedTotal,
-            fallbackTotal: Number(orderForPayment.total || 0)
-          });
+            if (orderForPayment?.exactTotal !== undefined && orderForPayment.exactTotal !== null) {
+              return orderForPayment.exactTotal;
+            }
 
-          return calculatedTotal > 0 ? calculatedTotal : Number(orderForPayment.total || 0);
-        })()}
-        onShowEInvoice={() => setShowEInvoiceModal(true)}
-        cartItems={(() => {
-          // Sử dụng orderItems từ orderForPayment nếu có
-          const itemsToMap = orderForPayment?.orderItems || orderItems || [];
-          console.log('📦 Mapping cart items for payment modal:', itemsToMap.length);
+            // Fallback to calculating from order items
+            const calculatedTotal = orderForPayment?.orderItems?.reduce((sum: number, item: any) => {
+              const itemTotal = parseFloat(item.total || '0');
+              return sum + itemTotal;
+            }, 0) || 0;
 
-          return itemsToMap.map((item: any) => ({
-            id: item.id,
-            name: item.productName || getProductName(item.productId),
-            price: parseFloat(item.unitPrice || '0'),
-            quantity: item.quantity,
-            sku: item.productSku || `SP${item.productId}`,
-            taxRate: (() => {
+            console.log('⚠️ Using calculated total as fallback:', calculatedTotal);
+            return calculatedTotal;
+          })()}
+          cartItems={(() => {
+            console.log('📦 Table: Preparing cartItems for payment modal using exact Order Details data:', orderForPayment?.orderItems?.length || 0);
+
+            if (!orderForPayment?.orderItems || !Array.isArray(orderForPayment.orderItems)) {
+              console.warn('⚠️ No order items found in orderForPayment');
+              return [];
+            }
+
+            return orderForPayment.orderItems.map((item: any) => {
               const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-              return product?.taxRate ? parseFloat(product.taxRate) : 10;
-            })()
-          }));
-        })()}
-      />
+
+              return {
+                id: item.productId,
+                name: item.productName || getProductName(item.productId),
+                price: parseFloat(item.unitPrice || '0'),
+                quantity: item.quantity,
+                sku: item.productSku || `SP${item.productId}`,
+                taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10,
+                afterTaxPrice: product?.afterTaxPrice || null // Pass afterTaxPrice for exact calculation
+              };
+            });
+          })()}
+          orderForPayment={orderForPayment} // Pass orderForPayment for exact values
+          products={products} // Pass products for tax rate lookup
+          getProductName={getProductName} // Pass getProductName function
+          receipt={previewReceipt} // Pass receipt data from receipt modal
+        />
+      )}
 
       {/* E-Invoice Modal */}
       {showEInvoiceModal && orderForPayment && (
@@ -1420,7 +1944,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           name: item.productName || item.name,
           price: parseFloat(item.price || item.unitPrice || '0'),
           quantity: item.quantity,
-          sku: item.productSku || `SP${item.productId}`,
+          sku: item.sku || `SP${item.productId}`,
           taxRate: (() => {
             const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
             return product?.taxRate ? parseFloat(product.taxRate) : 10;
@@ -1450,7 +1974,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>{t('orders.pointsPaymentDialog.totalAmount')}</span>
-                  <span className="font-medium">{Math.round(Number(selectedOrder.total)).toLocaleString()} ₫</span>
+                  <span className="font-medium">{Math.floor(Number(selectedOrder.total)).toLocaleString()} ₫</span>
                 </div>
               </div>
             )}
@@ -1543,17 +2067,17 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             <Button variant="outline" onClick={() => setPointsPaymentOpen(false)}>
               Hủy
             </Button>
-            <Button 
+            <Button
               onClick={handlePointsPayment}
               disabled={
-                !selectedCustomer || 
+                !selectedCustomer ||
                 (selectedCustomer.points || 0) === 0 ||
                 pointsPaymentMutation.isPending
               }
               className="bg-blue-600 hover:bg-blue-700"
             >
-              {pointsPaymentMutation.isPending ? 'Đang xử lý...' : 
-               selectedCustomer && selectedOrder && ((selectedCustomer.points || 0) * 1000) >= Number(selectedOrder.total) ? 
+              {pointsPaymentMutation.isPending ? 'Đang xử lý...' :
+               selectedCustomer && selectedOrder && ((selectedCustomer.points || 0) * 1000) >= Number(selectedOrder.total) ?
                'Thanh toán bằng điểm' : 'Thanh toán hỗn hợp'}
             </Button>
           </div>
@@ -1580,14 +2104,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 <p className="text-sm text-gray-600">Đơn hàng: {selectedOrder.orderNumber}</p>
                 <p className="text-sm text-gray-500 mb-2">Số tiền cần thanh toán:</p>
                 <p className="text-3xl font-bold text-green-600">
-                  {mixedPaymentData ? 
-                    Math.round(mixedPaymentData.remainingAmount).toLocaleString('vi-VN') :
-                    Math.round(Number(selectedOrder?.total || 0)).toLocaleString('vi-VN')
+                  {mixedPaymentData ?
+                    Math.floor(mixedPaymentData.remainingAmount).toLocaleString('vi-VN') :
+                    Math.floor(Number(selectedOrder?.total || 0)).toLocaleString('vi-VN')
                   } ₫</p>
                 {mixedPaymentData && (
                   <div className="mt-2 pt-2 border-t border-gray-300">
                     <p className="text-xs text-blue-600">
-                      Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}P 
+                      Đã sử dụng {mixedPaymentData.pointsToUse.toLocaleString()}P
                       (-{(mixedPaymentData.pointsToUse * 1000).toLocaleString()} ₫)
                     </p>
                   </div>
@@ -1599,9 +2123,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
             {qrCodeUrl && (
               <div className="flex justify-center">
                 <div className="bg-white p-4 rounded-lg border-2 border-gray-200 shadow-lg">
-                  <img 
-                    src={qrCodeUrl} 
-                    alt="QR Code for Payment" 
+                  <img
+                    src={qrCodeUrl}
+                    alt="QR Code for Payment"
                     className="w-64 h-64"
                   />
                 </div>
@@ -1614,14 +2138,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
             {/* Action Buttons */}
             <div className="flex gap-3">
-              <Button 
-                variant="outline" 
-                onClick={handleQRPaymentClose} 
+              <Button
+                variant="outline"
+                onClick={handleQRPaymentClose}
                 className="flex-1"
               >
                 Quay lại
               </Button>
-              <Button 
+              <Button
                 onClick={handleQRPaymentConfirm}
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200"
               >
@@ -1658,13 +2182,13 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                   <div className="flex justify-between text-blue-600">
                     <span>Thanh toán bằng điểm:</span>
                     <span className="font-medium">
-                      {mixedPaymentData.pointsToUse.toLocaleString()}P 
+                      {mixedPaymentData.pointsToUse.toLocaleString()}P
                       <span className="ml-1">(-{(mixedPaymentData.pointsToUse * 1000).toLocaleString()} ₫)</span>
                     </span>
                   </div>
                   <div className="border-t pt-2 flex justify-between font-medium text-orange-600">
                     <span>Cần thanh toán thêm:</span>
-                    <span>{mixedPaymentData.remainingAmount.toLocaleString()} ₫</span>
+                    <p className="text-sm text-gray-500">{Math.floor(mixedPaymentData.remainingAmount).toLocaleString()} ₫</p>
                   </div>
                 </div>
               </div>
@@ -1687,7 +2211,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <span className="text-2xl mr-3">💵</span>
                     <div className="text-left">
                       <p className="font-medium">Tiền mặt</p>
-                      <p className="text-sm text-gray-500">{Math.round(mixedPaymentData.remainingAmount).toLocaleString()} ₫</p>
+                      <p className="text-sm text-gray-500">{Math.floor(mixedPaymentData.remainingAmount).toLocaleString()} ₫</p>
                     </div>
                   </Button>
 
@@ -1742,9 +2266,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
                           // Set QR code data and show QR payment modal
                           setQrCodeUrl(qrUrl);
-                          setSelectedPaymentMethod({ 
-                            key: 'transfer', 
-                            method: { name: 'Chuyển khoản', icon: '💳' } 
+                          setSelectedPaymentMethod({
+                            key: 'transfer',
+                            method: { name: 'Chuyển khoản', icon: '💳' }
                           });
                           setShowQRPayment(true);
                           setMixedPaymentOpen(false);
@@ -1776,7 +2300,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     <span className="text-2xl mr-3">💳</span>
                     <div className="text-left">
                       <p className="font-medium">Chuyển khoản</p>
-                      <p className="text-sm text-gray-500">{Math.round(mixedPaymentData.remainingAmount).toLocaleString()} ₫</p>
+                      <p className="text-sm text-gray-500">{Math.floor(mixedPaymentData.remainingAmount).toLocaleString()} ₫</p>
                     </div>
                   </Button>
                 </div>
@@ -1793,9 +2317,25 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       </Dialog>
 
       {/* Edit Order Dialog */}
-      <OrderDialog 
+      <OrderDialog
         open={editOrderOpen}
-        onOpenChange={setEditOrderOpen}
+        onOpenChange={(open) => {
+          setEditOrderOpen(open);
+          // When dialog closes after editing, refresh all data
+          if (!open && editingOrder) {
+            console.log('🔄 Edit dialog closed, triggering recalculation for order:', editingOrder.id);
+            
+            // Add a small delay to ensure any pending API calls complete
+            setTimeout(() => {
+              // Recalculate order total first - this will also handle the data refresh
+              recalculateOrderMutation.mutate(editingOrder.id);
+            }, 100);
+            
+            // Clear editing states
+            setEditingOrder(null);
+            setEditingTable(null);
+          }
+        }}
         table={editingTable}
         existingOrder={editingOrder}
         mode="edit"

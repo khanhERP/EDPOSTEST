@@ -21,6 +21,7 @@ interface PrintDialogProps {
       total: string;
       sku: string;
       taxRate: number;
+      afterTaxPrice?: string | null; // Added for new tax calculation
     }>;
     subtotal: string;
     tax: string;
@@ -185,14 +186,26 @@ export function PrintDialog({
             <span>Thuế (${(() => {
               if (!receiptData.items || receiptData.items.length === 0) return "10.0";
 
-              // Calculate weighted average tax rate from items
+              // Calculate weighted average tax rate from items using shopping cart logic
               let totalTaxableAmount = 0;
               let totalTaxAmount = 0;
 
               receiptData.items.forEach(item => {
-                const itemSubtotal = parseFloat(item.price) * item.quantity;
-                const itemTaxRate = parseFloat(item.taxRate || "0"); // Use actual tax rate from item
-                const itemTax = (itemSubtotal * itemTaxRate) / 100;
+                const basePrice = parseFloat(item.price);
+                const quantity = item.quantity;
+                const itemTaxRate = item.taxRate || 10;
+                const itemSubtotal = basePrice * quantity;
+
+                // Use same tax calculation logic as shopping cart
+                let itemTax;
+                if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                  const afterTaxPrice = parseFloat(item.afterTaxPrice);
+                  // Tax = afterTaxPrice - basePrice
+                  itemTax = (afterTaxPrice - basePrice) * quantity;
+                } else {
+                  // No afterTaxPrice means no tax
+                  itemTax = 0;
+                }
 
                 totalTaxableAmount += itemSubtotal;
                 totalTaxAmount += itemTax;
@@ -329,14 +342,27 @@ export function PrintDialog({
               <span>Thuế ({(() => {
                 if (!receiptData.items || receiptData.items.length === 0) return "10.0";
 
-                // Calculate weighted average tax rate from items
+                // Calculate weighted average tax rate from items using shopping cart logic
                 let totalTaxableAmount = 0;
                 let totalTaxAmount = 0;
 
                 receiptData.items.forEach(item => {
-                  const itemSubtotal = parseFloat(item.price) * item.quantity;
-                  const itemTaxRate = parseFloat(item.taxRate || "0"); // Use actual tax rate from item
-                  const itemTax = (itemSubtotal * itemTaxRate) / 100;
+                  const basePrice = parseFloat(item.price);
+                  const quantity = item.quantity;
+                  const itemTaxRate = item.taxRate || 10;
+                  const itemSubtotal = basePrice * quantity;
+
+                  // Use same tax calculation logic as shopping cart
+                  let itemTax;
+                  if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                    const afterTaxPrice = parseFloat(item.afterTaxPrice);
+                    // Tax = afterTaxPrice - basePrice
+                    itemTax = (afterTaxPrice - basePrice) * quantity;
+                  } else {
+                    // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
+                    const calculatedAfterTaxPrice = basePrice * (1 + itemTaxRate / 100);
+                    itemTax = (calculatedAfterTaxPrice - basePrice) * quantity;
+                  }
 
                   totalTaxableAmount += itemSubtotal;
                   totalTaxAmount += itemTax;

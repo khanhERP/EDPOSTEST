@@ -239,6 +239,67 @@ export interface CommonTranslations {
   shopeepayWallet: string;
   grabpayWallet: string;
   paymentMethodGeneric: string;
+
+  // Combo values
+  comboValues: {
+    // Gender options
+    male: string;
+    female: string;
+    other: string;
+
+    // Size options
+    small: string;
+    medium: string;
+    large: string;
+    extraLarge: string;
+
+    // Priority levels
+    low: string;
+    normal: string;
+    high: string;
+    urgent: string;
+
+    // Order status
+    pending: string;
+    confirmed: string;
+    preparing: string;
+    ready: string;
+    served: string;
+    paid: string;
+    cancelled: string;
+    completed: string;
+
+    // Product types
+    food: string;
+    beverage: string;
+    snack: string;
+    dessert: string;
+
+    // Table status
+    occupied: string;
+    reserved: string;
+    cleaning: string;
+    outOfService: string;
+
+    // Payment status
+    unpaid: string;
+    partiallyPaid: string;
+    fullyPaid: string;
+    refunded: string;
+
+    // Stock levels
+    inStock: string;
+    lowStock: string;
+    outOfStock: string;
+
+    // Employee roles
+    admin: string;
+    manager: string;
+    cashier: string;
+    waiter: string;
+    chef: string;
+    cleaner: string;
+  };
 }
 
 // Navigation translations interface
@@ -761,6 +822,7 @@ export interface SettingsTranslations {
   contactInfoDesc: string;
   operationHours: string;
   operationHoursDesc: string;
+
   storeName: string;
   storeCode: string;
   address: string;
@@ -786,6 +848,7 @@ export interface SettingsTranslations {
   enableInventoryTracking: string;
   usageStatus: string;
   goToEmployees: string;
+  addCustomer: string;
   yes: string;
   goToInventory: string;
   paymentMethodsDesc: string;

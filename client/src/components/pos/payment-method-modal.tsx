@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { CreditCard, Banknote, Smartphone, Wallet, QrCode, Keyboard } from "lucide-react";
+import {
+  CreditCard,
+  Banknote,
+  Smartphone,
+  Wallet,
+  QrCode,
+  Keyboard,
+} from "lucide-react";
 import { useTranslation } from "@/lib/i18n";
 import {
   Dialog,
@@ -27,7 +34,12 @@ interface PaymentMethodModalProps {
     quantity: number;
     sku?: string;
     taxRate?: number;
+    afterTaxPrice?: number | string | null | "";
   }>;
+  orderForPayment?: any; // Add orderForPayment prop for exact values
+  products?: any[]; // Add products prop for tax rate and afterTaxPrice lookup
+  getProductName?: (productId: number | string) => string; // Add getProductName function
+  receipt?: any; // Add receipt prop to receive exact total from receipt modal
 }
 
 export function PaymentMethodModal({
@@ -37,6 +49,10 @@ export function PaymentMethodModal({
   total,
   onShowEInvoice,
   cartItems = [],
+  orderForPayment, // Receive orderForPayment prop
+  products, // Receive products prop
+  getProductName, // Receive getProductName function
+  receipt, // Receive receipt prop
 }: PaymentMethodModalProps) {
   const { t } = useTranslation();
   const [showQRCode, setShowQRCode] = useState(false);
@@ -46,8 +62,13 @@ export function PaymentMethodModal({
   const [qrLoading, setQrLoading] = useState(false);
   const [amountReceived, setAmountReceived] = useState("");
   const [showCashPayment, setShowCashPayment] = useState(false);
-  const [currentTransactionUuid, setCurrentTransactionUuid] = useState<string | null>(null);
+  const [currentTransactionUuid, setCurrentTransactionUuid] = useState<
+    string | null
+  >(null);
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
+
+  // Separate state for cash payment to avoid sharing with other screens
+  const [cashAmountInput, setCashAmountInput] = useState("");
 
   const amountInputRef = useRef<HTMLInputElement>(null);
   const { listenForPaymentSuccess, removePaymentListener } = usePopupSignal();
@@ -191,8 +212,7 @@ export function PaymentMethodModal({
       grabpay: t("common.grabpay"),
     };
     return (
-      names[nameKey as keyof typeof names] ||
-      t("common.paymentMethodGeneric")
+      names[nameKey as keyof typeof names] || t("common.paymentMethodGeneric")
     );
   };
 
@@ -220,6 +240,9 @@ export function PaymentMethodModal({
     setSelectedPaymentMethod(method);
 
     if (method === "cash") {
+      // Reset cash amount input when showing cash payment
+      setCashAmountInput("");
+      setAmountReceived("");
       // Show cash payment input form
       setShowCashPayment(true);
     } else if (method === "qrCode") {
@@ -228,30 +251,17 @@ export function PaymentMethodModal({
         setQrLoading(true);
         const transactionUuid = `TXN-${Date.now()}`;
 
-        // Calculate total including tax for QR payment
-        const totalWithTax = cartItems && cartItems.length > 0 ? 
-          cartItems.reduce((sum, item) => {
-            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-            const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-            // Use actual tax rate from item, default to 0 if not specified
-            const itemTaxRate = (() => {
-              if (item.taxRate !== undefined && item.taxRate !== null) {
-                if (typeof item.taxRate === 'string') {
-                  const parsed = parseFloat(item.taxRate);
-                  return isNaN(parsed) ? 0 : parsed;
-                } else if (typeof item.taxRate === 'number') {
-                  return isNaN(item.taxRate) ? 0 : item.taxRate;
-                }
-              }
-              return 0; // Use 0% if no tax rate specified
-            })();
-            return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
-          }, 0) : 
-          total;
+        // Use exact total with proper priority
+        const orderTotal =
+          receipt?.exactTotal ??
+          orderForPayment?.exactTotal ??
+          orderForPayment?.total ??
+          total ??
+          0;
 
         const qrRequest: CreateQRPosRequest = {
           transactionUuid,
-          depositAmt: totalWithTax,
+          depositAmt: orderTotal,
           posUniqueId: "HAN01",
           accntNo: "0900993023",
           posfranchiseeName: "DOOKI-HANOI",
@@ -282,7 +292,10 @@ export function PaymentMethodModal({
         // Listen for payment success notification
         listenForPaymentSuccess(transactionUuid, (success) => {
           if (success) {
-            console.log('Payment confirmed via WebSocket for transaction:', transactionUuid);
+            console.log(
+              "Payment confirmed via WebSocket for transaction:",
+              transactionUuid,
+            );
             // Auto-complete the payment when notification is received
             handleQRComplete();
           }
@@ -313,28 +326,34 @@ export function PaymentMethodModal({
 
           // Send QR payment info to customer display via WebSocket
           try {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const protocol =
+              window.location.protocol === "https:" ? "wss:" : "ws:";
             const wsUrl = `${protocol}//${window.location.host}/ws`;
             const ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
-              ws.send(JSON.stringify({
-                type: 'qr_payment',
-                qrCodeUrl: qrUrl,
-                amount: totalWithTax,
-                transactionUuid: transactionUuid,
-                paymentMethod: 'QR Code',
-                timestamp: new Date().toISOString()
-              }));
+              ws.send(
+                JSON.stringify({
+                  type: "qr_payment",
+                  qrCodeUrl: qrUrl,
+                  amount: orderTotal,
+                  transactionUuid: transactionUuid,
+                  paymentMethod: "QR Code",
+                  timestamp: new Date().toISOString(),
+                }),
+              );
               ws.close();
             };
           } catch (error) {
-            console.error('Failed to send QR payment info to customer display:', error);
+            console.error(
+              "Failed to send QR payment info to customer display:",
+              error,
+            );
           }
         } else {
           console.error("No QR data received from API");
           // Fallback to mock QR code
-          const fallbackData = `Payment via QR\nAmount: ${totalWithTax.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nTime: ${new Date().toLocaleString("vi-VN")}`;
+          const fallbackData = `Payment via QR\nAmount: ${Math.floor(orderTotal).toLocaleString("vi-VN")} ₫\nTime: ${new Date().toLocaleString("vi-VN")}`;
           const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
             width: 256,
             margin: 2,
@@ -350,15 +369,13 @@ export function PaymentMethodModal({
         console.error("Error calling CreateQRPos API:", error);
         // Fallback to mock QR code on error
         try {
-          const totalWithTax = cartItems && cartItems.length > 0 ? 
-            cartItems.reduce((sum, item) => {
-              const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-              const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-              const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-              return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
-            }, 0) : 
-            total;
-          const fallbackData = `Payment via QR\nAmount: ${totalWithTax.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nTime: ${new Date().toLocaleString("vi-VN")}`;
+          const orderTotal =
+            receipt?.exactTotal ??
+            orderForPayment?.exactTotal ??
+            orderForPayment?.total ??
+            total ??
+            0;
+          const fallbackData = `Payment via QR\nAmount: ${Math.floor(orderTotal).toLocaleString("vi-VN")} ₫\nTime: ${new Date().toLocaleString("vi-VN")}`;
           const qrUrl = await QRCodeLib.toDataURL(fallbackData, {
             width: 256,
             margin: 2,
@@ -379,16 +396,14 @@ export function PaymentMethodModal({
       // Generate QR code for VNPay
       try {
         setQrLoading(true);
-        // Calculate total including tax for VNPay QR
-        const totalWithTax = cartItems && cartItems.length > 0 ? 
-          cartItems.reduce((sum, item) => {
-            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-            const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-            const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-            return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
-          }, 0) : 
-          total;
-        const qrData = `Payment via ${method}\nAmount: ${totalWithTax.toLocaleString("vi-VN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫\nTime: ${new Date().toLocaleString("vi-VN")}`;
+        // Use exact total with proper priority for QR payment
+        const orderTotal =
+          receipt?.exactTotal ??
+          orderForPayment?.exactTotal ??
+          orderForPayment?.total ??
+          total ??
+          0;
+        const qrData = `Payment via ${method}\nAmount: ${Math.floor(orderTotal).toLocaleString("vi-VN")} ₫\nTime: ${new Date().toLocaleString("vi-VN")}`;
         const qrUrl = await QRCodeLib.toDataURL(qrData, {
           width: 256,
           margin: 2,
@@ -415,14 +430,16 @@ export function PaymentMethodModal({
     setQrCodeUrl("");
 
     // Return to parent with QR payment method
-    onSelectMethod('qrCode');
+    onSelectMethod("qrCode");
   };
 
   const handleBack = () => {
     setShowQRCode(false);
     setQrCodeUrl("");
     setShowCashPayment(false);
+    // Reset toàn bộ trạng thái thanh toán tiền mặt
     setAmountReceived("");
+    setCashAmountInput("");
     setSelectedPaymentMethod("");
     setShowVirtualKeyboard(false);
 
@@ -434,52 +451,68 @@ export function PaymentMethodModal({
 
     // Send message to customer display to clear QR payment
     try {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        ws.send(JSON.stringify({
-          type: 'qr_payment_cancelled',
-          timestamp: new Date().toISOString()
-        }));
+        ws.send(
+          JSON.stringify({
+            type: "qr_payment_cancelled",
+            timestamp: new Date().toISOString(),
+          }),
+        );
         ws.close();
       };
     } catch (error) {
-      console.error('Failed to send QR payment cancellation to customer display:', error);
+      console.error(
+        "Failed to send QR payment cancellation to customer display:",
+        error,
+      );
     }
   };
 
   const handleCashPaymentComplete = () => {
-    const receivedAmount = parseFloat(amountReceived) || 0;
+    const receivedAmount = parseFloat(cashAmountInput || "0");
 
-    // Calculate total including tax for cash payment
-    const totalWithTax = cartItems && cartItems.length > 0 ? 
-      cartItems.reduce((sum, item) => {
-        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-        return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
-      }, 0) : 
-      total;
+    // Sử dụng exact total with proper priority
+    const orderTotal = receipt?.exactTotal ??
+                      orderForPayment?.exactTotal ??
+                      orderForPayment?.total ??
+                      total ??
+                      0;
 
-    const changeAmount = receivedAmount - totalWithTax;
+    // Tính tiền thối: Tiền khách đưa - Tiền cần thanh toán
+    const changeAmount = receivedAmount - orderTotal;
+    const finalChange = changeAmount >= 0 ? changeAmount : 0;
 
-    if (receivedAmount < totalWithTax) {
-      return; // Don't proceed if insufficient amount
+    console.log("💰 Hoàn thành thanh toán tiền mặt:", {
+      "Số tiền nhập": amountReceived,
+      "Số tiền khách đưa": receivedAmount,
+      "Tổng cần thanh toán": orderTotal,
+      "Tiền thối": finalChange,
+      "Đủ tiền": receivedAmount >= orderTotal
+    });
+
+    if (receivedAmount < orderTotal) {
+      console.warn("❌ Số tiền chưa đủ");
+      return; // Không thực hiện nếu chưa đủ tiền
     }
 
+    // Reset trạng thái và đóng form tiền mặt
     setShowCashPayment(false);
+    setAmountReceived("");
+    setCashAmountInput("");
 
-    // Return to parent with cash payment method and amount data
-    onSelectMethod('cash', {
+    // Trả về kết quả cho component cha
+    onSelectMethod("cash", {
       amountReceived: receivedAmount,
-      change: changeAmount
+      change: finalChange,
     });
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
-    console.log('📧 E-Invoice confirmed from payment modal:', eInvoiceData);
+    console.log("📧 E-Invoice confirmed from payment modal:", eInvoiceData);
 
     // Close E-invoice modal
     setShowEInvoice(false);
@@ -488,9 +521,9 @@ export function PaymentMethodModal({
     onClose();
 
     // Pass e-invoice data back to parent component with original payment method
-    onSelectMethod('einvoice', {
+    onSelectMethod("einvoice", {
       ...eInvoiceData,
-      originalPaymentMethod: selectedPaymentMethod
+      originalPaymentMethod: selectedPaymentMethod,
     });
   };
 
@@ -499,14 +532,21 @@ export function PaymentMethodModal({
     setSelectedPaymentMethod("");
 
     // Return to payment method selection instead of closing completely
-    console.log('🔙 E-invoice modal closed, returning to payment method selection');
+    console.log(
+      "🔙 E-invoice modal closed, returning to payment method selection",
+    );
   };
 
   // Virtual keyboard handlers
   const handleVirtualKeyPress = (key: string) => {
-    const currentValue = amountReceived;
+    const currentValue = cashAmountInput || "";
+    // Only allow numbers and prevent multiple decimal points
+    if (!/^[0-9]$/.test(key)) return;
+
     const newValue = currentValue + key;
-    setAmountReceived(newValue);
+    console.log("🔢 Virtual keyboard input:", { currentValue, key, newValue });
+    setCashAmountInput(newValue);
+    setAmountReceived(newValue); // Sync for calculation
 
     // Focus the input to show cursor position
     const inputRef = amountInputRef.current;
@@ -520,9 +560,10 @@ export function PaymentMethodModal({
   };
 
   const handleVirtualBackspace = () => {
-    const currentValue = amountReceived;
+    const currentValue = cashAmountInput;
     const newValue = currentValue.slice(0, -1);
-    setAmountReceived(newValue);
+    setCashAmountInput(newValue);
+    setAmountReceived(newValue); // Sync for calculation
 
     // Focus the input to show cursor position
     const inputRef = amountInputRef.current;
@@ -537,14 +578,13 @@ export function PaymentMethodModal({
   const handleVirtualEnter = () => {
     // Hide keyboard on enter and try to complete payment if amount is sufficient
     setShowVirtualKeyboard(false);
-    if (parseFloat(amountReceived) >= (cartItems && cartItems.length > 0 ? 
-      cartItems.reduce((sum, item) => {
-        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-        return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
-      }, 0) : 
-      total)) {
+    const orderTotal =
+      receipt?.exactTotal ??
+      parseFloat(receipt?.total || "0") ??
+      orderForPayment?.exactTotal ??
+      orderForPayment?.total ??
+      total;
+    if (parseFloat(cashAmountInput) >= orderTotal) {
       handleCashPaymentComplete();
     }
   };
@@ -578,53 +618,66 @@ export function PaymentMethodModal({
       // Always send message to customer display when modal closes
       const sendCloseMessage = () => {
         try {
-          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const protocol =
+            window.location.protocol === "https:" ? "wss:" : "ws:";
           const wsUrl = `${protocol}//${window.location.host}/ws`;
           const ws = new WebSocket(wsUrl);
 
           ws.onopen = () => {
-            console.log('Payment Modal: WebSocket connected for close message');
+            console.log("Payment Modal: WebSocket connected for close message");
 
             // If QR code was showing, send cancellation and restore cart
             if (wasShowingQRCode || showQRCode || qrCodeUrl) {
-              console.log('Payment Modal: Sending QR cancellation message');
-              ws.send(JSON.stringify({
-                type: 'qr_payment_cancelled',
-                timestamp: new Date().toISOString()
-              }));
+              console.log("Payment Modal: Sending QR cancellation message");
+              ws.send(
+                JSON.stringify({
+                  type: "qr_payment_cancelled",
+                  timestamp: new Date().toISOString(),
+                }),
+              );
 
               // Wait a bit then send cart restore message
               setTimeout(() => {
-                console.log('Payment Modal: Sending cart restore message');
-                ws.send(JSON.stringify({
-                  type: 'restore_cart_display',
-                  timestamp: new Date().toISOString(),
-                  reason: 'payment_dialog_closed'
-                }));
+                console.log("Payment Modal: Sending cart restore message");
+                ws.send(
+                  JSON.stringify({
+                    type: "restore_cart_display",
+                    timestamp: new Date().toISOString(),
+                    reason: "payment_dialog_closed",
+                  }),
+                );
                 ws.close();
               }, 100);
             } else {
               // Just send cart restore message if no QR code
-              console.log('Payment Modal: Sending cart restore message (no QR)');
-              ws.send(JSON.stringify({
-                type: 'restore_cart_display',
-                timestamp: new Date().toISOString(),
-                reason: 'payment_dialog_closed'
-              }));
+              console.log(
+                "Payment Modal: Sending cart restore message (no QR)",
+              );
+              ws.send(
+                JSON.stringify({
+                  type: "restore_cart_display",
+                  timestamp: new Date().toISOString(),
+                  reason: "payment_dialog_closed",
+                }),
+              );
               ws.close();
             }
           };
 
           ws.onerror = (error) => {
-            console.error('Payment Modal: WebSocket error:', error);
+            console.error("Payment Modal: WebSocket error:", error);
           };
 
           ws.onclose = () => {
-            console.log('Payment Modal: WebSocket closed after sending close message');
+            console.log(
+              "Payment Modal: WebSocket closed after sending close message",
+            );
           };
-
         } catch (error) {
-          console.error('Payment Modal: Failed to send close message when modal closes:', error);
+          console.error(
+            "Payment Modal: Failed to send close message when modal closes:",
+            error,
+          );
         }
       };
 
@@ -632,7 +685,7 @@ export function PaymentMethodModal({
       setTimeout(sendCloseMessage, 50);
 
       // Reset all states when modal completely closes
-      console.log('🔄 Payment Modal: Resetting all states on modal close');
+      console.log("🔄 Payment Modal: Resetting all states on modal close");
       setShowQRCode(false);
       setQrCodeUrl("");
       setShowEInvoice(false);
@@ -640,6 +693,7 @@ export function PaymentMethodModal({
       setQrLoading(false);
       setShowCashPayment(false);
       setAmountReceived("");
+      setCashAmountInput("");
       setShowVirtualKeyboard(false);
       setWasShowingQRCode(false);
 
@@ -649,7 +703,14 @@ export function PaymentMethodModal({
         setCurrentTransactionUuid(null);
       }
     }
-  }, [isOpen, currentTransactionUuid, removePaymentListener, showQRCode, qrCodeUrl, wasShowingQRCode]);
+  }, [
+    isOpen,
+    currentTransactionUuid,
+    removePaymentListener,
+    showQRCode,
+    qrCodeUrl,
+    wasShowingQRCode,
+  ]);
 
   return (
     <Dialog
@@ -658,39 +719,51 @@ export function PaymentMethodModal({
         if (!open) {
           // When dialog is closed via X button or outside click
           try {
-            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const protocol =
+              window.location.protocol === "https:" ? "wss:" : "ws:";
             const wsUrl = `${protocol}//${window.location.host}/ws`;
             const ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
-              console.log('Payment Modal: Sending clear message from X button close');
+              console.log(
+                "Payment Modal: Sending clear message from X button close",
+              );
               // If QR code was showing, send cancellation and restore cart
               if (showQRCode || qrCodeUrl) {
-                ws.send(JSON.stringify({
-                  type: 'qr_payment_cancelled',
-                  timestamp: new Date().toISOString()
-                }));
+                ws.send(
+                  JSON.stringify({
+                    type: "qr_payment_cancelled",
+                    timestamp: new Date().toISOString(),
+                  }),
+                );
                 // Wait a bit then send cart restore message
                 setTimeout(() => {
-                  ws.send(JSON.stringify({
-                    type: 'restore_cart_display',
-                    timestamp: new Date().toISOString(),
-                    reason: 'payment_dialog_x_button'
-                  }));
+                  ws.send(
+                    JSON.stringify({
+                      type: "restore_cart_display",
+                      timestamp: new Date().toISOString(),
+                      reason: "payment_dialog_x_button",
+                    }),
+                  );
                   ws.close();
                 }, 100);
               } else {
                 // Just send cart restore message if no QR code
-                ws.send(JSON.stringify({
-                  type: 'restore_cart_display',
-                  timestamp: new Date().toISOString(),
-                  reason: 'payment_dialog_x_button'
-                }));
+                ws.send(
+                  JSON.stringify({
+                    type: "restore_cart_display",
+                    timestamp: new Date().toISOString(),
+                    reason: "payment_dialog_x_button",
+                  }),
+                );
                 ws.close();
               }
             };
           } catch (error) {
-            console.error('Failed to send clear message when X button clicked:', error);
+            console.error(
+              "Failed to send clear message when X button clicked:",
+              error,
+            );
           }
         }
         onClose();
@@ -705,36 +778,18 @@ export function PaymentMethodModal({
           {!showQRCode && !showCashPayment ? (
             <>
               <div className="text-center p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600">{t("common.totalAmount")}</p>
+                <p className="text-sm text-gray-600">
+                  {t("common.totalAmount")}
+                </p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {(() => {
-                    // Calculate total including tax from cart items
-                    if (cartItems && cartItems.length > 0) {
-                      const subtotal = cartItems.reduce((sum, item) => {
-                        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                        return sum + (itemPrice * itemQuantity);
-                      }, 0);
-
-                      const tax = cartItems.reduce((sum, item) => {
-                        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-                        return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
-                      }, 0);
-
-                      return (subtotal + tax).toLocaleString("vi-VN", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      });
-                    }
-
-                    // Fallback to provided total
-                    return (typeof total === 'number' ? total : parseFloat(total || '0')).toLocaleString("vi-VN", {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: 0,
-                    });
-                  })()}{" "}
+                  {/* Use exact total with proper priority for QR payment */}
+                  {Math.floor(
+                    receipt?.exactTotal ??
+                      orderForPayment?.exactTotal ??
+                      orderForPayment?.total ??
+                      total ??
+                      0,
+                  ).toLocaleString("vi-VN")}{" "}
                   ₫
                 </p>
               </div>
@@ -778,21 +833,29 @@ export function PaymentMethodModal({
                 onClick={() => {
                   // Send clear message to customer display before closing
                   try {
-                    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                    const protocol =
+                      window.location.protocol === "https:" ? "wss:" : "ws:";
                     const wsUrl = `${protocol}//${window.location.host}/ws`;
                     const ws = new WebSocket(wsUrl);
 
                     ws.onopen = () => {
-                      console.log('Payment Modal: Sending clear message from cancel button');
-                      ws.send(JSON.stringify({
-                        type: 'restore_cart_display',
-                        timestamp: new Date().toISOString(),
-                        reason: 'payment_cancel_button'
-                      }));
+                      console.log(
+                        "Payment Modal: Sending clear message from cancel button",
+                      );
+                      ws.send(
+                        JSON.stringify({
+                          type: "restore_cart_display",
+                          timestamp: new Date().toISOString(),
+                          reason: "payment_cancel_button",
+                        }),
+                      );
                       ws.close();
                     };
                   } catch (error) {
-                    console.error('Failed to send clear message to customer display:', error);
+                    console.error(
+                      "Failed to send clear message to customer display:",
+                      error,
+                    );
                   }
 
                   onClose();
@@ -817,34 +880,14 @@ export function PaymentMethodModal({
                     {t("common.amountToPay")}
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {(() => {
-                      // Calculate total including tax from cart items
-                      if (cartItems && cartItems.length > 0) {
-                        const subtotal = cartItems.reduce((sum, item) => {
-                          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                          return sum + (itemPrice * itemQuantity);
-                        }, 0);
-
-                        const tax = cartItems.reduce((sum, item) => {
-                          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                          const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-                          return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
-                        }, 0);
-
-                        return (subtotal + tax).toLocaleString("vi-VN", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        });
-                      }
-
-                      // Fallback to provided total
-                      return (typeof total === 'number' ? total : parseFloat(total || '0')).toLocaleString("vi-VN", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      });
-                    })()}{" "}
+                    {/* Use exact total with proper priority for QR payment */}
+                    {Math.floor(
+                      receipt?.exactTotal ??
+                        orderForPayment?.exactTotal ??
+                        orderForPayment?.total ??
+                        total ??
+                        0,
+                    ).toLocaleString("vi-VN")}{" "}
                     ₫
                   </p>
                 </div>
@@ -872,28 +915,38 @@ export function PaymentMethodModal({
                   onClick={() => {
                     // Send clear message to customer display before going back
                     try {
-                      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                      const protocol =
+                        window.location.protocol === "https:" ? "wss:" : "ws:";
                       const wsUrl = `${protocol}//${window.location.host}/ws`;
                       const ws = new WebSocket(wsUrl);
 
                       ws.onopen = () => {
-                        console.log('Payment Modal: Sending clear message from back button');
-                        ws.send(JSON.stringify({
-                          type: 'qr_payment_cancelled',
-                          timestamp: new Date().toISOString()
-                        }));
+                        console.log(
+                          "Payment Modal: Sending clear message from back button",
+                        );
+                        ws.send(
+                          JSON.stringify({
+                            type: "qr_payment_cancelled",
+                            timestamp: new Date().toISOString(),
+                          }),
+                        );
                         // Wait a bit then send cart restore message
                         setTimeout(() => {
-                          ws.send(JSON.stringify({
-                            type: 'restore_cart_display',
-                            timestamp: new Date().toISOString(),
-                            reason: 'payment_back_button'
-                          }));
+                          ws.send(
+                            JSON.stringify({
+                              type: "restore_cart_display",
+                              timestamp: new Date().toISOString(),
+                              reason: "payment_back_button",
+                            }),
+                          );
                           ws.close();
                         }, 100);
                       };
                     } catch (error) {
-                      console.error('Failed to send clear message from back button:', error);
+                      console.error(
+                        "Failed to send clear message from back button:",
+                        error,
+                      );
                     }
 
                     handleBack();
@@ -906,28 +959,38 @@ export function PaymentMethodModal({
                   onClick={() => {
                     // Send clear message to customer display before completing
                     try {
-                      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                      const protocol =
+                        window.location.protocol === "https:" ? "wss:" : "ws:";
                       const wsUrl = `${protocol}//${window.location.host}/ws`;
                       const ws = new WebSocket(wsUrl);
 
                       ws.onopen = () => {
-                        console.log('Payment Modal: Sending clear message from complete button');
-                        ws.send(JSON.stringify({
-                          type: 'qr_payment_cancelled',
-                          timestamp: new Date().toISOString()
-                        }));
+                        console.log(
+                          "Payment Modal: Sending clear message from complete button",
+                        );
+                        ws.send(
+                          JSON.stringify({
+                            type: "qr_payment_cancelled",
+                            timestamp: new Date().toISOString(),
+                          }),
+                        );
                         // Wait a bit then send cart restore message
                         setTimeout(() => {
-                          ws.send(JSON.stringify({
-                            type: 'restore_cart_display',
-                            timestamp: new Date().toISOString(),
-                            reason: 'payment_complete_button'
-                          }));
+                          ws.send(
+                            JSON.stringify({
+                              type: "restore_cart_display",
+                              timestamp: new Date().toISOString(),
+                              reason: "payment_complete_button",
+                            }),
+                          );
                           ws.close();
                         }, 100);
                       };
                     } catch (error) {
-                      console.error('Failed to send clear message from complete button:', error);
+                      console.error(
+                        "Failed to send clear message from complete button:",
+                        error,
+                      );
                     }
 
                     handleQRComplete();
@@ -943,7 +1006,9 @@ export function PaymentMethodModal({
               <div className="text-center space-y-4">
                 <div className="flex items-center justify-center gap-2 mb-4">
                   <Banknote className="w-6 h-6" />
-                  <h3 className="text-lg font-semibold">{t("common.cashPayment")}</h3>
+                  <h3 className="text-lg font-semibold">
+                    {t("common.cashPayment")}
+                  </h3>
                 </div>
 
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
@@ -951,34 +1016,14 @@ export function PaymentMethodModal({
                     {t("common.amountToPay")}
                   </p>
                   <p className="text-2xl font-bold text-blue-600">
-                    {(() => {
-                      // Calculate total including tax from cart items
-                      if (cartItems && cartItems.length > 0) {
-                        const subtotal = cartItems.reduce((sum, item) => {
-                          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                          return sum + (itemPrice * itemQuantity);
-                        }, 0);
-
-                        const tax = cartItems.reduce((sum, item) => {
-                          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                          const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-                          return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
-                        }, 0);
-
-                        return (subtotal + tax).toLocaleString("vi-VN", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        });
-                      }
-
-                      // Fallback to provided total
-                      return (typeof total === 'number' ? total : parseFloat(total || '0')).toLocaleString("vi-VN", {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0,
-                      });
-                    })()}{" "}
+                    {/* Use exact total with proper priority for cash payment */}
+                    {Math.floor(
+                      receipt?.exactTotal ??
+                        orderForPayment?.exactTotal ??
+                        orderForPayment?.total ??
+                        total ??
+                        0,
+                    ).toLocaleString("vi-VN")}{" "}
                     ₫
                   </p>
                 </div>
@@ -992,9 +1037,15 @@ export function PaymentMethodModal({
                       ref={amountInputRef}
                       type="number"
                       step="1000"
+                      min="0"
                       placeholder={t("common.enterCustomerAmount")}
-                      value={amountReceived}
-                      onChange={(e) => setAmountReceived(e.target.value)}
+                      value={cashAmountInput}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        console.log("💰 Cash input changed to:", value);
+                        setCashAmountInput(value);
+                        setAmountReceived(value); // Sync for calculation
+                      }}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg text-center"
                       autoFocus
                     />
@@ -1006,75 +1057,77 @@ export function PaymentMethodModal({
                       variant="outline"
                       size="sm"
                       onClick={toggleVirtualKeyboard}
-                      className={`${showVirtualKeyboard ? 'bg-blue-100 border-blue-300' : ''}`}
+                      className={`${showVirtualKeyboard ? "bg-blue-100 border-blue-300" : ""}`}
                     >
                       <Keyboard className="w-4 h-4 mr-2" />
-                      {showVirtualKeyboard ? 'Ẩn bàn phím' : 'Hiện bàn phím ảo'}
+                      {showVirtualKeyboard ? "Ẩn bàn phím" : "Hiện bàn phím ảo"}
                     </Button>
                   </div>
 
-                  {amountReceived && parseFloat(amountReceived) >= (cartItems && cartItems.length > 0 ? 
-                    cartItems.reduce((sum, item) => {
-                      const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                      const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                      const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-                      return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
-                    }, 0) : 
-                    total) && (
-                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  {amountReceived && parseFloat(amountReceived || "0") > 0 && (
+                    <div className={`p-3 border rounded-lg ${
+                      (() => {
+                        const receivedAmount = parseFloat(cashAmountInput || "0");
+                        // Sử dụng exact priority order giống như table payment
+                        const orderTotal = receipt?.exactTotal ??
+                                         orderForPayment?.exactTotal ??
+                                         orderForPayment?.total ??
+                                         total;
+                        const changeAmount = receivedAmount - orderTotal;
+                        return changeAmount >= 0
+                          ? "bg-green-50 border-green-200"
+                          : "bg-red-50 border-red-200";
+                      })()
+                    }`}>
                       <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-green-800">
-                          {t("common.change")}:
+                        <span className={`text-sm font-medium ${
+                          (() => {
+                            const receivedAmount = parseFloat(cashAmountInput || "0");
+                            const orderTotal = receipt?.exactTotal ??
+                                             orderForPayment?.exactTotal ??
+                                             orderForPayment?.total ??
+                                             total;
+                            const changeAmount = receivedAmount - orderTotal;
+                            return changeAmount >= 0 ? "text-green-800" : "text-red-800";
+                          })()
+                        }`}>
+                          {(() => {
+                            const receivedAmount = parseFloat(cashAmountInput || "0");
+                            const orderTotal = receipt?.exactTotal ??
+                                             orderForPayment?.exactTotal ??
+                                             orderForPayment?.total ??
+                                             total;
+                            const changeAmount = receivedAmount - orderTotal;
+                            return changeAmount >= 0 ? "Tiền thối:" : "Còn thiếu:";
+                          })()}
                         </span>
-                        <span className="text-lg font-bold text-green-600">
-                          {(parseFloat(amountReceived) - (cartItems && cartItems.length > 0 ? 
-                            cartItems.reduce((sum, item) => {
-                              const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                              const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                              const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-                              return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
-                            }, 0) : 
-                            total)).toLocaleString(
-                            "vi-VN",
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            },
-                          )}{" "}
-                          ₫
-                        </span>
-                      </div>
-                    </div>
-                  )}
+                        <span className={`text-lg font-bold ${
+                          (() => {
+                            const receivedAmount = parseFloat(cashAmountInput || "0");
+                            const orderTotal = receipt?.exactTotal ??
+                                             orderForPayment?.exactTotal ??
+                                             orderForPayment?.total ??
+                                             total;
+                            const changeAmount = receivedAmount - orderTotal;
+                            return changeAmount >= 0 ? "text-green-600" : "text-red-600";
+                          })()
+                        }`}>
+                          {(() => {
+                            // Sử dụng cashAmountInput thay vì amountReceived để tính toán chính xác
+                            const receivedAmount = parseFloat(cashAmountInput || "0");
 
-                  {amountReceived && parseFloat(amountReceived) < (cartItems && cartItems.length > 0 ? 
-                    cartItems.reduce((sum, item) => {
-                      const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                      const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                      const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-                      return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
-                    }, 0) : 
-                    total) && (
-                    <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-red-800">
-                          {t("common.insufficient")}:
-                        </span>
-                        <span className="text-lg font-bold text-red-600">
-                          {((cartItems && cartItems.length > 0 ? 
-                            cartItems.reduce((sum, item) => {
-                              const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                              const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                              const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-                              return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
-                            }, 0) : 
-                            total) - parseFloat(amountReceived)).toLocaleString(
-                            "vi-VN",
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            },
-                          )}{" "}
+                            // Sử dụng exact priority order giống như table payment
+                            const orderTotal = receipt?.exactTotal ??
+                                             orderForPayment?.exactTotal ??
+                                             orderForPayment?.total ??
+                                             total;
+
+                            // Tính tiền thối: Tiền khách đưa - Tổng tiền cần thanh toán
+                            const changeAmount = receivedAmount - orderTotal;
+                            const displayAmount = changeAmount >= 0 ? changeAmount : Math.abs(changeAmount);
+
+                            return Math.floor(displayAmount).toLocaleString("vi-VN");
+                          })()}{" "}
                           ₫
                         </span>
                       </div>
@@ -1102,21 +1155,29 @@ export function PaymentMethodModal({
                   onClick={() => {
                     // Send clear message to customer display before going back from cash payment
                     try {
-                      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                      const protocol =
+                        window.location.protocol === "https:" ? "wss:" : "ws:";
                       const wsUrl = `${protocol}//${window.location.host}/ws`;
                       const ws = new WebSocket(wsUrl);
 
                       ws.onopen = () => {
-                        console.log('Payment Modal: Sending clear message from cash payment back button');
-                        ws.send(JSON.stringify({
-                          type: 'restore_cart_display',
-                          timestamp: new Date().toISOString(),
-                          reason: 'cash_payment_back_button'
-                        }));
+                        console.log(
+                          "Payment Modal: Sending clear message from cash payment back button",
+                        );
+                        ws.send(
+                          JSON.stringify({
+                            type: "restore_cart_display",
+                            timestamp: new Date().toISOString(),
+                            reason: "cash_payment_back_button",
+                          }),
+                        );
                         ws.close();
                       };
                     } catch (error) {
-                      console.error('Failed to send clear message from cash payment back button:', error);
+                      console.error(
+                        "Failed to send clear message from cash payment back button:",
+                        error,
+                      );
                     }
 
                     handleBack();
@@ -1129,34 +1190,40 @@ export function PaymentMethodModal({
                   onClick={() => {
                     // Send clear message to customer display before completing cash payment
                     try {
-                      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                      const protocol =
+                        window.location.protocol === "https:" ? "wss:" : "ws:";
                       const wsUrl = `${protocol}//${window.location.host}/ws`;
                       const ws = new WebSocket(wsUrl);
 
                       ws.onopen = () => {
-                        console.log('Payment Modal: Sending clear message from cash payment complete button');
-                        ws.send(JSON.stringify({
-                          type: 'restore_cart_display',
-                          timestamp: new Date().toISOString(),
-                          reason: 'cash_payment_complete_button'
-                        }));
+                        console.log(
+                          "Payment Modal: Sending clear message from cash payment complete button",
+                        );
+                        ws.send(
+                          JSON.stringify({
+                            type: "restore_cart_display",
+                            timestamp: new Date().toISOString(),
+                            reason: "cash_payment_complete_button",
+                          }),
+                        );
                         ws.close();
                       };
                     } catch (error) {
-                      console.error('Failed to send clear message from cash payment complete button:', error);
+                      console.error(
+                        "Failed to send clear message from cash payment complete button:",
+                        error,
+                      );
                     }
 
                     handleCashPaymentComplete();
                   }}
                   disabled={
-                    !amountReceived || parseFloat(amountReceived) < (cartItems && cartItems.length > 0 ? 
-                      cartItems.reduce((sum, item) => {
-                        const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                        const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                        const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-                        return sum + (itemPrice * itemQuantity) + (itemPrice * itemQuantity * itemTaxRate / 100);
-                      }, 0) : 
-                      total)
+                    !cashAmountInput ||
+                    parseFloat(cashAmountInput) <
+                      (receipt?.exactTotal ??
+                       orderForPayment?.exactTotal ??
+                       orderForPayment?.total ??
+                       total)
                   }
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 disabled:bg-gray-400"
                 >
@@ -1175,49 +1242,47 @@ export function PaymentMethodModal({
           onClose={handleEInvoiceClose}
           onConfirm={handleEInvoiceConfirm}
           total={(() => {
-            // Calculate total including tax from cart items for e-invoice
-            if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-              const subtotal = cartItems.reduce((sum, item) => {
-                const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                return sum + (itemPrice * itemQuantity);
-              }, 0);
-
-              const tax = cartItems.reduce((sum, item) => {
-                const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                const itemTaxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-                return sum + (itemPrice * itemQuantity * itemTaxRate / 100);
-              }, 0);
-              return subtotal + tax;
-            }
-            // Fallback to provided total if no cart items
-            return typeof total === 'number' && !isNaN(total) ? total : 0;
+            // Use exact total from orderForPayment or receipt for e-invoice
+            const orderTotal =
+              receipt?.exactTotal ??
+              parseFloat(receipt?.total || "0") ??
+              orderForPayment?.exactTotal ??
+              orderForPayment?.total ??
+              total;
+            console.log("💰 Using exact total for EInvoice:", orderTotal);
+            return Math.floor(orderTotal);
           })()}
           selectedPaymentMethod={selectedPaymentMethod}
           cartItems={(() => {
-            console.log("🔄 Payment Modal - Preparing cartItems for EInvoice:");
-            console.log("- cartItems prop:", cartItems);
-            console.log("- cartItems length:", cartItems?.length || 0);
+            // Use orderItems from orderForPayment or receipt if available
+            const itemsToMap =
+              orderForPayment?.orderItems ||
+              receipt?.orderItems ||
+              cartItems ||
+              [];
+            console.log(
+              "📦 Mapping cart items for payment modal using exact Order Details data:",
+              itemsToMap.length,
+            );
 
-            // Always prefer cartItems prop since it has the most accurate data
-            if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-              console.log("✅ Using cartItems prop for e-invoice (most accurate data)");
-              // Ensure all cartItems have proper structure
-              const processedCartItems = cartItems.map(item => ({
+            return itemsToMap.map((item: any) => {
+              const product = Array.isArray(products)
+                ? products.find((p: any) => p.id === item.productId)
+                : null;
+
+              return {
                 id: item.id,
-                name: item.name,
-                price: typeof item.price === 'string' ? parseFloat(item.price) : item.price,
-                quantity: typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity,
-                sku: item.sku || `FOOD${String(item.id).padStart(5, '0')}`,
-                taxRate: typeof item.taxRate === 'string' ? parseFloat(item.taxRate || "0") : (item.taxRate || 0)
-              }));
-              console.log("🔧 Processed cartItems for e-invoice:", processedCartItems);
-              return processedCartItems;
-            } else {
-              console.error("❌ No valid cart items found for e-invoice");
-              return [];
-            }
+                name:
+                  item.productName ||
+                  getProductName?.(item.productId) ||
+                  `Product ${item.productId}`,
+                price: parseFloat(item.unitPrice || "0"),
+                quantity: item.quantity,
+                sku: item.productSku || `SP${item.productId}`,
+                taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10,
+                afterTaxPrice: product?.afterTaxPrice || null, // Pass afterTaxPrice for exact calculation
+              };
+            });
           })()}
         />
       )}

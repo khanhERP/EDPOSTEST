@@ -2665,8 +2665,8 @@ export default function Settings() {
                                       }`}
                                     >
                                       {product.stock > 0
-                                        ? "Còn hàng"
-                                        : "Hết hàng"}
+                                        ? t("settings.inStock")
+                                        : t("settings.outOfStock")}
                                     </Badge>
                                   </td>
                                   <td className="px-4 py-3 text-center">
@@ -2752,7 +2752,7 @@ export default function Settings() {
                     <div className="flex justify-between items-center mb-6">
                       <div className="flex items-center gap-4">
                         <Input
-                          placeholder="Tìm kiếm theo tên, mã NV, số điện thoại..."
+                          placeholder={t("employees.searchPlaceholder")}
                           className="w-64"
                           value={employeeSearchTerm}
                           onChange={(e) =>

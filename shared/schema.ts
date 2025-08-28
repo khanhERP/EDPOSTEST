@@ -36,6 +36,8 @@ export const products = pgTable("products", {
   taxRate: decimal("tax_rate", { precision: 5, scale: 2 })
     .notNull()
     .default("10.00"),
+  priceIncludesTax: boolean("price_includes_tax").notNull().default(false),
+  afterTaxPrice: decimal("after_tax_price", { precision: 10, scale: 2 }),
 });
 
 export const transactions = pgTable("transactions", {
@@ -152,6 +154,8 @@ export const orders = pgTable("orders", {
   paymentMethod: text("payment_method"), // "cash", "card", "mobile"
   paymentStatus: text("payment_status").notNull().default("pending"), // "pending", "paid", "refunded"
   einvoiceStatus: integer("einvoice_status").notNull().default(0), // 0=Chưa phát hành, 1=Đã phát hành, 2=Tạo nháp, 3=Đã duyệt, 4=Đã bị thay thế (hủy), 5=Thay thế tạm, 6=Thay thế, 7=Đã bị điều chỉnh, 8=Điều chỉnh tạm, 9=Điều chỉnh, 10=Đã hủy
+  templateNumber: varchar("template_number", { length: 50 }),
+  symbol: varchar("symbol", { length: 20 }),
   notes: text("notes"),
   orderedAt: timestamp("ordered_at").defaultNow().notNull(),
   servedAt: timestamp("served_at"),
@@ -194,6 +198,7 @@ export const insertProductSchema = createInsertSchema(products)
           message: "Tax rate must be between 0 and 100",
         },
       ),
+    priceIncludesTax: z.boolean().optional().default(false),
   });
 
 export const insertTransactionSchema = createInsertSchema(transactions).omit({
@@ -538,6 +543,42 @@ export type InvoiceItem = typeof invoiceItems.$inferSelect;
 export type InsertInvoice = z.infer<typeof insertInvoiceSchema>;
 export type InsertInvoiceItem = z.infer<typeof insertInvoiceItemSchema>;
 
+
+
+// Printer configs table
+export const printerConfigs = pgTable("printer_configs", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  printerType: varchar("printer_type", { length: 50 }).notNull().default("thermal"),
+  connectionType: varchar("connection_type", { length: 50 }).notNull().default("usb"),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  port: integer("port").default(9100),
+  macAddress: varchar("mac_address", { length: 17 }),
+  paperWidth: integer("paper_width").notNull().default(80),
+  printSpeed: integer("print_speed").default(100),
+  isPrimary: boolean("is_primary").notNull().default(false),
+  isSecondary: boolean("is_secondary").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+
+
+export const insertPrinterConfigSchema = createInsertSchema(printerConfigs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  printerType: z.enum(["thermal", "inkjet", "laser"]).optional(),
+  connectionType: z.enum(["usb", "network", "bluetooth"]).optional(),
+});
+
+export type PrintTemplate = typeof printTemplates.$inferSelect;
+export type PrinterConfig = typeof printerConfigs.$inferSelect;
+export type InsertPrintTemplate = z.infer<typeof insertPrintTemplateSchema>;
+export type InsertPrinterConfig = z.infer<typeof insertPrinterConfigSchema>;
+
 // Cart item type for frontend use
 export type CartItem = {
   id: number;
@@ -548,6 +589,7 @@ export type CartItem = {
   imageUrl?: string;
   stock: number;
   taxRate?: string;
+  afterTaxPrice?: string;
 };
 
 // Relations

@@ -263,10 +263,11 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(products)
       .where(eq(products.isActive, true));
-    // Ensure productType has a default value if missing
+    // Ensure productType has a default value if missing and afterTaxPrice is properly returned
     return result.map((product) => ({
       ...product,
       productType: product.productType || 1,
+      afterTaxPrice: product.afterTaxPrice || null
     }));
   }
 
@@ -288,7 +289,11 @@ export class DatabaseStorage implements IStorage {
       .where(whereCondition)
       .orderBy(products.name);
 
-    return result;
+    // Ensure afterTaxPrice is properly returned
+    return result.map((product) => ({
+      ...product,
+      afterTaxPrice: product.afterTaxPrice || null
+    }));
   }
 
   async getProduct(id: number, tenantDb?: any): Promise<Product | undefined> {
@@ -379,7 +384,7 @@ export class DatabaseStorage implements IStorage {
   async deleteProduct(id: number, tenantDb?: any): Promise<boolean> {
     try {
       const database = tenantDb || db;
-      
+
       // Check if product exists in transactions
       const transactionItemsCheck = await database
         .select()
@@ -575,7 +580,7 @@ export class DatabaseStorage implements IStorage {
       // Find the highest number and increment
       const highestNumber = existingNumbers[0] || 0;
       const nextNumber = highestNumber + 1;
-      
+
       return `CUST${nextNumber.toString().padStart(3, "0")}`;
     } catch (error) {
       console.error("Error generating next customer ID:", error);
@@ -749,7 +754,7 @@ export class DatabaseStorage implements IStorage {
         .from(employees)
         .where(eq(employees.id, employeeId))
         .limit(1);
-        
+
       if (!employee) {
         throw new Error(`Employee with ID ${employeeId} not found`);
       }
@@ -770,11 +775,11 @@ export class DatabaseStorage implements IStorage {
           notes: notes || null,
         })
         .returning();
-        
+
       if (!record) {
         throw new Error('Failed to create attendance record');
       }
-        
+
       return record;
     } catch (error) {
       console.error('Clock-in error:', error);
@@ -977,7 +982,7 @@ export class DatabaseStorage implements IStorage {
   ): Promise<Order | undefined> {
     console.log(`=== UPDATING ORDER STATUS ===`);
     console.log(`Order ID: ${id}, New Status: ${status}`);
-    
+
     const [order] = await db
       .update(orders)
       .set({ status })
@@ -989,7 +994,7 @@ export class DatabaseStorage implements IStorage {
     // If order is paid, check if there are other unpaid orders on the same table
     if (order && status === "paid") {
       console.log(`Order paid - checking other orders on table ${order.tableId}`);
-      
+
       // Check for other active orders on the same table
       const otherActiveOrders = await db
         .select()
@@ -1034,6 +1039,12 @@ export class DatabaseStorage implements IStorage {
 
   async removeOrderItem(itemId: number): Promise<boolean> {
     const result = await db.delete(orderItems).where(eq(orderItems.id, itemId));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async deleteOrderItem(itemId: number, tenantDb?: any): Promise<boolean> {
+    const database = tenantDb || db;
+    const result = await database.delete(orderItems).where(eq(orderItems.id, itemId));
     return (result.rowCount ?? 0) > 0;
   }
 
@@ -1195,7 +1206,7 @@ export class DatabaseStorage implements IStorage {
   // Customers
   async getCustomers(tenantDb?: any): Promise<Customer[]> {
     const database = tenantDb || db;
-    
+
     // Get membership thresholds
     const thresholds = await this.getMembershipThresholds();
 
@@ -1521,25 +1532,37 @@ export class DatabaseStorage implements IStorage {
 
   async getAllProducts(includeInactive: boolean = false, tenantDb?: any): Promise<Product[]> {
     const database = tenantDb || db;
+    let result;
     if (includeInactive) {
-      return await database.select().from(products).orderBy(products.name);
+      result = await database.select().from(products).orderBy(products.name);
     } else {
-      return await database
+      result = await database
         .select()
         .from(products)
         .where(eq(products.isActive, true))
         .orderBy(products.name);
     }
+    
+    // Ensure afterTaxPrice is properly returned
+    return result.map((product) => ({
+      ...product,
+      afterTaxPrice: product.afterTaxPrice || null
+    }));
   }
 
-  async getActiveProducts(): Promise<Product[]> {
-    const result = await db
+  async getActiveProducts(tenantDb?: any): Promise<Product[]> {
+    const database = tenantDb || db;
+    const result = await database
       .select()
       .from(products)
       .where(eq(products.isActive, true))
       .orderBy(products.name);
 
-    return result;
+    // Ensure afterTaxPrice is properly returned
+    return result.map((product) => ({
+      ...product,
+      afterTaxPrice: product.afterTaxPrice || null
+    }));
   }
 
   async createProduct(productData: Omit<Product, "id">): Promise<Product> {

@@ -363,7 +363,11 @@ export function OrderManagement() {
   };
 
   const formatCurrency = (amount: number) => {
-    return `${amount.toLocaleString()} ₫`;
+    if (typeof amount !== 'number' || isNaN(amount)) {
+      return '0 ₫';
+    }
+    // Always round to integer and format without decimals
+    return `${Math.floor(amount).toLocaleString('vi-VN')} ₫`;
   };
 
   const formatTime = (dateString: string | Date) => {
@@ -696,7 +700,7 @@ export function OrderManagement() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">{t('orders.totalAmount')}:</span>
                       <span className="text-lg font-bold text-green-600">
-                        {Number(order.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                        {formatCurrency(Number(order.total))}
                       </span>
                     </div>
 
@@ -836,7 +840,7 @@ export function OrderManagement() {
                         </Badge>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span>Trạng thái hóa đơn điện tử:</span>
+                        <span>{t('common.einvoiceStatus')}</span>
                         <Badge variant={
                           selectedOrder.einvoiceStatus === 1 ? "default" :
                           selectedOrder.einvoiceStatus === 2 ? "destructive" :
@@ -882,11 +886,11 @@ export function OrderManagement() {
                                 </span>
                               </div>
                               <div className="text-xs text-gray-600 mt-1">
-                                {Number(item.unitPrice || 0).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫/món
+                                {formatCurrency(Number(item.unitPrice || 0))}/món
                               </div>
                               {product?.taxRate && parseFloat(product.taxRate) > 0 && (
                                 <div className="text-xs text-orange-600 mt-1">
-                                  Thuế: {(Number(item.unitPrice || 0) * parseFloat(product.taxRate) / 100 * item.quantity).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫ ({product.taxRate}%)
+                                  Thuế: {formatCurrency(Number(item.unitPrice || 0) * parseFloat(product.taxRate) / 100 * item.quantity)} ({product.taxRate}%)
                                 </div>
                               )}
                               {item.notes && (
@@ -897,7 +901,7 @@ export function OrderManagement() {
                             </div>
                             <div className="text-right">
                               <div className="font-bold text-green-600">
-                                {Number(item.total || 0).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                                {formatCurrency(Number(item.total || 0))}
                               </div>
                             </div>
                           </div>
@@ -918,7 +922,7 @@ export function OrderManagement() {
                   <h4 className="font-medium mb-2">{t('orders.totalAmount')}</h4>
                   <div className="space-y-1 text-sm">
                     {(() => {
-                      // Calculate totals properly based on item data
+                      // Calculate totals based on item data
                       let totalItemSubtotal = 0;
                       let totalItemTax = 0;
 
@@ -929,10 +933,7 @@ export function OrderManagement() {
                           const itemUnitPrice = Number(item.unitPrice || 0);
                           const itemQuantity = item.quantity;
 
-                          // Calculate subtotal (before tax)
                           const itemSubtotal = itemUnitPrice * itemQuantity;
-
-                          // Calculate tax amount
                           const itemTax = taxRate > 0 ? (itemSubtotal * taxRate) / 100 : 0;
 
                           totalItemSubtotal += itemSubtotal;
@@ -945,17 +946,17 @@ export function OrderManagement() {
                       return (
                         <>
                           <div className="flex justify-between">
-                            <span>Tổng phụ:</span>
-                            <span>{totalItemSubtotal.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
+                            <span>{t('common.subtotalLabel')}</span>
+                            <span>{formatCurrency(totalItemSubtotal)}</span>
                           </div>
                           <div className="flex justify-between">
-                            <span>Thuế:</span>
-                            <span>{totalItemTax.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
+                            <span>{t('orders.tax')}</span>
+                            <span>{formatCurrency(totalItemTax)}</span>
                           </div>
                           <Separator />
                           <div className="flex justify-between font-medium">
-                            <span>Tổng tiền:</span>
-                            <span>{finalTotal.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫</span>
+                            <span>{t('orders.totalAmount')}:</span>
+                            <span>{formatCurrency(finalTotal)}</span>
                           </div>
                         </>
                       );
@@ -1146,8 +1147,8 @@ export function OrderManagement() {
                 <p className="text-sm text-gray-600">Số tiền cần thanh toán:</p>
                 <p className="text-3xl font-bold text-green-600">
                   {mixedPaymentData ?
-                    `${mixedPaymentData.remainingAmount.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫` :
-                    `${Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫`
+                    formatCurrency(mixedPaymentData.remainingAmount) :
+                    formatCurrency(Number(selectedOrder.total))
                   }
                 </p>
                 {mixedPaymentData && (
@@ -1214,7 +1215,7 @@ export function OrderManagement() {
               <div className="p-4 bg-blue-50 rounded-lg">
                 <p className="text-sm text-gray-600">{t('orders.orderNumber')}: {selectedOrder.orderNumber}</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {Number(selectedOrder.total).toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ₫
+                  {formatCurrency(Number(selectedOrder.total))}
                 </p>
                 {selectedCustomer && (
                   <div className="mt-2 pt-2 border-t border-blue-200">
@@ -1334,7 +1335,7 @@ export function OrderManagement() {
 
       {/* Mixed Payment Dialog */}
       <Dialog open={mixedPaymentOpen} onOpenChange={setMixedPaymentOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-orange-600" />
@@ -1519,7 +1520,7 @@ export function OrderManagement() {
         receipt={previewReceipt}
         onConfirm={() => {
           console.log("📄 Order Management: Receipt preview confirmed, starting payment flow");
-          
+
           if (!previewReceipt) {
             console.error('❌ No preview receipt data available');
             return;
@@ -1533,7 +1534,7 @@ export function OrderManagement() {
 
           console.log('💾 Setting order for payment with complete data:', completeOrderData);
           setOrderForPayment(completeOrderData);
-          
+
           // Close preview and show payment method modal
           setShowReceiptPreview(false);
           setShowPaymentMethodModal(true);
@@ -1717,7 +1718,7 @@ export function OrderManagement() {
           name: item.productName || item.name,
           price: parseFloat(item.price || item.unitPrice || '0'),
           quantity: item.quantity,
-          sku: item.productSku || `SP${item.productId}`,
+          sku: item.sku || `SP${item.productId}`,
           taxRate: (() => {
             const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
             return product?.taxRate ? parseFloat(product.taxRate) : 10;

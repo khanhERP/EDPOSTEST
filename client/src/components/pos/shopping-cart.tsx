@@ -58,34 +58,60 @@ export function ShoppingCart({
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
 
-  // Calculate totals with individual product tax rates
-  const subtotal = cart.reduce(
-    (sum, item) => sum + parseFloat(item.price) * item.quantity,
-    0,
-  );
-
-  // Calculate tax using individual product tax rates
+  const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
-    const itemSubtotal = parseFloat(item.price) * item.quantity;
-    let itemTaxRate = 0;
+      if (item.taxRate && parseFloat(item.taxRate) > 0) {
+        const basePrice = parseFloat(item.price);
 
-    // Get actual tax rate from item
-    if (item.taxRate !== undefined && item.taxRate !== null) {
-      if (typeof item.taxRate === 'string') {
-        const parsed = parseFloat(item.taxRate);
-        itemTaxRate = isNaN(parsed) ? 0 : parsed;
-      } else if (typeof item.taxRate === 'number') {
-        itemTaxRate = isNaN(item.taxRate) ? 0 : item.taxRate;
+        // Debug log to check afterTaxPrice
+        console.log("=== SHOPPING CART TAX CALCULATION DEBUG ===");
+        console.log("Product:", item.name);
+        console.log("Base Price:", basePrice);
+        console.log("Tax Rate:", item.taxRate + "%");
+        console.log("After Tax Price (from DB):", item.afterTaxPrice);
+        console.log("After Tax Price Type:", typeof item.afterTaxPrice);
+        console.log("🔍 KIỂM TRA: After Tax Price có phải 20000 không?", item.afterTaxPrice === "20000" || item.afterTaxPrice === 20000);
+
+        // So sánh chi tiết
+        if (item.afterTaxPrice) {
+          const afterTaxPrice = parseFloat(item.afterTaxPrice);
+          console.log("🆚 SHOPPING CART CHI TIẾT:");
+          console.log("  Shopping Cart afterTaxPrice parsed:", afterTaxPrice);
+          console.log("  Có bằng 20000 không?", afterTaxPrice === 20000);
+          console.log("  Base price:", basePrice);
+          console.log("  Tax per item (Shopping Cart):", afterTaxPrice - basePrice);
+          console.log("  Tax for", item.quantity, "items:", (afterTaxPrice - basePrice) * item.quantity);
+        }
+
+        // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
+        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(item.afterTaxPrice);
+          // Tax = afterTaxPrice - basePrice
+          const taxPerItem = afterTaxPrice - basePrice;
+          const totalItemTax = taxPerItem * item.quantity;
+          console.log("✅ Using afterTaxPrice from database:");
+          console.log("  After Tax Price:", afterTaxPrice, "₫");
+          console.log("  Tax per item:", taxPerItem, "₫");
+          console.log("  Quantity:", item.quantity);
+          console.log("  Total tax for this item:", totalItemTax, "₫");
+          console.log("  Verification: " + afterTaxPrice + " - " + basePrice + " = " + taxPerItem);
+          return sum + totalItemTax;
+        } else {
+          // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
+          const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
+          const taxPerItem = calculatedAfterTaxPrice - basePrice;
+          const totalItemTax = taxPerItem * item.quantity;
+          console.log("⚠️ Using calculated afterTaxPrice (fallback):");
+          console.log("  Calculated After Tax Price:", calculatedAfterTaxPrice, "₫");
+          console.log("  Tax per item:", taxPerItem, "₫");
+          console.log("  Quantity:", item.quantity);
+          console.log("  Total tax for this item:", totalItemTax, "₫");
+          return sum + totalItemTax;
+        }
       }
-    }
-
-    const itemTax = (itemSubtotal * itemTaxRate) / 100;
-    console.log(`Tax calculation for ${item.name}: rate=${itemTaxRate}%, subtotal=${itemSubtotal}, tax=${itemTax}`);
-
-    return sum + itemTax;
-  }, 0);
-
-  const total = subtotal + tax;
+      return sum;
+    }, 0);
+  const total = Math.round(subtotal + tax);
   const change =
     paymentMethod === "cash"
       ? Math.max(0, parseFloat(amountReceived || "0") - total)
@@ -95,24 +121,25 @@ export function ShoppingCart({
   const calculateSubtotal = () =>
     cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const calculateTax = () =>
-    Math.round(
       cart.reduce((sum, item) => {
-        // Use actual tax rate from item
-        const itemTaxRate = (() => {
-          if (item.taxRate !== undefined && item.taxRate !== null) {
-            if (typeof item.taxRate === 'string') {
-              const parsed = parseFloat(item.taxRate);
-              return isNaN(parsed) ? 0 : parsed;
-            } else if (typeof item.taxRate === 'number') {
-              return isNaN(item.taxRate) ? 0 : item.taxRate;
-            }
-          }
-          return 0; // Use 0% if no tax rate specified
-        })();
+        if (item.taxRate && parseFloat(item.taxRate) > 0) {
+          const basePrice = parseFloat(item.price);
 
-        return sum + ((parseFloat(item.price) * itemTaxRate) / 100) * item.quantity;
-      }, 0),
-    );
+          // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
+          if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+            const afterTaxPrice = parseFloat(item.afterTaxPrice);
+            // Tax = afterTaxPrice - basePrice
+            const taxPerItem = afterTaxPrice - basePrice;
+            return sum + (taxPerItem * item.quantity);
+          } else {
+            // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
+            const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
+            const taxPerItem = calculatedAfterTaxPrice - basePrice;
+            return sum + (taxPerItem * item.quantity);
+          }
+        }
+        return sum;
+      }, 0);
   const calculateTotal = () => Math.round(calculateSubtotal() + calculateTax());
 
   // WebSocket connection for broadcasting cart updates to customer display
@@ -430,24 +457,27 @@ export function ShoppingCart({
                   </h4>
                   <div className="space-y-1">
                     <p className="text-xs pos-text-secondary">
-                      {parseFloat(item.price).toLocaleString("vi-VN", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}{" "}
-                      ₫ {t("pos.each")}
+                      {Math.round(parseFloat(item.price)).toLocaleString("vi-VN")} ₫ {t("pos.each")}
                     </p>
                     {item.taxRate && parseFloat(item.taxRate) > 0 && (
                       <p className="text-xs text-orange-600">
                         Thuế:{" "}
-                        {(
-                          ((parseFloat(item.price) * parseFloat(item.taxRate)) /
-                            100) *
-                          item.quantity
-                        ).toLocaleString("vi-VN", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}{" "}
-                        ₫ ({item.taxRate}%)
+                        {(() => {
+                            const basePrice = parseFloat(item.price);
+
+                            // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
+                            if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                              const afterTaxPrice = parseFloat(item.afterTaxPrice);
+                              // Tax = afterTaxPrice - basePrice
+                              const taxPerItem = afterTaxPrice - basePrice;
+                              return Math.round(taxPerItem * item.quantity);
+                            } else {
+                              // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
+                              const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
+                              const taxPerItem = calculatedAfterTaxPrice - basePrice;
+                              return Math.round(taxPerItem * item.quantity);
+                            }
+                          })().toLocaleString("vi-VN")} ₫ ({item.taxRate}%)
                       </p>
                     )}
                   </div>
@@ -510,21 +540,13 @@ export function ShoppingCart({
                 {t("tables.subtotal")}:
               </span>
               <span className="font-medium">
-                {subtotal.toLocaleString("vi-VN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{" "}
-                ₫
+                {Math.round(subtotal).toLocaleString("vi-VN")} ₫
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="pos-text-secondary">{t("tables.tax")}:</span>
               <span className="font-medium">
-                {tax.toLocaleString("vi-VN", {
-                  minimumFractionDigits: 0,
-                  maximumFractionDigits: 0,
-                })}{" "}
-                ₫
+                {Math.round(tax).toLocaleString("vi-VN")} ₫
               </span>
             </div>
             <div className="border-t pt-2">
@@ -533,11 +555,7 @@ export function ShoppingCart({
                   {t("tables.total")}:
                 </span>
                 <span className="text-lg font-bold text-blue-600">
-                  {total.toLocaleString("vi-VN", {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0,
-                  })}{" "}
-                  ₫
+                  {Math.round(total).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
             </div>

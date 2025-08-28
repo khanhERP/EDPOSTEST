@@ -8,12 +8,25 @@ import type { Product } from "@shared/schema";
 // Import placeholders as data URLs since SVG imports are causing issues
 const placeholderFood = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmM2Y0ZjYiLz4KICA8Y2lyY2xlIGN4PSIxMDAiIGN5PSI5MCIgcj0iMzAiIGZpbGw9IiMxMGI5ODEiIG9wYWNpdHk9IjAuMiIvPgogIDxyZWN0IHg9IjcwIiB5PSI3MCIgd2lkdGg9IjYwIiBoZWlnaHQ9IjQwIiByeD0iOCIgZmlsbD0iIzEwYjk4MSIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iODUiIGN5PSI4NSIgcj0iNSIgZmlsbD0iIzEwYjk4MSIvPgogIDxjaXJjbGUgY3g9IjEwMCIgY3k9Ijg1IiByPSI1IiBmaWxsPSIjMTBiOTgxIi8+CiAgPGNpcmNsZSBjeD0iMTE1IiBjeT0iODUiIHI9IjUiIGZpbGw9IiMxMGI5ODEiLz4KICA8cmVjdCB4PSI4MCIgeT0iMTIwIiB3aWR0aD0iNDAiIGhlaWdodD0iMjAiIHJ4PSIxMCIgZmlsbD0iIzEwYjk4MSIgb3BhY2l0eT0iMC40Ii8+CiAgPHRleHQgeD0iMTAwIiB5PSIxNjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2YjcyODAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiI+7J2M7Iud7IqI7KK4PC90ZXh0Pgo8L3N2Zz4=";
 const placeholderBeverage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmM2Y0ZjYiLz4KICA8cmVjdCB4PSI4MCIgeT0iNTAiIHdpZHRoPSI0MCIgaGVpZ2h0PSI4MCIgcng9IjUiIGZpbGw9IiMzYjgyZjYiIG9wYWNpdHk9IjAuMiIvPgogIDxyZWN0IHg9IjgyIiB5PSI1NSIgd2lkdGg9IjM2IiBoZWlnaHQ9IjUwIiBmaWxsPSIjM2I4MmY2IiBvcGFjaXR5PSIwLjQiLz4KICA8Y2lyY2xlIGN4PSIxMDAiIHk9IjQwIiByPSI4IiBmaWxsPSIjM2I4MmY2IiBvcGFjaXR5PSIwLjMiLz4KICA8cmVjdCB4PSI5NiIgeT0iMzAiIHdpZHRoPSI4IiBoZWlnaHQ9IjE1IiBmaWxsPSIjM2I4MmY2IiBvcGFjaXR5PSIwLjUiLz4KICA8dGV4dCB4PSIxMDAiIHk9IjE2MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzZiNzI4MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjEyIj7smYzro4zsnbTrr7w8L3RleHQ+Cjwvc3ZnPg==";
-const placeholderSnack = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmM2Y0ZjYiLz4KICA8cmVjdCB4PSI2MCIgeT0iNzAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI1MCIgcng9IjEwIiBmaWxsPSIjZjU5ZTBiIiBvcGFjaXR5PSIwLjIiLz4KICA8cmVjdCB4PSI2NSIgeT0iNzUiIHdpZHRoPSI3MCIgaGVpZ2h0PSIxNSIgcng9IjMiIGZpbGw9IiNmNTllMGIiIG9wYWNpdHk9IjAuNCIvPgogIDxyZWN0IHg9IjY1IiB5PSI5NSIgd2lkdGg9IjcwIiBoZWlnaHQ9IjE1IiByeD0iMyIgZmlsbD0iI2Y1OWUwYiIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iNzUiIGN5PSI4MyIgcj0iMyIgZmlsbD0iI2Y1OWUwYiIvPgogIDxjaXJjbGUgY3g9IjkwIiBjeT0iODMiIHI9IjMiIGZpbGw9IiNmNTllMGIiLz4KICA8Y2lyY2xlIGN4PSIxMDUiIGN5PSI4MyIgcj0iMyIgZmlsbD0iI2Y1OWUwYiIvPgogIDxjaXJjbGUgY3g9IjEyMCIgY3k9IjgzIiByPSIzIiBmaWxsPSIjZjU5ZTBiIi8+CiAgPHRleHQgeD0iMTAwIiB5PSIxNjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2YjcyODAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiI+7Iqk64WN7J207Ja47KeAPC90ZXh0Pgo8L3N2Zz4=";
+const placeholderSnack = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIyMDAiIGZpbGw9IiNmM2Y0ZjYiLz4KICA8cmVjdCB4PSI2MCIgeT0iNzAiIHdpZHRoPSI4MCIgaGVpZ2h0PSI1MCIgcng9IjEwIiBmaWxsPSIjZjU5ZTBiIiBvcGFjaXR5PSIwLjIiLz4KICA8cmVjdCB4PSI2NSIgeT0iNzUiIHdpZHRoPSI3MCIgaGVpZ2h0PSIxNSIgcng9IjMiIGZpbGw9IiNmNTllMGIiIG9wYWNpdHk9IjAuNCIvPgogIDxyZWN0IHg9IjY1IiB5PSI5NSIgd2lkdGg9IjcwIiBoZWlnaHQ9IjE1IiByeD0iMyIgZmlsbD0iI2Y1OWUwYiIgb3BhY2l0eT0iMC4zIi8+CiAgPGNpcmNsZSBjeD0iN1giIGN5PSI4MyIgcj0iMyIgZmlsbD0iI2Y1OWUwYiIvPgogIDxjaXJjbGUgY3g9IjkwIiBjeT0iODMiIHI9IjMiIGZpbGw9IiNmNTllMGIiLz4KICA8Y2lyY2xlIGN4PSIxMDUiIGN5PSI4MyIgcj0iMyIgZmlsbD0iI2Y1OWUwYiIvPgogIDxjaXJjbGUgY3g9IjEyMCIgY3k9IjgzIiByPSIzIiBmaWxsPSIjZjU5ZTBiIi8+CiAgPHRleHQgeD0iMTAwIiB5PSIxNjAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiM2YjcyODAiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxMiI+7Iqk64WN7J207Ja47KeAPC90ZXh0Pgo8L3N2Zz4=";
 
 interface ProductGridProps {
   selectedCategory: number | "all";
   searchQuery: string;
   onAddToCart: (productId: number) => void;
+}
+
+// Define CartItem type if it's not defined elsewhere
+interface CartItem {
+  id: number;
+  name: string;
+  price: string;
+  quantity: number;
+  total: string;
+  imageUrl?: string;
+  stock: number;
+  taxRate?: string;
+  afterTaxPrice?: string;
 }
 
 export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: ProductGridProps) {
@@ -22,6 +35,12 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+  // Assume setCart and other necessary hooks/context are available if this were a real component
+  // For demonstration, we'll just use the onAddToCart prop
+  const setCart = (items: CartItem[]) => {
+    console.log("Set cart called with:", items);
+  };
 
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products", { category: selectedCategory, search: searchQuery }],
@@ -46,19 +65,19 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
         const isNotRawMaterial = product.productType !== 2;
         const isActive = product.isActive !== false;
         const isIncluded = isNotRawMaterial && isActive;
-        
+
         if (!isIncluded) {
           console.log(`❌ Product ${product.name} excluded: productType=${product.productType}, isActive=${product.isActive}`);
         } else {
           console.log(`✅ Product ${product.name} included: category=${product.categoryId}`);
         }
-        
+
         return isIncluded;
       });
 
       console.log("Filtered products for POS:", filteredProducts);
       console.log("Products after filtering:", filteredProducts.length);
-      
+
       // Group by category for debugging
       const productsByCategory = filteredProducts.reduce((acc: any, product: any) => {
         if (!acc[product.categoryId]) acc[product.categoryId] = [];
@@ -81,29 +100,34 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
       return;
     }
 
-    // Ensure product has correct tax rate from database
-    let actualTaxRate = "0";
-    if (product.taxRate !== undefined && product.taxRate !== null) {
-      if (typeof product.taxRate === 'string') {
-        actualTaxRate = product.taxRate;
-      } else if (typeof product.taxRate === 'number') {
-        actualTaxRate = product.taxRate.toString();
-      }
-    }
+    console.log("Adding product to cart:", product.name);
+    console.log("Product afterTaxPrice from database:", product.afterTaxPrice);
+    console.log("Product afterTaxPrice type:", typeof product.afterTaxPrice);
+    console.log("Product afterTaxPrice is null?", product.afterTaxPrice === null);
+    console.log("Product afterTaxPrice is empty string?", product.afterTaxPrice === "");
 
-    const productWithTax = {
-      ...product,
-      taxRate: actualTaxRate
-    };
+    // Pass productId to onAddToCart as expected by the interface
+    onAddToCart(product.id);
 
-    console.log(`Adding ${product.name} to cart with tax rate: ${actualTaxRate}%`);
-
-    onAddToCart(productWithTax);
     // Trigger toast notification for successful add to cart
     toast({
       title: t('pos.addedToCartShort'),
       description: `${product.name}${t('pos.hasBeenAddedToOrder')}`,
     });
+  };
+  
+  // Mock updateCart function to demonstrate the change
+  const updateCart = (productId: number, quantity: number) => {
+    setCart(prev => prev.map(item => 
+      item.id === productId 
+        ? { 
+            ...item, 
+            quantity, 
+            total: (parseFloat(item.price) * quantity).toFixed(2),
+            afterTaxPrice: item.afterTaxPrice // Preserve afterTaxPrice
+          }
+        : item
+    ));
   };
 
   const getPlaceholderImage = (categoryId: number, productName: string) => {

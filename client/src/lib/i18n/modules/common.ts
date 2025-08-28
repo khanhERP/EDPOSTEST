@@ -190,7 +190,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     // Payment method names
     cash: "현금",
     creditCard: "신용카드",
-    debitCard: "직불카드",
+    debitCard: "체크카드",
     transfer: "계좌이체",
     momo: "모모",
     zalopay: "잘로페이",
@@ -200,7 +200,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     grabpay: "그랩페이",
 
     // Payment method descriptions
-    visaMastercard: "Visa, Mastercard",
+    visaMastercard: "비자/마스터카드",
     atmCard: "ATM 카드",
     momoWallet: "MoMo 전자지갑",
     zalopayWallet: "ZaloPay 전자지갑",
@@ -209,6 +209,76 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     grabpayWallet: "GrabPay 전자지갑",
     paymentMethodGeneric: "결제 방법",
     paid: "결제 완료",
+
+    // Subtotal
+    subtotalLabel: "소계:",
+
+    // Usage status
+    usageStatus: "사용 상태:",
+
+    // E-invoice status
+    einvoiceStatus: "전자세금계산서 상태:",
+
+    // Combo values
+    comboValues: {
+      // Gender options
+      male: "남성",
+      female: "여성",
+      other: "기타",
+
+      // Size options
+      small: "소",
+      medium: "중",
+      large: "대",
+      extraLarge: "특대",
+
+      // Priority levels
+      low: "낮음",
+      normal: "보통",
+      high: "높음",
+      urgent: "긴급",
+
+      // Order status
+      pending: "대기 중",
+      confirmed: "확인됨",
+      preparing: "준비 중",
+      ready: "준비 완료",
+      served: "서빙됨",
+      paid: "결제 완료",
+      cancelled: "취소됨",
+      completed: "완료",
+
+      // Product types
+      food: "음식",
+      beverage: "음료",
+      snack: "간식",
+      dessert: "디저트",
+
+      // Table status
+      occupied: "사용 중",
+      reserved: "예약됨",
+      cleaning: "청소 중",
+      outOfService: "서비스 중단",
+
+      // Payment status
+      unpaid: "미결제",
+      partiallyPaid: "부분 결제",
+      fullyPaid: "완전 결제",
+      refunded: "환불됨",
+
+      // Stock levels
+      inStock: "재고 있음",
+      lowStock: "재고 부족",
+      outOfStock: "재고 없음",
+
+      // Employee roles
+      admin: "관리자",
+      manager: "매니저",
+      cashier: "계산원",
+      waiter: "웨이터",
+      chef: "요리사",
+      cleaner: "청소원",
+    },
   },
   en: {
     loading: "Loading...",
@@ -346,22 +416,92 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     grabpay: "GrabPay",
 
     // Payment method descriptions
-    visaMastercard: "Visa, Mastercard",
+    visaMastercard: "Visa/Mastercard",
     atmCard: "ATM Card",
-    momoWallet: "MoMo E-Wallet",
-    zalopayWallet: "ZaloPay E-Wallet",
-    vnpayWallet: "VNPay E-Wallet",
-    shopeepayWallet: "ShopeePay E-Wallet",
-    grabpayWallet: "GrabPay E-Wallet",
+    momoWallet: "MoMo Wallet",
+    zalopayWallet: "ZaloPay Wallet",
+    vnpayWallet: "VNPay Wallet",
+    shopeepayWallet: "ShopeePay Wallet",
+    grabpayWallet: "GrabPay Wallet",
     paymentMethodGeneric: "Payment Method",
     paid: "Paid",
+
+    // Subtotal
+    subtotalLabel: "Subtotal:",
+
+    // Usage status
+    usageStatus: "Usage Status:",
+
+    // E-invoice status
+    einvoiceStatus: "E-Invoice Status:",
+
+    // Combo values
+    comboValues: {
+      // Gender options
+      male: "Male",
+      female: "Female",
+      other: "Other",
+
+      // Size options
+      small: "Small",
+      medium: "Medium",
+      large: "Large",
+      extraLarge: "Extra Large",
+
+      // Priority levels
+      low: "Low",
+      normal: "Normal",
+      high: "High",
+      urgent: "Urgent",
+
+      // Order status
+      pending: "Pending",
+      confirmed: "Confirmed",
+      preparing: "Preparing",
+      ready: "Ready",
+      served: "Served",
+      paid: "Paid",
+      cancelled: "Cancelled",
+      completed: "Completed",
+
+      // Product types
+      food: "Food",
+      beverage: "Beverage",
+      snack: "Snack",
+      dessert: "Dessert",
+
+      // Table status
+      occupied: "Occupied",
+      reserved: "Reserved",
+      cleaning: "Cleaning",
+      outOfService: "Out of Service",
+
+      // Payment status
+      unpaid: "Unpaid",
+      partiallyPaid: "Partially Paid",
+      fullyPaid: "Fully Paid",
+      refunded: "Refunded",
+
+      // Stock levels
+      inStock: "In Stock",
+      lowStock: "Low Stock",
+      outOfStock: "Out of Stock",
+
+      // Employee roles
+      admin: "Administrator",
+      manager: "Manager",
+      cashier: "Cashier",
+      waiter: "Waiter",
+      chef: "Chef",
+      cleaner: "Cleaner",
+    },
   },
   vi: {
     loading: "Đang tải...",
     save: "Lưu",
     cancel: "Hủy",
     delete: "Xóa",
-    edit: "Sửa",
+    edit: "Chỉnh sửa",
     add: "Thêm",
     remove: "Xóa",
     confirm: "Xác nhận",
@@ -428,7 +568,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     disabled: "Đã tắt",
     available: "Có sẵn",
     unavailable: "Không có sẵn",
-    occupied: "Đang sử dụng",
+    occupied: "Đã có khách",
     reserved: "Đã đặt",
     maintenance: "Bảo trì",
     noData: "Không có dữ liệu",
@@ -463,7 +603,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     backToPOS: "Quay lại POS",
     description: "Mô tả",
 
-    // Payment method modal translations (already exist above)
+    // Payment method modal
     selectPaymentMethod: "Chọn phương thức thanh toán",
     totalAmount: "Tổng tiền",
     cashPayment: "Thanh toán tiền mặt",
@@ -492,14 +632,84 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
     grabpay: "GrabPay",
 
     // Payment method descriptions
-    visaMastercard: "Visa, Mastercard",
+    visaMastercard: "Visa/Mastercard",
     atmCard: "Thẻ ATM",
-    momoWallet: "Ví điện tử MoMo",
-    zalopayWallet: "Ví điện tử ZaloPay",
-    vnpayWallet: "Ví điện tử VNPay",
-    shopeepayWallet: "Ví điện tử ShopeePay",
-    grabpayWallet: "Ví điện tử GrabPay",
+    momoWallet: "Ví MoMo",
+    zalopayWallet: "ZaloPay Wallet",
+    vnpayWallet: "VNPay Wallet",
+    shopeepayWallet: "ShopeePay Wallet",
+    grabpayWallet: "GrabPay Wallet",
     paymentMethodGeneric: "Phương thức thanh toán",
     paid: "Đã thanh toán",
+
+    // Subtotal
+    subtotalLabel: "Tổng phụ:",
+
+    // Usage status
+    usageStatus: "Trạng thái sử dụng:",
+
+    // E-invoice status
+    einvoiceStatus: "Trạng thái hóa đơn điện tử:",
+
+    // Combo values
+    comboValues: {
+      // Gender options
+      male: "Nam",
+      female: "Nữ",
+      other: "Khác",
+
+      // Size options
+      small: "Nhỏ",
+      medium: "Vừa",
+      large: "Lớn",
+      extraLarge: "Cực lớn",
+
+      // Priority levels
+      low: "Thấp",
+      normal: "Bình thường",
+      high: "Cao",
+      urgent: "Khẩn cấp",
+
+      // Order status
+      pending: "Đang chờ",
+      confirmed: "Đã xác nhận",
+      preparing: "Đang chuẩn bị",
+      ready: "Sẵn sàng",
+      served: "Đã phục vụ",
+      paid: "Đã thanh toán",
+      cancelled: "Đã hủy",
+      completed: "Hoàn thành",
+
+      // Product types
+      food: "Thức ăn",
+      beverage: "Đồ uống",
+      snack: "Đồ ăn nhẹ",
+      dessert: "Tráng miệng",
+
+      // Table status
+      occupied: "Đã có khách",
+      reserved: "Đã đặt",
+      cleaning: "Đang dọn dẹp",
+      outOfService: "Ngừng phục vụ",
+
+      // Payment status
+      unpaid: "Chưa thanh toán",
+      partiallyPaid: "Thanh toán một phần",
+      fullyPaid: "Đã thanh toán đủ",
+      refunded: "Đã hoàn tiền",
+
+      // Stock levels
+      inStock: "Còn hàng",
+      lowStock: "Sắp hết hàng",
+      outOfStock: "Hết hàng",
+
+      // Employee roles
+      admin: "Quản trị viên",
+      manager: "Quản lý",
+      cashier: "Thu ngân",
+      waiter: "Phục vụ",
+      chef: "Đầu bếp",
+      cleaner: "Nhân viên vệ sinh",
+    },
   },
 };

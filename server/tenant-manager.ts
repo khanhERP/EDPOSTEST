@@ -27,9 +27,44 @@ class TenantManager {
         isActive: true,
       },
       {
-        subdomain: "hazkitchen",
+        subdomain: "freshway",
+        databaseUrl:
+          process.env.EXTERNAL_DB_URL_Freshway || process.env.DATABASE_URL!,
+        storeName: "Demo Store - Cửa hàng demo",
+        isActive: true,
+      },
+      {
+        subdomain: "0110109031",
         databaseUrl: process.env.EXTERNAL_DB_URL || process.env.DATABASE_URL!,
+        storeName: "Demo Store - Cửa hàng demo",
+        isActive: true,
+      },
+      {
+        subdomain: "hazkitchen",
+        databaseUrl:
+          process.env.EXTERNAL_DB_URL_hazkitchen || process.env.DATABASE_URL!,
         storeName: "Store 1 - Cửa hàng số 1",
+        isActive: true,
+      },
+      {
+        subdomain: "store2",
+        databaseUrl:
+          process.env.STORE2_DATABASE_URL || process.env.DATABASE_URL!,
+        storeName: "Store 2 - Cửa hàng số 2",
+        isActive: true,
+      },
+      {
+        subdomain: "restaurant1",
+        databaseUrl:
+          process.env.RESTAURANT1_DATABASE_URL || process.env.DATABASE_URL!,
+        storeName: "Restaurant 1 - Nhà hàng số 1",
+        isActive: true,
+      },
+      {
+        subdomain: "vitaly",
+        databaseUrl:
+          process.env.VITALY_DATABASE_URL || process.env.DATABASE_URL!,
+        storeName: "Vitaly - Nhà hàng Vitaly",
         isActive: true,
       },
       // Add more tenants as needed
