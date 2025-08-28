@@ -563,7 +563,7 @@ export default function SalesOrders() {
       customerPhone: invoice.customerPhone || '',
       customerAddress: invoice.customerAddress || '',
       customerTaxCode: invoice.customerTaxCode || '',
-      symbol: invoice.symbol || '',
+      symbol: invoice.symbol || invoice.templateNumber || '',
       einvoiceStatus: invoice.einvoiceStatus || 0
     })) : []),
     ...(Array.isArray(orders) ? orders.map((order: Order) => ({
@@ -578,7 +578,7 @@ export default function SalesOrders() {
       customerPhone: '',
       customerAddress: '',
       customerTaxCode: '',
-      symbol: '',
+      symbol: order.symbol || order.templateNumber || '',
       invoiceNumber: order.orderNumber || `ORD-${String(order.id).padStart(8, '0')}`,
       tradeNumber: order.orderNumber || '',
       invoiceDate: order.orderedAt,
@@ -1104,6 +1104,9 @@ export default function SalesOrders() {
                             const invoiceNumber = item.invoiceNumber || String(item.id).padStart(8, '0');
                             const notes = item.notes || '';
 
+                            // Lấy symbol từ dữ liệu gốc của item
+                            const itemSymbol = item.symbol || item.templateNumber || '';
+                            
                             return (
                               <>
                                 <tr
@@ -1183,7 +1186,7 @@ export default function SalesOrders() {
                                   </td>
                                   <td className="px-3 py-3">
                                     <div className="text-sm">
-                                      {symbol || '-'}
+                                      {itemSymbol || '-'}
                                     </div>
                                   </td>
                                   <td className="px-3 py-3">
