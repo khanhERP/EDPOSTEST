@@ -676,8 +676,8 @@ export function SalesReport() {
                       <TableRow>
                         <TableHead className="sticky top-0 bg-white">{t("common.date")}</TableHead>
                         <TableHead className="sticky top-0 bg-white">{t("reports.revenue")}</TableHead>
-                        <TableHead className="sticky top-0 bg-white">{t("reports.orders")}</TableHead>
-                        <TableHead className="sticky top-0 bg-white">{t("reports.customers")}</TableHead>
+                        <TableHead className="sticky top-0 bg-white">Tổng đơn hàng</TableHead>
+                        <TableHead className="sticky top-0 bg-white">Tổng khách hàng</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -689,10 +689,10 @@ export function SalesReport() {
                               {formatCurrency(day.revenue)}
                             </TableCell>
                             <TableCell>
-                              {day.orders} {t("common.items")}
+                              {day.orders}
                             </TableCell>
                             <TableCell>
-                              {day.customers} {t("common.items")}
+                              {day.customers}
                             </TableCell>
                           </TableRow>
                         ))
