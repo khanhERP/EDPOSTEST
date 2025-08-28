@@ -295,7 +295,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
           </div>
         ) : (
           <div className={viewMode === 'grid' ? 
-            "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" : 
+            "grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4" : 
             "flex flex-col space-y-2"
           }>
             {getSortedProducts().map((product) => {
@@ -307,7 +307,7 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                 <div
                   key={product.id}
                   className={viewMode === 'grid' ? 
-                    "bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 overflow-hidden cursor-pointer relative border border-gray-100" :
+                    "bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-200 overflow-hidden cursor-pointer relative border border-gray-100 min-h-[200px] flex flex-col" :
                     "bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer relative border border-gray-100 flex items-center p-4"
                   }
                   onClick={() => handleAddToCart(product)}
@@ -345,15 +345,21 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                         </div>
                       )}
 
-                      <div className="p-3">
-                        <h3 className="font-medium pos-text-primary mb-1 line-clamp-2">{product.name}</h3>
-                        <p className="text-sm pos-text-secondary mb-2">SKU: {product.sku}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-green-600">{parseFloat(product.price).toLocaleString()} ₫</span>
+                      <div className="p-3 min-h-[100px] flex flex-col justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-medium pos-text-primary mb-1 line-clamp-2 text-sm leading-tight">{product.name}</h3>
+                          <p className="text-xs pos-text-secondary mb-2 truncate">SKU: {product.sku}</p>
+                        </div>
+                        <div className="flex flex-col space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm sm:text-lg font-bold text-green-600 truncate">{parseFloat(product.price).toLocaleString()} ₫</span>
+                          </div>
                           {product.trackInventory !== false && (
-                            <span className={`text-xs font-medium ${stockStatus.color}`}>
-                              {stockStatus.text}
-                            </span>
+                            <div className="text-right">
+                              <span className={`text-xs font-medium ${stockStatus.color} block`}>
+                                {stockStatus.text}
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -377,13 +383,13 @@ export function ProductGrid({ selectedCategory, searchQuery, onAddToCart }: Prod
                           </div>
                         )}
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-medium pos-text-primary mb-1">{product.name}</h3>
-                        <p className="text-sm pos-text-secondary mb-1">SKU: {product.sku}</p>
-                        <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-green-600">{parseFloat(product.price).toLocaleString()} ₫</span>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium pos-text-primary mb-1 truncate text-sm sm:text-base">{product.name}</h3>
+                        <p className="text-xs sm:text-sm pos-text-secondary mb-1 truncate">SKU: {product.sku}</p>
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-1 sm:space-y-0">
+                          <span className="text-sm sm:text-lg font-bold text-green-600">{parseFloat(product.price).toLocaleString()} ₫</span>
                           {product.trackInventory !== false && (
-                            <span className={`text-xs font-medium ${stockStatus.color}`}>
+                            <span className={`text-xs font-medium ${stockStatus.color} text-left sm:text-right`}>
                               {stockStatus.text}
                             </span>
                           )}
