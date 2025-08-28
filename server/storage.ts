@@ -439,6 +439,8 @@ export class DatabaseStorage implements IStorage {
     const database = tenantDb || db;
     
     try {
+      console.log(`🔍 Starting stock update for product ID: ${id}, quantity change: ${quantity}`);
+      
       const [product] = await database
         .select()
         .from(products)
@@ -446,22 +448,32 @@ export class DatabaseStorage implements IStorage {
         
       if (!product) {
         console.error(`❌ Product not found for stock update: ID ${id}`);
-        return undefined;
+        throw new Error(`Product with ID ${id} not found`);
       }
+
+      console.log(`📋 Product found: ${product.name}, current stock: ${product.stock}, tracks inventory: ${product.trackInventory}`);
 
       // Check if product tracks inventory before updating
       if (!product.trackInventory) {
-        console.log(`📦 Product ${product.name} does not track inventory - skipping stock update`);
+        console.log(`⏭️ Product ${product.name} does not track inventory - skipping stock update`);
         return product; // Return the original product without updating stock
       }
 
       const oldStock = product.stock || 0;
       const newStock = Math.max(0, oldStock + quantity);
 
-      console.log(`📦 Stock update: ${product.name} (ID: ${id})`);
+      // Log the stock calculation
+      console.log(`📦 Stock calculation for ${product.name} (ID: ${id}):`);
       console.log(`   - Old stock: ${oldStock}`);
       console.log(`   - Quantity change: ${quantity}`);
-      console.log(`   - New stock: ${newStock}`);
+      console.log(`   - Calculated new stock: ${newStock}`);
+
+      // Check if we have sufficient stock for negative quantities
+      if (quantity < 0 && oldStock < Math.abs(quantity)) {
+        const errorMsg = `Insufficient stock for ${product.name}. Available: ${oldStock}, Required: ${Math.abs(quantity)}`;
+        console.error(`❌ ${errorMsg}`);
+        throw new Error(errorMsg);
+      }
 
       const [updatedProduct] = await database
         .update(products)
@@ -474,24 +486,27 @@ export class DatabaseStorage implements IStorage {
         
         // Create inventory transaction record
         try {
+          const transactionType = quantity > 0 ? 'add' : 'subtract';
           await database.execute(sql`
             INSERT INTO inventory_transactions 
             (product_id, type, quantity, previous_stock, new_stock, notes, created_at)
-            VALUES (${id}, 'subtract', ${Math.abs(quantity)}, ${oldStock}, ${newStock}, 
-                   'E-Invoice transaction deduction', ${new Date().toISOString()})
+            VALUES (${id}, ${transactionType}, ${Math.abs(quantity)}, ${oldStock}, ${newStock}, 
+                   'E-Invoice stock deduction', ${new Date().toISOString()})
           `);
-          console.log(`📝 Inventory transaction recorded for ${product.name}`);
+          console.log(`📝 Inventory transaction recorded for ${product.name} (type: ${transactionType})`);
         } catch (invError) {
           console.error(`❌ Failed to record inventory transaction:`, invError);
+          // Don't throw here as the stock update was successful
         }
+        
+        return updatedProduct;
       } else {
-        console.error(`❌ Failed to update stock for ${product.name}`);
+        console.error(`❌ Failed to update stock for ${product.name} - no updated product returned`);
+        throw new Error(`Failed to update stock for product: ${product.name}`);
       }
-
-      return updatedProduct || undefined;
     } catch (error) {
       console.error(`❌ Error updating stock for product ID ${id}:`, error);
-      return undefined;
+      throw error; // Re-throw the error so the caller can handle it
     }
   }
 
@@ -503,46 +518,102 @@ export class DatabaseStorage implements IStorage {
     const database = tenantDb || db;
     console.log(`🔄 Creating transaction: ${insertTransaction.transactionId}`);
     console.log(`📦 Processing ${items.length} items for inventory deduction`);
+    console.log(`📋 Transaction details:`, JSON.stringify(insertTransaction, null, 2));
 
-    const [transaction] = await database
-      .insert(transactions)
-      .values({
-        ...insertTransaction,
-        amountReceived: insertTransaction.amountReceived || null,
-        change: insertTransaction.change || null,
-      })
-      .returning();
-
-    const transactionItemsWithIds: TransactionItem[] = [];
-    for (const item of items) {
-      console.log(`📝 Processing item: ${item.productName} (ID: ${item.productId}) - Qty: ${item.quantity}`);
-      
-      const [transactionItem] = await database
-        .insert(transactionItems)
+    try {
+      // Create the main transaction record
+      const [transaction] = await database
+        .insert(transactions)
         .values({
-          ...item,
-          transactionId: transaction.id,
+          ...insertTransaction,
+          amountReceived: insertTransaction.amountReceived || null,
+          change: insertTransaction.change || null,
         })
         .returning();
 
-      // Update product stock - this is the key part for inventory deduction
-      console.log(`🔢 Updating stock for product ID ${item.productId}: -${item.quantity}`);
-      const updatedProduct = await this.updateProductStock(item.productId, -item.quantity, tenantDb);
-      
-      if (updatedProduct) {
-        console.log(`✅ Stock updated for ${item.productName}: New stock = ${updatedProduct.stock}`);
-      } else {
-        console.error(`❌ Failed to update stock for ${item.productName} (ID: ${item.productId})`);
-      }
-      
-      transactionItemsWithIds.push(transactionItem);
-    }
+      console.log(`✅ Transaction record created with ID: ${transaction.id}`);
 
-    console.log(`✅ Transaction created successfully: ${transaction.transactionId}`);
-    return {
-      ...transaction,
-      items: transactionItemsWithIds,
-    };
+      const transactionItemsWithIds: TransactionItem[] = [];
+      const stockUpdateResults: Array<{productName: string, success: boolean, error?: string}> = [];
+
+      // Process each item
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        console.log(`📝 Processing item ${i + 1}/${items.length}: ${item.productName} (ID: ${item.productId}) - Qty: ${item.quantity}`);
+        
+        try {
+          // Create transaction item record
+          const [transactionItem] = await database
+            .insert(transactionItems)
+            .values({
+              ...item,
+              transactionId: transaction.id,
+            })
+            .returning();
+
+          console.log(`✅ Transaction item created with ID: ${transactionItem.id}`);
+
+          // Update product stock - this is the key part for inventory deduction
+          console.log(`🔢 Attempting to update stock for product ID ${item.productId}: -${item.quantity}`);
+          
+          try {
+            const updatedProduct = await this.updateProductStock(item.productId, -item.quantity, tenantDb);
+            
+            if (updatedProduct) {
+              console.log(`✅ Stock successfully updated for ${item.productName}: New stock = ${updatedProduct.stock}`);
+              stockUpdateResults.push({
+                productName: item.productName,
+                success: true
+              });
+            } else {
+              const errorMsg = `Failed to update stock for ${item.productName} - no product returned`;
+              console.error(`❌ ${errorMsg}`);
+              stockUpdateResults.push({
+                productName: item.productName,
+                success: false,
+                error: errorMsg
+              });
+            }
+          } catch (stockError) {
+            const errorMsg = stockError instanceof Error ? stockError.message : String(stockError);
+            console.error(`❌ Stock update error for ${item.productName}:`, errorMsg);
+            stockUpdateResults.push({
+              productName: item.productName,
+              success: false,
+              error: errorMsg
+            });
+          }
+          
+          transactionItemsWithIds.push(transactionItem);
+        } catch (itemError) {
+          console.error(`❌ Error processing transaction item ${item.productName}:`, itemError);
+          throw new Error(`Failed to process item ${item.productName}: ${itemError instanceof Error ? itemError.message : String(itemError)}`);
+        }
+      }
+
+      // Log stock update summary
+      const successfulUpdates = stockUpdateResults.filter(r => r.success);
+      const failedUpdates = stockUpdateResults.filter(r => !r.success);
+      
+      console.log(`📊 Stock update summary:`);
+      console.log(`   - Successful: ${successfulUpdates.length}/${items.length}`);
+      console.log(`   - Failed: ${failedUpdates.length}/${items.length}`);
+      
+      if (failedUpdates.length > 0) {
+        console.error(`❌ Failed stock updates:`, failedUpdates);
+        // Log but don't fail the transaction - the transaction was created successfully
+      }
+
+      console.log(`✅ Transaction created successfully: ${transaction.transactionId} with ${transactionItemsWithIds.length} items`);
+      
+      return {
+        ...transaction,
+        items: transactionItemsWithIds,
+      };
+    } catch (error) {
+      console.error(`❌ Error creating transaction ${insertTransaction.transactionId}:`, error);
+      throw new Error(`Failed to create transaction: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   async getTransaction(id: number): Promise<Receipt | undefined> {
