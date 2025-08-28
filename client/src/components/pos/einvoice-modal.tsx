@@ -180,6 +180,11 @@ export function EInvoiceModal({
     enabled: isOpen,
   });
 
+  // Fetch products for SKU lookup
+  const { data: products } = useQuery({
+    queryKey: ["/api/products"],
+  });
+
   // Filter templates to only show ones that are in use (useCK: true)
   const invoiceTemplates = allInvoiceTemplates.filter(
     (template) => template.useCK === true,
@@ -534,9 +539,9 @@ export function EInvoiceModal({
             const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
             const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
             const itemTotal = itemPrice * itemQuantity;
-            
+
             console.log(`📦 Preparing transaction item: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Total: ${itemTotal}`);
-            
+
             return {
               productId: item.id,
               quantity: itemQuantity,
@@ -592,11 +597,11 @@ export function EInvoiceModal({
         }
       } catch (transactionError) {
         console.error("❌ Error creating transaction for inventory:", transactionError);
-        
-        const errorMessage = transactionError instanceof Error 
-          ? transactionError.message 
+
+        const errorMessage = transactionError instanceof Error
+          ? transactionError.message
           : "Có lỗi không xác định khi trừ tồn kho";
-          
+
         toast({
           title: "Lỗi hệ thống - Trừ tồn kho",
           description: errorMessage,
@@ -814,72 +819,37 @@ export function EInvoiceModal({
       let cartSubtotal = 0;
       let cartTaxAmount = 0;
 
-      // Convert cart items to invoice products with real data from shopping cart
-      const invoiceProducts = cartItems.map((item, index) => {
-        console.log(
-          `📦 Processing cart item ${index + 1} for e-invoice:`,
-          item,
-        );
+      // Tìm sản phẩm theo SKU thay vì ID
+      const findProductBySku = (sku: string) => {
+        return products?.find((p: any) => p.sku === sku);
+      };
 
-        // Ensure proper data types with robust parsing
-        const itemPrice = (() => {
-          if (typeof item.price === "string") {
-            const parsed = parseFloat(item.price);
-            return isNaN(parsed) ? 0 : parsed;
-          }
-          return typeof item.price === "number" ? item.price : 0;
-        })();
+      // Tạo invoice items từ cartItems với tìm kiếm theo SKU
+      const invoiceItems = cartItems.map((item: any) => {
+        console.log(`💰 Item calculation: ${item.name} - Price: ${item.price}, Qty: ${item.quantity}, SKU: ${item.sku}`);
 
-        const itemQuantity = (() => {
-          if (typeof item.quantity === "string") {
-            const parsed = parseInt(item.quantity);
-            return isNaN(parsed) ? 1 : Math.max(1, parsed);
-          }
-          return typeof item.quantity === "number"
-            ? Math.max(1, item.quantity)
-            : 1;
-        })();
+        // Tìm sản phẩm theo SKU
+        const product = findProductBySku(item.sku);
+        if (!product) {
+          console.error(`❌ Product not found with SKU: ${item.sku}`);
+        }
 
-        const itemTaxRate = (() => {
-          if (typeof item.taxRate === "string") {
-            const parsed = parseFloat(item.taxRate);
-            return isNaN(parsed) ? 10 : parsed;
-          }
-          return typeof item.taxRate === "number" ? item.taxRate : 10;
-        })();
+        const itemSubtotal = item.price * item.quantity;
+        const taxAmount = (itemSubtotal * (item.taxRate || 0)) / 100;
+        const itemTotal = itemSubtotal + taxAmount;
 
-        // Calculate amounts
-        const itemSubtotal = itemPrice * itemQuantity;
-        const itemTax = (itemSubtotal * itemTaxRate) / 100;
-        const itemTotal = itemSubtotal + itemTax;
+        console.log(`💰 Tax calculation: ${item.name} - Tax rate: ${item.taxRate || 0}%, Tax: ${taxAmount}`);
 
         cartSubtotal += itemSubtotal;
-        cartTaxAmount += itemTax;
-
-        console.log(`💰 Item ${index + 1} calculations:`, {
-          name: item.name,
-          price: itemPrice,
-          quantity: itemQuantity,
-          taxRate: itemTaxRate,
-          subtotal: itemSubtotal,
-          tax: itemTax,
-          total: itemTotal,
-        });
+        cartTaxAmount += taxAmount;
 
         return {
-          itmCd:
-            item.sku || `SP${String(item.id || index + 1).padStart(3, "0")}`, // Sử dụng SKU thực tế từ cart
-          itmName: item.name, // Sử dụng tên sản phẩm thực tế từ cart
-          itmKnd: 1, // Loại sản phẩm (1 = hàng hóa)
-          unitNm: "Cái", // Đơn vị tính
-          qty: itemQuantity, // Số lượng thực tế từ cart
-          unprc: itemPrice, // Đơn giá thực tế từ cart
-          amt: Math.round(itemSubtotal), // Thành tiền chưa thuế
-          discRate: 0, // Tỷ lệ chiết khấu
-          discAmt: 0, // Tiền chiết khấu
-          vatRt: itemTaxRate.toString(), // Thuế suất thực tế từ cart
-          vatAmt: Math.round(itemTax), // Tiền thuế tính từ dữ liệu thực tế
-          totalAmt: Math.round(itemTotal), // Tổng tiền có thuế tính từ dữ liệu thực tế
+          productId: product?.id || item.id, // Sử dụng product ID từ database hoặc fallback
+          productName: item.name,
+          quantity: item.quantity,
+          unitPrice: item.price.toFixed(2),
+          total: itemTotal.toFixed(2),
+          taxRate: (item.taxRate || 0).toFixed(2)
         };
       });
 
@@ -889,7 +859,7 @@ export function EInvoiceModal({
         subtotal: cartSubtotal,
         tax: cartTaxAmount,
         total: cartTotal,
-        itemsCount: invoiceProducts.length,
+        itemsCount: invoiceItems.length,
       });
 
       // Get selected template data for API mapping
@@ -944,7 +914,7 @@ export function EInvoiceModal({
           email: formData.email || "",
           emailCC: "",
         },
-        products: invoiceProducts,
+        products: invoiceItems,
       };
 
       console.log(
@@ -988,12 +958,12 @@ export function EInvoiceModal({
               const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
               const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
               const itemTotal = itemPrice * itemQuantity;
-              
+
               console.log(`📦 Preparing published transaction item: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Total: ${itemTotal}`);
-              
+
               return {
                 productId: item.id,
-                quantity: itemQuantity,
+                quantity: item.quantity,
                 price: itemPrice.toFixed(2),
                 total: itemTotal.toFixed(2),
                 productName: item.name
@@ -1002,7 +972,7 @@ export function EInvoiceModal({
           };
 
           console.log("🔄 Creating transaction to deduct inventory for published invoice:", JSON.stringify(transactionData, null, 2));
-          
+
           const transactionResponse = await fetch("/api/transactions", {
             method: "POST",
             headers: {
@@ -1014,7 +984,7 @@ export function EInvoiceModal({
           if (transactionResponse.ok) {
             const transactionResult = await transactionResponse.json();
             console.log("✅ Transaction created successfully for published invoice:", transactionResult);
-            
+
             toast({
               title: "Thành công",
               description: `Đã trừ tồn kho cho ${cartItems.length} sản phẩm khi phát hành hóa đơn`,
@@ -1022,7 +992,7 @@ export function EInvoiceModal({
           } else {
             const transactionError = await transactionResponse.text();
             console.error("❌ Failed to create transaction for published invoice:", transactionError);
-            
+
             toast({
               title: "Cảnh báo",
               description: "Hóa đơn đã phát hành nhưng không thể trừ tồn kho. Vui lòng kiểm tra lại.",
@@ -1031,7 +1001,7 @@ export function EInvoiceModal({
           }
         } catch (transactionError) {
           console.error("❌ Error creating transaction for published invoice:", transactionError);
-          
+
           toast({
             title: "Cảnh báo",
             description: "Hóa đơn đã phát hành nhưng có lỗi khi trừ tồn kho.",
