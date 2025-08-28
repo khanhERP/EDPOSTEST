@@ -362,6 +362,16 @@ export async function initializeSampleData() {
     // Note: Sample data insertion disabled for external database
     console.log("ℹ️ Sample data insertion skipped - using external database");
 
+    // Add notes column to transactions table if it doesn't exist
+    try {
+      await db.execute(sql`
+        ALTER TABLE transactions ADD COLUMN IF NOT EXISTS notes TEXT
+      `);
+      console.log("Migration for notes column in transactions table completed successfully.");
+    } catch (migrationError) {
+      console.log("Notes column migration already applied or error:", migrationError);
+    }
+
     // Initialize inventory_transactions table if it doesn't exist
     try {
       await db.execute(sql`

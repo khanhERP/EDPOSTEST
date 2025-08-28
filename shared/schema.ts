@@ -211,6 +211,7 @@ export const insertTransactionSchema = createInsertSchema(transactions).omit({
 }).extend({
   invoiceId: z.number().optional(),
   invoiceNumber: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 export const insertTransactionItemSchema = createInsertSchema(
