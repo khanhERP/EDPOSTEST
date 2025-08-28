@@ -544,7 +544,7 @@ export function EInvoiceModal({
 
             return {
               productId: item.id,
-              quantity: itemQuantity,
+              quantity: item.quantity,
               price: itemPrice.toFixed(2),
               total: itemTotal.toFixed(2),
               productName: item.name
@@ -676,9 +676,11 @@ export function EInvoiceModal({
         showReceiptModal: true, // Show receipt modal directly
         publishLater: true, // Flag to indicate this is for later publishing
         savedInvoice: invoiceResult.invoice, // Pass saved invoice data
+        receipt: receiptData, // Include receipt data for final modal
       };
 
       console.log("Calling onConfirm with publishLater data - showing receipt modal");
+      console.log("Receipt data included:", receiptData);
 
       // Close e-invoice modal and return data
       onClose();
@@ -1063,7 +1065,7 @@ export function EInvoiceModal({
           };
 
           console.log(
-            "💾 Saving published invoice to database:",
+            "Saving published invoice to database:",
             invoicePayload,
           );
 
@@ -1121,7 +1123,7 @@ export function EInvoiceModal({
             salesChannel: "pos",
           };
 
-          console.log("💾 Saving published order to database:", orderData);
+          console.log("Saving published order to database:", orderData);
 
           const saveResponse = await fetch("/api/orders", {
             method: "POST",
@@ -1217,71 +1219,23 @@ export function EInvoiceModal({
 
         console.log("✅ Prepared comprehensive invoice result:", invoiceResultForConfirm);
 
-        // --- CHANGE START ---
-        // Always show receipt after processing
-        const receiptDataToConfirm = {
-          transactionId: publishResult.data?.invoiceNo || `TXN-${Date.now()}`,
-          items: cartItems.map((item) => {
-            const itemPrice =
-              typeof item.price === "string"
-                ? parseFloat(item.price)
-                : item.price;
-            const itemQuantity =
-              typeof item.quantity === "string"
-                ? parseInt(item.quantity)
-                : item.quantity;
-            const itemTaxRate =
-              typeof item.taxRate === "string"
-                ? parseFloat(item.taxRate || "10")
-                : item.taxRate || 10;
-            const itemSubtotal = itemPrice * itemQuantity;
-            const itemTax = (itemSubtotal * itemTaxRate) / 100;
-
-            return {
-              id: item.id,
-              productId: item.id,
-              productName: item.name,
-              price: itemPrice.toFixed(2),
-              quantity: itemQuantity,
-              total: (itemSubtotal + itemTax).toFixed(2),
-              sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-              taxRate: itemTaxRate,
-            };
-          }),
-          subtotal: cartSubtotal.toFixed(2),
-          tax: cartTaxAmount.toFixed(2),
-          total: cartTotal.toFixed(2),
-          paymentMethod: "einvoice",
+        // Prepare data for receipt modal with proper receipt data
+        const completeInvoiceData = {
+          ...invoiceDataForConfirm,
+          paymentMethod: selectedPaymentMethod, // Use original payment method
           originalPaymentMethod: selectedPaymentMethod,
-          amountReceived: cartTotal.toFixed(2),
-          change: "0.00",
-          cashierName: "System User",
-          createdAt: new Date().toISOString(),
-          invoiceNumber: publishResult.data?.invoiceNo || null,
-          customerName: formData.customerName,
-          customerTaxCode: formData.taxCode,
+          showReceiptModal: true, // Show receipt modal directly
+          publishLater: true, // Flag to indicate this is for later publishing
+          savedInvoice: invoiceResult.invoice, // Pass saved invoice data
+          receipt: receiptData, // Include receipt data for final modal
         };
 
-        // Return comprehensive result for parent component to handle updates
-        const publishResultToConfirm = {
-          success: true,
-          invoiceNumber: publishResult.data?.invoiceNo || null,
-          symbol: selectedTemplate.symbol || null,
-          templateNumber: selectedTemplate.templateNumber || null,
-          einvoiceStatus: 1, // Đã phát hành
-          invoiceStatus: 1, // Hoàn thành
-          status: 'published',
-          receipt: receiptDataToConfirm,
-          publishedImmediately: true,
-          showReceiptModal: true, // Show receipt modal directly instead of invoice management
-        };
+        console.log("Calling onConfirm with publishLater data - showing receipt modal");
+        console.log("Receipt data included:", receiptData);
 
-        console.log(
-          "📧 Step 4: E-Invoice completed, going directly to final receipt",
-        );
-        onConfirm(publishResultToConfirm);
+        // Close e-invoice modal and return data
         onClose();
-        // --- CHANGE END ---
+        onConfirm(completeInvoiceData);
       } catch (error) {
         console.error("Error publishing invoice:", error);
         alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error}`);
