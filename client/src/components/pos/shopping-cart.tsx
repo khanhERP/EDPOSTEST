@@ -366,7 +366,11 @@ export function ShoppingCart({
     console.log('🧹 Shopping cart: Auto clearing cart after E-Invoice completion');
     onClearCart();
 
-    if (eInvoiceData.publishLater && eInvoiceData.redirectToInvoiceManagement) {
+    if (eInvoiceData.redirectToInvoiceManagement) {
+      // For any payment that requires invoice management - redirect to invoice management
+      console.log('📄 Shopping cart: Step 5: Redirecting to invoice management after payment');
+      setShowInvoiceManagementModal(true);
+    } else if (eInvoiceData.publishLater && eInvoiceData.redirectToInvoiceManagement) {
       // For "Phát hành sau" - redirect to invoice management
       console.log('📄 Shopping cart: Step 5: Redirecting to invoice management for later publishing');
       setShowInvoiceManagementModal(true);

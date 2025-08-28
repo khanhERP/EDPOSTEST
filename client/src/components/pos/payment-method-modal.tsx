@@ -452,8 +452,10 @@ export function PaymentMethodModal({
         setQrLoading(false);
       }
     } else {
-      // Close payment method modal and let parent handle the flow
-      onSelectMethod(method);
+      // Sau khi chọn phương thức thanh toán khác, chuyển đến màn E-Invoice để tạo hóa đơn
+      console.log("💳 Payment method selected:", method, "showing E-Invoice modal for invoice creation");
+      setSelectedPaymentMethod(method);
+      setShowEInvoice(true);
     }
   };
 
@@ -461,8 +463,10 @@ export function PaymentMethodModal({
     setShowQRCode(false);
     setQrCodeUrl("");
 
-    // Return to parent with QR payment method
-    onSelectMethod("qrCode");
+    // Sau khi thanh toán QR thành công, chuyển đến màn E-Invoice để tạo hóa đơn
+    console.log("💳 QR payment completed, showing E-Invoice modal for invoice creation");
+    setSelectedPaymentMethod("qrCode");
+    setShowEInvoice(true);
   };
 
   const handleBack = () => {
@@ -536,11 +540,10 @@ export function PaymentMethodModal({
     setAmountReceived("");
     setCashAmountInput("");
 
-    // Trả về kết quả cho component cha
-    onSelectMethod("cash", {
-      amountReceived: receivedAmount,
-      change: finalChange,
-    });
+    // Sau khi thanh toán thành công, chuyển đến màn E-Invoice để tạo hóa đơn
+    console.log("💳 Cash payment completed, showing E-Invoice modal for invoice creation");
+    setSelectedPaymentMethod("cash");
+    setShowEInvoice(true);
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
@@ -552,10 +555,11 @@ export function PaymentMethodModal({
     // Close Payment modal
     onClose();
 
-    // Pass e-invoice data back to parent component with original payment method
+    // Pass e-invoice data back to parent component with original payment method and redirect flag
     onSelectMethod("einvoice", {
       ...eInvoiceData,
       originalPaymentMethod: selectedPaymentMethod,
+      redirectToInvoiceManagement: true, // Flag to redirect to invoice management
     });
   };
 

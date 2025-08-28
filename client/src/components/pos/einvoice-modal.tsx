@@ -576,7 +576,7 @@ export function EInvoiceModal({
         createdAt: new Date().toISOString(),
       };
 
-      // Prepare the invoice data to be returned - redirect to invoice management
+      // Prepare data for invoice management redirect
       const invoiceData = {
         ...formData,
         cartItems: cartItems,
@@ -599,11 +599,9 @@ export function EInvoiceModal({
         ...invoiceData,
         paymentMethod: selectedPaymentMethod, // Use original payment method
         originalPaymentMethod: selectedPaymentMethod,
-        publishLater: true,
-        customerName: formData.customerName,
-        taxCode: formData.taxCode,
-        redirectToInvoiceManagement: true, // Flag để parent component biết cần chuyển đến invoice management
-        savedInvoice: savedInvoice.invoice, // Truyền thông tin hóa đơn đã lưu
+        redirectToInvoiceManagement: true, // Always redirect to invoice management after payment
+        publishLater: true, // Flag to indicate this is for later publishing
+        savedInvoice: savedInvoice.invoice, // Pass saved invoice data
       };
 
       console.log("✅ Calling onConfirm with publishLater data - redirecting to invoice management");
@@ -1165,7 +1163,8 @@ export function EInvoiceModal({
           invoiceStatus: 1, // Hoàn thành
           status: 'published',
           receipt: receiptDataToConfirm,
-          publishedImmediately: true
+          publishedImmediately: true,
+          redirectToInvoiceManagement: true, // Always redirect to invoice management after payment
         };
 
         console.log(
