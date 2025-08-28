@@ -372,6 +372,19 @@ export async function initializeSampleData() {
       console.log("Notes column migration already applied or error:", migrationError);
     }
 
+    // Add invoice_id and invoice_number columns to transactions table if they don't exist
+    try {
+      await db.execute(sql`
+        ALTER TABLE transactions ADD COLUMN IF NOT EXISTS invoice_id INTEGER REFERENCES invoices(id)
+      `);
+      await db.execute(sql`
+        ALTER TABLE transactions ADD COLUMN IF NOT EXISTS invoice_number VARCHAR(50)
+      `);
+      console.log("Migration for invoice_id and invoice_number columns in transactions table completed successfully.");
+    } catch (migrationError) {
+      console.log("Invoice columns migration already applied or error:", migrationError);
+    }
+
     // Initialize inventory_transactions table if it doesn't exist
     try {
       await db.execute(sql`
