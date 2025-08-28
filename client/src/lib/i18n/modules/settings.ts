@@ -114,6 +114,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     defaultConnection: "기본 연결",
     setAsDefaultConnection: "기본 연결로 설정",
     notesLabel: "메모",
+    notesPlaceholder: "메모를 입력하세요 (선택사항)",
     operations: "운영",
     cancel: "취소",
     // Product Management
@@ -289,6 +290,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     defaultConnection: "Default",
     setAsDefaultConnection: "Set as default connection",
     notesLabel: "Notes",
+    notesPlaceholder: "Enter notes (optional)",
     operations: "Operations",
     cancel: "Cancel",
     // Product Management
@@ -457,6 +459,7 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     defaultConnection: "Mặc định",
     setAsDefaultConnection: "Đặt làm kết nối mặc định",
     notesLabel: "Ghi chú",
+    notesPlaceholder: "Nhập ghi chú (tùy chọn)",
     operations: "Hoạt động",
     cancel: "Hủy bỏ",
     // Product Management

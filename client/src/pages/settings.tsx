@@ -468,10 +468,10 @@ export default function Settings() {
         ? { ...method, name: paymentMethodForm.name.trim(), icon: paymentMethodForm.icon }
         : method
     );
-    
+
     setPaymentMethods(updatedMethods);
     localStorage.setItem("paymentMethods", JSON.stringify(updatedMethods));
-    
+
     setShowPaymentMethodForm(false);
     setEditingPaymentMethod(null);
     setPaymentMethodForm({ name: "", icon: "" });
@@ -3839,7 +3839,7 @@ export default function Settings() {
                   }))
                 }
                 className="col-span-3"
-                placeholder={t("common.notesPlaceholder")}
+                placeholder={t("settings.notesPlaceholder")}
                 rows={3}
               />
             </div>
