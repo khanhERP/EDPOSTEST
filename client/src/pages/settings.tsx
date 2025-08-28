@@ -3170,13 +3170,13 @@ export default function Settings() {
           <DialogHeader>
             <DialogTitle>
               {editingProduct
-                ? t("settings.editProduct")
-                : t("settings.addProduct")}
+                ? t("settings.editProductTitle")
+                : t("settings.addProductTitle")}
             </DialogTitle>
             <DialogDescription>
               {editingProduct
-                ? t("settings.updateProductInfo")
-                : t("settings.enterProductInfo")}
+                ? t("settings.editProductDesc")
+                : t("settings.addProductDesc")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -3283,7 +3283,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="taxRate" className="text-right">
-                Thuế suất (%)
+                {t("settings.taxRatePercent")}
               </Label>
               <Input
                 id="taxRate"
@@ -3307,12 +3307,12 @@ export default function Settings() {
                   }
                 }}
                 className="col-span-3"
-                placeholder="0.00"
+                placeholder={t("settings.taxRatePlaceholder")}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="afterTaxPrice" className="text-right">
-                Giá sau thuế
+                {t("settings.afterTaxPrice")}
               </Label>
               <Input
                 id="afterTaxPrice"
@@ -3353,7 +3353,7 @@ export default function Settings() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productDescription" className="text-right">
-                {t("common.description")}
+                {t("settings.productDescriptionLabel")}
               </Label>
               <Textarea
                 id="productDescription"
@@ -3365,13 +3365,13 @@ export default function Settings() {
                   }))
                 }
                 className="col-span-3"
-                placeholder="품목 설명을 입력하세요 (선택사항)"
+                placeholder={t("settings.productDescriptionPlaceholder")}
                 rows={3}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="productIsActive" className="text-right">
-                Trạng thái sử dụng
+                {t("settings.usageStatusLabel")}
               </Label>
               <Select
                 value={productForm.isActive}
@@ -3380,11 +3380,11 @@ export default function Settings() {
                 }
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Chọn trạng thái" />
+                  <SelectValue placeholder={t("settings.selectUsageStatus")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="true">Có</SelectItem>
-                  <SelectItem value="false">Không</SelectItem>
+                  <SelectItem value="true">{t("settings.usageStatusActive")}</SelectItem>
+                  <SelectItem value="false">{t("settings.usageStatusInactive")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
