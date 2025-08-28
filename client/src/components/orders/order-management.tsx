@@ -1577,13 +1577,18 @@ export function OrderManagement() {
         total={(() => {
           if (!orderForPayment) return 0;
 
-          // Sử dụng orderItems từ orderForPayment nếu có
+          // Use pre-calculated total if available
+          if (orderForPayment.calculatedTotal) {
+            console.log('💰 Payment Modal using pre-calculated total:', orderForPayment.calculatedTotal);
+            return Math.round(orderForPayment.calculatedTotal);
+          }
+
+          // Fallback calculation
           const itemsToCalculate = orderForPayment.orderItems || orderItems || [];
-          console.log('💰 Calculating total from items:', itemsToCalculate.length);
+          console.log('💰 Payment Modal fallback calculation from items:', itemsToCalculate.length);
 
           if (!Array.isArray(itemsToCalculate) || itemsToCalculate.length === 0) {
-            // Fallback to order total if no items
-            return Number(orderForPayment.total || 0);
+            return Math.round(Number(orderForPayment.total || 0));
           }
 
           let itemsTotal = 0;
@@ -1591,42 +1596,62 @@ export function OrderManagement() {
 
           if (Array.isArray(products)) {
             itemsToCalculate.forEach((item: any) => {
-              const itemSubtotal = Number(item.total || 0);
+              const product = products.find((p: any) => p.id === item.productId);
+              const basePrice = Number(item.unitPrice || 0);
+              const quantity = item.quantity;
+
+              const itemSubtotal = basePrice * quantity;
               itemsTotal += itemSubtotal;
 
-              const product = products.find((p: any) => p.id === item.productId);
-              const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
-              itemsTax += (itemSubtotal * taxRate) / 100;
+              if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                const taxPerUnit = afterTaxPrice - basePrice;
+                itemsTax += taxPerUnit * quantity;
+              }
             });
           }
 
-          const calculatedTotal = itemsTotal + itemsTax;
-          console.log('💰 Total calculation result:', {
+          const calculatedTotal = Math.round(itemsTotal + itemsTax);
+          console.log('💰 Payment Modal fallback calculation result:', {
             itemsTotal,
             itemsTax,
-            calculatedTotal,
-            fallbackTotal: Number(orderForPayment.total || 0)
+            calculatedTotal
           });
 
-          return calculatedTotal > 0 ? calculatedTotal : Number(orderForPayment.total || 0);
+          return calculatedTotal > 0 ? calculatedTotal : Math.round(Number(orderForPayment.total || 0));
         })()}
         onShowEInvoice={() => setShowEInvoiceModal(true)}
         cartItems={(() => {
-          // Sử dụng orderItems từ orderForPayment nếu có
-          const itemsToMap = orderForPayment?.orderItems || orderItems || [];
-          console.log('📦 Mapping cart items for payment modal:', itemsToMap.length);
+          // Use processed items if available
+          if (orderForPayment?.processedItems) {
+            console.log('📦 Using processed items for Payment Modal:', orderForPayment.processedItems.length);
+            return orderForPayment.processedItems.map((item: any) => ({
+              id: item.productId,
+              name: item.productName,
+              price: item.price,
+              quantity: item.quantity,
+              sku: item.sku,
+              taxRate: item.taxRate,
+              afterTaxPrice: item.afterTaxPrice
+            }));
+          }
 
-          return itemsToMap.map((item: any) => ({
-            id: item.id,
-            name: item.productName || getProductInfo(item.productId)?.name || 'Unknown Product',
-            price: parseFloat(item.unitPrice || '0'),
-            quantity: item.quantity,
-            sku: item.productSku || `SP${item.productId}`,
-            taxRate: (() => {
-              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-              return product?.taxRate ? parseFloat(product.taxRate) : 10;
-            })()
-          }));
+          // Fallback to orderItems
+          const itemsToMap = orderForPayment?.orderItems || orderItems || [];
+          console.log("📦 Mapping cart items for Payment Modal:", itemsToMap.length);
+
+          return itemsToMap.map((item: any) => {
+            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+            return {
+              id: item.productId,
+              name: item.productName || getProductInfo(item.productId)?.name || 'Unknown Product',
+              price: parseFloat(item.unitPrice || '0'),
+              quantity: item.quantity,
+              sku: item.productSku || `SP${item.productId}`,
+              taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
+              afterTaxPrice: product?.afterTaxPrice || null
+            };
+          });
         })()}
       />
 
@@ -1642,12 +1667,17 @@ export function OrderManagement() {
           total={(() => {
             if (!orderForPayment) return 0;
 
-            // Sử dụng orderItems từ orderForPayment nếu có
+            // Use pre-calculated total if available
+            if (orderForPayment.calculatedTotal) {
+              console.log('💰 E-invoice using pre-calculated total:', orderForPayment.calculatedTotal);
+              return Math.round(orderForPayment.calculatedTotal);
+            }
+
+            // Fallback calculation
             const itemsToCalculate = orderForPayment.orderItems || orderItems || [];
-            console.log('💰 E-invoice calculating total from items:', itemsToCalculate.length);
+            console.log("💰 E-invoice fallback calculation from items:", itemsToCalculate.length);
 
             if (!Array.isArray(itemsToCalculate) || itemsToCalculate.length === 0) {
-              // Fallback to order total if no items
               return Math.round(Number(orderForPayment.total || 0));
             }
 
@@ -1656,41 +1686,63 @@ export function OrderManagement() {
 
             if (Array.isArray(products)) {
               itemsToCalculate.forEach((item: any) => {
-                const itemSubtotal = Number(item.total || 0);
+                const product = products.find((p: any) => p.id === item.productId);
+                const basePrice = Number(item.unitPrice || 0);
+                const quantity = item.quantity;
+
+                // Calculate item subtotal
+                const itemSubtotal = basePrice * quantity;
                 itemsTotal += itemSubtotal;
 
-                const product = products.find((p: any) => p.id === item.productId);
-                const taxRate = product?.taxRate ? parseFloat(product.taxRate) : 10;
-                itemsTax += (itemSubtotal * taxRate) / 100;
+                // Calculate tax using afterTaxPrice if available
+                if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
+                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                  const taxPerUnit = afterTaxPrice - basePrice;
+                  itemsTax += taxPerUnit * quantity;
+                }
               });
             }
 
             const calculatedTotal = Math.round(itemsTotal + itemsTax);
-            console.log('💰 E-invoice total calculation result:', {
+            console.log("💰 E-invoice fallback calculation result:", {
               itemsTotal,
               itemsTax,
-              calculatedTotal,
-              fallbackTotal: Math.round(Number(orderForPayment.total || 0))
+              calculatedTotal
             });
 
             return calculatedTotal > 0 ? calculatedTotal : Math.round(Number(orderForPayment.total || 0));
           })()}
           cartItems={(() => {
-            // Sử dụng orderItems từ orderForPayment nếu có
-            const itemsToMap = orderForPayment?.orderItems || orderItems || [];
-            console.log('📦 Mapping cart items for E-invoice modal:', itemsToMap.length);
+            // Use processed items if available
+            if (orderForPayment?.processedItems) {
+              console.log('📦 Using processed items for E-invoice modal:', orderForPayment.processedItems.length);
+              return orderForPayment.processedItems.map((item: any) => ({
+                id: item.productId,
+                name: item.productName,
+                price: item.price,
+                quantity: item.quantity,
+                sku: item.sku,
+                taxRate: item.taxRate,
+                afterTaxPrice: item.afterTaxPrice
+              }));
+            }
 
-            return itemsToMap.map((item: any) => ({
-              id: item.id,
-              name: item.productName || getProductInfo(item.productId)?.name || 'Unknown Product',
-              price: parseFloat(item.unitPrice || '0'),
-              quantity: item.quantity,
-              sku: item.productSku || `SP${item.productId}`,
-              taxRate: (() => {
-                const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-                return product?.taxRate ? parseFloat(product.taxRate) : 10;
-              })()
-            }));
+            // Fallback to orderItems
+            const itemsToMap = orderForPayment?.orderItems || orderItems || [];
+            console.log("📦 Mapping cart items for E-invoice modal:", itemsToMap.length);
+
+            return itemsToMap.map((item: any) => {
+              const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+              return {
+                id: item.productId,
+                name: item.productName || getProductInfo(item.productId)?.name || 'Unknown Product',
+                price: parseFloat(item.unitPrice || '0'),
+                quantity: item.quantity,
+                sku: item.productSku || `SP${item.productId}`,
+                taxRate: product?.taxRate ? parseFloat(product.taxRate) : 0,
+                afterTaxPrice: product?.afterTaxPrice || null
+              };
+            });
           })()}
           source="order-management"
           orderId={orderForPayment.id}
