@@ -19,7 +19,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "@/i18n/index";
+import { useTranslation } from "@/lib/i18n";
 import VirtualKeyboard from "@/components/ui/virtual-keyboard";
 
 // E-invoice software providers mapping
@@ -441,31 +441,14 @@ export function EInvoiceModal({
         (template) => template.id.toString() === formData.selectedTemplateId,
       );
 
-      if (!selectedTemplate) {
-        console.error("❌ No template selected for invoice");
-        toast({
-          title: "Lỗi",
-          description: "Vui lòng chọn mẫu số hóa đơn",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log("📋 Selected template for publishing later:", {
-        id: selectedTemplate.id,
-        name: selectedTemplate.name,
-        templateNumber: selectedTemplate.templateNumber,
-        symbol: selectedTemplate.symbol
-      });
-
       // Map phương thức thanh toán từ selectedPaymentMethod sang mã số
       const paymentMethodCode = getPaymentMethodCode(selectedPaymentMethod);
 
       // Chuẩn bị thông tin hóa đơn để lưu vào bảng invoices và invoice_items
       const invoicePayload = {
         invoiceNumber: null, // Chưa có số hóa đơn vì chưa phát hành
-        templateNumber: selectedTemplate.templateNumber, // Mẫu số hóa đơn từ template được chọn
-        symbol: selectedTemplate.symbol, // Ký hiệu hóa đơn từ template được chọn
+        templateNumber: selectedTemplate?.templateNumber || null, // Mẫu số hóa đơn
+        symbol: selectedTemplate?.symbol || null, // Ký hiệu hóa đơn
         customerName: formData.customerName || "Khách hàng",
         customerTaxCode: formData.taxCode || null,
         customerAddress: formData.address || null,
@@ -625,6 +608,8 @@ export function EInvoiceModal({
         originalPaymentMethod: selectedPaymentMethod,
         publishLater: true,
         receipt: receiptData, // Receipt data để hiển thị modal in
+        customerName: formData.customerName,
+        taxCode: formData.taxCode,
         showReceiptModal: true, // Flag để parent component biết cần hiển thị receipt modal
       };
 
@@ -852,12 +837,7 @@ export function EInvoiceModal({
       );
 
       if (!selectedTemplate) {
-        console.error("❌ No template selected for invoice");
-        toast({
-          title: "Lỗi",
-          description: "Vui lòng chọn mẫu số hóa đơn",
-          variant: "destructive",
-        });
+        alert("Không tìm thấy thông tin mẫu số hóa đơn được chọn");
         return;
       }
 
@@ -942,8 +922,8 @@ export function EInvoiceModal({
 
           const invoicePayload = {
             invoiceNumber: result.data?.invoiceNo || null, // Số hóa đơn từ API response
-            templateNumber: selectedTemplate.templateNumber, // Mẫu số hóa đơn từ template được chọn
-            symbol: selectedTemplate.symbol, // Ký hiệu hóa đơn từ template được chọn
+            templateNumber: selectedTemplate.templateNumber || null, // Mẫu số hóa đơn
+            symbol: selectedTemplate.symbol || null, // Ký hiệu hóa đơn
             customerName: formData.customerName || "Khách hàng",
             customerTaxCode: formData.taxCode || null,
             customerAddress: formData.address || null,
@@ -1184,8 +1164,8 @@ export function EInvoiceModal({
         const publishResult = {
           success: true,
           invoiceNumber: result.data?.invoiceNo || null,
-          symbol: selectedTemplate.symbol, // Ký hiệu hóa đơn từ template được chọn
-          templateNumber: selectedTemplate.templateNumber, // Mẫu số hóa đơn từ template được chọn
+          symbol: selectedTemplate.symbol || null,
+          templateNumber: selectedTemplate.templateNumber || null,
           einvoiceStatus: 1, // Đã phát hành
           invoiceStatus: 1, // Hoàn thành
           status: 'published',
