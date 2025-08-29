@@ -1481,11 +1481,13 @@ export function EInvoiceModal({
                       const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
                       
                       // Use afterTaxPrice if available for exact calculation
-                      if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                      if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
                         const afterTaxPrice = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
-                        const itemTotal = afterTaxPrice * quantity;
-                        console.log(`💰 Item ${item.name}: afterTaxPrice=${afterTaxPrice}, qty=${quantity}, total=${itemTotal}`);
-                        return sum + itemTotal;
+                        if (!isNaN(afterTaxPrice) && afterTaxPrice > 0) {
+                          const itemTotal = afterTaxPrice * quantity;
+                          console.log(`💰 Item ${item.name}: afterTaxPrice=${afterTaxPrice}, qty=${quantity}, total=${itemTotal}`);
+                          return sum + itemTotal;
+                        }
                       } else {
                         // Calculate with tax rate
                         const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
