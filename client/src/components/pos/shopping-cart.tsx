@@ -409,13 +409,47 @@ export function ShoppingCart({
 
     // Show receipt modal
       console.log('📄 Shopping cart: Step 5: Showing final receipt modal (not preview)');
+      console.log('📄 E-invoice data received:', eInvoiceData);
+      console.log('📄 Receipt in e-invoice data:', eInvoiceData.receipt);
 
       // Ensure receipt modal state is properly set
-      setTimeout(() => {
-        console.log('📄 Setting receipt modal with data:', eInvoiceData.receipt);
+      if (eInvoiceData.receipt) {
+        console.log('📄 Setting receipt modal with valid receipt data');
         setSelectedReceipt(eInvoiceData.receipt);
         setShowReceiptModal(true);
-      }, 100);
+      } else {
+        console.log('❌ No receipt data found in e-invoice result');
+        
+        // Create fallback receipt from e-invoice data
+        const fallbackReceipt = {
+          transactionId: `FALLBACK-${Date.now()}`,
+          items: eInvoiceData.cartItems?.map((item: any) => ({
+            id: item.id,
+            productId: item.id,
+            productName: item.name,
+            price: (typeof item.price === "string" ? parseFloat(item.price) : item.price).toFixed(2),
+            quantity: typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity,
+            total: ((typeof item.price === "string" ? parseFloat(item.price) : item.price) * (typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity)).toFixed(2),
+            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+            taxRate: typeof item.taxRate === "string" ? parseFloat(item.taxRate || "10") : item.taxRate || 10,
+          })) || [],
+          subtotal: "0.00",
+          tax: "0.00",
+          total: (eInvoiceData.total || 0).toFixed(2),
+          paymentMethod: "einvoice",
+          originalPaymentMethod: eInvoiceData.originalPaymentMethod || "cash",
+          amountReceived: (eInvoiceData.total || 0).toFixed(2),
+          change: "0.00",
+          cashierName: "System User",
+          createdAt: new Date().toISOString(),
+          customerName: eInvoiceData.customerName || "Khách hàng",
+          customerTaxCode: eInvoiceData.taxCode || "",
+        };
+        
+        console.log('📄 Created fallback receipt:', fallbackReceipt);
+        setSelectedReceipt(fallbackReceipt);
+        setShowReceiptModal(true);
+      }
 
     // Clear cart after receipt modal is shown
     setTimeout(() => {

@@ -220,7 +220,7 @@ export function EInvoiceModal({
         email: "",
       });
     }
-  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]); // Reset when modal opens and data is ready
+  }, [isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0]); // Only reset when truly ready
 
   // Separate effect for debugging cartItems changes without resetting form
   useEffect(() => {
@@ -648,12 +648,15 @@ export function EInvoiceModal({
         console.error("❌ Error creating transaction for inventory:", transactionError);
       }
 
-      // Always create receipt data for "Phát hành sau"
-      if (cartItems && cartItems.length > 0) {
+      // Always create receipt data for "Phát hành sau" - preserve original cart data
+      const originalCartItems = cartItems || [];
+      console.log("📄 Creating receipt with original cart items:", originalCartItems);
+      
+      if (originalCartItems && originalCartItems.length > 0) {
         receiptData = {
           transactionId:
             invoiceResult?.invoice?.tradeNumber || `TXN-${Date.now()}`,
-          items: cartItems.map((item) => {
+          items: originalCartItems.map((item) => {
             const itemPrice =
               typeof item.price === "string"
                 ? parseFloat(item.price)
@@ -667,7 +670,17 @@ export function EInvoiceModal({
                 ? parseFloat(item.taxRate || "10")
                 : item.taxRate || 10;
             const itemSubtotal = itemPrice * itemQuantity;
-            const itemTax = (itemSubtotal * itemTaxRate) / 100;
+            
+            // Use afterTaxPrice for exact tax calculation if available
+            let itemTax;
+            if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+              const afterTax = typeof item.afterTaxPrice === 'string'
+                ? parseFloat(item.afterTaxPrice)
+                : item.afterTaxPrice;
+              itemTax = (afterTax - itemPrice) * itemQuantity;
+            } else {
+              itemTax = (itemSubtotal * itemTaxRate) / 100;
+            }
 
             return {
               id: item.id,
@@ -695,7 +708,7 @@ export function EInvoiceModal({
           customerTaxCode: formData.taxCode,
         };
         
-        console.log("📄 Receipt data created:", receiptData);
+        console.log("📄 Receipt data created with", originalCartItems.length, "items:", receiptData);
       } else {
         // Fallback receipt for empty cart
         receiptData = {
@@ -714,12 +727,13 @@ export function EInvoiceModal({
           customerName: formData.customerName || "Khách hàng",
           customerTaxCode: formData.taxCode || "",
         };
+        console.log("📄 Created fallback empty receipt data");
       }
 
       // Prepare complete invoice data with receipt for immediate display
       const completeInvoiceData = {
         ...formData,
-        cartItems: cartItems || [],
+        cartItems: originalCartItems, // Use preserved cart items
         total: total || 0,
         paymentMethod: selectedPaymentMethod,
         originalPaymentMethod: selectedPaymentMethod,
@@ -729,9 +743,17 @@ export function EInvoiceModal({
         savedInvoice: invoiceResult?.invoice || null,
         receipt: receiptData,
         showReceiptModal: true,
+        // Add debugging info
+        debug: {
+          originalCartLength: originalCartItems?.length || 0,
+          receiptItemsLength: receiptData?.items?.length || 0,
+          calculatedSubtotal,
+          calculatedTax,
+        }
       };
 
       console.log("✅ Calling onConfirm with publishLater data and receipt");
+      console.log("📄 Complete invoice data:", completeInvoiceData);
       console.log("📄 Receipt data to display:", receiptData);
 
       // Call onConfirm first with the complete data including receipt
@@ -741,7 +763,7 @@ export function EInvoiceModal({
       setTimeout(() => {
         onClose();
         console.log("🔴 E-Invoice modal closed after publishLater processing");
-      }, 50);
+      }, 100); // Slightly longer delay to ensure data propagation
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
 
