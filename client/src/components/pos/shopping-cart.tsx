@@ -70,27 +70,18 @@ export function ShoppingCart({
         console.log("Tax Rate:", item.taxRate + "%");
         console.log("After Tax Price (from DB):", item.afterTaxPrice);
         console.log("After Tax Price Type:", typeof item.afterTaxPrice);
-        console.log("🔍 KIỂM TRA: After Tax Price có phải 20000 không?", item.afterTaxPrice === "20000" || item.afterTaxPrice === 20000);
-
-        // So sánh chi tiết
-        if (item.afterTaxPrice) {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          console.log("🆚 SHOPPING CART CHI TIẾT:");
-          console.log("  Shopping Cart afterTaxPrice parsed:", afterTaxPrice);
-          console.log("  Có bằng 20000 không?", afterTaxPrice === 20000);
-          console.log("  Base price:", basePrice);
-          console.log("  Tax per item (Shopping Cart):", afterTaxPrice - basePrice);
-          console.log("  Tax for", item.quantity, "items:", (afterTaxPrice - basePrice) * item.quantity);
-        }
 
         // Tax = (after_tax_price - price) * quantity
-          const totalItemTax = Math.floor((afterTaxPrice - price) * item.quantity);
+        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(item.afterTaxPrice);
+          const totalItemTax = Math.floor((afterTaxPrice - basePrice) * item.quantity);
           console.log("✅ Using tax formula: Math.floor((after_tax_price - price) * quantity)");
           console.log("  After Tax Price:", afterTaxPrice, "₫");
-          console.log("  Price:", price, "₫");
+          console.log("  Base Price:", basePrice, "₫");
           console.log("  Quantity:", item.quantity);
-          console.log("  Tax calculation: Math.floor((" + afterTaxPrice + " - " + price + ") * " + item.quantity + ") = " + totalItemTax + "₫");
+          console.log("  Tax calculation: Math.floor((" + afterTaxPrice + " - " + basePrice + ") * " + item.quantity + ") = " + totalItemTax + "₫");
           return sum + totalItemTax;
+        }
       }
       return sum;
     }, 0);
@@ -111,14 +102,9 @@ export function ShoppingCart({
           // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
           if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
             const afterTaxPrice = parseFloat(item.afterTaxPrice);
-            // Tax = afterTaxPrice - basePrice
+            // Tax = Math.floor((afterTaxPrice - basePrice) * quantity)
             const taxPerItem = afterTaxPrice - basePrice;
-            return sum + (taxPerItem * item.quantity);
-          } else {
-            // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
-            const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
-            const taxPerItem = calculatedAfterTaxPrice - basePrice;
-            return sum + (taxPerItem * item.quantity);
+            return sum + Math.floor(taxPerItem * item.quantity);
           }
         }
         return sum;
@@ -451,15 +437,11 @@ export function ShoppingCart({
                             // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
                             if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
                               const afterTaxPrice = parseFloat(item.afterTaxPrice);
-                              // Tax = afterTaxPrice - basePrice
+                              // Tax = Math.floor((afterTaxPrice - basePrice) * quantity)
                               const taxPerItem = afterTaxPrice - basePrice;
-                              return Math.round(taxPerItem * item.quantity);
-                            } else {
-                              // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
-                              const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
-                              const taxPerItem = calculatedAfterTaxPrice - basePrice;
-                              return Math.round(taxPerItem * item.quantity);
+                              return Math.floor(taxPerItem * item.quantity);
                             }
+                            return 0;
                           })().toLocaleString("vi-VN")} ₫ ({item.taxRate}%)
                       </p>
                     )}

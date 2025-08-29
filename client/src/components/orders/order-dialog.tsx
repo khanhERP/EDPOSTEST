@@ -685,7 +685,7 @@ export function OrderDialog({
                                                     // Calculate subtotal
                                                     newSubtotal += basePrice * quantity;
 
-                                                    // Calculate tax using Math.floor
+                                                    // Calculate tax using Math.floor((after_tax_price - price) * quantity)
                                                     if (
                                                       product?.afterTaxPrice &&
                                                       product.afterTaxPrice !== null &&
@@ -697,22 +697,6 @@ export function OrderDialog({
                                                     }
                                                   });
                                                 }
-
-                                                console.log('💰 New totals after deletion:', {
-                                                  newSubtotal,
-                                                  newTax,
-                                                  newTotal: newSubtotal + newTax
-                                                });ubtotal
-                                                  newSubtotal += basePrice * quantity;
-
-                                                  // Calculate tax using same logic as shopping cart
-                                                  const productResponse = products?.find((p: any) => p.id === remainingItem.productId);
-                                                  if (productResponse?.afterTaxPrice && productResponse.afterTaxPrice !== null && productResponse.afterTaxPrice !== "") {
-                                                    const afterTaxPrice = parseFloat(productResponse.afterTaxPrice);
-                                                    const price = parseFloat(productResponse.price);
-                                                    newTax += (afterTaxPrice - price) * quantity;
-                                                  }
-                                                });
                                               }
                                               // If no items left, totals should be 0
                                               else {
