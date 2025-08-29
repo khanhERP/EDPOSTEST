@@ -2082,41 +2082,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("Menu Analysis API called with params:", { startDate, endDate, search, categoryId, productType });
 
-      // Apply filters
-      const conditions: any[] = [eq(products.isActive, true)];
+      // Apply filters for products
+      const productConditions: any[] = [eq(products.isActive, true)];
       
-      // Date range filter conditions
-      let dateConditions: any[] = [];
-      if (startDate && endDate) {
-        const start = new Date(startDate as string);
-        const end = new Date(endDate as string);
-        end.setHours(23, 59, 59, 999);
-
-        dateConditions = [
-          and(
-            gte(transactionsTable.createdAt, start),
-            lte(transactionsTable.createdAt, end)
-          )
-        ];
-      }
-
       if (search) {
-        conditions.push(ilike(products.name, `%${search}%`));
+        productConditions.push(ilike(products.name, `%${search}%`));
       }
 
       if (categoryId && categoryId !== 'all') {
-        conditions.push(eq(products.categoryId, parseInt(categoryId as string)));
+        productConditions.push(eq(products.categoryId, parseInt(categoryId as string)));
       }
 
       if (productType !== "all" && productType) {
         const typeMap = { combo: 3, product: 1, service: 2 };
         const typeValue = typeMap[productType as keyof typeof typeMap];
         if (typeValue) {
-          conditions.push(eq(products.productType, typeValue));
+          productConditions.push(eq(products.productType, typeValue));
         }
       }
 
-      // Query transaction items with proper revenue calculation (total - discount, no tax added)
+      // Date range conditions
+      const dateConditions: any[] = [];
+      if (startDate && endDate) {
+        const start = new Date(startDate as string);
+        const end = new Date(endDate as string);
+        end.setHours(23, 59, 59, 999);
+
+        dateConditions.push(
+          gte(transactionsTable.createdAt, start),
+          lte(transactionsTable.createdAt, end)
+        );
+      }
+
+      // Query transaction items - Revenue calculation: subtotal without tax
       let transactionQuery = db
         .select({
           productId: transactionItemsTable.productId,
@@ -2124,17 +2122,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
           categoryId: products.categoryId,
           categoryName: categories.name,
           quantity: sql<number>`sum(${transactionItemsTable.quantity})`.as('quantity'),
-          // Revenue = item total (already excludes tax in transaction_items)
-          revenue: sql<number>`sum(CAST(${transactionItemsTable.total} AS DECIMAL))`.as('revenue'),
+          // Revenue = quantity * unit price (excluding tax and discount)
+          revenue: sql<number>`sum(${transactionItemsTable.quantity} * CAST(${transactionItemsTable.price} AS DECIMAL))`.as('revenue'),
         })
         .from(transactionItemsTable)
-        .leftJoin(products, eq(transactionItemsTable.productId, products.id))
+        .innerJoin(products, eq(transactionItemsTable.productId, products.id))
         .leftJoin(categories, eq(products.categoryId, categories.id))
-        .leftJoin(transactionsTable, eq(transactionItemsTable.transactionId, transactionsTable.id))
-        .where(and(...conditions, ...(dateConditions.length > 0 ? dateConditions : [])))
+        .innerJoin(transactionsTable, eq(transactionItemsTable.transactionId, transactionsTable.id))
+        .where(and(
+          ...productConditions,
+          ...(dateConditions.length > 0 ? dateConditions : [])
+        ))
         .groupBy(transactionItemsTable.productId, products.name, products.categoryId, categories.name);
 
-      // Query order items with proper revenue calculation (total - discount, no tax added)
+      // Date conditions for orders
+      const orderDateConditions: any[] = [];
+      if (startDate && endDate) {
+        const start = new Date(startDate as string);
+        const end = new Date(endDate as string);
+        end.setHours(23, 59, 59, 999);
+
+        orderDateConditions.push(
+          gte(orders.orderedAt, start),
+          lte(orders.orderedAt, end)
+        );
+      }
+
+      // Query order items - Revenue calculation: subtotal without tax 
       let orderQuery = db
         .select({
           productId: orderItems.productId,
@@ -2142,22 +2156,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           categoryId: products.categoryId,
           categoryName: categories.name,
           quantity: sql<number>`sum(${orderItems.quantity})`.as('quantity'),
-          // Revenue = item total (already excludes tax in order_items)
-          revenue: sql<number>`sum(CAST(${orderItems.total} AS DECIMAL))`.as('revenue'),
+          // Revenue = quantity * unit price (excluding tax and discount)
+          revenue: sql<number>`sum(${orderItems.quantity} * CAST(${orderItems.unitPrice} AS DECIMAL))`.as('revenue'),
         })
         .from(orderItems)
-        .leftJoin(products, eq(orderItems.productId, products.id))
+        .innerJoin(products, eq(orderItems.productId, products.id))
         .leftJoin(categories, eq(products.categoryId, categories.id))
-        .leftJoin(orders, eq(orderItems.orderId, orders.id))
+        .innerJoin(orders, eq(orderItems.orderId, orders.id))
         .where(and(
-          ...conditions,
+          ...productConditions,
           eq(orders.status, 'paid'), // Only include paid orders
-          ...(startDate && endDate ? [
-            and(
-              gte(orders.orderedAt, new Date(startDate as string)),
-              lte(orders.orderedAt, new Date(endDate as string))
-            )
-          ] : [])
+          ...(orderDateConditions.length > 0 ? orderDateConditions : [])
         ))
         .groupBy(orderItems.productId, products.name, products.categoryId, categories.name);
 
@@ -2219,10 +2228,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convert to arrays and calculate totals
       const productStatsArray = Array.from(combinedStats.values());
       
+      // Calculate total revenue (sum of all product revenues excluding tax)
       const totalRevenue = productStatsArray.reduce((sum, item) => sum + item.totalRevenue, 0);
       const totalQuantity = productStatsArray.reduce((sum, item) => sum + item.totalQuantity, 0);
 
-      // Group by category
+      // Group by category for category statistics
       const categoryStatsMap = new Map();
       productStatsArray.forEach((item) => {
         const categoryKey = item.categoryId || 0;
