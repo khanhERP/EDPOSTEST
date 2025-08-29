@@ -202,33 +202,53 @@ export function EInvoiceModal({
   useEffect(() => {
     if (isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0) {
       console.log("🔥 E-INVOICE MODAL OPENING - INITIALIZING DATA");
+      console.log("🔥 Available templates:", invoiceTemplates);
       
-      // Only initialize if formData is empty or selectedTemplateId is empty
+      const defaultTemplate = invoiceTemplates[0];
+      const defaultTemplateId = defaultTemplate.id.toString();
+
+      console.log("🎯 Force setting template data:", {
+        template: defaultTemplate,
+        templateId: defaultTemplateId,
+        templateName: defaultTemplate.name,
+        templateNumber: defaultTemplate.templateNumber
+      });
+
+      // Always force set form data to prevent empty template issues
+      const initialFormData = {
+        invoiceProvider: "EasyInvoice",
+        invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY",
+        selectedTemplateId: defaultTemplateId,
+        taxCode: "0123456789",
+        customerName: "Khách hàng lẻ",
+        address: "",
+        phoneNumber: "",
+        email: "",
+      };
+
+      setFormData(initialFormData);
+      console.log("✅ Template forced to:", defaultTemplateId, "- Full data:", initialFormData);
+    }
+  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]);
+
+  // Additional effect to ensure template is always set when data changes
+  useEffect(() => {
+    if (isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0) {
+      // Double-check template is set after any state changes
       if (!formData.selectedTemplateId || formData.selectedTemplateId === "") {
         const defaultTemplate = invoiceTemplates[0];
         const defaultTemplateId = defaultTemplate.id.toString();
-
-        console.log("🎯 Setting form data on modal open:", defaultTemplate);
-
-        // Force set form data immediately without conditions
-        const initialFormData = {
-          invoiceProvider: "EasyInvoice",
-          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY",
+        
+        console.log("🚨 Template missing, force setting again:", defaultTemplateId);
+        
+        setFormData(prev => ({
+          ...prev,
           selectedTemplateId: defaultTemplateId,
-          taxCode: "0123456789",
-          customerName: "Khách hàng lẻ",
-          address: "",
-          phoneNumber: "",
-          email: "",
-        };
-
-        setFormData(initialFormData);
-        console.log("✅ Form data initialized with template:", defaultTemplateId, initialFormData);
-      } else {
-        console.log("✅ Form data already has template:", formData.selectedTemplateId);
+          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
+        }));
       }
     }
-  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]);
+  }, [formData.selectedTemplateId, isOpen, templatesLoading, connectionsLoading, invoiceTemplates]);
 
   // Log data immediately when modal opens
   useEffect(() => {
@@ -426,15 +446,40 @@ export function EInvoiceModal({
       return;
     }
 
-    // Validate template without auto-setting to prevent reload
+    // Detailed template validation with logging
+    console.log("🔍 Template validation check:", {
+      selectedTemplateId: formData.selectedTemplateId,
+      templatesLoading,
+      connectionsLoading,
+      templatesCount: invoiceTemplates.length,
+      templates: invoiceTemplates.map(t => ({ id: t.id, name: t.name, templateNumber: t.templateNumber }))
+    });
+
     if (!formData.selectedTemplateId || formData.selectedTemplateId === "" || !invoiceTemplates.length) {
       console.error("❌ Template validation failed - cannot proceed with publish later");
-      toast({
-        title: "Lỗi",
-        description: "Chưa chọn mẫu số hóa đơn. Vui lòng thử lại.",
-        variant: "destructive"
-      });
-      return;
+      
+      // Auto-fix if templates are available but not selected
+      if (invoiceTemplates.length > 0 && (!formData.selectedTemplateId || formData.selectedTemplateId === "")) {
+        const defaultTemplate = invoiceTemplates[0];
+        const defaultTemplateId = defaultTemplate.id.toString();
+        
+        console.log("🔧 Auto-fixing template selection:", defaultTemplateId);
+        
+        setFormData(prev => ({
+          ...prev,
+          selectedTemplateId: defaultTemplateId,
+          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
+        }));
+        
+        // Don't return, continue with the fixed template
+      } else {
+        toast({
+          title: "Lỗi",
+          description: "Chưa chọn mẫu số hóa đơn. Vui lòng thử lại.",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     const currentFormData = formData;
@@ -688,15 +733,40 @@ export function EInvoiceModal({
     console.log("🟢 Cart items:", cartItems);
     console.log("🟢 Invoice templates:", invoiceTemplates);
 
-    // Validate template without auto-setting to prevent reload
+    // Detailed template validation for immediate publish
+    console.log("🔍 Template validation check (immediate publish):", {
+      selectedTemplateId: formData.selectedTemplateId,
+      templatesLoading,
+      connectionsLoading,
+      templatesCount: invoiceTemplates.length,
+      templates: invoiceTemplates.map(t => ({ id: t.id, name: t.name, templateNumber: t.templateNumber }))
+    });
+
     if (!formData.selectedTemplateId || formData.selectedTemplateId === "" || !invoiceTemplates.length) {
       console.error("❌ Template validation failed for immediate publish");
-      toast({
-        title: "Lỗi",
-        description: "Chưa chọn mẫu số hóa đơn. Vui lòng thử lại.",
-        variant: "destructive"
-      });
-      return;
+      
+      // Auto-fix if templates are available but not selected
+      if (invoiceTemplates.length > 0 && (!formData.selectedTemplateId || formData.selectedTemplateId === "")) {
+        const defaultTemplate = invoiceTemplates[0];
+        const defaultTemplateId = defaultTemplate.id.toString();
+        
+        console.log("🔧 Auto-fixing template selection for immediate publish:", defaultTemplateId);
+        
+        setFormData(prev => ({
+          ...prev,
+          selectedTemplateId: defaultTemplateId,
+          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
+        }));
+        
+        // Don't return, continue with the fixed template
+      } else {
+        toast({
+          title: "Lỗi",
+          description: "Chưa chọn mẫu số hóa đơn. Vui lòng thử lại.",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     const currentFormData = formData;
