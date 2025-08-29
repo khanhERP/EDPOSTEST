@@ -97,6 +97,12 @@ export function ReceiptModal({
     return null;
   }
 
+  // Additional safety check - if receipt is null but we're supposed to show it, return null
+  if (!receipt) {
+    console.log("❌ Receipt Modal: Receipt is null, cannot render");
+    return null;
+  }
+
   const handlePrint = async () => {
     console.log("🖨️ Starting browser print process");
     await handleBrowserPrint();
@@ -321,15 +327,15 @@ export function ReceiptModal({
           <div className="border-t border-b border-gray-300 py-3 mb-3">
             <div className="flex justify-between text-sm">
               <span>{t("pos.transactionNumber")}</span>
-              <span>{receipt.transactionId}</span>
+              <span>{receipt?.transactionId || "N/A"}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>{t("pos.date")}</span>
-              <span>{new Date(receipt.createdAt).toLocaleString()}</span>
+              <span>{receipt?.createdAt ? new Date(receipt.createdAt).toLocaleString() : "N/A"}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>{t("pos.cashier")}</span>
-              <span>{receipt.cashierName}</span>
+              <span>{receipt?.cashierName || "N/A"}</span>
             </div>
             {isEInvoice && customerName && (
               <div className="flex justify-between text-sm">
@@ -354,7 +360,7 @@ export function ReceiptModal({
           </div>
 
           <div className="space-y-2 mb-3">
-            {receipt.items.map((item) => {
+            {receipt?.items?.map((item) => {
               // For receipt display, show the unit price (base price without tax) and total from order details
               const unitPrice = parseFloat(item.price);
 
@@ -424,10 +430,10 @@ export function ReceiptModal({
               <span className="capitalize">
                 {(() => {
                   // Always prioritize originalPaymentMethod for e-invoices
-                  let displayMethod = receipt.paymentMethod;
+                  let displayMethod = receipt?.paymentMethod || "cash";
 
                   // If this is an e-invoice transaction and we have originalPaymentMethod, use it
-                  if (receipt.originalPaymentMethod) {
+                  if (receipt?.originalPaymentMethod) {
                     displayMethod = receipt.originalPaymentMethod;
                   }
 
@@ -449,29 +455,29 @@ export function ReceiptModal({
                 })()}
               </span>
             </div>
-            {receipt.amountReceived && (
+            {receipt?.amountReceived && (
               <div className="flex justify-between text-sm">
                 <span>{t("pos.amountReceived")}</span>
                 <span>
                   {(() => {
                     // For e-invoice transactions, amount received should equal the total
                     if (
-                      receipt.paymentMethod === "einvoice" ||
-                      receipt.originalPaymentMethod === "einvoice"
+                      receipt?.paymentMethod === "einvoice" ||
+                      receipt?.originalPaymentMethod === "einvoice"
                     ) {
                       // For e-invoice, use the total from receipt
-                      return Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN");
+                      return Math.floor(parseFloat(receipt?.total || "0")).toLocaleString("vi-VN");
                     }
                     // For other payment methods, use the original amount received
                     return Math.floor(
-                      parseFloat(receipt.amountReceived),
+                      parseFloat(receipt?.amountReceived || "0"),
                     ).toLocaleString("vi-VN");
                   })()}{" "}
                   ₫
                 </span>
               </div>
             )}
-            {receipt.change && parseFloat(receipt.change) > 0 && (
+            {receipt?.change && parseFloat(receipt.change) > 0 && (
               <div className="flex justify-between text-sm">
                 <span>Change:</span>
                 <span>{receipt.change} ₫</span>
