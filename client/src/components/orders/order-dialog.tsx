@@ -697,13 +697,12 @@ export function OrderDialog({
                                                     }
                                                   });
                                                 }
-                                              }
-                                              // If no items left, totals should be 0
-                                              else {
-                                                console.log('📝 Order Dialog: No items left, setting totals to zero');
-                                                newSubtotal = 0;
-                                                newTax = 0;
-                                              }
+                                                // If no items left, totals should be 0
+                                                else {
+                                                  console.log('📝 Order Dialog: No items left, setting totals to zero');
+                                                  newSubtotal = 0;
+                                                  newTax = 0;
+                                                }
 
                                               const newTotal = newSubtotal + newTax;
 
