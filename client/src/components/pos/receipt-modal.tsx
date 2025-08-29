@@ -87,13 +87,13 @@ export function ReceiptModal({
     isOpen,
     isPreview,
     receipt,
-    cartItems,
-    total,
+    cartItems: cartItems?.length || 0,
     onConfirm: !!onConfirm
   });
 
-  if (!receipt) {
-    console.log("❌ Receipt Modal: No receipt data provided");
+  // Don't render if modal is not open or no receipt data
+  if (!isOpen || !receipt) {
+    console.log("❌ Receipt Modal: Modal closed or no receipt data provided");
     return null;
   }
 
