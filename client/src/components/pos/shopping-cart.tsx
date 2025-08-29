@@ -826,7 +826,14 @@ export function ShoppingCart({
           total={total}
           selectedPaymentMethod={selectedPaymentMethod}
           cartItems={cart.map((item) => {
-            console.log("🔄 Mapping cart item for E-Invoice:", item.name, "Price:", item.price, "Qty:", item.quantity, "AfterTaxPrice:", item.afterTaxPrice);
+            console.log("🔄 Mapping cart item for E-Invoice:", {
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+              afterTaxPrice: item.afterTaxPrice,
+              afterTaxPriceType: typeof item.afterTaxPrice,
+              taxRate: item.taxRate
+            });
 
             return {
               id: item.id,
@@ -835,7 +842,7 @@ export function ShoppingCart({
               quantity: item.quantity,
               sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
               taxRate: parseFloat(item.taxRate || "0"),
-              afterTaxPrice: item.afterTaxPrice ? (typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice) : null,
+              afterTaxPrice: item.afterTaxPrice, // Keep original format to preserve data
             };
           })}
         />
