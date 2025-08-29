@@ -430,8 +430,34 @@ export function ShoppingCart({
         console.log('🧹 Shopping cart: Auto clearing cart after fallback receipt modal shown');
         onClearCart();
       }, 100);
-    }ate().toISOString(),
-        invoiceNumber: eInvoiceData.invoiceNumber || null,
+    }
+    
+    // Create fallback receipt data from current cart
+    const receiptData = {
+      transactionId: eInvoiceData.invoiceNumber || eInvoiceData.savedInvoice?.tradeNumber || `TXN-${Date.now()}`,
+      items: cart.map((item) => ({
+        id: item.id,
+        productId: item.id,
+        productName: item.name,
+        price: parseFloat(item.price).toFixed(2),
+        quantity: item.quantity,
+        total: parseFloat(item.total).toFixed(2),
+        sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+        taxRate: parseFloat(item.taxRate || "10"),
+        afterTaxPrice: item.afterTaxPrice,
+      })),
+      subtotal: subtotal.toFixed(2),
+      tax: tax.toFixed(2),
+      total: total.toFixed(2),
+      paymentMethod: "einvoice",
+      originalPaymentMethod: selectedPaymentMethod,
+      amountReceived: total.toFixed(2),
+      change: "0.00",
+      cashierName: "System User",
+      createdAt: new Date().toISOString(),
+      customerName: eInvoiceData.customerName || "Khách hàng",
+      customerTaxCode: eInvoiceData.taxCode || "",
+      invoiceNumber: eInvoiceData.invoiceNumber || null,
         customerName: eInvoiceData.customerName || "Khách hàng",
         customerTaxCode: eInvoiceData.taxCode || "",
       };
