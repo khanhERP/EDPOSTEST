@@ -169,46 +169,50 @@ export function EInvoiceModal({
   });
 
   // Fetch E-invoice connections
-  const { data: eInvoiceConnections = [] } = useQuery<any[]>({
+  const { data: eInvoiceConnections = [], isLoading: connectionsLoading } = useQuery<any[]>({
     queryKey: ["/api/einvoice-connections"],
     enabled: isOpen,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Fetch active invoice templates for dropdown
-  const { data: allInvoiceTemplates = [] } = useQuery<any[]>({
+  const { data: allInvoiceTemplates = [], isLoading: templatesLoading } = useQuery<any[]>({
     queryKey: ["/api/invoice-templates/active"],
     enabled: isOpen,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Fetch products for SKU lookup
   const { data: products } = useQuery({
     queryKey: ["/api/products"],
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   // Filter templates to only show ones that are in use (useCK: true)
   const invoiceTemplates = allInvoiceTemplates.filter(
-    (template) => template.useCK === true,
+    (template) => template && template.useCK === true,
   );
 
   // Reset form only when modal opens, not when cartItems/total changes
   useEffect(() => {
-    if (isOpen) {
-      console.log("🔥 E-INVOICE MODAL OPENING");
+    if (isOpen && !templatesLoading && !connectionsLoading) {
+      console.log("🔥 E-INVOICE MODAL OPENING WITH DATA READY");
       console.log("🔥 cartItems when modal opens:", cartItems);
-      console.log(
-        "🔥 cartItems length when modal opens:",
-        cartItems?.length || 0,
-      );
-      console.log(
-        "🔥 cartItems is array when modal opens:",
-        Array.isArray(cartItems),
-      );
+      console.log("🔥 cartItems length when modal opens:", cartItems?.length || 0);
+      console.log("🔥 cartItems is array when modal opens:", Array.isArray(cartItems));
       console.log("🔥 total when modal opens:", total);
+      console.log("🔥 Available templates:", invoiceTemplates.length);
 
+      // Set default template if available
+      const defaultTemplateId = invoiceTemplates.length > 0 ? invoiceTemplates[0].id.toString() : "";
+      
       setFormData({
         invoiceProvider: "EasyInvoice", // Default provider
         invoiceTemplate: "1C25TYY", // Default template
-        selectedTemplateId: "",
+        selectedTemplateId: defaultTemplateId,
         taxCode: "0123456789", // Default tax code
         customerName: "Khách hàng lẻ", // Default customer name
         address: "",
@@ -216,11 +220,11 @@ export function EInvoiceModal({
         email: "",
       });
     }
-  }, [isOpen]); // Only reset when modal opens/closes
+  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]); // Reset when modal opens and data is ready
 
   // Separate effect for debugging cartItems changes without resetting form
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && cartItems && Array.isArray(cartItems)) {
       console.log("🔄 Cart items or total changed:", {
         cartItems: cartItems?.length || 0,
         total,
@@ -1358,6 +1362,14 @@ export function EInvoiceModal({
         </DialogHeader>
 
         <div className="p-6 space-y-6">
+          {/* Loading indicator */}
+          {(templatesLoading || connectionsLoading) && (
+            <div className="flex items-center justify-center py-4">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-sm text-gray-600">Đang tải dữ liệu...</span>
+            </div>
+          )}
+          
           {/* E-invoice Provider Information */}
           <div>
             <h3 className="text-base font-medium mb-4">
@@ -1395,9 +1407,18 @@ export function EInvoiceModal({
                   onValueChange={(value) =>
                     handleInputChange("selectedTemplateId", value)
                   }
+                  disabled={templatesLoading || invoiceTemplates.length === 0}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={t("einvoice.selectTemplate")} />
+                    <SelectValue 
+                      placeholder={
+                        templatesLoading 
+                          ? "Đang tải mẫu số..." 
+                          : invoiceTemplates.length === 0
+                          ? "Không có mẫu số nào"
+                          : t("einvoice.selectTemplate")
+                      } 
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     {invoiceTemplates.map((template) => (
@@ -1405,7 +1426,7 @@ export function EInvoiceModal({
                         key={template.id}
                         value={template.id.toString()}
                       >
-                        {template.name}
+                        {template.name} ({template.templateNumber})
                       </SelectItem>
                     ))}
                   </SelectContent>
