@@ -199,7 +199,7 @@ export function EInvoiceModal({
 
   // Reset form only when modal opens, not when cartItems/total changes
   useEffect(() => {
-    if (isOpen && !templatesLoading && !connectionsLoading) {
+    if (isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0) {
       console.log("🔥 E-INVOICE MODAL OPENING WITH DATA READY");
       console.log("🔥 cartItems when modal opens:", cartItems);
       console.log("🔥 cartItems length when modal opens:", cartItems?.length || 0);
@@ -221,7 +221,7 @@ export function EInvoiceModal({
         email: "",
       });
     }
-  }, [isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0]); // Only reset when truly ready
+  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]); // Proper dependency array
 
   // Separate effect for debugging cartItems changes without resetting form
   useEffect(() => {
@@ -1400,6 +1400,14 @@ export function EInvoiceModal({
             </div>
           )}
 
+          {/* Data availability warning */}
+          {isOpen && !templatesLoading && !connectionsLoading && 
+           (!cartItems || cartItems.length === 0) && (!total || total === 0) && (
+            <div className="flex items-center justify-center py-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <span className="text-sm text-yellow-700">⚠️ Chưa có dữ liệu giỏ hàng. Vui lòng thử lại.</span>
+            </div>
+          )}
+
           {/* E-invoice Provider Information */}
           <div>
             <h3 className="text-base font-medium mb-4">
@@ -1591,47 +1599,42 @@ export function EInvoiceModal({
                     cartItemsData: cartItems
                   });
 
+                  // Priority: Use total prop first if valid, then calculate from cartItems as fallback
                   let displayTotal = 0;
 
-                  // If total prop is provided and valid, use it directly
-                  if (total && typeof total === 'number' && !isNaN(total) && total > 0) {
+                  // First try to use the total prop if it's valid
+                  if (total && typeof total === 'number' && total > 0) {
                     displayTotal = total;
-                    console.log('💰 EInvoice Modal - Using total prop (exact):', displayTotal);
-                  } else if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-                    // Calculate from cart items using afterTaxPrice for accuracy
+                    console.log('💰 EInvoice Modal - Using total prop:', displayTotal);
+                  } 
+                  // If no valid total prop, calculate from cartItems
+                  else if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
                     displayTotal = cartItems.reduce((sum, item) => {
-                      const price = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
-                      const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
+                      const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+                      const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
                       
-                      // Always prefer afterTaxPrice if available
+                      // Use afterTaxPrice if available for exact calculation
                       if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
                         const afterTaxPrice = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
-                        if (!isNaN(afterTaxPrice) && afterTaxPrice > 0) {
-                          const itemTotal = afterTaxPrice * quantity;
-                          console.log(`💰 EInvoice - Using afterTaxPrice for ${item.name}: ${afterTaxPrice} x ${quantity} = ${itemTotal}`);
-                          return sum + itemTotal;
-                        }
+                        return sum + (afterTaxPrice * quantity);
+                      } else {
+                        // Fallback to price + tax calculation
+                        const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
+                        const subtotal = price * quantity;
+                        const tax = (subtotal * taxRate) / 100;
+                        return sum + subtotal + tax;
                       }
-                      
-                      // Fallback: calculate with tax rate
-                      const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
-                      const subtotal = price * quantity;
-                      const tax = (subtotal * taxRate) / 100;
-                      const itemTotal = subtotal + tax;
-                      console.log(`💰 EInvoice - Calculated for ${item.name}: ${price} x ${quantity} + ${taxRate}% tax = ${itemTotal}`);
-                      return sum + itemTotal;
                     }, 0);
-                    console.log('💰 EInvoice Modal - Calculated total from cartItems:', displayTotal);
+                    console.log('💰 EInvoice Modal - Calculated from cartItems:', displayTotal);
+                  }
+                  // If still no data, show loading state instead of 0
+                  else if (isOpen && (!cartItems || cartItems.length === 0) && (!total || total === 0)) {
+                    console.log('💰 EInvoice Modal - No data available, showing loading');
+                    return "Đang tải...";
                   }
 
                   console.log('💰 EInvoice Modal - Final display total:', displayTotal);
-                  
-                  // Return formatted total, ensuring it's a valid number
-                  const finalTotal = displayTotal && displayTotal > 0 ? displayTotal : 0;
-                  return finalTotal.toLocaleString("vi-VN", {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                  });
+                  return Math.floor(displayTotal).toLocaleString("vi-VN");
                 })()}
                 {" "}₫
               </span>
