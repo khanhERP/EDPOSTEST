@@ -200,25 +200,15 @@ export function EInvoiceModal({
 
   // Initialize form data when modal opens and templates are loaded
   useEffect(() => {
-    if (isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0) {
+    if (isOpen && !templatesLoading && !connectionsLoading) {
       console.log("🔥 E-INVOICE MODAL OPENING - INITIALIZING DATA");
       console.log("🔥 Available templates:", invoiceTemplates);
 
-      const defaultTemplate = invoiceTemplates[0];
-      const defaultTemplateId = defaultTemplate.id.toString();
-
-      console.log("🎯 Setting default template:", {
-        template: defaultTemplate,
-        templateId: defaultTemplateId,
-        templateName: defaultTemplate.name,
-        templateNumber: defaultTemplate.templateNumber
-      });
-
-      // Set form data with default template
-      const initialFormData = {
+      // Always initialize basic form data
+      let initialFormData = {
         invoiceProvider: "EasyInvoice",
-        invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY", // Set a default name/number for display
-        selectedTemplateId: defaultTemplateId, // Store template ID for selection
+        invoiceTemplate: "1C25TYY", // Default fallback
+        selectedTemplateId: "", // Will be set below if templates available
         taxCode: "0123456789",
         customerName: "Khách hàng lẻ",
         address: "",
@@ -226,10 +216,32 @@ export function EInvoiceModal({
         email: "",
       };
 
+      // Set template data if templates are available
+      if (invoiceTemplates.length > 0) {
+        const defaultTemplate = invoiceTemplates[0];
+        const defaultTemplateId = defaultTemplate.id.toString();
+
+        console.log("🎯 Setting default template:", {
+          template: defaultTemplate,
+          templateId: defaultTemplateId,
+          templateName: defaultTemplate.name,
+          templateNumber: defaultTemplate.templateNumber
+        });
+
+        initialFormData = {
+          ...initialFormData,
+          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY",
+          selectedTemplateId: defaultTemplateId,
+        };
+
+        console.log("✅ Template set to:", defaultTemplateId);
+      } else {
+        console.log("⚠️ No templates available, using defaults");
+      }
+
       setFormData(initialFormData);
-      console.log("✅ Template set to:", defaultTemplateId);
     }
-  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]);
+  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates]);
 
 
 
@@ -439,12 +451,12 @@ export function EInvoiceModal({
       return;
     }
 
-    // Ensure we have a valid template before proceeding
+    // Get current form data and ensure template is set
     let currentFormData = { ...formData };
 
-    // Force template selection if not set
-    if (!currentFormData.selectedTemplateId || currentFormData.selectedTemplateId === "" || invoiceTemplates.length === 0) {
-      console.log("🔧 Template not set, forcing selection...");
+    // Always ensure we have a template - even if user hasn't selected one
+    if (!currentFormData.selectedTemplateId || currentFormData.selectedTemplateId === "") {
+      console.log("🔧 Template not set, auto-selecting first available template...");
 
       if (invoiceTemplates.length > 0) {
         const defaultTemplate = invoiceTemplates[0];
@@ -452,13 +464,14 @@ export function EInvoiceModal({
 
         console.log("✅ Auto-selecting template:", defaultTemplateId, defaultTemplate.name);
 
-        // Update both state and current data
+        // Update both state and current data immediately
         currentFormData = {
           ...currentFormData,
           selectedTemplateId: defaultTemplateId,
           invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
         };
 
+        // Update the state for UI consistency
         setFormData(currentFormData);
       } else {
         console.error("❌ No templates available");
@@ -471,11 +484,13 @@ export function EInvoiceModal({
       }
     }
 
-    console.log("🔍 Final template validation:", {
+    console.log("🔍 Final template validation for publish later:", {
       selectedTemplateId: currentFormData.selectedTemplateId,
-      templatesCount: invoiceTemplates.length
+      templatesCount: invoiceTemplates.length,
+      currentFormData: currentFormData
     });
 
+    // Validate required fields
     if (!currentFormData.customerName.trim()) {
       toast({
         title: "Lỗi validation",
@@ -636,13 +651,14 @@ export function EInvoiceModal({
         console.error("❌ Error creating transaction:", transactionError);
       }
 
-      // Create receipt data for display
+      // Create receipt data for display with proper tax calculations
       const receiptData = {
         transactionId: invoiceResult?.invoice?.tradeNumber || `TXN-${Date.now()}`,
         items: cartItems.map((item) => {
           const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
           const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
 
+          // Use the same calculation logic as in the invoice payload
           let itemTotalWithTax;
           if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
             const afterTaxPrice = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
@@ -1333,6 +1349,17 @@ export function EInvoiceModal({
     if (!isOpen) {
       setIsPublishing(false);
       setIsPublishingLater(false);
+      // Reset form data to ensure clean state for next opening
+      setFormData({
+        invoiceProvider: "",
+        invoiceTemplate: "",
+        selectedTemplateId: "",
+        taxCode: "",
+        customerName: "",
+        address: "",
+        phoneNumber: "",
+        email: "",
+      });
     }
   }, [isOpen]);
 
