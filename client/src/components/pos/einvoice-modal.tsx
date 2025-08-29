@@ -599,9 +599,9 @@ export function EInvoiceModal({
             transactionId: `EINV-DRAFT-${Date.now()}`,
             subtotal: calculatedSubtotal.toFixed(2),
             tax: calculatedTax.toFixed(2),
-            total: total.toFixed(2),
+            total: (typeof total === "number" && !isNaN(total) ? total : calculatedSubtotal + calculatedTax).toFixed(2),
             paymentMethod: "einvoice",
-            amountReceived: total.toFixed(2),
+            amountReceived: (typeof total === "number" && !isNaN(total) ? total : calculatedSubtotal + calculatedTax).toFixed(2),
             change: "0.00",
             cashierName: "E-Invoice System",
             notes: `E-Invoice Draft - Trừ tồn kho: ${invoiceResult?.invoice?.tradeNumber || 'N/A'}`,
@@ -611,17 +611,10 @@ export function EInvoiceModal({
           items: cartItems.map((item) => {
             const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
             const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-            
-            // Use afterTaxPrice for total if available, otherwise calculate with base price + tax
-            let itemTotalForTransaction;
-            if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
-              const afterTaxPrice = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
-              itemTotalForTransaction = afterTaxPrice * itemQuantity;
-              console.log(`📦 Transaction item (afterTaxPrice): ${item.name} - afterTax: ${afterTaxPrice}, qty: ${itemQuantity}, total: ${itemTotalForTransaction}`);
-            } else {
-              itemTotalForTransaction = itemPrice * itemQuantity;
-              console.log(`📦 Transaction item (basePrice): ${item.name} - price: ${itemPrice}, qty: ${itemQuantity}, total: ${itemTotalForTransaction}`);
-            }
+
+            // Use base price for transaction items (inventory deduction based on base price)
+            const itemTotalForTransaction = itemPrice * itemQuantity;
+            console.log(`📦 Transaction item: ${item.name} - price: ${itemPrice}, qty: ${itemQuantity}, total: ${itemTotalForTransaction}`);
 
             return {
               productId: item.id,
@@ -654,31 +647,26 @@ export function EInvoiceModal({
         console.error("❌ Error creating transaction for inventory:", transactionError);
       }
 
-      // Create receipt data for "Phát hành sau" with consistent calculations
+      // Create receipt data for "Phát hành sau" using proper total from props
       const receiptData = {
         transactionId: invoiceResult?.invoice?.tradeNumber || `TXN-${Date.now()}`,
         items: cartItems.map((item) => {
-          const itemPrice =
-            typeof item.price === "string"
-              ? parseFloat(item.price)
-              : item.price;
-          const itemQuantity =
-            typeof item.quantity === "string"
-              ? parseInt(item.quantity)
-              : item.quantity;
+          const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+          const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
 
-          // Use exact same tax calculation as in invoice payload
+          // For receipt display, use afterTaxPrice if available for exact amounts
           let itemTotalWithTax;
           if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
             const afterTaxPrice = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
             itemTotalWithTax = afterTaxPrice * itemQuantity;
-            console.log(`🧾 Receipt item calculation (afterTaxPrice): ${item.name} - afterTax: ${afterTaxPrice}, qty: ${itemQuantity}, total: ${itemTotalWithTax}`);
+            console.log(`🧾 Receipt item (afterTaxPrice): ${item.name} - afterTax: ${afterTaxPrice}, qty: ${itemQuantity}, total: ${itemTotalWithTax}`);
           } else {
+            // Calculate with tax rate
             const itemTaxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "0") : item.taxRate || 0;
             const itemSubtotal = itemPrice * itemQuantity;
             const itemTax = (itemSubtotal * itemTaxRate) / 100;
             itemTotalWithTax = itemSubtotal + itemTax;
-            console.log(`🧾 Receipt item calculation (taxRate): ${item.name} - base: ${itemPrice}, qty: ${itemQuantity}, tax: ${itemTax}, total: ${itemTotalWithTax}`);
+            console.log(`🧾 Receipt item (calculated): ${item.name} - base: ${itemPrice}, qty: ${itemQuantity}, tax: ${itemTax}, total: ${itemTotalWithTax}`);
           }
 
           return {
@@ -695,10 +683,10 @@ export function EInvoiceModal({
         }),
         subtotal: calculatedSubtotal.toFixed(2),
         tax: calculatedTax.toFixed(2),
-        total: (typeof total === "number" && !isNaN(total) ? total : calculatedSubtotal + calculatedTax).toFixed(2),
+        total: total.toFixed(2), // Use exact total from props
         paymentMethod: "einvoice",
         originalPaymentMethod: selectedPaymentMethod,
-        amountReceived: (typeof total === "number" && !isNaN(total) ? total : calculatedSubtotal + calculatedTax).toFixed(2),
+        amountReceived: total.toFixed(2), // Use exact total from props
         change: "0.00",
         cashierName: "System User",
         createdAt: new Date().toISOString(),
@@ -719,7 +707,7 @@ export function EInvoiceModal({
       const completeInvoiceData = {
         ...formData,
         cartItems: cartItems,
-        total: total || 0,
+        total: total,
         paymentMethod: selectedPaymentMethod,
         originalPaymentMethod: selectedPaymentMethod,
         source: source || "pos",
@@ -1370,7 +1358,7 @@ export function EInvoiceModal({
           {/* Loading indicator */}
           {(templatesLoading || connectionsLoading) && (
             <div className="flex items-center justify-center py-4">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent rounded-full mr-2"></div>
               <span className="ml-2 text-sm text-gray-600">Đang tải dữ liệu...</span>
             </div>
           )}
@@ -1520,7 +1508,7 @@ export function EInvoiceModal({
                   >
                     {isTaxCodeLoading ? (
                       <>
-                        <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full mr-2" />
+                        <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full mr-2"></div>
                         Đang tải...
                       </>
                     ) : (
@@ -1715,7 +1703,7 @@ export function EInvoiceModal({
             >
               {isPublishing ? (
                 <>
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
                   {t("einvoice.publishing") || "Đang phát hành..."}
                 </>
               ) : (
@@ -1739,7 +1727,7 @@ export function EInvoiceModal({
             >
               {isPublishing ? (
                 <>
-                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
                   Đang xử lý...
                 </>
               ) : (
