@@ -60,6 +60,9 @@ interface Invoice {
 export function DashboardOverview() {
   const { t, currentLanguage } = useTranslation();
 
+  // Add error boundary
+  try {
+
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -127,11 +130,38 @@ export function DashboardOverview() {
   };
 
   const getDashboardStats = () => {
+    // Add proper loading and error checks
+    if (invoicesLoading || ordersLoading) {
+      return {
+        periodRevenue: 0,
+        periodOrderCount: 0,
+        periodCustomerCount: 0,
+        dailyAverageRevenue: 0,
+        activeOrders: 0,
+        occupiedTables: 0,
+        monthRevenue: 0,
+        averageOrderValue: 0,
+        peakHour: 12,
+        totalTables: Array.isArray(tables) ? tables.length : 0,
+      };
+    }
+
     if (
       !tables ||
       !Array.isArray(tables)
     )
-      return null;
+      return {
+        periodRevenue: 0,
+        periodOrderCount: 0,
+        periodCustomerCount: 0,
+        dailyAverageRevenue: 0,
+        activeOrders: 0,
+        occupiedTables: 0,
+        monthRevenue: 0,
+        averageOrderValue: 0,
+        peakHour: 12,
+        totalTables: 0,
+      };
 
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -343,6 +373,34 @@ export function DashboardOverview() {
       day: "numeric",
     });
   };
+
+  // Show loading state
+  if (invoicesLoading || ordersLoading) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="text-gray-500">{t("reports.loading")}</div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (invoicesError || ordersError) {
+    return (
+      <div className="flex justify-center py-8">
+        <div className="text-red-500">
+          Lỗi tải dữ liệu báo cáo: {invoicesError?.message || ordersError?.message || "Unknown error"}
+          <Button 
+            onClick={handleRefresh} 
+            variant="outline" 
+            size="sm" 
+            className="ml-4"
+          >
+            Thử lại
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (!stats) {
     return (
@@ -570,4 +628,21 @@ export function DashboardOverview() {
       </div>
     </div>
   );
+  } catch (error) {
+    console.error("Dashboard Overview Error:", error);
+    return (
+      <div className="flex justify-center py-8">
+        <div className="text-red-500">
+          <p className="mb-4">Lỗi hiển thị dashboard</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline" 
+            size="sm"
+          >
+            Tải lại trang
+          </Button>
+        </div>
+      </div>
+    );
+  }
 }
