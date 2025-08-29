@@ -405,25 +405,27 @@ export function ReceiptModal({
           </div>
 
           <div className="space-y-2 mb-3">
-            {receipt?.items?.map((item) => {
+            {(receipt?.items || cartItems)?.map((item) => {
               // For receipt display, show the unit price (base price without tax) and total from order details
-              const unitPrice = parseFloat(item.price);
+              const unitPrice = parseFloat(item.price || item.unitPrice || '0');
+              const quantity = item.quantity || 1;
+              const itemTotal = item.total ? parseFloat(item.total) : (unitPrice * quantity);
 
               return (
-                <div key={item.id}>
+                <div key={item.id || item.productId}>
                   <div className="flex justify-between text-sm">
                     <div className="flex-1">
-                      <div>{item.productName}</div>
+                      <div>{item.productName || item.name}</div>
                       <div className="text-xs text-gray-600">
                         SKU:{" "}
-                        {`FOOD${String(item.productId || item.id).padStart(5, "0")}`}
+                        {item.sku || `FOOD${String(item.productId || item.id).padStart(5, "0")}`}
                       </div>
                       <div className="text-xs text-gray-600">
-                        {item.quantity} x{" "}
-                        {Math.floor(parseFloat(item.total) / item.quantity).toLocaleString("vi-VN")} ₫
+                        {quantity} x{" "}
+                        {Math.floor(unitPrice).toLocaleString("vi-VN")} ₫
                       </div>
                     </div>
-                    <div>{Math.floor(parseFloat(item.total)).toLocaleString("vi-VN")} ₫</div>
+                    <div>{Math.floor(itemTotal).toLocaleString("vi-VN")} ₫</div>
                   </div>
                 </div>
               );
@@ -435,11 +437,28 @@ export function ReceiptModal({
               <span>Tạm tính</span>
               <span>
                 {(() => {
-                  // Always prioritize exact values passed from parent component
-                  const subtotalValue = receipt?.exactSubtotal !== undefined
-                    ? receipt.exactSubtotal
-                    : parseFloat(receipt?.subtotal || "0");
-                  console.log('💰 Receipt Modal - Subtotal display:', subtotalValue, 'from exactSubtotal:', receipt?.exactSubtotal, 'from subtotal:', receipt?.subtotal);
+                  // Priority: exactSubtotal > subtotal > calculate from items
+                  let subtotalValue = 0;
+                  
+                  if (receipt?.exactSubtotal !== undefined) {
+                    subtotalValue = receipt.exactSubtotal;
+                  } else if (receipt?.subtotal) {
+                    subtotalValue = parseFloat(receipt.subtotal);
+                  } else if (cartItems?.length > 0) {
+                    // Calculate from cartItems
+                    subtotalValue = cartItems.reduce((sum, item) => {
+                      const price = parseFloat(item.price || '0');
+                      const quantity = item.quantity || 1;
+                      return sum + (price * quantity);
+                    }, 0);
+                  } else if (receipt?.items?.length > 0) {
+                    // Fallback to receipt items
+                    subtotalValue = receipt.items.reduce((sum, item) => {
+                      return sum + parseFloat(item.price || '0') * item.quantity;
+                    }, 0);
+                  }
+                  
+                  console.log('💰 Receipt Modal - Subtotal display:', subtotalValue, 'from exactSubtotal:', receipt?.exactSubtotal, 'from subtotal:', receipt?.subtotal, 'cartItems length:', cartItems?.length);
                   return Math.floor(subtotalValue).toLocaleString("vi-VN");
                 })()} ₫
               </span>
@@ -448,11 +467,30 @@ export function ReceiptModal({
               <span>Thuế:</span>
               <span>
                 {(() => {
-                  // Always prioritize exact values passed from parent component
-                  const taxValue = receipt?.exactTax !== undefined
-                    ? receipt.exactTax
-                    : parseFloat(receipt?.tax || "0");
-                  console.log('💰 Receipt Modal - Tax display:', taxValue, 'from exactTax:', receipt?.exactTax, 'from tax:', receipt?.tax);
+                  // Priority: exactTax > tax > calculate from items
+                  let taxValue = 0;
+                  
+                  if (receipt?.exactTax !== undefined) {
+                    taxValue = receipt.exactTax;
+                  } else if (receipt?.tax) {
+                    taxValue = parseFloat(receipt.tax);
+                  } else if (cartItems?.length > 0) {
+                    // Calculate tax from cartItems using afterTaxPrice logic
+                    taxValue = cartItems.reduce((sum, item) => {
+                      if (item.taxRate && parseFloat(item.taxRate || '0') > 0) {
+                        const basePrice = parseFloat(item.price || '0');
+                        const quantity = item.quantity || 1;
+                        
+                        // Calculate tax using taxRate
+                        const taxRate = parseFloat(item.taxRate || '0') / 100;
+                        const itemTax = basePrice * taxRate * quantity;
+                        return sum + itemTax;
+                      }
+                      return sum;
+                    }, 0);
+                  }
+                  
+                  console.log('💰 Receipt Modal - Tax display:', taxValue, 'from exactTax:', receipt?.exactTax, 'from tax:', receipt?.tax, 'cartItems length:', cartItems?.length);
                   return Math.floor(taxValue).toLocaleString("vi-VN");
                 })()} ₫
               </span>
@@ -461,11 +499,38 @@ export function ReceiptModal({
               <span>{t("pos.total")}</span>
               <span>
                 {(() => {
-                  // Always prioritize exact values passed from parent component
-                  const totalValue = receipt?.exactTotal !== undefined
-                    ? receipt.exactTotal
-                    : parseFloat(receipt?.total || "0");
-                  console.log('💰 Receipt Modal - Total display:', totalValue, 'from exactTotal:', receipt?.exactTotal, 'from total:', receipt?.total);
+                  // Priority: exactTotal > total > passed total prop > calculate from items
+                  let totalValue = 0;
+                  
+                  if (receipt?.exactTotal !== undefined) {
+                    totalValue = receipt.exactTotal;
+                  } else if (receipt?.total) {
+                    totalValue = parseFloat(receipt.total);
+                  } else if (total) {
+                    totalValue = typeof total === 'string' ? parseFloat(total) : total;
+                  } else if (cartItems?.length > 0) {
+                    // Calculate total from cartItems
+                    const subtotal = cartItems.reduce((sum, item) => {
+                      const price = parseFloat(item.price || '0');
+                      const quantity = item.quantity || 1;
+                      return sum + (price * quantity);
+                    }, 0);
+                    
+                    const tax = cartItems.reduce((sum, item) => {
+                      if (item.taxRate && parseFloat(item.taxRate || '0') > 0) {
+                        const basePrice = parseFloat(item.price || '0');
+                        const quantity = item.quantity || 1;
+                        const taxRate = parseFloat(item.taxRate || '0') / 100;
+                        const itemTax = basePrice * taxRate * quantity;
+                        return sum + itemTax;
+                      }
+                      return sum;
+                    }, 0);
+                    
+                    totalValue = subtotal + tax;
+                  }
+                  
+                  console.log('💰 Receipt Modal - Total display:', totalValue, 'from exactTotal:', receipt?.exactTotal, 'from total:', receipt?.total, 'from total prop:', total);
                   return Math.floor(totalValue).toLocaleString("vi-VN");
                 })()} ₫
               </span>
