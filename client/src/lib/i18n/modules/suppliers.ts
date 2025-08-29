@@ -1,5 +1,4 @@
-
-import type { SuppliersTranslations } from '../types';
+import type { SuppliersTranslations } from "../types";
 
 export const suppliersTranslations: { [key: string]: SuppliersTranslations } = {
   ko: {
