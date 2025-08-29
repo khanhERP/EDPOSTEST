@@ -660,6 +660,7 @@ export function EInvoiceModal({
               total: (itemSubtotal + itemTax).toFixed(2),
               sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
               taxRate: itemTaxRate,
+              afterTaxPrice: item.afterTaxPrice,
             };
           }),
           subtotal: calculatedSubtotal.toFixed(2),

@@ -378,13 +378,22 @@ export function ShoppingCart({
     // Ensure we have receipt data to show - prioritize receipt from eInvoiceData
     if (eInvoiceData.receipt) {
       console.log('✅ Using receipt data from E-Invoice response');
+      console.log('📄 Receipt data details:', eInvoiceData.receipt);
+      
+      // Show receipt modal immediately before clearing cart
       setSelectedReceipt(eInvoiceData.receipt);
       setShowReceiptModal(true);
+      
+      // Small delay to ensure state is set before clearing cart
+      setTimeout(() => {
+        console.log('🧹 Shopping cart: Auto clearing cart after receipt modal shown');
+        onClearCart();
+      }, 100);
     } else {
       console.log('⚠️ No receipt in eInvoiceData, creating receipt from cart data');
       // Fallback: create receipt data from current cart and eInvoiceData
       const receiptData = {
-        transactionId: eInvoiceData.invoiceNumber || `TXN-${Date.now()}`,
+        transactionId: eInvoiceData.invoiceNumber || eInvoiceData.savedInvoice?.tradeNumber || `TXN-${Date.now()}`,
         items: cart.map((item) => ({
           id: item.id,
           productId: item.id,
@@ -394,6 +403,7 @@ export function ShoppingCart({
           total: parseFloat(item.total).toFixed(2),
           sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
           taxRate: parseFloat(item.taxRate || "10"),
+          afterTaxPrice: item.afterTaxPrice,
         })),
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
@@ -404,6 +414,23 @@ export function ShoppingCart({
         change: "0.00",
         cashierName: "System User",
         createdAt: new Date().toISOString(),
+        customerName: eInvoiceData.customerName || "Khách hàng",
+        customerTaxCode: eInvoiceData.taxCode || "",
+        invoiceNumber: eInvoiceData.invoiceNumber || null,
+      };
+      
+      console.log('📄 Fallback receipt data created:', receiptData);
+      
+      // Show receipt modal before clearing cart
+      setSelectedReceipt(receiptData);
+      setShowReceiptModal(true);
+      
+      // Small delay to ensure state is set before clearing cart
+      setTimeout(() => {
+        console.log('🧹 Shopping cart: Auto clearing cart after fallback receipt modal shown');
+        onClearCart();
+      }, 100);
+    }ate().toISOString(),
         invoiceNumber: eInvoiceData.invoiceNumber || null,
         customerName: eInvoiceData.customerName || "Khách hàng",
         customerTaxCode: eInvoiceData.taxCode || "",

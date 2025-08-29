@@ -76,11 +76,9 @@ export function ReceiptModal({
 
   // Log receipt modal state for debugging
   useEffect(() => {
-    console.log("🔍 Receipt Modal state:", {
-      isOpen,
-      hasReceipt: !!receipt,
-      isPreview,
-    });
+    const hasReceipt = receipt && receipt.items && receipt.items.length > 0;
+    const shouldShow = isOpen && (hasReceipt || isPreview);
+    console.log("🔍 Receipt Modal state:", { isOpen, hasReceipt, isPreview, shouldShow });
   }, [isOpen, receipt, isPreview]);
 
   // Debug: Log all props
@@ -93,7 +91,8 @@ export function ReceiptModal({
     onConfirm: !!onConfirm
   });
 
-  if (!receipt) {
+  // Early return if no receipt data and not in preview mode
+  if (!receipt && !isPreview) {
     console.log("❌ Receipt Modal: No receipt data provided");
     return null;
   }
@@ -386,8 +385,8 @@ export function ReceiptModal({
               <span>
                 {(() => {
                   // Always prioritize exact values passed from parent component
-                  const subtotalValue = receipt.exactSubtotal !== undefined 
-                    ? receipt.exactSubtotal 
+                  const subtotalValue = receipt.exactSubtotal !== undefined
+                    ? receipt.exactSubtotal
                     : parseFloat(receipt.subtotal || "0");
                   console.log('💰 Receipt Modal - Subtotal display:', subtotalValue, 'from exactSubtotal:', receipt.exactSubtotal, 'from subtotal:', receipt.subtotal);
                   return Math.floor(subtotalValue).toLocaleString("vi-VN");
@@ -399,8 +398,8 @@ export function ReceiptModal({
               <span>
                 {(() => {
                   // Always prioritize exact values passed from parent component
-                  const taxValue = receipt.exactTax !== undefined 
-                    ? receipt.exactTax 
+                  const taxValue = receipt.exactTax !== undefined
+                    ? receipt.exactTax
                     : parseFloat(receipt.tax || "0");
                   console.log('💰 Receipt Modal - Tax display:', taxValue, 'from exactTax:', receipt.exactTax, 'from tax:', receipt.tax);
                   return Math.floor(taxValue).toLocaleString("vi-VN");
@@ -412,8 +411,8 @@ export function ReceiptModal({
               <span>
                 {(() => {
                   // Always prioritize exact values passed from parent component
-                  const totalValue = receipt.exactTotal !== undefined 
-                    ? receipt.exactTotal 
+                  const totalValue = receipt.exactTotal !== undefined
+                    ? receipt.exactTotal
                     : parseFloat(receipt.total || "0");
                   console.log('💰 Receipt Modal - Total display:', totalValue, 'from exactTotal:', receipt.exactTotal, 'from total:', receipt.total);
                   return Math.floor(totalValue).toLocaleString("vi-VN");
