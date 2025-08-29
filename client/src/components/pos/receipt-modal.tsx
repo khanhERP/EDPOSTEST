@@ -94,7 +94,17 @@ export function ReceiptModal({
   // Early return if no receipt data and not in preview mode
   if (!receipt && !isPreview) {
     console.log("❌ Receipt Modal: No receipt data provided");
-    return null;
+
+    console.log("🔍 Receipt Modal state:", {
+      isOpen,
+      hasReceipt: !!receipt,
+      isPreview
+    });
+
+    // Early return if no receipt data to prevent null access errors
+    if (!receipt) {
+      return null;
+    }
   }
 
   // Additional safety check - if receipt is null and not in preview mode, return null
