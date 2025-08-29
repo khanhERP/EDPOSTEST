@@ -1574,8 +1574,8 @@ export function EInvoiceModal({
           {/* Total Amount Display */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex justify-between items-center">
-              <span className="font-medium">{t("einvoice.totalAmount") || "Tổng tiền hóa đơn"}</span>
-              <span className="text-lg font-bold text-blue-600">
+              <span className="font-medium text-lg">{t("einvoice.totalAmount") || "Tổng tiền hóa đơn"}</span>
+              <span className="text-xl font-bold text-blue-600">
                 {(() => {
                   // Tính toán từ cartItems nếu có dữ liệu
                   if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
@@ -1618,46 +1618,6 @@ export function EInvoiceModal({
                 {" "}₫
               </span>
             </div>
-
-            {/* Hiển thị chi tiết tính toán */}
-            {cartItems && Array.isArray(cartItems) && cartItems.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-gray-200 text-sm text-gray-600">
-                <div className="flex justify-between">
-                  <span>Tạm tính:</span>
-                  <span>
-                    {(() => {
-                      const subtotal = cartItems.reduce((sum, item) => {
-                        const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-                        const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
-                        return sum + (itemPrice * itemQuantity);
-                      }, 0);
-                      return Math.round(subtotal).toLocaleString("vi-VN");
-                    })()}₫
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Thuế:</span>
-                  <span>
-                    {(() => {
-                      const taxTotal = cartItems.reduce((sum, item) => {
-                        const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-                        const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
-
-                        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
-                          const afterTax = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
-                          return sum + ((afterTax - itemPrice) * itemQuantity);
-                        } else {
-                          const itemTaxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "0") : item.taxRate || 0;
-                          const itemSubtotal = itemPrice * itemQuantity;
-                          return sum + ((itemSubtotal * itemTaxRate) / 100);
-                        }
-                      }, 0);
-                      return Math.round(taxTotal).toLocaleString("vi-VN");
-                    })()}₫
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Virtual Keyboard Toggle */}
