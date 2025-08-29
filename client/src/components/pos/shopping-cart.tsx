@@ -835,7 +835,7 @@ export function ShoppingCart({
               quantity: item.quantity,
               sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
               taxRate: parseFloat(item.taxRate || "0"),
-              afterTaxPrice: item.afterTaxPrice, // Ensure afterTaxPrice is passed correctly
+              afterTaxPrice: item.afterTaxPrice ? (typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice) : null,
             };
           })}
         />
