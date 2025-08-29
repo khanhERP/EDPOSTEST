@@ -1798,6 +1798,7 @@ export interface TablesTranslations {
   productTypeLabel: string;
   productTypePlaceholder: string;
   addTableDesc: string;
+  deleteorder: string;
 }
 
 // Type-safe translation keys
