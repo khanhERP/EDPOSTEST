@@ -199,7 +199,7 @@ export function EInvoiceModal({
 
   // Initialize form data when modal opens and templates are loaded
   useEffect(() => {
-    if (isOpen && !templatesLoading && !connectionsLoading) {
+    if (isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0) {
       console.log("🔥 E-INVOICE MODAL OPENING - INITIALIZING DATA");
       console.log("🔥 Templates loading:", templatesLoading);
       console.log("🔥 Connections loading:", connectionsLoading);
@@ -207,31 +207,22 @@ export function EInvoiceModal({
       console.log("🔥 cartItems when modal opens:", cartItems);
       console.log("🔥 total when modal opens:", total);
 
-      // Always ensure we have a template selected if templates are available
-      const shouldSetTemplate = invoiceTemplates.length > 0 && (
-        !formData.selectedTemplateId || 
-        formData.selectedTemplateId === "" ||
-        !isProcessed // Allow template reset if not currently processing
-      );
+      // Always set template immediately when modal opens with templates available
+      const defaultTemplateId = invoiceTemplates[0].id.toString();
+      console.log("🎯 Setting default template ID immediately:", defaultTemplateId);
 
-      if (shouldSetTemplate) {
-        const defaultTemplateId = invoiceTemplates[0].id.toString();
-        console.log("🎯 Setting default template ID:", defaultTemplateId);
-
-        setFormData(prev => ({
-          ...prev,
-          invoiceProvider: prev.invoiceProvider || "EasyInvoice",
-          invoiceTemplate: prev.invoiceTemplate || "1C25TYY", 
-          selectedTemplateId: defaultTemplateId,
-          taxCode: prev.taxCode || "0123456789",
-          customerName: prev.customerName || "Khách hàng lẻ",
-          address: prev.address || "",
-          phoneNumber: prev.phoneNumber || "",
-          email: prev.email || "",
-        }));
-      }
+      setFormData({
+        invoiceProvider: "EasyInvoice",
+        invoiceTemplate: "1C25TYY", 
+        selectedTemplateId: defaultTemplateId,
+        taxCode: "0123456789",
+        customerName: "Khách hàng lẻ",
+        address: "",
+        phoneNumber: "",
+        email: "",
+      });
     }
-  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length, isProcessed]);
+  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]);
 
   // Separate effect for debugging cartItems changes without resetting form
   useEffect(() => {
@@ -401,20 +392,8 @@ export function EInvoiceModal({
     console.log("🟡 Cart items:", cartItems);
     console.log("🟡 Total:", total);
 
-    // Ensure template is set before processing
-    let currentFormData = formData;
-    if (!formData.selectedTemplateId && invoiceTemplates.length > 0) {
-      const defaultTemplateId = invoiceTemplates[0].id.toString();
-      console.log("🟡 Setting template for publish later:", defaultTemplateId);
-      currentFormData = {
-        ...formData,
-        selectedTemplateId: defaultTemplateId
-      };
-      setFormData(currentFormData);
-    }
-
     // Validate that we have required data
-    if (!currentFormData.selectedTemplateId) {
+    if (!formData.selectedTemplateId) {
       console.error("❌ No template available for publish later");
       toast({
         title: "Lỗi",
@@ -424,7 +403,6 @@ export function EInvoiceModal({
       return;
     }
 
-    setIsProcessed(true); // Mark processing as started
     setIsPublishing(true); // Set publishing state
 
     try {
@@ -737,23 +715,11 @@ export function EInvoiceModal({
     console.log("🟢 Cart items:", cartItems);
     console.log("🟢 Invoice templates:", invoiceTemplates);
 
-    // Ensure template is set before processing
-    let currentFormData = formData;
-    if (!formData.selectedTemplateId && invoiceTemplates.length > 0) {
-      const defaultTemplateId = invoiceTemplates[0].id.toString();
-      console.log("🟢 Setting template for immediate publish:", defaultTemplateId);
-      currentFormData = {
-        ...formData,
-        selectedTemplateId: defaultTemplateId
-      };
-      setFormData(currentFormData);
-    }
-
-    // Validate required fields using current form data
-    if (!currentFormData.invoiceProvider || !currentFormData.customerName) {
+    // Validate required fields
+    if (!formData.invoiceProvider || !formData.customerName) {
       console.error("❌ Missing required fields:", {
-        invoiceProvider: currentFormData.invoiceProvider,
-        customerName: currentFormData.customerName
+        invoiceProvider: formData.invoiceProvider,
+        customerName: formData.customerName
       });
       toast({
         title: "Lỗi validation",
@@ -763,7 +729,7 @@ export function EInvoiceModal({
       return;
     }
 
-    if (!currentFormData.selectedTemplateId) {
+    if (!formData.selectedTemplateId) {
       console.error("❌ No template available");
       toast({
         title: "Lỗi hệ thống", 
@@ -774,7 +740,6 @@ export function EInvoiceModal({
     }
 
     setIsPublishing(true); // Set publishing to true
-    setIsProcessed(true); // Mark processing as started
 
     try {
       // Debug log current cart items
@@ -1291,17 +1256,8 @@ export function EInvoiceModal({
   };
 
   const handleCancel = () => {
-    setIsProcessed(false); // Reset processed state when closing
     onClose();
   };
-
-  // Reset processed state when modal closes
-  useEffect(() => {
-    if (!isOpen && isProcessed) {
-      console.log("🔄 Resetting processed state as modal closed");
-      setIsProcessed(false);
-    }
-  }, [isOpen, isProcessed]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(isOpen) => { if (isOpen) { onClose(); } else { onClose(); } }}>
@@ -1520,11 +1476,16 @@ export function EInvoiceModal({
                     cartItemsData: cartItems
                   });
 
-                  // Always prioritize cartItems calculation for accuracy
+                  // Always use total prop first if available, then calculate from cartItems
                   let displayTotal = 0;
 
-                  // Calculate from cartItems first (most reliable)
-                  if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
+                  // Prioritize total prop if it's a valid number
+                  if (total && typeof total === 'number' && total > 0) {
+                    displayTotal = total;
+                    console.log('💰 EInvoice Modal - Using total prop:', displayTotal);
+                  }
+                  // Calculate from cartItems as fallback
+                  else if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
                     displayTotal = cartItems.reduce((sum, item) => {
                       const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                       const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
@@ -1537,27 +1498,22 @@ export function EInvoiceModal({
                           console.log(`💰 Item ${item.name}: afterTaxPrice=${afterTaxPrice}, qty=${quantity}, total=${itemTotal}`);
                           return sum + itemTotal;
                         }
-                      } else {
-                        // Calculate with tax rate
-                        const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
-                        const subtotal = price * quantity;
-                        const tax = (subtotal * taxRate) / 100;
-                        const itemTotal = subtotal + tax;
-                        console.log(`💰 Item ${item.name}: price=${price}, qty=${quantity}, taxRate=${taxRate}%, total=${itemTotal}`);
-                        return sum + itemTotal;
                       }
+                      
+                      // Calculate with tax rate
+                      const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
+                      const subtotal = price * quantity;
+                      const tax = (subtotal * taxRate) / 100;
+                      const itemTotal = subtotal + tax;
+                      console.log(`💰 Item ${item.name}: price=${price}, qty=${quantity}, taxRate=${taxRate}%, total=${itemTotal}`);
+                      return sum + itemTotal;
                     }, 0);
                     console.log('💰 EInvoice Modal - Calculated from cartItems:', displayTotal);
                   }
-                  // Only use total prop if no cartItems available
-                  else if (total && typeof total === 'number' && total > 0) {
-                    displayTotal = total;
-                    console.log('💰 EInvoice Modal - Using total prop (no cartItems):', displayTotal);
-                  }
-                  // Show loading if no data
+                  // Show 0 if no valid data
                   else {
-                    console.log('💰 EInvoice Modal - No data available, showing loading');
-                    return "Đang tải...";
+                    console.log('💰 EInvoice Modal - No valid data, showing 0');
+                    return "0";
                   }
 
                   console.log('💰 EInvoice Modal - Final display total:', displayTotal);
@@ -1616,13 +1572,13 @@ export function EInvoiceModal({
               type="button"
               onClick={(e) => {
                 e.preventDefault();
-                if (!isProcessed && !isPublishing) {
+                if (!isPublishing) {
                   console.log("🟢 Phát hành button clicked");
                   handleConfirm();
                 }
               }}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={isPublishing || isProcessed}
+              disabled={isPublishing}
             >
               {isPublishing ? (
                 <>
@@ -1641,12 +1597,12 @@ export function EInvoiceModal({
               onClick={(e) => {
                 e.preventDefault();
                 console.log("🟡 Phát hành sau button clicked");
-                if (!isProcessed && !isPublishing) {
+                if (!isPublishing) {
                   handlePublishLater();
                 }
               }}
               className="flex-1 bg-gray-500 hover:bg-gray-600 text-white"
-              disabled={isPublishing || isProcessed}
+              disabled={isPublishing}
             >
               {isPublishing ? (
                 <>
@@ -1666,12 +1622,12 @@ export function EInvoiceModal({
               onClick={(e) => {
                 e.preventDefault();
                 console.log("❌ Cancel button clicked");
-                if (!isProcessed && !isPublishing) {
+                if (!isPublishing) {
                   handleCancel();
                 }
               }} 
               className="flex-1"
-              disabled={isPublishing || isProcessed}
+              disabled={isPublishing}
             >
               <span className="mr-2">❌</span>
               {t("einvoice.cancel") || "Hủy bỏ"}
