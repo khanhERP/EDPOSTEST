@@ -430,6 +430,12 @@ export function EInvoiceModal({
   const handlePublishLater = async () => {
     console.log("🟡 handlePublishLater called - CHỈ LƯU DRAFT, KHÔNG PHÁT HÀNH");
 
+    // Prevent multiple clicks
+    if (isPublishingLater || isPublishing) {
+      console.log("⚠️ Already processing, ignoring click");
+      return;
+    }
+
     // Validate cart items first
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
       console.error("❌ No valid cart items found for later publishing");
@@ -702,26 +708,33 @@ export function EInvoiceModal({
         }
       };
 
-      // Close modal and call onConfirm with publishLater flag
-      onClose();
-      onConfirm({
-        ...currentFormData, // Use currentFormData which might be updated with auto-selected template
-        cartItems: cartItems,
-        total: finalTotal,
-        paymentMethod: selectedPaymentMethod,
-        originalPaymentMethod: selectedPaymentMethod,
-        source: source || "pos",
-        orderId: orderId,
-        savedInvoice: invoiceResult?.invoice || null,
-        receipt: receiptData,
-        showReceiptModal: true,
-        publishLater: true, // Important flag to distinguish from immediate publish
-      });
+      console.log("✅ Draft invoice saved, preparing result data");
 
-      toast({
-        title: "Thành công",
-        description: "Hóa đơn đã được lưu để phát hành sau và hiển thị để in.",
-      });
+      // Close modal immediately to prevent reopening
+      setIsPublishingLater(false);
+      onClose();
+
+      // Then call onConfirm with publishLater flag
+      setTimeout(() => {
+        onConfirm({
+          ...currentFormData, // Use currentFormData which might be updated with auto-selected template
+          cartItems: cartItems,
+          total: finalTotal,
+          paymentMethod: selectedPaymentMethod,
+          originalPaymentMethod: selectedPaymentMethod,
+          source: source || "pos",
+          orderId: orderId,
+          savedInvoice: invoiceResult?.invoice || null,
+          receipt: receiptData,
+          showReceiptModal: true,
+          publishLater: true, // Important flag to distinguish from immediate publish
+        });
+
+        toast({
+          title: "Thành công",
+          description: "Hóa đơn đã được lưu để phát hành sau và hiển thị để in.",
+        });
+      }, 100);
 
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
@@ -736,7 +749,7 @@ export function EInvoiceModal({
         title: "Lỗi",
         description: errorMessage,
       });
-    } finally {
+      
       setIsPublishingLater(false);
     }
   };
@@ -1755,6 +1768,7 @@ export function EInvoiceModal({
               type="button"
               onClick={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 console.log("🟡 Phát hành sau button clicked");
                 if (!isPublishing && !isPublishingLater) {
                   handlePublishLater();
