@@ -6,7 +6,7 @@ import { AttendanceStats } from "@/components/attendance/attendance-stats";
 import { ClockInOut } from "@/components/attendance/clock-in-out";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, Clock, Users } from "lucide-react";
+import { Calendar, Clock, Users, ShoppingCart } from "lucide-react";
 import { Link } from "wouter";
 import { useTranslation } from "@/lib/i18n";
 
@@ -41,7 +41,8 @@ export default function AttendancePage() {
               </Link>
               <Link href="/">
                 <Button variant="outline">
-                  {t('tables.backToPOS')}
+                  <ShoppingCart className="w-4 h-4 mr-2" />
+                  Quay lại Bán hàng
                 </Button>
               </Link>
             </div>
