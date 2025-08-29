@@ -214,18 +214,26 @@ export function EInvoiceModal({
 
       console.log("🎯 Setting form data on modal open:", defaultTemplate);
 
-      setFormData({
+      // Force set form data immediately without conditions
+      const initialFormData = {
         invoiceProvider: "EasyInvoice",
-        invoiceTemplate: defaultTemplate.name || "1C25TYY",
+        invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY",
         selectedTemplateId: defaultTemplateId,
         taxCode: "0123456789",
         customerName: "Khách hàng lẻ",
         address: "",
         phoneNumber: "",
         email: "",
-      });
+      };
 
-      console.log("✅ Form data initialized with template:", defaultTemplateId);
+      setFormData(initialFormData);
+      console.log("✅ Form data initialized with template:", defaultTemplateId, initialFormData);
+      console.log("🔍 Template debug:", {
+        templateId: defaultTemplateId,
+        templateName: defaultTemplate.name,
+        templateNumber: defaultTemplate.templateNumber,
+        useCK: defaultTemplate.useCK
+      });
     }
   }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]);
 
@@ -425,34 +433,45 @@ export function EInvoiceModal({
       return;
     }
 
-    // Ensure template is set before processing
+    // Use current form data (may have been updated with auto-set template)
     let currentFormData = formData;
-    if (!formData.selectedTemplateId && invoiceTemplates.length > 0) {
-      const defaultTemplate = invoiceTemplates[0];
-      const defaultTemplateId = defaultTemplate.id.toString();
-      console.log("🟡 Setting template for publish later:", defaultTemplateId, defaultTemplate.name);
-      currentFormData = {
-        ...formData,
-        selectedTemplateId: defaultTemplateId,
-        invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber
-      };
-      setFormData(currentFormData);
-    }
+    console.log("🟡 Current form data before processing:", currentFormData);
 
-    // Validate required data
-    if (!currentFormData.selectedTemplateId) {
-      console.error("❌ No template available for publish later");
-      toast({
-        title: "Lỗi",
-        description: "Không có mẫu số hóa đơn khả dụng",
-        variant: "destructive"
+    // Validate template - should already be set from initialization
+    if (!formData.selectedTemplateId || !invoiceTemplates.length) {
+      console.error("❌ No template available for publish later:", {
+        selectedTemplateId: formData.selectedTemplateId,
+        templatesLength: invoiceTemplates.length,
+        templates: invoiceTemplates.map(t => ({ id: t.id, name: t.name, useCK: t.useCK }))
       });
-      return;
+
+      // Try to auto-set template if available
+      if (invoiceTemplates.length > 0) {
+        const defaultTemplate = invoiceTemplates[0];
+        const defaultTemplateId = defaultTemplate.id.toString();
+        console.log("🔧 Auto-setting template:", defaultTemplateId);
+
+        setFormData(prev => ({
+          ...prev,
+          selectedTemplateId: defaultTemplateId,
+          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
+        }));
+
+        // Continue with the updated template
+        console.log("✅ Template auto-set, continuing...");
+      } else {
+        toast({
+          title: "Lỗi",
+          description: "Không có mẫu số hóa đơn khả dụng",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     if (!currentFormData.customerName.trim()) {
       toast({
-        title: "Lỗi validation", 
+        title: "Lỗi validation",
         description: "Tên khách hàng là bắt buộc",
         variant: "destructive"
       });
@@ -524,7 +543,7 @@ export function EInvoiceModal({
           const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
           const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
           const itemTaxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "0") : item.taxRate || 0;
-          
+
           let itemTotal;
           if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
             const afterTax = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
@@ -546,7 +565,7 @@ export function EInvoiceModal({
         }),
       };
 
-      console.log("💾 Saving draft invoice:", JSON.stringify(invoicePayload, null, 2));
+      console.log("Saving draft invoice:", JSON.stringify(invoicePayload, null, 2));
 
       // Save invoice to database
       const invoiceResponse = await apiRequest("POST", "/api/invoices", invoicePayload);
@@ -699,18 +718,21 @@ export function EInvoiceModal({
     console.log("🟢 Cart items:", cartItems);
     console.log("🟢 Invoice templates:", invoiceTemplates);
 
+    // Use current form data (may have been updated with auto-set template)
+    const currentFormData = formData;
+
+    console.log("🟢 Current form data before immediate publish:", currentFormData);
+
     // Ensure template is set before processing
-    let currentFormData = formData;
     if (!formData.selectedTemplateId && invoiceTemplates.length > 0) {
       const defaultTemplate = invoiceTemplates[0];
       const defaultTemplateId = defaultTemplate.id.toString();
       console.log("🟢 Setting template for immediate publish:", defaultTemplateId, defaultTemplate.name);
-      currentFormData = {
-        ...formData,
+      setFormData(prev => ({
+        ...prev,
         selectedTemplateId: defaultTemplateId,
-        invoiceTemplate: defaultTemplate.name
-      };
-      setFormData(currentFormData);
+        invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
+      }));
     }
 
     // Validate required fields using current form data
@@ -727,14 +749,35 @@ export function EInvoiceModal({
       return;
     }
 
-    if (!currentFormData.selectedTemplateId) {
-      console.error("❌ No template available");
-      toast({
-        title: "Lỗi hệ thống",
-        description: "Không có mẫu số hóa đơn khả dụng",
-        variant: "destructive"
+    if (!formData.selectedTemplateId) {
+      console.error("❌ No template available:", {
+        selectedTemplateId: formData.selectedTemplateId,
+        templatesLength: invoiceTemplates.length,
+        templates: invoiceTemplates.map(t => ({ id: t.id, name: t.name, useCK: t.useCK }))
       });
-      return;
+
+      // Try to auto-set template if available
+      if (invoiceTemplates.length > 0) {
+        const defaultTemplate = invoiceTemplates[0];
+        const defaultTemplateId = defaultTemplate.id.toString();
+        console.log("🔧 Auto-setting template for immediate publish:", defaultTemplateId);
+
+        setFormData(prev => ({
+          ...prev,
+          selectedTemplateId: defaultTemplateId,
+          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
+        }));
+
+        // Continue with the updated template
+        console.log("✅ Template auto-set for immediate publish, continuing...");
+      } else {
+        toast({
+          title: "Lỗi hệ thống",
+          description: "Không có mẫu số hóa đơn khả dụng",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     setIsPublishing(true); // Set publishing to true FOR IMMEDIATE PUBLISH ONLY
@@ -869,9 +912,10 @@ export function EInvoiceModal({
 
         // Use afterTaxPrice if available for exact tax calculation
         if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
-          const afterTax = typeof item.afterTaxPrice === 'string'
-            ? parseFloat(item.afterTaxPrice)
-            : item.afterTaxPrice;
+          const afterTax = typeof item.afterTaxPrice ===
+            "string"
+              ? parseFloat(item.afterTaxPrice)
+              : item.afterTaxPrice;
           taxAmount = (afterTax - item.price) * item.quantity;
           console.log(`💰 Tax calculation (afterTaxPrice): ${item.name} - Base: ${item.price}, After tax: ${afterTax}, Tax per unit: ${afterTax - item.price}, Total tax: ${taxAmount}`);
         } else {
@@ -978,7 +1022,6 @@ export function EInvoiceModal({
           const errorData = await publishResponse.json();
           console.error("❌ Failed to publish e-invoice:", errorData);
           setIsPublishing(false);
-          setIsProcessed(false); // Reset processed state on error
           return;
         }
 
@@ -1537,17 +1580,17 @@ export function EInvoiceModal({
                   // Tính toán từ cartItems nếu có dữ liệu
                   if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
                     console.log('💰 EInvoice Modal - Calculating from cartItems:', cartItems);
-                    
+
                     let calculatedSubtotal = 0;
                     let calculatedTax = 0;
-                    
+
                     cartItems.forEach(item => {
                       const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
                       const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
                       const itemSubtotal = itemPrice * itemQuantity;
-                      
+
                       calculatedSubtotal += itemSubtotal;
-                      
+
                       // Tính thuế từ afterTaxPrice hoặc taxRate
                       if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
                         const afterTax = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
@@ -1557,25 +1600,25 @@ export function EInvoiceModal({
                         calculatedTax += (itemSubtotal * itemTaxRate) / 100;
                       }
                     });
-                    
+
                     const calculatedTotal = calculatedSubtotal + calculatedTax;
                     console.log('💰 EInvoice Modal - Calculated total:', calculatedTotal);
                     return Math.round(calculatedTotal).toLocaleString("vi-VN");
                   }
-                  
+
                   // Fallback to prop total
                   if (total !== null && total !== undefined && typeof total === 'number') {
                     console.log('💰 EInvoice Modal - Using prop total:', total);
                     return Math.round(total).toLocaleString("vi-VN");
                   }
-                  
+
                   console.log('💰 EInvoice Modal - No valid data, showing 0');
                   return "0";
                 })()}
                 {" "}₫
               </span>
             </div>
-            
+
             {/* Hiển thị chi tiết tính toán */}
             {cartItems && Array.isArray(cartItems) && cartItems.length > 0 && (
               <div className="mt-3 pt-3 border-t border-gray-200 text-sm text-gray-600">
@@ -1599,7 +1642,7 @@ export function EInvoiceModal({
                       const taxTotal = cartItems.reduce((sum, item) => {
                         const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
                         const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
-                        
+
                         if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
                           const afterTax = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
                           return sum + ((afterTax - itemPrice) * itemQuantity);
