@@ -676,35 +676,35 @@ export function OrderDialog({
                                                   const quantity = Number(remainingItem.quantity || 0);
 
                                                   // Calculate subtotal and tax exactly as in other components
-                                                if (Array.isArray(remainingItems) && remainingItems.length > 0) {
-                                                  remainingItems.forEach((remainingItem: any) => {
-                                                    const basePrice = Number(remainingItem.unitPrice || 0);
-                                                    const quantity = Number(remainingItem.quantity || 0);
-                                                    const product = products?.find((p: any) => p.id === remainingItem.productId);
+                                                  if (Array.isArray(remainingItems) && remainingItems.length > 0) {
+                                                    remainingItems.forEach((remainingItem: any) => {
+                                                      const basePrice = Number(remainingItem.unitPrice || 0);
+                                                      const quantity = Number(remainingItem.quantity || 0);
+                                                      const product = products?.find((p: any) => p.id === remainingItem.productId);
 
-                                                    // Calculate subtotal
-                                                    newSubtotal += basePrice * quantity;
+                                                      // Calculate subtotal
+                                                      newSubtotal += basePrice * quantity;
 
-                                                    // Calculate tax using Math.floor((after_tax_price - price) * quantity)
-                                                    if (
-                                                      product?.afterTaxPrice &&
-                                                      product.afterTaxPrice !== null &&
-                                                      product.afterTaxPrice !== ""
-                                                    ) {
-                                                      const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                                                      const taxPerUnit = afterTaxPrice - basePrice;
-                                                      newTax += Math.floor(taxPerUnit * quantity);
-                                                    }
-                                                  });
-                                                }
-                                                // If no items left, totals should be 0
-                                                else {
-                                                  console.log('📝 Order Dialog: No items left, setting totals to zero');
-                                                  newSubtotal = 0;
-                                                  newTax = 0;
-                                                }
+                                                      // Calculate tax using Math.floor((after_tax_price - price) * quantity)
+                                                      if (
+                                                        product?.afterTaxPrice &&
+                                                        product.afterTaxPrice !== null &&
+                                                        product.afterTaxPrice !== ""
+                                                      ) {
+                                                        const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                                                        const taxPerUnit = afterTaxPrice - basePrice;
+                                                        newTax += Math.floor(taxPerUnit * quantity);
+                                                      }
+                                                    });
+                                                  }
+                                                  // If no items left, totals should be 0
+                                                  else {
+                                                    console.log('📝 Order Dialog: No items left, setting totals to zero');
+                                                    newSubtotal = 0;
+                                                    newTax = 0;
+                                                  }
 
-                                              const newTotal = newSubtotal + newTax;
+                                                const newTotal = newSubtotal + newTax;
 
                                               console.log('💰 Order Dialog: Calculated new totals:', {
                                                 newSubtotal,
