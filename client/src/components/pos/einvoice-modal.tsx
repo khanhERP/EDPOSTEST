@@ -463,11 +463,11 @@ export function EInvoiceModal({
           // Fallback to taxRate calculation
           const itemTaxRate =
             typeof item.taxRate === "string"
-              ? parseFloat(item.taxRate || "10")
-              : item.taxRate || 10;
+              ? parseFloat(item.taxRate || "0")
+              : item.taxRate || 0;
           const itemTax = (itemPrice * itemQuantity * itemTaxRate) / 100;
           console.log(
-            `💰 Tax calculation (taxRate): ${item.name} - Tax rate: ${itemTaxRate}%, Tax: ${itemTax}`,
+            `💰 Tax calculation (taxRate): ${item.name} - Tax rate: ${item.taxRate || 0}%, Tax: ${itemTax}`,
           );
           return sum + itemTax;
         }
@@ -505,7 +505,7 @@ export function EInvoiceModal({
         invoiceDate: new Date(),
         status: "draft",
         einvoiceStatus: 0, // 0 = Chưa phát hành
-        notes: `E-Invoice draft - MST: ${formData.taxCode || "N/A"}, Template: ${selectedTemplate?.name || "N/A"}, Đợi phát hành sau`,
+        notes: `E-Invoice draft - MST: ${formData.taxCode || "N/A"}, Template: ${selectedTemplate.name || "N/A"}, Đợi phát hành sau`,
         items: cartItems.map((item) => {
           const itemPrice =
             typeof item.price === "string"
@@ -517,8 +517,8 @@ export function EInvoiceModal({
               : item.quantity;
           const itemTaxRate =
             typeof item.taxRate === "string"
-              ? parseFloat(item.taxRate || "10")
-              : item.taxRate || 10;
+              ? parseFloat(item.taxRate || "0")
+              : item.taxRate || 0;
           const itemSubtotal = itemPrice * itemQuantity;
           const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
@@ -618,20 +618,10 @@ export function EInvoiceModal({
               : item.quantity;
           const itemTaxRate =
             typeof item.taxRate === "string"
-              ? parseFloat(item.taxRate || "10")
-              : item.taxRate || 10;
+              ? parseFloat(item.taxRate || "0")
+              : item.taxRate || 0;
           const itemSubtotal = itemPrice * itemQuantity;
-
-          // Use afterTaxPrice for exact tax calculation if available
-          let itemTax;
-          if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-            const afterTax = typeof item.afterTaxPrice === 'string'
-              ? parseFloat(item.afterTaxPrice)
-              : item.afterTaxPrice;
-            itemTax = (afterTax - itemPrice) * itemQuantity;
-          } else {
-            itemTax = (itemSubtotal * itemTaxRate) / 100;
-          }
+          const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
           return {
             id: item.id,
@@ -884,7 +874,11 @@ export function EInvoiceModal({
           console.log(`💰 Tax calculation (afterTaxPrice): ${item.name} - Base: ${item.price}, After tax: ${afterTax}, Tax per unit: ${afterTax - item.price}, Total tax: ${taxAmount}`);
         } else {
           // Fallback to taxRate calculation
-          taxAmount = (itemSubtotal * (item.taxRate || 0)) / 100;
+          const itemTaxRate =
+            typeof item.taxRate === "string"
+              ? parseFloat(item.taxRate || "0")
+              : item.taxRate || 0;
+          taxAmount = (itemSubtotal * itemTaxRate) / 100;
           console.log(`💰 Tax calculation (taxRate): ${item.name} - Tax rate: ${item.taxRate || 0}%, Tax: ${taxAmount}`);
         }
 
@@ -1080,8 +1074,8 @@ export function EInvoiceModal({
                   : item.quantity;
               const itemTaxRate =
                 typeof item.taxRate === "string"
-                  ? parseFloat(item.taxRate || "10")
-                  : item.taxRate || 10;
+                  ? parseFloat(item.taxRate || "0")
+                  : item.taxRate || 0;
               const itemSubtotal = itemPrice * itemQuantity;
               const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
@@ -1197,8 +1191,8 @@ export function EInvoiceModal({
                 : item.quantity;
             const itemTaxRate =
               typeof item.taxRate === "string"
-                ? parseFloat(item.taxRate || "10")
-                : item.taxRate || 10;
+                ? parseFloat(item.taxRate || "0")
+                : item.taxRate || 0;
             const itemSubtotal = itemPrice * itemQuantity;
             const itemTax = (itemSubtotal * itemTaxRate) / 100;
 
@@ -1507,7 +1501,7 @@ export function EInvoiceModal({
                     displayTotal = cartItems.reduce((sum, item) => {
                       const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                       const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                      
+
                       // Use afterTaxPrice if available for exact calculation
                       if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
                         const afterTaxPrice = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;

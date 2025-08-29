@@ -419,7 +419,7 @@ export function ShoppingCart({
         setShowReceiptModal(true);
       } else {
         console.log('❌ No receipt data found in e-invoice result');
-        
+
         // Create fallback receipt from e-invoice data
         const fallbackReceipt = {
           transactionId: `FALLBACK-${Date.now()}`,
@@ -445,7 +445,7 @@ export function ShoppingCart({
           customerName: eInvoiceData.customerName || "Khách hàng",
           customerTaxCode: eInvoiceData.taxCode || "",
         };
-        
+
         console.log('📄 Created fallback receipt:', fallbackReceipt);
         setSelectedReceipt(fallbackReceipt);
         setShowReceiptModal(true);
@@ -545,23 +545,32 @@ export function ShoppingCart({
                     <p className="text-xs pos-text-secondary">
                       {Math.round(parseFloat(item.price)).toLocaleString("vi-VN")} ₫ {t("pos.each")}
                     </p>
-                    {item.taxRate && parseFloat(item.taxRate) > 0 && (
-                      <p className="text-xs text-orange-600">
-                        Thuế:{" "}
-                        {(() => {
-                            const basePrice = parseFloat(item.price);
+                    {item.taxRate && parseFloat(item.taxRate || "0") > 0 && (
+                        <p className="text-xs text-orange-600">
+                          Thuế:{" "}
+                          {(() => {
+                            // Calculate tax using afterTaxPrice if available, otherwise use taxRate
+                            const basePrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                            const itemTaxRate = parseFloat(item.taxRate || "0");
 
-                            // Only calculate tax if afterTaxPrice exists in database
                             if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-                              const afterTaxPrice = parseFloat(item.afterTaxPrice);
-                              const taxPerItem = afterTaxPrice - basePrice;
-                              return Math.round(taxPerItem * item.quantity);
+                              const afterTaxPrice = typeof item.afterTaxPrice === 'string' 
+                                ? parseFloat(item.afterTaxPrice) 
+                                : item.afterTaxPrice;
+
+                              if (!isNaN(afterTaxPrice) && afterTaxPrice > basePrice) {
+                                const taxAmount = afterTaxPrice - basePrice;
+                                return `${Math.floor(taxAmount * item.quantity).toLocaleString("vi-VN")}₫`;
+                              }
                             }
-                            // No tax if no afterTaxPrice in database
-                            return 0;
-                          })().toLocaleString("vi-VN")} ₫ ({item.taxRate}%)
-                      </p>
-                    )}
+
+                            // Fallback calculation with tax rate
+                            const taxAmount = (basePrice * itemTaxRate / 100) * item.quantity;
+                            return `${Math.floor(taxAmount).toLocaleString("vi-VN")}₫`;
+                          })()}
+                          ({item.taxRate || "0"}%)
+                        </p>
+                      )}
                   </div>
                 </div>
                 <div className="flex flex-col items-end space-y-2">
