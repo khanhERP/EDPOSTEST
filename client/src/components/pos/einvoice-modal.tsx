@@ -433,32 +433,37 @@ export function EInvoiceModal({
       return;
     }
 
-    // Use current form data (may have been updated with auto-set template)
+    // Validate and ensure template is set - fix empty selectedTemplateId issue
     let currentFormData = formData;
-    console.log("🟡 Current form data before processing:", currentFormData);
 
-    // Validate template - should already be set from initialization
-    if (!formData.selectedTemplateId || !invoiceTemplates.length) {
-      console.error("❌ No template available for publish later:", {
+    if (!formData.selectedTemplateId || formData.selectedTemplateId === "" || !invoiceTemplates.length) {
+      console.error("❌ Template validation failed:", {
         selectedTemplateId: formData.selectedTemplateId,
-        templatesLength: invoiceTemplates.length,
-        templates: invoiceTemplates.map(t => ({ id: t.id, name: t.name, useCK: t.useCK }))
+        selectedTemplateIdLength: (formData.selectedTemplateId || "").length,
+        templatesAvailable: invoiceTemplates.length,
+        templates: invoiceTemplates.map(t => ({ id: t.id, name: t.name }))
       });
 
       // Try to auto-set template if available
       if (invoiceTemplates.length > 0) {
         const defaultTemplate = invoiceTemplates[0];
         const defaultTemplateId = defaultTemplate.id.toString();
-        console.log("🔧 Auto-setting template:", defaultTemplateId);
+        console.log("🔧 Auto-setting template for publish later:", {
+          templateId: defaultTemplateId,
+          templateName: defaultTemplate.name,
+          templateNumber: defaultTemplate.templateNumber
+        });
 
-        setFormData(prev => ({
-          ...prev,
+        currentFormData = {
+          ...formData,
           selectedTemplateId: defaultTemplateId,
           invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
-        }));
+        };
 
-        // Continue with the updated template
-        console.log("✅ Template auto-set, continuing...");
+        // Update form data state
+        setFormData(currentFormData);
+
+        console.log("✅ Template auto-set successfully for publish later");
       } else {
         toast({
           title: "Lỗi",
@@ -718,24 +723,47 @@ export function EInvoiceModal({
     console.log("🟢 Cart items:", cartItems);
     console.log("🟢 Invoice templates:", invoiceTemplates);
 
-    // Use current form data (may have been updated with auto-set template)
-    const currentFormData = formData;
+    // Validate and ensure template is set before immediate publish
+    let currentFormData = formData;
 
-    console.log("🟢 Current form data before immediate publish:", currentFormData);
+    // First validate template
+    if (!formData.selectedTemplateId || formData.selectedTemplateId === "" || !invoiceTemplates.length) {
+      console.error("❌ Template validation failed for immediate publish:", {
+        selectedTemplateId: formData.selectedTemplateId,
+        selectedTemplateIdLength: (formData.selectedTemplateId || "").length,
+        templatesAvailable: invoiceTemplates.length
+      });
 
-    // Ensure template is set before processing
-    if (!formData.selectedTemplateId && invoiceTemplates.length > 0) {
-      const defaultTemplate = invoiceTemplates[0];
-      const defaultTemplateId = defaultTemplate.id.toString();
-      console.log("🟢 Setting template for immediate publish:", defaultTemplateId, defaultTemplate.name);
-      setFormData(prev => ({
-        ...prev,
-        selectedTemplateId: defaultTemplateId,
-        invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
-      }));
+      // Try to auto-set template if available
+      if (invoiceTemplates.length > 0) {
+        const defaultTemplate = invoiceTemplates[0];
+        const defaultTemplateId = defaultTemplate.id.toString();
+        console.log("🔧 Auto-setting template for immediate publish:", {
+          templateId: defaultTemplateId,
+          templateName: defaultTemplate.name
+        });
+
+        currentFormData = {
+          ...formData,
+          selectedTemplateId: defaultTemplateId,
+          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
+        };
+
+        // Update form data state
+        setFormData(currentFormData);
+
+        console.log("✅ Template auto-set for immediate publish");
+      } else {
+        toast({
+          title: "Lỗi hệ thống",
+          description: "Không có mẫu số hóa đơn khả dụng",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
-    // Validate required fields using current form data
+    // Then validate other required fields
     if (!currentFormData.invoiceProvider || !currentFormData.customerName) {
       console.error("❌ Missing required fields:", {
         invoiceProvider: currentFormData.invoiceProvider,
@@ -747,37 +775,6 @@ export function EInvoiceModal({
         variant: "destructive"
       });
       return;
-    }
-
-    if (!formData.selectedTemplateId) {
-      console.error("❌ No template available:", {
-        selectedTemplateId: formData.selectedTemplateId,
-        templatesLength: invoiceTemplates.length,
-        templates: invoiceTemplates.map(t => ({ id: t.id, name: t.name, useCK: t.useCK }))
-      });
-
-      // Try to auto-set template if available
-      if (invoiceTemplates.length > 0) {
-        const defaultTemplate = invoiceTemplates[0];
-        const defaultTemplateId = defaultTemplate.id.toString();
-        console.log("🔧 Auto-setting template for immediate publish:", defaultTemplateId);
-
-        setFormData(prev => ({
-          ...prev,
-          selectedTemplateId: defaultTemplateId,
-          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
-        }));
-
-        // Continue with the updated template
-        console.log("✅ Template auto-set for immediate publish, continuing...");
-      } else {
-        toast({
-          title: "Lỗi hệ thống",
-          description: "Không có mẫu số hóa đơn khả dụng",
-          variant: "destructive"
-        });
-        return;
-      }
     }
 
     setIsPublishing(true); // Set publishing to true FOR IMMEDIATE PUBLISH ONLY
@@ -1478,7 +1475,7 @@ export function EInvoiceModal({
                       handleInputChange("taxCode", e.target.value)
                     }
                     onFocus={() => handleInputFocus("taxCode")}
-                    placeholder="0102222333-001"
+                    placeholder="0123456789-001"
                     disabled={false}
                     readOnly={false}
                   />
@@ -1574,8 +1571,8 @@ export function EInvoiceModal({
           {/* Total Amount Display */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex justify-between items-center">
-              <span className="font-medium text-lg">{t("einvoice.totalAmount") || "Tổng tiền hóa đơn"}</span>
-              <span className="text-xl font-bold text-blue-600">
+              <span className="font-medium">{t("einvoice.totalAmount") || "Tổng tiền hóa đơn"}</span>
+              <span className="text-lg font-bold text-blue-600">
                 {(() => {
                   // Tính toán từ cartItems nếu có dữ liệu
                   if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
@@ -1618,6 +1615,46 @@ export function EInvoiceModal({
                 {" "}₫
               </span>
             </div>
+
+            {/* Hiển thị chi tiết tính toán */}
+            {cartItems && Array.isArray(cartItems) && cartItems.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-200 text-sm text-gray-600">
+                <div className="flex justify-between">
+                  <span>Tạm tính:</span>
+                  <span>
+                    {(() => {
+                      const subtotal = cartItems.reduce((sum, item) => {
+                        const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                        const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
+                        return sum + (itemPrice * itemQuantity);
+                      }, 0);
+                      return Math.round(subtotal).toLocaleString("vi-VN");
+                    })()}₫
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Thuế:</span>
+                  <span>
+                    {(() => {
+                      const taxTotal = cartItems.reduce((sum, item) => {
+                        const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                        const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
+
+                        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
+                          const afterTax = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
+                          return sum + ((afterTax - itemPrice) * itemQuantity);
+                        } else {
+                          const itemTaxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "0") : item.taxRate || 0;
+                          const itemSubtotal = itemPrice * itemQuantity;
+                          return sum + ((itemSubtotal * itemTaxRate) / 100);
+                        }
+                      }, 0);
+                      return Math.round(taxTotal).toLocaleString("vi-VN");
+                    })()}₫
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Virtual Keyboard Toggle */}
