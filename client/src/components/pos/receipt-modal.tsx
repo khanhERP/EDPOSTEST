@@ -97,11 +97,19 @@ export function ReceiptModal({
     return null;
   }
 
-  // Additional safety check - if receipt is null but we're supposed to show it, return null
-  if (!receipt) {
+  // Additional safety check - if receipt is null and not in preview mode, return null
+  if (!receipt && !isPreview) {
     console.log("❌ Receipt Modal: Receipt is null, cannot render");
     return null;
   }
+
+  // Debug logging for receipt modal state
+  console.log("🔍 Receipt Modal state:", {
+    isOpen,
+    hasReceipt: !!receipt,
+    isPreview,
+    receiptTransactionId: receipt?.transactionId || 'N/A',
+  });
 
   const handlePrint = async () => {
     console.log("🖨️ Starting browser print process");

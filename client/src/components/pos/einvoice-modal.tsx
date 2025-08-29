@@ -716,9 +716,14 @@ export function EInvoiceModal({
       console.log("✅ Calling onConfirm with publishLater data and receipt");
       console.log("📄 Receipt data to display:", receiptData);
 
-      // Close e-invoice modal and trigger receipt modal display
-      onClose();
+      // Call onConfirm first with the complete data including receipt
       onConfirm(completeInvoiceData);
+      
+      // Close e-invoice modal after triggering the receipt display
+      setTimeout(() => {
+        onClose();
+        console.log("🔴 E-Invoice modal closed after publishLater processing");
+      }, 50);
     } catch (error) {
       console.error("❌ Error in handlePublishLater:", error);
 

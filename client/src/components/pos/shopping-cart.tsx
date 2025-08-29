@@ -123,12 +123,11 @@ export function ShoppingCart({
             // Tax = afterTaxPrice - basePrice
             const taxPerItem = afterTaxPrice - basePrice;
             return sum + (taxPerItem * item.quantity);
-          } else {
-            // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
-            const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
-            const taxPerItem = calculatedAfterTaxPrice - basePrice;
-            return sum + (taxPerItem * item.quantity);
           }
+          // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
+          const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
+          const taxPerItem = calculatedAfterTaxPrice - basePrice;
+          return sum + (taxPerItem * item.quantity);
         }
         return sum;
       }, 0);
@@ -362,6 +361,13 @@ export function ShoppingCart({
     onCheckout(paymentData);
   };
 
+  // Function to clear the cart, used in handleEInvoiceConfirm
+  const clearCart = () => {
+    onClearCart();
+    setAmountReceived(""); // Also clear amount received for cash
+    setPaymentMethod("bankTransfer"); // Reset to default payment method
+  };
+
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
     console.log('📧 Shopping cart: Step 4: E-Invoice processing completed:', eInvoiceData);
 
@@ -370,15 +376,18 @@ export function ShoppingCart({
 
     // Step 5: Always show final receipt modal for printing
     console.log('📄 Shopping cart: Step 5: Showing final receipt modal for printing');
-    
+
     // Ensure we have receipt data to show - prioritize receipt from eInvoiceData
     if (eInvoiceData.receipt) {
       console.log('✅ Using receipt data from E-Invoice response');
       console.log('📄 Receipt data details:', eInvoiceData.receipt);
-      
-      // Show receipt modal with the receipt data
-      setSelectedReceipt(eInvoiceData.receipt);
-      setShowReceiptModal(true);
+
+      // Use setTimeout to ensure E-Invoice modal is fully closed before showing receipt
+      setTimeout(() => {
+        setSelectedReceipt(eInvoiceData.receipt);
+        setShowReceiptModal(true);
+        console.log('📄 Receipt modal opened with E-Invoice data');
+      }, 100);
     } else {
       console.log('⚠️ No receipt in eInvoiceData, creating receipt from cart data');
       // Fallback: create receipt data from current cart and eInvoiceData
@@ -399,28 +408,30 @@ export function ShoppingCart({
         tax: tax.toFixed(2),
         total: total.toFixed(2),
         paymentMethod: "einvoice",
-        originalPaymentMethod: selectedPaymentMethod,
+        originalPaymentMethod: eInvoiceData.originalPaymentMethod || eInvoiceData.paymentMethod || "cash",
         amountReceived: total.toFixed(2),
         change: "0.00",
         cashierName: "System User",
         createdAt: new Date().toISOString(),
+        invoiceNumber: eInvoiceData.invoiceNumber || null,
         customerName: eInvoiceData.customerName || "Khách hàng",
         customerTaxCode: eInvoiceData.taxCode || "",
-        invoiceNumber: eInvoiceData.invoiceNumber || null,
       };
-      
-      console.log('📄 Fallback receipt data created:', receiptData);
-      
-      // Show receipt modal with fallback receipt data
-      setSelectedReceipt(receiptData);
-      setShowReceiptModal(true);
+
+      console.log('📄 Created fallback receipt data:', receiptData);
+      setTimeout(() => {
+        setSelectedReceipt(receiptData);
+        setShowReceiptModal(true);
+        console.log('📄 Receipt modal opened with fallback data');
+      }, 100);
     }
 
-    // Clear cart after setting up receipt modal
+    // Auto clear cart after successful E-Invoice processing (both immediate and later)
+    // Delay cart clearing to ensure receipt modal is properly shown first
     setTimeout(() => {
-      console.log('🧹 Shopping cart: Auto clearing cart after receipt modal setup');
-      onClearCart();
-    }, 100);
+      console.log('🧹 Shopping cart: Auto clearing cart after E-Invoice completion');
+      clearCart();
+    }, 150);
   };
 
   const canCheckout = cart.length > 0;
