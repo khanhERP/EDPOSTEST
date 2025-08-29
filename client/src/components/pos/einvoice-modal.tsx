@@ -1591,34 +1591,44 @@ export function EInvoiceModal({
                     cartItemsData: cartItems
                   });
 
-                  // Priority: Calculate from cartItems if available, then use total prop
+                  // Priority: Use total prop first, then calculate from cartItems
                   let displayTotal = 0;
 
-                  if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
+                  // Always prioritize the total prop if it's valid
+                  if (total && typeof total === 'number' && !isNaN(total) && total > 0) {
+                    displayTotal = total;
+                    console.log('💰 EInvoice Modal - Using total prop:', displayTotal);
+                  } else if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
+                    // Fallback to calculating from cart items
                     displayTotal = cartItems.reduce((sum, item) => {
-                      const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                      const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+                      const price = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
+                      const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 1);
                       
                       // Use afterTaxPrice if available for exact calculation
                       if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
                         const afterTaxPrice = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
-                        return sum + (afterTaxPrice * quantity);
-                      } else {
-                        // Fallback to price + tax calculation
-                        const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
-                        const subtotal = price * quantity;
-                        const tax = (subtotal * taxRate) / 100;
-                        return sum + subtotal + tax;
+                        if (!isNaN(afterTaxPrice) && afterTaxPrice > 0) {
+                          console.log(`💰 Using afterTaxPrice for ${item.name}: ${afterTaxPrice} x ${quantity} = ${afterTaxPrice * quantity}`);
+                          return sum + (afterTaxPrice * quantity);
+                        }
                       }
+                      
+                      // Fallback to price + tax calculation
+                      const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
+                      const subtotal = price * quantity;
+                      const tax = (subtotal * taxRate) / 100;
+                      const itemTotal = subtotal + tax;
+                      console.log(`💰 Calculated for ${item.name}: ${price} x ${quantity} + ${taxRate}% tax = ${itemTotal}`);
+                      return sum + itemTotal;
                     }, 0);
                     console.log('💰 EInvoice Modal - Calculated from cartItems:', displayTotal);
-                  } else if (total && typeof total === 'number' && total > 0) {
-                    displayTotal = total;
-                    console.log('💰 EInvoice Modal - Using total prop:', displayTotal);
                   }
 
                   console.log('💰 EInvoice Modal - Final display total:', displayTotal);
-                  return Math.floor(displayTotal).toLocaleString("vi-VN");
+                  
+                  // Ensure we have a valid number to display
+                  const finalTotal = displayTotal > 0 ? displayTotal : 0;
+                  return Math.floor(finalTotal).toLocaleString("vi-VN");
                 })()}
                 {" "}₫
               </span>
