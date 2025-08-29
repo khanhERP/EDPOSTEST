@@ -555,12 +555,20 @@ export function PaymentMethodModal({
     // Close Payment modal
     onClose();
 
+    // Calculate exact total from payment modal for consistency
+    const exactTotal = receipt?.exactTotal ??
+                      orderForPayment?.exactTotal ??
+                      orderForPayment?.total ??
+                      total ??
+                      0;
+
     // Pass comprehensive e-invoice data back to parent component
     onSelectMethod("einvoice", {
       ...eInvoiceData,
       originalPaymentMethod: selectedPaymentMethod,
       paymentMethod: selectedPaymentMethod, // Ensure original payment method is preserved
       source: "pos",
+      exactTotal: exactTotal, // Ensure exact total is passed
       // Receipt data should already be included in eInvoiceData
       showReceiptModal: true, // Ensure receipt modal is shown
       // Add flag for proper handling
@@ -1290,8 +1298,16 @@ export function PaymentMethodModal({
               orderForPayment?.exactTotal ??
               orderForPayment?.total ??
               total;
-            console.log("💰 Using exact total for EInvoice:", orderTotal);
-            return Math.floor(orderTotal);
+            console.log("💰 Payment Modal: Passing exact total to EInvoice:", orderTotal, "VND");
+            console.log("💰 Payment Modal: Total source priority:", {
+              receiptExactTotal: receipt?.exactTotal,
+              receiptTotal: receipt?.total,
+              orderExactTotal: orderForPayment?.exactTotal,
+              orderTotal: orderForPayment?.total,
+              propTotal: total,
+              finalTotal: orderTotal
+            });
+            return orderTotal; // Pass exact total without rounding
           })()}
           selectedPaymentMethod={selectedPaymentMethod}
           cartItems={(() => {
@@ -1302,7 +1318,7 @@ export function PaymentMethodModal({
               cartItems ||
               [];
             console.log(
-              "📦 Mapping cart items for payment modal using exact Order Details data:",
+              "📦 Payment Modal: Mapping cart items for EInvoice using exact data:",
               itemsToMap.length,
             );
 
