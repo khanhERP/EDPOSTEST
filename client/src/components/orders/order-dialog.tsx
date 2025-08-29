@@ -12,6 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -57,6 +64,11 @@ export function OrderDialog({
 
   const { data: categories, isLoading: categoriesLoading } = useQuery({
     queryKey: ["/api/categories"],
+  });
+
+  const { data: customers } = useQuery({
+    queryKey: ["/api/customers"],
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   const { data: existingOrderItems, refetch: refetchExistingItems } = useQuery({
@@ -488,12 +500,20 @@ export function OrderDialog({
                     <Label htmlFor="customerName">
                       {t("tables.customerName")} ({t("tables.optional")})
                     </Label>
-                    <Input
-                      id="customerName"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder={t("tables.customerNamePlaceholder")}
-                    />
+                    <Select value={customerName} onValueChange={setCustomerName}>
+                      <SelectTrigger>
+                        <SelectValue placeholder={t("tables.customerNamePlaceholder")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Khách hàng lẻ</SelectItem>
+                        {Array.isArray(customers) &&
+                          customers.map((customer: any) => (
+                            <SelectItem key={customer.id} value={customer.name}>
+                              {customer.name} {customer.phone ? `(${customer.phone})` : ''}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label htmlFor="customerCount">
