@@ -1238,12 +1238,13 @@ export function SalesChartReport() {
                     </button>
                   </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </>
-      );
-    };
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </>
+    );
+  };
 
   // Sales Detail Report Component
   const renderSalesDetailReport = () => {
@@ -2424,11 +2425,12 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      );
-    };
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
 
   // Legacy Sales Channel Report Component Logic
   const renderSalesChannelReport = () => {
@@ -2704,12 +2706,14 @@ export function SalesChartReport() {
 
         console.log("Chart data generation:", {
           filteredOrdersCount: filteredOrders.length,
-          sampleOrder: filteredOrders[0] ? {
-            id: filteredOrders[0].id,
-            total: filteredOrders[0].total,
-            orderedAt: filteredOrders[0].orderedAt,
-            status: filteredOrders[0].status,
-          } : null,
+          sampleOrder: filteredOrders[0]
+            ? {
+                id: filteredOrders[0].id,
+                total: filteredOrders[0].total,
+                orderedAt: filteredOrders[0].orderedAt,
+                status: filteredOrders[0].status,
+              }
+            : null,
         });
 
         const dailySales: {
@@ -2747,7 +2751,9 @@ export function SalesChartReport() {
             revenue: data.revenue,
             orders: data.orders,
           }))
-          .sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime()) // Sort by date
+          .sort(
+            (a, b) => new Date(a.name).getTime() - new Date(b.name).getTime(),
+          ) // Sort by date
           .slice(0, 10);
 
         console.log("Generated chart data:", chartData);
@@ -3083,7 +3089,8 @@ export function SalesChartReport() {
                 {t("reports.noDataDescription")}
               </div>
               <div className="text-sm text-orange-600">
-                📊 Không có dữ liệu trong khoảng thời gian đã chọn ({startDate} - {endDate})
+                📊 Không có dữ liệu trong khoảng thời gian đã chọn ({startDate}{" "}
+                - {endDate})
               </div>
               <div className="text-xs text-gray-400 mt-1">
                 Thử chọn khoảng thời gian khác hoặc kiểm tra dữ liệu đơn hàng
@@ -3487,10 +3494,7 @@ export function SalesChartReport() {
               );
               const transactionDateOnly = new Date(transactionDate);
               transactionDateOnly.setHours(0, 0, 0, 0);
-              return (
-                transactionDateOnly >= start &&
-                transactionDateOnly <= end
-              );
+              return transactionDateOnly >= start && transactionDateOnly <= end;
             },
           );
 
