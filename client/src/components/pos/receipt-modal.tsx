@@ -245,7 +245,7 @@ export function ReceiptModal({
         exactSubtotal: receipt?.exactSubtotal,
         exactTax: receipt?.exactTax
       });
-      
+
       // Call onConfirm with receipt data
       onConfirm();
     }
@@ -523,10 +523,7 @@ export function ReceiptModal({
                     ? parseInt(item.quantity)
                     : item.quantity,
                 sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-                taxRate:
-                  typeof item.taxRate === "string"
-                    ? parseFloat(item.taxRate || "10")
-                    : item.taxRate || 10,
+                taxRate: item.taxRate || 0,
               }));
               console.log(
                 "🔧 Processed cartItems for e-invoice:",
@@ -553,7 +550,7 @@ export function ReceiptModal({
                 sku:
                   item.productId?.toString() ||
                   `FOOD${String(item.id).padStart(5, "0")}`,
-                taxRate: 10,
+                taxRate: 0,
               }));
             } else {
               console.error("❌ No valid cart items found for e-invoice");

@@ -1279,7 +1279,7 @@ export function PaymentMethodModal({
                 price: parseFloat(item.unitPrice || "0"),
                 quantity: item.quantity,
                 sku: item.productSku || `SP${item.productId}`,
-                taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10,
+                taxRate: item.taxRate || 0,
                 afterTaxPrice: product?.afterTaxPrice || null, // Pass afterTaxPrice for exact calculation
               };
             });

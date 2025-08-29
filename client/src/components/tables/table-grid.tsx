@@ -1964,7 +1964,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       );
                       const itemTaxRate = product?.taxRate
                         ? parseFloat(product.taxRate)
-                        : 10;
+                        : 0;
 
                       // Calculate subtotal (base price without tax)
                       subtotal += basePrice * quantity;

@@ -281,7 +281,7 @@ export function ShoppingCart({
         quantity: item.quantity,
         total: parseFloat(item.total).toFixed(2),
         sku: `FOOD${String(item.id).padStart(5, "0")}`,
-        taxRate: parseFloat(item.taxRate || "10"),
+        taxRate: parseFloat(item.taxRate || "0"),
       })),
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
@@ -625,7 +625,7 @@ export function ShoppingCart({
           price: parseFloat(item.price),
           quantity: item.quantity,
           sku: `ITEM${String(item.id).padStart(3, "0")}`,
-          taxRate: parseFloat(item.taxRate || "10"),
+          taxRate: parseFloat(item.taxRate || "0"),
         }))}
       />
 
@@ -648,7 +648,7 @@ export function ShoppingCart({
           price: parseFloat(item.price),
           quantity: item.quantity,
           sku: `ITEM${String(item.id).padStart(3, "0")}`,
-          taxRate: parseFloat(item.taxRate || "10"),
+          taxRate: parseFloat(item.taxRate || "0"),
         }))}
       />
 
@@ -669,7 +669,7 @@ export function ShoppingCart({
           price: parseFloat(item.price),
           quantity: item.quantity,
           sku: String(item.id),
-          taxRate: parseFloat(item.taxRate || "10"),
+          taxRate: parseFloat(item.taxRate || "0"),
         }))}
       />
 
@@ -690,7 +690,7 @@ export function ShoppingCart({
             price: parseFloat(item.price),
             quantity: item.quantity,
             sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-            taxRate: parseFloat(item.taxRate || "10"),
+            taxRate: parseFloat(item.taxRate || "0"),
           }))}
         />
       )}
