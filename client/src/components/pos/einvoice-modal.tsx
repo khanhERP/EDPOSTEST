@@ -1590,44 +1590,40 @@ export function EInvoiceModal({
                     cartItemsData: cartItems
                   });
 
-                  // Priority: Use total prop if valid number
+                  // Priority: Use total prop first if valid
                   let displayTotal = 0;
 
-                  if (typeof total === 'number' && total > 0) {
+                  // Check if total prop is valid and use it
+                  if (total && typeof total === 'number' && !isNaN(total) && total > 0) {
                     displayTotal = total;
-                    console.log('💰 Using total prop:', displayTotal);
-                  } else if (typeof total === 'string' && parseFloat(total) > 0) {
+                    console.log('💰 Using total prop (number):', displayTotal);
+                  } else if (total && typeof total === 'string' && !isNaN(parseFloat(total)) && parseFloat(total) > 0) {
                     displayTotal = parseFloat(total);
-                    console.log('💰 Using total prop (converted from string):', displayTotal);
+                    console.log('💰 Using total prop (string converted):', displayTotal);
                   } else if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-                    // Calculate from cart items with accurate tax calculation
+                    // Calculate from cart items as fallback
                     displayTotal = cartItems.reduce((sum, item) => {
-                      const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price || 0;
-                      const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity || 0;
+                      const price = typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0);
+                      const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : (item.quantity || 0);
                       
-                      // Use afterTaxPrice if available for exact calculation
-                      if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-                        const afterTaxPriceValue = typeof item.afterTaxPrice === 'string' 
-                          ? parseFloat(item.afterTaxPrice) 
-                          : item.afterTaxPrice;
-                        const itemTotal = afterTaxPriceValue * quantity;
-                        console.log(`💰 Item ${item.name} with afterTaxPrice: ${afterTaxPriceValue} x ${quantity} = ${itemTotal}`);
-                        return sum + itemTotal;
-                      } else {
-                        // Fallback to price + tax calculation
-                        const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
+                      if (price > 0 && quantity > 0) {
+                        const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : (item.taxRate || 0);
                         const subtotal = price * quantity;
                         const tax = (subtotal * taxRate) / 100;
                         const itemTotal = subtotal + tax;
-                        console.log(`💰 Item ${item.name}: ${price} x ${quantity} + ${taxRate}% tax = ${itemTotal}`);
+                        console.log(`💰 Calculating item ${item.name}: ${price} x ${quantity} + ${taxRate}% = ${itemTotal}`);
                         return sum + itemTotal;
                       }
+                      return sum;
                     }, 0);
-                    console.log('💰 Calculated from cartItems:', displayTotal);
+                    console.log('💰 Calculated total from cartItems:', displayTotal);
                   }
 
                   console.log('💰 EInvoice Modal - Final display total:', displayTotal);
-                  return Math.floor(displayTotal).toLocaleString("vi-VN");
+                  
+                  // Ensure we have a valid number to display
+                  const finalTotal = displayTotal > 0 ? displayTotal : 0;
+                  return Math.floor(finalTotal).toLocaleString("vi-VN");
                 })()}
                 {" "}₫
               </span>
