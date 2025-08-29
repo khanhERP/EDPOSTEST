@@ -490,7 +490,7 @@ function MenuReport() {
               </div>
             </CardContent>
           </Card>
-        )}
+        )}</old_str>
       </div>
 
       {/* Product List */}

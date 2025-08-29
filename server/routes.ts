@@ -2080,36 +2080,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { startDate, endDate, search, categoryId, productType } = req.query;
       const tenantDb = await getTenantDatabase(req);
 
-      // Base query for transaction items with product and category joins
-      let query = db
-        .select({
-          product: products,
-          category: categories,
-          quantity: sql<number>`sum(${transactionItemsTable.quantity})`.as('quantity'),
-          revenue: sql<number>`sum(${transactionItemsTable.total})`.as('revenue'),
-        })
-        .from(transactionItemsTable)
-        .leftJoin(products, eq(transactionItemsTable.productId, products.id))
-        .leftJoin(categories, eq(products.categoryId, categories.id))
-        .leftJoin(transactionsTable, eq(transactionItemsTable.transactionId, transactionsTable.id))
-        .groupBy(products.id, categories.id)
-        .orderBy(desc(sql`sum(${transactionItemsTable.total})`));
+      console.log("Menu Analysis API called with params:", { startDate, endDate, search, categoryId, productType });
 
       // Apply filters
       const conditions: any[] = [eq(products.isActive, true)];
-
-      // Date range filter - IMPORTANT: Apply to transactions table
+      
+      // Date range filter conditions
+      let dateConditions: any[] = [];
       if (startDate && endDate) {
         const start = new Date(startDate as string);
         const end = new Date(endDate as string);
-        end.setHours(23, 59, 59, 999); // Include entire end date
+        end.setHours(23, 59, 59, 999);
 
-        conditions.push(
+        dateConditions = [
           and(
             gte(transactionsTable.createdAt, start),
             lte(transactionsTable.createdAt, end)
           )
-        );
+        ];
       }
 
       if (search) {
@@ -2128,92 +2116,156 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Apply all conditions
-      query = query.where(and(...conditions));
+      // Query transaction items with proper revenue calculation (total - discount, no tax added)
+      let transactionQuery = db
+        .select({
+          productId: transactionItemsTable.productId,
+          productName: products.name,
+          categoryId: products.categoryId,
+          categoryName: categories.name,
+          quantity: sql<number>`sum(${transactionItemsTable.quantity})`.as('quantity'),
+          // Revenue = item total (already excludes tax in transaction_items)
+          revenue: sql<number>`sum(CAST(${transactionItemsTable.total} AS DECIMAL))`.as('revenue'),
+        })
+        .from(transactionItemsTable)
+        .leftJoin(products, eq(transactionItemsTable.productId, products.id))
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .leftJoin(transactionsTable, eq(transactionItemsTable.transactionId, transactionsTable.id))
+        .where(and(...conditions, ...(dateConditions.length > 0 ? dateConditions : [])))
+        .groupBy(transactionItemsTable.productId, products.name, products.categoryId, categories.name);
 
-      const productStats = await query;
+      // Query order items with proper revenue calculation (total - discount, no tax added)
+      let orderQuery = db
+        .select({
+          productId: orderItems.productId,
+          productName: products.name,
+          categoryId: products.categoryId,
+          categoryName: categories.name,
+          quantity: sql<number>`sum(${orderItems.quantity})`.as('quantity'),
+          // Revenue = item total (already excludes tax in order_items)
+          revenue: sql<number>`sum(CAST(${orderItems.total} AS DECIMAL))`.as('revenue'),
+        })
+        .from(orderItems)
+        .leftJoin(products, eq(orderItems.productId, products.id))
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .leftJoin(orders, eq(orderItems.orderId, orders.id))
+        .where(and(
+          ...conditions,
+          eq(orders.status, 'paid'), // Only include paid orders
+          ...(startDate && endDate ? [
+            and(
+              gte(orders.orderedAt, new Date(startDate as string)),
+              lte(orders.orderedAt, new Date(endDate as string))
+            )
+          ] : [])
+        ))
+        .groupBy(orderItems.productId, products.name, products.categoryId, categories.name);
 
+      console.log("Executing transaction and order queries...");
+      
+      const [transactionStats, orderStats] = await Promise.all([
+        transactionQuery,
+        orderQuery
+      ]);
 
-      // Initialize default values
-      let totalRevenue = 0;
-      let totalQuantity = 0;
-      let categoryStats = [];
-      let productStatsGrouped = []; // Renamed from productStats to avoid conflict
-      let topSellingProducts = [];
-      let topRevenueProducts = [];
+      console.log("Transaction stats:", transactionStats.length, "items");
+      console.log("Order stats:", orderStats.length, "items");
 
-      // Process data if we have results
-      if (productStats && productStats.length > 0) {
-        // Calculate totals
-        totalRevenue = productStats.reduce(
-          (sum, item) => sum + parseFloat(item.revenue || "0"),
-          0,
-        );
-        // Fix totalQuantity calculation to return proper number instead of concatenated string
-        totalQuantity = productStats.reduce(
-          (sum, item) => sum + parseInt(item.quantity.toString()),
-          0,
-        );
+      // Combine and aggregate data from both sources
+      const combinedStats = new Map();
 
-        // Group by category
-        const categoryStatsMap = new Map();
-        const productStatsMap = new Map();
+      // Process transaction items
+      transactionStats.forEach((item: any) => {
+        if (!item.productId || !item.productName) return;
+        
+        const key = item.productId;
+        if (!combinedStats.has(key)) {
+          combinedStats.set(key, {
+            productId: item.productId,
+            productName: item.productName,
+            categoryId: item.categoryId,
+            categoryName: item.categoryName || 'N/A',
+            totalQuantity: 0,
+            totalRevenue: 0,
+          });
+        }
+        
+        const stats = combinedStats.get(key);
+        stats.totalQuantity += Number(item.quantity || 0);
+        stats.totalRevenue += Number(item.revenue || 0);
+      });
 
-        productStats.forEach((item) => {
-          if (!item.category || !item.product) return;
+      // Process order items
+      orderStats.forEach((item: any) => {
+        if (!item.productId || !item.productName) return;
+        
+        const key = item.productId;
+        if (!combinedStats.has(key)) {
+          combinedStats.set(key, {
+            productId: item.productId,
+            productName: item.productName,
+            categoryId: item.categoryId,
+            categoryName: item.categoryName || 'N/A',
+            totalQuantity: 0,
+            totalRevenue: 0,
+          });
+        }
+        
+        const stats = combinedStats.get(key);
+        stats.totalQuantity += Number(item.quantity || 0);
+        stats.totalRevenue += Number(item.revenue || 0);
+      });
 
-          const categoryKey = item.category.id;
-          const productKey = item.product.id;
+      // Convert to arrays and calculate totals
+      const productStatsArray = Array.from(combinedStats.values());
+      
+      const totalRevenue = productStatsArray.reduce((sum, item) => sum + item.totalRevenue, 0);
+      const totalQuantity = productStatsArray.reduce((sum, item) => sum + item.totalQuantity, 0);
 
-          // Category stats
-          if (!categoryStatsMap.has(categoryKey)) {
-            categoryStatsMap.set(categoryKey, {
-              category: item.category,
-              revenue: 0,
-              quantity: 0,
-              productCount: new Set(),
-            });
-          }
-          const categoryStatsItem = categoryStatsMap.get(categoryKey);
-          categoryStatsItem.revenue += parseFloat(item.revenue || "0");
-          categoryStatsItem.quantity += item.quantity || 0;
-          categoryStatsItem.productCount.add(item.product.id);
+      // Group by category
+      const categoryStatsMap = new Map();
+      productStatsArray.forEach((item) => {
+        const categoryKey = item.categoryId || 0;
+        
+        if (!categoryStatsMap.has(categoryKey)) {
+          categoryStatsMap.set(categoryKey, {
+            categoryId: categoryKey,
+            categoryName: item.categoryName || 'N/A',
+            totalQuantity: 0,
+            totalRevenue: 0,
+            productCount: 0,
+          });
+        }
+        
+        const categoryStats = categoryStatsMap.get(categoryKey);
+        categoryStats.totalQuantity += item.totalQuantity;
+        categoryStats.totalRevenue += item.totalRevenue;
+        categoryStats.productCount += 1;
+      });
 
-          // Product stats
-          if (!productStatsMap.has(productKey)) {
-            productStatsMap.set(productKey, {
-              product: item.product,
-              revenue: 0,
-              quantity: 0,
-            });
-          }
-          const productStatsItem = productStatsMap.get(productKey);
-          productStatsItem.revenue += parseFloat(item.revenue || "0");
-          productStatsItem.quantity += item.quantity || 0;
-        });
+      const categoryStats = Array.from(categoryStatsMap.values());
 
-        // Convert to arrays and add productCount
-        categoryStats = Array.from(categoryStatsMap.values()).map((cat) => ({
-          ...cat,
-          productCount: cat.productCount.size,
-        }));
+      // Sort products by quantity and revenue
+      const topSellingProducts = [...productStatsArray]
+        .sort((a, b) => b.totalQuantity - a.totalQuantity)
+        .slice(0, 10);
+        
+      const topRevenueProducts = [...productStatsArray]
+        .sort((a, b) => b.totalRevenue - a.totalRevenue)
+        .slice(0, 10);
 
-        productStatsGrouped = Array.from(productStatsMap.values());
-
-        // Sort products by quantity and revenue
-        topSellingProducts = [...productStatsGrouped].sort(
-          (a, b) => b.quantity - a.quantity,
-        );
-        topRevenueProducts = [...productStatsGrouped].sort(
-          (a, b) => b.revenue - a.revenue,
-        );
-      }
+      console.log("Menu Analysis Results:", {
+        totalRevenue,
+        totalQuantity,
+        productCount: productStatsArray.length,
+        categoryCount: categoryStats.length
+      });
 
       res.json({
         totalRevenue,
         totalQuantity,
         categoryStats,
-        productStats: productStatsGrouped, // Use the renamed variable
+        productStats: productStatsArray,
         topSellingProducts,
         topRevenueProducts,
       });
