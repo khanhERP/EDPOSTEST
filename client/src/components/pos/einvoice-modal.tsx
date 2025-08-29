@@ -85,7 +85,7 @@ export function EInvoiceModal({
 
   const [isTaxCodeLoading, setIsTaxCodeLoading] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [isProcessed, setIsProcessed] = useState(false); // New state to track if processing has started
+  const [isPublishingLater, setIsPublishingLater] = useState(false);
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
   const [activeInputField, setActiveInputField] = useState<string | null>(null);
 
@@ -442,8 +442,7 @@ export function EInvoiceModal({
       return;
     }
 
-    setIsProcessed(true); // Mark processing as started
-    setIsPublishing(true); // Set publishing state
+    setIsPublishingLater(true); // Set publishing later state
 
     try {
       console.log(
@@ -753,8 +752,7 @@ export function EInvoiceModal({
         description: errorMessage,
       });
     } finally {
-      setIsPublishing(false);
-      // Keep isProcessed true until modal closes to maintain form state
+      setIsPublishingLater(false);
     }
   };
 
@@ -803,7 +801,6 @@ export function EInvoiceModal({
     }
 
     setIsPublishing(true); // Set publishing to true
-    setIsProcessed(true); // Mark processing as started
 
     try {
       // Debug log current cart items
@@ -1327,22 +1324,20 @@ export function EInvoiceModal({
       alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error}`);
     } finally {
       setIsPublishing(false); // Reset publishing state
-      // Keep isProcessed true until modal closes to maintain form state
     }
   };
 
   const handleCancel = () => {
-    setIsProcessed(false); // Reset processed state when closing
     onClose();
   };
 
-  // Reset processed state when modal closes
+  // Reset states when modal closes
   useEffect(() => {
-    if (!isOpen && isProcessed) {
-      console.log("🔄 Resetting processed state as modal closed");
-      setIsProcessed(false);
+    if (!isOpen) {
+      setIsPublishing(false);
+      setIsPublishingLater(false);
     }
-  }, [isOpen, isProcessed]);
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(isOpen) => { if (isOpen) { onClose(); } else { onClose(); } }}>
@@ -1665,13 +1660,13 @@ export function EInvoiceModal({
               type="button"
               onClick={(e) => {
                 e.preventDefault();
-                if (!isProcessed && !isPublishing) {
+                if (!isPublishing && !isPublishingLater) {
                   console.log("🟢 Phát hành button clicked");
                   handleConfirm();
                 }
               }}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={isPublishing || isProcessed}
+              disabled={isPublishing || isPublishingLater}
             >
               {isPublishing ? (
                 <>
@@ -1690,14 +1685,14 @@ export function EInvoiceModal({
               onClick={(e) => {
                 e.preventDefault();
                 console.log("🟡 Phát hành sau button clicked");
-                if (!isProcessed && !isPublishing) {
+                if (!isPublishing && !isPublishingLater) {
                   handlePublishLater();
                 }
               }}
               className="flex-1 bg-gray-500 hover:bg-gray-600 text-white"
-              disabled={isPublishing || isProcessed}
+              disabled={isPublishing || isPublishingLater}
             >
-              {isPublishing ? (
+              {isPublishingLater ? (
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
                   Đang xử lý...
@@ -1715,12 +1710,12 @@ export function EInvoiceModal({
               onClick={(e) => {
                 e.preventDefault();
                 console.log("❌ Cancel button clicked");
-                if (!isProcessed && !isPublishing) {
+                if (!isPublishing && !isPublishingLater) {
                   handleCancel();
                 }
               }}
               className="flex-1"
-              disabled={isPublishing || isProcessed}
+              disabled={isPublishing || isPublishingLater}
             >
               <span className="mr-2">❌</span>
               {t("einvoice.cancel") || "Hủy bỏ"}
