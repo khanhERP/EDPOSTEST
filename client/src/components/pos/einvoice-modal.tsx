@@ -1600,49 +1600,16 @@ export function EInvoiceModal({
               <span className="font-medium">{t("einvoice.totalAmount") || "Tổng tiền hóa đơn"}</span>
               <span className="text-lg font-bold text-blue-600">
                 {(() => {
-                  console.log('💰 EInvoice Modal - Display calculation start:', {
-                    cartItemsLength: cartItems?.length || 0,
+                  console.log('💰 EInvoice Modal - Total display:', {
                     totalProp: total,
-                    hasCartItems: cartItems && Array.isArray(cartItems) && cartItems.length > 0
+                    totalType: typeof total,
+                    cartItemsLength: cartItems?.length || 0
                   });
 
-                  // Prioritize prop total first for accuracy
-                  if (total !== null && total !== undefined && typeof total === 'number' && total > 0) {
-                    console.log('💰 EInvoice Modal - Using prop total:', total);
-                    return Math.round(total).toLocaleString("vi-VN");
-                  }
-
-                  // Fallback: Calculate from cartItems if prop total is not available
-                  if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-                    console.log('💰 EInvoice Modal - Fallback: Calculating from cartItems:', cartItems);
-
-                    let calculatedSubtotal = 0;
-                    let calculatedTax = 0;
-
-                    cartItems.forEach(item => {
-                      const itemPrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-                      const itemQuantity = typeof item.quantity === "string" ? parseInt(item.quantity) : item.quantity;
-                      const itemSubtotal = itemPrice * itemQuantity;
-
-                      calculatedSubtotal += itemSubtotal;
-
-                      // Calculate tax from afterTaxPrice or taxRate
-                      if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
-                        const afterTax = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
-                        calculatedTax += (afterTax - itemPrice) * itemQuantity;
-                      } else {
-                        const itemTaxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "0") : item.taxRate || 0;
-                        calculatedTax += (itemSubtotal * itemTaxRate) / 100;
-                      }
-                    });
-
-                    const calculatedTotal = calculatedSubtotal + calculatedTax;
-                    console.log('💰 EInvoice Modal - Calculated total fallback:', calculatedTotal);
-                    return Math.round(calculatedTotal).toLocaleString("vi-VN");
-                  }
-
-                  console.log('💰 EInvoice Modal - No valid data, showing 0');
-                  return "0";
+                  // Use total prop directly - it's already calculated correctly
+                  const displayTotal = total || 0;
+                  console.log('💰 EInvoice Modal - Display total:', displayTotal);
+                  return Math.round(displayTotal).toLocaleString("vi-VN");
                 })()}
                 {" "}₫
               </span>
