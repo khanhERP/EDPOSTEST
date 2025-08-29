@@ -1333,8 +1333,8 @@ export function EInvoiceModal({
             </div>
           )}
 
-          {/* Data ready indicator */}
-          {isOpen && !templatesLoading && !connectionsLoading && (
+          {/* Data ready indicator - HIDDEN */}
+          {false && isOpen && !templatesLoading && !connectionsLoading && (
             (() => {
               const hasValidCartItems = cartItems && Array.isArray(cartItems) && cartItems.length > 0;
               const hasValidTotal = total !== null && total !== undefined && typeof total === 'number' && total >= 0;
