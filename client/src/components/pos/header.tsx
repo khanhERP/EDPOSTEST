@@ -266,8 +266,8 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >
-                      <Home className="w-4 h-4 mr-3" />
-                      {t("nav.directSales")}
+                      <ShoppingCart className="w-4 h-4 mr-3" />
+                      Bán hàng
                     </button>
                   </Link>
 
