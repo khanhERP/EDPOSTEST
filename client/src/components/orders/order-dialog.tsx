@@ -714,27 +714,27 @@ export function OrderDialog({
                                               });
 
                                               // Update order with new totals
-                                              await apiRequest('PUT', `/api/orders/${existingOrder.id}`, {
+                                              apiRequest('PUT', `/api/orders/${existingOrder.id}`, {
                                                 subtotal: newSubtotal.toString(),
                                                 tax: newTax.toString(),
                                                 total: newTotal.toString()
+                                              }).then(() => {
+                                                console.log('✅ Order Dialog: Order totals updated successfully');
+
+                                                // Force refresh of all related data to ensure UI updates immediately
+                                                Promise.all([
+                                                  queryClient.invalidateQueries({ queryKey: ["/api/orders"] }),
+                                                  queryClient.invalidateQueries({ queryKey: ["/api/tables"] }),
+                                                  queryClient.invalidateQueries({ queryKey: ["/api/order-items"] }),
+                                                  queryClient.invalidateQueries({ queryKey: ["/api/order-items", existingOrder.id] })
+                                                ]).then(() => {
+                                                  // Force immediate refetch to update table grid display
+                                                  return Promise.all([
+                                                    queryClient.refetchQueries({ queryKey: ["/api/orders"] }),
+                                                    queryClient.refetchQueries({ queryKey: ["/api/tables"] })
+                                                  ]);
+                                                });
                                               });
-
-                                              console.log('✅ Order Dialog: Order totals updated successfully');
-
-                                              // Force refresh of all related data to ensure UI updates immediately
-                                              await Promise.all([
-                                                queryClient.invalidateQueries({ queryKey: ["/api/orders"] }),
-                                                queryClient.invalidateQueries({ queryKey: ["/api/tables"] }),
-                                                queryClient.invalidateQueries({ queryKey: ["/api/order-items"] }),
-                                                queryClient.invalidateQueries({ queryKey: ["/api/order-items", existingOrder.id] })
-                                              ]);
-
-                                              // Force immediate refetch to update table grid display
-                                              await Promise.all([
-                                                queryClient.refetchQueries({ queryKey: ["/api/orders"] }),
-                                                queryClient.refetchQueries({ queryKey: ["/api/tables"] })
-                                              ]);
 
                                               console.log('🔄 Order Dialog: All queries refreshed successfully');
 
