@@ -86,6 +86,8 @@ export function EInvoiceModal({
   const [isPublishing, setIsPublishing] = useState(false);
   const [showVirtualKeyboard, setShowVirtualKeyboard] = useState(false);
   const [activeInputField, setActiveInputField] = useState<string | null>(null);
+  const [selectedInternalPaymentMethod, setSelectedInternalPaymentMethod] = useState<string>(selectedPaymentMethod);
+
 
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -215,6 +217,7 @@ export function EInvoiceModal({
         phoneNumber: "",
         email: "",
       });
+      setSelectedInternalPaymentMethod(selectedPaymentMethod);
     }
   }, [isOpen]); // Only reset when modal opens/closes
 
@@ -524,13 +527,10 @@ export function EInvoiceModal({
 
       // Create receipt data thực sự cho receipt modal
       const receiptData = {
-        transactionId:
-          invoiceResult.invoice?.invoiceNumber || `TXN-${Date.now()}`,
+        transactionId: invoiceResult.invoice?.invoiceNumber || `TXN-${Date.now()}`,
         items: cartItems.map((item) => {
           const itemPrice =
-            typeof item.price === "string"
-              ? parseFloat(item.price)
-              : item.price;
+            typeof item.price === "string" ? parseFloat(item.price) : item.price;
           const itemQuantity =
             typeof item.quantity === "string"
               ? parseInt(item.quantity)
@@ -557,6 +557,7 @@ export function EInvoiceModal({
         tax: calculatedTax.toFixed(2),
         total: total.toFixed(2),
         paymentMethod: "einvoice",
+        originalPaymentMethod: selectedInternalPaymentMethod,
         cashierName: "System User",
         createdAt: new Date().toISOString(),
         invoiceNumber: invoiceResult.invoice?.invoiceNumber || null,
@@ -570,6 +571,7 @@ export function EInvoiceModal({
         cartItems: cartItems,
         total: total,
         paymentMethod: "einvoice",
+        originalPaymentMethod: selectedInternalPaymentMethod,
         source: source || "pos",
         invoiceId: invoiceResult.invoice?.id,
         publishLater: true, // Flag to indicate this is for later publishing
@@ -581,7 +583,7 @@ export function EInvoiceModal({
         invoiceDataForConfirm,
       );
 
-      // Prepare data for receipt modal
+      // Prepare data for receipt modal with proper receipt data
       const completeInvoiceData = {
         ...invoiceDataForConfirm,
         paymentMethod: selectedPaymentMethod, // Use original payment method
@@ -996,7 +998,7 @@ export function EInvoiceModal({
           description: `Hóa đơn điện tử đã được phát hành thành công!\nSố hóa đơn: ${publishResult.data?.invoiceNo || "N/A"}`,
         });
 
-        // Tạo receipt data ngay sau khi phát hành thành công
+        // Create receipt data ngay sau khi phát hành thành công
         const receiptData = {
           transactionId: publishResult.data?.invoiceNo || `TXN-${Date.now()}`,
           items: cartItems.map((item) => {
@@ -1030,7 +1032,7 @@ export function EInvoiceModal({
           tax: cartTaxAmount.toFixed(2),
           total: cartTotal.toFixed(2),
           paymentMethod: "einvoice",
-          originalPaymentMethod: selectedPaymentMethod,
+          originalPaymentMethod: selectedInternalPaymentMethod,
           amountReceived: cartTotal.toFixed(2),
           change: "0.00",
           cashierName: "System User",
@@ -1046,13 +1048,13 @@ export function EInvoiceModal({
         );
 
         // Prepare comprehensive invoice data with all necessary flags
-        const invoiceResultForConfirm = {
+        const invoiceDataForConfirm = {
           ...formData,
           invoiceData: publishResult.data,
           cartItems: cartItems,
           total: total,
           paymentMethod: selectedPaymentMethod, // Use original payment method
-          originalPaymentMethod: selectedPaymentMethod,
+          originalPaymentMethod: selectedInternalPaymentMethod,
           source: source || "pos",
           orderId: orderId,
           publishedImmediately: true, // Flag để phân biệt với phát hành sau
@@ -1062,7 +1064,7 @@ export function EInvoiceModal({
           invoiceNumber: publishResult.data?.invoiceNo || null,
         };
 
-        console.log("✅ Prepared comprehensive invoice result:", invoiceResultForConfirm);
+        console.log("✅ Prepared comprehensive invoice result:", invoiceDataForConfirm);
 
         // Prepare data for receipt modal with proper receipt data
         const completeInvoiceData = {
