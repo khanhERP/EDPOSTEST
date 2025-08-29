@@ -381,6 +381,11 @@ export function EInvoiceModal({
   };
 
   const handlePublishLater = async () => {
+    console.log("🟡 handlePublishLater called");
+    console.log("🟡 Form data:", formData);
+    console.log("🟡 Cart items:", cartItems);
+    console.log("🟡 Total:", total);
+
     // Placeholder for subtotal, tax, total calculation if needed within this scope
     let subtotal = 0;
     let tax = 0;
@@ -781,16 +786,32 @@ export function EInvoiceModal({
   };
 
   const handleConfirm = async () => {
+    console.log("🟢 handleConfirm called");
+    console.log("🟢 Form data:", formData);
+    console.log("🟢 Cart items:", cartItems);
+    console.log("🟢 Invoice templates:", invoiceTemplates);
+
     // Validate required fields
     if (!formData.invoiceProvider || !formData.customerName) {
-      alert(
-        "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
-      );
+      console.error("❌ Missing required fields:", {
+        invoiceProvider: formData.invoiceProvider,
+        customerName: formData.customerName
+      });
+      toast({
+        title: "Lỗi validation",
+        description: "Vui lòng điền đầy đủ thông tin bắt buộc: Đơn vị HĐĐT và Tên đơn vị",
+        variant: "destructive"
+      });
       return;
     }
 
-    if (!formData.selectedTemplateId) {
-      alert("Vui lòng chọn mẫu số hóa đơn");
+    if (!formData.selectedTemplateId && invoiceTemplates.length > 0) {
+      console.error("❌ No template selected");
+      toast({
+        title: "Lỗi validation", 
+        description: "Vui lòng chọn mẫu số hóa đơn",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -1529,33 +1550,65 @@ export function EInvoiceModal({
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4 border-t">
             <Button
-              onClick={handleConfirm}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                console.log("🟢 Phát hành button clicked");
+                handleConfirm();
+              }}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
               disabled={isPublishing}
             >
               {isPublishing ? (
                 <>
                   <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
-                  {t("einvoice.publishing")}
+                  {t("einvoice.publishing") || "Đang phát hành..."}
                 </>
               ) : (
                 <>
                   <span className="mr-2">✅</span>
-                  {t("einvoice.publish")}
+                  {t("einvoice.publish") || "Phát hành"}
                 </>
               )}
             </Button>
             <Button
-              onClick={handlePublishLater}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                console.log("🟡 Phát hành sau button clicked");
+                if (!isPublishing) {
+                  setIsPublishing(true);
+                  handlePublishLater();
+                }
+              }}
               className="flex-1 bg-gray-500 hover:bg-gray-600 text-white"
               disabled={isPublishing}
             >
-              <span className="mr-2">⏳</span>
-              Phát hành sau
+              {isPublishing ? (
+                <>
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2" />
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <span className="mr-2">⏳</span>
+                  Phát hành sau
+                </>
+              )}
             </Button>
-            <Button variant="outline" onClick={handleCancel} className="flex-1">
+            <Button 
+              type="button"
+              variant="outline" 
+              onClick={(e) => {
+                e.preventDefault();
+                console.log("❌ Cancel button clicked");
+                handleCancel();
+              }} 
+              className="flex-1"
+              disabled={isPublishing}
+            >
               <span className="mr-2">❌</span>
-              {t("einvoice.cancel")}
+              {t("einvoice.cancel") || "Hủy bỏ"}
             </Button>
           </div>
         </div>
