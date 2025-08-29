@@ -333,6 +333,7 @@ export interface NavigationTranslations {
   warehouseReport: string;
   orderReport: string;
   customerDisplay: string;
+  tablesSales: string;
 }
 
 // Reports translations interface
