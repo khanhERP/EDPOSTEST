@@ -11,6 +11,7 @@ import {
   Package,
   Settings as SettingsIcon,
   Building2,
+  ShoppingCart,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import logoPath from "@assets/EDPOS_1753091767028.png";
