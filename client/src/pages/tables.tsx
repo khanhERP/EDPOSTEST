@@ -6,7 +6,7 @@ import { OrderManagement } from "@/components/orders/order-management";
 import { TableManagement } from "@/components/tables/table-management";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Utensils, Settings, ClipboardList } from "lucide-react";
+import { Utensils, Settings, ClipboardList, ShoppingCart } from "lucide-react";
 import { Link } from "wouter";
 import { useTranslation } from "@/lib/i18n";
 
@@ -33,6 +33,7 @@ export default function TablesPage() {
             <div className="flex gap-4">
               <Link href="/">
                 <Button variant="outline">
+                  <ShoppingCart className="w-4 h-4 mr-2" />
                   Quay lại Bán hàng
                 </Button>
               </Link>
