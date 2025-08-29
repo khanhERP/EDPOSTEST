@@ -59,6 +59,10 @@ export function ShoppingCart({
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
   const [showInvoiceManagementModal, setShowInvoiceManagementModal] = useState(false);
+  
+  // Additional states for new ordered flow
+  const [previewReceipt, setPreviewReceipt] = useState<any>(null);
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
@@ -258,12 +262,12 @@ export function ShoppingCart({
   const handleCheckout = () => {
     if (cart.length === 0) return;
 
-    console.log("🛒 Direct checkout to E-Invoice modal - no intermediate steps");
+    console.log("📄 BƯỚC 1: Hiển thị preview receipt trước tiên");
     console.log("Cart items:", cart.length);
 
     // Validate cart data before proceeding
     if (!cart || cart.length === 0) {
-      console.error("❌ No cart data available for E-Invoice processing");
+      console.error("❌ No cart data available for processing");
       toast({
         title: "Lỗi",
         description: "Không có dữ liệu giỏ hàng để xử lý hóa đơn",
@@ -272,14 +276,36 @@ export function ShoppingCart({
       return;
     }
 
-    console.log("🚀 DIRECT OPEN: E-Invoice modal with current cart data");
-    console.log("🚀 Cart items to pass:", cart.length, "items");
-    console.log("🚀 Total to pass:", total);
-    console.log("🚀 Cart data:", cart);
+    // BƯỚC 1: Tạo preview receipt data
+    const previewReceiptData = {
+      transactionId: `PREVIEW-${Date.now()}`,
+      items: cart.map((item) => ({
+        id: item.id,
+        productId: item.id,
+        productName: item.name,
+        price: parseFloat(item.price.toString()).toFixed(2),
+        quantity: item.quantity,
+        total: parseFloat(item.total.toString()).toFixed(2),
+        sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+        taxRate: parseFloat(item.taxRate || "0"),
+      })),
+      subtotal: subtotal.toFixed(2),
+      tax: tax.toFixed(2),
+      total: total.toFixed(2),
+      paymentMethod: "preview",
+      cashierName: "System User",
+      createdAt: new Date().toISOString(),
+      // Add exact values for precise calculations
+      exactSubtotal: subtotal,
+      exactTax: tax,
+      exactTotal: total,
+    };
 
-    // Set default payment method and open E-Invoice modal directly
-    setSelectedPaymentMethod("cash");
-    setShowEInvoiceModal(true);
+    console.log("📄 BƯỚC 1: Hiển thị preview receipt với dữ liệu:", previewReceiptData);
+    
+    // Set preview receipt và hiển thị modal
+    setPreviewReceipt(previewReceiptData);
+    setShowReceiptModal(true); // This will show as preview mode
   };
 
   const handleReceiptConfirm = () => {
@@ -315,9 +341,9 @@ export function ShoppingCart({
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
-    console.log('📧 Shopping cart: E-Invoice processing completed:', eInvoiceData);
+    console.log('✅ BƯỚC 4: E-Invoice processing completed:', eInvoiceData);
 
-    // Close E-Invoice modal first
+    // BƯỚC 4: Đóng E-Invoice modal
     setShowEInvoiceModal(false);
     setSelectedPaymentMethod("");
 
@@ -332,13 +358,13 @@ export function ShoppingCart({
       return;
     }
 
-    console.log('📄 Processing receipt data for display');
+    console.log('📄 BƯỚC 4: Processing receipt data for final display');
 
     let receiptToShow: any = null;
 
     // Priority 1: Use receipt from eInvoiceData if available and valid
     if (eInvoiceData.receipt && eInvoiceData.receipt.items && eInvoiceData.receipt.items.length > 0) {
-      console.log('✅ Using receipt from E-Invoice data');
+      console.log('✅ BƯỚC 4: Using receipt from E-Invoice data');
       receiptToShow = {
         ...eInvoiceData.receipt,
         einvoiceData: {
@@ -348,15 +374,15 @@ export function ShoppingCart({
           customerName: eInvoiceData.customerName || eInvoiceData.receipt.customerName || "Khách hàng",
           customerTaxCode: eInvoiceData.taxCode || eInvoiceData.receipt.customerTaxCode || "",
         },
-        originalPaymentMethod: eInvoiceData.originalPaymentMethod || "cash",
-        displayPaymentMethod: eInvoiceData.originalPaymentMethod || "cash",
+        originalPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash",
+        displayPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash",
         isEInvoice: true,
         publishLater: eInvoiceData.publishLater || false,
       };
     }
     // Priority 2: Create receipt from current cart data
     else if (cart && cart.length > 0) {
-      console.log('⚠️ Creating receipt from current cart data');
+      console.log('⚠️ BƯỚC 4: Creating receipt from current cart data');
       receiptToShow = {
         transactionId: eInvoiceData.savedInvoice?.tradeNumber || `TXN-${Date.now()}`,
         items: cart.map((item) => ({
@@ -374,8 +400,8 @@ export function ShoppingCart({
         tax: tax.toFixed(2),
         total: total.toFixed(2),
         paymentMethod: "einvoice",
-        originalPaymentMethod: eInvoiceData.originalPaymentMethod || "cash",
-        displayPaymentMethod: eInvoiceData.originalPaymentMethod || "cash",
+        originalPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash",
+        displayPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash",
         amountReceived: total.toFixed(2),
         change: "0.00",
         cashierName: "System User",
@@ -390,7 +416,7 @@ export function ShoppingCart({
 
     // Final validation of receipt data
     if (!receiptToShow || !receiptToShow.items || receiptToShow.items.length === 0) {
-      console.error("❌ No valid receipt data could be created");
+      console.error("❌ BƯỚC 4: No valid receipt data could be created");
       toast({
         title: "Lỗi",
         description: "Không thể tạo dữ liệu hóa đơn để hiển thị",
@@ -399,17 +425,17 @@ export function ShoppingCart({
       return;
     }
 
-    console.log('✅ Final receipt data ready for display:', receiptToShow);
+    console.log('✅ BƯỚC 4→5: Final receipt data ready for display');
 
-    // Show receipt modal with validated data
+    // BƯỚC 5: Show final receipt modal
     setSelectedReceipt(receiptToShow);
     setShowReceiptModal(true);
 
-    // Clear cart after receipt modal is shown
+    // Clear cart after a brief delay
     setTimeout(() => {
-      console.log('🧹 Shopping cart: Auto clearing cart after receipt modal shown');
+      console.log('🧹 BƯỚC 5: Auto clearing cart after final receipt modal shown');
       clearCart();
-    }, 200);
+    }, 500);
   };
 
   const canCheckout = cart.length > 0;
@@ -645,12 +671,76 @@ export function ShoppingCart({
         </div>
       )}
 
-      {/* Direct E-Invoice Modal - simplified single step */}
+      {/* BƯỚC 1: Preview Receipt Modal */}
+      <ReceiptModal
+        isOpen={showReceiptModal && !selectedReceipt} // Preview mode when no selectedReceipt
+        onClose={() => {
+          console.log("🔴 BƯỚC 1: Đóng preview receipt modal");
+          setShowReceiptModal(false);
+          setPreviewReceipt(null);
+        }}
+        receipt={previewReceipt}
+        onConfirm={() => {
+          console.log("✅ BƯỚC 1→2: Preview confirmed, chuyển sang chọn phương thức thanh toán");
+          
+          // Đóng preview receipt modal
+          setShowReceiptModal(false);
+          
+          // BƯỚC 2: Hiển thị payment method modal
+          setShowPaymentMethodModal(true);
+        }}
+        isPreview={true} // This is preview mode
+        cartItems={cart.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+          taxRate: parseFloat(item.taxRate || "0"),
+          afterTaxPrice: item.afterTaxPrice,
+        }))}
+        total={total}
+      />
+
+      {/* BƯỚC 2: Payment Method Modal */}
+      {showPaymentMethodModal && (
+        <PaymentMethodModal
+          isOpen={showPaymentMethodModal}
+          onClose={() => {
+            console.log("🔴 BƯỚC 2: Đóng payment method modal");
+            setShowPaymentMethodModal(false);
+          }}
+          onSelectMethod={(method, data) => {
+            console.log("✅ BƯỚC 2→3: Payment method selected:", method);
+            
+            // Đóng payment method modal
+            setShowPaymentMethodModal(false);
+            
+            // Lưu phương thức thanh toán đã chọn
+            setSelectedPaymentMethod(method);
+            
+            // BƯỚC 3: Hiển thị E-Invoice modal
+            setShowEInvoiceModal(true);
+          }}
+          total={total}
+          cartItems={cart.map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+            taxRate: parseFloat(item.taxRate || "0"),
+            afterTaxPrice: item.afterTaxPrice,
+          }))}
+        />
+      )}
+
+      {/* BƯỚC 3-4: E-Invoice Modal */}
       {showEInvoiceModal && (
         <EInvoiceModal
           isOpen={showEInvoiceModal}
           onClose={() => {
-            console.log("🔴 Closing E-invoice modal");
+            console.log("🔴 BƯỚC 3: Đóng E-invoice modal");
             setShowEInvoiceModal(false);
             setSelectedPaymentMethod("");
           }}
@@ -658,15 +748,6 @@ export function ShoppingCart({
           total={total}
           selectedPaymentMethod={selectedPaymentMethod}
           cartItems={cart.map((item) => {
-            console.log("🔄 Mapping cart item for E-Invoice:", {
-              name: item.name,
-              price: item.price,
-              quantity: item.quantity,
-              afterTaxPrice: item.afterTaxPrice,
-              afterTaxPriceType: typeof item.afterTaxPrice,
-              taxRate: item.taxRate
-            });
-
             return {
               id: item.id,
               name: item.name,
@@ -680,13 +761,11 @@ export function ShoppingCart({
         />
       )}
 
-      {/* Final Receipt Modal - "In hóa đơn" for printing */}
+      {/* BƯỚC 5: Final Receipt Modal - "In hóa đơn" for printing */}
       <ReceiptModal
-        isOpen={showReceiptModal}
+        isOpen={showReceiptModal && !!selectedReceipt} // Final mode when selectedReceipt exists
         onClose={() => {
-          console.log(
-            "🔴 Closing final receipt modal (In hóa đơn)",
-          );
+          console.log("🔴 BƯỚC 5: Đóng final receipt modal");
           setShowReceiptModal(false);
           setSelectedReceipt(null);
         }}
@@ -698,9 +777,9 @@ export function ShoppingCart({
           name: item.name,
           price: parseFloat(item.price),
           quantity: item.quantity,
-          sku: `ITEM${String(item.id).padStart(3, "0")}`,
-          taxRate: parseFloat(item.taxRate || "10"),
-          afterTaxPrice: item.afterTaxPrice, // Pass afterTaxPrice for exact calculation
+          sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+          taxRate: parseFloat(item.taxRate || "0"),
+          afterTaxPrice: item.afterTaxPrice,
         }))}
       />
 
