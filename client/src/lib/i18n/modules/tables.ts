@@ -17,7 +17,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     addTable: "테이블 추가",
     editTable: "테이블 편집",
     addTableDesc: "새 테이블을 추가하세요",
-    editTableDesc: "테이블 정보를 편집하세요",
+
     deleteTable: "테이블 삭제",
     available: "이용 가능",
     occupied: "사용중",
@@ -79,7 +79,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     capacityMinimum: "수용 인원은 최소 1명이어야 합니다",
     tableUpdateError: "테이블 업데이트 오류",
     tableDeleteError: "테이블 삭제 중 오류가 발생했습니다",
-    deleteOrder: "주문 삭제",
+
     statusPlaceholder: "상태를 선택하세요",
     unitPrice: "단가",
     taxRate: "세율",
@@ -180,7 +180,7 @@ export const tablesTranslations: { [key: string]: TablesTranslations } = {
     capacityMinimum: "Capacity must be at least 1 person",
     tableUpdateError: "Error updating table",
     tableDeleteError: "Error deleting table",
-    deleteOrder: "Delete Order",
+
     statusPlaceholder: "Select status",
     confirmDeleteProduct: "Are you sure you want to delete this product?",
     productNameRequired: "Product name is required",
