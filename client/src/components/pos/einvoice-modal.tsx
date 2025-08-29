@@ -227,44 +227,24 @@ export function EInvoiceModal({
     }
   }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]);
 
-  // Auto-validate and log data immediately when modal opens
+  // Log data immediately when modal opens
   useEffect(() => {
     if (isOpen) {
-      console.log("🚀 E-INVOICE MODAL OPENED - IMMEDIATE DATA CHECK");
+      console.log("🚀 E-INVOICE MODAL OPENED IMMEDIATELY:");
       console.log("🚀 cartItems available:", cartItems && Array.isArray(cartItems) ? cartItems.length : 0);
       console.log("🚀 total available:", total);
-      console.log("🚀 cartItems data:", JSON.stringify(cartItems, null, 2));
-      
-      // Validate and ensure data is ready for display
-      if (cartItems && Array.isArray(cartItems) && cartItems.length > 0 && total > 0) {
-        console.log("✅ ALL DATA READY - Modal should display complete information");
-        
-        // Calculate total from cartItems to verify
-        const calculatedTotal = cartItems.reduce((sum, item) => {
-          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-          
-          if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-            const afterTaxPrice = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
-            return sum + (afterTaxPrice * itemQuantity);
-          } else {
-            const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
-            const subtotal = itemPrice * itemQuantity;
-            const tax = (subtotal * taxRate) / 100;
-            return sum + subtotal + tax;
-          }
-        }, 0);
-        
-        console.log("💰 Calculated total from cartItems:", calculatedTotal);
-        console.log("💰 Prop total received:", total);
-        console.log("💰 Match:", Math.abs(calculatedTotal - total) < 1);
+      console.log("🚀 cartItems data:", cartItems);
+
+      if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
+        console.log("✅ CART DATA READY IMMEDIATELY - No delays!");
+        cartItems.forEach((item, index) => {
+          console.log(`📦 Item ${index + 1}: ${item.name} - Price: ${item.price}, Qty: ${item.quantity}, Tax: ${item.taxRate}%`);
+        });
       } else {
-        console.warn("⚠️ INCOMPLETE DATA - Modal may show loading or placeholder data");
-        console.warn("⚠️ cartItems valid:", cartItems && Array.isArray(cartItems) && cartItems.length > 0);
-        console.warn("⚠️ total valid:", total > 0);
+        console.warn("⚠️ NO CART DATA AVAILABLE ON MODAL OPEN");
       }
     }
-  }, [isOpen, cartItems, total]);
+  }, [isOpen]);
 
   // Monitor cartItems changes for debugging
   useEffect(() => {
@@ -514,7 +494,7 @@ export function EInvoiceModal({
             : item.afterTaxPrice;
           const itemTax = (afterTax - itemPrice) * itemQuantity;
           console.log(
-            `💰 Tax calculation (afterTaxPrice): ${item.name} - Base: ${item.price}, After tax: ${afterTax}, Tax per unit: ${afterTax - itemPrice}, Total tax: ${itemTax}`,
+            `💰 Tax calculation (afterTaxPrice): ${item.name} - Base: ${item.price}, After tax: ${afterTax}, Tax per unit: ${afterTax - item.price}, Total tax: ${itemTax}`,
           );
           return sum + itemTax;
         } else {
@@ -915,13 +895,13 @@ export function EInvoiceModal({
           const productBySku = products.find((p: any) => p.sku === item.sku);
           if (productBySku) return productBySku;
         }
-        
+
         // Nếu không tìm thấy theo SKU, thử tìm theo ID
         if (item.id && products) {
           const productById = products.find((p: any) => p.id === item.id);
           if (productById) return productById;
         }
-        
+
         return null;
       };
 
@@ -1595,7 +1575,7 @@ export function EInvoiceModal({
                           return sum + itemTotal;
                         }
                       }
-                      
+
                       // Calculate with tax rate if afterTaxPrice not available
                       const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
                       const subtotal = price * quantity;
