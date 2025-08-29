@@ -818,16 +818,14 @@ export function PaymentMethodModal({
                   {t("common.totalAmount")}
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {/* Use exact total with proper priority for display */}
-                  {(() => {
-                    const exactTotal = receipt?.exactTotal ??
-                                     orderForPayment?.exactTotal ??
-                                     parseFloat(receipt?.total || "0") ??
-                                     orderForPayment?.total ??
-                                     total ??
-                                     0;
-                    return Math.floor(exactTotal).toLocaleString("vi-VN");
-                  })()}{" "}
+                  {/* Use exact total with proper priority for QR payment */}
+                  {Math.floor(
+                    receipt?.exactTotal ??
+                      orderForPayment?.exactTotal ??
+                      orderForPayment?.total ??
+                      total ??
+                      0,
+                  ).toLocaleString("vi-VN")}{" "}
                   ₫
                 </p>
               </div>
@@ -1102,17 +1100,15 @@ export function PaymentMethodModal({
                     </Button>
                   </div>
 
-                  {cashAmountInput && parseFloat(cashAmountInput || "0") > 0 && (
+                  {amountReceived && parseFloat(amountReceived || "0") > 0 && (
                     <div className={`p-3 border rounded-lg ${
                       (() => {
                         const receivedAmount = parseFloat(cashAmountInput || "0");
-                        // Use exact priority order with proper calculation
+                        // Sử dụng exact priority order giống như table payment
                         const orderTotal = receipt?.exactTotal ??
-                                         parseFloat(receipt?.total || "0") ??
                                          orderForPayment?.exactTotal ??
                                          orderForPayment?.total ??
-                                         total ??
-                                         0;
+                                         total;
                         const changeAmount = receivedAmount - orderTotal;
                         return changeAmount >= 0
                           ? "bg-green-50 border-green-200"
@@ -1259,13 +1255,11 @@ export function PaymentMethodModal({
                   }}
                   disabled={
                     !cashAmountInput ||
-                    parseFloat(cashAmountInput || "0") <
+                    parseFloat(cashAmountInput) <
                       (receipt?.exactTotal ??
-                       parseFloat(receipt?.total || "0") ??
                        orderForPayment?.exactTotal ??
                        orderForPayment?.total ??
-                       total ??
-                       0)
+                       total)
                   }
                   className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-colors duration-200 disabled:bg-gray-400"
                 >
