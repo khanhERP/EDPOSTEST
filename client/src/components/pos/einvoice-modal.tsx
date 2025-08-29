@@ -1357,7 +1357,7 @@ export function EInvoiceModal({
 
           {/* Data availability warning */}
           {isOpen && !templatesLoading && !connectionsLoading && 
-           (!cartItems || cartItems.length === 0 || !total || total === 0) && (
+           (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0 || !total || total <= 0) && (
             <div className="flex items-center justify-center py-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <span className="text-sm text-yellow-700">⚠️ Chưa có dữ liệu giỏ hàng. Vui lòng thử lại.</span>
             </div>
