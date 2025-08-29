@@ -52,7 +52,7 @@ export function RightSidebar() {
     },
     {
       icon: ShoppingCart,
-      label: t('nav.pos'),
+      label: "Bán hàng trực tiếp",
       href: "/pos",
     },
     {
