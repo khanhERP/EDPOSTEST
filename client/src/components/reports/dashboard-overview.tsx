@@ -60,9 +60,6 @@ interface Invoice {
 export function DashboardOverview() {
   const { t, currentLanguage } = useTranslation();
 
-  // Add error boundary
-  try {
-
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -628,21 +625,4 @@ export function DashboardOverview() {
       </div>
     </div>
   );
-  } catch (error) {
-    console.error("Dashboard Overview Error:", error);
-    return (
-      <div className="flex justify-center py-8">
-        <div className="text-red-500">
-          <p className="mb-4">Lỗi hiển thị dashboard</p>
-          <Button 
-            onClick={() => window.location.reload()} 
-            variant="outline" 
-            size="sm"
-          >
-            Tải lại trang
-          </Button>
-        </div>
-      </div>
-    );
-  }
 }
