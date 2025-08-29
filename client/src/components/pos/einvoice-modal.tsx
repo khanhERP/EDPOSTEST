@@ -749,7 +749,7 @@ export function EInvoiceModal({
         title: "Lỗi",
         description: errorMessage,
       });
-      
+
       setIsPublishingLater(false);
     }
   };
@@ -1175,7 +1175,7 @@ export function EInvoiceModal({
                 productId: item.id,
                 productName: item.name,
                 quantity: itemQuantity,
-                unitPrice: itemPrice.toFixed(2),
+                unitPrice: item.price.toFixed(2),
                 total: (itemSubtotal + itemTax).toFixed(2),
                 taxRate: itemTaxRate.toFixed(2),
               };
@@ -1377,7 +1377,17 @@ export function EInvoiceModal({
   }, [isOpen]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={(isOpen) => { if (isOpen) { onClose(); } else { onClose(); } }}>
+    <Dialog 
+      open={isOpen} 
+      onOpenChange={(open) => {
+        if (!open) {
+          // Reset states when dialog closes
+          setIsPublishing(false);
+          setIsPublishingLater(false);
+          onClose();
+        }
+      }}
+    >
       <DialogContent className="max-w-2xl max-h-screen overflow-y-auto [&>button]:hidden">
         <DialogHeader>
           <DialogTitle className="text-blue-700 bg-blue-100 p-3 rounded-t-lg">
