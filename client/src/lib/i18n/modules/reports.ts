@@ -22,7 +22,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     custom: "Tùy chỉnh",
 
     // Dashboard metrics
-    totalRevenue: "Tổng doanh thu",
+    totalRevenue: "Tổng thu từ bán hàng",
     totalOrders: "Tổng đơn hàng",
     totalQuantitySold: "Tổng số lượng bán",
     averageOrderValue: "Giá trị đơn hàng trung bình",
@@ -202,7 +202,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     discountReport: "Báo cáo giảm giá",
     returnReport: "Báo cáo trả hàng",
     salesDetailReport: "Chi tiết bán hàng",
-    customerCode: "Mã khách hàng",
     searchOrderCode: "Tìm theo mã đơn bán",
     searchTable: "Tìm theo bàn",
     pending: "Đang chờ",
@@ -396,7 +395,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     averageRevenue: "Doanh thu trung bình",
     peakHours: "Giờ cao điểm",
     revenuePerTable: "Doanh thu mỗi bàn",
-    ordersPerTable: "Đ��n hàng mỗi bàn",
+    ordersPerTable: "Đn hàng mỗi bàn",
 
     // Sales report specific
     salesReportDescription: "Phân tích chi tiết về doanh số bán hàng",
@@ -845,7 +844,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     categoryBreakdown: "카테고리별 분석",
     itemPerformance: "상품 성과",
     salesTrend: "판매 트렌드",
-    profitMargin: "이rt�률",
+    profitMargin: "이rt률",
     costAnalysis: "비용 분석",
     stockMovement: "재고 움직임",
     menuAnalysisDescription: "메뉴 및 상품 성과에 대한 상세 분석",
@@ -895,7 +894,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     summaryReportTitle: "요약 보고서",
 
     // Table detail headers
-    salesDetailsHeader: " ��출 세부사항",
+    salesDetailsHeader: " 출 세부사항",
     revenueExpenseDetailsHeader: "수입 지출 세부사항",
     inventoryDetailsHeader: "재고 세부사항",
 
@@ -966,10 +965,11 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noDataAvailable: "데이터 없음",
     loadingData: "데이터 로딩 중...",
     errorLoadingData: "데이터 로딩 오류",
+    totalSalesRevenue: "총 판매 수익",
   },
 
   en: {
-    title: "Reports",
+    title: "Tổng thu từ bán hàng",
     description: "View sales and operational reports",
     dashboard: "Dashboard",
     dashboardDescription: "Dashboard of total sales and operational status",
@@ -989,7 +989,7 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     custom: "Custom",
 
     // Dashboard metrics
-    totalRevenue: "Total Revenue",
+    totalRevenue: "Total Sales Revenue",
     totalOrders: "Total Orders",
     totalQuantitySold: "Total Quantity Sold",
     averageOrderValue: "Average Order Value",
@@ -1455,5 +1455,6 @@ export const reportsTranslations: { [key: string]: ReportsTranslations } = {
     noDataAvailable: "No Data Available",
     loadingData: "Loading Data...",
     errorLoadingData: "Error Loading Data",
+    totalSalesRevenue: "Total Sales Revenue",
   },
 };

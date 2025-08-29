@@ -601,6 +601,7 @@ export interface ReportsTranslations {
   credit_card: string;
   qrbanking: string;
   einvoice: string;
+  totalSalesRevenue: string;
 
   // Table analysis specific
   customerCount: string;
