@@ -119,6 +119,21 @@ export function ReceiptModal({
     return null;
   }
 
+  // If modal is open but receipt is null, wait for receipt data
+  if (isOpen && !receipt && !isPreview) {
+    console.log("⏳ Receipt Modal: Waiting for receipt data...");
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-sm">
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <p className="text-gray-500">Đang tải hóa đơn...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   // Additional safety check - if receipt is null and not in preview mode, return null
   if (!receipt && !isPreview) {
     console.log("❌ Receipt Modal: Receipt is null, cannot render");

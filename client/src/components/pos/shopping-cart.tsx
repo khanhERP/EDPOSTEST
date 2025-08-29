@@ -117,7 +117,7 @@ export function ShoppingCart({
         if (item.taxRate && parseFloat(item.taxRate) > 0) {
           const basePrice = parseFloat(item.price);
 
-          // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
+          // Only calculate tax if afterTaxPrice exists in database
           if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
             const afterTaxPrice = parseFloat(item.afterTaxPrice);
             // Tax = afterTaxPrice - basePrice
@@ -407,12 +407,15 @@ export function ShoppingCart({
 
     console.log('📄 Receipt data to display:', receiptToShow);
 
-    // Show receipt modal immediately after E-Invoice modal closes
-    setTimeout(() => {
-      console.log('📄 Setting receipt modal state');
-      setSelectedReceipt(receiptToShow);
-      setShowReceiptModal(true);
-    }, 50);
+    // Show receipt modal
+      console.log('📄 Shopping cart: Step 5: Showing final receipt modal (not preview)');
+
+      // Ensure receipt modal state is properly set
+      setTimeout(() => {
+        console.log('📄 Setting receipt modal with data:', eInvoiceData.receipt);
+        setSelectedReceipt(eInvoiceData.receipt);
+        setShowReceiptModal(true);
+      }, 100);
 
     // Clear cart after receipt modal is shown
     setTimeout(() => {
