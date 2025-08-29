@@ -197,31 +197,34 @@ export function EInvoiceModal({
     (template) => template && template.useCK === true,
   );
 
-  // Reset form only when modal opens, not when cartItems/total changes
+  // Reset form only when modal first opens with fresh data, not when already processed
   useEffect(() => {
-    if (isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0) {
-      console.log("🔥 E-INVOICE MODAL OPENING WITH DATA READY");
+    if (isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0 && !isProcessed) {
+      console.log("🔥 E-INVOICE MODAL OPENING WITH FRESH DATA");
       console.log("🔥 cartItems when modal opens:", cartItems);
       console.log("🔥 cartItems length when modal opens:", cartItems?.length || 0);
       console.log("🔥 cartItems is array when modal opens:", Array.isArray(cartItems));
       console.log("🔥 total when modal opens:", total);
       console.log("🔥 Available templates:", invoiceTemplates.length);
 
-      // Set default template if available
-      const defaultTemplateId = invoiceTemplates.length > 0 ? invoiceTemplates[0].id.toString() : "";
+      // Only reset form if it's truly a fresh open (not after processing)
+      if (formData.customerName === "" || formData.customerName === "Khách hàng lẻ") {
+        // Set default template if available
+        const defaultTemplateId = invoiceTemplates.length > 0 ? invoiceTemplates[0].id.toString() : "";
 
-      setFormData({
-        invoiceProvider: "EasyInvoice", // Default provider
-        invoiceTemplate: "1C25TYY", // Default template
-        selectedTemplateId: defaultTemplateId,
-        taxCode: "0123456789", // Default tax code
-        customerName: "Khách hàng lẻ", // Default customer name
-        address: "",
-        phoneNumber: "",
-        email: "",
-      });
+        setFormData({
+          invoiceProvider: "EasyInvoice", // Default provider
+          invoiceTemplate: "1C25TYY", // Default template
+          selectedTemplateId: defaultTemplateId,
+          taxCode: "0123456789", // Default tax code
+          customerName: "Khách hàng lẻ", // Default customer name
+          address: "",
+          phoneNumber: "",
+          email: "",
+        });
+      }
     }
-  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]); // Proper dependency array
+  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length, isProcessed]); // Add isProcessed to deps
 
   // Separate effect for debugging cartItems changes without resetting form
   useEffect(() => {
@@ -674,10 +677,11 @@ export function EInvoiceModal({
       onConfirm(completeInvoiceData);
 
       // Close e-invoice modal after triggering the receipt display
-      setTimeout(() => {
-        onClose();
-        console.log("🔴 E-Invoice modal closed after publishLater processing");
-      }, 100);
+        // Don't reset isProcessed here to prevent form reset on next open
+        setTimeout(() => {
+          onClose();
+          console.log("🔴 E-Invoice modal closed after publishLater processing");
+        }, 100);
 
       toast({
         title: "Thành công",
@@ -1251,8 +1255,17 @@ export function EInvoiceModal({
   };
 
   const handleCancel = () => {
+    setIsProcessed(false); // Reset processed state when closing
     onClose();
   };
+
+  // Reset processed state when modal closes
+  useEffect(() => {
+    if (!isOpen && isProcessed) {
+      console.log("🔄 Resetting processed state as modal closed");
+      setIsProcessed(false);
+    }
+  }, [isOpen, isProcessed]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(isOpen) => { if (isOpen) { onClose(); } else { onClose(); } }}>
