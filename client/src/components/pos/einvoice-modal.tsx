@@ -74,8 +74,7 @@ export function EInvoiceModal({
   console.log("- cartItems length:", cartItems?.length || 0);
   const [formData, setFormData] = useState({
     invoiceProvider: "",
-    invoiceTemplate: "",
-    selectedTemplateId: "",
+    invoiceTemplate: "", // This will store the template ID
     taxCode: "",
     customerName: "",
     address: "",
@@ -207,18 +206,17 @@ export function EInvoiceModal({
       const defaultTemplate = invoiceTemplates[0];
       const defaultTemplateId = defaultTemplate.id.toString();
 
-      console.log("🎯 Force setting template data:", {
+      console.log("🎯 Setting default template:", {
         template: defaultTemplate,
         templateId: defaultTemplateId,
         templateName: defaultTemplate.name,
         templateNumber: defaultTemplate.templateNumber
       });
 
-      // Always force set form data to prevent empty template issues
+      // Set form data with default template
       const initialFormData = {
         invoiceProvider: "EasyInvoice",
-        invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY",
-        selectedTemplateId: defaultTemplateId,
+        invoiceTemplate: defaultTemplateId, // Store template ID directly
         taxCode: "0123456789",
         customerName: "Khách hàng lẻ",
         address: "",
@@ -227,28 +225,11 @@ export function EInvoiceModal({
       };
 
       setFormData(initialFormData);
-      console.log("✅ Template forced to:", defaultTemplateId, "- Full data:", initialFormData);
+      console.log("✅ Template set to:", defaultTemplateId);
     }
   }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]);
 
-  // Additional effect to ensure template is always set when data changes
-  useEffect(() => {
-    if (isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0) {
-      // Double-check template is set after any state changes
-      if (!formData.selectedTemplateId || formData.selectedTemplateId === "") {
-        const defaultTemplate = invoiceTemplates[0];
-        const defaultTemplateId = defaultTemplate.id.toString();
-        
-        console.log("🚨 Template missing, force setting again:", defaultTemplateId);
-        
-        setFormData(prev => ({
-          ...prev,
-          selectedTemplateId: defaultTemplateId,
-          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
-        }));
-      }
-    }
-  }, [formData.selectedTemplateId, isOpen, templatesLoading, connectionsLoading, invoiceTemplates]);
+  
 
   // Log data immediately when modal opens
   useEffect(() => {
@@ -446,20 +427,12 @@ export function EInvoiceModal({
       return;
     }
 
-    // Detailed template validation with logging
-    console.log("🔍 Template validation check:", {
-      selectedTemplateId: formData.selectedTemplateId,
-      templatesLoading,
-      connectionsLoading,
-      templatesCount: invoiceTemplates.length,
-      templates: invoiceTemplates.map(t => ({ id: t.id, name: t.name, templateNumber: t.templateNumber }))
-    });
-
-    if (!formData.selectedTemplateId || formData.selectedTemplateId === "" || !invoiceTemplates.length) {
+    // Template validation
+    if (!formData.invoiceTemplate || !invoiceTemplates.length) {
       console.error("❌ Template validation failed - cannot proceed with publish later");
       
       // Auto-fix if templates are available but not selected
-      if (invoiceTemplates.length > 0 && (!formData.selectedTemplateId || formData.selectedTemplateId === "")) {
+      if (invoiceTemplates.length > 0 && !formData.invoiceTemplate) {
         const defaultTemplate = invoiceTemplates[0];
         const defaultTemplateId = defaultTemplate.id.toString();
         
@@ -467,8 +440,7 @@ export function EInvoiceModal({
         
         setFormData(prev => ({
           ...prev,
-          selectedTemplateId: defaultTemplateId,
-          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
+          invoiceTemplate: defaultTemplateId
         }));
         
         // Don't return, continue with the fixed template
@@ -526,7 +498,7 @@ export function EInvoiceModal({
 
       // Get selected template
       const selectedTemplate = invoiceTemplates.find(
-        (template) => template.id.toString() === currentFormData.selectedTemplateId,
+        (template) => template.id.toString() === currentFormData.invoiceTemplate,
       );
 
       if (!selectedTemplate) {
@@ -733,20 +705,12 @@ export function EInvoiceModal({
     console.log("🟢 Cart items:", cartItems);
     console.log("🟢 Invoice templates:", invoiceTemplates);
 
-    // Detailed template validation for immediate publish
-    console.log("🔍 Template validation check (immediate publish):", {
-      selectedTemplateId: formData.selectedTemplateId,
-      templatesLoading,
-      connectionsLoading,
-      templatesCount: invoiceTemplates.length,
-      templates: invoiceTemplates.map(t => ({ id: t.id, name: t.name, templateNumber: t.templateNumber }))
-    });
-
-    if (!formData.selectedTemplateId || formData.selectedTemplateId === "" || !invoiceTemplates.length) {
+    // Template validation for immediate publish
+    if (!formData.invoiceTemplate || !invoiceTemplates.length) {
       console.error("❌ Template validation failed for immediate publish");
       
       // Auto-fix if templates are available but not selected
-      if (invoiceTemplates.length > 0 && (!formData.selectedTemplateId || formData.selectedTemplateId === "")) {
+      if (invoiceTemplates.length > 0 && !formData.invoiceTemplate) {
         const defaultTemplate = invoiceTemplates[0];
         const defaultTemplateId = defaultTemplate.id.toString();
         
@@ -754,8 +718,7 @@ export function EInvoiceModal({
         
         setFormData(prev => ({
           ...prev,
-          selectedTemplateId: defaultTemplateId,
-          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
+          invoiceTemplate: defaultTemplateId
         }));
         
         // Don't return, continue with the fixed template
@@ -959,7 +922,7 @@ export function EInvoiceModal({
 
       // Get selected template data for API mapping
       const selectedTemplate = invoiceTemplates.find(
-        (template) => template.id.toString() === currentFormData.selectedTemplateId,
+        (template) => template.id.toString() === currentFormData.invoiceTemplate,
       );
 
       if (!selectedTemplate) {
@@ -1432,9 +1395,9 @@ export function EInvoiceModal({
                   {t("einvoice.invoiceTemplate")}
                 </Label>
                 <Select
-                  value={formData.selectedTemplateId}
+                  value={formData.invoiceTemplate}
                   onValueChange={(value) =>
-                    handleInputChange("selectedTemplateId", value)
+                    handleInputChange("invoiceTemplate", value)
                   }
                   disabled={templatesLoading || invoiceTemplates.length === 0}
                 >
