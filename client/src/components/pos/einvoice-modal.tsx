@@ -1600,9 +1600,21 @@ export function EInvoiceModal({
               <span className="font-medium">{t("einvoice.totalAmount") || "Tổng tiền hóa đơn"}</span>
               <span className="text-lg font-bold text-blue-600">
                 {(() => {
-                  // Calculate total from cartItems if available
+                  console.log('💰 EInvoice Modal - Display calculation start:', {
+                    cartItemsLength: cartItems?.length || 0,
+                    totalProp: total,
+                    hasCartItems: cartItems && Array.isArray(cartItems) && cartItems.length > 0
+                  });
+
+                  // Prioritize prop total first for accuracy
+                  if (total !== null && total !== undefined && typeof total === 'number' && total > 0) {
+                    console.log('💰 EInvoice Modal - Using prop total:', total);
+                    return Math.round(total).toLocaleString("vi-VN");
+                  }
+
+                  // Fallback: Calculate from cartItems if prop total is not available
                   if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-                    console.log('💰 EInvoice Modal - Calculating from cartItems:', cartItems);
+                    console.log('💰 EInvoice Modal - Fallback: Calculating from cartItems:', cartItems);
 
                     let calculatedSubtotal = 0;
                     let calculatedTax = 0;
@@ -1625,14 +1637,8 @@ export function EInvoiceModal({
                     });
 
                     const calculatedTotal = calculatedSubtotal + calculatedTax;
-                    console.log('💰 EInvoice Modal - Calculated total:', calculatedTotal);
+                    console.log('💰 EInvoice Modal - Calculated total fallback:', calculatedTotal);
                     return Math.round(calculatedTotal).toLocaleString("vi-VN");
-                  }
-
-                  // Fallback to prop total
-                  if (total !== null && total !== undefined && typeof total === 'number') {
-                    console.log('💰 EInvoice Modal - Using prop total:', total);
-                    return Math.round(total).toLocaleString("vi-VN");
                   }
 
                   console.log('💰 EInvoice Modal - No valid data, showing 0');

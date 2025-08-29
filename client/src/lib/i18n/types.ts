@@ -1919,6 +1919,8 @@ export interface TablesTranslations {
   deleteTableError: string;
   duplicateTableNumber: string;
   tableNumberAlreadyExists: string;
+  backToPOS: string;
+  tableStatus: string;
 }
 
 // Type-safe translation keys
