@@ -12,18 +12,7 @@ import {
   Settings as SettingsIcon,
   Building2,
   ShoppingCart,
-} from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import logoPath from "@assets/EDPOS_1753091767028.png";
-import { useTranslation } from "@/lib/i18n";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
-import {
-  type StoreSettings,
-  type Employee,
-  type AttendanceRecord,
-} from "@shared/schema";
-import { PieChart } from "lucide-react";
-import {
+  PieChart,
   Search,
   Bell,
   User,
@@ -35,11 +24,19 @@ import {
   FileText as ReportsIcon,
   ShoppingCart as CartIcon,
   FileText,
-  ShoppingCart,
   Package2,
   UserCheck,
   Truck,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import logoPath from "@assets/EDPOS_1753091767028.png";
+import { useTranslation } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import {
+  type StoreSettings,
+  type Employee,
+  type AttendanceRecord,
+} from "@shared/schema";
 import { Button } from "@/components/ui/button";
 
 interface POSHeaderProps {
