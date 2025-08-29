@@ -207,46 +207,62 @@ export function EInvoiceModal({
       console.log("🔥 cartItems when modal opens:", cartItems);
       console.log("🔥 total when modal opens:", total);
 
-      // Always ensure we have a template selected if templates are available
-      const shouldSetTemplate = invoiceTemplates.length > 0 && (
-        !formData.selectedTemplateId || 
-        formData.selectedTemplateId === ""
-      );
+      // Always initialize form data with default values when modal opens
+      const defaultTemplate = invoiceTemplates.length > 0 ? invoiceTemplates[0] : null;
+      const defaultTemplateId = defaultTemplate ? defaultTemplate.id.toString() : "";
 
-      if (shouldSetTemplate) {
-        const defaultTemplateId = invoiceTemplates[0].id.toString();
-        const defaultTemplate = invoiceTemplates[0];
-        console.log("🎯 Setting default template:", defaultTemplate);
+      console.log("🎯 Setting form data on modal open:", defaultTemplate);
 
-        setFormData(prev => ({
-          ...prev,
-          invoiceProvider: prev.invoiceProvider || "EasyInvoice",
-          invoiceTemplate: defaultTemplate.name || "1C25TYY", 
-          selectedTemplateId: defaultTemplateId,
-          taxCode: prev.taxCode || "0123456789",
-          customerName: prev.customerName || "Khách hàng lẻ",
-          address: prev.address || "",
-          phoneNumber: prev.phoneNumber || "",
-          email: prev.email || "",
-        }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        invoiceProvider: prev.invoiceProvider || "EasyInvoice",
+        invoiceTemplate: defaultTemplate?.name || "1C25TYY", 
+        selectedTemplateId: defaultTemplateId,
+        taxCode: prev.taxCode || "0123456789",
+        customerName: prev.customerName || "Khách hàng lẻ",
+        address: prev.address || "",
+        phoneNumber: prev.phoneNumber || "",
+        email: prev.email || "",
+      }));
     }
-  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length, isProcessed]);
+  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]);
 
-  // Auto-load data immediately when modal opens with valid cartItems
+  // Auto-validate and log data immediately when modal opens
   useEffect(() => {
-    if (isOpen && cartItems && Array.isArray(cartItems) && cartItems.length > 0 && total > 0) {
-      console.log("🚀 AUTO-LOADING: Modal opened with valid data");
-      console.log("🚀 cartItems:", cartItems.length, "items");
-      console.log("🚀 total:", total);
-      console.log("🚀 Force component re-render to display data immediately");
+    if (isOpen) {
+      console.log("🚀 E-INVOICE MODAL OPENED - IMMEDIATE DATA CHECK");
+      console.log("🚀 cartItems available:", cartItems && Array.isArray(cartItems) ? cartItems.length : 0);
+      console.log("🚀 total available:", total);
+      console.log("🚀 cartItems data:", JSON.stringify(cartItems, null, 2));
       
-      // Force a small state update to trigger re-render and display correct total
-      const timeoutId = setTimeout(() => {
-        console.log("🔄 Forcing display refresh with current data");
-      }, 100);
-
-      return () => clearTimeout(timeoutId);
+      // Validate and ensure data is ready for display
+      if (cartItems && Array.isArray(cartItems) && cartItems.length > 0 && total > 0) {
+        console.log("✅ ALL DATA READY - Modal should display complete information");
+        
+        // Calculate total from cartItems to verify
+        const calculatedTotal = cartItems.reduce((sum, item) => {
+          const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+          const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+          
+          if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+            const afterTaxPrice = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
+            return sum + (afterTaxPrice * itemQuantity);
+          } else {
+            const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
+            const subtotal = itemPrice * itemQuantity;
+            const tax = (subtotal * taxRate) / 100;
+            return sum + subtotal + tax;
+          }
+        }, 0);
+        
+        console.log("💰 Calculated total from cartItems:", calculatedTotal);
+        console.log("💰 Prop total received:", total);
+        console.log("💰 Match:", Math.abs(calculatedTotal - total) < 1);
+      } else {
+        console.warn("⚠️ INCOMPLETE DATA - Modal may show loading or placeholder data");
+        console.warn("⚠️ cartItems valid:", cartItems && Array.isArray(cartItems) && cartItems.length > 0);
+        console.warn("⚠️ total valid:", total > 0);
+      }
     }
   }, [isOpen, cartItems, total]);
 
@@ -1351,9 +1367,17 @@ export function EInvoiceModal({
             </div>
           )}
 
+          {/* Data ready indicator */}
+          {isOpen && !templatesLoading && !connectionsLoading && 
+           cartItems && Array.isArray(cartItems) && cartItems.length > 0 && total > 0 && (
+            <div className="flex items-center justify-center py-2 bg-green-50 border border-green-200 rounded-lg">
+              <span className="text-sm text-green-700">✅ Dữ liệu đã sẵn sàng ({cartItems.length} sản phẩm, {Math.floor(total).toLocaleString("vi-VN")} ₫)</span>
+            </div>
+          )}
+
           {/* Data availability warning */}
           {isOpen && !templatesLoading && !connectionsLoading && 
-           (!cartItems || cartItems.length === 0) && (!total || total === 0) && (
+           (!cartItems || cartItems.length === 0 || !total || total === 0) && (
             <div className="flex items-center justify-center py-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <span className="text-sm text-yellow-700">⚠️ Chưa có dữ liệu giỏ hàng. Vui lòng thử lại.</span>
             </div>
@@ -1542,20 +1566,23 @@ export function EInvoiceModal({
               <span className="font-medium">{t("einvoice.totalAmount") || "Tổng tiền hóa đơn"}</span>
               <span className="text-lg font-bold text-blue-600">
                 {(() => {
-                  console.log('💰 EInvoice Modal - Total display calculation:', { 
+                  console.log('💰 EInvoice Modal - IMMEDIATE Total display calculation:', { 
                     total, 
                     totalType: typeof total,
                     cartItems: cartItems?.length,
                     isOpen,
-                    cartItemsData: cartItems
+                    timestamp: new Date().toISOString()
                   });
 
-                  // Always prioritize cartItems calculation for accuracy
-                  let displayTotal = 0;
+                  // Priority 1: Use prop total if available (most reliable for display)
+                  if (total && typeof total === 'number' && total > 0) {
+                    console.log('💰 EInvoice Modal - Using prop total (IMMEDIATE):', total);
+                    return Math.floor(total).toLocaleString("vi-VN");
+                  }
 
-                  // Calculate from cartItems first (most reliable)
+                  // Priority 2: Calculate from cartItems if prop total not available
                   if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-                    displayTotal = cartItems.reduce((sum, item) => {
+                    const displayTotal = cartItems.reduce((sum, item) => {
                       const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                       const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
 
@@ -1577,21 +1604,13 @@ export function EInvoiceModal({
                       console.log(`💰 Item ${item.name}: price=${price}, qty=${quantity}, taxRate=${taxRate}%, total=${itemTotal}`);
                       return sum + itemTotal;
                     }, 0);
-                    console.log('💰 EInvoice Modal - Calculated from cartItems:', displayTotal);
-                  }
-                  // Use total prop if cartItems not available but total is valid
-                  else if (total && typeof total === 'number' && total > 0) {
-                    displayTotal = total;
-                    console.log('💰 EInvoice Modal - Using total prop (no cartItems):', displayTotal);
-                  }
-                  // Show 0 if no data instead of loading text
-                  else {
-                    console.log('💰 EInvoice Modal - No data available, showing 0');
-                    displayTotal = 0;
+                    console.log('💰 EInvoice Modal - Calculated from cartItems (IMMEDIATE):', displayTotal);
+                    return Math.floor(displayTotal).toLocaleString("vi-VN");
                   }
 
-                  console.log('💰 EInvoice Modal - Final display total:', displayTotal);
-                  return Math.floor(displayTotal).toLocaleString("vi-VN");
+                  // Priority 3: Show 0 if no data available
+                  console.log('💰 EInvoice Modal - No data available, showing 0 (IMMEDIATE)');
+                  return "0";
                 })()}
                 {" "}₫
               </span>
