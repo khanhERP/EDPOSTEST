@@ -199,7 +199,7 @@ export function EInvoiceModal({
 
   // Reset form only when modal first opens with fresh data, not when already processed
   useEffect(() => {
-    if (isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0 && !isProcessed) {
+    if (isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0) {
       console.log("🔥 E-INVOICE MODAL OPENING WITH FRESH DATA");
       console.log("🔥 cartItems when modal opens:", cartItems);
       console.log("🔥 cartItems length when modal opens:", cartItems?.length || 0);
@@ -207,24 +207,21 @@ export function EInvoiceModal({
       console.log("🔥 total when modal opens:", total);
       console.log("🔥 Available templates:", invoiceTemplates.length);
 
-      // Only reset form if it's truly a fresh open (not after processing)
-      if (formData.customerName === "" || formData.customerName === "Khách hàng lẻ") {
-        // Set default template if available
+      // Only set template if not already set to prevent reset during processing
+      if (!formData.selectedTemplateId && !isProcessed) {
         const defaultTemplateId = invoiceTemplates.length > 0 ? invoiceTemplates[0].id.toString() : "";
 
-        setFormData({
-          invoiceProvider: "EasyInvoice", // Default provider
-          invoiceTemplate: "1C25TYY", // Default template
+        setFormData(prev => ({
+          ...prev,
+          invoiceProvider: prev.invoiceProvider || "EasyInvoice",
+          invoiceTemplate: prev.invoiceTemplate || "1C25TYY", 
           selectedTemplateId: defaultTemplateId,
-          taxCode: "0123456789", // Default tax code
-          customerName: "Khách hàng lẻ", // Default customer name
-          address: "",
-          phoneNumber: "",
-          email: "",
-        });
+          taxCode: prev.taxCode || "0123456789",
+          customerName: prev.customerName || "Khách hàng lẻ",
+        }));
       }
     }
-  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length, isProcessed]); // Add isProcessed to deps
+  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]); // Remove isProcessed to prevent blocking template loading
 
   // Separate effect for debugging cartItems changes without resetting form
   useEffect(() => {
@@ -394,7 +391,17 @@ export function EInvoiceModal({
     console.log("🟡 Cart items:", cartItems);
     console.log("🟡 Total:", total);
 
+    // Don't block processing if template isn't set yet
+    if (!formData.selectedTemplateId && invoiceTemplates.length > 0) {
+      const defaultTemplateId = invoiceTemplates[0].id.toString();
+      setFormData(prev => ({
+        ...prev,
+        selectedTemplateId: defaultTemplateId
+      }));
+    }
+
     setIsProcessed(true); // Mark processing as started
+    setIsPublishing(true); // Set publishing state
 
     try {
       console.log(
@@ -677,7 +684,6 @@ export function EInvoiceModal({
       onConfirm(completeInvoiceData);
 
       // Close e-invoice modal after triggering the receipt display
-        // Don't reset isProcessed here to prevent form reset on next open
         setTimeout(() => {
           onClose();
           console.log("🔴 E-Invoice modal closed after publishLater processing");
@@ -706,8 +712,8 @@ export function EInvoiceModal({
         description: errorMessage,
       });
     } finally {
-      setIsProcessed(false); // Reset processing state
       setIsPublishing(false);
+      // Keep isProcessed true until modal closes to maintain form state
     }
   };
 
@@ -716,6 +722,15 @@ export function EInvoiceModal({
     console.log("🟢 Form data:", formData);
     console.log("🟢 Cart items:", cartItems);
     console.log("🟢 Invoice templates:", invoiceTemplates);
+
+    // Auto-set template if not selected but templates are available
+    if (!formData.selectedTemplateId && invoiceTemplates.length > 0) {
+      const defaultTemplateId = invoiceTemplates[0].id.toString();
+      setFormData(prev => ({
+        ...prev,
+        selectedTemplateId: defaultTemplateId
+      }));
+    }
 
     // Validate required fields
     if (!formData.invoiceProvider || !formData.customerName) {
@@ -731,11 +746,11 @@ export function EInvoiceModal({
       return;
     }
 
-    if (!formData.selectedTemplateId && invoiceTemplates.length > 0) {
-      console.error("❌ No template selected");
+    if (!formData.selectedTemplateId) {
+      console.error("❌ No template available");
       toast({
-        title: "Lỗi validation", 
-        description: "Vui lòng chọn mẫu số hóa đơn",
+        title: "Lỗi hệ thống", 
+        description: "Không có mẫu số hóa đơn khả dụng",
         variant: "destructive"
       });
       return;
@@ -1250,7 +1265,7 @@ export function EInvoiceModal({
       alert(`Có lỗi xảy ra khi phát hành hóa đơn: ${error}`);
     } finally {
       setIsPublishing(false); // Reset publishing state
-      // isProcessed is reset at the start of the next modal open
+      // Keep isProcessed true until modal closes to maintain form state
     }
   };
 
