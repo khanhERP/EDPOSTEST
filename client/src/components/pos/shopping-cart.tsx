@@ -14,7 +14,6 @@ import { useTranslation } from "@/lib/i18n";
 import { PaymentMethodModal } from "./payment-method-modal";
 import { ReceiptModal } from "./receipt-modal";
 import { EInvoiceModal } from "./einvoice-modal";
-import { InvoiceManagementModal } from "./invoice-management-modal";
 import type { CartItem } from "@shared/schema";
 import { toast } from "@/hooks/use-toast";
 
@@ -47,8 +46,10 @@ export function ShoppingCart({
 }: ShoppingCartProps) {
   const [paymentMethod, setPaymentMethod] = useState<string>("bankTransfer");
   const [amountReceived, setAmountReceived] = useState<string>("");
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [selectedCardMethod, setSelectedCardMethod] = useState<string>("");
+  const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const { t } = useTranslation();
 
   // State for Receipt Modal and E-Invoice Modal integration
@@ -56,11 +57,6 @@ export function ShoppingCart({
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
-  const [showInvoiceManagementModal, setShowInvoiceManagementModal] = useState(false);
-  
-  // Additional states for new ordered flow
-  const [previewReceipt, setPreviewReceipt] = useState<any>(null);
-  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
@@ -87,9 +83,10 @@ export function ShoppingCart({
           console.log("  Tax for", item.quantity, "items:", (afterTaxPrice - basePrice) * item.quantity);
         }
 
-        // Only calculate tax if afterTaxPrice exists in database
+        // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
         if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(item.afterTaxPrice);
+          // Tax = afterTaxPrice - basePrice
           const taxPerItem = afterTaxPrice - basePrice;
           const totalItemTax = taxPerItem * item.quantity;
           console.log("✅ Using afterTaxPrice from database:");
@@ -97,11 +94,20 @@ export function ShoppingCart({
           console.log("  Tax per item:", taxPerItem, "₫");
           console.log("  Quantity:", item.quantity);
           console.log("  Total tax for this item:", totalItemTax, "₫");
+          console.log("  Verification: " + afterTaxPrice + " - " + basePrice + " = " + taxPerItem);
+          return sum + totalItemTax;
+        } else {
+          // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
+          const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
+          const taxPerItem = calculatedAfterTaxPrice - basePrice;
+          const totalItemTax = taxPerItem * item.quantity;
+          console.log("⚠️ Using calculated afterTaxPrice (fallback):");
+          console.log("  Calculated After Tax Price:", calculatedAfterTaxPrice, "₫");
+          console.log("  Tax per item:", taxPerItem, "₫");
+          console.log("  Quantity:", item.quantity);
+          console.log("  Total tax for this item:", totalItemTax, "₫");
           return sum + totalItemTax;
         }
-        // No tax calculation if afterTaxPrice in database
-        console.log("⚠️ No afterTaxPrice in database - no tax applied");
-        return sum;
       }
       return sum;
     }, 0);
@@ -119,17 +125,18 @@ export function ShoppingCart({
         if (item.taxRate && parseFloat(item.taxRate) > 0) {
           const basePrice = parseFloat(item.price);
 
-          // Only calculate tax if afterTaxPrice exists in database
+          // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
           if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
             const afterTaxPrice = parseFloat(item.afterTaxPrice);
             // Tax = afterTaxPrice - basePrice
             const taxPerItem = afterTaxPrice - basePrice;
             return sum + (taxPerItem * item.quantity);
+          } else {
+            // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
+            const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
+            const taxPerItem = calculatedAfterTaxPrice - basePrice;
+            return sum + (taxPerItem * item.quantity);
           }
-          // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
-          const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
-          const taxPerItem = calculatedAfterTaxPrice - basePrice;
-          return sum + (taxPerItem * item.quantity);
         }
         return sum;
       }, 0);
@@ -260,65 +267,66 @@ export function ShoppingCart({
   const handleCheckout = () => {
     if (cart.length === 0) return;
 
-    console.log("📄 BƯỚC 1: Hiển thị preview receipt trước tiên");
+    console.log("🛒 Starting checkout process - Step 1: Preview Receipt");
     console.log("Cart items:", cart.length);
 
-    // Validate cart data before proceeding
-    if (!cart || cart.length === 0) {
-      console.error("❌ No cart data available for processing");
-      toast({
-        title: "Lỗi",
-        description: "Không có dữ liệu giỏ hàng để xử lý hóa đơn",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    // BƯỚC 1: Tạo preview receipt data
+    // Generate preview receipt data first
     const previewReceiptData = {
-      transactionId: `PREVIEW-${Date.now()}`,
+      transactionId: `TXN-${Date.now()}`,
       items: cart.map((item) => ({
         id: item.id,
         productId: item.id,
         productName: item.name,
-        price: parseFloat(item.price.toString()).toFixed(2),
+        price: parseFloat(item.price).toFixed(2),
         quantity: item.quantity,
-        total: parseFloat(item.total.toString()).toFixed(2),
-        sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-        taxRate: parseFloat(item.taxRate || "0"),
+        total: parseFloat(item.total).toFixed(2),
+        sku: `FOOD${String(item.id).padStart(5, "0")}`,
+        taxRate: parseFloat(item.taxRate || "10"),
       })),
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
       total: total.toFixed(2),
-      paymentMethod: "preview",
+      paymentMethod: "preview", // Special flag for preview mode
+      amountReceived: total.toFixed(2),
+      change: "0.00",
       cashierName: "System User",
       createdAt: new Date().toISOString(),
-      // Add exact values for precise calculations
-      exactSubtotal: subtotal,
-      exactTax: tax,
-      exactTotal: total,
     };
 
-    console.log("📄 BƯỚC 1: Hiển thị preview receipt với dữ liệu:", previewReceiptData);
-    
-    // Set preview receipt và hiển thị modal
+    // Step 1: Show receipt preview first
     setPreviewReceipt(previewReceiptData);
-    setShowReceiptModal(true); // This will show as preview mode
+    setShowReceiptPreview(true);
   };
 
   const handleReceiptConfirm = () => {
-    console.log("📄 Final receipt confirmed - closing all modals and resetting state");
+    console.log("📄 Receipt confirmed - closing modal (cart already cleared)");
 
-    // Close all modals and reset state
+    // Close receipt modal
+    setShowReceiptPreview(false);
+    setPreviewReceipt(null);
     setShowReceiptModal(false);
     setSelectedReceipt(null);
-    setShowEInvoiceModal(false);
-    setSelectedPaymentMethod("");
 
-    console.log("✅ All modals closed and state reset");
+    console.log("✅ Receipt modal closed");
   };
 
-  // This function is no longer needed since we skip payment method selection
+  const handlePaymentMethodSelect = (method: string, data?: any) => {
+    console.log(
+      "🎯 Shopping cart: Step 3: Payment method selected:",
+      method,
+      data,
+    );
+
+    // Step 3: Payment method selected, now go directly to Step 4: E-Invoice modal
+    setShowPaymentMethodModal(false);
+    setSelectedPaymentMethod(method);
+
+    // Go directly to E-invoice modal for invoice processing (no duplicate payment selection)
+    console.log(
+      "📧 Shopping cart: Going directly to E-invoice modal for invoice processing",
+    );
+    setShowEInvoiceModal(true);
+  };
 
   const handleCardPaymentMethodSelect = (method: string) => {
     setSelectedCardMethod(method);
@@ -331,109 +339,37 @@ export function ShoppingCart({
     onCheckout(paymentData);
   };
 
-  // Function to clear the cart, used in handleEInvoiceConfirm
-  const clearCart = () => {
-    onClearCart();
-    setAmountReceived(""); // Also clear amount received for cash
-    setPaymentMethod("bankTransfer"); // Reset to default payment method
-  };
-
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
-    console.log('✅ BƯỚC 4: E-Invoice processing completed:', eInvoiceData);
+    console.log(
+      "📧 Shopping cart: Step 4: E-Invoice processing completed:",
+      eInvoiceData,
+    );
 
-    // BƯỚC 4: Đóng E-Invoice modal
     setShowEInvoiceModal(false);
-    setSelectedPaymentMethod("");
 
-    // Validate that e-invoice data contains required information
-    if (!eInvoiceData) {
-      console.error("❌ No e-invoice data received");
+    // Auto clear cart after E-Invoice completion (both publish now and publish later)
+    console.log(
+      "🧹 Shopping cart: Auto clearing cart after E-Invoice completion",
+    );
+    onClearCart();
+
+    // Step 5: Show final receipt modal if receipt data exists
+    if (eInvoiceData.receipt) {
+      console.log(
+        "📄 Shopping cart: Step 5: Showing final receipt modal (not preview)",
+      );
+      setSelectedReceipt(eInvoiceData.receipt);
+      setShowReceiptModal(true);
+    } else {
+      console.log(
+        "✅ Shopping cart: E-invoice completed successfully, cart cleared",
+      );
       toast({
-        title: "Lỗi",
-        description: "Không nhận được dữ liệu hóa đơn điện tử",
-        variant: "destructive"
+        title: "Thành công",
+        description: "Hóa đơn đã được xử lý thành công",
+        variant: "default",
       });
-      return;
     }
-
-    console.log('📄 BƯỚC 4: Processing receipt data for final display');
-
-    let receiptToShow: any = null;
-
-    // Priority 1: Use receipt from eInvoiceData if available and valid
-    if (eInvoiceData.receipt && eInvoiceData.receipt.items && eInvoiceData.receipt.items.length > 0) {
-      console.log('✅ BƯỚC 4: Using receipt from E-Invoice data');
-      receiptToShow = {
-        ...eInvoiceData.receipt,
-        einvoiceData: {
-          status: eInvoiceData.publishLater ? "draft" : "published",
-          invoiceId: eInvoiceData.invoiceId || eInvoiceData.receipt.invoiceId || null,
-          invoiceNumber: eInvoiceData.receipt.invoiceNumber || null,
-          customerName: eInvoiceData.customerName || eInvoiceData.receipt.customerName || "Khách hàng",
-          customerTaxCode: eInvoiceData.taxCode || eInvoiceData.receipt.customerTaxCode || "",
-        },
-        originalPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash",
-        displayPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash",
-        isEInvoice: true,
-        publishLater: eInvoiceData.publishLater || false,
-      };
-    }
-    // Priority 2: Create receipt from current cart data
-    else if (cart && cart.length > 0) {
-      console.log('⚠️ BƯỚC 4: Creating receipt from current cart data');
-      receiptToShow = {
-        transactionId: eInvoiceData.savedInvoice?.tradeNumber || `TXN-${Date.now()}`,
-        items: cart.map((item) => ({
-          id: item.id,
-          productId: item.id,
-          productName: item.name,
-          price: parseFloat(item.price.toString()).toFixed(2),
-          quantity: item.quantity,
-          total: parseFloat(item.total.toString()).toFixed(2),
-          sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-          taxRate: parseFloat(item.taxRate || "0"),
-          afterTaxPrice: item.afterTaxPrice,
-        })),
-        subtotal: subtotal.toFixed(2),
-        tax: tax.toFixed(2),
-        total: total.toFixed(2),
-        paymentMethod: "einvoice",
-        originalPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash",
-        displayPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash",
-        amountReceived: total.toFixed(2),
-        change: "0.00",
-        cashierName: "System User",
-        createdAt: new Date().toISOString(),
-        invoiceNumber: eInvoiceData.invoiceNumber || null,
-        customerName: eInvoiceData.customerName || "Khách hàng",
-        customerTaxCode: eInvoiceData.taxCode || "",
-        isEInvoice: true,
-        publishLater: eInvoiceData.publishLater || false,
-      };
-    }
-
-    // Final validation of receipt data
-    if (!receiptToShow || !receiptToShow.items || receiptToShow.items.length === 0) {
-      console.error("❌ BƯỚC 4: No valid receipt data could be created");
-      toast({
-        title: "Lỗi",
-        description: "Không thể tạo dữ liệu hóa đơn để hiển thị",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    console.log('✅ BƯỚC 4→5: Final receipt data ready for display');
-
-    // BƯỚC 5: Show final receipt modal
-    setSelectedReceipt(receiptToShow);
-    setShowReceiptModal(true);
-
-    // Clear cart after a brief delay
-    setTimeout(() => {
-      console.log('🧹 BƯỚC 5: Auto clearing cart after final receipt modal shown');
-      clearCart();
-    }, 500);
   };
 
   const canCheckout = cart.length > 0;
@@ -523,32 +459,27 @@ export function ShoppingCart({
                     <p className="text-xs pos-text-secondary">
                       {Math.round(parseFloat(item.price)).toLocaleString("vi-VN")} ₫ {t("pos.each")}
                     </p>
-                    {item.taxRate && parseFloat(item.taxRate || "0") > 0 && (
-                        <p className="text-xs text-orange-600">
-                          Thuế:{" "}
-                          {(() => {
-                            // Calculate tax using afterTaxPrice if available, otherwise use taxRate
-                            const basePrice = typeof item.price === "string" ? parseFloat(item.price) : item.price;
-                            const itemTaxRate = parseFloat(item.taxRate || "0");
+                    {item.taxRate && parseFloat(item.taxRate) > 0 && (
+                      <p className="text-xs text-orange-600">
+                        Thuế:{" "}
+                        {(() => {
+                            const basePrice = parseFloat(item.price);
 
+                            // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
                             if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-                              const afterTaxPrice = typeof item.afterTaxPrice === 'string' 
-                                ? parseFloat(item.afterTaxPrice) 
-                                : item.afterTaxPrice;
-
-                              if (!isNaN(afterTaxPrice) && afterTaxPrice > basePrice) {
-                                const taxAmount = afterTaxPrice - basePrice;
-                                return `${Math.floor(taxAmount * item.quantity).toLocaleString("vi-VN")}₫`;
-                              }
+                              const afterTaxPrice = parseFloat(item.afterTaxPrice);
+                              // Tax = afterTaxPrice - basePrice
+                              const taxPerItem = afterTaxPrice - basePrice;
+                              return Math.round(taxPerItem * item.quantity);
+                            } else {
+                              // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
+                              const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
+                              const taxPerItem = calculatedAfterTaxPrice - basePrice;
+                              return Math.round(taxPerItem * item.quantity);
                             }
-
-                            // Fallback calculation with tax rate
-                            const taxAmount = (basePrice * itemTaxRate / 100) * item.quantity;
-                            return `${Math.floor(taxAmount).toLocaleString("vi-VN")}₫`;
-                          })()}
-                          ({item.taxRate || "0"}%)
-                        </p>
-                      )}
+                          })().toLocaleString("vi-VN")} ₫ ({item.taxRate}%)
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-col items-end space-y-2">
@@ -669,177 +600,100 @@ export function ShoppingCart({
         </div>
       )}
 
-      {/* BƯỚC 1: Preview Receipt Modal */}
+      {/* Step 1: Receipt Preview Modal - "Xem trước hóa đơn" */}
       <ReceiptModal
-        isOpen={showReceiptModal && !selectedReceipt} // Preview mode when no selectedReceipt
+        isOpen={showReceiptPreview}
         onClose={() => {
-          console.log("🔴 BƯỚC 1: Đóng preview receipt modal");
-          setShowReceiptModal(false);
+          console.log(
+            "🔴 Step 1: Closing receipt preview modal (Xem trước hóa đơn)",
+          );
+          setShowReceiptPreview(false);
           setPreviewReceipt(null);
         }}
         receipt={previewReceipt}
         onConfirm={() => {
-          console.log("✅ BƯỚC 1→2: Preview confirmed, chuyển sang chọn phương thức thanh toán");
-          
-          // Đóng preview receipt modal
-          setShowReceiptModal(false);
-          
-          // BƯỚC 2: Hiển thị payment method modal
+          console.log(
+            "📄 Step 1 → Step 2: Receipt preview confirmed, showing payment methods",
+          );
+          setShowReceiptPreview(false);
           setShowPaymentMethodModal(true);
         }}
-        isPreview={true} // This is preview mode
+        isPreview={true} // This is the preview modal - "Xem trước hóa đơn"
         cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,
           price: parseFloat(item.price),
           quantity: item.quantity,
-          sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-          taxRate: parseFloat(item.taxRate || "0"),
-          afterTaxPrice: item.afterTaxPrice,
+          sku: `ITEM${String(item.id).padStart(3, "0")}`,
+          taxRate: parseFloat(item.taxRate || "10"),
         }))}
-        total={total}
       />
 
-      {/* BƯỚC 2: Payment Method Modal */}
-      {showPaymentMethodModal && (
-        <PaymentMethodModal
-          isOpen={showPaymentMethodModal}
-          onClose={() => {
-            console.log("🔴 BƯỚC 2: Đóng payment method modal");
-            setShowPaymentMethodModal(false);
-          }}
-          onSelectMethod={(method, data) => {
-            console.log("✅ BƯỚC 2→3: Payment method selected:", method);
-            console.log("💰 BƯỚC 2→3: Current cart data:", {
-              cartLength: cart.length,
-              total: total,
-              subtotal: subtotal,
-              tax: tax
-            });
-            
-            // Validate cart data before proceeding
-            if (!cart || cart.length === 0) {
-              console.error("❌ BƯỚC 2→3: No cart data available");
-              toast({
-                title: "Lỗi",
-                description: "Không có dữ liệu giỏ hàng để tạo hóa đơn",
-                variant: "destructive"
-              });
-              return;
-            }
-
-            if (total <= 0) {
-              console.error("❌ BƯỚC 2→3: Invalid total amount");
-              toast({
-                title: "Lỗi", 
-                description: "Tổng tiền không hợp lệ",
-                variant: "destructive"
-              });
-              return;
-            }
-            
-            // Đóng payment method modal
-            setShowPaymentMethodModal(false);
-            
-            // Lưu phương thức thanh toán đã chọn
-            setSelectedPaymentMethod(method);
-            
-            // BƯỚC 3: Hiển thị E-Invoice modal với dữ liệu đã validate
-            console.log("✅ BƯỚC 2→3: Opening E-Invoice modal with validated data");
-            setShowEInvoiceModal(true);
-          }}
-          total={(() => {
-            console.log("💰 Shopping Cart: Passing total to PaymentMethod:", total);
-            return total;
-          })()}
-          cartItems={(() => {
-            console.log("📦 Shopping Cart: Mapping cart for PaymentMethod:", cart.length);
-            return cart.map((item) => ({
-              id: item.id,
-              name: item.name,
-              price: parseFloat(item.price),
-              quantity: item.quantity,
-              sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-              taxRate: parseFloat(item.taxRate || "0"),
-              afterTaxPrice: item.afterTaxPrice,
-            }));
-          })()}
-        />
-      )}
-
-      {/* BƯỚC 3-4: E-Invoice Modal */}
-      {showEInvoiceModal && (
-        <EInvoiceModal
-          isOpen={showEInvoiceModal}
-          onClose={() => {
-            console.log("🔴 BƯỚC 3: Đóng E-invoice modal");
-            setShowEInvoiceModal(false);
-            setSelectedPaymentMethod("");
-          }}
-          onConfirm={handleEInvoiceConfirm}
-          total={(() => {
-            console.log("💰 Shopping Cart: Passing total to E-Invoice:", total);
-            console.log("💰 Shopping Cart: Cart data:", cart);
-            console.log("💰 Shopping Cart: Subtotal:", subtotal);
-            console.log("💰 Shopping Cart: Tax:", tax);
-            return total; // Ensure exact total is passed
-          })()}
-          selectedPaymentMethod={selectedPaymentMethod}
-          cartItems={(() => {
-            console.log("📦 Shopping Cart: Mapping cart items for E-Invoice:", cart.length);
-            return cart.map((item) => {
-              console.log("📦 Cart item mapping:", {
-                id: item.id,
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                taxRate: item.taxRate,
-                afterTaxPrice: item.afterTaxPrice
-              });
-              return {
-                id: item.id,
-                name: item.name,
-                price: parseFloat(item.price.toString()),
-                quantity: item.quantity,
-                sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-                taxRate: parseFloat(item.taxRate || "0"),
-                afterTaxPrice: item.afterTaxPrice,
-              };
-            });
-          })()}
-        />
-      )}
-
-      {/* BƯỚC 5: Final Receipt Modal - "In hóa đơn" for printing */}
+      {/* Step 5: Final Receipt Modal - "Receipt" after all processing complete */}
       <ReceiptModal
-        isOpen={showReceiptModal && !!selectedReceipt} // Final mode when selectedReceipt exists
+        isOpen={showReceiptModal}
         onClose={() => {
-          console.log("🔴 BƯỚC 5: Đóng final receipt modal");
+          console.log(
+            "🔴 Step 5: Closing final receipt modal (Receipt) from shopping cart",
+          );
           setShowReceiptModal(false);
           setSelectedReceipt(null);
         }}
         receipt={selectedReceipt}
         onConfirm={handleReceiptConfirm}
-        isPreview={false} // This is the final receipt for printing
+        isPreview={false} // This is the final receipt - "Receipt"
         cartItems={cart.map((item) => ({
           id: item.id,
           name: item.name,
           price: parseFloat(item.price),
           quantity: item.quantity,
-          sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-          taxRate: parseFloat(item.taxRate || "0"),
-          afterTaxPrice: item.afterTaxPrice,
+          sku: `ITEM${String(item.id).padStart(3, "0")}`,
+          taxRate: parseFloat(item.taxRate || "10"),
         }))}
       />
 
-      {/* Invoice Management Modal */}
-      <InvoiceManagementModal
-        isOpen={showInvoiceManagementModal}
+      {/* Step 2: Payment Method Selection Modal */}
+      <PaymentMethodModal
+        isOpen={showPaymentMethodModal}
         onClose={() => {
-          console.log('🔴 Closing invoice management modal from shopping cart');
-          setShowInvoiceManagementModal(false);
+          console.log("🔴 Step 2: Closing payment method modal");
+          setShowPaymentMethodModal(false);
         }}
+        onSelectMethod={(method, data) => {
+          handlePaymentMethodSelect(method, data);
+        }}
+        total={total}
+        cartItems={cart.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          sku: String(item.id),
+          taxRate: parseFloat(item.taxRate || "10"),
+        }))}
       />
+
+      {/* Step 4: E-Invoice Modal for invoice processing */}
+      {showEInvoiceModal && (
+        <EInvoiceModal
+          isOpen={showEInvoiceModal}
+          onClose={() => {
+            console.log("🔴 Step 4: Closing E-invoice modal");
+            setShowEInvoiceModal(false);
+          }}
+          onConfirm={handleEInvoiceConfirm}
+          total={total}
+          selectedPaymentMethod={selectedPaymentMethod}
+          cartItems={cart.map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: parseFloat(item.price),
+            quantity: item.quantity,
+            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+            taxRate: parseFloat(item.taxRate || "10"),
+          }))}
+        />
+      )}
     </aside>
   );
 }

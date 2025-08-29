@@ -11,8 +11,18 @@ import {
   Package,
   Settings as SettingsIcon,
   Building2,
-  ShoppingCart,
-  PieChart,
+} from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import logoPath from "@assets/EDPOS_1753091767028.png";
+import { useTranslation } from "@/lib/i18n";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
+import {
+  type StoreSettings,
+  type Employee,
+  type AttendanceRecord,
+} from "@shared/schema";
+import { PieChart } from "lucide-react";
+import {
   Search,
   Bell,
   User,
@@ -24,19 +34,11 @@ import {
   FileText as ReportsIcon,
   ShoppingCart as CartIcon,
   FileText,
+  ShoppingCart,
   Package2,
   UserCheck,
   Truck,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import logoPath from "@assets/EDPOS_1753091767028.png";
-import { useTranslation } from "@/lib/i18n";
-import { LanguageSwitcher } from "@/components/ui/language-switcher";
-import {
-  type StoreSettings,
-  type Employee,
-  type AttendanceRecord,
-} from "@shared/schema";
 import { Button } from "@/components/ui/button";
 
 interface POSHeaderProps {
@@ -264,7 +266,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                       }`}
                       onClick={() => setPosMenuOpen(false)}
                     >
-                      <ShoppingCart className="w-4 h-4 mr-3" />
+                      <Home className="w-4 h-4 mr-3" />
                       {t("nav.directSales")}
                     </button>
                   </Link>
@@ -488,7 +490,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                     onClick={() => setPosMenuOpen(false)}
                   >
                     <Users className="w-4 h-4 mr-3" />
-                    {t("nav.customerDisplay")}
+                    Màn hình khách hàng
                   </a>
 
                   <div className="border-t border-gray-200 my-2"></div>
@@ -501,7 +503,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                     }}
                   >
                     <LogOut className="w-4 h-4 mr-3" />
-                    {t("nav.logout")}
+                    Đăng xuất
                   </button>
                 </div>
               )}

@@ -200,22 +200,6 @@ export function PaymentMethodModal({
   };
 
   const getPaymentMethodName = (nameKey: string) => {
-    // Get the saved payment methods from localStorage to use actual names
-    const savedPaymentMethods = localStorage.getItem("paymentMethods");
-    
-    if (savedPaymentMethods) {
-      try {
-        const paymentMethods = JSON.parse(savedPaymentMethods);
-        const method = paymentMethods.find((m: any) => m.nameKey === nameKey);
-        if (method && method.name) {
-          return method.name;
-        }
-      } catch (error) {
-        console.error("Error parsing saved payment methods:", error);
-      }
-    }
-
-    // Fallback to translation keys if no saved name found
     const names = {
       cash: t("common.cash"),
       creditCard: t("common.creditCard"),
@@ -233,22 +217,6 @@ export function PaymentMethodModal({
   };
 
   const getMethodDescription = (nameKey: string) => {
-    // Get the saved payment methods from localStorage to use actual names as descriptions
-    const savedPaymentMethods = localStorage.getItem("paymentMethods");
-    
-    if (savedPaymentMethods) {
-      try {
-        const paymentMethods = JSON.parse(savedPaymentMethods);
-        const method = paymentMethods.find((m: any) => m.nameKey === nameKey);
-        if (method && method.name) {
-          return method.name;
-        }
-      } catch (error) {
-        console.error("Error parsing saved payment methods:", error);
-      }
-    }
-
-    // Fallback to translation descriptions if no saved name found
     const descriptions = {
       cash: t("common.cash"),
       creditCard: t("common.visaMastercard"),
@@ -452,10 +420,8 @@ export function PaymentMethodModal({
         setQrLoading(false);
       }
     } else {
-      // Sau khi chọn phương thức thanh toán khác, chuyển đến màn E-Invoice để tạo hóa đơn
-      console.log("💳 Payment method selected:", method, "showing E-Invoice modal for invoice creation");
-      setSelectedPaymentMethod(method);
-      setShowEInvoice(true);
+      // Close payment method modal and let parent handle the flow
+      onSelectMethod(method);
     }
   };
 
@@ -463,10 +429,8 @@ export function PaymentMethodModal({
     setShowQRCode(false);
     setQrCodeUrl("");
 
-    // Sau khi thanh toán QR thành công, chuyển đến màn E-Invoice để tạo hóa đơn
-    console.log("💳 QR payment completed, showing E-Invoice modal for invoice creation");
-    setSelectedPaymentMethod("qrCode");
-    setShowEInvoice(true);
+    // Return to parent with QR payment method
+    onSelectMethod("qrCode");
   };
 
   const handleBack = () => {
@@ -540,10 +504,11 @@ export function PaymentMethodModal({
     setAmountReceived("");
     setCashAmountInput("");
 
-    // Sau khi thanh toán thành công, chuyển đến màn E-Invoice để tạo hóa đơn
-    console.log("💳 Cash payment completed, showing E-Invoice modal for invoice creation");
-    setSelectedPaymentMethod("cash");
-    setShowEInvoice(true);
+    // Trả về kết quả cho component cha
+    onSelectMethod("cash", {
+      amountReceived: receivedAmount,
+      change: finalChange,
+    });
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
@@ -555,24 +520,10 @@ export function PaymentMethodModal({
     // Close Payment modal
     onClose();
 
-    // Calculate exact total from payment modal for consistency
-    const exactTotal = receipt?.exactTotal ??
-                      orderForPayment?.exactTotal ??
-                      orderForPayment?.total ??
-                      total ??
-                      0;
-
-    // Pass comprehensive e-invoice data back to parent component
+    // Pass e-invoice data back to parent component with original payment method
     onSelectMethod("einvoice", {
       ...eInvoiceData,
       originalPaymentMethod: selectedPaymentMethod,
-      paymentMethod: selectedPaymentMethod, // Ensure original payment method is preserved
-      source: "pos",
-      exactTotal: exactTotal, // Ensure exact total is passed
-      // Receipt data should already be included in eInvoiceData
-      showReceiptModal: true, // Ensure receipt modal is shown
-      // Add flag for proper handling
-      fromPaymentModal: true,
     });
   };
 
@@ -1298,16 +1249,8 @@ export function PaymentMethodModal({
               orderForPayment?.exactTotal ??
               orderForPayment?.total ??
               total;
-            console.log("💰 Payment Modal: Passing exact total to EInvoice:", orderTotal, "VND");
-            console.log("💰 Payment Modal: Total source priority:", {
-              receiptExactTotal: receipt?.exactTotal,
-              receiptTotal: receipt?.total,
-              orderExactTotal: orderForPayment?.exactTotal,
-              orderTotal: orderForPayment?.total,
-              propTotal: total,
-              finalTotal: orderTotal
-            });
-            return orderTotal; // Pass exact total without rounding
+            console.log("💰 Using exact total for EInvoice:", orderTotal);
+            return Math.floor(orderTotal);
           })()}
           selectedPaymentMethod={selectedPaymentMethod}
           cartItems={(() => {
@@ -1318,7 +1261,7 @@ export function PaymentMethodModal({
               cartItems ||
               [];
             console.log(
-              "📦 Payment Modal: Mapping cart items for EInvoice using exact data:",
+              "📦 Mapping cart items for payment modal using exact Order Details data:",
               itemsToMap.length,
             );
 

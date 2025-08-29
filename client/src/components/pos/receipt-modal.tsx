@@ -19,7 +19,7 @@ interface ReceiptModalProps {
   isOpen: boolean;
   onClose: () => void;
   receipt: Receipt | null;
-  onConfirm?: (data?: any) => void; // Modified to accept optional data
+  onConfirm?: () => void;
   isPreview?: boolean;
   cartItems?: Array<{
     id: number;
@@ -28,7 +28,6 @@ interface ReceiptModalProps {
     quantity: number;
     sku?: string;
     taxRate?: number;
-    afterTaxPrice?: number | string | null; // Added for precise calculations
   }>;
   total?: number;
   isEInvoice?: boolean;
@@ -74,54 +73,13 @@ export function ReceiptModal({
     },
   });
 
-  // Helper function to format currency
-  const formatCurrency = (value: string | number) => {
-    const num = typeof value === 'string' ? parseFloat(value) : value;
-    return isNaN(num) ? '0' : Math.floor(num).toLocaleString('vi-VN');
-  };
-
-  // Helper function to get payment method display name
-  const getPaymentMethodDisplay = (method: string) => {
-    if (!method) return t('payment.cash') || 'Tiền mặt';
-
-    const methodMap: { [key: string]: string } = {
-      cash: t('payment.cash') || 'Tiền mặt',
-      creditCard: t('payment.creditCard') || 'Thẻ tín dụng',
-      debitCard: t('payment.debitCard') || 'Thẻ ghi nợ',
-      qrCode: t('payment.qrCode') || 'Mã QR',
-      einvoice: t('einvoice.title') || 'Hóa đơn điện tử',
-      preview: t('common.preview') || 'Xem trước'
-    };
-
-    return methodMap[method] || method;
-  };
-
-  // Helper function to get payment method name, considering e-invoice specific fields
-  const getPaymentMethodName = (method: string) => {
-    if (!method) return t('payment.cash') || 'Tiền mặt';
-
-    const methodMap: { [key: string]: string } = {
-      cash: t('common.cash'),
-      creditCard: t('common.creditCard'),
-      debitCard: t('common.debitCard'),
-      momo: t('common.momo'),
-      zalopay: t('common.zalopay'),
-      vnpay: t('common.vnpay'),
-      qrCode: t('common.qrCode'),
-      shopeepay: t('common.shopeepay'),
-      grabpay: t('common.grabpay'),
-      einvoice: t('pos.eInvoice'),
-    };
-
-    return methodMap[method] || method;
-  };
-
-
   // Log receipt modal state for debugging
   useEffect(() => {
-    const hasReceipt = receipt && receipt.items && receipt.items.length > 0;
-    const shouldShow = isOpen && (hasReceipt || isPreview);
-    console.log("🔍 Receipt Modal state:", { isOpen, hasReceipt, isPreview, shouldShow });
+    console.log("🔍 Receipt Modal state:", {
+      isOpen,
+      hasReceipt: !!receipt,
+      isPreview,
+    });
   }, [isOpen, receipt, isPreview]);
 
   // Debug: Log all props
@@ -134,40 +92,10 @@ export function ReceiptModal({
     onConfirm: !!onConfirm
   });
 
-  // Early return if no receipt data and not in preview mode
-  if (!receipt && !isPreview) {
+  if (!receipt) {
     console.log("❌ Receipt Modal: No receipt data provided");
     return null;
   }
-
-  // If modal is open but receipt is null, wait for receipt data
-  if (isOpen && !receipt && !isPreview) {
-    console.log("⏳ Receipt Modal: Waiting for receipt data...");
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-sm">
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-            <p className="text-gray-500">Đang tải hóa đơn...</p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
-  // Additional safety check - if receipt is null and not in preview mode, return null
-  if (!receipt && !isPreview) {
-    console.log("❌ Receipt Modal: Receipt is null, cannot render");
-    return null;
-  }
-
-  // Debug logging for receipt modal state
-  console.log("🔍 Receipt Modal state:", {
-    isOpen,
-    hasReceipt: !!receipt,
-    isPreview,
-    receiptTransactionId: receipt?.transactionId || 'N/A',
-  });
 
   const handlePrint = async () => {
     console.log("🖨️ Starting browser print process");
@@ -307,46 +235,19 @@ export function ReceiptModal({
     // Pass complete receipt data to parent for payment flow
     if (onConfirm) {
       console.log('📄 Receipt Modal: Passing complete receipt data to payment flow');
-
-      // Use exact values from receipt for accurate calculation
-      const exactData = {
+      console.log('🎯 Receipt data being passed:', {
         receipt,
         cartItems,
         total,
-        // Pass exact calculated values to ensure consistency
-        exactSubtotal: receipt?.exactSubtotal ?? parseFloat(receipt?.subtotal || "0"),
-        exactTax: receipt?.exactTax ?? parseFloat(receipt?.tax || "0"),
-        exactTotal: receipt?.exactTotal ?? parseFloat(receipt?.total || "0"),
-        // Map cart items with correct tax calculation
-        processedCartItems: cartItems?.map((item: any) => ({
-          ...item,
-          // Ensure proper tax calculation based on afterTaxPrice logic
-          calculatedTax: (() => {
-            if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-              const afterTax = typeof item.afterTaxPrice === 'string'
-                ? parseFloat(item.afterTaxPrice)
-                : item.afterTaxPrice;
-              const basePrice = typeof item.price === 'string'
-                ? parseFloat(item.price)
-                : item.price;
-              return (afterTax - basePrice) * item.quantity;
-            }
-            return 0;
-          })()
-        })) || []
-      };
-
-      console.log('🎯 Receipt data being passed with exact values:', {
-        exactSubtotal: exactData.exactSubtotal,
-        exactTax: exactData.exactTax,
-        exactTotal: exactData.exactTotal,
-        receiptSubtotal: receipt?.subtotal,
-        receiptTax: receipt?.tax,
-        receiptTotal: receipt?.total
+        subtotal: receipt?.subtotal,
+        tax: receipt?.tax,
+        exactTotal: receipt?.exactTotal,
+        exactSubtotal: receipt?.exactSubtotal,
+        exactTax: receipt?.exactTax
       });
-
-      // Call onConfirm with exact receipt data
-      onConfirm(exactData);
+      
+      // Call onConfirm with receipt data
+      onConfirm();
     }
   };
 
@@ -393,15 +294,15 @@ export function ReceiptModal({
           <div className="border-t border-b border-gray-300 py-3 mb-3">
             <div className="flex justify-between text-sm">
               <span>{t("pos.transactionNumber")}</span>
-              <span>{receipt?.transactionId || "N/A"}</span>
+              <span>{receipt.transactionId}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>{t("pos.date")}</span>
-              <span>{receipt?.createdAt ? new Date(receipt.createdAt).toLocaleString('vi-VN') : new Date().toLocaleString('vi-VN')}</span>
+              <span>{new Date(receipt.createdAt).toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>{t("pos.cashier")}</span>
-              <span>{receipt?.cashierName || 'System User'}</span>
+              <span>{receipt.cashierName}</span>
             </div>
             {isEInvoice && customerName && (
               <div className="flex justify-between text-sm">
@@ -415,7 +316,7 @@ export function ReceiptModal({
                 <span>{customerTaxCode}</span>
               </div>
             )}
-            {receipt?.paymentMethod === "einvoice" && (
+            {receipt.paymentMethod === "einvoice" && (
               <div className="flex justify-between text-sm text-blue-600">
                 <span>Trạng thái E-Invoice:</span>
                 <span>
@@ -426,27 +327,25 @@ export function ReceiptModal({
           </div>
 
           <div className="space-y-2 mb-3">
-            {(receipt?.items || cartItems)?.map((item) => {
+            {receipt.items.map((item) => {
               // For receipt display, show the unit price (base price without tax) and total from order details
-              const unitPrice = parseFloat(item.price || item.unitPrice || '0');
-              const quantity = item.quantity || 1;
-              const itemTotal = item.total ? parseFloat(item.total) : (unitPrice * quantity);
+              const unitPrice = parseFloat(item.price);
 
               return (
-                <div key={item.id || item.productId}>
+                <div key={item.id}>
                   <div className="flex justify-between text-sm">
                     <div className="flex-1">
-                      <div>{item.name || item.productName}</div>
+                      <div>{item.productName}</div>
                       <div className="text-xs text-gray-600">
                         SKU:{" "}
-                        {item.sku || `FOOD${String(item.id || item.productId).padStart(5, "0")}`}
+                        {`FOOD${String(item.productId || item.id).padStart(5, "0")}`}
                       </div>
                       <div className="text-xs text-gray-600">
-                        {quantity} x{" "}
-                        {Math.floor(unitPrice).toLocaleString("vi-VN")} ₫
+                        {item.quantity} x{" "}
+                        {Math.floor(parseFloat(item.total) / item.quantity).toLocaleString("vi-VN")} ₫
                       </div>
                     </div>
-                    <div>{Math.floor(itemTotal).toLocaleString("vi-VN")} ₫</div>
+                    <div>{Math.floor(parseFloat(item.total)).toLocaleString("vi-VN")} ₫</div>
                   </div>
                 </div>
               );
@@ -457,116 +356,19 @@ export function ReceiptModal({
             <div className="flex justify-between text-sm">
               <span>Tạm tính</span>
               <span>
-                {(() => {
-                  // Priority: exactSubtotal > subtotal > calculate from items
-                  let subtotalValue = 0;
-
-                  if (receipt?.exactSubtotal !== undefined) {
-                    subtotalValue = receipt.exactSubtotal;
-                  } else if (receipt?.subtotal) {
-                    subtotalValue = parseFloat(receipt.subtotal);
-                  } else if (cartItems?.length > 0) {
-                    // Calculate from cartItems
-                    subtotalValue = cartItems.reduce((sum, item) => {
-                      const price = parseFloat(item.price || '0');
-                      const quantity = item.quantity || 1;
-                      return sum + (price * quantity);
-                    }, 0);
-                  } else if (receipt?.items?.length > 0) {
-                    // Fallback to receipt items
-                    subtotalValue = receipt.items.reduce((sum, item) => {
-                      return sum + parseFloat(item.price || '0') * item.quantity;
-                    }, 0);
-                  }
-
-                  console.log('💰 Receipt Modal - Subtotal display:', subtotalValue, 'from exactSubtotal:', receipt?.exactSubtotal, 'from subtotal:', receipt?.subtotal, 'cartItems length:', cartItems?.length);
-                  return Math.floor(subtotalValue).toLocaleString("vi-VN");
-                })()} ₫
+                {Math.floor(parseFloat(receipt.subtotal || "0")).toLocaleString("vi-VN")} ₫
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Thuế:</span>
               <span>
-                {(() => {
-                  // Priority: exactTax > tax > calculate from items
-                  let taxValue = 0;
-
-                  if (receipt?.exactTax !== undefined) {
-                    taxValue = receipt.exactTax;
-                  } else if (receipt?.tax) {
-                    taxValue = parseFloat(receipt.tax);
-                  } else if (cartItems?.length > 0) {
-                    // Calculate tax from cartItems using afterTaxPrice logic
-                    taxValue = cartItems.reduce((sum, item) => {
-                      if (item.taxRate && parseFloat(item.taxRate || '0') > 0) {
-                        const basePrice = parseFloat(item.price || '0');
-                        const quantity = item.quantity || 1;
-
-                        // Calculate tax using taxRate
-                        const taxRate = parseFloat(item.taxRate || '0') / 100;
-                        const itemTax = basePrice * taxRate * quantity;
-                        return sum + itemTax;
-                      }
-                      return sum;
-                    }, 0);
-                  }
-
-                  console.log('💰 Receipt Modal - Tax display:', taxValue, 'from exactTax:', receipt?.exactTax, 'from tax:', receipt?.tax, 'cartItems length:', cartItems?.length);
-                  return Math.floor(taxValue).toLocaleString("vi-VN");
-                })()} ₫
+                {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
               </span>
             </div>
             <div className="flex justify-between font-bold">
               <span>{t("pos.total")}</span>
               <span>
-                {(() => {
-                  // Priority order for total calculation - consistent with EInvoice
-                  let totalValue = 0;
-
-                  if (receipt?.exactTotal !== undefined) {
-                    totalValue = receipt.exactTotal;
-                    console.log('💰 Receipt Modal - Using exactTotal:', totalValue);
-                  } else if (receipt?.total) {
-                    totalValue = parseFloat(receipt.total);
-                    console.log('💰 Receipt Modal - Using receipt.total:', totalValue);
-                  } else if (total && typeof total === 'number') {
-                    totalValue = total;
-                    console.log('💰 Receipt Modal - Using total prop:', totalValue);
-                  } else if (cartItems?.length > 0) {
-                    // Calculate using afterTaxPrice when available, consistent with EInvoice logic
-                    totalValue = cartItems.reduce((sum, item) => {
-                      const price = parseFloat(item.price || '0');
-                      const quantity = item.quantity || 1;
-
-                      // Use afterTaxPrice if available for exact calculation
-                      if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-                        const afterTaxPrice = typeof item.afterTaxPrice === 'string'
-                          ? parseFloat(item.afterTaxPrice)
-                          : item.afterTaxPrice;
-                        if (!isNaN(afterTaxPrice) && afterTaxPrice > 0) {
-                          const itemTotal = afterTaxPrice * quantity;
-                          console.log(`💰 Receipt - Using afterTaxPrice for ${item.name}: ${afterTaxPrice} x ${quantity} = ${itemTotal}`);
-                          return sum + itemTotal;
-                        }
-                      }
-
-                      // Fallback: calculate with tax rate
-                      const taxRate = parseFloat(item.taxRate || '0') / 100;
-                      const subtotal = price * quantity;
-                      const tax = subtotal * taxRate;
-                      const itemTotal = subtotal + tax;
-                      console.log(`💰 Receipt - Calculated for ${item.name}: ${price} x ${quantity} + ${taxRate * 100}% tax = ${itemTotal}`);
-                      return sum + itemTotal;
-                    }, 0);
-                    console.log('💰 Receipt Modal - Calculated from cartItems:', totalValue);
-                  }
-
-                  console.log('💰 Receipt Modal - Final total display:', totalValue);
-                  return totalValue.toLocaleString("vi-VN", {
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                  });
-                })()} ₫
+                {Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
               </span>
             </div>
             <div className="flex justify-between text-sm mt-2">
@@ -574,10 +376,10 @@ export function ReceiptModal({
               <span className="capitalize">
                 {(() => {
                   // Always prioritize originalPaymentMethod for e-invoices
-                  let displayMethod = receipt?.paymentMethod || "cash";
+                  let displayMethod = receipt.paymentMethod;
 
                   // If this is an e-invoice transaction and we have originalPaymentMethod, use it
-                  if (receipt?.originalPaymentMethod) {
+                  if (receipt.originalPaymentMethod) {
                     displayMethod = receipt.originalPaymentMethod;
                   }
 
@@ -599,51 +401,34 @@ export function ReceiptModal({
                 })()}
               </span>
             </div>
-            {receipt?.amountReceived && (
+            {receipt.amountReceived && (
               <div className="flex justify-between text-sm">
                 <span>{t("pos.amountReceived")}</span>
                 <span>
                   {(() => {
                     // For e-invoice transactions, amount received should equal the total
                     if (
-                      receipt?.paymentMethod === "einvoice" ||
-                      receipt?.originalPaymentMethod === "einvoice"
+                      receipt.paymentMethod === "einvoice" ||
+                      receipt.originalPaymentMethod === "einvoice"
                     ) {
                       // For e-invoice, use the total from receipt
-                      return Math.floor(parseFloat(receipt?.total || "0")).toLocaleString("vi-VN");
+                      return Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN");
                     }
                     // For other payment methods, use the original amount received
                     return Math.floor(
-                      parseFloat(receipt?.amountReceived || "0"),
+                      parseFloat(receipt.amountReceived),
                     ).toLocaleString("vi-VN");
                   })()}{" "}
                   ₫
                 </span>
               </div>
             )}
-            {receipt?.change && parseFloat(receipt.change) > 0 && (
+            {receipt.change && parseFloat(receipt.change) > 0 && (
               <div className="flex justify-between text-sm">
                 <span>Change:</span>
                 <span>{receipt.change} ₫</span>
               </div>
             )}
-          </div>
-
-          {/* Payment method */}
-          <div className="border-b pb-3">
-            <div className="flex justify-between">
-              <span className="text-sm">Phương thức thanh toán:</span>
-              <span className="text-sm font-medium">
-                {getPaymentMethodName(
-                  receipt?.displayPaymentMethod ||
-                  receipt?.originalPaymentMethod ||
-                  receipt?.paymentMethod ||
-                  cartItems?.paymentMethod ||
-                  "cash"
-                )}
-              </span>
-            </div>
-            
           </div>
 
           <div className="text-center mt-4 text-xs text-gray-600">
