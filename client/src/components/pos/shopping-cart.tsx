@@ -368,10 +368,6 @@ export function ShoppingCart({
     // Close E-Invoice modal first
     setShowEInvoiceModal(false);
 
-    // Always clear cart after E-Invoice completion (both immediate and later publishing)
-    console.log('🧹 Shopping cart: Auto clearing cart after E-Invoice completion');
-    onClearCart();
-
     // Step 5: Always show final receipt modal for printing
     console.log('📄 Shopping cart: Step 5: Showing final receipt modal for printing');
     
@@ -380,15 +376,9 @@ export function ShoppingCart({
       console.log('✅ Using receipt data from E-Invoice response');
       console.log('📄 Receipt data details:', eInvoiceData.receipt);
       
-      // Show receipt modal immediately before clearing cart
+      // Show receipt modal with the receipt data
       setSelectedReceipt(eInvoiceData.receipt);
       setShowReceiptModal(true);
-      
-      // Small delay to ensure state is set before clearing cart
-      setTimeout(() => {
-        console.log('🧹 Shopping cart: Auto clearing cart after receipt modal shown');
-        onClearCart();
-      }, 100);
     } else {
       console.log('⚠️ No receipt in eInvoiceData, creating receipt from cart data');
       // Fallback: create receipt data from current cart and eInvoiceData
@@ -421,18 +411,16 @@ export function ShoppingCart({
       
       console.log('📄 Fallback receipt data created:', receiptData);
       
-      // Show receipt modal before clearing cart
+      // Show receipt modal with fallback receipt data
       setSelectedReceipt(receiptData);
       setShowReceiptModal(true);
-      
-      // Small delay to ensure state is set before clearing cart
-      setTimeout(() => {
-        console.log('🧹 Shopping cart: Auto clearing cart after fallback receipt modal shown');
-        onClearCart();
-      }, 100);
     }
-    
-    
+
+    // Clear cart after setting up receipt modal
+    setTimeout(() => {
+      console.log('🧹 Shopping cart: Auto clearing cart after receipt modal setup');
+      onClearCart();
+    }, 100);
   };
 
   const canCheckout = cart.length > 0;
