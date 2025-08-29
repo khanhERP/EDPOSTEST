@@ -1880,7 +1880,46 @@ export interface SuppliersTranslations {
   requiredFields: string;
 }
 
-export interface TablesTranslations {}
+export interface TablesTranslations {
+  title: string;
+  description: string;
+  tableManagement: string;
+  addTable: string;
+  editTable: string;
+  deleteTable: string;
+  searchPlaceholder: string;
+  tableNumber: string;
+  capacity: string;
+  status: string;
+  actions: string;
+  noTables: string;
+  confirmDelete: string;
+  deleteOrder: string;
+  tableNumberRequired: string;
+  capacityMinimum: string;
+  tableUpdateError: string;
+  tableCreated: string;
+  tableUpdated: string;
+  tableDeleted: string;
+  tableError: string;
+  tableNumberPlaceholder: string;
+  capacityPlaceholder: string;
+  available: string;
+  occupied: string;
+  reserved: string;
+  maintenance: string;
+  cleaning: string;
+  outOfService: string;
+  selectStatus: string;
+  addTableSuccess: string;
+  addTableError: string;
+  updateTableSuccess: string;
+  updateTableError: string;
+  deleteTableSuccess: string;
+  deleteTableError: string;
+  duplicateTableNumber: string;
+  tableNumberAlreadyExists: string;
+}
 
 // Type-safe translation keys
 export type TranslationKey =

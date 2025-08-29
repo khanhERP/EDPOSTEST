@@ -1751,7 +1751,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           }}
                         >
                           <X className="w-3 h-3 mr-1" />
-                          Xóa đơn
+                          {t("tables.deleteOrder")}
                         </Button>
                       </div>
                     )}
