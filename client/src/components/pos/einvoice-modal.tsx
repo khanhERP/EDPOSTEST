@@ -197,19 +197,26 @@ export function EInvoiceModal({
     (template) => template && template.useCK === true,
   );
 
-  // Reset form only when modal first opens with fresh data, not when already processed
+  // Initialize form data when modal opens and templates are loaded
   useEffect(() => {
-    if (isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0) {
-      console.log("🔥 E-INVOICE MODAL OPENING WITH FRESH DATA");
-      console.log("🔥 cartItems when modal opens:", cartItems);
-      console.log("🔥 cartItems length when modal opens:", cartItems?.length || 0);
-      console.log("🔥 cartItems is array when modal opens:", Array.isArray(cartItems));
-      console.log("🔥 total when modal opens:", total);
+    if (isOpen && !templatesLoading && !connectionsLoading) {
+      console.log("🔥 E-INVOICE MODAL OPENING - INITIALIZING DATA");
+      console.log("🔥 Templates loading:", templatesLoading);
+      console.log("🔥 Connections loading:", connectionsLoading);
       console.log("🔥 Available templates:", invoiceTemplates.length);
+      console.log("🔥 cartItems when modal opens:", cartItems);
+      console.log("🔥 total when modal opens:", total);
 
-      // Only set template if not already set to prevent reset during processing
-      if (!formData.selectedTemplateId && !isProcessed) {
-        const defaultTemplateId = invoiceTemplates.length > 0 ? invoiceTemplates[0].id.toString() : "";
+      // Always ensure we have a template selected if templates are available
+      const shouldSetTemplate = invoiceTemplates.length > 0 && (
+        !formData.selectedTemplateId || 
+        formData.selectedTemplateId === "" ||
+        !isProcessed // Allow template reset if not currently processing
+      );
+
+      if (shouldSetTemplate) {
+        const defaultTemplateId = invoiceTemplates[0].id.toString();
+        console.log("🎯 Setting default template ID:", defaultTemplateId);
 
         setFormData(prev => ({
           ...prev,
@@ -218,10 +225,13 @@ export function EInvoiceModal({
           selectedTemplateId: defaultTemplateId,
           taxCode: prev.taxCode || "0123456789",
           customerName: prev.customerName || "Khách hàng lẻ",
+          address: prev.address || "",
+          phoneNumber: prev.phoneNumber || "",
+          email: prev.email || "",
         }));
       }
     }
-  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]); // Remove isProcessed to prevent blocking template loading
+  }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length, isProcessed]);
 
   // Separate effect for debugging cartItems changes without resetting form
   useEffect(() => {
@@ -391,13 +401,27 @@ export function EInvoiceModal({
     console.log("🟡 Cart items:", cartItems);
     console.log("🟡 Total:", total);
 
-    // Don't block processing if template isn't set yet
+    // Ensure template is set before processing
+    let currentFormData = formData;
     if (!formData.selectedTemplateId && invoiceTemplates.length > 0) {
       const defaultTemplateId = invoiceTemplates[0].id.toString();
-      setFormData(prev => ({
-        ...prev,
+      console.log("🟡 Setting template for publish later:", defaultTemplateId);
+      currentFormData = {
+        ...formData,
         selectedTemplateId: defaultTemplateId
-      }));
+      };
+      setFormData(currentFormData);
+    }
+
+    // Validate that we have required data
+    if (!currentFormData.selectedTemplateId) {
+      console.error("❌ No template available for publish later");
+      toast({
+        title: "Lỗi",
+        description: "Không có mẫu số hóa đơn khả dụng",
+        variant: "destructive"
+      });
+      return;
     }
 
     setIsProcessed(true); // Mark processing as started
@@ -713,20 +737,23 @@ export function EInvoiceModal({
     console.log("🟢 Cart items:", cartItems);
     console.log("🟢 Invoice templates:", invoiceTemplates);
 
-    // Auto-set template if not selected but templates are available
+    // Ensure template is set before processing
+    let currentFormData = formData;
     if (!formData.selectedTemplateId && invoiceTemplates.length > 0) {
       const defaultTemplateId = invoiceTemplates[0].id.toString();
-      setFormData(prev => ({
-        ...prev,
+      console.log("🟢 Setting template for immediate publish:", defaultTemplateId);
+      currentFormData = {
+        ...formData,
         selectedTemplateId: defaultTemplateId
-      }));
+      };
+      setFormData(currentFormData);
     }
 
-    // Validate required fields
-    if (!formData.invoiceProvider || !formData.customerName) {
+    // Validate required fields using current form data
+    if (!currentFormData.invoiceProvider || !currentFormData.customerName) {
       console.error("❌ Missing required fields:", {
-        invoiceProvider: formData.invoiceProvider,
-        customerName: formData.customerName
+        invoiceProvider: currentFormData.invoiceProvider,
+        customerName: currentFormData.customerName
       });
       toast({
         title: "Lỗi validation",
@@ -736,7 +763,7 @@ export function EInvoiceModal({
       return;
     }
 
-    if (!formData.selectedTemplateId) {
+    if (!currentFormData.selectedTemplateId) {
       console.error("❌ No template available");
       toast({
         title: "Lỗi hệ thống", 
@@ -759,14 +786,14 @@ export function EInvoiceModal({
 
       // Find the provider value from the EINVOICE_PROVIDERS mapping
       const provider = EINVOICE_PROVIDERS.find(
-        (p) => p.name === formData.invoiceProvider,
+        (p) => p.name === currentFormData.invoiceProvider,
       );
       const providerId = provider ? parseInt(provider.value) : 1;
 
       // Get connection info from database based on selected provider
       const connectionInfo = eInvoiceConnections.find(
         (conn) =>
-          conn.softwareName === formData.invoiceProvider && conn.isActive,
+          conn.softwareName === currentFormData.invoiceProvider && conn.isActive,
       );
 
       if (!connectionInfo) {
@@ -908,7 +935,7 @@ export function EInvoiceModal({
 
       // Get selected template data for API mapping
       const selectedTemplate = invoiceTemplates.find(
-        (template) => template.id.toString() === formData.selectedTemplateId,
+        (template) => template.id.toString() === currentFormData.selectedTemplateId,
       );
 
       if (!selectedTemplate) {
