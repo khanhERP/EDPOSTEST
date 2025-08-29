@@ -75,6 +75,7 @@ export function EInvoiceModal({
   const [formData, setFormData] = useState({
     invoiceProvider: "",
     invoiceTemplate: "", // This will store the template ID
+    selectedTemplateId: "", // To store the selected template ID explicitly
     taxCode: "",
     customerName: "",
     address: "",
@@ -202,7 +203,7 @@ export function EInvoiceModal({
     if (isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0) {
       console.log("🔥 E-INVOICE MODAL OPENING - INITIALIZING DATA");
       console.log("🔥 Available templates:", invoiceTemplates);
-      
+
       const defaultTemplate = invoiceTemplates[0];
       const defaultTemplateId = defaultTemplate.id.toString();
 
@@ -216,7 +217,8 @@ export function EInvoiceModal({
       // Set form data with default template
       const initialFormData = {
         invoiceProvider: "EasyInvoice",
-        invoiceTemplate: defaultTemplateId, // Store template ID directly
+        invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY", // Set a default name/number for display
+        selectedTemplateId: defaultTemplateId, // Store template ID for selection
         taxCode: "0123456789",
         customerName: "Khách hàng lẻ",
         address: "",
@@ -229,7 +231,7 @@ export function EInvoiceModal({
     }
   }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]);
 
-  
+
 
   // Log data immediately when modal opens
   useEffect(() => {
@@ -427,34 +429,52 @@ export function EInvoiceModal({
       return;
     }
 
-    // Template validation
-    if (!formData.invoiceTemplate || !invoiceTemplates.length) {
-      console.error("❌ Template validation failed - cannot proceed with publish later");
-      
-      // Auto-fix if templates are available but not selected
-      if (invoiceTemplates.length > 0 && !formData.invoiceTemplate) {
+    // Wait for templates to load if still loading
+    if (templatesLoading || connectionsLoading) {
+      console.log("⏳ Still loading templates/connections, please wait...");
+      toast({
+        title: "Đang tải dữ liệu",
+        description: "Vui lòng đợi hệ thống tải xong mẫu số hóa đơn.",
+      });
+      return;
+    }
+
+    // Ensure we have a valid template before proceeding
+    let currentFormData = { ...formData };
+
+    // Force template selection if not set
+    if (!currentFormData.selectedTemplateId || currentFormData.selectedTemplateId === "" || invoiceTemplates.length === 0) {
+      console.log("🔧 Template not set, forcing selection...");
+
+      if (invoiceTemplates.length > 0) {
         const defaultTemplate = invoiceTemplates[0];
         const defaultTemplateId = defaultTemplate.id.toString();
-        
-        console.log("🔧 Auto-fixing template selection:", defaultTemplateId);
-        
-        setFormData(prev => ({
-          ...prev,
-          invoiceTemplate: defaultTemplateId
-        }));
-        
-        // Don't return, continue with the fixed template
+
+        console.log("✅ Auto-selecting template:", defaultTemplateId, defaultTemplate.name);
+
+        // Update both state and current data
+        currentFormData = {
+          ...currentFormData,
+          selectedTemplateId: defaultTemplateId,
+          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
+        };
+
+        setFormData(currentFormData);
       } else {
+        console.error("❌ No templates available");
         toast({
           title: "Lỗi",
-          description: "Chưa chọn mẫu số hóa đơn. Vui lòng thử lại.",
+          description: "Không có mẫu số hóa đơn nào được kích hoạt. Vui lòng kiểm tra cài đặt.",
           variant: "destructive"
         });
         return;
       }
     }
 
-    const currentFormData = formData;
+    console.log("🔍 Final template validation:", {
+      selectedTemplateId: currentFormData.selectedTemplateId,
+      templatesCount: invoiceTemplates.length
+    });
 
     if (!currentFormData.customerName.trim()) {
       toast({
@@ -496,10 +516,16 @@ export function EInvoiceModal({
 
       console.log(`💰 Total calculations: Subtotal: ${calculatedSubtotal}, Tax: ${calculatedTax}, Final: ${finalTotal}`);
 
-      // Get selected template
-      const selectedTemplate = invoiceTemplates.find(
-        (template) => template.id.toString() === currentFormData.invoiceTemplate,
+      // Get selected template with fallback
+      let selectedTemplate = invoiceTemplates.find(
+        (template) => template.id.toString() === currentFormData.selectedTemplateId,
       );
+
+      // Fallback to first template if not found
+      if (!selectedTemplate && invoiceTemplates.length > 0) {
+        selectedTemplate = invoiceTemplates[0];
+        console.log("🔧 Using fallback template:", selectedTemplate.id, selectedTemplate.name);
+      }
 
       if (!selectedTemplate) {
         throw new Error("Không tìm thấy mẫu số hóa đơn được chọn");
@@ -663,7 +689,7 @@ export function EInvoiceModal({
       // Close modal and call onConfirm with publishLater flag
       onClose();
       onConfirm({
-        ...currentFormData,
+        ...currentFormData, // Use currentFormData which might be updated with auto-selected template
         cartItems: cartItems,
         total: finalTotal,
         paymentMethod: selectedPaymentMethod,
@@ -705,34 +731,53 @@ export function EInvoiceModal({
     console.log("🟢 Cart items:", cartItems);
     console.log("🟢 Invoice templates:", invoiceTemplates);
 
-    // Template validation for immediate publish
-    if (!formData.invoiceTemplate || !invoiceTemplates.length) {
-      console.error("❌ Template validation failed for immediate publish");
-      
-      // Auto-fix if templates are available but not selected
-      if (invoiceTemplates.length > 0 && !formData.invoiceTemplate) {
+    // Wait for templates to load if still loading
+    if (templatesLoading || connectionsLoading) {
+      console.log("⏳ Still loading templates/connections for immediate publish, please wait...");
+      toast({
+        title: "Đang tải dữ liệu",
+        description: "Vui lòng đợi hệ thống tải xong mẫu số hóa đơn.",
+      });
+      return;
+    }
+
+    // Ensure we have a valid template before proceeding
+    let currentFormData = { ...formData };
+
+    // Force template selection if not set
+    if (!currentFormData.selectedTemplateId || currentFormData.selectedTemplateId === "" || invoiceTemplates.length === 0) {
+      console.log("🔧 Template not set for immediate publish, forcing selection...");
+
+      if (invoiceTemplates.length > 0) {
         const defaultTemplate = invoiceTemplates[0];
         const defaultTemplateId = defaultTemplate.id.toString();
-        
-        console.log("🔧 Auto-fixing template selection for immediate publish:", defaultTemplateId);
-        
-        setFormData(prev => ({
-          ...prev,
-          invoiceTemplate: defaultTemplateId
-        }));
-        
-        // Don't return, continue with the fixed template
+
+        console.log("✅ Auto-selecting template for immediate publish:", defaultTemplateId, defaultTemplate.name);
+
+        // Update both state and current data
+        currentFormData = {
+          ...currentFormData,
+          selectedTemplateId: defaultTemplateId,
+          invoiceTemplate: defaultTemplate.name || defaultTemplate.templateNumber || "1C25TYY"
+        };
+
+        setFormData(currentFormData);
       } else {
+        console.error("❌ No templates available for immediate publish");
         toast({
           title: "Lỗi",
-          description: "Chưa chọn mẫu số hóa đơn. Vui lòng thử lại.",
+          description: "Không có mẫu số hóa đơn nào được kích hoạt. Vui lòng kiểm tra cài đặt.",
           variant: "destructive"
         });
         return;
       }
     }
 
-    const currentFormData = formData;
+    console.log("🔍 Final template validation for immediate publish:", {
+      selectedTemplateId: currentFormData.selectedTemplateId,
+      templatesCount: invoiceTemplates.length
+    });
+
 
     // Then validate other required fields
     if (!currentFormData.invoiceProvider || !currentFormData.customerName) {
@@ -920,14 +965,19 @@ export function EInvoiceModal({
         itemsCount: invoiceItems.length,
       });
 
-      // Get selected template data for API mapping
-      const selectedTemplate = invoiceTemplates.find(
-        (template) => template.id.toString() === currentFormData.invoiceTemplate,
+      // Get selected template with fallback
+      let selectedTemplate = invoiceTemplates.find(
+        (template) => template.id.toString() === currentFormData.selectedTemplateId,
       );
 
+      // Fallback to first template if not found
+      if (!selectedTemplate && invoiceTemplates.length > 0) {
+        selectedTemplate = invoiceTemplates[0];
+        console.log("🔧 Using fallback template:", selectedTemplate.id, selectedTemplate.name);
+      }
+
       if (!selectedTemplate) {
-        alert("Không tìm thấy thông tin mẫu số hóa đơn được chọn");
-        return;
+        throw new Error("Không tìm thấy mẫu số hóa đơn được chọn");
       }
 
       const publishRequest = {
@@ -959,17 +1009,17 @@ export function EInvoiceModal({
         bankAccount: "",
         bankName: "",
         customer: {
-          custCd: formData.taxCode,
-          custNm: formData.customerName,
-          custCompany: formData.customerName,
-          taxCode: formData.taxCode,
+          custCd: currentFormData.taxCode,
+          custNm: currentFormData.customerName,
+          custCompany: currentFormData.customerName,
+          taxCode: currentFormData.taxCode,
           custCity: "",
           custDistrictName: "",
-          custAddrs: formData.address || "",
-          custPhone: formData.phoneNumber || "",
+          custAddrs: currentFormData.address || "",
+          custPhone: currentFormData.phoneNumber || "",
           custBankAccount: "",
           custBankName: "",
-          email: formData.email || "",
+          email: currentFormData.email || "",
           emailCC: "",
         },
         products: invoiceItems,
@@ -1063,11 +1113,11 @@ export function EInvoiceModal({
             invoiceNumber: publishResult.data?.invoiceNo || null, // Số hóa đơn từ API response
             templateNumber: selectedTemplate.templateNumber || null, // Mẫu số hóa đơn từ selectedTemplate
             symbol: selectedTemplate.symbol || null, // Ký hiệu hóa đơn từ selectedTemplate
-            customerName: formData.customerName || "Khách hàng",
-            customerTaxCode: formData.taxCode || null,
-            customerAddress: formData.address || null,
-            customerPhone: formData.phoneNumber || null,
-            customerEmail: formData.email || null,
+            customerName: currentFormData.customerName || "Khách hàng",
+            customerTaxCode: currentFormData.taxCode || null,
+            customerAddress: currentFormData.address || null,
+            customerPhone: currentFormData.phoneNumber || null,
+            customerEmail: currentFormData.email || null,
             subtotal: cartSubtotal.toFixed(2),
             tax: cartTaxAmount.toFixed(2),
             total: cartTotal.toFixed(2),
@@ -1143,9 +1193,9 @@ export function EInvoiceModal({
           const orderData = {
             orderNumber: `ORD-${Date.now()}`,
             tableId: null, // No table for POS orders
-            customerName: formData.customerName,
-            customerPhone: formData.phoneNumber || null,
-            customerEmail: formData.email || null,
+            customerName: currentFormData.customerName,
+            customerPhone: currentFormData.phoneNumber || null,
+            customerEmail: currentFormData.email || null,
             subtotal: cartSubtotal.toFixed(2),
             tax: cartTaxAmount.toFixed(2),
             total: cartTotal.toFixed(2),
@@ -1156,7 +1206,7 @@ export function EInvoiceModal({
             templateNumber: selectedTemplate.templateNumber || null, // Lưu templateNumber từ selectedTemplate
             symbol: selectedTemplate.symbol || null, // Lưu symbol từ selectedTemplate
             invoiceNumber: publishResult.data?.invoiceNo || null, // Lưu invoiceNumber từ API response
-            notes: `E-Invoice published - Tax Code: ${formData.taxCode || "N/A"}, Address: ${formData.address || "N/A"}, Template: ${selectedTemplate.templateNumber || "N/A"}, Symbol: ${selectedTemplate.symbol || "N/A"}, Invoice No: ${publishResult.data?.invoiceNo || "N/A"}`,
+            notes: `E-Invoice published - Tax Code: ${currentFormData.taxCode || "N/A"}, Address: ${currentFormData.address || "N/A"}, Template: ${selectedTemplate.templateNumber || "N/A"}, Symbol: ${selectedTemplate.symbol || "N/A"}, Invoice No: ${publishResult.data?.invoiceNo || "N/A"}`,
             orderedAt: new Date(),
             employeeId: null, // Can be set if employee info is available
             salesChannel: "pos",
@@ -1230,8 +1280,8 @@ export function EInvoiceModal({
           cashierName: "System User",
           createdAt: new Date().toISOString(),
           invoiceNumber: publishResult.data?.invoiceNo || null,
-          customerName: formData.customerName,
-          customerTaxCode: formData.taxCode,
+          customerName: currentFormData.customerName,
+          customerTaxCode: currentFormData.taxCode,
         };
 
         console.log(
@@ -1395,10 +1445,15 @@ export function EInvoiceModal({
                   {t("einvoice.invoiceTemplate")}
                 </Label>
                 <Select
-                  value={formData.invoiceTemplate}
-                  onValueChange={(value) =>
-                    handleInputChange("invoiceTemplate", value)
-                  }
+                  value={formData.selectedTemplateId} // Use selectedTemplateId for the Select value
+                  onValueChange={(value) => {
+                    handleInputChange("selectedTemplateId", value);
+                    // Also update invoiceTemplate for display purposes if needed, but selectedTemplateId is key for logic
+                    const selected = invoiceTemplates.find(t => t.id.toString() === value);
+                    if (selected) {
+                      handleInputChange("invoiceTemplate", selected.name || selected.templateNumber || "1C25TYY");
+                    }
+                  }}
                   disabled={templatesLoading || invoiceTemplates.length === 0}
                 >
                   <SelectTrigger>
@@ -1416,7 +1471,7 @@ export function EInvoiceModal({
                     {invoiceTemplates.map((template) => (
                       <SelectItem
                         key={template.id}
-                        value={template.id.toString()}
+                        value={template.id.toString()} // Value is the ID
                       >
                         {template.name} ({template.templateNumber})
                       </SelectItem>
@@ -1545,7 +1600,7 @@ export function EInvoiceModal({
               <span className="font-medium">{t("einvoice.totalAmount") || "Tổng tiền hóa đơn"}</span>
               <span className="text-lg font-bold text-blue-600">
                 {(() => {
-                  // Tính toán từ cartItems nếu có dữ liệu
+                  // Calculate total from cartItems if available
                   if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
                     console.log('💰 EInvoice Modal - Calculating from cartItems:', cartItems);
 
@@ -1559,7 +1614,7 @@ export function EInvoiceModal({
 
                       calculatedSubtotal += itemSubtotal;
 
-                      // Tính thuế từ afterTaxPrice hoặc taxRate
+                      // Calculate tax from afterTaxPrice or taxRate
                       if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
                         const afterTax = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
                         calculatedTax += (afterTax - itemPrice) * itemQuantity;
