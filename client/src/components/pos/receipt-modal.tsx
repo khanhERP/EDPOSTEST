@@ -643,39 +643,7 @@ export function ReceiptModal({
                 )}
               </span>
             </div>
-            {/* E-Invoice information */}
-            {receipt?.isEInvoice && (
-              <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
-                <div className="text-xs font-medium text-blue-800 mb-1">
-                  📧 Hóa đơn điện tử
-                </div>
-                <div className="text-xs text-blue-700 space-y-1">
-                  {receipt.einvoiceData?.status === "published" && (
-                    <>
-                      <div>✅ Trạng thái: Đã phát hành</div>
-                      {receipt.einvoiceData?.invoiceNumber && (
-                        <div>📄 Số HĐ: {receipt.einvoiceData.invoiceNumber}</div>
-                      )}
-                    </>
-                  )}
-                  {receipt.einvoiceData?.status === "draft" && (
-                    <>
-                      <div>⏳ Trạng thái: Đã lưu - chờ phát hành sau</div>
-                      <div>📝 ID: {receipt.einvoiceData?.invoiceId}</div>
-                    </>
-                  )}
-                  {receipt.einvoiceData?.customerName && (
-                    <div>👤 KH: {receipt.einvoiceData.customerName}</div>
-                  )}
-                  {receipt.einvoiceData?.customerTaxCode && (
-                    <div>🏢 MST: {receipt.einvoiceData.customerTaxCode}</div>
-                  )}
-                  {receipt.einvoiceData?.templateNumber && (
-                    <div>📋 Mẫu số: {receipt.einvoiceData.templateNumber}</div>
-                  )}
-                </div>
-              </div>
-            )}
+            
           </div>
 
           <div className="text-center mt-4 text-xs text-gray-600">
