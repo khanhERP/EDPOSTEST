@@ -1599,16 +1599,11 @@ export function EInvoiceModal({
                     cartItemsData: cartItems
                   });
 
-                  // Priority: Use total prop first if valid, then calculate from cartItems as fallback
+                  // Priority: Calculate from cartItems first for accuracy, then fallback to total prop
                   let displayTotal = 0;
 
-                  // First try to use the total prop if it's valid
-                  if (total && typeof total === 'number' && total > 0) {
-                    displayTotal = total;
-                    console.log('💰 EInvoice Modal - Using total prop:', displayTotal);
-                  } 
-                  // If no valid total prop, calculate from cartItems
-                  else if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
+                  // First try to calculate from cartItems (most reliable data source)
+                  if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
                     displayTotal = cartItems.reduce((sum, item) => {
                       const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
                       const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
@@ -1626,6 +1621,11 @@ export function EInvoiceModal({
                       }
                     }, 0);
                     console.log('💰 EInvoice Modal - Calculated from cartItems:', displayTotal);
+                  }
+                  // Fallback to total prop if cartItems unavailable but total is valid
+                  else if (total && typeof total === 'number' && total > 0) {
+                    displayTotal = total;
+                    console.log('💰 EInvoice Modal - Using total prop as fallback:', displayTotal);
                   }
                   // If still no data, show loading state instead of 0
                   else if (isOpen && (!cartItems || cartItems.length === 0) && (!total || total === 0)) {
