@@ -183,7 +183,6 @@ export interface CommonTranslations {
   transfer: string;
   view: string;
   backToPOS: string;
-  description: string;
   paid: string;
   login: string;
   register: string;
@@ -333,7 +332,6 @@ export interface NavigationTranslations {
   warehouseReport: string;
   orderReport: string;
   customerDisplay: string;
-  tablesSales: string;
   logout: string;
 }
 
@@ -1696,7 +1694,6 @@ export interface TablesTranslations {
   actions: string;
   noTables: string;
   confirmDelete: string;
-  deleteOrder: string;
   tableNumberRequired: string;
   capacityMinimum: string;
   tableUpdateError: string;
