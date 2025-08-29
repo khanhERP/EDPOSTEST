@@ -377,61 +377,48 @@ export function ShoppingCart({
     // Step 5: Always show final receipt modal for printing
     console.log('📄 Shopping cart: Step 5: Showing final receipt modal for printing');
 
-    // Ensure we have receipt data to show - prioritize receipt from eInvoiceData
-    if (eInvoiceData.receipt) {
-      console.log('✅ Using receipt data from E-Invoice response');
-      console.log('📄 Receipt data details:', eInvoiceData.receipt);
+    // Always show receipt modal - prioritize receipt from eInvoiceData
+    const receiptToShow = eInvoiceData.receipt || {
+      transactionId: eInvoiceData.savedInvoice?.tradeNumber || `TXN-${Date.now()}`,
+      items: cart.map((item) => ({
+        id: item.id,
+        productId: item.id,
+        productName: item.name,
+        price: parseFloat(item.price).toFixed(2),
+        quantity: item.quantity,
+        total: parseFloat(item.total).toFixed(2),
+        sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+        taxRate: parseFloat(item.taxRate || "10"),
+        afterTaxPrice: item.afterTaxPrice,
+      })),
+      subtotal: subtotal.toFixed(2),
+      tax: tax.toFixed(2),
+      total: total.toFixed(2),
+      paymentMethod: "einvoice",
+      originalPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash",
+      amountReceived: total.toFixed(2),
+      change: "0.00",
+      cashierName: "System User",
+      createdAt: new Date().toISOString(),
+      invoiceNumber: eInvoiceData.invoiceNumber || null,
+      customerName: eInvoiceData.customerName || "Khách hàng",
+      customerTaxCode: eInvoiceData.taxCode || "",
+    };
 
-      // Use setTimeout to ensure E-Invoice modal is fully closed before showing receipt
-      setTimeout(() => {
-        setSelectedReceipt(eInvoiceData.receipt);
-        setShowReceiptModal(true);
-        console.log('📄 Receipt modal opened with E-Invoice data');
-      }, 100);
-    } else {
-      console.log('⚠️ No receipt in eInvoiceData, creating receipt from cart data');
-      // Fallback: create receipt data from current cart and eInvoiceData
-      const receiptData = {
-        transactionId: eInvoiceData.invoiceNumber || eInvoiceData.savedInvoice?.tradeNumber || `TXN-${Date.now()}`,
-        items: cart.map((item) => ({
-          id: item.id,
-          productId: item.id,
-          productName: item.name,
-          price: parseFloat(item.price).toFixed(2),
-          quantity: item.quantity,
-          total: parseFloat(item.total).toFixed(2),
-          sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-          taxRate: parseFloat(item.taxRate || "10"),
-          afterTaxPrice: item.afterTaxPrice,
-        })),
-        subtotal: subtotal.toFixed(2),
-        tax: tax.toFixed(2),
-        total: total.toFixed(2),
-        paymentMethod: "einvoice",
-        originalPaymentMethod: eInvoiceData.originalPaymentMethod || eInvoiceData.paymentMethod || "cash",
-        amountReceived: total.toFixed(2),
-        change: "0.00",
-        cashierName: "System User",
-        createdAt: new Date().toISOString(),
-        invoiceNumber: eInvoiceData.invoiceNumber || null,
-        customerName: eInvoiceData.customerName || "Khách hàng",
-        customerTaxCode: eInvoiceData.taxCode || "",
-      };
+    console.log('📄 Receipt data to display:', receiptToShow);
 
-      console.log('📄 Created fallback receipt data:', receiptData);
-      setTimeout(() => {
-        setSelectedReceipt(receiptData);
-        setShowReceiptModal(true);
-        console.log('📄 Receipt modal opened with fallback data');
-      }, 100);
-    }
-
-    // Auto clear cart after successful E-Invoice processing (both immediate and later)
-    // Delay cart clearing to ensure receipt modal is properly shown first
+    // Show receipt modal immediately after E-Invoice modal closes
     setTimeout(() => {
-      console.log('🧹 Shopping cart: Auto clearing cart after E-Invoice completion');
+      console.log('📄 Setting receipt modal state');
+      setSelectedReceipt(receiptToShow);
+      setShowReceiptModal(true);
+    }, 50);
+
+    // Clear cart after receipt modal is shown
+    setTimeout(() => {
+      console.log('🧹 Shopping cart: Auto clearing cart after receipt modal shown');
       clearCart();
-    }, 150);
+    }, 100);
   };
 
   const canCheckout = cart.length > 0;
