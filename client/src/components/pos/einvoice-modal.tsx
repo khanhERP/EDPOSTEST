@@ -1366,12 +1366,21 @@ export function EInvoiceModal({
           {isOpen && !templatesLoading && !connectionsLoading && (
             (() => {
               const hasValidCartItems = cartItems && Array.isArray(cartItems) && cartItems.length > 0;
-              const hasValidTotal = total !== null && total !== undefined && typeof total === 'number' && total > 0;
+              const hasValidTotal = total !== null && total !== undefined && typeof total === 'number' && total >= 0;
+
+              console.log("✅ E-Invoice data ready check:", {
+                hasValidCartItems,
+                hasValidTotal,
+                cartLength: cartItems?.length,
+                totalValue: total
+              });
 
               if (hasValidCartItems && hasValidTotal) {
                 return (
                   <div className="flex items-center justify-center py-2 bg-green-50 border border-green-200 rounded-lg">
-                    <span className="text-sm text-green-700">✅ Dữ liệu đã sẵn sàng ({cartItems.length} sản phẩm, {Math.floor(total).toLocaleString("vi-VN")} ₫)</span>
+                    <span className="text-sm text-green-700">
+                      ✅ Dữ liệu đã sẵn sàng ({cartItems.length} sản phẩm, {Math.floor(total).toLocaleString("vi-VN")} ₫)
+                    </span>
                   </div>
                 );
               }
@@ -1379,30 +1388,31 @@ export function EInvoiceModal({
             })()
           )}
 
-          {/* Data availability warning */}
+          {/* Data availability warning - only show if ACTUALLY missing data */}
           {isOpen && !templatesLoading && !connectionsLoading && (
             (() => {
-              // More robust data validation
+              // Only validate if modal is actually open and templates/connections are loaded
               const hasValidCartItems = cartItems && Array.isArray(cartItems) && cartItems.length > 0;
-              const hasValidTotal = total !== null && total !== undefined && typeof total === 'number' && total > 0;
+              const hasValidTotal = total !== null && total !== undefined && typeof total === 'number' && total >= 0;
 
-              console.log("🔍 E-Invoice modal data validation:", {
-                cartItems: cartItems,
-                cartItemsLength: cartItems?.length || 0,
-                cartItemsType: typeof cartItems,
-                cartItemsIsArray: Array.isArray(cartItems),
-                total: total,
-                totalType: typeof total,
+              console.log("🔍 E-Invoice modal data validation (STRICT):", {
+                modalOpen: isOpen,
+                templatesLoaded: !templatesLoading,
+                connectionsLoaded: !connectionsLoading,
+                cartItemsCount: cartItems?.length || 0,
+                totalValue: total,
                 hasValidCartItems,
                 hasValidTotal,
                 shouldShowWarning: !hasValidCartItems || !hasValidTotal
               });
 
-              // Only show warning if data is genuinely missing
-              if (!hasValidCartItems || !hasValidTotal) {
+              // Only show warning if data is genuinely missing AND modal is fully loaded
+              if ((!hasValidCartItems || !hasValidTotal) && !templatesLoading && !connectionsLoading) {
                 return (
                   <div className="flex items-center justify-center py-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <span className="text-sm text-yellow-700">⚠️ Chưa có dữ liệu giỏ hàng. Vui lòng thử lại.</span>
+                    <span className="text-sm text-yellow-700">
+                      ⚠️ Chưa có dữ liệu giỏ hàng ({cartItems?.length || 0} sản phẩm, {total || 0} ₫). Vui lòng thử lại.
+                    </span>
                   </div>
                 );
               }
@@ -1593,50 +1603,13 @@ export function EInvoiceModal({
               <span className="font-medium">{t("einvoice.totalAmount") || "Tổng tiền hóa đơn"}</span>
               <span className="text-lg font-bold text-blue-600">
                 {(() => {
-                  console.log('💰 EInvoice Modal - IMMEDIATE Total display calculation:', {
-                    total,
-                    totalType: typeof total,
-                    cartItems: cartItems?.length,
-                    isOpen,
-                    timestamp: new Date().toISOString()
-                  });
-
-                  // Priority 1: Use prop total if available (most reliable for display)
-                  if (total && typeof total === 'number' && total > 0) {
-                    console.log('💰 EInvoice Modal - Using prop total (IMMEDIATE):', total);
+                  // Always use prop total first - this is the most reliable
+                  if (total !== null && total !== undefined && typeof total === 'number') {
+                    console.log('💰 EInvoice Modal - Using prop total:', total);
                     return Math.floor(total).toLocaleString("vi-VN");
                   }
-
-                  // Priority 2: Calculate from cartItems if prop total not available
-                  if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
-                    const displayTotal = cartItems.reduce((sum, item) => {
-                      const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                      const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-
-                      // Use afterTaxPrice if available for exact calculation
-                      if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
-                        const afterTaxPrice = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
-                        if (!isNaN(afterTaxPrice) && afterTaxPrice > 0) {
-                          const itemTotal = afterTaxPrice * quantity;
-                          console.log(`💰 Item ${item.name}: afterTaxPrice=${afterTaxPrice}, qty=${quantity}, total=${itemTotal}`);
-                          return sum + itemTotal;
-                        }
-                      }
-
-                      // Calculate with tax rate if afterTaxPrice not available
-                      const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
-                      const subtotal = price * quantity;
-                      const tax = (subtotal * taxRate) / 100;
-                      const itemTotal = subtotal + tax;
-                      console.log(`💰 Item ${item.name}: price=${price}, qty=${quantity}, taxRate=${taxRate}%, total=${itemTotal}`);
-                      return sum + itemTotal;
-                    }, 0);
-                    console.log('💰 EInvoice Modal - Calculated from cartItems (IMMEDIATE):', displayTotal);
-                    return Math.floor(displayTotal).toLocaleString("vi-VN");
-                  }
-
-                  // Priority 3: Show 0 if no data available
-                  console.log('💰 EInvoice Modal - No data available, showing 0 (IMMEDIATE)');
+                  
+                  console.log('💰 EInvoice Modal - No valid total prop, showing 0');
                   return "0";
                 })()}
                 {" "}₫
