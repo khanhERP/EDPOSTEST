@@ -415,7 +415,7 @@ export function DashboardOverview() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">
-                  Tổng doanh thu
+                  Tổng thu từ bán hàng
                 </p>
                 <p className="text-2xl font-bold text-blue-600">
                   {formatCurrency(stats.monthRevenue)}
