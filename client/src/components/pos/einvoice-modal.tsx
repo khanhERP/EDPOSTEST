@@ -433,7 +433,7 @@ export function EInvoiceModal({
         // Don't return early, continue to show receipt modal
       }
 
-      // Calculate subtotal and tax with proper type conversion
+      // Calculate subtotal and tax with proper type conversion using afterTaxPrice logic
       const calculatedSubtotal = cartItems.reduce((sum, item) => {
         const itemPrice =
           typeof item.price === "string" ? parseFloat(item.price) : item.price;
@@ -454,15 +454,29 @@ export function EInvoiceModal({
           typeof item.quantity === "string"
             ? parseInt(item.quantity)
             : item.quantity;
-        const itemTaxRate =
-          typeof item.taxRate === "string"
-            ? parseFloat(item.taxRate || "10")
-            : item.taxRate || 10;
-        const itemTax = (itemPrice * itemQuantity * itemTaxRate) / 100;
-        console.log(
-          `💰 Tax calculation: ${item.name} - Tax rate: ${itemTaxRate}%, Tax: ${itemTax}`,
-        );
-        return sum + itemTax;
+        
+        // Use afterTaxPrice if available for exact tax calculation
+        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+          const afterTax = typeof item.afterTaxPrice === 'string'
+            ? parseFloat(item.afterTaxPrice)
+            : item.afterTaxPrice;
+          const itemTax = (afterTax - itemPrice) * itemQuantity;
+          console.log(
+            `💰 Tax calculation (afterTaxPrice): ${item.name} - Base: ${itemPrice}, After tax: ${afterTax}, Tax per unit: ${afterTax - itemPrice}, Total tax: ${itemTax}`,
+          );
+          return sum + itemTax;
+        } else {
+          // Fallback to taxRate calculation
+          const itemTaxRate =
+            typeof item.taxRate === "string"
+              ? parseFloat(item.taxRate || "10")
+              : item.taxRate || 10;
+          const itemTax = (itemPrice * itemQuantity * itemTaxRate) / 100;
+          console.log(
+            `💰 Tax calculation (taxRate): ${item.name} - Tax rate: ${itemTaxRate}%, Tax: ${itemTax}`,
+          );
+          return sum + itemTax;
+        }
       }, 0);
 
       console.log(
@@ -936,10 +950,22 @@ export function EInvoiceModal({
         }
 
         const itemSubtotal = item.price * item.quantity;
-        const taxAmount = (itemSubtotal * (item.taxRate || 0)) / 100;
+        let taxAmount = 0;
+        
+        // Use afterTaxPrice if available for exact tax calculation
+        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+          const afterTax = typeof item.afterTaxPrice === 'string'
+            ? parseFloat(item.afterTaxPrice)
+            : item.afterTaxPrice;
+          taxAmount = (afterTax - item.price) * item.quantity;
+          console.log(`💰 Tax calculation (afterTaxPrice): ${item.name} - Base: ${item.price}, After tax: ${afterTax}, Tax per unit: ${afterTax - item.price}, Total tax: ${taxAmount}`);
+        } else {
+          // Fallback to taxRate calculation
+          taxAmount = (itemSubtotal * (item.taxRate || 0)) / 100;
+          console.log(`💰 Tax calculation (taxRate): ${item.name} - Tax rate: ${item.taxRate || 0}%, Tax: ${taxAmount}`);
+        }
+        
         const itemTotal = itemSubtotal + taxAmount;
-
-        console.log(`💰 Tax calculation: ${item.name} - Tax rate: ${item.taxRate || 0}%, Tax: ${taxAmount}`);
 
         cartSubtotal += itemSubtotal;
         cartTaxAmount += taxAmount;
@@ -1503,10 +1529,43 @@ export function EInvoiceModal({
           {/* Total Amount Display */}
           <div className="bg-gray-50 p-4 rounded-lg">
             <div className="flex justify-between items-center">
-              <span className="font-medium">{t("einvoice.totalAmount")}</span>
+              <span className="font-medium">{t("einvoice.totalAmount") || "Tổng tiền hóa đơn"}</span>
               <span className="text-lg font-bold text-blue-600">
-                {Math.floor(total).toLocaleString("vi-VN")}{" "}
-                ₫
+                {(() => {
+                  console.log('💰 EInvoice Modal - Total display calculation:', { 
+                    total, 
+                    totalType: typeof total,
+                    cartItems: cartItems?.length,
+                    cartTotal: cartItems?.reduce((sum, item) => {
+                      const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+                      const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+                      const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
+                      const subtotal = price * quantity;
+                      const tax = (subtotal * taxRate) / 100;
+                      return sum + subtotal + tax;
+                    }, 0) || 0
+                  });
+                  
+                  // Priority: Use total prop if valid, otherwise calculate from cartItems
+                  let displayTotal = 0;
+                  
+                  if (total && typeof total === 'number' && total > 0) {
+                    displayTotal = total;
+                  } else if (cartItems && cartItems.length > 0) {
+                    displayTotal = cartItems.reduce((sum, item) => {
+                      const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+                      const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
+                      const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
+                      const subtotal = price * quantity;
+                      const tax = (subtotal * taxRate) / 100;
+                      return sum + subtotal + tax;
+                    }, 0);
+                  }
+                  
+                  console.log('💰 EInvoice Modal - Final display total:', displayTotal);
+                  return Math.floor(displayTotal).toLocaleString("vi-VN");
+                })()}
+                {" "}₫
               </span>
             </div>
           </div>
