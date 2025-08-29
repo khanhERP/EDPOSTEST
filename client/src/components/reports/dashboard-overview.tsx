@@ -215,25 +215,28 @@ export function DashboardOverview() {
       endDate,
       filteredCompletedItems: filteredCompletedItems.length,
       itemsToAnalyze: itemsToAnalyze.length,
-      sampleItems: itemsToAnalyze.slice(0, 5).map((item: any) => ({
+      periodRevenue,
+      monthRevenue,
+      sampleItems: itemsToAnalyze.slice(0, 3).map((item: any) => ({
         id: item.id,
         type: item.type,
-        displayStatus: item.displayStatus,
-        date: item.date,
         total: item.total,
-        status: item.status || item.invoiceStatus
+        subtotal: item.subtotal,
+        tax: item.tax,
+        discount: item.discount,
+        calculatedRevenue: (Number(item.subtotal || 0) - Number(item.discount || 0))
       })),
     });
 
-    // Period revenue: total amount minus discount minus actual tax from database
+    // Period revenue: Use exact same calculation as Order Details
+    // Revenue = Subtotal (base price without tax)
     const periodRevenue = itemsToAnalyze.reduce(
       (total: number, item: any) => {
-        const itemTotal = Number(item.total || 0);
+        // Use subtotal (pre-tax amount) as revenue, same as Order Details display
+        const itemSubtotal = Number(item.subtotal || 0);
         const itemDiscount = Number(item.discount || 0);
-        // Use actual tax from database, default to 0 if not available
-        const actualTax = Number(item.tax || 0);
-        // Revenue = Total Amount - Discount - Actual Tax
-        const itemRevenue = itemTotal - itemDiscount - actualTax;
+        // Revenue = Subtotal - Discount (excluding tax from revenue calculation)
+        const itemRevenue = itemSubtotal - itemDiscount;
         return total + itemRevenue;
       },
       0,
@@ -272,8 +275,15 @@ export function DashboardOverview() {
       (table: TableType) => table.status === "occupied",
     ) : [];
 
-    // Month revenue: same as period revenue calculation (Total Amount - Discount)
-    const monthRevenue = periodRevenue;
+    // Month revenue: Use subtotal-based calculation for consistency with Order Details
+    const monthRevenue = itemsToAnalyze.reduce(
+      (total: number, item: any) => {
+        const itemSubtotal = Number(item.subtotal || 0);
+        const itemDiscount = Number(item.discount || 0);
+        return total + (itemSubtotal - itemDiscount);
+      },
+      0,
+    );
 
     // Average order value
     const averageOrderValue =
