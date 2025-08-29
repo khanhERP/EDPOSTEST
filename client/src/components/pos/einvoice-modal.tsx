@@ -710,30 +710,36 @@ export function EInvoiceModal({
 
       console.log("✅ Draft invoice saved, preparing result data");
 
-      // Close modal immediately to prevent reopening
+      // Prepare the result data but don't close modal yet
+      const resultData = {
+        ...currentFormData, // Use currentFormData which might be updated with auto-selected template
+        cartItems: cartItems,
+        total: finalTotal,
+        paymentMethod: selectedPaymentMethod,
+        originalPaymentMethod: selectedPaymentMethod,
+        source: source || "pos",
+        orderId: orderId,
+        savedInvoice: invoiceResult?.invoice || null,
+        receipt: receiptData,
+        showReceiptModal: true,
+        publishLater: true, // Important flag to distinguish from immediate publish
+      };
+
+      // Reset publishing state
       setIsPublishingLater(false);
-      onClose();
 
-      // Then call onConfirm with publishLater flag
+      // Call onConfirm directly without closing modal to prevent reopening
+      onConfirm(resultData);
+
+      // Show success message
+      toast({
+        title: "Thành công",
+        description: "Hóa đơn đã được lưu để phát hành sau và hiển thị để in.",
+      });
+
+      // Close modal AFTER onConfirm is called
       setTimeout(() => {
-        onConfirm({
-          ...currentFormData, // Use currentFormData which might be updated with auto-selected template
-          cartItems: cartItems,
-          total: finalTotal,
-          paymentMethod: selectedPaymentMethod,
-          originalPaymentMethod: selectedPaymentMethod,
-          source: source || "pos",
-          orderId: orderId,
-          savedInvoice: invoiceResult?.invoice || null,
-          receipt: receiptData,
-          showReceiptModal: true,
-          publishLater: true, // Important flag to distinguish from immediate publish
-        });
-
-        toast({
-          title: "Thành công",
-          description: "Hóa đơn đã được lưu để phát hành sau và hiển thị để in.",
-        });
+        onClose();
       }, 100);
 
     } catch (error) {
