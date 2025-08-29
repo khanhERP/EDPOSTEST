@@ -47,7 +47,6 @@ export function ShoppingCart({
 }: ShoppingCartProps) {
   const [paymentMethod, setPaymentMethod] = useState<string>("bankTransfer");
   const [amountReceived, setAmountReceived] = useState<string>("");
-  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [selectedCardMethod, setSelectedCardMethod] = useState<string>("");
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
@@ -59,6 +58,7 @@ export function ShoppingCart({
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
   const [showInvoiceManagementModal, setShowInvoiceManagementModal] = useState(false);
+  const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
   const tax = cart.reduce((sum, item) => {
