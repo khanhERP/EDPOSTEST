@@ -1733,6 +1733,7 @@ export interface TablesTranslations {
   tableUpdateSuccess: string;
   tableDeleteSuccess: string;
   deleteConfirm: string;
+  deleteOrder: string;
   totalTables: string;
   availableTables: string;
   occupiedTables: string;
