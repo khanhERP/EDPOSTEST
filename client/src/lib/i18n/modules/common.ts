@@ -279,6 +279,13 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       chef: "요리사",
       cleaner: "청소원",
     },
+
+    // Time periods
+    days30: "30일",
+    days60: "60일",
+    days90: "90일",
+    days180: "180일",
+    days365: "365일",
   },
   en: {
     loading: "Loading...",
@@ -495,6 +502,13 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       chef: "Chef",
       cleaner: "Cleaner",
     },
+
+    // Time periods
+    days30: "30 days",
+    days60: "60 days",
+    days90: "90 days",
+    days180: "180 days",
+    days365: "365 days",
   },
   vi: {
     loading: "Đang tải...",
