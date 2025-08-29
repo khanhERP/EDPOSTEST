@@ -710,6 +710,33 @@ export function ShoppingCart({
           }}
           onSelectMethod={(method, data) => {
             console.log("✅ BƯỚC 2→3: Payment method selected:", method);
+            console.log("💰 BƯỚC 2→3: Current cart data:", {
+              cartLength: cart.length,
+              total: total,
+              subtotal: subtotal,
+              tax: tax
+            });
+            
+            // Validate cart data before proceeding
+            if (!cart || cart.length === 0) {
+              console.error("❌ BƯỚC 2→3: No cart data available");
+              toast({
+                title: "Lỗi",
+                description: "Không có dữ liệu giỏ hàng để tạo hóa đơn",
+                variant: "destructive"
+              });
+              return;
+            }
+
+            if (total <= 0) {
+              console.error("❌ BƯỚC 2→3: Invalid total amount");
+              toast({
+                title: "Lỗi", 
+                description: "Tổng tiền không hợp lệ",
+                variant: "destructive"
+              });
+              return;
+            }
             
             // Đóng payment method modal
             setShowPaymentMethodModal(false);
@@ -717,19 +744,26 @@ export function ShoppingCart({
             // Lưu phương thức thanh toán đã chọn
             setSelectedPaymentMethod(method);
             
-            // BƯỚC 3: Hiển thị E-Invoice modal
+            // BƯỚC 3: Hiển thị E-Invoice modal với dữ liệu đã validate
+            console.log("✅ BƯỚC 2→3: Opening E-Invoice modal with validated data");
             setShowEInvoiceModal(true);
           }}
-          total={total}
-          cartItems={cart.map((item) => ({
-            id: item.id,
-            name: item.name,
-            price: parseFloat(item.price),
-            quantity: item.quantity,
-            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-            taxRate: parseFloat(item.taxRate || "0"),
-            afterTaxPrice: item.afterTaxPrice,
-          }))}
+          total={(() => {
+            console.log("💰 Shopping Cart: Passing total to PaymentMethod:", total);
+            return total;
+          })()}
+          cartItems={(() => {
+            console.log("📦 Shopping Cart: Mapping cart for PaymentMethod:", cart.length);
+            return cart.map((item) => ({
+              id: item.id,
+              name: item.name,
+              price: parseFloat(item.price),
+              quantity: item.quantity,
+              sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+              taxRate: parseFloat(item.taxRate || "0"),
+              afterTaxPrice: item.afterTaxPrice,
+            }));
+          })()}
         />
       )}
 
@@ -743,19 +777,36 @@ export function ShoppingCart({
             setSelectedPaymentMethod("");
           }}
           onConfirm={handleEInvoiceConfirm}
-          total={total}
+          total={(() => {
+            console.log("💰 Shopping Cart: Passing total to E-Invoice:", total);
+            console.log("💰 Shopping Cart: Cart data:", cart);
+            console.log("💰 Shopping Cart: Subtotal:", subtotal);
+            console.log("💰 Shopping Cart: Tax:", tax);
+            return total; // Ensure exact total is passed
+          })()}
           selectedPaymentMethod={selectedPaymentMethod}
-          cartItems={cart.map((item) => {
-            return {
-              id: item.id,
-              name: item.name,
-              price: parseFloat(item.price.toString()),
-              quantity: item.quantity,
-              sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-              taxRate: parseFloat(item.taxRate || "0"),
-              afterTaxPrice: item.afterTaxPrice,
-            };
-          })}
+          cartItems={(() => {
+            console.log("📦 Shopping Cart: Mapping cart items for E-Invoice:", cart.length);
+            return cart.map((item) => {
+              console.log("📦 Cart item mapping:", {
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+                taxRate: item.taxRate,
+                afterTaxPrice: item.afterTaxPrice
+              });
+              return {
+                id: item.id,
+                name: item.name,
+                price: parseFloat(item.price.toString()),
+                quantity: item.quantity,
+                sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+                taxRate: parseFloat(item.taxRate || "0"),
+                afterTaxPrice: item.afterTaxPrice,
+              };
+            });
+          })()}
         />
       )}
 
