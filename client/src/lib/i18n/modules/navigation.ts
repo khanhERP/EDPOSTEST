@@ -24,6 +24,7 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     purchaseReport: '구매 보고서',
     warehouseReport: '창고 보고서',
     orderReport: '구매 주문 보고서',
+    customerDisplay: '고객 디스플레이',
   },
   en: {
     pos: 'POS',
@@ -48,6 +49,7 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     purchaseReport: 'Purchase Report',
     warehouseReport: 'Warehouse Report',
     orderReport: 'Purchase Order Report',
+    customerDisplay: 'Customer Display',
   },
   vi: {
     pos: 'Bán hàng',
@@ -72,5 +74,6 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     purchaseReport: 'Báo cáo mua hàng',
     warehouseReport: 'Báo cáo kho',
     orderReport: 'Báo cáo mua hàng',
+    customerDisplay: 'Màn hình khách hàng',
   },
 };

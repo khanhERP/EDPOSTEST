@@ -488,7 +488,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                     onClick={() => setPosMenuOpen(false)}
                   >
                     <Users className="w-4 h-4 mr-3" />
-                    Màn hình khách hàng
+                    {t("nav.customerDisplay")}
                   </a>
 
                   <div className="border-t border-gray-200 my-2"></div>
