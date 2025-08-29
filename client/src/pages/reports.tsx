@@ -50,6 +50,7 @@ export default function ReportsPage() {
             <div className="flex gap-4">
               <Link href="/">
                 <Button variant="outline">
+                  <ShoppingCart className="w-4 h-4 mr-2" />
                   {t('reports.backToTables')}
                 </Button>
               </Link>
