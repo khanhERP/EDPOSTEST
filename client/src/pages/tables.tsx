@@ -33,7 +33,7 @@ export default function TablesPage() {
             <div className="flex gap-4">
               <Link href="/">
                 <Button variant="outline">
-                  {t('tables.backToPOS')}
+                  Quay lại Bán hàng
                 </Button>
               </Link>
             </div>
