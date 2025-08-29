@@ -119,6 +119,12 @@ export function ReceiptModal({
     return null;
   }
 
+  // Additional safety check - if receipt is null and not in preview mode, return null
+  if (!receipt && !isPreview) {
+    console.log("❌ Receipt Modal: Receipt is null, cannot render");
+    return null;
+  }
+
   // Debug logging for receipt modal state
   console.log("🔍 Receipt Modal state:", {
     isOpen,

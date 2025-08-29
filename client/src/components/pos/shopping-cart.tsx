@@ -412,9 +412,6 @@ export function ShoppingCart({
       console.log('📄 Setting receipt modal state');
       setSelectedReceipt(receiptToShow);
       setShowReceiptModal(true);
-      console.log('✅ Receipt modal should now be visible');
-    }, 100);etSelectedReceipt(receiptToShow);
-      setShowReceiptModal(true);
     }, 50);
 
     // Clear cart after receipt modal is shown
