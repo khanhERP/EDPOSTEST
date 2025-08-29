@@ -2084,6 +2084,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.get('/api/menu-analysis', async (req, res) => {
     try {
       const { startDate, endDate, categoryId } = req.query;
+      const tenantDb = await getTenantDatabase(req);
 
       console.log('Menu Analysis API called with params:', {
         startDate,
@@ -2093,78 +2094,98 @@ export async function registerRoutes(app: Express): Promise < Server > {
         productType: req.query.productType
       });
 
-      // Date filtering
-      let dateFilter = '';
-      const params: any[] = [];
-
-      if (startDate && endDate) {
-        dateFilter = `AND DATE(t.createdAt) BETWEEN ? AND ?`;
-        params.push(startDate, endDate);
-      } else if (startDate) {
-        dateFilter = `AND DATE(t.createdAt) >= ?`;
-        params.push(startDate);
-      } else if (endDate) {
-        dateFilter = `AND DATE(t.createdAt) <= ?`;
-        params.push(endDate);
-      }
-
-      // Category filtering
-      let categoryFilter = '';
-      if (categoryId && categoryId !== 'all') {
-        categoryFilter = `AND p.categoryId = ?`;
-        params.push(categoryId);
-      }
-
       console.log('Executing transaction and order queries...');
 
-      // Query transactions với tính toán doanh thu đúng: tổng tiền - giảm giá (không cộng thuế)
-      const transactionQuery = `
-        SELECT 
-          ti.productId,
-          p.name as productName,
-          p.categoryId,
-          c.name as categoryName,
-          SUM(ti.quantity) as totalQuantity,
-          SUM(CAST(ti.unitPrice AS DECIMAL(10,2)) * ti.quantity) as totalRevenue
-        FROM transaction_items ti
-        JOIN transactions t ON ti.transactionId = t.id
-        JOIN products p ON ti.productId = p.id
-        LEFT JOIN categories c ON p.categoryId = c.id
-        WHERE 1=1 ${dateFilter} ${categoryFilter}
-        GROUP BY ti.productId, p.name, p.categoryId, c.name
-      `;
+      // Build date conditions
+      const dateConditions = [];
+      if (startDate && endDate) {
+        const startDateTime = new Date(startDate as string);
+        const endDateTime = new Date(endDate as string);
+        endDateTime.setHours(23, 59, 59, 999);
+        dateConditions.push(
+          gte(transactionsTable.createdAt, startDateTime),
+          lte(transactionsTable.createdAt, endDateTime)
+        );
+      } else if (startDate) {
+        const startDateTime = new Date(startDate as string);
+        dateConditions.push(gte(transactionsTable.createdAt, startDateTime));
+      } else if (endDate) {
+        const endDateTime = new Date(endDate as string);
+        endDateTime.setHours(23, 59, 59, 999);
+        dateConditions.push(lte(transactionsTable.createdAt, endDateTime));
+      }
 
-      // Query orders với tính toán doanh thu đúng: tổng tiền - giảm giá (không cộng thuế)
-      const orderQuery = `
-        SELECT 
-          oi.productId,
-          p.name as productName,
-          p.categoryId,
-          c.name as categoryName,
-          SUM(oi.quantity) as totalQuantity,
-          SUM(CAST(oi.unitPrice AS DECIMAL(10,2)) * oi.quantity) as totalRevenue
-        FROM order_items oi
-        JOIN orders o ON oi.orderId = o.id
-        JOIN products p ON oi.productId = p.id
-        LEFT JOIN categories c ON p.categoryId = c.id
-        WHERE o.status != 'cancelled' ${dateFilter} ${categoryFilter}
-        GROUP BY oi.productId, p.name, p.categoryId, c.name
-      `;
+      // Build category conditions
+      const categoryConditions = [];
+      if (categoryId && categoryId !== 'all') {
+        categoryConditions.push(eq(products.categoryId, parseInt(categoryId as string)));
+      }
 
-      const [transactionResults, orderResults] = await Promise.all([
-        new Promise < any[] > ((resolve, reject) => {
-          db.all(transactionQuery, params, (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows || []);
-          });
-        }),
-        new Promise < any[] > ((resolve, reject) => {
-          db.all(orderQuery, params, (err, rows) => {
-            if (err) reject(err);
-            else resolve(rows || []);
-          });
+      // Query transaction items with proper Drizzle ORM
+      const transactionResults = await db
+        .select({
+          productId: transactionItemsTable.productId,
+          productName: products.name,
+          categoryId: products.categoryId,
+          categoryName: categories.name,
+          totalQuantity: sql<number>`CAST(SUM(${transactionItemsTable.quantity}) AS INTEGER)`,
+          totalRevenue: sql<number>`CAST(SUM(CAST(${transactionItemsTable.unitPrice} AS DECIMAL(10,2)) * ${transactionItemsTable.quantity}) AS DECIMAL(10,2))`
         })
-      ]);
+        .from(transactionItemsTable)
+        .innerJoin(transactionsTable, eq(transactionItemsTable.transactionId, transactionsTable.id))
+        .innerJoin(products, eq(transactionItemsTable.productId, products.id))
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .where(and(...dateConditions, ...categoryConditions))
+        .groupBy(
+          transactionItemsTable.productId,
+          products.name,
+          products.categoryId,
+          categories.name
+        );
+
+      // Query order items with proper Drizzle ORM
+      const orderDateConditions = [];
+      if (startDate && endDate) {
+        const startDateTime = new Date(startDate as string);
+        const endDateTime = new Date(endDate as string);
+        endDateTime.setHours(23, 59, 59, 999);
+        orderDateConditions.push(
+          gte(orders.orderedAt, startDateTime),
+          lte(orders.orderedAt, endDateTime)
+        );
+      } else if (startDate) {
+        const startDateTime = new Date(startDate as string);
+        orderDateConditions.push(gte(orders.orderedAt, startDateTime));
+      } else if (endDate) {
+        const endDateTime = new Date(endDate as string);
+        endDateTime.setHours(23, 59, 59, 999);
+        orderDateConditions.push(lte(orders.orderedAt, endDateTime));
+      }
+
+      const orderResults = await db
+        .select({
+          productId: orderItems.productId,
+          productName: products.name,
+          categoryId: products.categoryId,
+          categoryName: categories.name,
+          totalQuantity: sql<number>`CAST(SUM(${orderItems.quantity}) AS INTEGER)`,
+          totalRevenue: sql<number>`CAST(SUM(CAST(${orderItems.unitPrice} AS DECIMAL(10,2)) * ${orderItems.quantity}) AS DECIMAL(10,2))`
+        })
+        .from(orderItems)
+        .innerJoin(orders, eq(orderItems.orderId, orders.id))
+        .innerJoin(products, eq(orderItems.productId, products.id))
+        .leftJoin(categories, eq(products.categoryId, categories.id))
+        .where(and(
+          ne(orders.status, 'cancelled'),
+          ...orderDateConditions,
+          ...categoryConditions
+        ))
+        .groupBy(
+          orderItems.productId,
+          products.name,
+          products.categoryId,
+          categories.name
+        );
 
       console.log('Transaction stats:', transactionResults.length, 'items');
       console.log('Order stats:', orderResults.length, 'items');
