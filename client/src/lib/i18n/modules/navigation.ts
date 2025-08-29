@@ -1,4 +1,3 @@
-
 import type { NavigationTranslations } from '../types';
 
 export const navigationTranslations: { [key: string]: NavigationTranslations } = {
@@ -32,7 +31,7 @@ export const navigationTranslations: { [key: string]: NavigationTranslations } =
     salesOrders: "Sales Orders",
     inventory: "Inventory",
     reports: 'Reports',
-    employees: 'Employees', 
+    employees: 'Employees',
     attendance: 'Attendance',
     suppliers: 'Suppliers',
     salesReports: 'Sales Reports',
