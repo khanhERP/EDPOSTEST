@@ -49,7 +49,6 @@ export function ShoppingCart({
   const [amountReceived, setAmountReceived] = useState<string>("");
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [selectedCardMethod, setSelectedCardMethod] = useState<string>("");
-  const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const { t } = useTranslation();
 
   // State for Receipt Modal and E-Invoice Modal integration
@@ -58,6 +57,9 @@ export function ShoppingCart({
   const [showEInvoiceModal, setShowEInvoiceModal] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
   const [showInvoiceManagementModal, setShowInvoiceManagementModal] = useState(false);
+  
+  // Additional states for new ordered flow
+  const [previewReceipt, setPreviewReceipt] = useState<any>(null);
   const [showPaymentMethodModal, setShowPaymentMethodModal] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + parseFloat(item.total), 0);
