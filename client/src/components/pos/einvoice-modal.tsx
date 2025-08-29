@@ -519,95 +519,8 @@ export function EInvoiceModal({
       const invoiceResult = await invoiceResponse.json();
       console.log("Hóa đơn đã được lưu vào bảng invoices và invoice_items:", invoiceResult);
 
-      // Create transaction to deduct inventory for "Phát hành sau"
-      try {
-        const transactionData = {
-          transaction: {
-            transactionId: `EINV-DRAFT-${Date.now()}`,
-            subtotal: calculatedSubtotal.toFixed(2),
-            tax: calculatedTax.toFixed(2),
-            total: total.toFixed(2),
-            paymentMethod: "einvoice",
-            amountReceived: total.toFixed(2),
-            change: "0.00",
-            cashierName: "E-Invoice System",
-            notes: `E-Invoice Draft - Trừ tồn kho: ${invoiceResult.invoice.tradeNumber}`,
-            invoiceId: invoiceResult.invoice.id,
-            createdAt: new Date().toISOString()
-          },
-          items: cartItems.map((item) => {
-            const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-            const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-            const itemTotal = itemPrice * itemQuantity;
-
-            console.log(`📦 Preparing transaction item: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Total: ${itemTotal}`);
-
-            return {
-              productId: item.id,
-              quantity: item.quantity,
-              price: itemPrice.toFixed(2),
-              total: itemTotal.toFixed(2),
-              productName: item.name
-            };
-          })
-        };
-
-        console.log("💾 Creating transaction to deduct inventory for 'Phát hành sau':", JSON.stringify(transactionData, null, 2));
-
-        const transactionResponse = await fetch("/api/transactions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(transactionData),
-        });
-
-        if (transactionResponse.ok) {
-          const transactionResult = await transactionResponse.json();
-          console.log("✅ Transaction created successfully - inventory deducted:", transactionResult);
-
-          // Show success message for inventory deduction
-          toast({
-            title: "Thành công",
-            description: `Đã trừ tồn kho tự động cho ${cartItems.length} sản phẩm`,
-          });
-        } else {
-          const transactionError = await transactionResponse.text();
-          console.error("❌ Error creating transaction for inventory:", transactionError);
-
-          // Parse error message if possible
-          let errorMessage = "Không thể trừ tồn kho tự động";
-          try {
-            const errorData = JSON.parse(transactionError);
-            if (errorData.message) {
-              errorMessage = errorData.message;
-            } else if (errorData.details) {
-              errorMessage = errorData.details;
-            }
-          } catch (parseError) {
-            // Use default error message
-          }
-
-          // Show detailed error message
-          toast({
-            title: "Cảnh báo - Lỗi trừ tồn kho",
-            description: errorMessage,
-            variant: "destructive",
-          });
-        }
-      } catch (transactionError) {
-        console.error("❌ Error creating transaction for inventory:", transactionError);
-
-        const errorMessage = transactionError instanceof Error
-          ? transactionError.message
-          : "Có lỗi không xác định khi trừ tồn kho";
-
-        toast({
-          title: "Lỗi hệ thống - Trừ tồn kho",
-          description: errorMessage,
-          variant: "destructive",
-        });
-      }
+      // Note: Inventory will be deducted later when the invoice is actually published
+      console.log("📝 Invoice saved for later publishing - inventory will be deducted when published");
 
       // Create receipt data thực sự cho receipt modal
       const receiptData = {
@@ -940,76 +853,8 @@ export function EInvoiceModal({
         const publishResult = await publishResponse.json();
         console.log("✅ E-invoice published successfully:", publishResult);
 
-        // Create transaction to deduct inventory for immediate publishing
-        try {
-          const transactionData = {
-            transaction: {
-              transactionId: `EINV-PUB-${Date.now()}`,
-              subtotal: cartSubtotal.toFixed(2),
-              tax: cartTaxAmount.toFixed(2),
-              total: cartTotal.toFixed(2),
-              paymentMethod: "einvoice",
-              amountReceived: cartTotal.toFixed(2),
-              change: "0.00",
-              cashierName: "E-Invoice System",
-              notes: `E-Invoice Published - Trừ tồn kho: ${publishResult.data?.invoiceNo || 'Published'}`,
-              invoiceNumber: publishResult.data?.invoiceNo,
-              createdAt: new Date().toISOString()
-            },
-            items: cartItems.map((item) => {
-              const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-              const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-              const itemTotal = itemPrice * itemQuantity;
-
-              console.log(`📦 Preparing published transaction item: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Total: ${itemTotal}`);
-
-              return {
-                productId: item.id,
-                quantity: item.quantity,
-                price: itemPrice.toFixed(2),
-                total: itemTotal.toFixed(2),
-                productName: item.name
-              };
-            })
-          };
-
-          console.log("🔄 Creating transaction to deduct inventory for published invoice:", JSON.stringify(transactionData, null, 2));
-
-          const transactionResponse = await fetch("/api/transactions", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(transactionData),
-          });
-
-          if (transactionResponse.ok) {
-            const transactionResult = await transactionResponse.json();
-            console.log("✅ Transaction created successfully for published invoice:", transactionResult);
-
-            toast({
-              title: "Thành công",
-              description: `Đã trừ tồn kho cho ${cartItems.length} sản phẩm khi phát hành hóa đơn`,
-            });
-          } else {
-            const transactionError = await transactionResponse.text();
-            console.error("❌ Failed to create transaction for published invoice:", transactionError);
-
-            toast({
-              title: "Cảnh báo",
-              description: "Hóa đơn đã phát hành nhưng không thể trừ tồn kho. Vui lòng kiểm tra lại.",
-              variant: "destructive",
-            });
-          }
-        } catch (transactionError) {
-          console.error("❌ Error creating transaction for published invoice:", transactionError);
-
-          toast({
-            title: "Cảnh báo",
-            description: "Hóa đơn đã phát hành nhưng có lỗi khi trừ tồn kho.",
-            variant: "destructive",
-          });
-        }
+        // Note: Transaction for inventory deduction will be handled by the main checkout flow
+        console.log("✅ E-invoice published successfully - inventory will be handled by main transaction flow");
 
         console.log(
           "✅ E-invoice published successfully, now saving invoice and order to database",
