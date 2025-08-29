@@ -47,7 +47,7 @@ export function RightSidebar() {
   const baseMenuItems: MenuItem[] = [
     {
       icon: Utensils,
-      label: t('nav.tables'),
+      label: "Bán hàng tại bàn",
       href: "/tables",
     },
     {

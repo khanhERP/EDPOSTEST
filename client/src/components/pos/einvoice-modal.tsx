@@ -611,15 +611,23 @@ export function EInvoiceModal({
           items: cartItems.map((item) => {
             const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
             const itemQuantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-            const itemTotal = itemPrice * itemQuantity;
-
-            console.log(`📦 Preparing transaction item: ${item.name} - Price: ${itemPrice}, Qty: ${itemQuantity}, Total: ${itemTotal}`);
+            
+            // Use afterTaxPrice for total if available, otherwise calculate with base price + tax
+            let itemTotalForTransaction;
+            if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
+              const afterTaxPrice = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
+              itemTotalForTransaction = afterTaxPrice * itemQuantity;
+              console.log(`📦 Transaction item (afterTaxPrice): ${item.name} - afterTax: ${afterTaxPrice}, qty: ${itemQuantity}, total: ${itemTotalForTransaction}`);
+            } else {
+              itemTotalForTransaction = itemPrice * itemQuantity;
+              console.log(`📦 Transaction item (basePrice): ${item.name} - price: ${itemPrice}, qty: ${itemQuantity}, total: ${itemTotalForTransaction}`);
+            }
 
             return {
               productId: item.id,
               quantity: itemQuantity,
               price: itemPrice.toFixed(2),
-              total: itemTotal.toFixed(2),
+              total: itemTotalForTransaction.toFixed(2),
               productName: item.name
             };
           })
@@ -664,11 +672,13 @@ export function EInvoiceModal({
           if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
             const afterTaxPrice = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
             itemTotalWithTax = afterTaxPrice * itemQuantity;
+            console.log(`🧾 Receipt item calculation (afterTaxPrice): ${item.name} - afterTax: ${afterTaxPrice}, qty: ${itemQuantity}, total: ${itemTotalWithTax}`);
           } else {
             const itemTaxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "0") : item.taxRate || 0;
             const itemSubtotal = itemPrice * itemQuantity;
             const itemTax = (itemSubtotal * itemTaxRate) / 100;
             itemTotalWithTax = itemSubtotal + itemTax;
+            console.log(`🧾 Receipt item calculation (taxRate): ${item.name} - base: ${itemPrice}, qty: ${itemQuantity}, tax: ${itemTax}, total: ${itemTotalWithTax}`);
           }
 
           return {

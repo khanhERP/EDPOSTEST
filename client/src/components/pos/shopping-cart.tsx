@@ -826,7 +826,7 @@ export function ShoppingCart({
           total={total}
           selectedPaymentMethod={selectedPaymentMethod}
           cartItems={cart.map((item) => {
-            console.log("🔄 Mapping cart item for E-Invoice:", item.name, "Price:", item.price, "Qty:", item.quantity);
+            console.log("🔄 Mapping cart item for E-Invoice:", item.name, "Price:", item.price, "Qty:", item.quantity, "AfterTaxPrice:", item.afterTaxPrice);
 
             return {
               id: item.id,
@@ -835,7 +835,7 @@ export function ShoppingCart({
               quantity: item.quantity,
               sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
               taxRate: parseFloat(item.taxRate || "0"),
-              afterTaxPrice: item.afterTaxPrice,
+              afterTaxPrice: item.afterTaxPrice, // Ensure afterTaxPrice is passed correctly
             };
           })}
         />
