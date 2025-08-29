@@ -155,7 +155,9 @@ export function ProductManagerModal({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/products/active"] });
+      setShowAddForm(false);
       setEditingProduct(null);
+      resetForm();
       toast({
         title: "Success",
         description: "Product updated successfully",
