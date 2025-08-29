@@ -1366,27 +1366,42 @@ export function EInvoiceModal({
           )}
 
           {/* Data ready indicator */}
-          {isOpen && !templatesLoading && !connectionsLoading &&
-           cartItems && Array.isArray(cartItems) && cartItems.length > 0 && total > 0 && (
-            <div className="flex items-center justify-center py-2 bg-green-50 border border-green-200 rounded-lg">
-              <span className="text-sm text-green-700">✅ Dữ liệu đã sẵn sàng ({cartItems.length} sản phẩm, {Math.floor(total).toLocaleString("vi-VN")} ₫)</span>
-            </div>
+          {isOpen && !templatesLoading && !connectionsLoading && (
+            (() => {
+              const hasValidCartItems = cartItems && Array.isArray(cartItems) && cartItems.length > 0;
+              const hasValidTotal = total !== null && total !== undefined && typeof total === 'number' && total > 0;
+
+              if (hasValidCartItems && hasValidTotal) {
+                return (
+                  <div className="flex items-center justify-center py-2 bg-green-50 border border-green-200 rounded-lg">
+                    <span className="text-sm text-green-700">✅ Dữ liệu đã sẵn sàng ({cartItems.length} sản phẩm, {Math.floor(total).toLocaleString("vi-VN")} ₫)</span>
+                  </div>
+                );
+              }
+              return null;
+            })()
           )}
 
           {/* Data availability warning */}
           {isOpen && !templatesLoading && !connectionsLoading && (
             (() => {
+              // More robust data validation
               const hasValidCartItems = cartItems && Array.isArray(cartItems) && cartItems.length > 0;
-              const hasValidTotal = total && typeof total === 'number' && total > 0;
+              const hasValidTotal = total !== null && total !== undefined && typeof total === 'number' && total > 0;
 
-              console.log("🔍 Data validation check:", {
+              console.log("🔍 E-Invoice modal data validation:", {
+                cartItems: cartItems,
+                cartItemsLength: cartItems?.length || 0,
+                cartItemsType: typeof cartItems,
+                cartItemsIsArray: Array.isArray(cartItems),
+                total: total,
+                totalType: typeof total,
                 hasValidCartItems,
                 hasValidTotal,
-                cartItemsLength: cartItems?.length || 0,
-                total: total,
                 shouldShowWarning: !hasValidCartItems || !hasValidTotal
               });
 
+              // Only show warning if data is genuinely missing
               if (!hasValidCartItems || !hasValidTotal) {
                 return (
                   <div className="flex items-center justify-center py-4 bg-yellow-50 border border-yellow-200 rounded-lg">
