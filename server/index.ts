@@ -128,19 +128,19 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
-  
+  const PORT = process.env.PORT || 5001;
+
   // Handle server errors first before trying to listen
   server.on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
-      console.log(`⚠️ Port ${port} is busy, trying port ${port + 1}`);
+      console.log(`⚠️ Port ${PORT} is busy, trying port ${PORT + 1}`);
       setTimeout(() => {
         server.listen({
-          port: port + 1,
+          port: PORT + 1,
           host: "0.0.0.0",
           reusePort: false,
         }, () => {
-          log(`🚀 Server running on port ${port + 1}`);
+          log(`🚀 Server running on port ${PORT + 1}`);
           import('./websocket-server').then((wsModule) => {
             wsModule.initializeWebSocketServer(server);
             log('WebSocket server initialized on same port as HTTP server');
@@ -155,11 +155,11 @@ app.use((req, res, next) => {
   // Try to start server on primary port
   try {
     server.listen({
-      port,
+      port: PORT,
       host: "0.0.0.0",
       reusePort: false,
     }, () => {
-      log(`🚀 Server running on port ${port}`);
+      log(`🚀 Server running on port ${PORT}`);
 
       // Initialize WebSocket server after HTTP server is running
       import('./websocket-server').then((wsModule) => {

@@ -76,19 +76,21 @@ export function DashboardOverview() {
     queryKey: ["/api/invoices"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", `/api/invoices`);
+        const response = await fetch("/api/invoices");
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log("Dashboard - Invoices loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Error fetching invoices:', error);
+        console.error('Dashboard - Error fetching invoices:', error);
         return [];
       }
     },
     retry: 3,
     retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   // Query orders - same as sales-orders page
@@ -96,19 +98,21 @@ export function DashboardOverview() {
     queryKey: ["/api/orders"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("GET", `/api/orders`);
+        const response = await fetch("/api/orders");
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
+        console.log("Dashboard - Orders loaded:", data?.length || 0);
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Error fetching orders:', error);
+        console.error('Dashboard - Error fetching orders:', error);
         return [];
       }
     },
     retry: 3,
     retryDelay: 1000,
+    staleTime: 5 * 60 * 1000,
   });
 
   const { data: tables } = useQuery({
