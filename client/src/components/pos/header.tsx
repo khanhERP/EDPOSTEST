@@ -501,7 +501,7 @@ export function POSHeader({ onLogout }: POSHeaderProps) {
                     }}
                   >
                     <LogOut className="w-4 h-4 mr-3" />
-                    Đăng xuất
+                    {t("nav.logout")}
                   </button>
                 </div>
               )}

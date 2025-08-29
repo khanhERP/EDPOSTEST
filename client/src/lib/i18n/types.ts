@@ -334,6 +334,7 @@ export interface NavigationTranslations {
   orderReport: string;
   customerDisplay: string;
   tablesSales: string;
+  logout: string;
 }
 
 // Reports translations interface
