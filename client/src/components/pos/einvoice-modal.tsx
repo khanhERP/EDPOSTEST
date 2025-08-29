@@ -413,9 +413,6 @@ export function EInvoiceModal({
 
   const handlePublishLater = async () => {
     console.log("🟡 handlePublishLater called - CHỈ LƯU DRAFT, KHÔNG PHÁT HÀNH");
-    console.log("🟡 Form data:", formData);
-    console.log("🟡 Cart items:", cartItems);
-    console.log("🟡 Total:", total);
 
     // Validate cart items first
     if (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0) {
@@ -505,7 +502,7 @@ export function EInvoiceModal({
       // Map payment method
       const paymentMethodCode = getPaymentMethodCode(selectedPaymentMethod);
 
-      // Prepare invoice data for draft save
+      // Save draft invoice to database only (no external API call)
       const invoicePayload = {
         invoiceNumber: null, // No invoice number yet
         templateNumber: selectedTemplate.templateNumber || null,
@@ -657,8 +654,9 @@ export function EInvoiceModal({
         }
       };
 
-      // Prepare complete data for onConfirm
-      const completeInvoiceData = {
+      // Close modal and call onConfirm with publishLater flag
+      onClose();
+      onConfirm({
         ...currentFormData,
         cartItems: cartItems,
         total: finalTotal,
@@ -669,23 +667,12 @@ export function EInvoiceModal({
         savedInvoice: invoiceResult?.invoice || null,
         receipt: receiptData,
         showReceiptModal: true,
-        publishLater: true,
-      };
-
-      console.log("🟡 PHÁT HÀNH SAU: Calling onConfirm with complete data");
-
-      // Call onConfirm to show receipt
-      onConfirm(completeInvoiceData);
-
-      // Close modal
-      setTimeout(() => {
-        onClose();
-        console.log("🟡 E-Invoice modal closed after draft save");
-      }, 100);
+        publishLater: true, // Important flag to distinguish from immediate publish
+      });
 
       toast({
         title: "Thành công",
-        description: "Hóa đơn đã được lưu để phát hành sau và đang hiển thị để in.",
+        description: "Hóa đơn đã được lưu để phát hành sau và hiển thị để in.",
       });
 
     } catch (error) {
