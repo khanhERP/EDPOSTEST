@@ -350,27 +350,83 @@ export function ShoppingCart({
       return;
     }
 
-    // Validate total amount
-    const calculatedTotal = calculateTotal();
+    // PRE-CALCULATE ALL DATA FOR E-INVOICE MODAL
+    console.log("🔄 PRE-CALCULATING all invoice data before opening E-Invoice modal");
+
+    // Calculate exact subtotal, tax, and total
+    const calculatedSubtotal = cart.reduce((sum, item) => {
+      const itemPrice = parseFloat(item.price.toString());
+      const itemQuantity = item.quantity;
+      return sum + (itemPrice * itemQuantity);
+    }, 0);
+
+    const calculatedTax = cart.reduce((sum, item) => {
+      if (item.taxRate && parseFloat(item.taxRate) > 0) {
+        const basePrice = parseFloat(item.price.toString());
+        const itemQuantity = item.quantity;
+
+        // Use afterTaxPrice if available for exact tax calculation
+        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+          const afterTaxPrice = parseFloat(item.afterTaxPrice.toString());
+          const taxPerItem = afterTaxPrice - basePrice;
+          return sum + (taxPerItem * itemQuantity);
+        }
+        // Fallback calculation with tax rate
+        const itemTaxRate = parseFloat(item.taxRate || "0");
+        const taxAmount = (basePrice * itemQuantity * itemTaxRate) / 100;
+        return sum + taxAmount;
+      }
+      return sum;
+    }, 0);
+
+    const calculatedTotal = Math.round(calculatedSubtotal + calculatedTax);
+
+    // Prepare complete cart items with all required data
+    const processedCartItems = cart.map(item => {
+      const itemPrice = parseFloat(item.price.toString());
+      const itemQuantity = item.quantity;
+      const itemTaxRate = parseFloat(item.taxRate || "0");
+      
+      // Calculate item total including tax
+      let itemTotal = itemPrice * itemQuantity;
+      if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+        const afterTaxPrice = parseFloat(item.afterTaxPrice.toString());
+        itemTotal = afterTaxPrice * itemQuantity;
+      } else if (itemTaxRate > 0) {
+        const taxAmount = (itemPrice * itemQuantity * itemTaxRate) / 100;
+        itemTotal = (itemPrice * itemQuantity) + taxAmount;
+      }
+
+      return {
+        id: item.id,
+        name: item.name,
+        price: itemPrice,
+        quantity: itemQuantity,
+        sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+        taxRate: itemTaxRate,
+        afterTaxPrice: item.afterTaxPrice,
+        calculatedItemTotal: itemTotal,
+      };
+    });
+
+    // Validate calculated data
     if (calculatedTotal <= 0) {
-      console.error("❌ Invalid total amount for E-Invoice processing");
+      console.error("❌ Invalid calculated total:", calculatedTotal);
       toast({
         title: "Lỗi", 
-        description: "Tổng tiền không hợp lệ để xử lý hóa đơn",
+        description: "Tổng tiền tính toán không hợp lệ",
         variant: "destructive"
       });
       return;
     }
 
     // Validate all cart items have required data
-    const invalidItems = cart.filter(item => 
-      !item.id || !item.name || 
-      (!item.price || parseFloat(item.price.toString()) <= 0) ||
-      (!item.quantity || item.quantity <= 0)
+    const invalidItems = processedCartItems.filter(item => 
+      !item.id || !item.name || item.price <= 0 || item.quantity <= 0
     );
 
     if (invalidItems.length > 0) {
-      console.error("❌ Invalid cart items found:", invalidItems);
+      console.error("❌ Invalid processed items found:", invalidItems);
       toast({
         title: "Lỗi",
         description: `Có ${invalidItems.length} sản phẩm thiếu thông tin. Vui lòng kiểm tra lại giỏ hàng.`,
@@ -379,36 +435,33 @@ export function ShoppingCart({
       return;
     }
 
-    console.log("✅ All cart data validation passed");
-    console.log("✅ Cart items count:", cart.length);
-    console.log("✅ Total amount:", calculatedTotal);
-    console.log("✅ Payment method:", method);
+    console.log("✅ PRE-CALCULATION COMPLETED:");
+    console.log("- Subtotal:", calculatedSubtotal);
+    console.log("- Tax:", calculatedTax); 
+    console.log("- Total:", calculatedTotal);
+    console.log("- Processed items:", processedCartItems.length);
+    console.log("- Payment method:", method);
 
-    // Step 3: Payment method selected, now go to Step 4: E-Invoice modal
+    // Create complete invoice data package
+    const invoiceDataPackage = {
+      subtotal: calculatedSubtotal,
+      tax: calculatedTax,
+      total: calculatedTotal,
+      cartItems: processedCartItems,
+      paymentMethod: method,
+      itemsCount: processedCartItems.length,
+      calculatedAt: new Date().toISOString(),
+    };
+
+    console.log("📦 COMPLETE INVOICE DATA PACKAGE:", invoiceDataPackage);
+
+    // Step 3: Payment method selected, now go to Step 4: E-Invoice modal with pre-calculated data
     setShowPaymentMethodModal(false);
     setSelectedPaymentMethod(method);
 
-    // Add small delay to ensure state is properly set
-    setTimeout(() => {
-      console.log(
-        "📧 Shopping cart: Going to E-invoice modal for invoice processing with validated data",
-      );
-      console.log("📧 Final cart data for E-Invoice:", {
-        itemsCount: cart.length,
-        total: calculatedTotal,
-        paymentMethod: method,
-        cartItems: cart.map(item => ({
-          id: item.id,
-          name: item.name,
-          price: parseFloat(item.price.toString()),
-          quantity: item.quantity,
-          sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-          taxRate: parseFloat(item.taxRate || "10"),
-          afterTaxPrice: item.afterTaxPrice
-        }))
-      });
-      setShowEInvoiceModal(true);
-    }, 100);
+    // Open E-Invoice modal immediately with all calculated data
+    console.log("📧 Opening E-Invoice modal with pre-calculated data - NO STATE DELAYS");
+    setShowEInvoiceModal(true);
   };
 
   const handleCardPaymentMethodSelect = (method: string) => {
@@ -834,8 +887,8 @@ export function ShoppingCart({
         }))}
       />
 
-      {/* Step 3: E-Invoice Modal for invoice processing */}
-      {showEInvoiceModal && cart.length > 0 && total > 0 && (
+      {/* Step 3: E-Invoice Modal for invoice processing with pre-calculated data */}
+      {showEInvoiceModal && cart.length > 0 && (
         <EInvoiceModal
           isOpen={showEInvoiceModal}
           onClose={() => {
@@ -844,17 +897,55 @@ export function ShoppingCart({
             setSelectedPaymentMethod("");
           }}
           onConfirm={handleEInvoiceConfirm}
-          total={total}
+          total={(() => {
+            // Calculate exact total immediately when modal renders
+            const calculatedSubtotal = cart.reduce((sum, item) => {
+              return sum + (parseFloat(item.price.toString()) * item.quantity);
+            }, 0);
+            
+            const calculatedTax = cart.reduce((sum, item) => {
+              if (item.taxRate && parseFloat(item.taxRate) > 0) {
+                const basePrice = parseFloat(item.price.toString());
+                const itemQuantity = item.quantity;
+
+                if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                  const afterTaxPrice = parseFloat(item.afterTaxPrice.toString());
+                  const taxPerItem = afterTaxPrice - basePrice;
+                  return sum + (taxPerItem * itemQuantity);
+                }
+                
+                const itemTaxRate = parseFloat(item.taxRate || "0");
+                const taxAmount = (basePrice * itemQuantity * itemTaxRate) / 100;
+                return sum + taxAmount;
+              }
+              return sum;
+            }, 0);
+
+            const immediateTotal = Math.round(calculatedSubtotal + calculatedTax);
+            console.log("💰 IMMEDIATE E-Invoice total calculation:", {
+              subtotal: calculatedSubtotal,
+              tax: calculatedTax,
+              total: immediateTotal,
+              timestamp: new Date().toISOString()
+            });
+            
+            return immediateTotal;
+          })()}
           selectedPaymentMethod={selectedPaymentMethod}
-          cartItems={cart.map((item) => ({
-            id: item.id,
-            name: item.name,
-            price: parseFloat(item.price.toString()),
-            quantity: item.quantity,
-            sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-            taxRate: parseFloat(item.taxRate || "10"),
-            afterTaxPrice: item.afterTaxPrice,
-          }))}
+          cartItems={cart.map((item) => {
+            const itemPrice = parseFloat(item.price.toString());
+            const itemTaxRate = parseFloat(item.taxRate || "0");
+            
+            return {
+              id: item.id,
+              name: item.name,
+              price: itemPrice,
+              quantity: item.quantity,
+              sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
+              taxRate: itemTaxRate,
+              afterTaxPrice: item.afterTaxPrice,
+            };
+          })}
         />
       )}
 
