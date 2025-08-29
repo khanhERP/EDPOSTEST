@@ -51,7 +51,7 @@ export default function ReportsPage() {
               <Link href="/">
                 <Button variant="outline">
                   <ShoppingCart className="w-4 h-4 mr-2" />
-                  {t('reports.backToTables')}
+                  Quay lại Bán hàng
                 </Button>
               </Link>
             </div>
