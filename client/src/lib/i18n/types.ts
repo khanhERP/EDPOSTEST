@@ -300,6 +300,13 @@ export interface CommonTranslations {
     chef: string;
     cleaner: string;
   };
+
+  // Time periods
+  days30: string;
+  days60: string;
+  days90: string;
+  days180: string;
+  days365: string;
 }
 
 // Navigation translations interface

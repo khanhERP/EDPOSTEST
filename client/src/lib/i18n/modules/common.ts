@@ -257,7 +257,7 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       // Table status
       occupied: "사용 중",
       reserved: "예약됨",
-      cleaning: "청소 중",
+      cleaning: "정소 중",
       outOfService: "서비스 중단",
 
       // Payment status
@@ -710,6 +710,13 @@ export const commonTranslations: { [key: string]: CommonTranslations } = {
       waiter: "Phục vụ",
       chef: "Đầu bếp",
       cleaner: "Nhân viên vệ sinh",
+
+      // Time periods
+      days30: "30 ngày",
+      days60: "60 ngày",
+      days90: "90 ngày",
+      days180: "180 ngày",
+      days365: "365 ngày",
     },
   },
 };
