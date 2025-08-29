@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { POSHeader } from "@/components/pos/header";
 import { RightSidebar } from "@/components/ui/right-sidebar";
 import { CategorySidebar } from "@/components/pos/category-sidebar";
@@ -113,8 +113,9 @@ export default function POS({ onLogout }: POSPageProps) {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-green-50 grocery-bg">
+  try {
+    return (
+      <div className="min-h-screen bg-green-50 grocery-bg">
       {/* Header */}
       <POSHeader onLogout={onLogout} />
 
@@ -170,6 +171,23 @@ export default function POS({ onLogout }: POSPageProps) {
         isOpen={showProductManagerModal}
         onClose={() => setShowProductManagerModal(false)}
       />
-    </div>
-  );
+      </div>
+    );
+  } catch (error) {
+    console.error("❌ POS Page Error:", error);
+    return (
+      <div className="min-h-screen bg-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Có lỗi xảy ra</h1>
+          <p className="text-gray-600 mb-4">Vui lòng tải lại trang</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Tải lại trang
+          </button>
+        </div>
+      </div>
+    );
+  }
 }

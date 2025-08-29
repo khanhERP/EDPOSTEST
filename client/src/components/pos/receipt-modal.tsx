@@ -91,9 +91,16 @@ export function ReceiptModal({
     onConfirm: !!onConfirm
   });
 
-  // Early return if no receipt data and not in preview mode
+  // Don't render if modal is not open
+  if (!isOpen) {
+    console.log("❌ Receipt Modal: Modal is closed");
+    return null;
+  }
+
+  // For preview mode, we can show even without receipt
+  // For final receipt mode, we need receipt data
   if (!receipt && !isPreview) {
-    console.log("❌ Receipt Modal: No receipt data provided");
+    console.log("❌ Receipt Modal: No receipt data provided for final receipt");
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md">
