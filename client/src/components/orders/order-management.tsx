@@ -410,12 +410,31 @@ export function OrderManagement() {
     setOrderDetailsOpen(true);
   };
 
-  const handlePaymentMethodSelect = (paymentMethod: string) => {
-    if (orderForPayment) {
-      completePaymentMutation.mutate({
-        orderId: orderForPayment.id,
-        paymentMethod
-      });
+  const handlePaymentMethodSelect = (method: any, data?: any) => {
+    console.log('🎯 Order Management payment method selected:', method, data);
+    setShowPaymentMethodModal(false);
+
+    // If payment method returns e-invoice data (like from "phát hành sau"), handle it
+    if (data && data.receipt) {
+      console.log('📄 Order Management: Payment method returned receipt data, showing receipt');
+      setSelectedReceipt(data.receipt);
+      setShowReceiptModal(true);
+      setOrderForPayment(null);
+    } else {
+      // Otherwise continue to E-invoice modal
+      console.log('🔄 Order Management: Continuing to E-invoice modal');
+      // If method.nameKey is 'einvoice', show E-invoice modal directly
+      if (method.nameKey === 'einvoice') {
+        setShowEInvoiceModal(true);
+      } else {
+        // For other payment methods, proceed with payment completion
+        if (selectedOrder) {
+          completePaymentMutation.mutate({
+            orderId: selectedOrder.id,
+            paymentMethod: method.nameKey,
+          });
+        }
+      }
     }
   };
 
@@ -1614,7 +1633,10 @@ export function OrderManagement() {
           price: parseFloat(item.price || item.unitPrice || '0'),
           quantity: item.quantity,
           sku: item.sku || `SP${item.productId}`,
-          taxRate: item.taxRate || 10
+          taxRate: (() => {
+            const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
+            return product?.taxRate ? parseFloat(product.taxRate) : 10;
+          })()
         })) || []}
         total={previewReceipt ? parseFloat(previewReceipt.total) : 0}
       />
@@ -1639,7 +1661,18 @@ export function OrderManagement() {
           } else {
             // Otherwise continue to E-invoice modal
             console.log('🔄 Order Management: Continuing to E-invoice modal');
-            setShowEInvoiceModal(true);
+            // If method.nameKey is 'einvoice', show E-invoice modal directly
+            if (method.nameKey === 'einvoice') {
+              setShowEInvoiceModal(true);
+            } else {
+              // For other payment methods, proceed with payment completion
+              if (selectedOrder) {
+                completePaymentMutation.mutate({
+                  orderId: selectedOrder.id,
+                  paymentMethod: method.nameKey,
+                });
+              }
+            }
           }
         }}
         total={(() => {
