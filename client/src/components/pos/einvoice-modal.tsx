@@ -199,7 +199,7 @@ export function EInvoiceModal({
 
   // Initialize form data when modal opens and templates are loaded
   useEffect(() => {
-    if (isOpen && !templatesLoading && !connectionsLoading) {
+    if (isOpen && !templatesLoading && !connectionsLoading && invoiceTemplates.length > 0) {
       console.log("🔥 E-INVOICE MODAL OPENING - INITIALIZING DATA");
       console.log("🔥 Templates loading:", templatesLoading);
       console.log("🔥 Connections loading:", connectionsLoading);
@@ -208,22 +208,23 @@ export function EInvoiceModal({
       console.log("🔥 total when modal opens:", total);
 
       // Always initialize form data with default values when modal opens
-      const defaultTemplate = invoiceTemplates.length > 0 ? invoiceTemplates[0] : null;
-      const defaultTemplateId = defaultTemplate ? defaultTemplate.id.toString() : "";
+      const defaultTemplate = invoiceTemplates[0];
+      const defaultTemplateId = defaultTemplate.id.toString();
 
       console.log("🎯 Setting form data on modal open:", defaultTemplate);
 
-      setFormData(prev => ({
-        ...prev,
-        invoiceProvider: prev.invoiceProvider || "EasyInvoice",
-        invoiceTemplate: defaultTemplate?.name || "1C25TYY", 
+      setFormData({
+        invoiceProvider: "EasyInvoice",
+        invoiceTemplate: defaultTemplate.name || "1C25TYY", 
         selectedTemplateId: defaultTemplateId,
-        taxCode: prev.taxCode || "0123456789",
-        customerName: prev.customerName || "Khách hàng lẻ",
-        address: prev.address || "",
-        phoneNumber: prev.phoneNumber || "",
-        email: prev.email || "",
-      }));
+        taxCode: "0123456789",
+        customerName: "Khách hàng lẻ",
+        address: "",
+        phoneNumber: "",
+        email: "",
+      });
+
+      console.log("✅ Form data initialized with template:", defaultTemplateId);
     }
   }, [isOpen, templatesLoading, connectionsLoading, invoiceTemplates.length]);
 
@@ -418,11 +419,13 @@ export function EInvoiceModal({
     // Ensure template is set before processing
     let currentFormData = formData;
     if (!formData.selectedTemplateId && invoiceTemplates.length > 0) {
-      const defaultTemplateId = invoiceTemplates[0].id.toString();
-      console.log("🟡 Setting template for publish later:", defaultTemplateId);
+      const defaultTemplate = invoiceTemplates[0];
+      const defaultTemplateId = defaultTemplate.id.toString();
+      console.log("🟡 Setting template for publish later:", defaultTemplateId, defaultTemplate.name);
       currentFormData = {
         ...formData,
-        selectedTemplateId: defaultTemplateId
+        selectedTemplateId: defaultTemplateId,
+        invoiceTemplate: defaultTemplate.name
       };
       setFormData(currentFormData);
     }
@@ -754,11 +757,13 @@ export function EInvoiceModal({
     // Ensure template is set before processing
     let currentFormData = formData;
     if (!formData.selectedTemplateId && invoiceTemplates.length > 0) {
-      const defaultTemplateId = invoiceTemplates[0].id.toString();
-      console.log("🟢 Setting template for immediate publish:", defaultTemplateId);
+      const defaultTemplate = invoiceTemplates[0];
+      const defaultTemplateId = defaultTemplate.id.toString();
+      console.log("🟢 Setting template for immediate publish:", defaultTemplateId, defaultTemplate.name);
       currentFormData = {
         ...formData,
-        selectedTemplateId: defaultTemplateId
+        selectedTemplateId: defaultTemplateId,
+        invoiceTemplate: defaultTemplate.name
       };
       setFormData(currentFormData);
     }
@@ -1356,11 +1361,28 @@ export function EInvoiceModal({
           )}
 
           {/* Data availability warning */}
-          {isOpen && !templatesLoading && !connectionsLoading && 
-           (!cartItems || !Array.isArray(cartItems) || cartItems.length === 0 || !total || total <= 0) && (
-            <div className="flex items-center justify-center py-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <span className="text-sm text-yellow-700">⚠️ Chưa có dữ liệu giỏ hàng. Vui lòng thử lại.</span>
-            </div>
+          {isOpen && !templatesLoading && !connectionsLoading && (
+            (() => {
+              const hasValidCartItems = cartItems && Array.isArray(cartItems) && cartItems.length > 0;
+              const hasValidTotal = total && typeof total === 'number' && total > 0;
+              
+              console.log("🔍 Data validation check:", {
+                hasValidCartItems,
+                hasValidTotal,
+                cartItemsLength: cartItems?.length || 0,
+                total: total,
+                shouldShowWarning: !hasValidCartItems || !hasValidTotal
+              });
+
+              if (!hasValidCartItems || !hasValidTotal) {
+                return (
+                  <div className="flex items-center justify-center py-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <span className="text-sm text-yellow-700">⚠️ Chưa có dữ liệu giỏ hàng. Vui lòng thử lại.</span>
+                  </div>
+                );
+              }
+              return null;
+            })()
           )}
 
           {/* E-invoice Provider Information */}
