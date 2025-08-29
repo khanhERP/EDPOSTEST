@@ -1624,8 +1624,8 @@ export function EInvoiceModal({
               </span>
             </div>
 
-            {/* Hiển thị chi tiết tính toán */}
-            {cartItems && Array.isArray(cartItems) && cartItems.length > 0 && (
+            {/* Hiển thị chi tiết tính toán - HIDDEN */}
+            {false && cartItems && Array.isArray(cartItems) && cartItems.length > 0 && (
               <div className="mt-3 pt-3 border-t border-gray-200 text-sm text-gray-600">
                 <div className="flex justify-between">
                   <span>Tạm tính:</span>
