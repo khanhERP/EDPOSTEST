@@ -412,7 +412,7 @@ export function EInvoiceModal({
   };
 
   const handlePublishLater = async () => {
-    console.log("🟡 handlePublishLater called");
+    console.log("🟡 handlePublishLater called - CHỈ LẮP LƯU, KHÔNG PHÁT HÀNH");
     console.log("🟡 Form data:", formData);
     console.log("🟡 Cart items:", cartItems);
     console.log("🟡 Total:", total);
@@ -442,7 +442,7 @@ export function EInvoiceModal({
       return;
     }
 
-    setIsPublishingLater(true); // Set publishing later state
+    setIsPublishingLater(true); // Set publishing later state ONLY
 
     try {
       console.log(
@@ -702,9 +702,9 @@ export function EInvoiceModal({
 
       console.log("📄 Receipt data created with", cartItems.length, "items:", receiptData);
 
-      // Prepare complete invoice data with receipt for immediate display
+      // Prepare complete invoice data with receipt for immediate display - PHÁT HÀNH SAU
       const completeInvoiceData = {
-        ...formData,
+        ...currentFormData,
         cartItems: cartItems,
         total: total,
         paymentMethod: selectedPaymentMethod,
@@ -714,20 +714,21 @@ export function EInvoiceModal({
         savedInvoice: invoiceResult?.invoice || null,
         receipt: receiptData,
         showReceiptModal: true,
+        publishLater: true, // Flag để phân biệt với phát hành ngay
       };
 
-      console.log("✅ Calling onConfirm with publishLater data and receipt");
-      console.log("📄 Complete invoice data:", completeInvoiceData);
+      console.log("🟡 PHÁT HÀNH SAU: Calling onConfirm with data and receipt");
+      console.log("📄 Complete invoice data for publish later:", completeInvoiceData);
       console.log("📄 Receipt data to display:", receiptData);
 
-      // Call onConfirm with the complete data including receipt
+      // Call onConfirm with the complete data including receipt for "Phát hành sau"
       onConfirm(completeInvoiceData);
 
       // Close e-invoice modal after triggering the receipt display
-        setTimeout(() => {
-          onClose();
-          console.log("🔴 E-Invoice modal closed after publishLater processing");
-        }, 100);
+      setTimeout(() => {
+        onClose();
+        console.log("🟡 E-Invoice modal closed after publishLater processing (save only)");
+      }, 100);
 
       toast({
         title: "Thành công",
@@ -757,7 +758,7 @@ export function EInvoiceModal({
   };
 
   const handleConfirm = async () => {
-    console.log("🟢 handleConfirm called");
+    console.log("🟢 handleConfirm called - PHÁT HÀNH NGAY");
     console.log("🟢 Form data:", formData);
     console.log("🟢 Cart items:", cartItems);
     console.log("🟢 Invoice templates:", invoiceTemplates);
@@ -800,7 +801,7 @@ export function EInvoiceModal({
       return;
     }
 
-    setIsPublishing(true); // Set publishing to true
+    setIsPublishing(true); // Set publishing to true FOR IMMEDIATE PUBLISH ONLY
 
     try {
       // Debug log current cart items
@@ -1291,9 +1292,9 @@ export function EInvoiceModal({
           receiptData,
         );
 
-        // Prepare comprehensive invoice data with all necessary flags
+        // Prepare comprehensive invoice data with all necessary flags - PHÁT HÀNH NGAY
         const invoiceResultForConfirm = {
-          ...formData,
+          ...currentFormData,
           invoiceData: publishResult.data,
           cartItems: cartItems,
           total: total,
@@ -1302,17 +1303,16 @@ export function EInvoiceModal({
           source: source || "pos",
           orderId: orderId,
           publishedImmediately: true, // Flag để phân biệt với phát hành sau
+          publishLater: false, // Explicitly set to false for immediate publish
           receipt: receiptData, // Truyền receipt data đã tạo
-          customerName: formData.customerName,
-          taxCode: formData.taxCode,
+          customerName: currentFormData.customerName,
+          taxCode: currentFormData.taxCode,
           invoiceNumber: publishResult.data?.invoiceNo || null,
         };
 
-        console.log("✅ Prepared comprehensive invoice result:", invoiceResultForConfirm);
+        console.log("🟢 PHÁT HÀNH NGAY: Prepared comprehensive invoice result:", invoiceResultForConfirm);
 
-        console.log("✅ Prepared comprehensive invoice result with receipt:", invoiceResultForConfirm);
-
-        // Close e-invoice modal and return data with receipt for printing
+        // Close e-invoice modal and return data with receipt for printing - IMMEDIATE PUBLISH
         onClose();
         onConfirm(invoiceResultForConfirm);
       } catch (error) {
