@@ -1579,30 +1579,43 @@ export function EInvoiceModal({
                     total, 
                     totalType: typeof total,
                     cartItems: cartItems?.length,
-                    cartTotal: cartItems?.reduce((sum, item) => {
-                      const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                      const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                      const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
-                      const subtotal = price * quantity;
-                      const tax = (subtotal * taxRate) / 100;
-                      return sum + subtotal + tax;
-                    }, 0) || 0
+                    cartItemsData: cartItems
                   });
                   
-                  // Priority: Use total prop if valid, otherwise calculate from cartItems
+                  // Priority: Use total prop if valid number
                   let displayTotal = 0;
                   
-                  if (total && typeof total === 'number' && total > 0) {
+                  if (typeof total === 'number' && total > 0) {
                     displayTotal = total;
-                  } else if (cartItems && cartItems.length > 0) {
+                    console.log('💰 Using total prop:', displayTotal);
+                  } else if (typeof total === 'string' && parseFloat(total) > 0) {
+                    displayTotal = parseFloat(total);
+                    console.log('💰 Using total prop (converted from string):', displayTotal);
+                  } else if (cartItems && Array.isArray(cartItems) && cartItems.length > 0) {
+                    // Calculate from cart items with accurate tax calculation
                     displayTotal = cartItems.reduce((sum, item) => {
-                      const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
-                      const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity;
-                      const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
-                      const subtotal = price * quantity;
-                      const tax = (subtotal * taxRate) / 100;
-                      return sum + subtotal + tax;
+                      const price = typeof item.price === 'string' ? parseFloat(item.price) : item.price || 0;
+                      const quantity = typeof item.quantity === 'string' ? parseInt(item.quantity) : item.quantity || 0;
+                      
+                      // Use afterTaxPrice if available for exact calculation
+                      if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                        const afterTaxPriceValue = typeof item.afterTaxPrice === 'string' 
+                          ? parseFloat(item.afterTaxPrice) 
+                          : item.afterTaxPrice;
+                        const itemTotal = afterTaxPriceValue * quantity;
+                        console.log(`💰 Item ${item.name} with afterTaxPrice: ${afterTaxPriceValue} x ${quantity} = ${itemTotal}`);
+                        return sum + itemTotal;
+                      } else {
+                        // Fallback to price + tax calculation
+                        const taxRate = typeof item.taxRate === 'string' ? parseFloat(item.taxRate || '0') : item.taxRate || 0;
+                        const subtotal = price * quantity;
+                        const tax = (subtotal * taxRate) / 100;
+                        const itemTotal = subtotal + tax;
+                        console.log(`💰 Item ${item.name}: ${price} x ${quantity} + ${taxRate}% tax = ${itemTotal}`);
+                        return sum + itemTotal;
+                      }
                     }, 0);
+                    console.log('💰 Calculated from cartItems:', displayTotal);
                   }
                   
                   console.log('💰 EInvoice Modal - Final display total:', displayTotal);
