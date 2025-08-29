@@ -74,6 +74,28 @@ export function ReceiptModal({
     },
   });
 
+  // Helper function to format currency
+  const formatCurrency = (value: string | number) => {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    return isNaN(num) ? '0' : Math.floor(num).toLocaleString('vi-VN');
+  };
+
+  // Helper function to get payment method display name
+  const getPaymentMethodDisplay = (method: string) => {
+    if (!method) return t('payment.cash') || 'Tiền mặt';
+
+    const methodMap: { [key: string]: string } = {
+      cash: t('payment.cash') || 'Tiền mặt',
+      creditCard: t('payment.creditCard') || 'Thẻ tín dụng',
+      debitCard: t('payment.debitCard') || 'Thẻ ghi nợ',
+      qrCode: t('payment.qrCode') || 'Mã QR',
+      einvoice: t('einvoice.title') || 'Hóa đơn điện tử',
+      preview: t('common.preview') || 'Xem trước'
+    };
+
+    return methodMap[method] || method;
+  };
+
   // Log receipt modal state for debugging
   useEffect(() => {
     const hasReceipt = receipt && receipt.items && receipt.items.length > 0;
@@ -349,11 +371,11 @@ export function ReceiptModal({
             </div>
             <div className="flex justify-between text-sm">
               <span>{t("pos.date")}</span>
-              <span>{receipt?.createdAt ? new Date(receipt.createdAt).toLocaleString() : "N/A"}</span>
+              <span>{receipt?.createdAt ? new Date(receipt.createdAt).toLocaleString('vi-VN') : new Date().toLocaleString('vi-VN')}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>{t("pos.cashier")}</span>
-              <span>{receipt?.cashierName || "N/A"}</span>
+              <span>{receipt?.cashierName || 'System User'}</span>
             </div>
             {isEInvoice && customerName && (
               <div className="flex justify-between text-sm">
@@ -367,7 +389,7 @@ export function ReceiptModal({
                 <span>{customerTaxCode}</span>
               </div>
             )}
-            {receipt.paymentMethod === "einvoice" && (
+            {receipt?.paymentMethod === "einvoice" && (
               <div className="flex justify-between text-sm text-blue-600">
                 <span>Trạng thái E-Invoice:</span>
                 <span>
@@ -409,10 +431,10 @@ export function ReceiptModal({
               <span>
                 {(() => {
                   // Always prioritize exact values passed from parent component
-                  const subtotalValue = receipt.exactSubtotal !== undefined
+                  const subtotalValue = receipt?.exactSubtotal !== undefined
                     ? receipt.exactSubtotal
-                    : parseFloat(receipt.subtotal || "0");
-                  console.log('💰 Receipt Modal - Subtotal display:', subtotalValue, 'from exactSubtotal:', receipt.exactSubtotal, 'from subtotal:', receipt.subtotal);
+                    : parseFloat(receipt?.subtotal || "0");
+                  console.log('💰 Receipt Modal - Subtotal display:', subtotalValue, 'from exactSubtotal:', receipt?.exactSubtotal, 'from subtotal:', receipt?.subtotal);
                   return Math.floor(subtotalValue).toLocaleString("vi-VN");
                 })()} ₫
               </span>
@@ -422,10 +444,10 @@ export function ReceiptModal({
               <span>
                 {(() => {
                   // Always prioritize exact values passed from parent component
-                  const taxValue = receipt.exactTax !== undefined
+                  const taxValue = receipt?.exactTax !== undefined
                     ? receipt.exactTax
-                    : parseFloat(receipt.tax || "0");
-                  console.log('💰 Receipt Modal - Tax display:', taxValue, 'from exactTax:', receipt.exactTax, 'from tax:', receipt.tax);
+                    : parseFloat(receipt?.tax || "0");
+                  console.log('💰 Receipt Modal - Tax display:', taxValue, 'from exactTax:', receipt?.exactTax, 'from tax:', receipt?.tax);
                   return Math.floor(taxValue).toLocaleString("vi-VN");
                 })()} ₫
               </span>
@@ -435,10 +457,10 @@ export function ReceiptModal({
               <span>
                 {(() => {
                   // Always prioritize exact values passed from parent component
-                  const totalValue = receipt.exactTotal !== undefined
+                  const totalValue = receipt?.exactTotal !== undefined
                     ? receipt.exactTotal
-                    : parseFloat(receipt.total || "0");
-                  console.log('💰 Receipt Modal - Total display:', totalValue, 'from exactTotal:', receipt.exactTotal, 'from total:', receipt.total);
+                    : parseFloat(receipt?.total || "0");
+                  console.log('💰 Receipt Modal - Total display:', totalValue, 'from exactTotal:', receipt?.exactTotal, 'from total:', receipt?.total);
                   return Math.floor(totalValue).toLocaleString("vi-VN");
                 })()} ₫
               </span>
