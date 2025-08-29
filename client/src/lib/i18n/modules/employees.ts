@@ -56,14 +56,15 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     selectRole: "역할을 선택하세요",
     employeeIdRequired: "직원 ID는 필수입니다",
     nameRequired: "이름은 필수입니다",
-    emailInvalid: "유효한 이메일 주소를 입력하세요"
+    emailInvalid: "유효한 이메일 주소를 입력하세요",
+    noEmployeesFound: "직원을 찾을 수 없습니다",
   },
   en: {
     title: "Employee Management",
     description: "Manage employee information",
     employeeManagement: "Employee Management",
     addEmployee: "Add Employee",
-    editEmployee: "Edit Employee", 
+    editEmployee: "Edit Employee",
     deleteEmployee: "Delete Employee",
     searchPlaceholder: "Search by name, employee ID, phone...",
     employeeId: "Employee ID",
@@ -113,7 +114,8 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     selectRole: "Select a role",
     employeeIdRequired: "Employee ID is required",
     nameRequired: "Name is required",
-    emailInvalid: "Please enter a valid email address"
+    emailInvalid: "Please enter a valid email address",
+    noEmployeesFound: "No employees found",
   },
   vi: {
     title: "Quản lý nhân viên",
@@ -121,7 +123,7 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     employeeManagement: "Quản lý nhân viên",
     addEmployee: "Thêm nhân viên",
     editEmployee: "Sửa nhân viên",
-    deleteEmployee: "Xóa nhân viên", 
+    deleteEmployee: "Xóa nhân viên",
     searchPlaceholder: "Tìm kiếm theo tên, mã NV, số điện thoại...",
     employeeId: "ID nhân viên",
     name: "Tên",
@@ -170,6 +172,7 @@ export const employeesTranslations: { [key: string]: EmployeesTranslations } = {
     selectRole: "Chọn vai trò",
     employeeIdRequired: "ID nhân viên là bắt buộc",
     nameRequired: "Tên nhân viên là bắt buộc",
-    emailInvalid: "Vui lòng nhập địa chỉ email hợp lệ"
+    emailInvalid: "Vui lòng nhập địa chỉ email hợp lệ",
+    noEmployeesFound: "Không tìm thấy nhân viên nào",
   },
 };
