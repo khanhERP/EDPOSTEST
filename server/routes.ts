@@ -40,7 +40,9 @@ import {
   lte,
   ilike,
 } from "drizzle-orm";
-import { sql } from "drizzle-orm";
+import {
+  sql
+} from "drizzle-orm";
 import {
   orders,
   orderItems,
@@ -50,7 +52,7 @@ import {
   transactionItems as transactionItemsTable,
 } from "@shared/schema";
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export async function registerRoutes(app: Express): Promise < Server > {
   // Register tenant management routes
   registerTenantRoutes(app);
 
@@ -62,7 +64,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Ensure inventory_transactions table exists
   try {
-    await db.execute(sql`
+    await db.execute(sql `
       CREATE TABLE IF NOT EXISTS inventory_transactions (
         id SERIAL PRIMARY KEY,
         product_id INTEGER REFERENCES products(id) NOT NULL,
@@ -395,8 +397,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .status(400)
           .json({ message: "Invalid product data", errors: error.errors });
       }
-      res.status(500).json({ 
-        message: "Failed to update product", 
+      res.status(500).json({
+        message: "Failed to update product",
         error: error instanceof Error ? error.message : String(error)
       });
     }
@@ -486,7 +488,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let subtotal = 0;
       let tax = 0;
       const stockValidationErrors = [];
-      
+
       for (const item of validatedItems) {
         const product = products.find((p) => p.id === item.productId);
         if (!product) {
@@ -494,7 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .status(400)
             .json({ message: `Product with ID ${item.productId} not found` });
         }
-        
+
         // Check stock availability only for products that track inventory
         if (product.trackInventory && product.stock < item.quantity) {
           const errorMsg = `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${item.quantity}`;
@@ -507,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const itemSubtotal = parseFloat(item.price) * item.quantity;
         let itemTax = 0;
-        
+
         // Use afterTaxPrice if available, otherwise calculate based on taxRate
         if (product.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
@@ -521,7 +523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subtotal += itemSubtotal;
         tax += itemTax;
       }
-      
+
       // Return all stock validation errors if any
       if (stockValidationErrors.length > 0) {
         return res.status(400).json({
@@ -821,7 +823,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.status(statusCode).json({ 
+      res.status(statusCode).json({
         message,
         error: error instanceof Error ? error.message : "Unknown error"
       });
@@ -1008,7 +1010,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const items = await storage.getOrderItems(id, tenantDb);
-      res.json({ ...order, items });
+      res.json({ ...order,
+        items
+      });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch order" });
     }
@@ -1094,7 +1098,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateTableStatus(order.tableId, "available", tenantDb);
       }
 
-      res.json({ ...order, paymentMethod });
+      res.json({ ...order,
+        paymentMethod
+      });
     } catch (error) {
       console.error("Payment completion error:", error);
       res.status(500).json({ message: "Failed to complete payment" });
@@ -1162,7 +1168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error message:', error.message);
       console.error('Error stack:', error.stack);
       console.error('Item ID:', req.params.itemId);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Failed to delete order item',
         details: error instanceof Error ? error.message : 'Unknown error',
         timestamp: new Date().toISOString(),
@@ -1264,7 +1270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const [orderItemsSum] = await db
           .select({
-            total: sql<number>`COALESCE(sum(CAST(${orderItems.total} AS DECIMAL)), 0)`,
+            total: sql < number > `COALESCE(sum(CAST(${orderItems.total} AS DECIMAL)), 0)`,
           })
           .from(orderItems)
           .where(eq(orderItems.orderId, orderId));
@@ -1561,14 +1567,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle specific database errors
       if (error.code === 'SQLITE_CONSTRAINT') {
-        return res.status(400).json({ 
-          message: "Customer with this ID already exists" 
+        return res.status(400).json({
+          message: "Customer with this ID already exists"
         });
       }
 
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to create customer",
-        error: error.message 
+        error: error.message
       });
     }
   });
@@ -2075,220 +2081,194 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Menu Analysis API
-  app.get("/api/menu-analysis", async (req: TenantRequest, res) => {
+  app.get('/api/menu-analysis', async (req, res) => {
     try {
-      const { startDate, endDate, search, categoryId, productType } = req.query;
-      const tenantDb = await getTenantDatabase(req);
+      const { startDate, endDate, categoryId } = req.query;
 
-      console.log("Menu Analysis API called with params:", { startDate, endDate, search, categoryId, productType });
+      console.log('Menu Analysis API called with params:', {
+        startDate,
+        endDate,
+        search: req.query.search,
+        categoryId,
+        productType: req.query.productType
+      });
 
-      // Apply filters for products
-      const productConditions: any[] = [eq(products.isActive, true)];
-      
-      if (search) {
-        productConditions.push(ilike(products.name, `%${search}%`));
+      // Date filtering
+      let dateFilter = '';
+      const params: any[] = [];
+
+      if (startDate && endDate) {
+        dateFilter = `AND DATE(t.createdAt) BETWEEN ? AND ?`;
+        params.push(startDate, endDate);
+      } else if (startDate) {
+        dateFilter = `AND DATE(t.createdAt) >= ?`;
+        params.push(startDate);
+      } else if (endDate) {
+        dateFilter = `AND DATE(t.createdAt) <= ?`;
+        params.push(endDate);
       }
 
+      // Category filtering
+      let categoryFilter = '';
       if (categoryId && categoryId !== 'all') {
-        productConditions.push(eq(products.categoryId, parseInt(categoryId as string)));
+        categoryFilter = `AND p.categoryId = ?`;
+        params.push(categoryId);
       }
 
-      if (productType !== "all" && productType) {
-        const typeMap = { combo: 3, product: 1, service: 2 };
-        const typeValue = typeMap[productType as keyof typeof typeMap];
-        if (typeValue) {
-          productConditions.push(eq(products.productType, typeValue));
-        }
-      }
+      console.log('Executing transaction and order queries...');
 
-      // Date range conditions
-      const dateConditions: any[] = [];
-      if (startDate && endDate) {
-        const start = new Date(startDate as string);
-        const end = new Date(endDate as string);
-        end.setHours(23, 59, 59, 999);
+      // Query transactions với tính toán doanh thu đúng: tổng tiền - giảm giá (không cộng thuế)
+      const transactionQuery = `
+        SELECT 
+          ti.productId,
+          p.name as productName,
+          p.categoryId,
+          c.name as categoryName,
+          SUM(ti.quantity) as totalQuantity,
+          SUM(CAST(ti.unitPrice AS DECIMAL(10,2)) * ti.quantity) as totalRevenue
+        FROM transaction_items ti
+        JOIN transactions t ON ti.transactionId = t.id
+        JOIN products p ON ti.productId = p.id
+        LEFT JOIN categories c ON p.categoryId = c.id
+        WHERE 1=1 ${dateFilter} ${categoryFilter}
+        GROUP BY ti.productId, p.name, p.categoryId, c.name
+      `;
 
-        dateConditions.push(
-          gte(transactionsTable.createdAt, start),
-          lte(transactionsTable.createdAt, end)
-        );
-      }
+      // Query orders với tính toán doanh thu đúng: tổng tiền - giảm giá (không cộng thuế)
+      const orderQuery = `
+        SELECT 
+          oi.productId,
+          p.name as productName,
+          p.categoryId,
+          c.name as categoryName,
+          SUM(oi.quantity) as totalQuantity,
+          SUM(CAST(oi.unitPrice AS DECIMAL(10,2)) * oi.quantity) as totalRevenue
+        FROM order_items oi
+        JOIN orders o ON oi.orderId = o.id
+        JOIN products p ON oi.productId = p.id
+        LEFT JOIN categories c ON p.categoryId = c.id
+        WHERE o.status != 'cancelled' ${dateFilter} ${categoryFilter}
+        GROUP BY oi.productId, p.name, p.categoryId, c.name
+      `;
 
-      // Query transaction items - Revenue calculation: subtotal without tax
-      let transactionQuery = db
-        .select({
-          productId: transactionItemsTable.productId,
-          productName: products.name,
-          categoryId: products.categoryId,
-          categoryName: categories.name,
-          quantity: sql<number>`sum(${transactionItemsTable.quantity})`.as('quantity'),
-          // Revenue = quantity * unit price (excluding tax and discount)
-          revenue: sql<number>`sum(${transactionItemsTable.quantity} * CAST(${transactionItemsTable.price} AS DECIMAL))`.as('revenue'),
+      const [transactionResults, orderResults] = await Promise.all([
+        new Promise < any[] > ((resolve, reject) => {
+          db.all(transactionQuery, params, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+          });
+        }),
+        new Promise < any[] > ((resolve, reject) => {
+          db.all(orderQuery, params, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows || []);
+          });
         })
-        .from(transactionItemsTable)
-        .innerJoin(products, eq(transactionItemsTable.productId, products.id))
-        .leftJoin(categories, eq(products.categoryId, categories.id))
-        .innerJoin(transactionsTable, eq(transactionItemsTable.transactionId, transactionsTable.id))
-        .where(and(
-          ...productConditions,
-          ...(dateConditions.length > 0 ? dateConditions : [])
-        ))
-        .groupBy(transactionItemsTable.productId, products.name, products.categoryId, categories.name);
-
-      // Date conditions for orders
-      const orderDateConditions: any[] = [];
-      if (startDate && endDate) {
-        const start = new Date(startDate as string);
-        const end = new Date(endDate as string);
-        end.setHours(23, 59, 59, 999);
-
-        orderDateConditions.push(
-          gte(orders.orderedAt, start),
-          lte(orders.orderedAt, end)
-        );
-      }
-
-      // Query order items - Revenue calculation: subtotal without tax 
-      let orderQuery = db
-        .select({
-          productId: orderItems.productId,
-          productName: products.name,
-          categoryId: products.categoryId,
-          categoryName: categories.name,
-          quantity: sql<number>`sum(${orderItems.quantity})`.as('quantity'),
-          // Revenue = quantity * unit price (excluding tax and discount)
-          revenue: sql<number>`sum(${orderItems.quantity} * CAST(${orderItems.unitPrice} AS DECIMAL))`.as('revenue'),
-        })
-        .from(orderItems)
-        .innerJoin(products, eq(orderItems.productId, products.id))
-        .leftJoin(categories, eq(products.categoryId, categories.id))
-        .innerJoin(orders, eq(orderItems.orderId, orders.id))
-        .where(and(
-          ...productConditions,
-          eq(orders.status, 'paid'), // Only include paid orders
-          ...(orderDateConditions.length > 0 ? orderDateConditions : [])
-        ))
-        .groupBy(orderItems.productId, products.name, products.categoryId, categories.name);
-
-      console.log("Executing transaction and order queries...");
-      
-      const [transactionStats, orderStats] = await Promise.all([
-        transactionQuery,
-        orderQuery
       ]);
 
-      console.log("Transaction stats:", transactionStats.length, "items");
-      console.log("Order stats:", orderStats.length, "items");
+      console.log('Transaction stats:', transactionResults.length, 'items');
+      console.log('Order stats:', orderResults.length, 'items');
 
-      // Combine and aggregate data from both sources
-      const combinedStats = new Map();
+      // Combine and aggregate results
+      const productMap = new Map();
+      const categoryMap = new Map();
 
-      // Process transaction items
-      transactionStats.forEach((item: any) => {
-        if (!item.productId || !item.productName) return;
-        
+      // Process transaction results
+      transactionResults.forEach(item => {
         const key = item.productId;
-        if (!combinedStats.has(key)) {
-          combinedStats.set(key, {
+        if (productMap.has(key)) {
+          const existing = productMap.get(key);
+          existing.totalQuantity += Number(item.totalQuantity || 0);
+          existing.totalRevenue += Number(item.totalRevenue || 0);
+        } else {
+          productMap.set(key, {
             productId: item.productId,
             productName: item.productName,
             categoryId: item.categoryId,
-            categoryName: item.categoryName || 'N/A',
-            totalQuantity: 0,
-            totalRevenue: 0,
+            categoryName: item.categoryName,
+            totalQuantity: Number(item.totalQuantity || 0),
+            totalRevenue: Number(item.totalRevenue || 0),
           });
         }
-        
-        const stats = combinedStats.get(key);
-        stats.totalQuantity += Number(item.quantity || 0);
-        stats.totalRevenue += Number(item.revenue || 0);
       });
 
-      // Process order items
-      orderStats.forEach((item: any) => {
-        if (!item.productId || !item.productName) return;
-        
+      // Process order results
+      orderResults.forEach(item => {
         const key = item.productId;
-        if (!combinedStats.has(key)) {
-          combinedStats.set(key, {
+        if (productMap.has(key)) {
+          const existing = productMap.get(key);
+          existing.totalQuantity += Number(item.totalQuantity || 0);
+          existing.totalRevenue += Number(item.totalRevenue || 0);
+        } else {
+          productMap.set(key, {
             productId: item.productId,
             productName: item.productName,
             categoryId: item.categoryId,
-            categoryName: item.categoryName || 'N/A',
-            totalQuantity: 0,
-            totalRevenue: 0,
+            categoryName: item.categoryName,
+            totalQuantity: Number(item.totalQuantity || 0),
+            totalRevenue: Number(item.totalRevenue || 0),
           });
         }
-        
-        const stats = combinedStats.get(key);
-        stats.totalQuantity += Number(item.quantity || 0);
-        stats.totalRevenue += Number(item.revenue || 0);
       });
 
-      // Convert to arrays and calculate totals
-      const productStatsArray = Array.from(combinedStats.values());
-      
-      // Calculate total revenue (sum of all product revenues excluding tax)
-      const totalRevenue = productStatsArray.reduce((sum, item) => sum + item.totalRevenue, 0);
-      const totalQuantity = productStatsArray.reduce((sum, item) => sum + item.totalQuantity, 0);
-
-      // Group by category for category statistics
-      const categoryStatsMap = new Map();
-      productStatsArray.forEach((item) => {
-        const categoryKey = item.categoryId || 0;
-        
-        if (!categoryStatsMap.has(categoryKey)) {
-          categoryStatsMap.set(categoryKey, {
-            categoryId: categoryKey,
-            categoryName: item.categoryName || 'N/A',
-            totalQuantity: 0,
-            totalRevenue: 0,
-            productCount: 0,
+      // Calculate category stats
+      productMap.forEach(product => {
+        const categoryKey = product.categoryId;
+        if (categoryMap.has(categoryKey)) {
+          const existing = categoryMap.get(categoryKey);
+          existing.totalQuantity += product.totalQuantity;
+          existing.totalRevenue += product.totalRevenue;
+          existing.productCount += 1;
+        } else {
+          categoryMap.set(categoryKey, {
+            categoryId: product.categoryId,
+            categoryName: product.categoryName,
+            totalQuantity: product.totalQuantity,
+            totalRevenue: product.totalRevenue,
+            productCount: 1,
           });
         }
-        
-        const categoryStats = categoryStatsMap.get(categoryKey);
-        categoryStats.totalQuantity += item.totalQuantity;
-        categoryStats.totalRevenue += item.totalRevenue;
-        categoryStats.productCount += 1;
       });
 
-      const categoryStats = Array.from(categoryStatsMap.values());
+      const productStats = Array.from(productMap.values());
+      const categoryStats = Array.from(categoryMap.values());
 
-      // Sort products by quantity and revenue
-      const topSellingProducts = [...productStatsArray]
+      // Calculate totals
+      const totalRevenue = productStats.reduce((sum, product) => sum + product.totalRevenue, 0);
+      const totalQuantity = productStats.reduce((sum, product) => sum + product.totalQuantity, 0);
+
+      // Top selling products (by quantity)
+      const topSellingProducts = productStats
         .sort((a, b) => b.totalQuantity - a.totalQuantity)
         .slice(0, 10);
-        
-      const topRevenueProducts = [...productStatsArray]
+
+      // Top revenue products
+      const topRevenueProducts = productStats
         .sort((a, b) => b.totalRevenue - a.totalRevenue)
         .slice(0, 10);
 
-      console.log("Menu Analysis Results:", {
-        totalRevenue,
-        totalQuantity,
-        productCount: productStatsArray.length,
-        categoryCount: categoryStats.length
-      });
-
-      res.json({
+      const result = {
         totalRevenue,
         totalQuantity,
         categoryStats,
-        productStats: productStatsArray,
+        productStats,
         topSellingProducts,
         topRevenueProducts,
+      };
+
+      console.log('Menu Analysis Results:', {
+        totalRevenue,
+        totalQuantity,
+        productCount: productStats.length,
+        categoryCount: categoryStats.length
       });
+
+      res.json(result);
     } catch (error) {
-      console.error("Error fetching menu analysis data:", error);
+      console.error('Menu analysis error:', error);
       res.status(500).json({
-        error: "Failed to fetch menu analysis data",
-        totalRevenue: 0,
-        totalQuantity: 0,
-        categoryStats: [],
-        productStats: [],
-        topSellingProducts: [],
-        topRevenueProducts: [],
+        error: 'Failed to fetch menu analysis',
+        details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
@@ -2305,10 +2285,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: customers.id,
           customerCode: customers.customerId,
           customerName: customers.name,
-          initialDebt: sql<number>`0`, // Mock initial debt
-          newDebt: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.1`, // 10% of total spent as debt
-          payment: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.05`, // 5% as payment
-          finalDebt: sql<number>`COALESCE(${customers.totalSpent}, 0) * 0.05`, // Final debt
+          initialDebt: sql < number > `0`, // Mock initial debt
+          newDebt: sql < number > `COALESCE(${customers.totalSpent}, 0) * 0.1`, // 10% of total spent as debt
+          payment: sql < number > `COALESCE(${customers.totalSpent}, 0) * 0.05`, // 5% as payment
+          finalDebt: sql < number > `COALESCE(${customers.totalSpent}, 0) * 0.05`, // Final debt
           phone: customers.phone,
         })
         .from(customers)
@@ -2341,7 +2321,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           customerName: customers.name,
           totalSales: customers.totalSpent,
           visitCount: customers.visitCount,
-          averageOrder: sql<number>`CASE WHEN ${customers.visitCount} > 0 THEN ${customers.totalSpent} / ${customers.visitCount} ELSE 0 END`,
+          averageOrder: sql < number > `CASE WHEN ${customers.visitCount} > 0 THEN ${customers.totalSpent} / ${customers.visitCount} ELSE 0 END`,
           phone: customers.phone,
         })
         .from(customers)
@@ -2352,7 +2332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (customerId) {
         filteredSales = customerSales.filter(
           (sale) => sale.id === parseInt(customerId as string),
-                );
+        );
       }
 
       res.json(filteredSales);
@@ -2527,16 +2507,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Enhanced filtering logic based on actual transaction data
           const methodMatch =
             salesMethod === "all" ||
-            (salesMethod === "no_delivery" && 
+            (salesMethod === "no_delivery" &&
               (!transaction.deliveryMethod || transaction.deliveryMethod === "pickup")) ||
-            (salesMethod === "delivery" && 
+            (salesMethod === "delivery" &&
               transaction.deliveryMethod === "delivery");
 
           const channelMatch =
             salesChannel === "all" ||
-            (salesChannel === "direct" && 
+            (salesChannel === "direct" &&
               (!transaction.salesChannel || transaction.salesChannel === "direct" || transaction.salesChannel === "pos")) ||
-            (salesChannel === "other" && 
+            (salesChannel === "other" &&
               transaction.salesChannel && transaction.salesChannel !== "direct" && transaction.salesChannel !== "pos");
 
           // Employee filter
@@ -2580,21 +2560,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const statusMatch = order.status === "paid";
 
           const employeeMatch =
-            selectedEmployee === "all" || 
+            selectedEmployee === "all" ||
             order.employeeId?.toString() === selectedEmployee;
 
           const channelMatch =
             salesChannel === "all" ||
-            (salesChannel === "direct" && 
+            (salesChannel === "direct" &&
               (!order.salesChannel || order.salesChannel === "direct")) ||
-            (salesChannel === "other" && 
+            (salesChannel === "other" &&
               order.salesChannel && order.salesChannel !== "direct");
 
           const methodMatch =
             salesMethod === "all" ||
-            (salesMethod === "no_delivery" && 
+            (salesMethod === "no_delivery" &&
               (!order.deliveryMethod || order.deliveryMethod === "pickup")) ||
-            (salesMethod === "delivery" && 
+            (salesMethod === "delivery" &&
               order.deliveryMethod === "delivery");
 
           return dateMatch && statusMatch && employeeMatch && channelMatch && methodMatch;
@@ -2635,20 +2615,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return dateMatch && statusMatch && sellerMatch && channelMatch;
         });
 
-        const salesData = [
-          {
-            salesChannelName: "Direct Sales",
-            revenue: filteredOrders.reduce(
-              (sum, order) => sum + Number(order.total),
-              0,
-            ),
-            returnValue: 0,
-            netRevenue: filteredOrders.reduce(
-              (sum, order) => sum + Number(order.total),
-              0,
-            ),
-          },
-        ];
+        const salesData = [{
+          salesChannelName: "Direct Sales",
+          revenue: filteredOrders.reduce(
+            (sum, order) => sum + Number(order.total),
+            0,
+          ),
+          returnValue: 0,
+          netRevenue: filteredOrders.reduce(
+            (sum, order) => sum + Number(order.total),
+            0,
+          ),
+        }, ];
 
         res.json(salesData);
       } catch (error) {
@@ -2690,20 +2668,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           (sum, order) => sum + Number(order.total),
           0,
         );
-        const profitData = [
-          {
-            salesChannelName: "Direct Sales",
-            totalAmount: totalAmount,
-            discount: 0,
-            revenue: totalAmount,
-            returnValue: 0,
-            netRevenue: totalAmount,
-            totalCost: totalAmount * 0.6,
-            grossProfit: totalAmount * 0.4,
-            platformFee: 0,
-            netProfit: totalAmount * 0.4,
-          },
-        ];
+        const profitData = [{
+          salesChannelName: "Direct Sales",
+          totalAmount: totalAmount,
+          discount: 0,
+          revenue: totalAmount,
+          returnValue: 0,
+          netRevenue: totalAmount,
+          totalCost: totalAmount * 0.6,
+          grossProfit: totalAmount * 0.4,
+          platformFee: 0,
+          netProfit: totalAmount * 0.4,
+        }, ];
 
         res.json(profitData);
       } catch (error) {
@@ -3033,11 +3009,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             percentage:
               filteredTransactions.length > 0
                 ? (amount /
-                    filteredTransactions.reduce(
-                      (sum, t) => sum + Number(t.total),
-                      0,
-                    )) *
-                  100
+                  filteredTransactions.reduce(
+                    (sum, t) => sum + Number(t.total),
+                    0,
+                  )) *
+                100
                 : 0,
           }),
         );
@@ -3379,7 +3355,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         errorDetails = "Data already exists in database";
       }
 
-      res.status(500).json({ 
+      res.status(500).json({
         error: errorMessage,
         details: errorDetails,
         timestamp: new Date().toISOString(),
@@ -3509,7 +3485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Invoice ID:", req.params.id);
       console.error("Update data:", req.body);
 
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to update invoice",
         details: error instanceof Error ? error.message : "Unknown error",
         invoiceID: req.params.id,
@@ -3585,7 +3561,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Order ID:", req.params.id);
       console.error("Update data:", req.body);
 
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to update order",
         details: error instanceof Error ? error.message : "Unknown error",
         orderID: req.params.id,
@@ -3612,9 +3588,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const [updatedOrder] = await db
             .update(orders)
-            .set({ 
+            .set({
               invoiceNumber: invoiceNumber,
-              updatedAt: new Date() 
+              updatedAt: new Date()
             })
             .where(eq(orders.id, orderId))
             .returning();
@@ -3637,9 +3613,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         try {
           const [updatedInvoice] = await db
             .update(invoices)
-            .set({ 
+            .set({
               invoiceNumber: invoiceNumber,
-              updatedAt: new Date() 
+              updatedAt: new Date()
             })
             .where(eq(invoices.id, invoiceId))
             .returning();
@@ -3667,7 +3643,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("=== UPDATE INVOICE NUMBER ERROR ===");
       console.error("Error:", error);
 
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to update invoice number",
         details: error instanceof Error ? error.message : "Unknown error"
       });
@@ -3754,7 +3730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Add einvoiceStatus column to orders table if it doesn't exist
   try {
-    await db.execute(sql`
+    await db.execute(sql `
       ALTER TABLE orders ADD COLUMN IF NOT EXISTS einvoice_status INTEGER NOT NULL DEFAULT 0
     `);
     console.log("Added einvoiceStatus column to orders table");
@@ -3768,7 +3744,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/printer-configs', async (req, res) => {
     try {
       const tenantDb = await getTenantDatabase(req);
-      const result = await db.execute(sql`
+      const result = await db.execute(sql `
         SELECT id, name, printer_type, connection_type, ip_address, port, 
                mac_address, paper_width, print_speed, is_employee, is_kitchen, 
                is_active, created_at, updated_at
@@ -3805,7 +3781,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { type } = req.query; // 'employee', 'kitchen', or 'all'
       const tenantDb = await getTenantDatabase(req);
-      
+
       let whereClause = 'WHERE is_active = true';
       if (type === 'employee') {
         whereClause += ' AND is_employee = true';
@@ -3813,7 +3789,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         whereClause += ' AND is_kitchen = true';
       }
 
-      const result = await db.execute(sql`
+      const result = await db.execute(sql `
         SELECT id, name, printer_type, connection_type, ip_address, port, 
                mac_address, paper_width, print_speed, is_employee, is_kitchen, 
                is_active, created_at, updated_at
@@ -3864,7 +3840,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         whereClause += ' AND (is_employee = true OR is_kitchen = true)';
       }
 
-      const result = await db.execute(sql`
+      const result = await db.execute(sql `
         SELECT id, name, printer_type, connection_type, ip_address, port, 
                mac_address, paper_width, print_speed, is_employee, is_kitchen
         FROM printer_configs 
@@ -3873,9 +3849,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `);
 
       if (!result.rows || result.rows.length === 0) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           error: 'No active printer found',
-          message: 'Không tìm thấy máy in hoặc không có cấu hình máy in' 
+          message: 'Không tìm thấy máy in hoặc không có cấu hình máy in'
         });
       }
 
@@ -3932,7 +3908,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     } catch (error) {
       console.error('❌ Auto-print error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: 'Print failed',
         message: 'Có lỗi xảy ra khi in hóa đơn'
       });
@@ -3946,15 +3922,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If setting as primary, unset all other primaries
       if (configData.isPrimary) {
-        await db.execute(sql`UPDATE printer_configs SET is_primary = false`);
+        await db.execute(sql `UPDATE printer_configs SET is_primary = false`);
       }
 
       // If setting as secondary, unset all other secondaries
       if (configData.isSecondary) {
-        await db.execute(sql`UPDATE printer_configs SET is_secondary = false`);
+        await db.execute(sql `UPDATE printer_configs SET is_secondary = false`);
       }
 
-      const result = await db.execute(sql`
+      const result = await db.execute(sql `
         INSERT INTO printer_configs (
           name, printer_type, connection_type, ip_address, port, mac_address,
           paper_width, print_speed, is_employee, is_kitchen, is_active
@@ -3984,15 +3960,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If setting as employee printer, unset all other employee printers
       if (configData.isEmployee) {
-        await db.execute(sql`UPDATE printer_configs SET is_employee = false WHERE id != ${id}`);
+        await db.execute(sql `UPDATE printer_configs SET is_employee = false WHERE id != ${id}`);
       }
 
       // If setting as kitchen printer, unset all other kitchen printers
       if (configData.isKitchen) {
-        await db.execute(sql`UPDATE printer_configs SET is_kitchen = false WHERE id != ${id}`);
+        await db.execute(sql `UPDATE printer_configs SET is_kitchen = false WHERE id != ${id}`);
       }
 
-      const result = await db.execute(sql`
+      const result = await db.execute(sql `
         UPDATE printer_configs SET
           name = ${configData.name},
           printer_type = ${configData.printerType},
@@ -4025,7 +4001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const tenantDb = await getTenantDatabase(req);
 
-      const result = await db.execute(sql`DELETE FROM printer_configs WHERE id = ${id}`);
+      const result = await db.execute(sql `DELETE FROM printer_configs WHERE id = ${id}`);
 
       if (result.rowCount === 0) {
         return res.status(404).json({ error: "Printer config not found" });
@@ -4043,7 +4019,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const tenantDb = await getTenantDatabase(req);
 
-      const result = await db.execute(sql`
+      const result = await db.execute(sql `
         SELECT * FROM printer_configs WHERE id = ${id}
       `);
 
@@ -4056,7 +4032,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Mock test print functionality
       console.log(`Testing printer: ${config.name}`);
 
-      res.json({ 
+      res.json({
         message: "Test print sent successfully",
         printer: config.name,
         status: "success"
@@ -4161,7 +4137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("=== SAVE ORDER FROM INVOICE ERROR ===");
       console.error("Error:", error);
 
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to save order from invoice",
         details: error instanceof Error ? error.message : "Unknown error"
       });
@@ -4223,7 +4199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Enhanced employee filtering
         let employeeMatch = true;
         if (selectedEmployee !== 'all') {
-          employeeMatch = 
+          employeeMatch =
             transaction.cashierName === selectedEmployee ||
             transaction.employeeId?.toString() === selectedEmployee ||
             (transaction.cashierName && transaction.cashierName.toLowerCase().includes(selectedEmployee.toLowerCase()));
@@ -4262,7 +4238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Enhanced employee filtering
         let employeeMatch = true;
         if (selectedEmployee !== 'all') {
-          employeeMatch = 
+          employeeMatch =
             order.employeeId?.toString() === selectedEmployee ||
             (order.employeeName && order.employeeName.toLowerCase().includes(selectedEmployee.toLowerCase()));
         }
@@ -4336,10 +4312,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Filter by product type if specified
       if (productType && productType !== 'all' && productType !== 'undefined') {
-        const typeMap = { 
-          combo: 3, 
+        const typeMap = {
+          combo: 3,
           'combo-dongoi': 3,
-          product: 1, 
+          product: 1,
           'hang-hoa': 1,
           service: 2,
           'dich-vu': 2
@@ -4353,7 +4329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Filter by product search if provided
       if (productSearch && productSearch !== '' && productSearch !== 'undefined' && productSearch !== 'all') {
         const searchTerm = productSearch.toLowerCase();
-        products = products.filter((product: any) => 
+        products = products.filter((product: any) =>
           product.name?.toLowerCase().includes(searchTerm) ||
           product.sku?.toLowerCase().includes(searchTerm) ||
           product.description?.toLowerCase().includes(searchTerm)
@@ -4380,7 +4356,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Filter by search if provided
       if (customerSearch && customerSearch !== '' && customerSearch !== 'undefined' && customerSearch !== 'all') {
         const searchTerm = customerSearch.toLowerCase();
-        customers = customers.filter((customer: any) => 
+        customers = customers.filter((customer: any) =>
           customer.name?.toLowerCase().includes(searchTerm) ||
           customer.phone?.includes(customerSearch) ||
           customer.email?.toLowerCase().includes(searchTerm) ||
@@ -4427,7 +4403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/health/db", async (req, res) => {
     try {
       // Test basic connection with simple query
-      const result = await db.execute(sql`SELECT 
+      const result = await db.execute(sql `SELECT 
         current_database() as database_name,
         current_user as user_name,
         version() as postgres_version,
@@ -4436,7 +4412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const dbInfo = result && result.length > 0 ? result[0] : {};
 
-      res.json({ 
+      res.json({
         status: "healthy",
         database: dbInfo.database_name,
         user: dbInfo.user_name,
@@ -4449,8 +4425,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("Database health check failed:", error);
 
-      res.status(500).json({ 
-        status: "unhealthy", 
+      res.status(500).json({
+        status: "unhealthy",
         error: errorMessage,
         connectionString: DATABASE_URL?.replace(/:[^:@]*@/, ':****@'),
         usingExternalDb: !!process.env.EXTERNAL_DB_URL,
