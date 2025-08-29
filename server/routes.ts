@@ -513,8 +513,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
         // Use afterTaxPrice if available, otherwise calculate based on taxRate
         if (product.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          const taxPerUnit = afterTaxPrice - parseFloat(item.price);
+          const basePrice = parseFloat(item.price);
+          // Calculate tax as difference between afterTaxPrice and base price
+          const taxPerUnit = Math.max(0, afterTaxPrice - basePrice);
           itemTax = taxPerUnit * item.quantity;
+          
+          // Update subtotal to use afterTaxPrice total
+          subtotal = subtotal - itemSubtotal + (afterTaxPrice * item.quantity);
         } else if (product.taxRate && parseFloat(product.taxRate) > 0) {
           // Calculate tax based on taxRate if no afterTaxPrice
           itemTax = (itemSubtotal * parseFloat(product.taxRate)) / 100;
