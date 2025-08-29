@@ -90,14 +90,14 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const activeOrders = Array.isArray(orders) ? orders.filter(
     (order: any) => !["paid", "cancelled"].includes(order.status)
   ) : [];
-  
+
   const { data: allOrderItems } = useQuery({
     queryKey: ["/api/all-order-items", activeOrders.map(o => o.id).join(",")],
     enabled: activeOrders.length > 0,
     staleTime: 0,
     queryFn: async () => {
       const itemsMap = new Map();
-      
+
       for (const order of activeOrders) {
         try {
           const response = await apiRequest("GET", `/api/order-items/${order.id}`);
@@ -108,7 +108,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           itemsMap.set(order.id, []);
         }
       }
-      
+
       return itemsMap;
     },
   });
@@ -1633,12 +1633,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           {(() => {
                             // Get order items for this specific order
                             const currentOrderItems = allOrderItems?.get(activeOrder.id) || [];
-                            
+
                             // If we don't have order items loaded or it's empty, use the stored total
                             if (!currentOrderItems || currentOrderItems.length === 0) {
                               const rawTotal = activeOrder.total;
                               const orderTotal = Number(rawTotal || 0);
-                              
+
                               console.log(
                                 `💰 Table ${table.tableNumber} - Order ${activeOrder.id} using stored total:`,
                                 {
@@ -1647,28 +1647,28 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                   hasItems: false,
                                 }
                               );
-                              
+
                               if (orderTotal <= 0) {
                                 return "0";
                               }
-                              
+
                               return Math.floor(orderTotal).toLocaleString("vi-VN");
                             }
-                            
+
                             // Recalculate using same logic as Order Details and Shopping Cart
                             let subtotal = 0;
                             let totalTax = 0;
-                            
+
                             currentOrderItems.forEach((item: any) => {
                               const basePrice = Number(item.unitPrice || 0);
                               const quantity = Number(item.quantity || 0);
                               const product = Array.isArray(products)
                                 ? products.find((p: any) => p.id === item.productId)
                                 : null;
-                              
+
                               // Calculate subtotal (base price without tax)
                               subtotal += basePrice * quantity;
-                              
+
                               // Only calculate tax if afterTaxPrice exists in database
                               if (
                                 product?.afterTaxPrice &&
@@ -1681,9 +1681,9 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                               }
                               // No tax calculation if no afterTaxPrice in database
                             });
-                            
+
                             const grandTotal = subtotal + totalTax;
-                            
+
                             console.log(
                               `💰 Table ${table.tableNumber} - Order ${activeOrder.id} recalculated total:`,
                               {
@@ -1694,11 +1694,11 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                                 storedTotal: Number(activeOrder.total || 0),
                               }
                             );
-                            
+
                             if (grandTotal <= 0) {
                               return "0";
                             }
-                            
+
                             return Math.floor(grandTotal).toLocaleString("vi-VN");
                           })()}{" "}
                           ₫
@@ -2176,9 +2176,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                               );
                               const taxPerUnit = afterTaxPrice - basePrice;
                               totalTax += taxPerUnit * quantity;
-                            } else {
-                              // No afterTaxPrice means no tax
-                              totalTax += 0;
                             }
                           });
                         }
@@ -2191,8 +2188,8 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           productId: item.productId,
                           productName:
                             item.productName || getProductName(item.productId),
-                          quantity: item.quantity,
                           price: item.unitPrice,
+                          quantity: item.quantity,
                           total: item.total,
                           sku: item.productSku || `SP${item.productId}`,
                           taxRate: (() => {
@@ -2369,7 +2366,6 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                     const itemTotal = parseFloat(item.total || "0");
                     return sum + itemTotal;
                   },
-                  0,
                 ) || 0,
             });
 

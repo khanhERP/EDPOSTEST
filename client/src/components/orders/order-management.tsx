@@ -142,12 +142,12 @@ export function OrderManagement() {
             const itemSubtotal = basePrice * quantity;
             subtotal += itemSubtotal;
 
-            // Use EXACT same tax calculation logic as Order Details display
+            // Tax = (after_tax_price - price) * quantity
             let itemTax = 0;
             if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
               const afterTaxPrice = parseFloat(product.afterTaxPrice);
-              const taxPerUnit = afterTaxPrice - basePrice;
-              itemTax = taxPerUnit * quantity;
+              const price = parseFloat(product.price);
+              itemTax = (afterTaxPrice - price) * quantity;
               totalTax += itemTax;
             }
 
@@ -920,25 +920,20 @@ export function OrderManagement() {
                                 // Calculate tax based on afterTaxPrice if available, otherwise use taxRate
                                 if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                                   const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                                  const basePrice = Number(item.unitPrice || 0);
-                                  const taxPerUnit = afterTaxPrice - basePrice;
-                                  const totalTax = taxPerUnit * item.quantity;
-                                  const taxRate = basePrice > 0 ? ((taxPerUnit / basePrice) * 100).toFixed(2) : "0.00";
-
-                                  return totalTax > 0 ? (
-                                    <div className="text-xs text-orange-600 mt-1">
-                                      Thuế: {formatCurrency(totalTax)} ({taxRate}%)
-                                    </div>
-                                  ) : null;
-                                } else if (product?.taxRate && parseFloat(product.taxRate) > 0) {
-                                  const taxAmount = Number(item.unitPrice || 0) * parseFloat(product.taxRate) / 100 * item.quantity;
+                                  const price = parseFloat(product.price);
+                                  const itemTax = (afterTaxPrice - price) * Number(item.quantity || 0);
                                   return (
-                                    <div className="text-xs text-orange-600 mt-1">
-                                      Thuế: {formatCurrency(taxAmount)} ({product.taxRate}%)
+                                    <div className="text-xs text-green-600">
+                                      Thuế: {formatCurrency(itemTax)}
+                                    </div>
+                                  );
+                                } else {
+                                  return (
+                                    <div className="text-xs text-gray-500">
+                                      Thuế: {formatCurrency(0)}
                                     </div>
                                   );
                                 }
-                                return null;
                               })()}
                               {item.notes && (
                                 <div className="text-xs text-blue-600 italic mt-1">
@@ -982,11 +977,11 @@ export function OrderManagement() {
                           // Calculate subtotal exactly as Order Details display
                           orderDetailsSubtotal += basePrice * quantity;
 
-                          // Use EXACT same tax calculation logic as Order Details display
+                          // Tax = (after_tax_price - price) * quantity
                           if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                             const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                            const taxPerUnit = afterTaxPrice - basePrice;
-                            orderDetailsTax += taxPerUnit * quantity;
+                            const price = parseFloat(product.price);
+                            orderDetailsTax += (afterTaxPrice - price) * quantity;
                           }
                         });
                       }
@@ -1044,12 +1039,12 @@ export function OrderManagement() {
                           const itemSubtotal = basePrice * quantity;
                           orderDetailsSubtotal += itemSubtotal;
 
-                          // Use EXACT same tax calculation logic as Order Details display
+                          // Tax = (after_tax_price - price) * quantity
                           let itemTax = 0;
                           if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                             const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                            const taxPerUnit = afterTaxPrice - basePrice;
-                            itemTax = taxPerUnit * quantity;
+                            const price = parseFloat(product.price);
+                            itemTax = (afterTaxPrice - price) * quantity;
                             orderDetailsTax += itemTax;
                           }
 
@@ -1704,11 +1699,11 @@ export function OrderManagement() {
               // Calculate subtotal exactly as Order Details display
               itemsSubtotal += basePrice * quantity;
 
-              // Use EXACT same tax calculation logic as Order Details display
+              // Tax = (after_tax_price - price) * quantity
               if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                const taxPerUnit = afterTaxPrice - basePrice;
-                itemsTax += taxPerUnit * quantity;
+                const price = parseFloat(product.price);
+                itemsTax += (afterTaxPrice - price) * quantity;
               }
             });
           }
@@ -1795,11 +1790,11 @@ export function OrderManagement() {
                 // Calculate subtotal exactly as Order Details display
                 itemsSubtotal += basePrice * quantity;
 
-                // Use EXACT same tax calculation logic as Order Details display
+                // Tax = (after_tax_price - price) * quantity
                 if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                   const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                  const taxPerUnit = afterTaxPrice - basePrice;
-                  itemsTax += taxPerUnit * quantity;
+                  const price = parseFloat(product.price);
+                  itemsTax += (afterTaxPrice - price) * quantity;
                 }
               });
             }

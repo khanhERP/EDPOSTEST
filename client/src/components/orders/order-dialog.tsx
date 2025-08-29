@@ -264,12 +264,11 @@ export function OrderDialog({
       const product = products?.find((p: Product) => p.id === item.product.id);
       let itemTax = 0;
 
-      // Only calculate tax if afterTaxPrice exists in database
+      // Tax = (after_tax_price - price) * quantity
       if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
         const afterTaxPrice = parseFloat(product.afterTaxPrice);
-        const basePrice = item.product.price;
-        const taxPerUnit = afterTaxPrice - basePrice;
-        itemTax = taxPerUnit * item.quantity;
+        const price = parseFloat(product.price);
+        itemTax = (afterTaxPrice - price) * item.quantity;
       }
       // No tax if no afterTaxPrice in database
 
@@ -282,12 +281,11 @@ export function OrderDialog({
         const product = products?.find((p: Product) => p.id === item.productId);
         let itemTax = 0;
 
-        // Only calculate tax if afterTaxPrice exists in database
+        // Tax = (after_tax_price - price) * quantity
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          const basePrice = Number(item.unitPrice || 0);
-          const taxPerUnit = afterTaxPrice - basePrice;
-          itemTax = taxPerUnit * Number(item.quantity || 0);
+          const price = parseFloat(product.price);
+          itemTax = (afterTaxPrice - price) * item.quantity;
         }
         // No tax if no afterTaxPrice in database
 
@@ -345,11 +343,11 @@ export function OrderDialog({
         const itemSubtotal = basePrice * quantity;
 
         let itemTax = 0;
-        // Only calculate tax if afterTaxPrice exists in database
+        // Tax = (after_tax_price - price) * quantity
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          const taxPerUnit = afterTaxPrice - basePrice;
-          itemTax = taxPerUnit * quantity;
+          const price = parseFloat(product.price);
+          itemTax = (afterTaxPrice - price) * quantity;
         }
         // No tax if no afterTaxPrice in database
 
@@ -397,11 +395,11 @@ export function OrderDialog({
         const itemSubtotal = basePrice * quantity;
 
         let itemTax = 0;
-        // Only calculate tax if afterTaxPrice exists in database
+        // Tax = (after_tax_price - price) * quantity
         if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(product.afterTaxPrice);
-          const taxPerUnit = afterTaxPrice - basePrice;
-          itemTax = taxPerUnit * quantity;
+          const price = parseFloat(product.price);
+          itemTax = (afterTaxPrice - price) * quantity;
         }
         // No tax if no afterTaxPrice in database
 
@@ -684,8 +682,8 @@ export function OrderDialog({
                                                   const productResponse = products?.find((p: any) => p.id === remainingItem.productId);
                                                   if (productResponse?.afterTaxPrice && productResponse.afterTaxPrice !== null && productResponse.afterTaxPrice !== "") {
                                                     const afterTaxPrice = parseFloat(productResponse.afterTaxPrice);
-                                                    const taxPerUnit = afterTaxPrice - basePrice;
-                                                    newTax += taxPerUnit * quantity;
+                                                    const price = parseFloat(productResponse.price);
+                                                    newTax += (afterTaxPrice - price) * quantity;
                                                   }
                                                 });
                                               }

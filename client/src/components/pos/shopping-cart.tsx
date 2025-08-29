@@ -83,30 +83,22 @@ export function ShoppingCart({
           console.log("  Tax for", item.quantity, "items:", (afterTaxPrice - basePrice) * item.quantity);
         }
 
-        // Always use afterTaxPrice - basePrice formula if afterTaxPrice exists
+        // Tax = (after_tax_price - price) * quantity
         if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
           const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          // Tax = afterTaxPrice - basePrice
-          const taxPerItem = afterTaxPrice - basePrice;
-          const totalItemTax = taxPerItem * item.quantity;
-          console.log("✅ Using afterTaxPrice from database:");
+          const price = parseFloat(item.price);
+          // Tax = (afterTaxPrice - price) * quantity
+          const totalItemTax = (afterTaxPrice - price) * item.quantity;
+          console.log("✅ Using tax formula: (after_tax_price - price) * quantity");
           console.log("  After Tax Price:", afterTaxPrice, "₫");
-          console.log("  Tax per item:", taxPerItem, "₫");
+          console.log("  Price:", price, "₫");
           console.log("  Quantity:", item.quantity);
-          console.log("  Total tax for this item:", totalItemTax, "₫");
-          console.log("  Verification: " + afterTaxPrice + " - " + basePrice + " = " + taxPerItem);
+          console.log("  Tax calculation: (" + afterTaxPrice + " - " + price + ") * " + item.quantity + " = " + totalItemTax + "₫");
           return sum + totalItemTax;
         } else {
-          // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
-          const calculatedAfterTaxPrice = basePrice * (1 + parseFloat(item.taxRate) / 100);
-          const taxPerItem = calculatedAfterTaxPrice - basePrice;
-          const totalItemTax = taxPerItem * item.quantity;
-          console.log("⚠️ Using calculated afterTaxPrice (fallback):");
-          console.log("  Calculated After Tax Price:", calculatedAfterTaxPrice, "₫");
-          console.log("  Tax per item:", taxPerItem, "₫");
-          console.log("  Quantity:", item.quantity);
-          console.log("  Total tax for this item:", totalItemTax, "₫");
-          return sum + totalItemTax;
+          // No afterTaxPrice means no tax
+          console.log("⚠️ No afterTaxPrice found, no tax applied for:", item.name);
+          return sum;
         }
       }
       return sum;
