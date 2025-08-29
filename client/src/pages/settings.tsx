@@ -3266,7 +3266,7 @@ export default function Settings() {
                 onChange={(e) => {
                   const basePrice = e.target.value;
                   setProductForm((prev) => ({ ...prev, price: basePrice }));
-                  
+
                   // Auto calculate after tax price when base price changes
                   if (basePrice && productForm.taxRate) {
                     const basePriceNum = parseFloat(basePrice);
@@ -3295,7 +3295,7 @@ export default function Settings() {
                 onChange={(e) => {
                   const taxRate = e.target.value;
                   setProductForm((prev) => ({ ...prev, taxRate }));
-                  
+
                   // Auto calculate after tax price when tax rate changes
                   if (taxRate && productForm.price) {
                     const basePriceNum = parseFloat(productForm.price);
@@ -3321,7 +3321,7 @@ export default function Settings() {
                 onChange={(e) => {
                   const afterTaxPrice = e.target.value;
                   setProductForm((prev) => ({ ...prev, afterTaxPrice }));
-                  
+
                   // Auto calculate base price from after tax price
                   if (afterTaxPrice && productForm.taxRate) {
                     const afterTaxPriceNum = parseFloat(afterTaxPrice);

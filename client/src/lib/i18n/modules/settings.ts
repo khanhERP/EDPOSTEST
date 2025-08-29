@@ -185,6 +185,13 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     usageStatusActive: "활성",
     usageStatusInactive: "비활성",
     selectUsageStatus: "상태를 선택하세요",
+    
+    // Placeholders
+    categoryNamePlaceholder: "카테고리 이름을 입력하세요",
+    templateNumberPlaceholder: "예: 01GTKT0/001",
+    templateCodePlaceholder: "예: 123451/88890345", 
+    symbolPlaceholder: "예: AA/19E",
+    templateNamePlaceholder: "예: 템플릿 1",
   },
   en: {
     title: "Settings",
@@ -373,6 +380,13 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     usageStatusActive: "Active",
     usageStatusInactive: "Inactive",
     selectUsageStatus: "Select status",
+    
+    // Placeholders
+    categoryNamePlaceholder: "Enter category name",
+    templateNumberPlaceholder: "e.g., 01GTKT0/001",
+    templateCodePlaceholder: "e.g., 123451/88890345",
+    symbolPlaceholder: "e.g., AA/19E", 
+    templateNamePlaceholder: "e.g., Template 1",
   },
   vi: {
     title: "Cài đặt",
@@ -561,5 +575,12 @@ export const settingsTranslations: { [key: string]: SettingsTranslations } = {
     usageStatusActive: "Hoạt động",
     usageStatusInactive: "Không hoạt động",
     selectUsageStatus: "Chọn trạng thái",
+    
+    // Placeholders
+    categoryNamePlaceholder: "Nhập tên danh mục",
+    templateNumberPlaceholder: "Ví dụ: 01GTKT0/001",
+    templateCodePlaceholder: "Ví dụ: 123451/88890345",
+    symbolPlaceholder: "Ví dụ: AA/19E",
+    templateNamePlaceholder: "Ví dụ: Mẫu số 1",
   },
 };
