@@ -415,10 +415,10 @@ export function ReceiptModal({
                 <div key={item.id || item.productId}>
                   <div className="flex justify-between text-sm">
                     <div className="flex-1">
-                      <div>{item.productName || item.name}</div>
+                      <div>{item.name || item.productName}</div>
                       <div className="text-xs text-gray-600">
                         SKU:{" "}
-                        {item.sku || `FOOD${String(item.productId || item.id).padStart(5, "0")}`}
+                        {item.sku || `FOOD${String(item.id || item.productId).padStart(5, "0")}`}
                       </div>
                       <div className="text-xs text-gray-600">
                         {quantity} x{" "}
@@ -439,7 +439,7 @@ export function ReceiptModal({
                 {(() => {
                   // Priority: exactSubtotal > subtotal > calculate from items
                   let subtotalValue = 0;
-                  
+
                   if (receipt?.exactSubtotal !== undefined) {
                     subtotalValue = receipt.exactSubtotal;
                   } else if (receipt?.subtotal) {
@@ -457,7 +457,7 @@ export function ReceiptModal({
                       return sum + parseFloat(item.price || '0') * item.quantity;
                     }, 0);
                   }
-                  
+
                   console.log('💰 Receipt Modal - Subtotal display:', subtotalValue, 'from exactSubtotal:', receipt?.exactSubtotal, 'from subtotal:', receipt?.subtotal, 'cartItems length:', cartItems?.length);
                   return Math.floor(subtotalValue).toLocaleString("vi-VN");
                 })()} ₫
@@ -469,7 +469,7 @@ export function ReceiptModal({
                 {(() => {
                   // Priority: exactTax > tax > calculate from items
                   let taxValue = 0;
-                  
+
                   if (receipt?.exactTax !== undefined) {
                     taxValue = receipt.exactTax;
                   } else if (receipt?.tax) {
@@ -480,7 +480,7 @@ export function ReceiptModal({
                       if (item.taxRate && parseFloat(item.taxRate || '0') > 0) {
                         const basePrice = parseFloat(item.price || '0');
                         const quantity = item.quantity || 1;
-                        
+
                         // Calculate tax using taxRate
                         const taxRate = parseFloat(item.taxRate || '0') / 100;
                         const itemTax = basePrice * taxRate * quantity;
@@ -489,7 +489,7 @@ export function ReceiptModal({
                       return sum;
                     }, 0);
                   }
-                  
+
                   console.log('💰 Receipt Modal - Tax display:', taxValue, 'from exactTax:', receipt?.exactTax, 'from tax:', receipt?.tax, 'cartItems length:', cartItems?.length);
                   return Math.floor(taxValue).toLocaleString("vi-VN");
                 })()} ₫
@@ -499,39 +499,52 @@ export function ReceiptModal({
               <span>{t("pos.total")}</span>
               <span>
                 {(() => {
-                  // Priority: exactTotal > total > passed total prop > calculate from items
+                  // Priority order for total calculation - consistent with EInvoice
                   let totalValue = 0;
-                  
+
                   if (receipt?.exactTotal !== undefined) {
                     totalValue = receipt.exactTotal;
+                    console.log('💰 Receipt Modal - Using exactTotal:', totalValue);
                   } else if (receipt?.total) {
                     totalValue = parseFloat(receipt.total);
-                  } else if (total) {
-                    totalValue = typeof total === 'string' ? parseFloat(total) : total;
+                    console.log('💰 Receipt Modal - Using receipt.total:', totalValue);
+                  } else if (total && typeof total === 'number') {
+                    totalValue = total;
+                    console.log('💰 Receipt Modal - Using total prop:', totalValue);
                   } else if (cartItems?.length > 0) {
-                    // Calculate total from cartItems
-                    const subtotal = cartItems.reduce((sum, item) => {
+                    // Calculate using afterTaxPrice when available, consistent with EInvoice logic
+                    totalValue = cartItems.reduce((sum, item) => {
                       const price = parseFloat(item.price || '0');
                       const quantity = item.quantity || 1;
-                      return sum + (price * quantity);
-                    }, 0);
-                    
-                    const tax = cartItems.reduce((sum, item) => {
-                      if (item.taxRate && parseFloat(item.taxRate || '0') > 0) {
-                        const basePrice = parseFloat(item.price || '0');
-                        const quantity = item.quantity || 1;
-                        const taxRate = parseFloat(item.taxRate || '0') / 100;
-                        const itemTax = basePrice * taxRate * quantity;
-                        return sum + itemTax;
+
+                      // Use afterTaxPrice if available for exact calculation
+                      if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                        const afterTaxPrice = typeof item.afterTaxPrice === 'string'
+                          ? parseFloat(item.afterTaxPrice)
+                          : item.afterTaxPrice;
+                        if (!isNaN(afterTaxPrice) && afterTaxPrice > 0) {
+                          const itemTotal = afterTaxPrice * quantity;
+                          console.log(`💰 Receipt - Using afterTaxPrice for ${item.name}: ${afterTaxPrice} x ${quantity} = ${itemTotal}`);
+                          return sum + itemTotal;
+                        }
                       }
-                      return sum;
+
+                      // Fallback: calculate with tax rate
+                      const taxRate = parseFloat(item.taxRate || '0') / 100;
+                      const subtotal = price * quantity;
+                      const tax = subtotal * taxRate;
+                      const itemTotal = subtotal + tax;
+                      console.log(`💰 Receipt - Calculated for ${item.name}: ${price} x ${quantity} + ${taxRate * 100}% tax = ${itemTotal}`);
+                      return sum + itemTotal;
                     }, 0);
-                    
-                    totalValue = subtotal + tax;
+                    console.log('💰 Receipt Modal - Calculated from cartItems:', totalValue);
                   }
-                  
-                  console.log('💰 Receipt Modal - Total display:', totalValue, 'from exactTotal:', receipt?.exactTotal, 'from total:', receipt?.total, 'from total prop:', total);
-                  return Math.floor(totalValue).toLocaleString("vi-VN");
+
+                  console.log('💰 Receipt Modal - Final total display:', totalValue);
+                  return totalValue.toLocaleString("vi-VN", {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0
+                  });
                 })()} ₫
               </span>
             </div>
