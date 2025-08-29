@@ -91,10 +91,24 @@ export function ReceiptModal({
     onConfirm: !!onConfirm
   });
 
-  // Don't render if modal is not open or no receipt data
-  if (!isOpen || !receipt) {
-    console.log("❌ Receipt Modal: Modal closed or no receipt data provided");
-    return null;
+  // Early return if no receipt data and not in preview mode
+  if (!receipt && !isPreview) {
+    console.log("❌ Receipt Modal: No receipt data provided");
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Lỗi hóa đơn</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 text-center">
+            <p>Không có dữ liệu hóa đơn để hiển thị</p>
+            <Button onClick={onClose} className="mt-4">
+              Đóng
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
   }
 
   const handlePrint = async () => {
@@ -257,6 +271,13 @@ export function ReceiptModal({
     // Logic to handle payment method selection, potentially opening e-invoice modal
   };
 
+  // If receipt is null but isPreview is true, we still render the modal structure but without receipt data
+  // This case is handled by the check below, which will render a message if receipt is null.
+  // We only return null if !isOpen
+  if (!isOpen) {
+    return null;
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md w-full max-h-screen overflow-y-auto">
@@ -270,172 +291,184 @@ export function ReceiptModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div
-          id="receipt-content"
-          className="receipt-print bg-white"
-          style={{ padding: "16px" }}
-        >
-          <div className="text-center mb-4">
-            <p className="text-xs font-semibold mb-1">
-              {storeSettings?.storeName || "Easy Digital Point Of Sale Service"}
-            </p>
-            <p className="text-xs mb-0.5">{t("pos.mainStoreLocation")}</p>
-            <p className="text-xs mb-0.5">
-              {storeSettings?.address || "123 Commerce St, City, State 12345"}
-            </p>
-            <p className="text-xs mb-2">
-              {t("pos.phone")} {storeSettings?.phone || "(555) 123-4567"}
-            </p>
-            <div className="flex items-center justify-center">
-              <img src={logoPath} alt="EDPOS Logo" className="h-6" />
+        {receipt ? (
+          <div
+            id="receipt-content"
+            className="receipt-print bg-white"
+            style={{ padding: "16px" }}
+          >
+            <div className="text-center mb-4">
+              <p className="text-xs font-semibold mb-1">
+                {storeSettings?.storeName || "Easy Digital Point Of Sale Service"}
+              </p>
+              <p className="text-xs mb-0.5">{t("pos.mainStoreLocation")}</p>
+              <p className="text-xs mb-0.5">
+                {storeSettings?.address || "123 Commerce St, City, State 12345"}
+              </p>
+              <p className="text-xs mb-2">
+                {t("pos.phone")} {storeSettings?.phone || "(555) 123-4567"}
+              </p>
+              <div className="flex items-center justify-center">
+                <img src={logoPath} alt="EDPOS Logo" className="h-6" />
+              </div>
             </div>
-          </div>
 
-          <div className="border-t border-b border-gray-300 py-3 mb-3">
-            <div className="flex justify-between text-sm">
-              <span>{t("pos.transactionNumber")}</span>
-              <span>{receipt.transactionId}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>{t("pos.date")}</span>
-              <span>{new Date(receipt.createdAt).toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>{t("pos.cashier")}</span>
-              <span>{receipt.cashierName}</span>
-            </div>
-            {isEInvoice && customerName && (
+            <div className="border-t border-b border-gray-300 py-3 mb-3">
               <div className="flex justify-between text-sm">
-                <span>Khách hàng:</span>
-                <span>{customerName}</span>
+                <span>{t("pos.transactionNumber")}</span>
+                <span>{receipt.transactionId}</span>
               </div>
-            )}
-            {isEInvoice && customerTaxCode && (
               <div className="flex justify-between text-sm">
-                <span>Mã số thuế:</span>
-                <span>{customerTaxCode}</span>
+                <span>{t("pos.date")}</span>
+                <span>{new Date(receipt.createdAt).toLocaleString()}</span>
               </div>
-            )}
-            {receipt.paymentMethod === "einvoice" && (
-              <div className="flex justify-between text-sm text-blue-600">
-                <span>Trạng thái E-Invoice:</span>
-                <span>
-                  {receipt.invoiceNumber ? "Đã phát hành" : "Chờ phát hành"}
-                </span>
+              <div className="flex justify-between text-sm">
+                <span>{t("pos.cashier")}</span>
+                <span>{receipt.cashierName}</span>
               </div>
-            )}
-          </div>
-
-          <div className="space-y-2 mb-3">
-            {receipt.items.map((item) => {
-              // For receipt display, show the unit price (base price without tax) and total from order details
-              const unitPrice = parseFloat(item.price);
-
-              return (
-                <div key={item.id}>
-                  <div className="flex justify-between text-sm">
-                    <div className="flex-1">
-                      <div>{item.productName}</div>
-                      <div className="text-xs text-gray-600">
-                        SKU:{" "}
-                        {`FOOD${String(item.productId || item.id).padStart(5, "0")}`}
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        {item.quantity} x{" "}
-                        {Math.floor(parseFloat(item.total) / item.quantity).toLocaleString("vi-VN")} ₫
-                      </div>
-                    </div>
-                    <div>{Math.floor(parseFloat(item.total)).toLocaleString("vi-VN")} ₫</div>
-                  </div>
+              {isEInvoice && customerName && (
+                <div className="flex justify-between text-sm">
+                  <span>Khách hàng:</span>
+                  <span>{customerName}</span>
                 </div>
-              );
-            })}
-          </div>
-
-          <div className="border-t border-gray-300 pt-3 space-y-1">
-            <div className="flex justify-between text-sm">
-              <span>Tạm tính</span>
-              <span>
-                {Math.floor(parseFloat(receipt.subtotal || "0")).toLocaleString("vi-VN")} ₫
-              </span>
+              )}
+              {isEInvoice && customerTaxCode && (
+                <div className="flex justify-between text-sm">
+                  <span>Mã số thuế:</span>
+                  <span>{customerTaxCode}</span>
+                </div>
+              )}
+              {receipt.paymentMethod === "einvoice" && (
+                <div className="flex justify-between text-sm text-blue-600">
+                  <span>Trạng thái E-Invoice:</span>
+                  <span>
+                    {receipt.invoiceNumber ? "Đã phát hành" : "Chờ phát hành"}
+                  </span>
+                </div>
+              )}
             </div>
-            <div className="flex justify-between text-sm">
-              <span>Thuế:</span>
-              <span>
-                {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
-              </span>
-            </div>
-            <div className="flex justify-between font-bold">
-              <span>{t("pos.total")}</span>
-              <span>
-                {Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
-              </span>
-            </div>
-            <div className="flex justify-between text-sm mt-2">
-              <span>{t("pos.paymentMethod")}</span>
-              <span className="capitalize">
-                {(() => {
-                  // Always prioritize originalPaymentMethod for e-invoices
-                  let displayMethod = receipt.paymentMethod;
 
-                  // If this is an e-invoice transaction and we have originalPaymentMethod, use it
-                  if (receipt.originalPaymentMethod) {
-                    displayMethod = receipt.originalPaymentMethod;
-                  }
+            <div className="space-y-2 mb-3">
+              {receipt.items.map((item) => {
+                // For receipt display, show the unit price (base price without tax) and total from order details
+                const unitPrice = parseFloat(item.price);
 
-                  // Map payment methods to display names
-                  const methodNames = {
-                    cash: t("common.cash"),
-                    creditCard: t("common.creditCard"),
-                    debitCard: t("common.debitCard"),
-                    momo: t("common.momo"),
-                    zalopay: t("common.zalopay"),
-                    vnpay: t("common.vnpay"),
-                    qrCode: t("common.qrCode"),
-                    shopeepay: t("common.shopeepay"),
-                    grabpay: t("common.grabpay"),
-                    einvoice: t("pos.eInvoice"),
-                  };
-
-                  return methodNames[displayMethod] || displayMethod;
-                })()}
-              </span>
+                return (
+                  <div key={item.id}>
+                    <div className="flex justify-between text-sm">
+                      <div className="flex-1">
+                        <div>{item.productName}</div>
+                        <div className="text-xs text-gray-600">
+                          SKU:{" "}
+                          {`FOOD${String(item.productId || item.id).padStart(5, "0")}`}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {item.quantity} x{" "}
+                          {Math.floor(parseFloat(item.total) / item.quantity).toLocaleString("vi-VN")} ₫
+                        </div>
+                      </div>
+                      <div>{Math.floor(parseFloat(item.total)).toLocaleString("vi-VN")} ₫</div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            {receipt.amountReceived && (
+
+            <div className="border-t border-gray-300 pt-3 space-y-1">
               <div className="flex justify-between text-sm">
-                <span>{t("pos.amountReceived")}</span>
+                <span>Tạm tính</span>
                 <span>
-                  {(() => {
-                    // For e-invoice transactions, amount received should equal the total
-                    if (
-                      receipt.paymentMethod === "einvoice" ||
-                      receipt.originalPaymentMethod === "einvoice"
-                    ) {
-                      // For e-invoice, use the total from receipt
-                      return Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN");
-                    }
-                    // For other payment methods, use the original amount received
-                    return Math.floor(
-                      parseFloat(receipt.amountReceived),
-                    ).toLocaleString("vi-VN");
-                  })()}{" "}
-                  ₫
+                  {Math.floor(parseFloat(receipt.subtotal || "0")).toLocaleString("vi-VN")} ₫
                 </span>
               </div>
-            )}
-            {receipt.change && parseFloat(receipt.change) > 0 && (
               <div className="flex justify-between text-sm">
-                <span>Change:</span>
-                <span>{receipt.change} ₫</span>
+                <span>Thuế:</span>
+                <span>
+                  {Math.floor(parseFloat(receipt.tax || "0")).toLocaleString("vi-VN")} ₫
+                </span>
               </div>
-            )}
-          </div>
+              <div className="flex justify-between font-bold">
+                <span>{t("pos.total")}</span>
+                <span>
+                  {Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN")} ₫
+                </span>
+              </div>
+              <div className="flex justify-between text-sm mt-2">
+                <span>{t("pos.paymentMethod")}</span>
+                <span className="capitalize">
+                  {(() => {
+                    // Always prioritize originalPaymentMethod for e-invoices
+                    let displayMethod = receipt.paymentMethod;
 
-          <div className="text-center mt-4 text-xs text-gray-600">
-            <p>{t("pos.thankYouBusiness")}</p>
-            <p>{t("pos.keepReceiptRecords")}</p>
+                    // If this is an e-invoice transaction and we have originalPaymentMethod, use it
+                    if (receipt.originalPaymentMethod) {
+                      displayMethod = receipt.originalPaymentMethod;
+                    }
+
+                    // Map payment methods to display names
+                    const methodNames = {
+                      cash: t("common.cash"),
+                      creditCard: t("common.creditCard"),
+                      debitCard: t("common.debitCard"),
+                      momo: t("common.momo"),
+                      zalopay: t("common.zalopay"),
+                      vnpay: t("common.vnpay"),
+                      qrCode: t("common.qrCode"),
+                      shopeepay: t("common.shopeepay"),
+                      grabpay: t("common.grabpay"),
+                      einvoice: t("pos.eInvoice"),
+                    };
+
+                    return methodNames[displayMethod] || displayMethod;
+                  })()}
+                </span>
+              </div>
+              {receipt.amountReceived && (
+                <div className="flex justify-between text-sm">
+                  <span>{t("pos.amountReceived")}</span>
+                  <span>
+                    {(() => {
+                      // For e-invoice transactions, amount received should equal the total
+                      if (
+                        receipt.paymentMethod === "einvoice" ||
+                        receipt.originalPaymentMethod === "einvoice"
+                      ) {
+                        // For e-invoice, use the total from receipt
+                        return Math.floor(parseFloat(receipt.total || "0")).toLocaleString("vi-VN");
+                      }
+                      // For other payment methods, use the original amount received
+                      return Math.floor(
+                        parseFloat(receipt.amountReceived),
+                      ).toLocaleString("vi-VN");
+                    })()}{" "}
+                    ₫
+                  </span>
+                </div>
+              )}
+              {receipt.change && parseFloat(receipt.change) > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Change:</span>
+                  <span>{receipt.change} ₫</span>
+                </div>
+              )}
+            </div>
+
+            <div className="text-center mt-4 text-xs text-gray-600">
+              <p>{t("pos.thankYouBusiness")}</p>
+              <p>{t("pos.keepReceiptRecords")}</p>
+            </div>
           </div>
-        </div>
+        ) : (
+          // This part renders if isPreview is true but receipt is null
+          <div className="p-4 text-center">
+            <p>Chưa có dữ liệu hóa đơn cho bản xem trước.</p>
+            <p>Vui lòng thực hiện thanh toán để có dữ liệu.</p>
+            <Button onClick={onClose} className="mt-4">
+              Đóng
+            </Button>
+          </div>
+        )}
+
 
         <div className="flex justify-center p-2 border-t">
           {isPreview ? (
