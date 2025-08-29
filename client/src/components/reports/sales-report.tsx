@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -152,7 +151,7 @@ export function SalesReport() {
           if (isNaN(itemDate.getTime())) return false;
 
           const dateMatch = itemDate >= start && itemDate <= end;
-          
+
           // Only include completed/paid items
           const isCompleted = (item.type === 'invoice' && item.invoiceStatus === 1) ||
                             (item.type === 'order' && (item.status === 'paid' || item.status === 'completed'));
@@ -200,7 +199,7 @@ export function SalesReport() {
             dailySales[date] = { revenue: 0, orders: 0, customers: 0 };
           }
 
-          // Revenue calculation: Total Amount - Discount - Tax (using actual tax from database)
+          // Revenue calculation: Total Amount - Discount - Tax (using actual tax from database, default to 0)
           const itemTotal = Number(item.total || 0);
           const discount = Number(item.discount || 0);
           // Use actual tax from database, default to 0 if not available
@@ -238,10 +237,10 @@ export function SalesReport() {
           if (!paymentMethods[method]) {
             paymentMethods[method] = { count: 0, revenue: 0 };
           }
-          
+
           paymentMethods[method].count += 1;
-          
-          // Revenue calculation: Total Amount - Discount - Tax (using actual tax from database)
+
+          // Revenue calculation: Total Amount - Discount - Tax (using actual tax from database, default to 0)
           const itemTotal = Number(item.total || 0);
           const discount = Number(item.discount || 0);
           // Use actual tax from database, default to 0 if not available
@@ -254,14 +253,14 @@ export function SalesReport() {
         }
       });
 
-      // Hourly breakdown with actual tax from database
+      // Hourly breakdown with actual tax from database (default to 0)
       const hourlySales: { [hour: number]: number } = {};
       filteredCompletedItems.forEach((item: any) => {
         try {
           const itemDate = new Date(item.date);
-          
+
           if (isNaN(itemDate.getTime())) return;
-          
+
           const hour = itemDate.getHours();
           const itemTotal = Number(item.total || 0);
           const discount = Number(item.discount || 0);
@@ -269,7 +268,7 @@ export function SalesReport() {
           const actualTax = Number(item.tax || 0);
           // Revenue = Total Amount - Discount - Actual Tax
           const revenue = itemTotal - discount - actualTax;
-          
+
           if (!isNaN(revenue) && revenue > 0) {
             hourlySales[hour] = (hourlySales[hour] || 0) + revenue;
           }
@@ -278,7 +277,7 @@ export function SalesReport() {
         }
       });
 
-      // Calculate totals with actual tax from database
+      // Calculate totals with actual tax from database (default to 0)
       const totalRevenue = filteredCompletedItems.reduce(
         (total: number, item: any) => {
           const itemTotal = Number(item.total || 0);
@@ -291,9 +290,9 @@ export function SalesReport() {
         },
         0,
       );
-      
+
       const totalOrders = filteredCompletedItems.length;
-      
+
       // Count unique customers EXACTLY like dashboard does
       const uniqueCustomers = new Set();
       filteredCompletedItems.forEach((item: any) => {
@@ -305,7 +304,7 @@ export function SalesReport() {
         }
       });
       const totalCustomers = uniqueCustomers.size;
-      
+
       const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
       const paymentMethodsArray = Object.entries(paymentMethods).map(([method, data]) => ({
@@ -361,22 +360,22 @@ export function SalesReport() {
         setStartDate(todayStr);
         setEndDate(todayStr);
         break;
-        
+
       case "week":
         const lastWeekEnd = new Date(today);
         lastWeekEnd.setDate(today.getDate() - 1);
-        
+
         const lastWeekStart = new Date(today);
         lastWeekStart.setDate(today.getDate() - 7);
 
         setStartDate(formatDate(lastWeekStart));
         setEndDate(formatDate(lastWeekEnd));
         break;
-        
+
       case "month":
         const lastMonth = new Date(today);
         lastMonth.setMonth(today.getMonth() - 1);
-        
+
         const lastMonthStart = new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1);
         const lastMonthEnd = new Date(lastMonth.getFullYear(), lastMonth.getMonth() + 1, 0);
 
@@ -405,13 +404,13 @@ export function SalesReport() {
         setStartDate(formatDate(thisMonthStart));
         setEndDate(formatDate(thisMonthEnd));
         break;
-        
+
       case "custom":
         const customToday = formatDate(today);
         setStartDate(customToday);
         setEndDate(customToday);
         break;
-        
+
       default:
         const defaultDate = formatDate(today);
         setStartDate(defaultDate);
@@ -428,7 +427,7 @@ export function SalesReport() {
     try {
       const date = new Date(dateStr);
       if (isNaN(date.getTime())) return dateStr;
-      
+
       const day = date.getDate().toString().padStart(2, "0");
       const month = (date.getMonth() + 1).toString().padStart(2, "0");
       const year = date.getFullYear();
@@ -443,7 +442,7 @@ export function SalesReport() {
       cash: "Tiền mặt",
       card: "Thẻ",
       creditCard: "Thẻ tín dụng",
-      credit_card: "Thẻ tín dụng", 
+      credit_card: "Thẻ tín dụng",
       debitCard: "Thẻ ghi nợ",
       debit_card: "Thẻ ghi nợ",
       transfer: "Chuyển khoản",
@@ -459,7 +458,7 @@ export function SalesReport() {
       2: "Thẻ",
       3: "Chuyển khoản",
       4: "MoMo",
-      5: "ZaloPay", 
+      5: "ZaloPay",
       6: "VNPay",
       7: "QR Code"
     };
@@ -474,7 +473,7 @@ export function SalesReport() {
   const hasError = !!ordersError;
   const isLoading = ordersLoading || invoicesLoading;
 
-  const peakHour = salesData && Object.keys(salesData.hourlySales).length > 0 
+  const peakHour = salesData && Object.keys(salesData.hourlySales).length > 0
     ? Object.entries(salesData.hourlySales).reduce(
         (peak, [hour, revenue]) =>
           revenue > (salesData.hourlySales[parseInt(peak)] || 0) ? hour : peak,
@@ -524,7 +523,7 @@ export function SalesReport() {
                 {t('reports.analyzeRevenue')}
               </CardDescription>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <div className="flex items-center gap-2">
                 <Filter className="w-4 h-4 text-gray-500" />
@@ -717,7 +716,7 @@ export function SalesReport() {
                   {t("reports.paymentMethods")}
                 </CardTitle>
                 <CardDescription>
-                  {t("reports.analyzeRevenue")} 
+                  {t("reports.analyzeRevenue")}
                   {salesData?.paymentMethods && salesData.paymentMethods.length > 0 && (
                     <span className="ml-2 text-blue-600 font-medium">
                       ({salesData.paymentMethods.length} phương thức • {salesData.totalOrders} đơn hàng)
@@ -746,7 +745,7 @@ export function SalesReport() {
                                   Mã: {payment.method}
                                 </span>
                               </div>
-                              
+
                               <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div className="space-y-1">
                                   <div className="text-gray-600">Số đơn hàng:</div>
@@ -761,7 +760,7 @@ export function SalesReport() {
                                   </div>
                                 </div>
                               </div>
-                              
+
                               <div className="mt-2 flex items-center gap-2">
                                 <span className="text-xs text-gray-500">Tỷ lệ:</span>
                                 <span className="text-sm font-semibold text-purple-600">
@@ -771,7 +770,7 @@ export function SalesReport() {
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <div className="flex justify-between text-xs text-gray-600">
                               <span>Biểu đồ tỷ lệ</span>

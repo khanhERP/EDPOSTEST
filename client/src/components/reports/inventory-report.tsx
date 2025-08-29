@@ -374,7 +374,11 @@ export function InventoryReport() {
     // In a real system, this would come from purchase orders and supplier data
     return filteredProducts.map((product: any) => {
       const supplierCount = product.supplierId ? 1 : 0; // Assume one supplier per product
-      const unitCost = (product.price || 0) * 0.7; // 70% of sale price as cost
+      // Use actual product price and tax calculation from database
+      const basePrice = Number(product.price || 0);
+      const taxRate = Number(product.taxRate || 0);
+      const afterTaxPrice = product.afterTaxPrice ? Number(product.afterTaxPrice) : (basePrice + (basePrice * taxRate / 100));
+      const unitCost = afterTaxPrice * 0.7; // 70% of after-tax price as cost
       const currentStock = product.stockQuantity || 0;
 
       return {

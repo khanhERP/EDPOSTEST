@@ -1238,13 +1238,12 @@ export function SalesChartReport() {
                     </button>
                   </div>
                 </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </>
-    );
-  };
+              )}
+            </CardContent>
+          </Card>
+        </>
+      );
+    };
 
   // Sales Detail Report Component
   const renderSalesDetailReport = () => {
@@ -1399,50 +1398,47 @@ export function SalesChartReport() {
       });
 
       filteredCompletedOrders.forEach((order: any) => {
-        try {
-          const employeeCode = order.employeeId || "EMP-000";
-          const employeeName =
-            order.cashierName || order.employeeName || "Unknown";
-          const employeeKey = `${employeeCode}-${employeeName}`;
+        // Get employee name - try multiple fields
+        const employeeName =
+          order.employeeName || order.cashierName || "Unknown Employee";
 
-          if (!employeeData[employeeKey]) {
-            employeeData[employeeKey] = {
-              employeeCode,
-              employeeName,
-              orderCount: 0,
-              revenue: 0,
-              tax: 0,
-              total: 0,
-              paymentMethods: {},
-            };
+        const employeeKey = `${order.employeeId || 0}-${employeeName}`;
 
-            // Initialize payment methods for each employee
-            allPaymentMethods.forEach((method) => {
-              employeeData[employeeKey].paymentMethods[method] = 0;
-            });
-          }
-
-          // Use EXACT same calculation as dashboard: total - discount
-          const orderTotal = Number(order.total || 0);
-          const orderDiscount = Number(order.discount || 0);
-          const orderRevenue = orderTotal - orderDiscount; // EXACT same calculation as dashboard
-          const orderTax = orderRevenue * 0.1; // 10% tax on revenue
-
-          employeeData[employeeKey].orderCount += 1;
-          employeeData[employeeKey].revenue += orderRevenue;
-          employeeData[employeeKey].tax += orderTax;
-          employeeData[employeeKey].total += orderRevenue;
-
-          // Add to payment method total
-          const paymentMethod = order.paymentMethod || "cash";
-          if (!employeeData[employeeKey].paymentMethods[paymentMethod]) {
-            employeeData[employeeKey].paymentMethods[paymentMethod] = 0;
-          }
-          employeeData[employeeKey].paymentMethods[paymentMethod] +=
-            orderRevenue;
-        } catch (error) {
-          console.warn("Error processing employee order:", error, order);
+        if (!employeeData[employeeKey]) {
+          employeeData[employeeKey] = {
+            employeeCode: order.employeeId?.toString() || "Unknown",
+            employeeName: employeeName,
+            orderCount: 0,
+            revenue: 0,
+            tax: 0,
+            total: 0,
+            paymentMethods: {},
+          };
         }
+
+        // Add payment method to all methods set
+        const paymentMethod = order.paymentMethod || "cash";
+        allPaymentMethods.add(paymentMethod);
+
+        // Initialize payment method if not exists
+        if (!employeeData[employeeKey].paymentMethods[paymentMethod]) {
+          employeeData[employeeKey].paymentMethods[paymentMethod] = 0;
+        }
+
+        // Calculate amounts using actual tax from database (default to 0)
+        const orderTotal = Number(order.total || 0);
+        const discount = Number(order.discount || 0);
+        // Use actual tax from database, default to 0 if not available
+        const tax = Number(order.tax || 0);
+
+        const revenue = orderTotal - discount - tax;
+
+        // Update employee data
+        employeeData[employeeKey].orderCount += 1;
+        employeeData[employeeKey].revenue += revenue;
+        employeeData[employeeKey].tax += tax;
+        employeeData[employeeKey].total += orderTotal;
+        employeeData[employeeKey].paymentMethods[paymentMethod] += revenue;
       });
 
       const data = Object.values(employeeData).sort(
@@ -2428,112 +2424,1161 @@ export function SalesChartReport() {
                   </button>
                 </div>
               </div>
-          </div>
             )}
+          </CardContent>
+        </Card>
+      );
+    };
+
+  // Legacy Sales Channel Report Component Logic
+  const renderSalesChannelReport = () => {
+    const dashboardStats = getDashboardStats();
+
+    if (!dashboardStats) {
+      return (
+        <div className="flex justify-center py-8">
+          <div className="text-gray-500">{t("reports.loading")}...</div>
+        </div>
+      );
+    }
+
+    const { filteredCompletedOrders } = dashboardStats;
+
+    console.log("Sales Channel Report Debug:", {
+      filteredCompletedOrders: filteredCompletedOrders.length,
+      sampleOrder: filteredCompletedOrders[0],
+    });
+
+    // Group data by sales method (Dine In vs Takeaway) - use EXACT same logic as dashboard
+    const salesMethodData: {
+      [method: string]: {
+        completedOrders: number;
+        cancelledOrders: number;
+        totalOrders: number;
+        completedRevenue: number;
+        cancelledRevenue: number;
+        totalRevenue: number;
+      };
+    } = {
+      [t("reports.dineIn")]: {
+        completedOrders: 0,
+        cancelledOrders: 0,
+        totalOrders: 0,
+        completedRevenue: 0,
+        cancelledRevenue: 0,
+        totalRevenue: 0,
+      },
+      [t("reports.takeaway")]: {
+        completedOrders: 0,
+        cancelledOrders: 0,
+        totalOrders: 0,
+        completedRevenue: 0,
+        cancelledRevenue: 0,
+        totalRevenue: 0,
+      },
+    };
+
+    // Process completed orders from dashboard (EXACT same data source)
+    filteredCompletedOrders.forEach((order: any) => {
+      // Determine sales method based on order properties
+      let method = t("reports.dineIn"); // Default
+
+      // Check for delivery/takeaway indicators
+      if (
+        order.deliveryMethod === "delivery" ||
+        order.deliveryMethod === "takeout" ||
+        order.deliveryMethod === "takeaway" ||
+        order.isDelivery === true ||
+        order.salesChannel === "delivery" ||
+        order.salesChannel === "takeout" ||
+        order.salesChannel === "takeaway"
+      ) {
+        method = t("reports.takeaway");
+      } else if (
+        order.deliveryMethod === "dine_in" ||
+        order.deliveryMethod === "dinein" ||
+        order.salesChannel === "dine_in" ||
+        order.tableId ||
+        order.tableNumber
+      ) {
+        method = t("reports.dineIn");
+      }
+
+      // Use EXACT same revenue calculation as dashboard: total - discount
+      const orderTotal = Number(order.total || 0);
+      const discount = Number(order.discount || 0);
+      const revenue = orderTotal - discount;
+
+      // All orders from filteredCompletedOrders are already completed/paid
+      if (revenue > 0) {
+        salesMethodData[method].completedOrders += 1;
+        salesMethodData[method].completedRevenue += revenue;
+      }
+
+      salesMethodData[method].totalOrders =
+        salesMethodData[method].completedOrders;
+      salesMethodData[method].totalRevenue =
+        salesMethodData[method].completedRevenue;
+    });
+
+    console.log("Sales Method Data:", salesMethodData);
+
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" />
+            {t("reports.channelSalesReport")}
+          </CardTitle>
+          <CardDescription>
+            {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
+            {t("reports.toDate")}: {formatDate(endDate)}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="w-full">
+            <div className="overflow-x-auto xl:overflow-x-visible">
+              <Table className="w-full min-w-[800px] xl:min-w-full">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead
+                      className="text-center font-bold bg-green-100 border"
+                      rowSpan={2}
+                    >
+                      {t("reports.salesMethod")}
+                    </TableHead>
+                    <TableHead
+                      className="text-center font-bold bg-green-100 border"
+                      colSpan={3}
+                    >
+                      {t("reports.totalOrders")}
+                    </TableHead>
+                    <TableHead
+                      className="text-center font-bold bg-green-100 border"
+                      colSpan={3}
+                    >
+                      {t("reports.revenue")}
+                    </TableHead>
+                  </TableRow>
+                  <TableRow>
+                    <TableHead className="text-center bg-green-50 border">
+                      {t("reports.completed")}
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 border">
+                      {t("reports.cancelled")}
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 border">
+                      {t("common.total")}
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 border">
+                      {t("reports.completed")}
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 border">
+                      {t("reports.cancelled")}
+                    </TableHead>
+                    <TableHead className="text-center bg-green-50 border">
+                      {t("common.total")}
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(salesMethodData).map(([method, data]) => (
+                    <TableRow key={method} className="hover:bg-gray-50">
+                      <TableCell className="font-medium text-center border bg-blue-50">
+                        {method}
+                      </TableCell>
+                      <TableCell className="text-center border">
+                        {data.completedOrders}
+                      </TableCell>
+                      <TableCell className="text-center border">
+                        {data.cancelledOrders}
+                      </TableCell>
+                      <TableCell className="text-center border font-medium">
+                        {data.totalOrders}
+                      </TableCell>
+                      <TableCell className="text-right border">
+                        {formatCurrency(data.completedRevenue)}
+                      </TableCell>
+                      <TableCell className="text-right border">
+                        {formatCurrency(data.cancelledRevenue)}
+                      </TableCell>
+                      <TableCell className="text-right border font-medium">
+                        {formatCurrency(data.totalRevenue)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+
+                  {/* Summary Row */}
+                  <TableRow className="bg-green-100 font-bold border-t-2">
+                    <TableCell className="text-center border font-bold">
+                      {t("common.total")}
+                    </TableCell>
+                    <TableCell className="text-center border">
+                      {Object.values(salesMethodData).reduce(
+                        (sum, data) => sum + data.completedOrders,
+                        0,
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center border">
+                      {Object.values(salesMethodData).reduce(
+                        (sum, data) => sum + data.cancelledOrders,
+                        0,
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center border font-bold">
+                      {Object.values(salesMethodData).reduce(
+                        (sum, data) => sum + data.totalOrders,
+                        0,
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right border">
+                      {formatCurrency(
+                        Object.values(salesMethodData).reduce(
+                          (sum, data) => sum + data.completedRevenue,
+                          0,
+                        ),
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right border">
+                      {formatCurrency(
+                        Object.values(salesMethodData).reduce(
+                          (sum, data) => sum + data.cancelledRevenue,
+                          0,
+                        ),
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right border font-bold">
+                      {formatCurrency(
+                        Object.values(salesMethodData).reduce(
+                          (sum, data) => sum + data.totalRevenue,
+                          0,
+                        ),
+                      )}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+          {/* No pagination needed for sales channel report - it's a summary table */}
         </CardContent>
       </Card>
     );
   };
 
-  // Legacy Sales Channel Report Component Logic
-  const renderSalesChannelReport = () => {
-      const dashboardStats = getDashboardStats();
+  // Chart configurations for each analysis type
+  const chartConfig = {
+    revenue: {
+      label: t("reports.revenue"),
+      color: "#10b981",
+    },
+    netRevenue: {
+      label: t("reports.netRevenue"),
+      color: "#3b82f6",
+    },
+    returnValue: {
+      label: t("reports.returnValue"),
+      color: "#ef4444",
+    },
+    quantity: {
+      label: t("reports.quantity"),
+      color: "#f59e0b",
+    },
+    profit: {
+      label: t("reports.profit"),
+      color: "#8b5cf6",
+    },
+  };
 
-      if (!dashboardStats) {
+  // Get chart data based on analysis type
+  const getChartData = () => {
+    switch (analysisType) {
+      case "time":
+        // Use dashboard stats to get filtered orders
+        const dashboardStats = getDashboardStats();
+        if (!dashboardStats || !dashboardStats.filteredCompletedOrders) {
+          return [];
+        }
+
+        const filteredOrders = dashboardStats.filteredCompletedOrders;
+
+        console.log("Chart data generation:", {
+          filteredOrdersCount: filteredOrders.length,
+          sampleOrder: filteredOrders[0] ? {
+            id: filteredOrders[0].id,
+            total: filteredOrders[0].total,
+            orderedAt: filteredOrders[0].orderedAt,
+            status: filteredOrders[0].status,
+          } : null,
+        });
+
+        const dailySales: {
+          [date: string]: { revenue: number; orders: number };
+        } = {};
+
+        filteredOrders.forEach((order: any) => {
+          const orderDate = new Date(
+            order.orderedAt ||
+              order.paidAt ||
+              order.createdAt ||
+              order.created_at,
+          );
+          const year = orderDate.getFullYear();
+          const month = (orderDate.getMonth() + 1).toString().padStart(2, "0");
+          const day = orderDate.getDate().toString().padStart(2, "0");
+          const date = `${year}-${month}-${day}`;
+
+          if (!dailySales[date]) {
+            dailySales[date] = { revenue: 0, orders: 0 };
+          }
+
+          // Use exact same revenue calculation as dashboard
+          const orderTotal = Number(order.total || 0);
+          const orderDiscount = Number(order.discount || 0);
+          const revenue = orderTotal - orderDiscount;
+
+          dailySales[date].revenue += revenue;
+          dailySales[date].orders += 1;
+        });
+
+        const chartData = Object.entries(dailySales)
+          .map(([date, data]) => ({
+            name: formatDate(date), // Format date for display
+            revenue: data.revenue,
+            orders: data.orders,
+          }))
+          .sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime()) // Sort by date
+          .slice(0, 10);
+
+        console.log("Generated chart data:", chartData);
+        return chartData;
+
+      case "product":
+        if (!products || !Array.isArray(products)) return [];
+
+        const productStart = new Date(startDate);
+        const productEnd = new Date(endDate);
+        productEnd.setHours(23, 59, 59, 999);
+
+        const productSales: {
+          [productId: string]: { quantity: number; revenue: number };
+        } = {};
+
+        // Get dữ liệu từ orders có items sẵn có
+        if (orders && Array.isArray(orders)) {
+          // Filter orders theo ngày và status
+          const filteredOrders = orders.filter((order: any) => {
+            // Chỉ lấy orders đã hoàn thành/thanh toán
+            if (order.status !== "completed" && order.status !== "paid")
+              return false;
+
+            const orderDate = new Date(
+              order.orderedAt ||
+                order.createdAt ||
+                order.created_at ||
+                order.paidAt,
+            );
+            const orderDateOnly = new Date(orderDate);
+            orderDateOnly.setHours(0, 0, 0, 0);
+            return orderDateOnly >= productStart && orderDateOnly <= productEnd;
+          });
+
+          // Xử lý từng order để lấy order items từ order.items nếu có
+          filteredOrders.forEach((order: any) => {
+            if (order.items && Array.isArray(order.items)) {
+              order.items.forEach((item: any) => {
+                const productId = item.productId?.toString();
+                if (!productId) return;
+
+                // Kiểm tra product có tồn tại trong danh sách products không
+                const product = products.find(
+                  (p) => p.id.toString() === productId,
+                );
+                if (!product) return;
+
+                if (!productSales[productId]) {
+                  productSales[productId] = {
+                    quantity: 0,
+                    revenue: 0,
+                  };
+                }
+
+                const quantity = Number(item.quantity || 0);
+                const total = Number(item.total || 0);
+
+                productSales[productId].quantity += quantity;
+                productSales[productId].revenue += total;
+              });
+            }
+          });
+        }
+
+        // Fallback: Process transaction items from transactions if available
+        if (
+          transactions &&
+          Array.isArray(transactions) &&
+          Object.keys(productSales).length === 0
+        ) {
+          const filteredTransactions = transactions.filter(
+            (transaction: any) => {
+              const transactionDate = new Date(
+                transaction.createdAt || transaction.created_at,
+              );
+              const transactionDateOnly = new Date(transactionDate);
+              transactionDateOnly.setHours(0, 0, 0, 0);
+              return (
+                transactionDateOnly >= productStart &&
+                transactionDateOnly <= productEnd
+              );
+            },
+          );
+
+          filteredTransactions.forEach((transaction: any) => {
+            if (transaction.items && Array.isArray(transaction.items)) {
+              transaction.items.forEach((item: any) => {
+                const productId = item.productId?.toString();
+                if (!productId) return;
+
+                // Check if this product is in our products list
+                const product = products.find(
+                  (p) => p.id.toString() === productId,
+                );
+                if (!product) return;
+
+                if (!productSales[productId]) {
+                  productSales[productId] = {
+                    quantity: 0,
+                    revenue: 0,
+                  };
+                }
+
+                const quantity = Number(item.quantity || 0);
+                const total = Number(item.total || 0);
+
+                productSales[productId].quantity += quantity;
+                productSales[productId].revenue += total;
+              });
+            }
+          });
+        }
+
+        return products
+          .map((product: any) => {
+            const sales = productSales[product.id.toString()] || {
+              quantity: 0,
+              revenue: 0,
+            };
+            return {
+              name:
+                product.name.length > 15
+                  ? product.name.substring(0, 15) + "..."
+                  : product.name,
+              revenue: sales.revenue,
+              quantity: sales.quantity,
+            };
+          })
+          .filter((item) => item.quantity > 0)
+          .sort((a, b) => b.revenue - a.revenue)
+          .slice(0, 10);
+
+      case "employee":
+        try {
+          if (!orders || !Array.isArray(orders)) {
+            console.warn("Employee chart: No orders data available");
+            return [];
+          }
+
+          const empStart = new Date(startDate);
+          const empEnd = new Date(endDate);
+          empEnd.setHours(23, 59, 59, 999);
+
+          // Use EXACT same filtering logic as dashboard for orders
+          const empFilteredOrders = orders.filter((order: any) => {
+            // Check if order is completed/paid (EXACT same as dashboard)
+            if (order.status !== "completed" && order.status !== "paid")
+              return false;
+
+            // Try multiple possible date fields (EXACT same as dashboard)
+            const orderDate = new Date(
+              order.orderedAt ||
+                order.createdAt ||
+                order.created_at ||
+                order.paidAt,
+            );
+
+            // Skip if date is invalid
+            if (isNaN(orderDate.getTime())) {
+              return false;
+            }
+
+            const dateMatch = orderDate >= empStart && orderDate <= empEnd;
+
+            const employeeMatch =
+              selectedEmployee === "all" ||
+              order.employeeName === selectedEmployee ||
+              order.cashierName === selectedEmployee ||
+              order.employeeId?.toString() === selectedEmployee ||
+              (order.employeeName &&
+                order.employeeName.includes(selectedEmployee)) ||
+              (order.cashierName &&
+                order.cashierName.includes(selectedEmployee));
+
+            return dateMatch && employeeMatch;
+          });
+
+          const employeeData: {
+            [cashier: string]: { revenue: number; orders: number };
+          } = {};
+
+          empFilteredOrders.forEach((order: any) => {
+            try {
+              const cashier =
+                order.cashierName || order.employeeName || "Unknown";
+              if (!employeeData[cashier]) {
+                employeeData[cashier] = { revenue: 0, orders: 0 };
+              }
+
+              // Use EXACT same calculation as dashboard: total - discount
+              const orderTotal = Number(order.total || 0);
+              const orderDiscount = Number(order.discount || 0);
+              const revenue = orderTotal - orderDiscount;
+
+              if (revenue >= 0) {
+                // Allow 0 revenue orders
+                employeeData[cashier].revenue += revenue;
+                employeeData[cashier].orders += 1;
+              }
+            } catch (error) {
+              console.warn("Error processing employee order:", error);
+            }
+          });
+
+          const result = Object.entries(employeeData)
+            .map(([name, data]) => ({
+              name:
+                name && name.length > 10
+                  ? name.substring(0, 10) + "..."
+                  : name || "Unknown",
+              revenue: Math.max(0, data.revenue || 0), // Ensure no negative values
+              orders: Math.max(0, data.orders || 0), // Ensure no negative values
+            }))
+            .filter((item) => item.revenue > 0 || item.orders > 0) // Only show employees with data
+            .sort((a, b) => (b.revenue || 0) - (a.revenue || 0))
+            .slice(0, 10);
+
+          console.log("Employee chart data generated:", {
+            filteredOrdersCount: empFilteredOrders.length,
+            employeeDataKeys: Object.keys(employeeData),
+            result,
+          });
+
+          return result;
+        } catch (error) {
+          console.error("Error in employee chart data generation:", error);
+          return [];
+        }
+
+      case "customer":
+        if (!orders || !Array.isArray(orders)) return [];
+
+        const custStart = new Date(startDate);
+        const custEnd = new Date(endDate);
+        custEnd.setHours(23, 59, 59, 999);
+
+        const custFilteredOrders = orders.filter((order: any) => {
+          const orderDate = new Date(
+            order.orderedAt || order.created_at || order.createdAt,
+          );
+          return (
+            orderDate >= custStart &&
+            orderDate <= custEnd &&
+            order.status === "paid"
+          );
+        });
+
+        const customerData: {
+          [customerId: string]: {
+            customerId: string;
+            customerName: string;
+            customerGroup: string;
+            orders: number;
+            totalAmount: number;
+            discount: number;
+            revenue: number;
+            status: string;
+            orderDetails: any[];
+          };
+        } = {};
+
+        custFilteredOrders.forEach((order: any) => {
+          const customerId = order.customerId || "guest";
+          const customerName = order.customerName || "Khách lẻ";
+
+          if (!customerData[customerId]) {
+            customerData[customerId] = {
+              customerId: customerId === "guest" ? "KL-001" : customerId,
+              customerName: customerName,
+              customerGroup: t("common.regularCustomer"), // Default group
+              orders: 0,
+              totalAmount: 0,
+              discount: 0,
+              revenue: 0,
+              status: t("reports.active"),
+              orderDetails: [],
+            };
+          }
+
+          const orderTotal = Number(order.total);
+          const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
+          const orderDiscount = orderSubtotal - orderTotal;
+
+          customerData[customerId].orders += 1;
+          customerData[customerId].totalAmount += orderSubtotal;
+          customerData[customerId].discount += orderDiscount;
+          customerData[customerId].revenue += orderTotal;
+          customerData[customerId].orderDetails.push(order);
+
+          // Determine customer group based on total spending
+          if (customerData[customerId].revenue >= 1000000) {
+            customerData[customerId].customerGroup = t("reports.vip");
+          } else if (customerData[customerId].revenue >= 500000) {
+            customerData[customerId].customerGroup = t("common.goldCustomer");
+          }
+        });
+
+        const data = Object.values(customerData).sort(
+          (a, b) => b.revenue - a.revenue,
+        );
+
+        // Pagination logic
+        const totalPages = Math.ceil(data.length / customerPageSize);
+        const startIndex = (customerCurrentPage - 1) * customerPageSize;
+        const endIndex = startIndex + customerPageSize;
+        const paginatedData = data.slice(startIndex, endIndex);
+
+        return Object.entries(customerData)
+          .map(([customerId, data]) => ({
+            name:
+              data.customerName.length > 10
+                ? data.customerName.substring(0, 10) + "..."
+                : data.customerName,
+            revenue: data.revenue,
+            orders: data.orders,
+          }))
+          .sort((a, b) => b.revenue - a.revenue)
+          .slice(0, 10);
+    }
+
+    // Chart rendering component
+    const renderChart = () => {
+      try {
+        const chartData = getChartData();
+
+        console.log("Chart data for", analysisType, ":", chartData);
+
+        if (!chartData || chartData.length === 0) {
+          return (
+            <div className="flex flex-col justify-center items-center py-8">
+              <div className="text-gray-500 mb-2">
+                {t("reports.noDataDescription")}
+              </div>
+              <div className="text-sm text-orange-600">
+                📊 Không có dữ liệu trong khoảng thời gian đã chọn ({startDate} - {endDate})
+              </div>
+              <div className="text-xs text-gray-400 mt-1">
+                Thử chọn khoảng thời gian khác hoặc kiểm tra dữ liệu đơn hàng
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-lg">
+              <CardTitle className="flex items-center gap-3 text-lg font-semibold">
+                <div className="p-2 bg-white/20 rounded-lg">
+                  <TrendingUp className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-white/90 text-sm font-normal">
+                    {t("reports.chartView")}
+                  </div>
+                  <div className="text-white font-semibold">
+                    {getReportTitle()}
+                  </div>
+                </div>
+              </CardTitle>
+              <CardDescription className="text-blue-100 mt-2">
+                {t("reports.visualRepresentation")} - {t("reports.fromDate")}:{" "}
+                {formatDate(startDate)} {t("reports.toDate")}:{" "}
+                {formatDate(endDate)}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
+              <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 to-purple-50/20 rounded-xl"></div>
+                <ChartContainer
+                  config={chartConfig}
+                  className="h-full w-full relative z-10"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={chartData}
+                      margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                    >
+                      <defs>
+                        <linearGradient
+                          id="revenueGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#10b981"
+                            stopOpacity={0.9}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#10b981"
+                            stopOpacity={0.6}
+                          />
+                        </linearGradient>
+                        <linearGradient
+                          id="ordersGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0.9}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#3b82f6"
+                            stopOpacity={0.6}
+                          />
+                        </linearGradient>
+                        <linearGradient
+                          id="quantityGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#f59e0b"
+                            stopOpacity={0.9}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#f59e0b"
+                            stopOpacity={0.6}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="#e5e7eb"
+                        opacity={0.5}
+                      />
+                      <XAxis
+                        dataKey="name"
+                        stroke="#6b7280"
+                        fontSize={12}
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                        interval={0}
+                      />
+                      <YAxis stroke="#6b7280" fontSize={12} />
+                      <ChartTooltip
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-lg">
+                                <p className="font-semibold text-gray-800 mb-2">
+                                  {label}
+                                </p>
+                                {payload.map((entry, index) => {
+                                  const translatedName =
+                                    entry.dataKey === "revenue"
+                                      ? t("reports.revenue")
+                                      : entry.dataKey === "orders"
+                                        ? t("reports.orders")
+                                        : entry.dataKey === "quantity"
+                                          ? t("reports.quantity")
+                                          : entry.name;
+                                  return (
+                                    <p
+                                      key={index}
+                                      className="text-sm"
+                                      style={{ color: entry.color }}
+                                    >
+                                      {translatedName}:{" "}
+                                      {entry.dataKey === "revenue" ||
+                                      entry.dataKey === "netRevenue"
+                                        ? formatCurrency(Number(entry.value))
+                                        : entry.value}
+                                    </p>
+                                  );
+                                })}
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+
+                      {/* Revenue bar - always show */}
+                      <Bar
+                        dataKey="revenue"
+                        fill="url(#revenueGradient)"
+                        radius={[4, 4, 0, 0]}
+                        maxBarSize={60}
+                      />
+
+                      {/* Additional bars based on analysis type */}
+                      {analysisType === "time" && (
+                        <Bar
+                          dataKey="orders"
+                          fill="url(#ordersGradient)"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                      )}
+
+                      {analysisType === "product" && (
+                        <Bar
+                          dataKey="quantity"
+                          fill="url(#quantityGradient)"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                      )}
+
+                      {(analysisType === "employee" ||
+                        analysisType === "customer" ||
+                        analysisType === "channel" ||
+                        analysisType === "salesDetail") && (
+                        <Bar
+                          dataKey="orders"
+                          fill="url(#ordersGradient)"
+                          radius={[4, 4, 0, 0]}
+                          maxBarSize={60}
+                        />
+                      )}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      } catch (error) {
+        console.error("Error in renderChart:", error);
         return (
           <div className="flex justify-center py-8">
-            <div className="text-gray-500">{t("reports.loading")}...</div>
+            <div className="text-red-500">
+              <p>Lỗi khi hiển thị biểu đồ</p>
+              <p className="text-sm">{error.message || "Unknown error"}</p>
+            </div>
           </div>
         );
       }
+    };
 
-      const { filteredCompletedOrders } = dashboardStats;
+    // Main render function
+    const renderReportContent = () => {
+      try {
+        console.log(
+          "Rendering report content for analysisType:",
+          analysisType,
+          "concernType:",
+          concernType,
+        );
 
-      console.log("Sales Channel Report Debug:", {
-        filteredCompletedOrders: filteredCompletedOrders.length,
-        sampleOrder: filteredCompletedOrders[0],
-      });
+        switch (analysisType) {
+          case "time":
+            // Handle concernType for time-based analysis
+            if (concernType === "employee") {
+              return renderEmployeeReport();
+            } else if (concernType === "salesDetail") {
+              return renderSalesDetailReport();
+            }
+            return renderSalesReport();
+          case "product":
+            return renderProductReport();
+          case "employee":
+            return renderEmployeeReport();
+          case "customer":
+            return renderCustomerReport();
+          case "channel":
+            return renderSalesChannelReport();
+          case "salesDetail":
+            return renderSalesDetailReport();
+          default:
+            return renderSalesReport();
+        }
+      } catch (error) {
+        console.error("Error in renderReportContent:", error);
+        return (
+          <div className="flex justify-center py-8">
+            <div className="text-red-500">
+              <p>Có lỗi xảy ra khi hiển thị báo cáo</p>
+              <p className="text-sm">{error.message}</p>
+            </div>
+          </div>
+        );
+      }
+    };
 
-      // Group data by sales method (Dine In vs Takeaway) - use EXACT same logic as dashboard
-      const salesMethodData: {
-        [method: string]: {
-          completedOrders: number;
-          cancelledOrders: number;
-          totalOrders: number;
-          completedRevenue: number;
-          cancelledRevenue: number;
-          totalRevenue: number;
-        };
-      } = {
-        [t("reports.dineIn")]: {
-          completedOrders: 0,
-          cancelledOrders: 0,
-          totalOrders: 0,
-          completedRevenue: 0,
-          cancelledRevenue: 0,
-          totalRevenue: 0,
-        },
-        [t("reports.takeaway")]: {
-          completedOrders: 0,
-          cancelledOrders: 0,
-          totalOrders: 0,
-          completedRevenue: 0,
-          cancelledRevenue: 0,
-          totalRevenue: 0,
-        },
+    // Product Report Logic (Moved up to be before renderChart)
+    const renderProductReport = () => {
+      const getFilteredProducts = () => {
+        if (!products || !Array.isArray(products)) return [];
+
+        return products.filter((product: any) => {
+          const searchMatch =
+            !productSearch ||
+            product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+            (product.sku &&
+              product.sku.toLowerCase().includes(productSearch.toLowerCase()));
+
+          const categoryMatch =
+            selectedCategory === "all" ||
+            product.categoryId?.toString() === selectedCategory;
+
+          const typeMatch =
+            productType === "all" ||
+            (productType === "combo" && product.productType === 3) ||
+            (productType === "product" && product.productType === 1) ||
+            (productType === "service" && product.productType === 2);
+
+          return searchMatch && categoryMatch && typeMatch;
+        });
       };
 
-      // Process completed orders from dashboard (EXACT same data source)
-      filteredCompletedOrders.forEach((order: any) => {
-        // Determine sales method based on order properties
-        let method = t("reports.dineIn"); // Default
+      const getSalesData = () => {
+        const filteredProducts = getFilteredProducts();
+        if (!filteredProducts.length) return [];
 
-        // Check for delivery/takeaway indicators
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+
+        console.log("Product Report Debug:", {
+          startDate,
+          endDate,
+          start: start.toISOString(),
+          end: end.toISOString(),
+          ordersLength: orders?.length || 0,
+          transactionsLength: transactions?.length || 0,
+        });
+
+        const productSales: {
+          [productId: string]: {
+            quantity: number;
+            totalAmount: number;
+            discount: number;
+            revenue: number;
+          };
+        } = {};
+
+        // Process order items from orders first (main data source)
+        if (orders && Array.isArray(orders)) {
+          // Use EXACT same filtering logic as other reports
+          const filteredOrders = orders.filter((order: any) => {
+            // Check if order is completed/paid (EXACT same as dashboard)
+            if (order.status !== "completed" && order.status !== "paid")
+              return false;
+
+            // Try multiple possible date fields (EXACT same as dashboard)
+            const orderDate = new Date(
+              order.orderedAt ||
+                order.createdAt ||
+                order.created_at ||
+                order.paidAt,
+            );
+
+            // Skip if date is invalid
+            if (isNaN(orderDate.getTime())) {
+              return false;
+            }
+
+            return orderDate >= start && orderDate <= end;
+          });
+
+          console.log("Filtered Orders for Product Report:", {
+            totalOrders: orders.length,
+            filteredOrders: filteredOrders.length,
+            sampleOrder: filteredOrders[0]
+              ? {
+                  id: filteredOrders[0].id,
+                  status: filteredOrders[0].status,
+                  orderedAt: filteredOrders[0].orderedAt,
+                  createdAt: filteredOrders[0].createdAt,
+                  items: filteredOrders[0].items?.length || 0,
+                }
+              : null,
+          });
+
+          filteredOrders.forEach((order: any) => {
+            if (order.items && Array.isArray(order.items)) {
+              order.items.forEach((item: any) => {
+                const productId = item.productId?.toString();
+                if (!productId) return;
+
+                // Check if this product is in our filtered products list
+                const product = filteredProducts.find(
+                  (p) => p.id.toString() === productId,
+                );
+                if (!product) return;
+
+                if (!productSales[productId]) {
+                  productSales[productId] = {
+                    quantity: 0,
+                    totalAmount: 0,
+                    discount: 0,
+                    revenue: 0,
+                  };
+                }
+
+                const quantity = Number(item.quantity || 0);
+                const total = Number(item.total || 0);
+                const unitPrice = Number(item.unitPrice || item.price || 0);
+                const totalAmount = quantity * unitPrice;
+                const discount = Math.max(0, totalAmount - total); // Ensure discount is not negative
+
+                productSales[productId].quantity += quantity;
+                productSales[productId].totalAmount += totalAmount;
+                productSales[productId].discount += discount;
+                productSales[productId].revenue += total;
+
+                console.log("Processing order item:", {
+                  productId,
+                  productName: product.name,
+                  quantity,
+                  total,
+                  unitPrice,
+                  totalAmount,
+                  discount,
+                });
+              });
+            }
+          });
+        }
+
+        // Fallback: Process transaction items from transactions if no order data
         if (
-          order.deliveryMethod === "delivery" ||
-          order.deliveryMethod === "takeout" ||
-          order.deliveryMethod === "takeaway" ||
-          order.isDelivery === true ||
-          order.salesChannel === "delivery" ||
-          order.salesChannel === "takeout" ||
-          order.salesChannel === "takeaway"
+          transactions &&
+          Array.isArray(transactions) &&
+          Object.keys(productSales).length === 0
         ) {
-          method = t("reports.takeaway");
-        } else if (
-          order.deliveryMethod === "dine_in" ||
-          order.deliveryMethod === "dinein" ||
-          order.salesChannel === "dine_in" ||
-          order.tableId ||
-          order.tableNumber
-        ) {
-          method = t("reports.dineIn");
+          const filteredTransactions = transactions.filter(
+            (transaction: any) => {
+              const transactionDate = new Date(
+                transaction.createdAt || transaction.created_at,
+              );
+              const transactionDateOnly = new Date(transactionDate);
+              transactionDateOnly.setHours(0, 0, 0, 0);
+              return (
+                transactionDateOnly >= start &&
+                transactionDateOnly <= end
+              );
+            },
+          );
+
+          console.log("Fallback to transactions:", {
+            totalTransactions: transactions.length,
+            filteredTransactions: filteredTransactions.length,
+          });
+
+          filteredTransactions.forEach((transaction: any) => {
+            if (transaction.items && Array.isArray(transaction.items)) {
+              transaction.items.forEach((item: any) => {
+                const productId = item.productId?.toString();
+                if (!productId) return;
+
+                // Check if this product is in our filtered products list
+                const product = filteredProducts.find(
+                  (p) => p.id.toString() === productId,
+                );
+                if (!product) return;
+
+                if (!productSales[productId]) {
+                  productSales[productId] = {
+                    quantity: 0,
+                    totalAmount: 0,
+                    discount: 0,
+                    revenue: 0,
+                  };
+                }
+
+                const quantity = Number(item.quantity || 0);
+                const total = Number(item.total || 0);
+                const unitPrice = Number(item.price || 0);
+                const totalAmount = quantity * unitPrice;
+                const discount = Math.max(0, totalAmount - total);
+
+                productSales[productId].quantity += quantity;
+                productSales[productId].totalAmount += totalAmount;
+                productSales[productId].discount += discount;
+                productSales[productId].revenue += total;
+              });
+            }
+          });
         }
 
-        // Use EXACT same revenue calculation as dashboard: total - discount
-        const orderTotal = Number(order.total || 0);
-        const discount = Number(order.discount || 0);
-        const revenue = orderTotal - discount;
+        console.log("Product Sales Summary:", productSales);
 
-        // All orders from filteredCompletedOrders are already completed/paid
-        if (revenue > 0) {
-          salesMethodData[method].completedOrders += 1;
-          salesMethodData[method].completedRevenue += revenue;
-        }
+        return filteredProducts
+          .map((product: any) => {
+            const sales = productSales[product.id.toString()] || {
+              quantity: 0,
+              totalAmount: 0,
+              discount: 0,
+              revenue: 0,
+            };
 
-        salesMethodData[method].totalOrders =
-          salesMethodData[method].completedOrders;
-        salesMethodData[method].totalRevenue =
-          salesMethodData[method].completedRevenue;
-      });
+            // Tìm category name
+            const categoryName =
+              categories && Array.isArray(categories)
+                ? categories.find((cat) => cat.id === product.categoryId)
+                    ?.name || ""
+                : "";
 
-      console.log("Sales Method Data:", salesMethodData);
+            return {
+              productCode: product.sku || "",
+              productName: product.name || "",
+              unit: "", // Đơn vị tính - để trống vì không có trong database
+              quantitySold: sales.quantity,
+              totalAmount: sales.totalAmount,
+              discount: sales.discount,
+              revenue: sales.revenue,
+              categoryName: categoryName,
+            };
+          })
+          .filter((item) => item !== null);
+      };
+
+      const data = getSalesData();
+      const totalPages = Math.ceil(data.length / productPageSize);
+      const startIndex = (productCurrentPage - 1) * productPageSize;
+      const endIndex = startIndex + productPageSize;
+      const paginatedData = data.slice(startIndex, endIndex);
 
       return (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5" />
-              {t("reports.channelSalesReport")}
+              <Package className="w-5 h-5" />
+              {t("reports.salesReportByProduct")}
             </CardTitle>
             <CardDescription>
               {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
@@ -2543,1272 +3588,407 @@ export function SalesChartReport() {
           <CardContent>
             <div className="w-full">
               <div className="overflow-x-auto xl:overflow-x-visible">
-                <Table className="w-full min-w-[800px] xl:min-w-full">
+                <Table className="w-full min-w-[1000px] xl:min-w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead
-                        className="text-center font-bold bg-green-100 border"
-                        rowSpan={2}
-                      >
-                        {t("reports.salesMethod")}
+                      <TableHead>{t("reports.productCode")}</TableHead>
+                      <TableHead>{t("reports.productName")}</TableHead>
+                      <TableHead>{t("reports.unit")}</TableHead>
+                      <TableHead className="text-center">
+                        {t("reports.quantitySold")}
                       </TableHead>
-                      <TableHead
-                        className="text-center font-bold bg-green-100 border"
-                        colSpan={3}
-                      >
-                        {t("reports.totalOrders")}
+                      <TableHead className="text-right">
+                        {t("reports.totalAmount")}
                       </TableHead>
-                      <TableHead
-                        className="text-center font-bold bg-green-100 border"
-                        colSpan={3}
-                      >
+                      <TableHead className="text-right">
+                        {t("reports.discount")}
+                      </TableHead>
+                      <TableHead className="text-right">
                         {t("reports.revenue")}
                       </TableHead>
-                    </TableRow>
-                    <TableRow>
-                      <TableHead className="text-center bg-green-50 border">
-                        {t("reports.completed")}
-                      </TableHead>
-                      <TableHead className="text-center bg-green-50 border">
-                        {t("reports.cancelled")}
-                      </TableHead>
-                      <TableHead className="text-center bg-green-50 border">
-                        {t("common.total")}
-                      </TableHead>
-                      <TableHead className="text-center bg-green-50 border">
-                        {t("reports.completed")}
-                      </TableHead>
-                      <TableHead className="text-center bg-green-50 border">
-                        {t("reports.cancelled")}
-                      </TableHead>
-                      <TableHead className="text-center bg-green-50 border">
-                        {t("common.total")}
-                      </TableHead>
+                      <TableHead>{t("reports.categoryName")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {Object.entries(salesMethodData).map(([method, data]) => (
-                      <TableRow key={method} className="hover:bg-gray-50">
-                        <TableCell className="font-medium text-center border bg-blue-50">
-                          {method}
-                        </TableCell>
-                        <TableCell className="text-center border">
-                          {data.completedOrders}
-                        </TableCell>
-                        <TableCell className="text-center border">
-                          {data.cancelledOrders}
-                        </TableCell>
-                        <TableCell className="text-center border font-medium">
-                          {data.totalOrders}
-                        </TableCell>
-                        <TableCell className="text-right border">
-                          {formatCurrency(data.completedRevenue)}
-                        </TableCell>
-                        <TableCell className="text-right border">
-                          {formatCurrency(data.cancelledRevenue)}
-                        </TableCell>
-                        <TableCell className="text-right border font-medium">
-                          {formatCurrency(data.totalRevenue)}
+                    {paginatedData.length > 0 ? (
+                      paginatedData.map((item, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">
+                            {item.productCode}
+                          </TableCell>
+                          <TableCell>{item.productName}</TableCell>
+                          <TableCell>{item.unit}</TableCell>
+                          <TableCell className="text-center">
+                            {item.quantitySold}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency(item.totalAmount)}
+                          </TableCell>
+                          <TableCell className="text-right text-red-600">
+                            {formatCurrency(item.discount)}
+                          </TableCell>
+                          <TableCell className="text-right text-green-600 font-medium">
+                            {formatCurrency(item.revenue)}
+                          </TableCell>
+                          <TableCell>{item.categoryName}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={8}
+                          className="text-center text-gray-500 italic"
+                        >
+                          {t("reports.noDataDescription")}
                         </TableCell>
                       </TableRow>
-                    ))}
-
-                    {/* Summary Row */}
-                    <TableRow className="bg-green-100 font-bold border-t-2">
-                      <TableCell className="text-center border font-bold">
-                        {t("common.total")}
-                      </TableCell>
-                      <TableCell className="text-center border">
-                        {Object.values(salesMethodData).reduce(
-                          (sum, data) => sum + data.completedOrders,
-                          0,
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center border">
-                        {Object.values(salesMethodData).reduce(
-                          (sum, data) => sum + data.cancelledOrders,
-                          0,
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center border font-bold">
-                        {Object.values(salesMethodData).reduce(
-                          (sum, data) => sum + data.totalOrders,
-                          0,
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right border">
-                        {formatCurrency(
-                          Object.values(salesMethodData).reduce(
-                            (sum, data) => sum + data.completedRevenue,
-                            0,
-                          ),
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right border">
-                        {formatCurrency(
-                          Object.values(salesMethodData).reduce(
-                            (sum, data) => sum + data.cancelledRevenue,
-                            0,
-                          ),
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right border font-bold">
-                        {formatCurrency(
-                          Object.values(salesMethodData).reduce(
-                            (sum, data) => sum + data.totalRevenue,
-                            0,
-                          ),
-                        )}
-                      </TableCell>
-                    </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </div>
             </div>
-            {/* No pagination needed for sales channel report - it's a summary table */}
+
+            {/* Pagination Controls for Product Report */}
+            {data.length > 0 && (
+              <div className="flex items-center justify-between space-x-6 py-4">
+                <div className="flex items-center space-x-2">
+                  <p className="text-sm font-medium">{t("common.show")} </p>
+                  <Select
+                    value={productPageSize.toString()}
+                    onValueChange={(value) => {
+                      setProductPageSize(Number(value));
+                      setProductCurrentPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="h-8 w-[70px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent side="top">
+                      <SelectItem value="15">15</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="30">30</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm font-medium"> {t("common.rows")}</p>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <p className="text-sm font-medium">
+                    {t("common.page")} {productCurrentPage} / {totalPages}
+                  </p>
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={() => setProductCurrentPage(1)}
+                      disabled={productCurrentPage === 1}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    >
+                      «
+                    </button>
+                    <button
+                      onClick={() =>
+                        setProductCurrentPage((prev) => Math.max(prev - 1, 1))
+                      }
+                      disabled={productCurrentPage === 1}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    >
+                      ‹
+                    </button>
+                    <button
+                      onClick={() =>
+                        setProductCurrentPage((prev) =>
+                          Math.min(prev + 1, totalPages),
+                        )
+                      }
+                      disabled={productCurrentPage === totalPages}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    >
+                      ›
+                    </button>
+                    <button
+                      onClick={() => setProductCurrentPage(totalPages)}
+                      disabled={productCurrentPage === totalPages}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
+                    >
+                      »
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       );
     };
 
-    // Chart configurations for each analysis type
-    const chartConfig = {
-      revenue: {
-        label: t("reports.revenue"),
-        color: "#10b981",
-      },
-      netRevenue: {
-        label: t("reports.netRevenue"),
-        color: "#3b82f6",
-      },
-      returnValue: {
-        label: t("reports.returnValue"),
-        color: "#ef4444",
-      },
-      quantity: {
-        label: t("reports.quantity"),
-        color: "#f59e0b",
-      },
-      profit: {
-        label: t("reports.profit"),
-        color: "#8b5cf6",
-      },
-    };
-
-    // Get chart data based on analysis type
-    const getChartData = () => {
-      switch (analysisType) {
-        case "time":
-          // Use dashboard stats to get filtered orders
-          const dashboardStats = getDashboardStats();
-          if (!dashboardStats || !dashboardStats.filteredCompletedOrders) {
-            return [];
-          }
-
-          const filteredOrders = dashboardStats.filteredCompletedOrders;
-
-          console.log("Chart data generation:", {
-            filteredOrdersCount: filteredOrders.length,
-            sampleOrder: filteredOrders[0] ? {
-              id: filteredOrders[0].id,
-              total: filteredOrders[0].total,
-              orderedAt: filteredOrders[0].orderedAt,
-              status: filteredOrders[0].status,
-            } : null,
-          });
-
-          const dailySales: {
-            [date: string]: { revenue: number; orders: number };
-          } = {};
-
-          filteredOrders.forEach((order: any) => {
-            const orderDate = new Date(
-              order.orderedAt ||
-                order.paidAt ||
-                order.createdAt ||
-                order.created_at,
-            );
-            const year = orderDate.getFullYear();
-            const month = (orderDate.getMonth() + 1).toString().padStart(2, "0");
-            const day = orderDate.getDate().toString().padStart(2, "0");
-            const date = `${year}-${month}-${day}`;
-
-            if (!dailySales[date]) {
-              dailySales[date] = { revenue: 0, orders: 0 };
-            }
-
-            // Use exact same revenue calculation as dashboard
-            const orderTotal = Number(order.total || 0);
-            const orderDiscount = Number(order.discount || 0);
-            const revenue = orderTotal - orderDiscount;
-
-            dailySales[date].revenue += revenue;
-            dailySales[date].orders += 1;
-          });
-
-          const chartData = Object.entries(dailySales)
-            .map(([date, data]) => ({
-              name: formatDate(date), // Format date for display
-              revenue: data.revenue,
-              orders: data.orders,
-            }))
-            .sort((a, b) => new Date(a.name).getTime() - new Date(b.name).getTime()) // Sort by date
-            .slice(0, 10);
-
-          console.log("Generated chart data:", chartData);
-          return chartData;
-
-        case "product":
-          if (!products || !Array.isArray(products)) return [];
-
-          const productStart = new Date(startDate);
-          const productEnd = new Date(endDate);
-          productEnd.setHours(23, 59, 59, 999);
-
-          const productSales: {
-            [productId: string]: { quantity: number; revenue: number };
-          } = {};
-
-          // Get dữ liệu từ orders có items sẵn có
-          if (orders && Array.isArray(orders)) {
-            // Filter orders theo ngày và status
-            const filteredOrders = orders.filter((order: any) => {
-              // Chỉ lấy orders đã hoàn thành/thanh toán
-              if (order.status !== "completed" && order.status !== "paid")
-                return false;
-
-              const orderDate = new Date(
-                order.orderedAt ||
-                  order.createdAt ||
-                  order.created_at ||
-                  order.paidAt,
-              );
-              const orderDateOnly = new Date(orderDate);
-              orderDateOnly.setHours(0, 0, 0, 0);
-              return orderDateOnly >= productStart && orderDateOnly <= productEnd;
-            });
-
-            // Xử lý từng order để lấy order items từ order.items nếu có
-            filteredOrders.forEach((order: any) => {
-              if (order.items && Array.isArray(order.items)) {
-                order.items.forEach((item: any) => {
-                  const productId = item.productId?.toString();
-                  if (!productId) return;
-
-                  // Kiểm tra product có tồn tại trong danh sách products không
-                  const product = products.find(
-                    (p) => p.id.toString() === productId,
-                  );
-                  if (!product) return;
-
-                  if (!productSales[productId]) {
-                    productSales[productId] = {
-                      quantity: 0,
-                      revenue: 0,
-                    };
-                  }
-
-                  const quantity = Number(item.quantity || 0);
-                  const total = Number(item.total || 0);
-
-                  productSales[productId].quantity += quantity;
-                  productSales[productId].revenue += total;
-                });
-              }
-            });
-          }
-
-          // Fallback: Process transaction items from transactions if available
-          if (
-            transactions &&
-            Array.isArray(transactions) &&
-            Object.keys(productSales).length === 0
-          ) {
-            const filteredTransactions = transactions.filter(
-              (transaction: any) => {
-                const transactionDate = new Date(
-                  transaction.createdAt || transaction.created_at,
-                );
-                const transactionDateOnly = new Date(transactionDate);
-                transactionDateOnly.setHours(0, 0, 0, 0);
-                return (
-                  transactionDateOnly >= productStart &&
-                  transactionDateOnly <= productEnd
-                );
-              },
-            );
-
-            filteredTransactions.forEach((transaction: any) => {
-              if (transaction.items && Array.isArray(transaction.items)) {
-                transaction.items.forEach((item: any) => {
-                  const productId = item.productId?.toString();
-                  if (!productId) return;
-
-                  // Check if this product is in our products list
-                  const product = products.find(
-                    (p) => p.id.toString() === productId,
-                  );
-                  if (!product) return;
-
-                  if (!productSales[productId]) {
-                    productSales[productId] = {
-                      quantity: 0,
-                      revenue: 0,
-                    };
-                  }
-
-                  const quantity = Number(item.quantity || 0);
-                  const total = Number(item.total || 0);
-
-                  productSales[productId].quantity += quantity;
-                  productSales[productId].revenue += total;
-                });
-              }
-            });
-          }
-
-          return products
-            .map((product: any) => {
-              const sales = productSales[product.id.toString()] || {
-                quantity: 0,
-                revenue: 0,
-              };
-              return {
-                name:
-                  product.name.length > 15
-                    ? product.name.substring(0, 15) + "..."
-                    : product.name,
-                revenue: sales.revenue,
-                quantity: sales.quantity,
-              };
-            })
-            .filter((item) => item.quantity > 0)
-            .sort((a, b) => b.revenue - a.revenue)
-            .slice(0, 10);
-
-        case "employee":
-          try {
-            if (!orders || !Array.isArray(orders)) {
-              console.warn("Employee chart: No orders data available");
-              return [];
-            }
-
-            const empStart = new Date(startDate);
-            const empEnd = new Date(endDate);
-            empEnd.setHours(23, 59, 59, 999);
-
-            // Use EXACT same filtering logic as dashboard for orders
-            const empFilteredOrders = orders.filter((order: any) => {
-              // Check if order is completed/paid (EXACT same as dashboard)
-              if (order.status !== "completed" && order.status !== "paid")
-                return false;
-
-              // Try multiple possible date fields (EXACT same as dashboard)
-              const orderDate = new Date(
-                order.orderedAt ||
-                  order.createdAt ||
-                  order.created_at ||
-                  order.paidAt,
-              );
-
-              // Skip if date is invalid
-              if (isNaN(orderDate.getTime())) {
-                return false;
-              }
-
-              const dateMatch = orderDate >= empStart && orderDate <= empEnd;
-
-              const employeeMatch =
-                selectedEmployee === "all" ||
-                order.employeeName === selectedEmployee ||
-                order.cashierName === selectedEmployee ||
-                order.employeeId?.toString() === selectedEmployee ||
-                (order.employeeName &&
-                  order.employeeName.includes(selectedEmployee)) ||
-                (order.cashierName &&
-                  order.cashierName.includes(selectedEmployee));
-
-              return dateMatch && employeeMatch;
-            });
-
-            const employeeData: {
-              [cashier: string]: { revenue: number; orders: number };
-            } = {};
-
-            empFilteredOrders.forEach((order: any) => {
-              try {
-                const cashier =
-                  order.cashierName || order.employeeName || "Unknown";
-                if (!employeeData[cashier]) {
-                  employeeData[cashier] = { revenue: 0, orders: 0 };
-                }
-
-                // Use EXACT same calculation as dashboard: total - discount
-                const orderTotal = Number(order.total || 0);
-                const orderDiscount = Number(order.discount || 0);
-                const revenue = orderTotal - orderDiscount;
-
-                if (revenue >= 0) {
-                  // Allow 0 revenue orders
-                  employeeData[cashier].revenue += revenue;
-                  employeeData[cashier].orders += 1;
-                }
-              } catch (error) {
-                console.warn("Error processing employee order:", error);
-              }
-            });
-
-            const result = Object.entries(employeeData)
-              .map(([name, data]) => ({
-                name:
-                  name && name.length > 10
-                    ? name.substring(0, 10) + "..."
-                    : name || "Unknown",
-                revenue: Math.max(0, data.revenue || 0), // Ensure no negative values
-                orders: Math.max(0, data.orders || 0), // Ensure no negative values
-              }))
-              .filter((item) => item.revenue > 0 || item.orders > 0) // Only show employees with data
-              .sort((a, b) => (b.revenue || 0) - (a.revenue || 0))
-              .slice(0, 10);
-
-            console.log("Employee chart data generated:", {
-              filteredOrdersCount: empFilteredOrders.length,
-              employeeDataKeys: Object.keys(employeeData),
-              result,
-            });
-
-            return result;
-          } catch (error) {
-            console.error("Error in employee chart data generation:", error);
-            return [];
-          }
-
-        case "customer":
-          if (!orders || !Array.isArray(orders)) return [];
-
-          const custStart = new Date(startDate);
-          const custEnd = new Date(endDate);
-          custEnd.setHours(23, 59, 59, 999);
-
-          const custFilteredOrders = orders.filter((order: any) => {
-            const orderDate = new Date(
-              order.orderedAt || order.created_at || order.createdAt,
-            );
-            return (
-              orderDate >= custStart &&
-              orderDate <= custEnd &&
-              order.status === "paid"
-            );
-          });
-
-          const customerData: {
-            [customerId: string]: {
-              customerId: string;
-              customerName: string;
-              customerGroup: string;
-              orders: number;
-              totalAmount: number;
-              discount: number;
-              revenue: number;
-              status: string;
-              orderDetails: any[];
-            };
-          } = {};
-
-          custFilteredOrders.forEach((order: any) => {
-            const customerId = order.customerId || "guest";
-            const customerName = order.customerName || "Khách lẻ";
-
-            if (!customerData[customerId]) {
-              customerData[customerId] = {
-                customerId: customerId === "guest" ? "KL-001" : customerId,
-                customerName: customerName,
-                customerGroup: t("common.regularCustomer"), // Default group
-                orders: 0,
-                totalAmount: 0,
-                discount: 0,
-                revenue: 0,
-                status: t("reports.active"),
-                orderDetails: [],
-              };
-            }
-
-            const orderTotal = Number(order.total);
-            const orderSubtotal = Number(order.subtotal || orderTotal * 1.1); // Calculate subtotal if not available
-            const orderDiscount = orderSubtotal - orderTotal;
-
-            customerData[customerId].orders += 1;
-            customerData[customerId].totalAmount += orderSubtotal;
-            customerData[customerId].discount += orderDiscount;
-            customerData[customerId].revenue += orderTotal;
-            customerData[customerId].orderDetails.push(order);
-
-            // Determine customer group based on total spending
-            if (customerData[customerId].revenue >= 1000000) {
-              customerData[customerId].customerGroup = t("reports.vip");
-            } else if (customerData[customerId].revenue >= 500000) {
-              customerData[customerId].customerGroup = t("common.goldCustomer");
-            }
-          });
-
-          const data = Object.values(customerData).sort(
-            (a, b) => b.revenue - a.revenue,
-          );
-
-          // Pagination logic
-          const totalPages = Math.ceil(data.length / customerPageSize);
-          const startIndex = (customerCurrentPage - 1) * customerPageSize;
-          const endIndex = startIndex + customerPageSize;
-          const paginatedData = data.slice(startIndex, endIndex);
-
-          return Object.entries(customerData)
-            .map(([customerId, data]) => ({
-              name:
-                data.customerName.length > 10
-                  ? data.customerName.substring(0, 10) + "..."
-                  : data.customerName,
-              revenue: data.revenue,
-              orders: data.orders,
-            }))
-            .sort((a, b) => b.revenue - a.revenue)
-            .slice(0, 10);
-      }
-
-      // Chart rendering component
-      const renderChart = () => {
-        try {
-          const chartData = getChartData();
-
-          console.log("Chart data for", analysisType, ":", chartData);
-
-          if (!chartData || chartData.length === 0) {
-            return (
-              <div className="flex flex-col justify-center items-center py-8">
-                <div className="text-gray-500 mb-2">
-                  {t("reports.noDataDescription")}
-                </div>
-                <div className="text-sm text-orange-600">
-                  📊 Không có dữ liệu trong khoảng thời gian đã chọn ({startDate} - {endDate})
-                </div>
-                <div className="text-xs text-gray-400 mt-1">
-                  Thử chọn khoảng thời gian khác hoặc kiểm tra dữ liệu đơn hàng
-                </div>
+    return (
+      <div className="space-y-6">
+        {/* Filters */}
+        <Card>
+          <CardContent className="pt-4">
+            {/* Main Filter Row */}
+            <div className="grid grid-cols-4 gap-4 mb-4">
+              {/* Analysis Type */}
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  {t("reports.analyzeBy")}
+                </Label>
+                <Select
+                  value={analysisType}
+                  onValueChange={(value) => {
+                    setAnalysisType(value);
+                    // Reset concernType when analysisType changes if necessary
+                    if (value === "time") {
+                      setConcernType("time"); // Default for time analysis
+                    } else if (value === "salesDetail") {
+                      setConcernType("sales"); // Default for sales detail analysis
+                    } else {
+                      // If moving away from 'time', ensure concernType is sensible or reset
+                      setConcernType("sales"); // Or a more appropriate default
+                    }
+                  }}
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="time">
+                      {t("reports.timeAnalysis")}
+                    </SelectItem>
+                    <SelectItem value="product">
+                      {t("reports.productAnalysis")}
+                    </SelectItem>
+                    <SelectItem value="employee">
+                      {t("reports.employeeAnalysis")}
+                    </SelectItem>
+                    <SelectItem value="customer">
+                      {t("reports.customerAnalysis")}
+                    </SelectItem>
+                    <SelectItem value="channel">
+                      {t("reports.channelAnalysis")}
+                    </SelectItem>
+                    <SelectItem value="salesDetail">
+                      {t("reports.salesDetailReport")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            );
-          }
 
-          return (
-            <Card className="shadow-xl border-0 bg-gradient-to-br from-blue-50/50 to-indigo-50/30">
-              <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-t-lg">
-                <CardTitle className="flex items-center gap-3 text-lg font-semibold">
-                  <div className="p-2 bg-white/20 rounded-lg">
-                    <TrendingUp className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="text-white/90 text-sm font-normal">
-                      {t("reports.chartView")}
-                    </div>
-                    <div className="text-white font-semibold">
-                      {getReportTitle()}
-                    </div>
-                  </div>
-                </CardTitle>
-                <CardDescription className="text-blue-100 mt-2">
-                  {t("reports.visualRepresentation")} - {t("reports.fromDate")}:{" "}
-                  {formatDate(startDate)} {t("reports.toDate")}:{" "}
-                  {formatDate(endDate)}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-8 bg-white/80 backdrop-blur-sm">
-                <div className="h-[450px] w-full bg-white/90 rounded-xl border-0 shadow-lg p-6 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/20 to-purple-50/20 rounded-xl"></div>
-                  <ChartContainer
-                    config={chartConfig}
-                    className="h-full w-full relative z-10"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart
-                        data={chartData}
-                        margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                      >
-                        <defs>
-                          <linearGradient
-                            id="revenueGradient"
-                            x1="0"
-                            y1="0"
-                            x2="0"
-                            y2="1"
-                          >
-                            <stop
-                              offset="5%"
-                              stopColor="#10b981"
-                              stopOpacity={0.9}
-                            />
-                            <stop
-                              offset="95%"
-                              stopColor="#10b981"
-                              stopOpacity={0.6}
-                            />
-                          </linearGradient>
-                          <linearGradient
-                            id="ordersGradient"
-                            x1="0"
-                            y1="0"
-                            x2="0"
-                            y2="1"
-                          >
-                            <stop
-                              offset="5%"
-                              stopColor="#3b82f6"
-                              stopOpacity={0.9}
-                            />
-                            <stop
-                              offset="95%"
-                              stopColor="#3b82f6"
-                              stopOpacity={0.6}
-                            />
-                          </linearGradient>
-                          <linearGradient
-                            id="quantityGradient"
-                            x1="0"
-                            y1="0"
-                            x2="0"
-                            y2="1"
-                          >
-                            <stop
-                              offset="5%"
-                              stopColor="#f59e0b"
-                              stopOpacity={0.9}
-                            />
-                            <stop
-                              offset="95%"
-                              stopColor="#f59e0b"
-                              stopOpacity={0.6}
-                            />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid
-                          strokeDasharray="3 3"
-                          stroke="#e5e7eb"
-                          opacity={0.5}
-                        />
-                        <XAxis
-                          dataKey="name"
-                          stroke="#6b7280"
-                          fontSize={12}
-                          angle={-45}
-                          textAnchor="end"
-                          height={80}
-                          interval={0}
-                        />
-                        <YAxis stroke="#6b7280" fontSize={12} />
-                        <ChartTooltip
-                          content={({ active, payload, label }) => {
-                            if (active && payload && payload.length) {
-                              return (
-                                <div className="bg-white/95 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-lg">
-                                  <p className="font-semibold text-gray-800 mb-2">
-                                    {label}
-                                  </p>
-                                  {payload.map((entry, index) => {
-                                    const translatedName =
-                                      entry.dataKey === "revenue"
-                                        ? t("reports.revenue")
-                                        : entry.dataKey === "orders"
-                                          ? t("reports.orders")
-                                          : entry.dataKey === "quantity"
-                                            ? t("reports.quantity")
-                                            : entry.name;
-                                    return (
-                                      <p
-                                        key={index}
-                                        className="text-sm"
-                                        style={{ color: entry.color }}
-                                      >
-                                        {translatedName}:{" "}
-                                        {entry.dataKey === "revenue" ||
-                                        entry.dataKey === "netRevenue"
-                                          ? formatCurrency(Number(entry.value))
-                                          : entry.value}
-                                      </p>
-                                    );
-                                  })}
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
+              {/* Date Range */}
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  {t("reports.startDate")}
+                </Label>
+                <Input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="h-9 text-sm"
+                />
+              </div>
 
-                        {/* Revenue bar - always show */}
-                        <Bar
-                          dataKey="revenue"
-                          fill="url(#revenueGradient)"
-                          radius={[4, 4, 0, 0]}
-                          maxBarSize={60}
-                        />
-
-                        {/* Additional bars based on analysis type */}
-                        {analysisType === "time" && (
-                          <Bar
-                            dataKey="orders"
-                            fill="url(#ordersGradient)"
-                            radius={[4, 4, 0, 0]}
-                            maxBarSize={60}
-                          />
-                        )}
-
-                        {analysisType === "product" && (
-                          <Bar
-                            dataKey="quantity"
-                            fill="url(#quantityGradient)"
-                            radius={[4, 4, 0, 0]}
-                            maxBarSize={60}
-                          />
-                        )}
-
-                        {(analysisType === "employee" ||
-                          analysisType === "customer" ||
-                          analysisType === "channel" ||
-                          analysisType === "salesDetail") && (
-                          <Bar
-                            dataKey="orders"
-                            fill="url(#ordersGradient)"
-                            radius={[4, 4, 0, 0]}
-                            maxBarSize={60}
-                          />
-                        )}
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        } catch (error) {
-          console.error("Error in renderChart:", error);
-          return (
-            <div className="flex justify-center py-8">
-              <div className="text-red-500">
-                <p>Lỗi khi hiển thị biểu đồ</p>
-                <p className="text-sm">{error.message || "Unknown error"}</p>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  {t("reports.endDate")}
+                </Label>
+                <Input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="h-9 text-sm"
+                />
               </div>
             </div>
-          );
-        }
-      };
 
-      // Main render function
-      const renderReportContent = () => {
-        try {
-          console.log(
-            "Rendering report content for analysisType:",
-            analysisType,
-            "concernType:",
-            concernType,
-          );
-
-          switch (analysisType) {
-            case "time":
-              // Handle concernType for time-based analysis
-              if (concernType === "employee") {
-                return renderEmployeeReport();
-              } else if (concernType === "salesDetail") {
-                return renderSalesDetailReport();
-              }
-              return renderSalesReport();
-            case "product":
-              return renderProductReport();
-            case "employee":
-              return renderEmployeeReport();
-            case "customer":
-              return renderCustomerReport();
-            case "channel":
-              return renderSalesChannelReport();
-            case "salesDetail":
-              return renderSalesDetailReport();
-            default:
-              return renderSalesReport();
-          }
-        } catch (error) {
-          console.error("Error in renderReportContent:", error);
-          return (
-            <div className="flex justify-center py-8">
-              <div className="text-red-500">
-                <p>Có lỗi xảy ra khi hiển thị báo cáo</p>
-                <p className="text-sm">{error.message}</p>
-              </div>
-            </div>
-          );
-        }
-      };
-
-      // Product Report Logic (Moved up to be before renderChart)
-      const renderProductReport = () => {
-        const getFilteredProducts = () => {
-          if (!products || !Array.isArray(products)) return [];
-
-          return products.filter((product: any) => {
-            const searchMatch =
-              !productSearch ||
-              product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-              (product.sku &&
-                product.sku.toLowerCase().includes(productSearch.toLowerCase()));
-
-            const categoryMatch =
-              selectedCategory === "all" ||
-              product.categoryId?.toString() === selectedCategory;
-
-            const typeMatch =
-              productType === "all" ||
-              (productType === "combo" && product.productType === 3) ||
-              (productType === "product" && product.productType === 1) ||
-              (productType === "service" && product.productType === 2);
-
-            return searchMatch && categoryMatch && typeMatch;
-          });
-        };
-
-        const getSalesData = () => {
-          const filteredProducts = getFilteredProducts();
-          if (!filteredProducts.length) return [];
-
-          const start = new Date(startDate);
-          const end = new Date(endDate);
-          end.setHours(23, 59, 59, 999);
-
-          console.log("Product Report Debug:", {
-            startDate,
-            endDate,
-            start: start.toISOString(),
-            end: end.toISOString(),
-            ordersLength: orders?.length || 0,
-            transactionsLength: transactions?.length || 0,
-          });
-
-          const productSales: {
-            [productId: string]: {
-              quantity: number;
-              totalAmount: number;
-              discount: number;
-              revenue: number;
-            };
-          } = {};
-
-          // Process order items from orders first (main data source)
-          if (orders && Array.isArray(orders)) {
-            // Use EXACT same filtering logic as other reports
-            const filteredOrders = orders.filter((order: any) => {
-              // Check if order is completed/paid (EXACT same as dashboard)
-              if (order.status !== "completed" && order.status !== "paid")
-                return false;
-
-              // Try multiple possible date fields (EXACT same as dashboard)
-              const orderDate = new Date(
-                order.orderedAt ||
-                  order.createdAt ||
-                  order.created_at ||
-                  order.paidAt,
-              );
-
-              // Skip if date is invalid
-              if (isNaN(orderDate.getTime())) {
-                return false;
-              }
-
-              return orderDate >= start && orderDate <= end;
-            });
-
-            console.log("Filtered Orders for Product Report:", {
-              totalOrders: orders.length,
-              filteredOrders: filteredOrders.length,
-              sampleOrder: filteredOrders[0]
-                ? {
-                    id: filteredOrders[0].id,
-                    status: filteredOrders[0].status,
-                    orderedAt: filteredOrders[0].orderedAt,
-                    createdAt: filteredOrders[0].createdAt,
-                    items: filteredOrders[0].items?.length || 0,
-                  }
-                : null,
-            });
-
-            filteredOrders.forEach((order: any) => {
-              if (order.items && Array.isArray(order.items)) {
-                order.items.forEach((item: any) => {
-                  const productId = item.productId?.toString();
-                  if (!productId) return;
-
-                  // Check if this product is in our filtered products list
-                  const product = filteredProducts.find(
-                    (p) => p.id.toString() === productId,
-                  );
-                  if (!product) return;
-
-                  if (!productSales[productId]) {
-                    productSales[productId] = {
-                      quantity: 0,
-                      totalAmount: 0,
-                      discount: 0,
-                      revenue: 0,
-                    };
-                  }
-
-                  const quantity = Number(item.quantity || 0);
-                  const total = Number(item.total || 0);
-                  const unitPrice = Number(item.unitPrice || item.price || 0);
-                  const totalAmount = quantity * unitPrice;
-                  const discount = Math.max(0, totalAmount - total); // Ensure discount is not negative
-
-                  productSales[productId].quantity += quantity;
-                  productSales[productId].totalAmount += totalAmount;
-                  productSales[productId].discount += discount;
-                  productSales[productId].revenue += total;
-
-                  console.log("Processing order item:", {
-                    productId,
-                    productName: product.name,
-                    quantity,
-                    total,
-                    unitPrice,
-                    totalAmount,
-                    discount,
-                  });
-                });
-              }
-            });
-          }
-
-          // Fallback: Process transaction items from transactions if no order data
-          if (
-            transactions &&
-            Array.isArray(transactions) &&
-            Object.keys(productSales).length === 0
-          ) {
-            const filteredTransactions = transactions.filter(
-              (transaction: any) => {
-                const transactionDate = new Date(
-                  transaction.createdAt || transaction.created_at,
-                );
-                const transactionDateOnly = new Date(transactionDate);
-                transactionDateOnly.setHours(0, 0, 0, 0);
-                return (
-                  transactionDateOnly >= start &&
-                  transactionDateOnly <= end
-                );
-              },
-            );
-
-            console.log("Fallback to transactions:", {
-              totalTransactions: transactions.length,
-              filteredTransactions: filteredTransactions.length,
-            });
-
-            filteredTransactions.forEach((transaction: any) => {
-              if (transaction.items && Array.isArray(transaction.items)) {
-                transaction.items.forEach((item: any) => {
-                  const productId = item.productId?.toString();
-                  if (!productId) return;
-
-                  // Check if this product is in our filtered products list
-                  const product = filteredProducts.find(
-                    (p) => p.id.toString() === productId,
-                  );
-                  if (!product) return;
-
-                  if (!productSales[productId]) {
-                    productSales[productId] = {
-                      quantity: 0,
-                      totalAmount: 0,
-                      discount: 0,
-                      revenue: 0,
-                    };
-                  }
-
-                  const quantity = Number(item.quantity || 0);
-                  const total = Number(item.total || 0);
-                  const unitPrice = Number(item.price || 0);
-                  const totalAmount = quantity * unitPrice;
-                  const discount = Math.max(0, totalAmount - total);
-
-                  productSales[productId].quantity += quantity;
-                  productSales[productId].totalAmount += totalAmount;
-                  productSales[productId].discount += discount;
-                  productSales[productId].revenue += total;
-                });
-              }
-            });
-          }
-
-          console.log("Product Sales Summary:", productSales);
-
-          return filteredProducts
-            .map((product: any) => {
-              const sales = productSales[product.id.toString()] || {
-                quantity: 0,
-                totalAmount: 0,
-                discount: 0,
-                revenue: 0,
-              };
-
-              // Tìm category name
-              const categoryName =
-                categories && Array.isArray(categories)
-                  ? categories.find((cat) => cat.id === product.categoryId)
-                      ?.name || ""
-                  : "";
-
-              return {
-                productCode: product.sku || "",
-                productName: product.name || "",
-                unit: "", // Đơn vị tính - để trống vì không có trong database
-                quantitySold: sales.quantity,
-                totalAmount: sales.totalAmount,
-                discount: sales.discount,
-                revenue: sales.revenue,
-                categoryName: categoryName,
-              };
-            })
-            .filter((item) => item !== null);
-        };
-
-        const data = getSalesData();
-        const totalPages = Math.ceil(data.length / productPageSize);
-        const startIndex = (productCurrentPage - 1) * productPageSize;
-        const endIndex = startIndex + productPageSize;
-        const paginatedData = data.slice(startIndex, endIndex);
-
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="w-5 h-5" />
-                {t("reports.salesReportByProduct")}
-              </CardTitle>
-              <CardDescription>
-                {t("reports.fromDate")}: {formatDate(startDate)} -{" "}
-                {t("reports.toDate")}: {formatDate(endDate)}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="w-full">
-                <div className="overflow-x-auto xl:overflow-x-visible">
-                  <Table className="w-full min-w-[1000px] xl:min-w-full">
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t("reports.productCode")}</TableHead>
-                        <TableHead>{t("reports.productName")}</TableHead>
-                        <TableHead>{t("reports.unit")}</TableHead>
-                        <TableHead className="text-center">
-                          {t("reports.quantitySold")}
-                        </TableHead>
-                        <TableHead className="text-right">
-                          {t("reports.totalAmount")}
-                        </TableHead>
-                        <TableHead className="text-right">
-                          {t("reports.discount")}
-                        </TableHead>
-                        <TableHead className="text-right">
-                          {t("reports.revenue")}
-                        </TableHead>
-                        <TableHead>{t("reports.categoryName")}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {paginatedData.length > 0 ? (
-                        paginatedData.map((item, index) => (
-                          <TableRow key={index}>
-                            <TableCell className="font-medium">
-                              {item.productCode}
-                            </TableCell>
-                            <TableCell>{item.productName}</TableCell>
-                            <TableCell>{item.unit}</TableCell>
-                            <TableCell className="text-center">
-                              {item.quantitySold}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {formatCurrency(item.totalAmount)}
-                            </TableCell>
-                            <TableCell className="text-right text-red-600">
-                              {formatCurrency(item.discount)}
-                            </TableCell>
-                            <TableCell className="text-right text-green-600 font-medium">
-                              {formatCurrency(item.revenue)}
-                            </TableCell>
-                            <TableCell>{item.categoryName}</TableCell>
-                          </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={8}
-                            className="text-center text-gray-500 italic"
-                          >
-                            {t("reports.noDataDescription")}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-
-              {/* Pagination Controls for Product Report */}
-              {data.length > 0 && (
-                <div className="flex items-center justify-between space-x-6 py-4">
-                  <div className="flex items-center space-x-2">
-                    <p className="text-sm font-medium">{t("common.show")} </p>
-                    <Select
-                      value={productPageSize.toString()}
-                      onValueChange={(value) => {
-                        setProductPageSize(Number(value));
-                        setProductCurrentPage(1);
-                      }}
-                    >
-                      <SelectTrigger className="h-8 w-[70px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent side="top">
-                        <SelectItem value="15">15</SelectItem>
-                        <SelectItem value="20">20</SelectItem>
-                        <SelectItem value="30">30</SelectItem>
-                        <SelectItem value="50">50</SelectItem>
-                        <SelectItem value="100">100</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-sm font-medium"> {t("common.rows")}</p>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <p className="text-sm font-medium">
-                      {t("common.page")} {productCurrentPage} / {totalPages}
-                    </p>
-                    <div className="flex items-center space-x-1">
-                      <button
-                        onClick={() => setProductCurrentPage(1)}
-                        disabled={productCurrentPage === 1}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
-                      >
-                        «
-                      </button>
-                      <button
-                        onClick={() =>
-                          setProductCurrentPage((prev) => Math.max(prev - 1, 1))
-                        }
-                        disabled={productCurrentPage === 1}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
-                      >
-                        ‹
-                      </button>
-                      <button
-                        onClick={() =>
-                          setProductCurrentPage((prev) =>
-                            Math.min(prev + 1, totalPages),
-                          )
-                        }
-                        disabled={productCurrentPage === totalPages}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
-                      >
-                        ›
-                      </button>
-                      <button
-                        onClick={() => setProductCurrentPage(totalPages)}
-                        disabled={productCurrentPage === totalPages}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
-                      >
-                        »
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        );
-      };
-
-      return (
-        <div className="space-y-6">
-          {/* Filters */}
-          <Card>
-            <CardContent className="pt-4">
-              {/* Main Filter Row */}
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                {/* Analysis Type */}
+            {/* Secondary Filter Row - Show based on analysis type */}
+            {analysisType === "employee" && (
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4 pt-4 border-t border-gray-200">
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    {t("reports.analyzeBy")}
+                    {t("reports.employeeFilter")}
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder={t("reports.employeeFilterPlaceholder")}
+                      value={selectedEmployee === "all" ? "" : selectedEmployee}
+                      onChange={(e) =>
+                        setSelectedEmployee(e.target.value || "all")
+                      }
+                      className="pl-10 h-9 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {analysisType === "customer" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.customerFilter")}
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder={t("reports.customerFilterPlaceholder")}
+                      value={customerSearch}
+                      onChange={(e) => setCustomerSearch(e.target.value)}
+                      className="pl-10 h-9 text-sm"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.status")}
                   </Label>
                   <Select
-                    value={analysisType}
-                    onValueChange={(value) => {
-                      setAnalysisType(value);
-                      // Reset concernType when analysisType changes if necessary
-                      if (value === "time") {
-                        setConcernType("time"); // Default for time analysis
-                      } else if (value === "salesDetail") {
-                        setConcernType("sales"); // Default for sales detail analysis
-                      } else {
-                        // If moving away from 'time', ensure concernType is sensible or reset
-                        setConcernType("sales"); // Or a more appropriate default
-                      }
-                    }}
+                    value={customerStatus}
+                    onValueChange={setCustomerStatus}
                   >
                     <SelectTrigger className="h-9 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="time">
-                        {t("reports.timeAnalysis")}
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
+                      <SelectItem value="active">
+                        {t("reports.active")}
+                      </SelectItem>
+                      <SelectItem value="inactive">
+                        {t("reports.inactive")}
+                      </SelectItem>
+                      <SelectItem value="vip">{t("reports.vip")}</SelectItem>
+                      <SelectItem value="new">
+                        {t("reports.newCustomer")}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
+            {analysisType === "product" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.productFilter")}
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder={t("reports.productFilterPlaceholder")}
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      className="pl-10 h-9 text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.productType")}
+                  </Label>
+                  <Select value={productType} onValueChange={setProductType}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
+                      <SelectItem value="combo">
+                        {t("reports.combo")}
                       </SelectItem>
                       <SelectItem value="product">
-                        {t("reports.productAnalysis")}
+                        {t("reports.product")}
                       </SelectItem>
-                      <SelectItem value="employee">
-                        {t("reports.employeeAnalysis")}
-                      </SelectItem>
-                      <SelectItem value="customer">
-                        {t("reports.customerAnalysis")}
-                      </SelectItem>
-                      <SelectItem value="channel">
-                        {t("reports.channelAnalysis")}
-                      </SelectItem>
-                      <SelectItem value="salesDetail">
-                        {t("reports.salesDetailReport")}
+                      <SelectItem value="service">
+                        {t("reports.service")}
                       </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Date Range */}
                 <div>
                   <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    {t("reports.startDate")}
+                    {t("reports.productGroup")}
                   </Label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="h-9 text-sm"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                    {t("reports.endDate")}
-                  </Label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="h-9 text-sm"
-                  />
+                  <Select
+                    value={selectedCategory}
+                    onValueChange={setSelectedCategory}
+                  >
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder={t("reports.productGroup")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("common.all")}</SelectItem>
+                      {categories &&
+                        Array.isArray(categories) &&
+                        categories.map((category: any) => (
+                          <SelectItem
+                            key={category.id}
+                            value={category.id.toString()}
+                          >
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
+            )}
 
-              {/* Secondary Filter Row - Show based on analysis type */}
-              {analysisType === "employee" && (
-                <div className="grid grid-cols-1 md:grid-cols-1 gap-4 pt-4 border-t border-gray-200">
+            {analysisType === "channel" && (
+              <div className="pt-4 border-t border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Sales Method */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">
+                      {t("reports.salesMethod")}
+                    </Label>
+                    <Select value={salesMethod} onValueChange={setSalesMethod}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        <SelectItem value="no_delivery">
+                          Không giao hàng
+                        </SelectItem>
+                        <SelectItem value="delivery">Có giao hàng</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Filters for Time Analysis and Sales Detail Report */}
+            {(analysisType === "time" || concernType === "salesDetail") && (
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4 pt-4 border-t border-gray-200">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    {t("reports.employeeFilter")}
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder={t("reports.employeeFilterPlaceholder")}
+                      value={selectedEmployee === "all" ? "" : selectedEmployee}
+                      onChange={(e) =>
+                        setSelectedEmployee(e.target.value || "all")
+                      }
+                      className="pl-10 h-9 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Sales Detail Report Filters */}
+            {analysisType === "salesDetail" && (
+              <div className="space-y-4 pt-4 border-t border-gray-200">
+                {/* Employee and Order Code */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-medium text-gray-700 mb-2 block">
                       {t("reports.employeeFilter")}
@@ -3817,7 +3997,9 @@ export function SalesChartReport() {
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <Input
                         placeholder={t("reports.employeeFilterPlaceholder")}
-                        value={selectedEmployee === "all" ? "" : selectedEmployee}
+                        value={
+                          selectedEmployee === "all" ? "" : selectedEmployee
+                        }
                         onChange={(e) =>
                           setSelectedEmployee(e.target.value || "all")
                         }
@@ -3825,56 +4007,22 @@ export function SalesChartReport() {
                       />
                     </div>
                   </div>
-                </div>
-              )}
-
-              {analysisType === "customer" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200">
                   <div>
                     <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                      {t("reports.customerFilter")}
+                      {t("reports.orderCode")}
                     </Label>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <Input
-                        placeholder={t("reports.customerFilterPlaceholder")}
-                        value={customerSearch}
-                        onChange={(e) => setCustomerSearch(e.target.value)}
+                        placeholder={t("reports.searchOrderCode")}
                         className="pl-10 h-9 text-sm"
                       />
                     </div>
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                      {t("reports.status")}
-                    </Label>
-                    <Select
-                      value={customerStatus}
-                      onValueChange={setCustomerStatus}
-                    >
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("common.all")}</SelectItem>
-                        <SelectItem value="active">
-                          {t("reports.active")}
-                        </SelectItem>
-                        <SelectItem value="inactive">
-                          {t("reports.inactive")}
-                        </SelectItem>
-                        <SelectItem value="vip">{t("reports.vip")}</SelectItem>
-                        <SelectItem value="new">
-                          {t("reports.newCustomer")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
-              )}
 
-              {analysisType === "product" && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200">
+                {/* Product and Product Group */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-sm font-medium text-gray-700 mb-2 block">
                       {t("reports.productFilter")}
@@ -3889,30 +4037,6 @@ export function SalesChartReport() {
                       />
                     </div>
                   </div>
-
-                  <div>
-                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                      {t("reports.productType")}
-                    </Label>
-                    <Select value={productType} onValueChange={setProductType}>
-                      <SelectTrigger className="h-9 text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">{t("common.all")}</SelectItem>
-                        <SelectItem value="combo">
-                          {t("reports.combo")}
-                        </SelectItem>
-                        <SelectItem value="product">
-                          {t("reports.product")}
-                        </SelectItem>
-                        <SelectItem value="service">
-                          {t("reports.service")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   <div>
                     <Label className="text-sm font-medium text-gray-700 mb-2 block">
                       {t("reports.productGroup")}
@@ -3940,188 +4064,59 @@ export function SalesChartReport() {
                     </Select>
                   </div>
                 </div>
-              )}
 
-              {analysisType === "channel" && (
-                <div className="pt-4 border-t border-gray-200">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Sales Method */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">
-                        {t("reports.salesMethod")}
-                      </Label>
-                      <Select value={salesMethod} onValueChange={setSalesMethod}>
-                        <SelectTrigger className="h-9 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{t("common.all")}</SelectItem>
-                          <SelectItem value="no_delivery">
-                            Không giao hàng
-                          </SelectItem>
-                          <SelectItem value="delivery">Có giao hàng</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Filters for Time Analysis and Sales Detail Report */}
-              {(analysisType === "time" || concernType === "salesDetail") && (
-                <div className="grid grid-cols-1 md:grid-cols-1 gap-4 pt-4 border-t border-gray-200">
+                {/* Status only */}
+                <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
                   <div>
                     <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                      {t("reports.employeeFilter")}
+                      {t("reports.status")}
                     </Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <Input
-                        placeholder={t("reports.employeeFilterPlaceholder")}
-                        value={selectedEmployee === "all" ? "" : selectedEmployee}
-                        onChange={(e) =>
-                          setSelectedEmployee(e.target.value || "all")
-                        }
-                        className="pl-10 h-9 text-sm"
-                      />
-                    </div>
+                    <Select defaultValue="all">
+                      <SelectTrigger className="h-9 text-sm w-full md:w-1/2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t("common.all")}</SelectItem>
+                        <SelectItem value="completed">
+                          {t("reports.completed")}
+                        </SelectItem>
+                        <SelectItem value="pending">
+                          {t("reports.pending")}
+                        </SelectItem>
+                        <SelectItem value="cancelled">
+                          {t("reports.cancelled")}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              )}
-
-              {/* Sales Detail Report Filters */}
-              {analysisType === "salesDetail" && (
-                <div className="space-y-4 pt-4 border-t border-gray-200">
-                  {/* Employee and Order Code */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                        {t("reports.employeeFilter")}
-                      </Label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          placeholder={t("reports.employeeFilterPlaceholder")}
-                          value={
-                            selectedEmployee === "all" ? "" : selectedEmployee
-                          }
-                          onChange={(e) =>
-                            setSelectedEmployee(e.target.value || "all")
-                          }
-                          className="pl-10 h-9 text-sm"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                        {t("reports.orderCode")}
-                      </Label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          placeholder={t("reports.searchOrderCode")}
-                          className="pl-10 h-9 text-sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Product and Product Group */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                        {t("reports.productFilter")}
-                      </Label>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          placeholder={t("reports.productFilterPlaceholder")}
-                          value={productSearch}
-                          onChange={(e) => setProductSearch(e.target.value)}
-                          className="pl-10 h-9 text-sm"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                        {t("reports.productGroup")}
-                      </Label>
-                      <Select
-                        value={selectedCategory}
-                        onValueChange={setSelectedCategory}
-                      >
-                        <SelectTrigger className="h-9 text-sm">
-                          <SelectValue placeholder={t("reports.productGroup")} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{t("common.all")}</SelectItem>
-                          {categories &&
-                            Array.isArray(categories) &&
-                            categories.map((category: any) => (
-                              <SelectItem
-                                key={category.id}
-                                value={category.id.toString()}
-                              >
-                                {category.name}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Status only */}
-                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                        {t("reports.status")}
-                      </Label>
-                      <Select defaultValue="all">
-                        <SelectTrigger className="h-9 text-sm w-full md:w-1/2">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">{t("common.all")}</SelectItem>
-                          <SelectItem value="completed">
-                            {t("reports.completed")}
-                          </SelectItem>
-                          <SelectItem value="pending">
-                            {t("reports.pending")}
-                          </SelectItem>
-                          <SelectItem value="cancelled">
-                            {t("reports.cancelled")}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Report Content */}
-          <div className="space-y-6">
-            {transactionsLoading || ordersLoading || invoicesLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="text-gray-500">{t("reports.loading")}...</div>
               </div>
-            ) : (
-              <>
-                {/* Chart Display */}
-                {(analysisType === "time" ||
-                  analysisType === "product" ||
-                  analysisType === "employee" ||
-                  analysisType === "customer" ||
-                  analysisType === "channel") &&
-                  renderChart()}
-
-                {/* Data Tables */}
-                {renderReportContent()}
-              </>
             )}
-          </div>
+          </CardContent>
+        </Card>
+
+        {/* Report Content */}
+        <div className="space-y-6">
+          {transactionsLoading || ordersLoading || invoicesLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="text-gray-500">{t("reports.loading")}...</div>
+            </div>
+          ) : (
+            <>
+              {/* Chart Display */}
+              {(analysisType === "time" ||
+                analysisType === "product" ||
+                analysisType === "employee" ||
+                analysisType === "customer" ||
+                analysisType === "channel") &&
+                renderChart()}
+
+              {/* Data Tables */}
+              {renderReportContent()}
+            </>
+          )}
         </div>
-      );
-    };
+      </div>
+    );
   };
+}
