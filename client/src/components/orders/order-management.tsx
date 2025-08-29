@@ -1032,8 +1032,8 @@ export function OrderManagement() {
                         }
 
                         // Use EXACT same calculation logic as Order Details display
-                        let subtotal = 0;
-                        let totalTax = 0;
+                        let orderDetailsSubtotal = 0;
+                        let orderDetailsTax = 0;
 
                         const processedItems = Array.isArray(orderItems) ? orderItems.map((item: any) => {
                           const basePrice = Number(item.unitPrice || 0);
@@ -1042,7 +1042,7 @@ export function OrderManagement() {
 
                           // Calculate subtotal exactly as Order Details display
                           const itemSubtotal = basePrice * quantity;
-                          subtotal += itemSubtotal;
+                          orderDetailsSubtotal += itemSubtotal;
 
                           // Use EXACT same tax calculation logic as Order Details display
                           let itemTax = 0;
@@ -1050,7 +1050,7 @@ export function OrderManagement() {
                             const afterTaxPrice = parseFloat(product.afterTaxPrice);
                             const taxPerUnit = afterTaxPrice - basePrice;
                             itemTax = taxPerUnit * quantity;
-                            totalTax += itemTax;
+                            orderDetailsTax += itemTax;
                           }
 
                           return {
@@ -1065,19 +1065,19 @@ export function OrderManagement() {
                           };
                         }) : [];
 
-                        const finalTotal = subtotal + totalTax;
+                        const finalTotal = orderDetailsSubtotal + orderDetailsTax;
 
                         // Create preview receipt data using EXACT values from Order Details
                         const previewData = {
                           ...selectedOrder,
                           transactionId: `PREVIEW-${Date.now()}`,
                           items: processedItems,
-                          subtotal: subtotal.toFixed(2),
-                          tax: totalTax.toFixed(2),
+                          subtotal: orderDetailsSubtotal.toFixed(2),
+                          tax: orderDetailsTax.toFixed(2),
                           total: finalTotal.toFixed(2),
                           // Add exact values to ensure proper display
-                          exactSubtotal: subtotal,
-                          exactTax: totalTax,
+                          exactSubtotal: orderDetailsSubtotal,
+                          exactTax: orderDetailsTax,
                           exactTotal: finalTotal,
                           paymentMethod: 'preview', // Special flag for preview mode
                           cashierName: 'Order Management',
@@ -1087,8 +1087,8 @@ export function OrderManagement() {
 
                         console.log('📄 Order Management: Showing receipt preview before payment');
                         console.log('💰 Exact values passed:', {
-                          subtotal: subtotal,
-                          tax: totalTax,
+                          subtotal: orderDetailsSubtotal,
+                          tax: orderDetailsTax,
                           total: finalTotal,
                         });
 
@@ -1096,16 +1096,16 @@ export function OrderManagement() {
                         const completeOrderForPayment = {
                           ...selectedOrder,
                           orderItems: orderItems || [],
-                          calculatedSubtotal: subtotal,
-                          calculatedTax: totalTax,
+                          calculatedSubtotal: orderDetailsSubtotal,
+                          calculatedTax: orderDetailsTax,
                           calculatedTotal: finalTotal,
                           processedItems: processedItems
                         };
 
                         console.log('💾 Order Management: Storing complete order data for payment:', {
                           orderId: selectedOrder.id,
-                          calculatedSubtotal: subtotal,
-                          calculatedTax: totalTax,
+                          calculatedSubtotal: orderDetailsSubtotal,
+                          calculatedTax: orderDetailsTax,
                           calculatedTotal: finalTotal,
                           processedItemsCount: processedItems.length
                         });
@@ -1684,7 +1684,7 @@ export function OrderManagement() {
             return Math.round(orderForPayment.calculatedTotal);
           }
 
-          // Fallback calculation
+          // Fallback calculation using EXACT same logic as Order Details display
           const itemsToCalculate = orderForPayment.orderItems || orderItems || [];
           console.log('💰 Payment Modal fallback calculation from items:', itemsToCalculate.length);
 
@@ -1692,7 +1692,7 @@ export function OrderManagement() {
             return Math.round(Number(orderForPayment.total || 0));
           }
 
-          let itemsTotal = 0;
+          let itemsSubtotal = 0;
           let itemsTax = 0;
 
           if (Array.isArray(products)) {
@@ -1701,9 +1701,10 @@ export function OrderManagement() {
               const basePrice = Number(item.unitPrice || 0);
               const quantity = item.quantity;
 
-              const itemSubtotal = basePrice * quantity;
-              itemsTotal += itemSubtotal;
+              // Calculate subtotal exactly as Order Details display
+              itemsSubtotal += basePrice * quantity;
 
+              // Use EXACT same tax calculation logic as Order Details display
               if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
                 const taxPerUnit = afterTaxPrice - basePrice;
@@ -1712,9 +1713,9 @@ export function OrderManagement() {
             });
           }
 
-          const calculatedTotal = Math.round(itemsTotal + itemsTax);
+          const calculatedTotal = Math.round(itemsSubtotal + itemsTax);
           console.log('💰 Payment Modal fallback calculation result:', {
-            itemsTotal,
+            itemsSubtotal,
             itemsTax,
             calculatedTotal
           });
@@ -1774,7 +1775,7 @@ export function OrderManagement() {
               return Math.round(orderForPayment.calculatedTotal);
             }
 
-            // Fallback calculation
+            // Fallback calculation using EXACT same logic as Order Details display
             const itemsToCalculate = orderForPayment.orderItems || orderItems || [];
             console.log("💰 E-invoice fallback calculation from items:", itemsToCalculate.length);
 
@@ -1782,7 +1783,7 @@ export function OrderManagement() {
               return Math.round(Number(orderForPayment.total || 0));
             }
 
-            let itemsTotal = 0;
+            let itemsSubtotal = 0;
             let itemsTax = 0;
 
             if (Array.isArray(products)) {
@@ -1791,11 +1792,10 @@ export function OrderManagement() {
                 const basePrice = Number(item.unitPrice || 0);
                 const quantity = item.quantity;
 
-                // Calculate item subtotal
-                const itemSubtotal = basePrice * quantity;
-                itemsTotal += itemSubtotal;
+                // Calculate subtotal exactly as Order Details display
+                itemsSubtotal += basePrice * quantity;
 
-                // Calculate tax using afterTaxPrice if available
+                // Use EXACT same tax calculation logic as Order Details display
                 if (product?.afterTaxPrice && product.afterTaxPrice !== null && product.afterTaxPrice !== "") {
                   const afterTaxPrice = parseFloat(product.afterTaxPrice);
                   const taxPerUnit = afterTaxPrice - basePrice;
@@ -1804,9 +1804,9 @@ export function OrderManagement() {
               });
             }
 
-            const calculatedTotal = Math.round(itemsTotal + itemsTax);
+            const calculatedTotal = Math.round(itemsSubtotal + itemsTax);
             console.log("💰 E-invoice fallback calculation result:", {
-              itemsTotal,
+              itemsSubtotal,
               itemsTax,
               calculatedTotal
             });
