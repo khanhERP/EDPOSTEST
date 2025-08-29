@@ -1730,7 +1730,7 @@ export interface TablesTranslations {
   tableUpdateSuccess: string;
   tableDeleteSuccess: string;
   deleteConfirm: string;
-  deleteOrder: string;
+  
   totalTables: string;
   availableTables: string;
   occupiedTables: string;
@@ -1767,6 +1767,7 @@ export interface TablesTranslations {
   paymentMethod: string;
   cash: string;
   card: string;
+  deleteOrder: string;
   amountReceived: string;
   change: string;
   completeSale: string;
