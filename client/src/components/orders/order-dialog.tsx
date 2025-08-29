@@ -930,7 +930,7 @@ export function OrderDialog({
                     ? t("orders.updating")
                     : t("tables.placing")
                   : mode === "edit"
-                    ? (cart.length === 0 ? "Cập nhật & Làm mới" : t("orders.updateOrder"))
+                    ? (cart.length === 0 ? t("orders.updateAndRefresh") : t("orders.updateOrder"))
                     : t("tables.placeOrder")}
               </Button>
             </div>

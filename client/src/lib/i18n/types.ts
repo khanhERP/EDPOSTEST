@@ -1379,6 +1379,7 @@ export interface OrdersTranslations {
   updating: string;
   orderUpdateSuccess: string;
   orderUpdateSuccessDesc: string;
+  updateAndRefresh: string;
   noInput: string;
   pointsPaymentDialog: {
     title: string;
