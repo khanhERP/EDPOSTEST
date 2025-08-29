@@ -47,6 +47,7 @@ interface EInvoiceModalProps {
     quantity: number;
     sku?: string;
     taxRate?: number;
+    afterTaxPrice?: number | string | null;
   }>;
   source?: "pos" | "table"; // Thêm prop để phân biệt nguồn gọi
   orderId?: number; // Thêm orderId để tự xử lý cập nhật trạng thái
@@ -215,7 +216,7 @@ export function EInvoiceModal({
 
       setFormData({
         invoiceProvider: "EasyInvoice",
-        invoiceTemplate: defaultTemplate.name || "1C25TYY", 
+        invoiceTemplate: defaultTemplate.name || "1C25TYY",
         selectedTemplateId: defaultTemplateId,
         taxCode: "0123456789",
         customerName: "Khách hàng lẻ",
@@ -495,7 +496,7 @@ export function EInvoiceModal({
           const afterTax = typeof item.afterTaxPrice === 'string'
             ? parseFloat(item.afterTaxPrice)
             : item.afterTaxPrice;
-          const itemTax = (afterTax - itemPrice) * itemQuantity;
+          const itemTax = (afterTax - item.price) * itemQuantity;
           console.log(
             `💰 Tax calculation (afterTaxPrice): ${item.name} - Base: ${item.price}, After tax: ${afterTax}, Tax per unit: ${afterTax - item.price}, Total tax: ${itemTax}`,
           );
@@ -645,7 +646,7 @@ export function EInvoiceModal({
         console.error("❌ Error creating transaction for inventory:", transactionError);
       }
 
-      // Create receipt data for "Phát hành sau"
+      // Create receipt data for "Phát hành sau" with consistent calculations
       const receiptData = {
         transactionId: invoiceResult?.invoice?.tradeNumber || `TXN-${Date.now()}`,
         items: cartItems.map((item) => {
@@ -657,12 +658,18 @@ export function EInvoiceModal({
             typeof item.quantity === "string"
               ? parseInt(item.quantity)
               : item.quantity;
-          const itemTaxRate =
-            typeof item.taxRate === "string"
-              ? parseFloat(item.taxRate || "0")
-              : item.taxRate || 0;
-          const itemSubtotal = itemPrice * itemQuantity;
-          const itemTax = (itemSubtotal * itemTaxRate) / 100;
+
+          // Use exact same tax calculation as in invoice payload
+          let itemTotalWithTax;
+          if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
+            const afterTaxPrice = typeof item.afterTaxPrice === 'string' ? parseFloat(item.afterTaxPrice) : item.afterTaxPrice;
+            itemTotalWithTax = afterTaxPrice * itemQuantity;
+          } else {
+            const itemTaxRate = typeof item.taxRate === "string" ? parseFloat(item.taxRate || "0") : item.taxRate || 0;
+            const itemSubtotal = itemPrice * itemQuantity;
+            const itemTax = (itemSubtotal * itemTaxRate) / 100;
+            itemTotalWithTax = itemSubtotal + itemTax;
+          }
 
           return {
             id: item.id,
@@ -670,24 +677,30 @@ export function EInvoiceModal({
             productName: item.name,
             price: itemPrice.toFixed(2),
             quantity: itemQuantity,
-            total: (itemSubtotal + itemTax).toFixed(2),
+            total: itemTotalWithTax.toFixed(2),
             sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-            taxRate: itemTaxRate,
+            taxRate: typeof item.taxRate === "string" ? parseFloat(item.taxRate || "0") : item.taxRate || 0,
             afterTaxPrice: item.afterTaxPrice,
           };
         }),
         subtotal: calculatedSubtotal.toFixed(2),
         tax: calculatedTax.toFixed(2),
-        total: total.toFixed(2),
+        total: (typeof total === "number" && !isNaN(total) ? total : calculatedSubtotal + calculatedTax).toFixed(2),
         paymentMethod: "einvoice",
         originalPaymentMethod: selectedPaymentMethod,
-        amountReceived: total.toFixed(2),
+        amountReceived: (typeof total === "number" && !isNaN(total) ? total : calculatedSubtotal + calculatedTax).toFixed(2),
         change: "0.00",
         cashierName: "System User",
         createdAt: new Date().toISOString(),
         invoiceNumber: invoiceResult?.invoice?.tradeNumber || null,
         customerName: formData.customerName,
         customerTaxCode: formData.taxCode,
+        einvoiceData: {
+          status: "draft",
+          invoiceId: invoiceResult?.invoice?.id || null,
+          templateNumber: selectedTemplate?.templateNumber || null,
+          symbol: selectedTemplate?.symbol || null,
+        }
       };
 
       console.log("📄 Receipt data created with", cartItems.length, "items:", receiptData);
@@ -785,7 +798,7 @@ export function EInvoiceModal({
     if (!currentFormData.selectedTemplateId) {
       console.error("❌ No template available");
       toast({
-        title: "Lỗi hệ thống", 
+        title: "Lỗi hệ thống",
         description: "Không có mẫu số hóa đơn khả dụng",
         variant: "destructive"
       });
@@ -924,7 +937,7 @@ export function EInvoiceModal({
         let taxAmount = 0;
 
         // Use afterTaxPrice if available for exact tax calculation
-        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "" && item.afterTaxPrice !== "0") {
           const afterTax = typeof item.afterTaxPrice === 'string'
             ? parseFloat(item.afterTaxPrice)
             : item.afterTaxPrice;
@@ -1353,7 +1366,7 @@ export function EInvoiceModal({
           )}
 
           {/* Data ready indicator */}
-          {isOpen && !templatesLoading && !connectionsLoading && 
+          {isOpen && !templatesLoading && !connectionsLoading &&
            cartItems && Array.isArray(cartItems) && cartItems.length > 0 && total > 0 && (
             <div className="flex items-center justify-center py-2 bg-green-50 border border-green-200 rounded-lg">
               <span className="text-sm text-green-700">✅ Dữ liệu đã sẵn sàng ({cartItems.length} sản phẩm, {Math.floor(total).toLocaleString("vi-VN")} ₫)</span>
@@ -1365,7 +1378,7 @@ export function EInvoiceModal({
             (() => {
               const hasValidCartItems = cartItems && Array.isArray(cartItems) && cartItems.length > 0;
               const hasValidTotal = total && typeof total === 'number' && total > 0;
-              
+
               console.log("🔍 Data validation check:", {
                 hasValidCartItems,
                 hasValidTotal,
@@ -1425,14 +1438,14 @@ export function EInvoiceModal({
                   disabled={templatesLoading || invoiceTemplates.length === 0}
                 >
                   <SelectTrigger>
-                    <SelectValue 
+                    <SelectValue
                       placeholder={
-                        templatesLoading 
-                          ? "Đang tải mẫu số..." 
+                        templatesLoading
+                          ? "Đang tải mẫu số..."
                           : invoiceTemplates.length === 0
                           ? "Không có mẫu số nào"
                           : t("einvoice.selectTemplate")
-                      } 
+                      }
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -1568,8 +1581,8 @@ export function EInvoiceModal({
               <span className="font-medium">{t("einvoice.totalAmount") || "Tổng tiền hóa đơn"}</span>
               <span className="text-lg font-bold text-blue-600">
                 {(() => {
-                  console.log('💰 EInvoice Modal - IMMEDIATE Total display calculation:', { 
-                    total, 
+                  console.log('💰 EInvoice Modal - IMMEDIATE Total display calculation:', {
+                    total,
                     totalType: typeof total,
                     cartItems: cartItems?.length,
                     isOpen,
@@ -1711,16 +1724,16 @@ export function EInvoiceModal({
                 </>
               )}
             </Button>
-            <Button 
+            <Button
               type="button"
-              variant="outline" 
+              variant="outline"
               onClick={(e) => {
                 e.preventDefault();
                 console.log("❌ Cancel button clicked");
                 if (!isProcessed && !isPublishing) {
                   handleCancel();
                 }
-              }} 
+              }}
               className="flex-1"
               disabled={isPublishing || isProcessed}
             >

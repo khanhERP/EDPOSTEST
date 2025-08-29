@@ -555,11 +555,16 @@ export function PaymentMethodModal({
     // Close Payment modal
     onClose();
 
-    // Pass e-invoice data back to parent component with original payment method and redirect flag
+    // Pass comprehensive e-invoice data back to parent component
     onSelectMethod("einvoice", {
       ...eInvoiceData,
       originalPaymentMethod: selectedPaymentMethod,
-      redirectToInvoiceManagement: true, // Flag to redirect to invoice management
+      paymentMethod: selectedPaymentMethod, // Ensure original payment method is preserved
+      source: "pos",
+      // Receipt data should already be included in eInvoiceData
+      showReceiptModal: true, // Ensure receipt modal is shown
+      // Add flag for proper handling
+      fromPaymentModal: true,
     });
   };
 

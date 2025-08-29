@@ -96,6 +96,27 @@ export function ReceiptModal({
     return methodMap[method] || method;
   };
 
+  // Helper function to get payment method name, considering e-invoice specific fields
+  const getPaymentMethodName = (method: string) => {
+    if (!method) return t('payment.cash') || 'Tiền mặt';
+
+    const methodMap: { [key: string]: string } = {
+      cash: t('common.cash'),
+      creditCard: t('common.creditCard'),
+      debitCard: t('common.debitCard'),
+      momo: t('common.momo'),
+      zalopay: t('common.zalopay'),
+      vnpay: t('common.vnpay'),
+      qrCode: t('common.qrCode'),
+      shopeepay: t('common.shopeepay'),
+      grabpay: t('common.grabpay'),
+      einvoice: t('pos.eInvoice'),
+    };
+
+    return methodMap[method] || method;
+  };
+
+
   // Log receipt modal state for debugging
   useEffect(() => {
     const hasReceipt = receipt && receipt.items && receipt.items.length > 0;
@@ -604,6 +625,55 @@ export function ReceiptModal({
               <div className="flex justify-between text-sm">
                 <span>Change:</span>
                 <span>{receipt.change} ₫</span>
+              </div>
+            )}
+          </div>
+
+          {/* Payment method */}
+          <div className="border-b pb-3">
+            <div className="flex justify-between">
+              <span className="text-sm">Phương thức thanh toán:</span>
+              <span className="text-sm font-medium">
+                {getPaymentMethodName(
+                  receipt?.displayPaymentMethod ||
+                  receipt?.originalPaymentMethod ||
+                  receipt?.paymentMethod ||
+                  cartItems?.paymentMethod ||
+                  "cash"
+                )}
+              </span>
+            </div>
+            {/* E-Invoice information */}
+            {receipt?.isEInvoice && (
+              <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
+                <div className="text-xs font-medium text-blue-800 mb-1">
+                  📧 Hóa đơn điện tử
+                </div>
+                <div className="text-xs text-blue-700 space-y-1">
+                  {receipt.einvoiceData?.status === "published" && (
+                    <>
+                      <div>✅ Trạng thái: Đã phát hành</div>
+                      {receipt.einvoiceData?.invoiceNumber && (
+                        <div>📄 Số HĐ: {receipt.einvoiceData.invoiceNumber}</div>
+                      )}
+                    </>
+                  )}
+                  {receipt.einvoiceData?.status === "draft" && (
+                    <>
+                      <div>⏳ Trạng thái: Đã lưu - chờ phát hành sau</div>
+                      <div>📝 ID: {receipt.einvoiceData?.invoiceId}</div>
+                    </>
+                  )}
+                  {receipt.einvoiceData?.customerName && (
+                    <div>👤 KH: {receipt.einvoiceData.customerName}</div>
+                  )}
+                  {receipt.einvoiceData?.customerTaxCode && (
+                    <div>🏢 MST: {receipt.einvoiceData.customerTaxCode}</div>
+                  )}
+                  {receipt.einvoiceData?.templateNumber && (
+                    <div>📋 Mẫu số: {receipt.einvoiceData.templateNumber}</div>
+                  )}
+                </div>
               </div>
             )}
           </div>

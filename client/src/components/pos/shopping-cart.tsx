@@ -386,13 +386,24 @@ export function ShoppingCart({
 
     // Validate that e-invoice data contains required information
     if (!eInvoiceData) {
-      console.error("❌ No e-invoice data received");
-      toast({
-        title: "Lỗi",
-        description: "Không nhận được dữ liệu hóa đơn điện tử",
-        variant: "destructive"
-      });
-      return;
+      console.log("❌ No e-invoice data received, proceeding with internal receipt logic");
+      // If eInvoiceData is null or undefined, proceed to show the previewReceipt if available
+      if (previewReceipt) {
+        console.log("✅ Showing preview receipt as fallback");
+        setSelectedReceipt(previewReceipt);
+        setShowReceiptModal(true);
+      } else {
+        console.error("❌ No e-invoice data AND no preview receipt available");
+        toast({
+          title: "Lỗi",
+          description: "Không nhận được dữ liệu hóa đơn điện tử hoặc hóa đơn xem trước",
+          variant: "destructive"
+        });
+      }
+      // Close E-Invoice modal regardless
+      setShowEInvoiceModal(false);
+      setSelectedPaymentMethod("");
+      return; // Exit early if no e-invoice data
     }
 
     // Close E-Invoice modal first
@@ -404,15 +415,25 @@ export function ShoppingCart({
 
     let receiptToShow: any = null;
 
-    // Priority 1: Use receipt from eInvoiceData if available
+    // Priority 1: Use receipt from eInvoiceData if available and valid
     if (eInvoiceData.receipt && eInvoiceData.receipt.items && eInvoiceData.receipt.items.length > 0) {
       console.log('✅ Using receipt from E-Invoice data');
       receiptToShow = {
         ...eInvoiceData.receipt,
+        // Merge E-Invoice specific data
+        einvoiceData: {
+          status: eInvoiceData.publishLater ? "draft" : "published",
+          invoiceId: eInvoiceData.invoiceId || eInvoiceData.receipt.invoiceId || null,
+          invoiceNumber: eInvoiceData.receipt.invoiceNumber || null,
+          templateNumber: eInvoiceData.receipt.einvoiceData?.templateNumber || null,
+          symbol: eInvoiceData.receipt.einvoiceData?.symbol || null,
+          customerName: eInvoiceData.customerName || eInvoiceData.receipt.customerName || "Khách hàng",
+          customerTaxCode: eInvoiceData.taxCode || eInvoiceData.receipt.customerTaxCode || "",
+        },
         originalPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash",
-        customerName: eInvoiceData.customerName || "Khách hàng",
-        customerTaxCode: eInvoiceData.taxCode || "",
-        invoiceNumber: eInvoiceData.invoiceNumber || eInvoiceData.receipt.invoiceNumber || null,
+        displayPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash", // For display
+        isEInvoice: true,
+        publishLater: eInvoiceData.publishLater || false,
       };
     }
     // Priority 2: Create receipt from current cart data if no receipt in eInvoiceData
@@ -428,14 +449,15 @@ export function ShoppingCart({
           quantity: item.quantity,
           total: parseFloat(item.total.toString()).toFixed(2),
           sku: item.sku || `FOOD${String(item.id).padStart(5, "0")}`,
-          taxRate: parseFloat(item.taxRate || "10"),
+          taxRate: parseFloat(item.taxRate || "0"),
           afterTaxPrice: item.afterTaxPrice,
         })),
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
         total: total.toFixed(2),
-        paymentMethod: "einvoice",
+        paymentMethod: "einvoice", // Mark as einvoice payment
         originalPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash",
+        displayPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash", // For display
         amountReceived: total.toFixed(2),
         change: "0.00",
         cashierName: "System User",
@@ -443,9 +465,11 @@ export function ShoppingCart({
         invoiceNumber: eInvoiceData.invoiceNumber || null,
         customerName: eInvoiceData.customerName || "Khách hàng",
         customerTaxCode: eInvoiceData.taxCode || "",
+        isEInvoice: true, // Mark as E-Invoice
+        publishLater: eInvoiceData.publishLater || false,
       };
     }
-    // Priority 3: Create from eInvoiceData.cartItems if available
+    // Priority 3: Create from eInvoiceData.cartItems if available and no current cart items
     else if (eInvoiceData.cartItems && eInvoiceData.cartItems.length > 0) {
       console.log('⚠️ Creating receipt from E-Invoice cartItems data');
       receiptToShow = {
@@ -466,6 +490,7 @@ export function ShoppingCart({
         total: (eInvoiceData.total || 0).toFixed(2),
         paymentMethod: "einvoice",
         originalPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash",
+        displayPaymentMethod: eInvoiceData.originalPaymentMethod || selectedPaymentMethod || "cash", // For display
         amountReceived: (eInvoiceData.total || 0).toFixed(2),
         change: "0.00",
         cashierName: "System User",
@@ -473,6 +498,8 @@ export function ShoppingCart({
         customerName: eInvoiceData.customerName || "Khách hàng",
         customerTaxCode: eInvoiceData.taxCode || "",
         invoiceNumber: eInvoiceData.invoiceNumber || null,
+        isEInvoice: true, // Mark as E-Invoice
+        publishLater: eInvoiceData.publishLater || false,
       };
     }
 
@@ -800,7 +827,7 @@ export function ShoppingCart({
           selectedPaymentMethod={selectedPaymentMethod}
           cartItems={cart.map((item) => {
             console.log("🔄 Mapping cart item for E-Invoice:", item.name, "Price:", item.price, "Qty:", item.quantity);
-            
+
             return {
               id: item.id,
               name: item.name,
