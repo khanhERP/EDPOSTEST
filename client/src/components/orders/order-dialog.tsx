@@ -675,7 +675,34 @@ export function OrderDialog({
                                                   const basePrice = Number(remainingItem.unitPrice || 0);
                                                   const quantity = Number(remainingItem.quantity || 0);
 
-                                                  // Calculate subtotal
+                                                  // Calculate subtotal and tax exactly as in other components
+                                                if (Array.isArray(remainingItems) && remainingItems.length > 0) {
+                                                  remainingItems.forEach((remainingItem: any) => {
+                                                    const basePrice = Number(remainingItem.unitPrice || 0);
+                                                    const quantity = Number(remainingItem.quantity || 0);
+                                                    const product = products?.find((p: any) => p.id === remainingItem.productId);
+
+                                                    // Calculate subtotal
+                                                    newSubtotal += basePrice * quantity;
+
+                                                    // Calculate tax using Math.floor
+                                                    if (
+                                                      product?.afterTaxPrice &&
+                                                      product.afterTaxPrice !== null &&
+                                                      product.afterTaxPrice !== ""
+                                                    ) {
+                                                      const afterTaxPrice = parseFloat(product.afterTaxPrice);
+                                                      const taxPerUnit = afterTaxPrice - basePrice;
+                                                      newTax += Math.floor(taxPerUnit * quantity);
+                                                    }
+                                                  });
+                                                }
+
+                                                console.log('💰 New totals after deletion:', {
+                                                  newSubtotal,
+                                                  newTax,
+                                                  newTotal: newSubtotal + newTax
+                                                });ubtotal
                                                   newSubtotal += basePrice * quantity;
 
                                                   // Calculate tax using same logic as shopping cart

@@ -3273,7 +3273,7 @@ export default function Settings() {
                     const taxRateNum = parseFloat(productForm.taxRate);
                     if (!isNaN(basePriceNum) && !isNaN(taxRateNum)) {
                       const afterTaxPrice = basePriceNum * (1 + taxRateNum / 100);
-                      setProductForm((prev) => ({ ...prev, afterTaxPrice: Math.round(afterTaxPrice).toString() }));
+                      setProductForm((prev) => ({ ...prev, afterTaxPrice: Math.floor(afterTaxPrice).toString() }));
                     }
                   }
                 }}
@@ -3302,7 +3302,7 @@ export default function Settings() {
                     const taxRateNum = parseFloat(taxRate);
                     if (!isNaN(basePriceNum) && !isNaN(taxRateNum)) {
                       const afterTaxPrice = basePriceNum * (1 + taxRateNum / 100);
-                      setProductForm((prev) => ({ ...prev, afterTaxPrice: Math.round(afterTaxPrice).toString() }));
+                      setProductForm((prev) => ({ ...prev, afterTaxPrice: Math.floor(afterTaxPrice).toString() }));
                     }
                   }
                 }}

@@ -1380,8 +1380,7 @@ export function EInvoiceModal({
             <div className="flex justify-between items-center">
               <span className="font-medium">{t("einvoice.totalAmount")}</span>
               <span className="text-lg font-bold text-blue-600">
-                {Math.floor(total).toLocaleString("vi-VN")}{" "}
-                ₫
+                {Math.floor(total).toLocaleString("vi-VN")} ₫
               </span>
             </div>
           </div>

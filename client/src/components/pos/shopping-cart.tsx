@@ -84,22 +84,13 @@ export function ShoppingCart({
         }
 
         // Tax = (after_tax_price - price) * quantity
-        if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
-          const afterTaxPrice = parseFloat(item.afterTaxPrice);
-          const price = parseFloat(item.price);
-          // Tax = (afterTaxPrice - price) * quantity
-          const totalItemTax = (afterTaxPrice - price) * item.quantity;
-          console.log("✅ Using tax formula: (after_tax_price - price) * quantity");
+          const totalItemTax = Math.floor((afterTaxPrice - price) * item.quantity);
+          console.log("✅ Using tax formula: Math.floor((after_tax_price - price) * quantity)");
           console.log("  After Tax Price:", afterTaxPrice, "₫");
           console.log("  Price:", price, "₫");
           console.log("  Quantity:", item.quantity);
-          console.log("  Tax calculation: (" + afterTaxPrice + " - " + price + ") * " + item.quantity + " = " + totalItemTax + "₫");
+          console.log("  Tax calculation: Math.floor((" + afterTaxPrice + " - " + price + ") * " + item.quantity + ") = " + totalItemTax + "₫");
           return sum + totalItemTax;
-        } else {
-          // No afterTaxPrice means no tax
-          console.log("⚠️ No afterTaxPrice found, no tax applied for:", item.name);
-          return sum;
-        }
       }
       return sum;
     }, 0);

@@ -356,7 +356,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
                 // Tax = afterTaxPrice - basePrice (per unit), then multiply by quantity
                 const taxPerUnit = afterTaxPrice - basePrice;
-                orderDetailsTax += taxPerUnit * quantity;
+                orderDetailsTax += Math.floor(taxPerUnit * quantity);
               } else {
                 // No afterTaxPrice means no tax
                 orderDetailsTax += 0;
@@ -1677,7 +1677,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                               ) {
                                 const afterTaxPrice = parseFloat(product.afterTaxPrice);
                                 const taxPerUnit = afterTaxPrice - basePrice;
-                                totalTax += taxPerUnit * quantity;
+                                totalTax += Math.floor(taxPerUnit * quantity);
                               }
                               // No tax calculation if no afterTaxPrice in database
                             });
