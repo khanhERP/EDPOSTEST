@@ -257,149 +257,12 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         description: "Đơn hàng đã được thanh toán",
       });
 
-      // Fetch the completed order and its items for receipt
-      try {
-        const [completedOrder, orderItemsData] = await Promise.all([
-          queryClient.fetchQuery({
-            queryKey: ["/api/orders", variables.orderId],
-            queryFn: async () => {
-              const response = await apiRequest(
-                "GET",
-                `/api/orders/${variables.orderId}`,
-              );
-              return response.json();
-            },
-          }),
-          queryClient.fetchQuery({
-            queryKey: ["/api/order-items", variables.orderId],
-            queryFn: async () => {
-              const response = await apiRequest(
-                "GET",
-                `/api/order-items/${variables.orderId}`,
-              );
-              return response.json();
-            },
-          }),
-        ]);
-
-        if (completedOrder && orderItemsData) {
-          console.log("✅ Table payment completed - preparing receipt data");
-
-          // Use same calculation logic as Order Details display to get exact values
-          let subtotal = 0;
-          let totalTax = 0;
-
-          const processedItems = Array.isArray(orderItemsData)
-            ? orderItemsData.map((item: any) => {
-                const basePrice = Number(item.unitPrice || 0);
-                const quantity = Number(item.quantity || 0);
-                const product = Array.isArray(products)
-                  ? products.find((p: any) => p.id === item.productId)
-                  : null;
-                const itemTaxRate = product?.taxRate
-                  ? parseFloat(product.taxRate)
-                  : 10;
-
-                // Calculate subtotal (base price without tax) - same as Order Details
-                subtotal += basePrice * quantity;
-
-                // Use same tax calculation logic as Order Details
-                if (
-                  product?.afterTaxPrice &&
-                  product.afterTaxPrice !== null &&
-                  product.afterTaxPrice !== ""
-                ) {
-                  const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                  // Tax = afterTaxPrice - basePrice (per unit), then multiply by quantity
-                  const taxPerUnit = afterTaxPrice - basePrice;
-                  totalTax += taxPerUnit * quantity;
-                } else {
-                  // No afterTaxPrice means no tax
-                  totalTax += 0;
-                }
-
-                return {
-                  id: item.id,
-                  productId: item.productId,
-                  productName:
-                    item.productName || getProductName(item.productId),
-                  quantity: item.quantity,
-                  price: item.unitPrice,
-                  total: item.total,
-                  sku: item.productSku || `SP${item.productId}`,
-                  taxRate: itemTaxRate,
-                };
-              })
-            : [];
-
-          // Use EXACT same calculation logic as Order Details display to ensure consistency
-          let orderDetailsSubtotal = 0;
-          let orderDetailsTax = 0;
-
-          if (Array.isArray(orderItemsData) && Array.isArray(products)) {
-            orderItemsData.forEach((item: any) => {
-              const basePrice = Number(item.unitPrice || 0);
-              const quantity = Number(item.quantity || 0);
-              const product = products.find(
-                (p: any) => p.id === item.productId,
-              );
-
-              // Calculate subtotal exactly as Order Details
-              orderDetailsSubtotal += basePrice * quantity;
-
-              // Use EXACT same tax calculation logic as Order Details
-              if (
-                product?.afterTaxPrice &&
-                product.afterTaxPrice !== null &&
-                product.afterTaxPrice !== ""
-              ) {
-                const afterTaxPrice = parseFloat(product.afterTaxPrice);
-                // Tax = afterTaxPrice - basePrice (per unit), then multiply by quantity
-                const taxPerUnit = afterTaxPrice - basePrice;
-                orderDetailsTax += taxPerUnit * quantity;
-              } else {
-                // No afterTaxPrice means no tax
-                orderDetailsTax += 0;
-              }
-            });
-          }
-
-          // Use exact calculated values from Order Details display
-          const receiptData = {
-            ...completedOrder,
-            transactionId: `TXN-${Date.now()}`,
-            items: processedItems,
-            subtotal: orderDetailsSubtotal.toString(),
-            tax: orderDetailsTax.toString(),
-            total: (orderDetailsSubtotal + orderDetailsTax).toString(),
-            paymentMethod: variables.paymentMethod || "cash",
-            amountReceived: (orderDetailsSubtotal + orderDetailsTax).toString(),
-            change: "0.00",
-            cashierName: "Table Service",
-            createdAt: new Date().toISOString(),
-          };
-
-          console.log("📄 Table receipt data prepared:", receiptData);
-
-          // Close all dialogs first
-          setOrderDetailsOpen(false);
-          setPaymentMethodsOpen(false);
-          setShowPaymentMethodModal(false);
-          setShowEInvoiceModal(false);
-          setOrderForPayment(null);
-
-          // Show receipt modal
-          setSelectedReceipt(receiptData);
-          setShowReceiptModal(true);
-        }
-      } catch (error) {
-        console.error("Error fetching order details for receipt:", error);
-        toast({
-          title: "Cảnh báo",
-          description: "Thanh toán thành công nhưng không thể hiển thị hóa đơn",
-          variant: "destructive",
-        });
-      }
+      // Close all dialogs
+      setOrderDetailsOpen(false);
+      setPaymentMethodsOpen(false);
+      setShowPaymentMethodModal(false);
+      setShowEInvoiceModal(false);
+      setOrderForPayment(null);
     },
     onError: () => {
       console.log("❌ Table completePaymentMutation.onError called");
@@ -1751,7 +1614,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                           }}
                         >
                           <X className="w-3 h-3 mr-1" />
-                          {t("tables.deleteOrder")}
+                          Xóa đơn
                         </Button>
                       </div>
                     )}
