@@ -1197,6 +1197,7 @@ export interface EmployeesTranslations {
   employeeIdRequired: string;
   nameRequired: string;
   emailInvalid: string;
+  noEmployeesFound: string;
 }
 
 // Attendance translations interface
