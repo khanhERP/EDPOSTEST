@@ -1307,90 +1307,94 @@ export class DatabaseStorage implements IStorage {
         einvoiceStatus: order.einvoiceStatus
       });
 
-    // CRITICAL: Handle table status update when order is paid
-    if (status === "paid" && order.tableId) {
-      console.log(`💳 Order PAID - IMMEDIATELY processing table ${order.tableId} release`);
+      // CRITICAL: Handle table status update when order is paid
+      if (status === "paid" && order.tableId) {
+        console.log(`💳 Order PAID - IMMEDIATELY processing table ${order.tableId} release`);
 
-      try {
-        // Import tables from schema
-        const { tables } = await import("@shared/schema");
+        try {
+          // Import tables from schema
+          const { tables } = await import("@shared/schema");
 
-        // Check for other ACTIVE orders on the same table (excluding current order and paid/cancelled orders)
-        const activeStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
-        const otherActiveOrders = await database
-          .select()
-          .from(orders)
-          .where(
-            and(
-              eq(orders.tableId, order.tableId),
-              not(eq(orders.id, id)), // Exclude current order
-              or(
-                ...activeStatuses.map(activeStatus => eq(orders.status, activeStatus))
+          // Check for other ACTIVE orders on the same table (excluding current order and paid/cancelled orders)
+          const activeStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
+          const otherActiveOrders = await database
+            .select()
+            .from(orders)
+            .where(
+              and(
+                eq(orders.tableId, order.tableId),
+                not(eq(orders.id, id)), // Exclude current order
+                or(
+                  ...activeStatuses.map(activeStatus => eq(orders.status, activeStatus))
+                )
               )
-            )
-          );
+            );
 
-        console.log(`🔍 Active orders remaining on table ${order.tableId}:`, {
-          count: otherActiveOrders.length,
-          orders: otherActiveOrders.map(o => ({ 
-            id: o.id, 
-            status: o.status, 
-            orderNumber: o.orderNumber 
-          }))
-        });
-
-        // Get current table status
-        const [currentTable] = await database
-          .select()
-          .from(tables)
-          .where(eq(tables.id, order.tableId));
-
-        if (!currentTable) {
-          console.error(`❌ Table ${order.tableId} not found`);
-        } else {
-          console.log(`📋 Current table status:`, {
-            id: currentTable.id,
-            tableNumber: currentTable.tableNumber,
-            status: currentTable.status
+          console.log(`🔍 Active orders remaining on table ${order.tableId}:`, {
+            count: otherActiveOrders.length,
+            orders: otherActiveOrders.map(o => ({ 
+              id: o.id, 
+              status: o.status, 
+              orderNumber: o.orderNumber 
+            }))
           });
 
-          // FORCE table release if no other active orders exist
-          if (otherActiveOrders.length === 0) {
-            console.log(`🔓 FORCING table ${order.tableId} release - no active orders remaining`);
-            
-            const [updatedTable] = await database
-              .update(tables)
-              .set({ 
-                status: "available",
-                updatedAt: new Date()
-              })
-              .where(eq(tables.id, order.tableId))
-              .returning();
-            
-            if (updatedTable) {
-              console.log(`✅ Table ${order.tableId} FORCEFULLY released:`, {
-                id: updatedTable.id,
-                tableNumber: updatedTable.tableNumber,
-                previousStatus: currentTable.status,
-                newStatus: updatedTable.status
-              });
-            } else {
-              console.error(`❌ CRITICAL: Failed to release table ${order.tableId} - no table returned`);
-            }
-          } else {
-            console.log(`🔒 Table ${order.tableId} remains occupied due to ${otherActiveOrders.length} active orders:`);
-            otherActiveOrders.forEach((activeOrder, index) => {
-              console.log(`   ${index + 1}. Order ${activeOrder.orderNumber} (${activeOrder.status})`);
-            });
-          }
-        }
-      } catch (tableError) {
-        console.error(`❌ CRITICAL: Error processing table status update for table ${order.tableId}:`, tableError);
-      }
-    }
+          // Get current table status
+          const [currentTable] = await database
+            .select()
+            .from(tables)
+            .where(eq(tables.id, order.tableId));
 
-    console.log(`=== END UPDATING ORDER STATUS ===`);
-    return order;
+          if (!currentTable) {
+            console.error(`❌ Table ${order.tableId} not found`);
+          } else {
+            console.log(`📋 Current table status:`, {
+              id: currentTable.id,
+              tableNumber: currentTable.tableNumber,
+              status: currentTable.status
+            });
+
+            // FORCE table release if no other active orders exist
+            if (otherActiveOrders.length === 0) {
+              console.log(`🔓 FORCING table ${order.tableId} release - no active orders remaining`);
+              
+              const [updatedTable] = await database
+                .update(tables)
+                .set({ 
+                  status: "available",
+                  updatedAt: new Date()
+                })
+                .where(eq(tables.id, order.tableId))
+                .returning();
+              
+              if (updatedTable) {
+                console.log(`✅ Table ${order.tableId} FORCEFULLY released:`, {
+                  id: updatedTable.id,
+                  tableNumber: updatedTable.tableNumber,
+                  previousStatus: currentTable.status,
+                  newStatus: updatedTable.status
+                });
+              } else {
+                console.error(`❌ CRITICAL: Failed to release table ${order.tableId} - no table returned`);
+              }
+            } else {
+              console.log(`🔒 Table ${order.tableId} remains occupied due to ${otherActiveOrders.length} active orders:`);
+              otherActiveOrders.forEach((activeOrder, index) => {
+                console.log(`   ${index + 1}. Order ${activeOrder.orderNumber} (${activeOrder.status})`);
+              });
+            }
+          }
+        } catch (tableError) {
+          console.error(`❌ CRITICAL: Error processing table status update for table ${order.tableId}:`, tableError);
+        }
+      }
+
+      console.log(`=== END UPDATING ORDER STATUS ===`);
+      return order;
+    } catch (error) {
+      console.error(`❌ Error updating order status:`, error);
+      throw error;
+    }
   }
 
   async addOrderItems(
