@@ -1246,6 +1246,17 @@ export function PaymentMethodModal({
           onClose={handleEInvoiceClose}
           onConfirm={handleEInvoiceConfirm}
           total={(() => {
+            // Debug current data to understand the issue
+            console.log("💰 Payment Modal EInvoice Total Debug:", {
+              orderForPayment: orderForPayment,
+              receipt: receipt,
+              propTotal: total,
+              orderForPaymentTotal: orderForPayment?.total,
+              orderForPaymentExactTotal: orderForPayment?.exactTotal,
+              receiptTotal: receipt?.total,
+              receiptExactTotal: receipt?.exactTotal
+            });
+
             // Priority: orderForPayment data first, then receipt, then fallback to prop total
             let calculatedTotal = 0;
             
@@ -1266,6 +1277,7 @@ export function PaymentMethodModal({
               console.log("💰 Using fallback total for EInvoice:", calculatedTotal);
             }
             
+            console.log("💰 Final calculated total for EInvoice:", calculatedTotal);
             return Math.floor(calculatedTotal || 0);
           })()}
           selectedPaymentMethod={selectedPaymentMethod}
@@ -1280,30 +1292,46 @@ export function PaymentMethodModal({
               "📦 Mapping cart items for payment modal using exact Order Details data:",
               itemsToMap.length,
             );
-            console.log("📦 Source orderItems:", orderForPayment?.orderItems);
-            console.log("📦 Raw itemsToMap:", itemsToMap);
+            console.log("📦 Payment Modal CartItems Debug:", {
+              orderForPayment: orderForPayment,
+              orderItems: orderForPayment?.orderItems,
+              receipt: receipt,
+              receiptOrderItems: receipt?.orderItems,
+              cartItems: cartItems,
+              itemsToMap: itemsToMap,
+              products: products
+            });
 
-            return itemsToMap.map((item: any) => {
+            return itemsToMap.map((item: any, index: number) => {
               const product = Array.isArray(products)
                 ? products.find((p: any) => p.id === item.productId)
                 : null;
 
-              // Use correct field names from orderItems
+              console.log(`📦 Mapping item ${index + 1}:`, {
+                rawItem: item,
+                foundProduct: product,
+                productId: item.productId,
+                productName: item.productName,
+                unitPrice: item.unitPrice,
+                price: item.price
+              });
+
+              // Use correct field names from orderItems with better fallbacks
               const mappedItem = {
-                id: item.productId || item.id,
+                id: item.productId || item.id || 0,
                 name:
                   item.productName ||
                   product?.name ||
                   getProductName?.(item.productId) ||
-                  `Product ${item.productId || item.id}`,
-                price: parseFloat(item.unitPrice || item.price || "0"),
-                quantity: item.quantity || 1,
-                sku: item.productSku || product?.sku || `SP${item.productId || item.id}`,
-                taxRate: product?.taxRate ? parseFloat(product.taxRate) : (item.taxRate || 0),
+                  (item.productId ? `Product ${item.productId}` : `Item ${index + 1}`),
+                price: parseFloat(item.unitPrice || item.price || product?.price || "0"),
+                quantity: parseInt(item.quantity?.toString() || "1"),
+                sku: item.productSku || product?.sku || `SP${item.productId || item.id || index}`,
+                taxRate: product?.taxRate ? parseFloat(product.taxRate.toString()) : (item.taxRate || 0),
                 afterTaxPrice: product?.afterTaxPrice || null,
               };
               
-              console.log("📦 Mapped item:", mappedItem);
+              console.log(`📦 Final mapped item ${index + 1}:`, mappedItem);
               return mappedItem;
             });
           })()}
