@@ -1246,19 +1246,31 @@ export function PaymentMethodModal({
           onClose={handleEInvoiceClose}
           onConfirm={handleEInvoiceConfirm}
           total={(() => {
-            // Use exact total from orderForPayment or receipt for e-invoice
-            const orderTotal =
-              receipt?.exactTotal ??
-              parseFloat(receipt?.total || "0") ??
-              orderForPayment?.exactTotal ??
-              orderForPayment?.total ??
-              total;
-            console.log("💰 Using exact total for EInvoice:", orderTotal);
-            return Math.floor(orderTotal);
+            // Priority: orderForPayment data first, then receipt, then fallback to prop total
+            let calculatedTotal = 0;
+            
+            if (orderForPayment?.total) {
+              calculatedTotal = parseFloat(orderForPayment.total.toString());
+              console.log("💰 Using orderForPayment.total for EInvoice:", calculatedTotal);
+            } else if (orderForPayment?.exactTotal) {
+              calculatedTotal = parseFloat(orderForPayment.exactTotal.toString());
+              console.log("💰 Using orderForPayment.exactTotal for EInvoice:", calculatedTotal);
+            } else if (receipt?.exactTotal) {
+              calculatedTotal = parseFloat(receipt.exactTotal.toString());
+              console.log("💰 Using receipt.exactTotal for EInvoice:", calculatedTotal);
+            } else if (receipt?.total) {
+              calculatedTotal = parseFloat(receipt.total.toString());
+              console.log("💰 Using receipt.total for EInvoice:", calculatedTotal);
+            } else {
+              calculatedTotal = parseFloat(total?.toString() || "0");
+              console.log("💰 Using fallback total for EInvoice:", calculatedTotal);
+            }
+            
+            return Math.floor(calculatedTotal || 0);
           })()}
           selectedPaymentMethod={selectedPaymentMethod}
           cartItems={(() => {
-            // Use orderItems from orderForPayment or receipt if available
+            // Use orderItems from orderForPayment first, then fallback to other sources
             const itemsToMap =
               orderForPayment?.orderItems ||
               receipt?.orderItems ||
@@ -1268,24 +1280,31 @@ export function PaymentMethodModal({
               "📦 Mapping cart items for payment modal using exact Order Details data:",
               itemsToMap.length,
             );
+            console.log("📦 Source orderItems:", orderForPayment?.orderItems);
+            console.log("📦 Raw itemsToMap:", itemsToMap);
 
             return itemsToMap.map((item: any) => {
               const product = Array.isArray(products)
                 ? products.find((p: any) => p.id === item.productId)
                 : null;
 
-              return {
-                id: item.id,
+              // Use correct field names from orderItems
+              const mappedItem = {
+                id: item.productId || item.id,
                 name:
                   item.productName ||
+                  product?.name ||
                   getProductName?.(item.productId) ||
-                  `Product ${item.productId}`,
-                price: parseFloat(item.unitPrice || "0"),
-                quantity: item.quantity,
-                sku: item.productSku || `SP${item.productId}`,
-                taxRate: item.taxRate || 0,
-                afterTaxPrice: product?.afterTaxPrice || null, // Pass afterTaxPrice for exact calculation
+                  `Product ${item.productId || item.id}`,
+                price: parseFloat(item.unitPrice || item.price || "0"),
+                quantity: item.quantity || 1,
+                sku: item.productSku || product?.sku || `SP${item.productId || item.id}`,
+                taxRate: product?.taxRate ? parseFloat(product.taxRate) : (item.taxRate || 0),
+                afterTaxPrice: product?.afterTaxPrice || null,
               };
+              
+              console.log("📦 Mapped item:", mappedItem);
+              return mappedItem;
             });
           })()}
         />
