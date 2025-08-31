@@ -1148,6 +1148,19 @@ export class DatabaseStorage implements IStorage {
     
     const database = tenantDb || db;
 
+    // First, get the current order to know its table
+    const [currentOrder] = await database
+      .select()
+      .from(orders)
+      .where(eq(orders.id, id));
+
+    if (!currentOrder) {
+      console.error(`❌ Order not found: ${id}`);
+      return undefined;
+    }
+
+    console.log(`Found order:`, currentOrder);
+
     const [order] = await database
       .update(orders)
       .set({ 
@@ -1161,9 +1174,9 @@ export class DatabaseStorage implements IStorage {
 
     // If order is paid, check if there are other unpaid orders on the same table
     if (order && status === "paid" && order.tableId) {
-      console.log(`Order paid - checking other orders on table ${order.tableId}`);
+      console.log(`💳 Order paid - checking other orders on table ${order.tableId}`);
 
-      // Check for other active orders on the same table
+      // Check for other active orders on the same table (excluding cancelled orders)
       const otherActiveOrders = await database
         .select()
         .from(orders)
@@ -1171,29 +1184,36 @@ export class DatabaseStorage implements IStorage {
           and(
             eq(orders.tableId, order.tableId),
             not(eq(orders.id, id)),
-            or(
-              eq(orders.status, "pending"),
-              eq(orders.status, "confirmed"),
-              eq(orders.status, "preparing"),
-              eq(orders.status, "ready"),
-              eq(orders.status, "served")
-            )
+            not(eq(orders.status, "paid")),
+            not(eq(orders.status, "cancelled")),
+            not(eq(orders.status, "completed"))
           )
         );
 
-      console.log(`Other active orders on table ${order.tableId}:`, otherActiveOrders);
+      console.log(`🔍 Other active orders on table ${order.tableId}:`, {
+        count: otherActiveOrders.length,
+        orders: otherActiveOrders.map(o => ({ id: o.id, status: o.status, orderNumber: o.orderNumber }))
+      });
 
       // Only update table status to available if no other active orders exist
       if (otherActiveOrders.length === 0) {
-        console.log(`No other active orders - updating table ${order.tableId} to available`);
+        console.log(`🔓 No other active orders - updating table ${order.tableId} to available`);
         try {
           const updatedTable = await this.updateTableStatus(order.tableId, "available", tenantDb);
-          console.log(`✅ Table ${order.tableId} status updated to available:`, updatedTable);
+          console.log(`✅ Table ${order.tableId} status updated to available:`, {
+            id: updatedTable?.id,
+            tableNumber: updatedTable?.tableNumber,
+            status: updatedTable?.status
+          });
         } catch (tableError) {
           console.error(`❌ Failed to update table ${order.tableId} status:`, tableError);
         }
       } else {
-        console.log(`Found ${otherActiveOrders.length} other active orders - keeping table occupied`);
+        console.log(`🔒 Found ${otherActiveOrders.length} other active orders - keeping table occupied`);
+        // Log the specific orders keeping table occupied
+        otherActiveOrders.forEach(activeOrder => {
+          console.log(`   - Order ${activeOrder.orderNumber} (${activeOrder.status})`);
+        });
       }
     }
 

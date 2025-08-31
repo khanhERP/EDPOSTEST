@@ -1071,6 +1071,16 @@ export async function registerRoutes(app: Express): Promise < Server > {
       
       console.log(`📋 Order status update API called - Order ID: ${id}, New Status: ${status}`);
       
+      if (isNaN(id)) {
+        console.error(`❌ Invalid order ID: ${req.params.id}`);
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+
+      if (!status) {
+        console.error(`❌ Missing status in request body`);
+        return res.status(400).json({ message: "Status is required" });
+      }
+
       const order = await storage.updateOrderStatus(id, status, tenantDb);
 
       if (!order) {
@@ -1078,13 +1088,26 @@ export async function registerRoutes(app: Express): Promise < Server > {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      console.log(`✅ Order status updated via API:`, order);
-      res.json(order);
+      console.log(`✅ Order status updated via API:`, {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        tableId: order.tableId,
+        newStatus: order.status,
+        paymentMethod: order.paymentMethod
+      });
+
+      // Send additional response data to help with debugging
+      res.json({
+        ...order,
+        updated: true,
+        timestamp: new Date().toISOString()
+      });
     } catch (error) {
       console.error(`❌ Error updating order status via API:`, error);
       res.status(500).json({ 
         message: "Failed to update order status",
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
       });
     }
   });
