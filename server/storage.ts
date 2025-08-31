@@ -1141,24 +1141,30 @@ export class DatabaseStorage implements IStorage {
   async updateOrderStatus(
     id: number,
     status: string,
+    tenantDb?: any,
   ): Promise<Order | undefined> {
     console.log(`=== UPDATING ORDER STATUS ===`);
     console.log(`Order ID: ${id}, New Status: ${status}`);
+    
+    const database = tenantDb || db;
 
-    const [order] = await db
+    const [order] = await database
       .update(orders)
-      .set({ status })
+      .set({ 
+        status,
+        updatedAt: new Date()
+      })
       .where(eq(orders.id, id))
       .returning();
 
     console.log(`Updated order:`, order);
 
     // If order is paid, check if there are other unpaid orders on the same table
-    if (order && status === "paid") {
+    if (order && status === "paid" && order.tableId) {
       console.log(`Order paid - checking other orders on table ${order.tableId}`);
 
       // Check for other active orders on the same table
-      const otherActiveOrders = await db
+      const otherActiveOrders = await database
         .select()
         .from(orders)
         .where(
@@ -1180,8 +1186,12 @@ export class DatabaseStorage implements IStorage {
       // Only update table status to available if no other active orders exist
       if (otherActiveOrders.length === 0) {
         console.log(`No other active orders - updating table ${order.tableId} to available`);
-        const updatedTable = await this.updateTableStatus(order.tableId, "available");
-        console.log(`Table update result:`, updatedTable);
+        try {
+          const updatedTable = await this.updateTableStatus(order.tableId, "available", tenantDb);
+          console.log(`✅ Table ${order.tableId} status updated to available:`, updatedTable);
+        } catch (tableError) {
+          console.error(`❌ Failed to update table ${order.tableId} status:`, tableError);
+        }
       } else {
         console.log(`Found ${otherActiveOrders.length} other active orders - keeping table occupied`);
       }

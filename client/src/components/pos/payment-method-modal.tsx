@@ -448,9 +448,11 @@ export function PaymentMethodModal({
         });
 
         if (updateResponse.ok) {
-          console.log("✅ Order status updated successfully for QR payment");
+          const updatedOrder = await updateResponse.json();
+          console.log("✅ Order status updated successfully for QR payment:", updatedOrder);
         } else {
-          console.error("❌ Failed to update order status for QR payment");
+          const errorText = await updateResponse.text();
+          console.error("❌ Failed to update order status for QR payment:", errorText);
         }
       } catch (error) {
         console.error("❌ Error updating order status for QR payment:", error);
@@ -548,9 +550,18 @@ export function PaymentMethodModal({
         });
 
         if (updateResponse.ok) {
-          console.log("✅ Order status updated successfully for cash payment");
+          const updatedOrder = await updateResponse.json();
+          console.log("✅ Order status updated successfully for cash payment:", updatedOrder);
+          
+          // Force refresh queries để cập nhật UI ngay lập tức
+          if (typeof window !== 'undefined' && window.location) {
+            window.dispatchEvent(new CustomEvent('orderStatusUpdated', { 
+              detail: { orderId: orderForPayment.id, status: 'paid' } 
+            }));
+          }
         } else {
-          console.error("❌ Failed to update order status for cash payment");
+          const errorText = await updateResponse.text();
+          console.error("❌ Failed to update order status for cash payment:", errorText);
         }
       } catch (error) {
         console.error("❌ Error updating order status for cash payment:", error);
@@ -575,22 +586,47 @@ export function PaymentMethodModal({
       try {
         console.log("🔄 Updating order status to 'paid' for order ID:", orderForPayment.id);
         
+        const updatePayload = {
+          status: 'paid',
+          paymentMethod: selectedPaymentMethod,
+          paidAt: new Date().toISOString(),
+        };
+
+        // Add cash payment specific data if applicable
+        if (selectedPaymentMethod === "cash" && cashAmountInput) {
+          const receivedAmount = parseFloat(cashAmountInput);
+          const orderTotal = receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0;
+          updatePayload.amountReceived = receivedAmount.toFixed(2);
+          updatePayload.change = (receivedAmount - orderTotal).toFixed(2);
+        }
+
+        console.log("📤 Sending order update payload:", updatePayload);
+        
         const updateResponse = await fetch(`/api/orders/${orderForPayment.id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            status: 'paid',
-            paymentMethod: selectedPaymentMethod,
-            paidAt: new Date().toISOString(),
-          }),
+          body: JSON.stringify(updatePayload),
         });
 
         if (updateResponse.ok) {
-          console.log("✅ Order status updated successfully");
+          const updatedOrder = await updateResponse.json();
+          console.log("✅ Order status updated successfully:", updatedOrder);
+          
+          // Force refresh queries để cập nhật UI ngay lập tức
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('orderStatusUpdated', { 
+              detail: { 
+                orderId: orderForPayment.id, 
+                status: 'paid',
+                tableId: orderForPayment.tableId
+              } 
+            }));
+          }
         } else {
-          console.error("❌ Failed to update order status");
+          const errorText = await updateResponse.text();
+          console.error("❌ Failed to update order status:", errorText);
         }
       } catch (error) {
         console.error("❌ Error updating order status:", error);

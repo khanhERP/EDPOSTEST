@@ -1068,42 +1068,73 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const id = parseInt(req.params.id);
       const { status } = req.body;
       const tenantDb = await getTenantDatabase(req);
+      
+      console.log(`📋 Order status update API called - Order ID: ${id}, New Status: ${status}`);
+      
       const order = await storage.updateOrderStatus(id, status, tenantDb);
 
       if (!order) {
+        console.error(`❌ Order not found for ID: ${id}`);
         return res.status(404).json({ message: "Order not found" });
       }
 
+      console.log(`✅ Order status updated via API:`, order);
       res.json(order);
     } catch (error) {
-      res.status(500).json({ message: "Failed to update order status" });
+      console.error(`❌ Error updating order status via API:`, error);
+      res.status(500).json({ 
+        message: "Failed to update order status",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
   app.post("/api/orders/:id/payment", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { paymentMethod } = req.body;
+      const { paymentMethod, amountReceived, change } = req.body;
       const tenantDb = await getTenantDatabase(req);
 
-      // Update order status to paid
-      const order = await storage.updateOrderStatus(id, "paid", tenantDb);
+      console.log(`💳 Payment completion API called - Order ID: ${id}, Payment Method: ${paymentMethod}`);
+
+      // Update order with payment details and status
+      const updateData = {
+        status: "paid",
+        paymentMethod,
+        paidAt: new Date().toISOString(),
+      };
+
+      // Add cash payment specific data if provided
+      if (amountReceived !== undefined) {
+        updateData.amountReceived = amountReceived;
+      }
+      if (change !== undefined) {
+        updateData.change = change;
+      }
+
+      console.log(`📤 Updating order with payment data:`, updateData);
+
+      const order = await storage.updateOrder(id, updateData, tenantDb);
 
       if (!order) {
+        console.error(`❌ Order not found for payment completion: ${id}`);
         return res.status(404).json({ message: "Order not found" });
       }
 
-      // Also update table status to available if the order is linked to a table
-      if (order.tableId) {
-        await storage.updateTableStatus(order.tableId, "available", tenantDb);
-      }
+      console.log(`✅ Payment completed successfully for order:`, order);
 
-      res.json({ ...order,
-        paymentMethod
+      res.json({
+        ...order,
+        paymentMethod,
+        amountReceived,
+        change
       });
     } catch (error) {
-      console.error("Payment completion error:", error);
-      res.status(500).json({ message: "Failed to complete payment" });
+      console.error("❌ Payment completion error:", error);
+      res.status(500).json({ 
+        message: "Failed to complete payment",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
