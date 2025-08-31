@@ -200,11 +200,11 @@ export function PrintDialog({
                 let itemTax;
                 if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
                   const afterTaxPrice = parseFloat(item.afterTaxPrice);
-                  // Tax = afterTaxPrice - basePrice
-                  itemTax = (afterTaxPrice - basePrice) * quantity;
+                  // Tax = (afterTaxPrice - basePrice) * quantity, using Math.floor for consistency
+                  itemTax = Math.floor((afterTaxPrice - basePrice) * quantity);
                 } else {
-                  // No afterTaxPrice means no tax
-                  itemTax = 0;
+                  // Fallback: calculate tax from tax rate if available
+                  itemTax = (itemSubtotal * itemTaxRate) / 100;
                 }
 
                 totalTaxableAmount += itemSubtotal;
@@ -356,12 +356,11 @@ export function PrintDialog({
                   let itemTax;
                   if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
                     const afterTaxPrice = parseFloat(item.afterTaxPrice);
-                    // Tax = afterTaxPrice - basePrice
-                    itemTax = (afterTaxPrice - basePrice) * quantity;
+                    // Tax = (afterTaxPrice - basePrice) * quantity, using Math.floor for consistency
+                    itemTax = Math.floor((afterTaxPrice - basePrice) * quantity);
                   } else {
-                    // Fallback: calculate afterTaxPrice from basePrice and tax rate, then subtract basePrice
-                    const calculatedAfterTaxPrice = basePrice * (1 + itemTaxRate / 100);
-                    itemTax = (calculatedAfterTaxPrice - basePrice) * quantity;
+                    // Fallback: calculate tax from tax rate if available
+                    itemTax = (itemSubtotal * itemTaxRate) / 100;
                   }
 
                   totalTaxableAmount += itemSubtotal;
