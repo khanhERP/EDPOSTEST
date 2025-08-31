@@ -394,25 +394,44 @@ export function PrintDialog({
             <Button
               variant="outline"
               onClick={() => {
-                console.log('🔒 Print Dialog: Đóng button clicked - closing all popups');
+                console.log('🔒 Print Dialog: Đóng button clicked - force closing all popups');
                 
-                // Send clear message to close all popups
+                // Send multiple clear messages to ensure all flows are stopped
                 try {
                   fetch('/api/popup/close', {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ success: true, action: 'close_all_popups' }),
+                    body: JSON.stringify({ 
+                      success: true, 
+                      action: 'force_close_all',
+                      reason: 'print_dialog_close_button',
+                      timestamp: new Date().toISOString()
+                    }),
                   }).catch(error => {
-                    console.error('Error sending close all popups signal:', error);
+                    console.error('Error sending force close signal:', error);
                   });
                 } catch (error) {
-                  console.error('Error in close all popups:', error);
+                  console.error('Error in force close:', error);
                 }
                 
-                // Close this dialog
+                // Immediately close this dialog without any delays
                 onClose();
+                
+                // Additional cleanup to prevent any other popups from opening
+                setTimeout(() => {
+                  // Force close any remaining modals
+                  const dialogs = document.querySelectorAll('[role="dialog"]');
+                  dialogs.forEach(dialog => {
+                    const closeButton = dialog.querySelector('button[aria-label="Close"]') || 
+                                      dialog.querySelector('button:contains("Đóng")') ||
+                                      dialog.querySelector('[data-close-modal]');
+                    if (closeButton) {
+                      (closeButton as HTMLElement).click();
+                    }
+                  });
+                }, 100);
               }}
               className="flex-1"
             >
