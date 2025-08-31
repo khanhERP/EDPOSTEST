@@ -175,11 +175,11 @@ export interface IStorage {
     customer: Partial<InsertCustomer>,
   ): Promise<Customer | undefined>;
   deleteCustomer(id: number): Promise<boolean>;
-  updateCustomerVisit(
+  updateCustomerVisit: (
     customerId: number,
     amount: number,
     points: number,
-  ): Promise<Customer | undefined>;
+  ) => Promise<Customer | undefined>;
 
   // Point Management
   getCustomerPoints(
