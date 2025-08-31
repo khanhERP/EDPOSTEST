@@ -1787,7 +1787,7 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  async updateCustomerVisit(
+  async async updateCustomerVisit(
     customerId: number,
     amount: number,
     points: number,
