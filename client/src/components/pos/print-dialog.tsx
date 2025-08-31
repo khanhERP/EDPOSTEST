@@ -237,7 +237,7 @@ export function PrintDialog({
               });
               
               return Math.round(actualTaxAmount).toLocaleString('vi-VN');
-            })())} đ</span>
+            })()} đ</span>
           </div>
           <div class="total-row" style="font-size: 14px; border-top: 1px solid #000; padding-top: 5px;">
             <span>Tổng cộng:</span>
