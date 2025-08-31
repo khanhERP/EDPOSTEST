@@ -184,15 +184,22 @@ export function PrintDialog({
           </div>
           <div class="total-row">
             <span>Thuế (${(() => {
-              const tax = parseFloat(receiptData.tax || "0");
+              // Calculate actual tax from total - subtotal
+              const total = parseFloat(receiptData.total || "0");
               const subtotal = parseFloat(receiptData.subtotal || "0");
+              const actualTax = total - subtotal;
               
-              if (subtotal === 0 || tax === 0) return "0.0";
+              if (subtotal === 0 || actualTax <= 0) return "0.0";
               
-              const taxRate = (tax / subtotal) * 100;
+              const taxRate = (actualTax / subtotal) * 100;
               return taxRate.toFixed(1);
             })()}%):</span>
-            <span>${Math.round(parseFloat(receiptData.tax || "0")).toLocaleString('vi-VN')} đ</span>
+            <span>${(() => {
+              const total = parseFloat(receiptData.total || "0");
+              const subtotal = parseFloat(receiptData.subtotal || "0");
+              const actualTax = total - subtotal;
+              return Math.round(actualTax).toLocaleString('vi-VN');
+            })()} đ</span>
           </div>
           <div class="total-row" style="font-size: 14px; border-top: 1px solid #000; padding-top: 5px;">
             <span>Tổng cộng:</span>
@@ -316,15 +323,22 @@ export function PrintDialog({
             </div>
             <div className="flex justify-between text-xs">
               <span>Thuế ({(() => {
-                const tax = parseFloat(receiptData.tax || "0");
+                // Calculate actual tax from total - subtotal
+                const total = parseFloat(receiptData.total || "0");
                 const subtotal = parseFloat(receiptData.subtotal || "0");
+                const actualTax = total - subtotal;
                 
-                if (subtotal === 0 || tax === 0) return "0.0";
+                if (subtotal === 0 || actualTax <= 0) return "0.0";
                 
-                const taxRate = (tax / subtotal) * 100;
+                const taxRate = (actualTax / subtotal) * 100;
                 return taxRate.toFixed(1);
               })()}%):</span>
-              <span>{Math.round(parseFloat(receiptData.tax || "0")).toLocaleString('vi-VN')} đ</span>
+              <span>{(() => {
+                const total = parseFloat(receiptData.total || "0");
+                const subtotal = parseFloat(receiptData.subtotal || "0");
+                const actualTax = total - subtotal;
+                return Math.round(actualTax).toLocaleString('vi-VN');
+              })()} đ</span>
             </div>
             <div className="flex justify-between font-bold border-t border-gray-400 pt-1">
               <span>Tổng cộng:</span>
