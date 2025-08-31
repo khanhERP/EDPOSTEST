@@ -520,10 +520,11 @@ export function PaymentMethodModal({
     }
 
     try {
-      console.log("🔄 Updating order status to 'paid' after E-Invoice creation");
+      console.log("🔄 Starting complete payment process for order:", orderForPayment.id);
       
-      // First, update the order status to 'paid'
-      const orderUpdateResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
+      // Step 1: Update order status to 'paid' using dedicated status endpoint
+      console.log("📤 Updating order status to 'paid'");
+      const statusUpdateResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -533,13 +534,16 @@ export function PaymentMethodModal({
         }),
       });
 
-      if (!orderUpdateResponse.ok) {
-        throw new Error('Failed to update order status');
+      if (!statusUpdateResponse.ok) {
+        const errorText = await statusUpdateResponse.text();
+        console.error("❌ Failed to update order status:", errorText);
+        throw new Error('Failed to update order status to paid');
       }
 
-      console.log("✅ Order status updated successfully to 'paid'");
+      const statusUpdateResult = await statusUpdateResponse.json();
+      console.log("✅ Order status updated successfully:", statusUpdateResult);
 
-      // Then update payment details
+      // Step 2: Update payment details and e-invoice status
       const paymentUpdateData: any = {
         paymentMethod: selectedPaymentMethod,
         paidAt: new Date().toISOString(),
@@ -553,6 +557,7 @@ export function PaymentMethodModal({
         paymentUpdateData.change = (parseFloat(cashAmountInput) - orderTotal).toFixed(2);
       }
 
+      console.log("📤 Updating payment details:", paymentUpdateData);
       const paymentResponse = await fetch(`/api/orders/${orderForPayment.id}`, {
         method: 'PUT',
         headers: {
@@ -562,52 +567,85 @@ export function PaymentMethodModal({
       });
 
       if (paymentResponse.ok) {
-        console.log("✅ Payment details updated successfully");
+        const paymentResult = await paymentResponse.json();
+        console.log("✅ Payment details updated successfully:", paymentResult);
+      } else {
+        const errorText = await paymentResponse.text();
+        console.warn("⚠️ Failed to update payment details:", errorText);
       }
 
-      // Dispatch events for real-time updates
+      // Step 3: Force refresh queries and UI
+      console.log("🔄 Refreshing UI and dispatching events");
+      
+      // Dispatch comprehensive events for real-time updates
       if (typeof window !== 'undefined') {
         const events = [
+          new CustomEvent('orderStatusUpdated', {
+            detail: {
+              orderId: orderForPayment.id,
+              status: 'paid',
+              tableId: orderForPayment.tableId,
+              paymentMethod: selectedPaymentMethod
+            }
+          }),
           new CustomEvent('refreshOrders'),
+          new CustomEvent('refreshTables'),
           new CustomEvent('paymentCompleted', {
-            detail: { orderId: orderForPayment.id, tableId: orderForPayment.tableId }
+            detail: { 
+              orderId: orderForPayment.id, 
+              tableId: orderForPayment.tableId,
+              paymentMethod: selectedPaymentMethod
+            }
           }),
           new CustomEvent('tableStatusUpdate', {
-            detail: { tableId: orderForPayment.tableId, checkForRelease: true }
+            detail: { 
+              tableId: orderForPayment.tableId, 
+              checkForRelease: true,
+              orderId: orderForPayment.id
+            }
           })
         ];
 
         events.forEach(event => {
+          console.log("📡 Dispatching event:", event.type, event.detail);
           window.dispatchEvent(event);
         });
       }
 
-      // Close modals
-      setShowEInvoice(false);
-      onClose();
+      // Step 4: Wait a bit for events to propagate, then close modals
+      setTimeout(() => {
+        console.log("🔄 Closing modals and completing payment flow");
+        setShowEInvoice(false);
+        onClose();
 
-      // Pass data to parent component
-      onSelectMethod("einvoice", {
-        ...eInvoiceData,
-        originalPaymentMethod: selectedPaymentMethod,
-        orderId: orderForPayment.id,
-        tableId: orderForPayment.tableId,
-        paymentData: selectedPaymentMethod === "cash" ? {
-          amountReceived: parseFloat(cashAmountInput || "0"),
-          change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)
-        } : null
-      });
+        // Pass success data to parent component
+        onSelectMethod("einvoice", {
+          ...eInvoiceData,
+          originalPaymentMethod: selectedPaymentMethod,
+          orderId: orderForPayment.id,
+          tableId: orderForPayment.tableId,
+          success: true,
+          paymentData: selectedPaymentMethod === "cash" ? {
+            amountReceived: parseFloat(cashAmountInput || "0"),
+            change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)
+          } : null
+        });
+      }, 200);
 
     } catch (error) {
-      console.error("❌ Error updating order after E-Invoice creation:", error);
-      // Still close modals and pass data even if update fails
+      console.error("❌ Error in complete payment process:", error);
+      
+      // Still close modals but indicate error
       setShowEInvoice(false);
       onClose();
+      
       onSelectMethod("einvoice", {
         ...eInvoiceData,
         originalPaymentMethod: selectedPaymentMethod,
         orderId: orderForPayment?.id,
         tableId: orderForPayment?.tableId,
+        success: false,
+        error: error.message,
         paymentData: selectedPaymentMethod === "cash" ? {
           amountReceived: parseFloat(cashAmountInput || "0"),
           change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)

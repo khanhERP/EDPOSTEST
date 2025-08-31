@@ -1092,51 +1092,85 @@ export async function registerRoutes(app: Express): Promise < Server > {
         return res.status(404).json({ message: "Order not found" });
       }
 
-      console.log(`📊 Current order state before update:`, {
+      console.log(`📊 API: Current order state before update:`, {
         orderId: currentOrder.id,
         orderNumber: currentOrder.orderNumber,
         tableId: currentOrder.tableId,
         currentStatus: currentOrder.status,
-        requestedStatus: status
+        requestedStatus: status,
+        timestamp: new Date().toISOString()
       });
 
+      // Update order status using storage layer
       const order = await storage.updateOrderStatus(id, status, tenantDb);
 
       if (!order) {
-        console.error(`❌ Order update failed for ID: ${id}`);
-        return res.status(500).json({ message: "Failed to update order status" });
+        console.error(`❌ API: Order update failed for ID: ${id}`);
+        return res.status(500).json({ 
+          message: "Failed to update order status",
+          orderId: id,
+          requestedStatus: status
+        });
       }
 
-      console.log(`✅ Order status updated via API:`, {
+      console.log(`✅ API: Order status updated successfully:`, {
         orderId: order.id,
         orderNumber: order.orderNumber,
         tableId: order.tableId,
         previousStatus: currentOrder.status,
         newStatus: order.status,
         paymentMethod: order.paymentMethod,
-        paidAt: order.paidAt
+        paidAt: order.paidAt,
+        einvoiceStatus: order.einvoiceStatus,
+        timestamp: new Date().toISOString()
       });
 
       // If status was updated to 'paid', also check and log table status
       if (status === 'paid' && order.tableId) {
-        const [tableAfterUpdate] = await db
-          .select()
-          .from(tables)
-          .where(eq(tables.id, order.tableId));
-        
-        console.log(`📋 Table status after order payment:`, {
-          tableId: order.tableId,
-          tableNumber: tableAfterUpdate?.tableNumber,
-          tableStatus: tableAfterUpdate?.status
-        });
+        try {
+          const [tableAfterUpdate] = await db
+            .select()
+            .from(tables)
+            .where(eq(tables.id, order.tableId));
+          
+          console.log(`📋 API: Table status after order payment:`, {
+            tableId: order.tableId,
+            tableNumber: tableAfterUpdate?.tableNumber,
+            tableStatus: tableAfterUpdate?.status,
+            timestamp: new Date().toISOString()
+          });
+
+          // Log all remaining orders on this table for debugging
+          const remainingOrders = await db
+            .select({
+              id: orders.id,
+              orderNumber: orders.orderNumber,
+              status: orders.status
+            })
+            .from(orders)
+            .where(eq(orders.tableId, order.tableId));
+
+          console.log(`📋 API: All orders on table ${order.tableId}:`, {
+            tableId: order.tableId,
+            totalOrders: remainingOrders.length,
+            orders: remainingOrders.map(o => ({
+              id: o.id,
+              orderNumber: o.orderNumber,
+              status: o.status
+            }))
+          });
+        } catch (tableCheckError) {
+          console.error(`❌ API: Error checking table status:`, tableCheckError);
+        }
       }
 
-      // Send additional response data to help with debugging
+      // Send comprehensive response data
       res.json({
         ...order,
         updated: true,
         previousStatus: currentOrder.status,
-        timestamp: new Date().toISOString()
+        updateTimestamp: new Date().toISOString(),
+        success: true
       });
     } catch (error) {
       console.error(`❌ Error updating order status via API:`, error);

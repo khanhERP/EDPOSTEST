@@ -1159,78 +1159,128 @@ export class DatabaseStorage implements IStorage {
       return undefined;
     }
 
-    console.log(`Found order:`, currentOrder);
+    console.log(`📋 Current order before update:`, {
+      id: currentOrder.id,
+      orderNumber: currentOrder.orderNumber,
+      tableId: currentOrder.tableId,
+      currentStatus: currentOrder.status,
+      requestedStatus: status
+    });
+
+    // Update the order status with additional paid timestamp if needed
+    const updateData: any = { 
+      status,
+      updatedAt: new Date()
+    };
+
+    if (status === "paid") {
+      updateData.paidAt = new Date();
+    }
 
     const [order] = await database
       .update(orders)
-      .set({ 
-        status,
-        updatedAt: new Date()
-      })
+      .set(updateData)
       .where(eq(orders.id, id))
       .returning();
 
-    console.log(`Updated order:`, order);
+    if (!order) {
+      console.error(`❌ No order returned after status update for ID: ${id}`);
+      return undefined;
+    }
 
-    // If order is paid, check if there are other unpaid orders on the same table
-    if (order && status === "paid" && order.tableId) {
-      console.log(`💳 Order paid - checking other orders on table ${order.tableId}`);
+    console.log(`✅ Order status updated successfully:`, {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      tableId: order.tableId,
+      previousStatus: currentOrder.status,
+      newStatus: order.status,
+      paidAt: order.paidAt
+    });
 
-      // Check for other orders on the same table that are NOT paid, cancelled, or completed
-      const otherActiveOrders = await database
-        .select()
-        .from(orders)
-        .where(
-          and(
-            eq(orders.tableId, order.tableId),
-            not(eq(orders.id, id)),
-            not(eq(orders.status, "paid")),
-            not(eq(orders.status, "cancelled")),
-            not(eq(orders.status, "completed"))
-          )
-        );
+    // Handle table status update when order is paid
+    if (status === "paid" && order.tableId) {
+      console.log(`💳 Order paid - processing table ${order.tableId} status update`);
 
-      console.log(`🔍 Other active orders on table ${order.tableId}:`, {
-        count: otherActiveOrders.length,
-        orders: otherActiveOrders.map(o => ({ id: o.id, status: o.status, orderNumber: o.orderNumber }))
-      });
+      try {
+        // Check for other active orders on the same table (excluding this order and non-active statuses)
+        const activeStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
+        const otherActiveOrders = await database
+          .select()
+          .from(orders)
+          .where(
+            and(
+              eq(orders.tableId, order.tableId),
+              not(eq(orders.id, id)), // Exclude current order
+              or(
+                ...activeStatuses.map(activeStatus => eq(orders.status, activeStatus))
+              )
+            )
+          );
 
-      // Only update table status to available if no other active orders exist
-      if (otherActiveOrders.length === 0) {
-        console.log(`🔓 No other active orders - updating table ${order.tableId} to available`);
-        try {
-          // Import tables from schema
-          const { tables } = await import("@shared/schema");
-          
-          const [updatedTable] = await database
-            .update(tables)
-            .set({ status: "available" })
-            .where(eq(tables.id, order.tableId))
-            .returning();
-          
-          if (updatedTable) {
-            console.log(`✅ Table ${order.tableId} status updated to available:`, {
-              id: updatedTable.id,
-              tableNumber: updatedTable.tableNumber,
-              status: updatedTable.status
-            });
-          } else {
-            console.error(`❌ No table returned after update for table ${order.tableId}`);
-          }
-        } catch (tableError) {
-          console.error(`❌ Failed to update table ${order.tableId} status:`, tableError);
-        }
-      } else {
-        console.log(`🔒 Found ${otherActiveOrders.length} other active orders - keeping table occupied`);
-        // Log the specific orders keeping table occupied
-        otherActiveOrders.forEach(activeOrder => {
-          console.log(`   - Order ${activeOrder.orderNumber} (${activeOrder.status})`);
+        console.log(`🔍 Active orders remaining on table ${order.tableId}:`, {
+          count: otherActiveOrders.length,
+          orders: otherActiveOrders.map(o => ({ 
+            id: o.id, 
+            status: o.status, 
+            orderNumber: o.orderNumber 
+          }))
         });
+
+        // Import tables from schema
+        const { tables } = await import("@shared/schema");
+
+        // Get current table status
+        const [currentTable] = await database
+          .select()
+          .from(tables)
+          .where(eq(tables.id, order.tableId));
+
+        if (!currentTable) {
+          console.error(`❌ Table ${order.tableId} not found`);
+        } else {
+          console.log(`📋 Current table status:`, {
+            id: currentTable.id,
+            tableNumber: currentTable.tableNumber,
+            status: currentTable.status
+          });
+
+          // Only update table status to available if no other active orders exist
+          if (otherActiveOrders.length === 0) {
+            console.log(`🔓 No active orders remaining - updating table ${order.tableId} to available`);
+            
+            const [updatedTable] = await database
+              .update(tables)
+              .set({ 
+                status: "available",
+                updatedAt: new Date()
+              })
+              .where(eq(tables.id, order.tableId))
+              .returning();
+            
+            if (updatedTable) {
+              console.log(`✅ Table ${order.tableId} released successfully:`, {
+                id: updatedTable.id,
+                tableNumber: updatedTable.tableNumber,
+                previousStatus: currentTable.status,
+                newStatus: updatedTable.status
+              });
+            } else {
+              console.error(`❌ Failed to update table ${order.tableId} - no table returned`);
+            }
+          } else {
+            console.log(`🔒 Table ${order.tableId} remains occupied due to ${otherActiveOrders.length} active orders:`);
+            otherActiveOrders.forEach((activeOrder, index) => {
+              console.log(`   ${index + 1}. Order ${activeOrder.orderNumber} (${activeOrder.status})`);
+            });
+          }
+        }
+      } catch (tableError) {
+        console.error(`❌ Error processing table status update for table ${order.tableId}:`, tableError);
       }
     }
 
     console.log(`=== END UPDATING ORDER STATUS ===`);
-    return order || undefined;
+    return order;
   }
 
   async addOrderItems(
