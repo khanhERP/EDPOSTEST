@@ -219,12 +219,12 @@ export function PrintDialog({
             <span>${(() => {
               // Calculate actual tax amount from items
               let actualTaxAmount = 0;
-              
+
               receiptData.items.forEach(item => {
                 const basePrice = parseFloat(item.price);
                 const quantity = item.quantity;
                 const itemTaxRate = item.taxRate || 10;
-                
+
                 if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
                   const afterTaxPrice = parseFloat(item.afterTaxPrice);
                   // Tax = (afterTaxPrice - basePrice) * quantity
@@ -235,7 +235,7 @@ export function PrintDialog({
                   actualTaxAmount += (itemSubtotal * itemTaxRate) / 100;
                 }
               });
-              
+
               return Math.round(actualTaxAmount).toLocaleString('vi-VN');
             })()} đ</span>
           </div>
@@ -396,12 +396,12 @@ export function PrintDialog({
               <span>{(() => {
                 // Calculate actual tax amount from items
                 let actualTaxAmount = 0;
-                
+
                 receiptData.items.forEach(item => {
                   const basePrice = parseFloat(item.price);
                   const quantity = item.quantity;
                   const itemTaxRate = item.taxRate || 10;
-                  
+
                   if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
                     const afterTaxPrice = parseFloat(item.afterTaxPrice);
                     // Tax = (afterTaxPrice - basePrice) * quantity
@@ -412,9 +412,9 @@ export function PrintDialog({
                     actualTaxAmount += (itemSubtotal * itemTaxRate) / 100;
                   }
                 });
-                
+
                 return Math.round(actualTaxAmount).toLocaleString('vi-VN');
-              })())} đ</span>
+              })()} đ</span>
             </div>
             <div className="flex justify-between font-bold border-t border-gray-400 pt-1">
               <span>Tổng cộng:</span>
