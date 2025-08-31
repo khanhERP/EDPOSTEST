@@ -520,11 +520,32 @@ export function PaymentMethodModal({
     }
 
     try {
-      console.log("🔄 Starting complete payment process for order:", orderForPayment.id);
+      console.log("🔄 Step 1: Starting payment process for order:", orderForPayment.id);
       
-      // Combine all updates in a single API call to ensure consistency
-      const updateData: any = {
-        status: 'paid',
+      // STEP 1: Update order status to 'paid' first using the dedicated status endpoint
+      console.log("📤 Step 1: Updating order status to 'paid'");
+      const statusResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'paid'
+        }),
+      });
+
+      if (!statusResponse.ok) {
+        const errorText = await statusResponse.text();
+        console.error("❌ Step 1 FAILED: Order status update failed:", errorText);
+        throw new Error(`Failed to update order status to paid: ${errorText}`);
+      }
+
+      const statusResult = await statusResponse.json();
+      console.log("✅ Step 1 SUCCESS: Order status updated to paid:", statusResult);
+
+      // STEP 2: Update order with payment details
+      console.log("📤 Step 2: Adding payment details to order");
+      const paymentData: any = {
         paymentMethod: selectedPaymentMethod,
         paidAt: new Date().toISOString(),
         einvoiceStatus: eInvoiceData.publishLater ? 0 : 1,
@@ -533,31 +554,29 @@ export function PaymentMethodModal({
       // Add cash payment specific data if applicable
       if (selectedPaymentMethod === "cash" && cashAmountInput) {
         const orderTotal = receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0;
-        updateData.amountReceived = parseFloat(cashAmountInput).toFixed(2);
-        updateData.change = (parseFloat(cashAmountInput) - orderTotal).toFixed(2);
+        paymentData.amountReceived = parseFloat(cashAmountInput).toFixed(2);
+        paymentData.change = (parseFloat(cashAmountInput) - orderTotal).toFixed(2);
       }
 
-      console.log("📤 Updating order with complete payment data:", updateData);
-      
-      const response = await fetch(`/api/orders/${orderForPayment.id}`, {
+      const paymentResponse = await fetch(`/api/orders/${orderForPayment.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(updateData),
+        body: JSON.stringify(paymentData),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ Failed to update order:", errorText);
-        throw new Error('Failed to update order with payment data');
+      if (!paymentResponse.ok) {
+        const errorText = await paymentResponse.text();
+        console.error("❌ Step 2 FAILED: Payment details update failed:", errorText);
+        // Don't throw here as the status was already updated successfully
+      } else {
+        const paymentResult = await paymentResponse.json();
+        console.log("✅ Step 2 SUCCESS: Payment details added:", paymentResult);
       }
 
-      const updateResult = await response.json();
-      console.log("✅ Order updated successfully:", updateResult);
-
-      // Force refresh UI immediately after successful update
-      console.log("🔄 Dispatching UI refresh events");
+      // STEP 3: Force refresh UI immediately after successful status update
+      console.log("🔄 Step 3: Dispatching UI refresh events");
       
       if (typeof window !== 'undefined') {
         const events = [
@@ -593,18 +612,21 @@ export function PaymentMethodModal({
         });
       }
 
-      // Close modals and complete payment flow
-      console.log("🔄 Closing modals and completing payment flow");
+      // STEP 4: Close modals and complete payment flow
+      console.log("🔄 Step 4: Closing modals and completing payment flow");
       setShowEInvoice(false);
+      setSelectedPaymentMethod(""); // Clear payment method to prevent modal reopening
       onClose();
 
-      // Pass success data to parent component
-      onSelectMethod("einvoice", {
+      // STEP 5: Pass success data to parent component
+      console.log("✅ Step 5: Payment process completed successfully");
+      onSelectMethod("paymentCompleted", {
         ...eInvoiceData,
         originalPaymentMethod: selectedPaymentMethod,
         orderId: orderForPayment.id,
         tableId: orderForPayment.tableId,
         success: true,
+        completed: true,
         paymentData: selectedPaymentMethod === "cash" ? {
           amountReceived: parseFloat(cashAmountInput || "0"),
           change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)
@@ -612,13 +634,15 @@ export function PaymentMethodModal({
       });
 
     } catch (error) {
-      console.error("❌ Error in complete payment process:", error);
+      console.error("❌ ERROR in payment process:", error);
       
-      // Still close modals but indicate error
+      // Close modals to prevent getting stuck
       setShowEInvoice(false);
+      setSelectedPaymentMethod(""); // Clear payment method
       onClose();
       
-      onSelectMethod("einvoice", {
+      // Pass error data to parent component
+      onSelectMethod("paymentError", {
         ...eInvoiceData,
         originalPaymentMethod: selectedPaymentMethod,
         orderId: orderForPayment?.id,
@@ -634,13 +658,18 @@ export function PaymentMethodModal({
   };
 
   const handleEInvoiceClose = () => {
+    console.log("🔙 E-invoice modal closed - determining next action");
+    
     setShowEInvoice(false);
     setSelectedPaymentMethod("");
 
-    // Return to payment method selection instead of closing completely
-    console.log(
-      "🔙 E-invoice modal closed, returning to payment method selection",
-    );
+    // If we came from a completed payment flow, close completely instead of returning to payment selection
+    if (orderForPayment?.status === "paid") {
+      console.log("💳 Order already paid - closing payment modal completely");
+      onClose();
+    } else {
+      console.log("🔙 Returning to payment method selection");
+    }
   };
 
   // Virtual keyboard handlers

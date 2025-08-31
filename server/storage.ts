@@ -1248,6 +1248,7 @@ export class DatabaseStorage implements IStorage {
 
     if (status === "paid") {
       updateData.paidAt = new Date();
+      console.log(`💳 Setting paidAt timestamp for order ${id}`);
     }
 
     const [order] = await database
@@ -1270,14 +1271,17 @@ export class DatabaseStorage implements IStorage {
       paidAt: order.paidAt
     });
 
-    // Handle table status update when order is paid or completed
-    if ((status === "paid" || status === "completed") && order.tableId) {
-      console.log(`💳 Order ${status} - processing table ${order.tableId} status update`);
+    // CRITICAL: Handle table status update when order is paid
+    if (status === "paid" && order.tableId) {
+      console.log(`💳 Order PAID - IMMEDIATELY processing table ${order.tableId} release`);
 
       try {
-        // Check for other unpaid orders on the same table (excluding this order)
-        const unpaidStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
-        const otherUnpaidOrders = await database
+        // Import tables from schema
+        const { tables } = await import("@shared/schema");
+
+        // Check for other ACTIVE orders on the same table (excluding current order and paid/cancelled orders)
+        const activeStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
+        const otherActiveOrders = await database
           .select()
           .from(orders)
           .where(
@@ -1285,22 +1289,19 @@ export class DatabaseStorage implements IStorage {
               eq(orders.tableId, order.tableId),
               not(eq(orders.id, id)), // Exclude current order
               or(
-                ...unpaidStatuses.map(unpaidStatus => eq(orders.status, unpaidStatus))
+                ...activeStatuses.map(activeStatus => eq(orders.status, activeStatus))
               )
             )
           );
 
-        console.log(`🔍 Unpaid orders remaining on table ${order.tableId}:`, {
-          count: otherUnpaidOrders.length,
-          orders: otherUnpaidOrders.map(o => ({ 
+        console.log(`🔍 Active orders remaining on table ${order.tableId}:`, {
+          count: otherActiveOrders.length,
+          orders: otherActiveOrders.map(o => ({ 
             id: o.id, 
             status: o.status, 
             orderNumber: o.orderNumber 
           }))
         });
-
-        // Import tables from schema
-        const { tables } = await import("@shared/schema");
 
         // Get current table status
         const [currentTable] = await database
@@ -1317,9 +1318,9 @@ export class DatabaseStorage implements IStorage {
             status: currentTable.status
           });
 
-          // Only update table status to available if no other unpaid orders exist
-          if (otherUnpaidOrders.length === 0) {
-            console.log(`🔓 No unpaid orders remaining - updating table ${order.tableId} to available`);
+          // FORCE table release if no other active orders exist
+          if (otherActiveOrders.length === 0) {
+            console.log(`🔓 FORCING table ${order.tableId} release - no active orders remaining`);
             
             const [updatedTable] = await database
               .update(tables)
@@ -1331,24 +1332,24 @@ export class DatabaseStorage implements IStorage {
               .returning();
             
             if (updatedTable) {
-              console.log(`✅ Table ${order.tableId} released successfully:`, {
+              console.log(`✅ Table ${order.tableId} FORCEFULLY released:`, {
                 id: updatedTable.id,
                 tableNumber: updatedTable.tableNumber,
                 previousStatus: currentTable.status,
                 newStatus: updatedTable.status
               });
             } else {
-              console.error(`❌ Failed to update table ${order.tableId} - no table returned`);
+              console.error(`❌ CRITICAL: Failed to release table ${order.tableId} - no table returned`);
             }
           } else {
-            console.log(`🔒 Table ${order.tableId} remains occupied due to ${otherUnpaidOrders.length} unpaid orders:`);
-            otherUnpaidOrders.forEach((unpaidOrder, index) => {
-              console.log(`   ${index + 1}. Order ${unpaidOrder.orderNumber} (${unpaidOrder.status})`);
+            console.log(`🔒 Table ${order.tableId} remains occupied due to ${otherActiveOrders.length} active orders:`);
+            otherActiveOrders.forEach((activeOrder, index) => {
+              console.log(`   ${index + 1}. Order ${activeOrder.orderNumber} (${activeOrder.status})`);
             });
           }
         }
       } catch (tableError) {
-        console.error(`❌ Error processing table status update for table ${order.tableId}:`, tableError);
+        console.error(`❌ CRITICAL: Error processing table status update for table ${order.tableId}:`, tableError);
       }
     }
 
