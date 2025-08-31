@@ -176,7 +176,7 @@ export interface IStorage {
   ): Promise<Customer | undefined>;
   deleteCustomer(id: number): Promise<boolean>;
   updateCustomerVisit(
-    id: number,
+    customerId: number,
     amount: number,
     points: number,
   ): Promise<Customer | undefined>;
@@ -1181,7 +1181,7 @@ export class DatabaseStorage implements IStorage {
           // Only update table status to available if no other unpaid orders exist
           if (otherUnpaidOrders.length === 0) {
             console.log(`🔓 No unpaid orders remaining - releasing table ${updatedOrder.tableId}`);
-            
+
             const [updatedTable] = await database
               .update(tables)
               .set({ 
@@ -1190,7 +1190,7 @@ export class DatabaseStorage implements IStorage {
               })
               .where(eq(tables.id, updatedOrder.tableId))
               .returning();
-            
+
             if (updatedTable) {
               console.log(`✅ Table ${updatedOrder.tableId} released successfully`);
             } else {
@@ -1224,9 +1224,9 @@ export class DatabaseStorage implements IStorage {
       dbType: tenantDb ? 'tenant' : 'default',
       timestamp: new Date().toISOString()
     });
-    
+
     const database = tenantDb || db;
-    
+
     console.log(`🔍 Storage: Database connection info:`, {
       databaseObject: !!database,
       isDefaultDb: database === db,
@@ -1270,7 +1270,7 @@ export class DatabaseStorage implements IStorage {
 
     if (!currentOrder) {
       console.error(`❌ Storage: Order not found for ID: ${id}`);
-      
+
       // Enhanced debugging
       console.log(`🔍 Storage: Debugging order not found...`);
       try {
@@ -1294,7 +1294,7 @@ export class DatabaseStorage implements IStorage {
       } catch (debugError) {
         console.error(`❌ Storage: Debug queries failed:`, debugError);
       }
-      
+
       return undefined;
     }
 
@@ -1357,7 +1357,7 @@ export class DatabaseStorage implements IStorage {
 
       if (!order) {
         console.error(`❌ Storage: No order returned after status update for ID: ${id}`);
-        
+
         // Detailed verification
         console.log(`🔍 Storage: Performing post-update verification...`);
         try {
@@ -1365,7 +1365,7 @@ export class DatabaseStorage implements IStorage {
             .select()
             .from(orders)
             .where(eq(orders.id, id));
-          
+
           console.log(`🔍 Storage: Post-update verification:`, {
             orderExists: !!verifyOrder,
             orderData: verifyOrder ? {
@@ -1461,7 +1461,7 @@ export class DatabaseStorage implements IStorage {
             // FORCE table release if no other active orders exist
             if (otherActiveOrders.length === 0) {
               console.log(`🔓 FORCING table ${order.tableId} release - no active orders remaining`);
-              
+
               const [updatedTable] = await database
                 .update(tables)
                 .set({ 
@@ -1470,7 +1470,7 @@ export class DatabaseStorage implements IStorage {
                 })
                 .where(eq(tables.id, order.tableId))
                 .returning();
-              
+
               if (updatedTable) {
                 console.log(`✅ Table ${order.tableId} FORCEFULLY released:`, {
                   id: updatedTable.id,
