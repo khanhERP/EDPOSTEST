@@ -76,17 +76,37 @@ export function OrderManagement() {
   });
 
   const updateOrderStatusMutation = useMutation({
-    mutationFn: ({ orderId, status }: { orderId: number; status: string }) =>
-      apiRequest('PUT', `/api/orders/${orderId}/status`, { status }),
-    onSuccess: () => {
+    mutationFn: ({ orderId, status }: { orderId: number; status: string }) => {
+      console.log('🎯 updateOrderStatusMutation.mutationFn called:', {
+        orderId,
+        status,
+        timestamp: new Date().toISOString()
+      });
+      return apiRequest('PUT', `/api/orders/${orderId}/status`, { status });
+    },
+    onSuccess: (data, variables) => {
+      console.log('✅ updateOrderStatusMutation.onSuccess called:', {
+        variables,
+        responseData: data,
+        timestamp: new Date().toISOString()
+      });
+
       queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
       queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      
       toast({
         title: t('common.success'),
         description: t('orders.orderStatusUpdated'),
       });
     },
-    onError: () => {
+    onError: (error, variables) => {
+      console.error('❌ updateOrderStatusMutation.onError called:', {
+        error: error,
+        errorMessage: error?.message,
+        variables,
+        timestamp: new Date().toISOString()
+      });
+
       toast({
         title: t('common.error'),
         description: t('orders.orderStatusUpdateFailed'),
@@ -507,26 +527,88 @@ export function OrderManagement() {
   };
 
   const handleStatusUpdate = async (orderId: number, newStatus: string) => {
+    console.log('=== ORDER STATUS UPDATE DEBUG START ===');
+    console.log('🎯 Function called with params:', {
+      orderId,
+      newStatus,
+      timestamp: new Date().toISOString()
+    });
+
     try {
-      console.log(`🔄 Order Management: Updating order ${orderId} status to ${newStatus}`);
+      console.log('🔍 Pre-API call debug info:', {
+        apiRequestFunction: typeof apiRequest,
+        orderId: orderId,
+        newStatus: newStatus,
+        apiUrl: `/api/orders/${orderId}/status`,
+        requestBody: { status: newStatus }
+      });
+
+      console.log(`🔄 Order Management: Starting API call to update order ${orderId} status to ${newStatus}`);
+
+      // Log the exact API request being made
+      console.log('📤 Making API request:', {
+        method: 'PUT',
+        url: `/api/orders/${orderId}/status`,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
 
       const response = await apiRequest('PUT', `/api/orders/${orderId}/status`, { status: newStatus });
 
+      console.log('📥 API Response received:', {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        url: response.url
+      });
+
       if (response.ok) {
         const updatedOrder = await response.json();
-        console.log(`✅ Order Management: Status updated successfully:`, updatedOrder);
+        console.log(`✅ Order Management: Status updated successfully:`, {
+          orderId: updatedOrder.id,
+          orderNumber: updatedOrder.orderNumber,
+          previousStatus: updatedOrder.previousStatus,
+          newStatus: updatedOrder.status,
+          paidAt: updatedOrder.paidAt,
+          tableId: updatedOrder.tableId,
+          updatedAt: updatedOrder.updatedAt,
+          fullOrderData: updatedOrder
+        });
 
-        // Force refresh the orders list
-        queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-        queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+        // Log query invalidation
+        console.log('🔄 Invalidating React Query caches...');
+        
+        const ordersInvalidation = queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+        const tablesInvalidation = queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+
+        console.log('🔄 Cache invalidation promises:', {
+          ordersInvalidation: !!ordersInvalidation,
+          tablesInvalidation: !!tablesInvalidation
+        });
+
+        await Promise.all([ordersInvalidation, tablesInvalidation]);
+        console.log('✅ Cache invalidation completed');
+
+        // Force refetch to ensure UI updates
+        console.log('🔄 Force refetching queries...');
+        await queryClient.refetchQueries({ queryKey: ['/api/orders'] });
+        console.log('✅ Queries refetched');
 
         toast({
           title: "Thành công",
           description: `Trạng thái đơn hàng đã được cập nhật thành ${newStatus}`,
         });
+
+        console.log('✅ SUCCESS: Order status update completed successfully');
       } else {
         const errorText = await response.text();
-        console.error(`❌ Order Management: Failed to update status:`, errorText);
+        console.error(`❌ Order Management: API call failed:`, {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText,
+          url: response.url
+        });
 
         toast({
           title: "Lỗi",
@@ -535,13 +617,26 @@ export function OrderManagement() {
         });
       }
     } catch (error) {
-      console.error('❌ Order Management: Error updating order status:', error);
+      console.error('=== CRITICAL ERROR IN handleStatusUpdate ===');
+      console.error('❌ Error type:', error?.constructor?.name);
+      console.error('❌ Error message:', error?.message);
+      console.error('❌ Error stack:', error?.stack);
+      console.error('❌ Error full object:', error);
+      console.error('❌ Parameters that caused error:', {
+        orderId,
+        newStatus,
+        apiRequestAvailable: typeof apiRequest,
+        queryClientAvailable: typeof queryClient
+      });
+
       toast({
         title: "Lỗi",
-        description: "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng",
+        description: `Có lỗi xảy ra khi cập nhật trạng thái đơn hàng: ${error?.message || 'Unknown error'}`,
         variant: "destructive",
       });
     }
+
+    console.log('=== ORDER STATUS UPDATE DEBUG END ===');
   };
 
   const handlePaymentClick = (order: Order) => {
@@ -1070,7 +1165,15 @@ export function OrderManagement() {
                       {order.status === 'pending' && (
                         <Button
                           size="sm"
-                          onClick={() => handleStatusUpdate(order.id, 'confirmed')}
+                          onClick={() => {
+                            console.log('🎯 CONFIRM button clicked for order:', {
+                              orderId: order.id,
+                              orderNumber: order.orderNumber,
+                              currentStatus: order.status,
+                              newStatus: 'confirmed'
+                            });
+                            handleStatusUpdate(order.id, 'confirmed');
+                          }}
                           className="flex-1"
                         >
                           {t('orders.confirm')}
@@ -1080,7 +1183,15 @@ export function OrderManagement() {
                       {order.status === 'confirmed' && (
                         <Button
                           size="sm"
-                          onClick={() => handleStatusUpdate(order.id, 'preparing')}
+                          onClick={() => {
+                            console.log('🎯 START COOKING button clicked for order:', {
+                              orderId: order.id,
+                              orderNumber: order.orderNumber,
+                              currentStatus: order.status,
+                              newStatus: 'preparing'
+                            });
+                            handleStatusUpdate(order.id, 'preparing');
+                          }}
                           className="flex-1"
                         >
                           {t('orders.startCooking')}
@@ -1090,7 +1201,15 @@ export function OrderManagement() {
                       {order.status === 'preparing' && (
                         <Button
                           size="sm"
-                          onClick={() => handleStatusUpdate(order.id, 'ready')}
+                          onClick={() => {
+                            console.log('🎯 READY button clicked for order:', {
+                              orderId: order.id,
+                              orderNumber: order.orderNumber,
+                              currentStatus: order.status,
+                              newStatus: 'ready'
+                            });
+                            handleStatusUpdate(order.id, 'ready');
+                          }}
                           className="flex-1"
                         >
                           {t('orders.ready')}
@@ -1100,7 +1219,15 @@ export function OrderManagement() {
                       {order.status === 'ready' && (
                         <Button
                           size="sm"
-                          onClick={() => handleStatusUpdate(order.id, 'served')}
+                          onClick={() => {
+                            console.log('🎯 SERVED button clicked for order:', {
+                              orderId: order.id,
+                              orderNumber: order.orderNumber,
+                              currentStatus: order.status,
+                              newStatus: 'served'
+                            });
+                            handleStatusUpdate(order.id, 'served');
+                          }}
                           className="flex-1"
                         >
                           {t('orders.served')}
