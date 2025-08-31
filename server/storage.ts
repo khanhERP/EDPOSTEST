@@ -1791,7 +1791,7 @@ export class DatabaseStorage implements IStorage {
     customerId: number,
     amount: number,
     points: number,
-  ) {
+  ): Promise<Customer | undefined> {
     const [customer] = await db
       .select()
       .from(customers)
