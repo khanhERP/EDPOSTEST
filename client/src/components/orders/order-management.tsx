@@ -357,11 +357,30 @@ export function OrderManagement() {
         throw new Error('Failed to update order status');
       }
 
-      // Invalidate queries to refresh the UI
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+      // Invalidate queries to refresh the UI with more comprehensive invalidation
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/orders', orderForPayment.id] }),
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] })
+      ]);
 
       console.log('✅ Order Management: Order status updated to paid with einvoice status');
+      console.log('🔄 Order Management: All queries invalidated and refetched');
+
+      // Verify the order was actually updated by fetching it again
+      try {
+        const verifyResponse = await apiRequest('GET', `/api/orders/${orderForPayment.id}`);
+        const verifiedOrder = await verifyResponse.json();
+        console.log('🔍 Order Management: Verified updated order:', {
+          orderId: verifiedOrder.id,
+          status: verifiedOrder.status,
+          einvoiceStatus: verifiedOrder.einvoiceStatus,
+          paymentMethod: verifiedOrder.paymentMethod
+        });
+      } catch (verifyError) {
+        console.error('❌ Error verifying order update:', verifyError);
+      }
 
       toast({
         title: 'Thành công',
@@ -913,9 +932,16 @@ export function OrderManagement() {
                           selectedOrder.einvoiceStatus === 2 ? "destructive" :
                           "secondary"
                         }>
-                          {selectedOrder.einvoiceStatus === 1 ? "Đã phát hành" :
-                           selectedOrder.einvoiceStatus === 2 ? "Lỗi phát hành" :
-                           "Chưa phát hành"}
+                          {(() => {
+                            console.log('🔍 Order Management: E-invoice status for order', selectedOrder.id, ':', {
+                              einvoiceStatus: selectedOrder.einvoiceStatus,
+                              type: typeof selectedOrder.einvoiceStatus
+                            });
+                            
+                            if (selectedOrder.einvoiceStatus === 1) return "Đã phát hành";
+                            if (selectedOrder.einvoiceStatus === 2) return "Lỗi phát hành";
+                            return "Chưa phát hành";
+                          })()}
                         </Badge>
                       </div>
                       <div className="flex justify-between">

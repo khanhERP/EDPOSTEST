@@ -437,15 +437,15 @@ export class DatabaseStorage implements IStorage {
     tenantDb?: any,
   ): Promise<Product | undefined> {
     const database = tenantDb || db;
-    
+
     try {
       console.log(`🔍 Starting stock update for product ID: ${id}, quantity change: ${quantity}`);
-      
+
       const [product] = await database
         .select()
         .from(products)
         .where(eq(products.id, id));
-        
+
       if (!product) {
         console.error(`❌ Product not found for stock update: ID ${id}`);
         throw new Error(`Product with ID ${id} not found`);
@@ -484,7 +484,7 @@ export class DatabaseStorage implements IStorage {
 
       if (updatedProduct) {
         console.log(`✅ Stock updated successfully for ${product.name}: ${currentStock} → ${newStock}`);
-        
+
         // Create inventory transaction record
         try {
           await database.execute(sql`
@@ -498,7 +498,7 @@ export class DatabaseStorage implements IStorage {
           console.error(`❌ Failed to record inventory transaction:`, invError);
           // Don't throw here as the stock update was successful
         }
-        
+
         return updatedProduct;
       } else {
         console.error(`❌ Failed to update stock for ${product.name} - no updated product returned`);
@@ -540,7 +540,7 @@ export class DatabaseStorage implements IStorage {
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         console.log(`📝 Processing item ${i + 1}/${items.length}: ${item.productName} (ID: ${item.productId}) - Qty: ${item.quantity}`);
-        
+
         try {
           // Create transaction item record
           const [transactionItem] = await database
@@ -555,10 +555,10 @@ export class DatabaseStorage implements IStorage {
 
           // Update product stock - trừ tồn kho đơn giản
           console.log(`🔢 Updating stock for product ID ${item.productId}: subtract ${item.quantity}`);
-          
+
           try {
             const updatedProduct = await this.updateProductStock(item.productId, item.quantity, tenantDb);
-            
+
             if (updatedProduct) {
               console.log(`✅ Stock successfully updated for ${item.productName}: New stock = ${updatedProduct.stock}`);
               stockUpdateResults.push({
@@ -583,7 +583,7 @@ export class DatabaseStorage implements IStorage {
               error: errorMsg
             });
           }
-          
+
           transactionItemsWithIds.push(transactionItem);
         } catch (itemError) {
           console.error(`❌ Error processing transaction item ${item.productName}:`, itemError);
@@ -594,18 +594,18 @@ export class DatabaseStorage implements IStorage {
       // Log stock update summary
       const successfulUpdates = stockUpdateResults.filter(r => r.success);
       const failedUpdates = stockUpdateResults.filter(r => !r.success);
-      
+
       console.log(`📊 Stock update summary:`);
       console.log(`   - Successful: ${successfulUpdates.length}/${items.length}`);
       console.log(`   - Failed: ${failedUpdates.length}/${items.length}`);
-      
+
       if (failedUpdates.length > 0) {
         console.error(`❌ Failed stock updates:`, failedUpdates);
         // Log but don't fail the transaction - the transaction was created successfully
       }
 
       console.log(`✅ Transaction created successfully: ${transaction.transactionId} with ${transactionItemsWithIds.length} items`);
-      
+
       return {
         ...transaction,
         items: transactionItemsWithIds,
@@ -1101,11 +1101,40 @@ export class DatabaseStorage implements IStorage {
     id: number,
     order: Partial<InsertOrder>,
   ): Promise<Order | undefined> {
+    console.log('=== UPDATING ORDER ===');
+    console.log('Order ID:', id);
+    console.log('Update data:', order);
+
+    // Handle field mapping - einvoiceStatus should map to einvoice_status in database
+    const mappedData = { ...order };
+    if (order.einvoiceStatus !== undefined) {
+      mappedData.einvoiceStatus = order.einvoiceStatus;
+      console.log('Mapped einvoiceStatus field:', order.einvoiceStatus);
+    }
+
+    // Add updatedAt timestamp
+    mappedData.updatedAt = new Date();
+
+    console.log('Final mapped data to update:', JSON.stringify(mappedData, null, 2));
+
     const [updatedOrder] = await db
       .update(orders)
-      .set(order)
+      .set(mappedData)
       .where(eq(orders.id, id))
       .returning();
+
+    if (updatedOrder) {
+      console.log('✅ Order updated successfully with einvoice status:', {
+        orderId: updatedOrder.id,
+        status: updatedOrder.status,
+        einvoiceStatus: updatedOrder.einvoiceStatus,
+        paymentMethod: updatedOrder.paymentMethod
+      });
+    } else {
+      console.error('❌ No order returned after update');
+    }
+
+    console.log('=== END UPDATING ORDER ===');
     return updatedOrder || undefined;
   }
 
