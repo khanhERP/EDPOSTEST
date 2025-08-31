@@ -93,14 +93,12 @@ export function OrderManagement() {
   });
 
   const completePaymentMutation = useMutation({
-    mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) =>
-      apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod }),
-    onSuccess: async (data, variables) => {
+    mutationFn: async ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) => {
+      console.log('🎯 completePaymentMutation called - using centralized payment completion');
+      return await completeOrderPayment(orderId, { paymentMethod });
+    },
+    onSuccess: async (result, variables) => {
       console.log('🎯 Order Management completePaymentMutation.onSuccess called');
-
-      // Invalidate queries first
-      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
 
       toast({
         title: 'Thanh toán thành công',
@@ -202,8 +200,8 @@ export function OrderManagement() {
         });
       }
     },
-    onError: () => {
-      console.log('❌ Order Management completePaymentMutation.onError called');
+    onError: (error) => {
+      console.log('❌ Order Management completePaymentMutation.onError called:', error);
       toast({
         title: 'Lỗi',
         description: 'Không thể hoàn tất thanh toán',
@@ -326,6 +324,85 @@ export function OrderManagement() {
     return (products as Product[]).find((product: Product) => product.id === productId);
   };
 
+  // CENTRALIZED payment completion function - all payment flows go through here
+  const completeOrderPayment = async (orderId: number, paymentData: any) => {
+    console.log('🎯 CENTRALIZED Payment Completion - Order ID:', orderId, 'Payment Data:', paymentData);
+
+    try {
+      // Step 1: Update order status to 'paid' - THIS IS THE CRITICAL STEP
+      console.log('📋 Step 1: Updating order status to PAID for order:', orderId);
+      
+      const statusResponse = await fetch(`/api/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'paid' })
+      });
+
+      if (!statusResponse.ok) {
+        const errorText = await statusResponse.text();
+        throw new Error(`Failed to update order status: ${errorText}`);
+      }
+
+      const updatedOrder = await statusResponse.json();
+      console.log('✅ Step 1 COMPLETED: Order status updated to PAID:', updatedOrder);
+
+      // Step 2: Update additional payment details
+      console.log('📋 Step 2: Updating payment details for order:', orderId);
+      
+      const paymentDetailsResponse = await fetch(`/api/orders/${orderId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentMethod: paymentData.paymentMethod || 'cash',
+          einvoiceStatus: paymentData.einvoiceStatus || 0,
+          paidAt: new Date().toISOString(),
+          invoiceNumber: paymentData.invoiceNumber || null,
+          symbol: paymentData.symbol || null,
+          templateNumber: paymentData.templateNumber || null
+        })
+      });
+
+      if (!paymentDetailsResponse.ok) {
+        console.warn('⚠️ Step 2 FAILED: Could not update payment details, but order is already PAID');
+      } else {
+        console.log('✅ Step 2 COMPLETED: Payment details updated');
+      }
+
+      // Step 3: Refresh UI and trigger events
+      console.log('📋 Step 3: Refreshing UI and triggering events');
+      
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+        queryClient.refetchQueries({ queryKey: ['/api/orders'] })
+      ]);
+
+      // Dispatch events for real-time updates
+      if (typeof window !== 'undefined') {
+        const events = [
+          new CustomEvent('refreshOrders'),
+          new CustomEvent('paymentCompleted', {
+            detail: { orderId, tableId: updatedOrder.tableId }
+          }),
+          new CustomEvent('tableStatusUpdate', {
+            detail: { tableId: updatedOrder.tableId, checkForRelease: true }
+          })
+        ];
+
+        events.forEach(event => window.dispatchEvent(event));
+      }
+
+      console.log('✅ Step 3 COMPLETED: UI refreshed and events dispatched');
+      console.log('🎉 PAYMENT COMPLETION SUCCESS - Order', orderId, 'is now PAID');
+
+      return { success: true, order: updatedOrder };
+
+    } catch (error) {
+      console.error('❌ PAYMENT COMPLETION FAILED for order', orderId, ':', error);
+      throw error;
+    }
+  };
+
   // Handle E-invoice confirmation and complete payment
   const handleEInvoiceConfirm = async (invoiceData: any) => {
     console.log('🎯 Order Management handleEInvoiceConfirm called with data:', invoiceData);
@@ -341,59 +418,14 @@ export function OrderManagement() {
     }
 
     try {
-      console.log('🔄 Starting payment completion for order:', orderForPayment.id);
-
-      // First update the order status to 'paid' using the status endpoint
-      const statusUpdateResponse = await apiRequest('PUT', `/api/orders/${orderForPayment.id}/status`, {
-        status: 'paid'
-      });
-
-      if (!statusUpdateResponse.ok) {
-        throw new Error('Failed to update order status to paid');
-      }
-
-      console.log('✅ Order status updated to paid successfully');
-
-      // Then update additional payment details
-      const paymentUpdateResponse = await apiRequest('PUT', `/api/orders/${orderForPayment.id}`, {
-        einvoiceStatus: invoiceData.publishLater ? 0 : 1, // 0 for draft, 1 for published
+      // Use centralized payment completion function
+      await completeOrderPayment(orderForPayment.id, {
         paymentMethod: invoiceData.originalPaymentMethod || 'einvoice',
-        paidAt: new Date().toISOString(),
-        invoiceNumber: invoiceData.invoiceNumber || null,
-        symbol: invoiceData.symbol || null,
-        templateNumber: invoiceData.templateNumber || null
+        einvoiceStatus: invoiceData.publishLater ? 0 : 1,
+        invoiceNumber: invoiceData.invoiceNumber,
+        symbol: invoiceData.symbol,
+        templateNumber: invoiceData.templateNumber
       });
-
-      if (!paymentUpdateResponse.ok) {
-        console.warn('⚠️ Failed to update payment details, but order is already paid');
-      }
-
-      // Dispatch events for real-time updates
-      if (typeof window !== 'undefined') {
-        const events = [
-          new CustomEvent('refreshOrders'),
-          new CustomEvent('paymentCompleted', {
-            detail: { orderId: orderForPayment.id, tableId: orderForPayment.tableId }
-          }),
-          new CustomEvent('tableStatusUpdate', {
-            detail: { tableId: orderForPayment.tableId, checkForRelease: true }
-          })
-        ];
-
-        events.forEach(event => {
-          window.dispatchEvent(event);
-        });
-      }
-
-      // Invalidate queries to refresh the UI
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
-        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
-        queryClient.invalidateQueries({ queryKey: ['/api/orders', orderForPayment.id] }),
-        queryClient.refetchQueries({ queryKey: ['/api/orders'] })
-      ]);
-
-      console.log('✅ Order Management: Payment completed and UI refreshed');
 
       toast({
         title: 'Thành công',
