@@ -394,60 +394,13 @@ export function PrintDialog({
             <Button
               variant="outline"
               onClick={() => {
-                console.log('✅ Print Dialog: Hoàn thành thanh toán - không in bill');
-                
-                // Send completion signal instead of close signal
-                try {
-                  fetch('/api/popup/close', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                      success: true, 
-                      action: 'payment_completed_no_print',
-                      reason: 'user_chose_complete_without_printing',
-                      timestamp: new Date().toISOString(),
-                      transactionId: receiptData.transactionId
-                    }),
-                  }).catch(error => {
-                    console.error('Error sending completion signal:', error);
-                  });
-                } catch (error) {
-                  console.error('Error in completion signal:', error);
-                }
-                
-                // Clear any pending timeouts or intervals
-                if (typeof window !== 'undefined') {
-                  // Clear all timeouts
-                  const maxId = setTimeout(() => {}, 0);
-                  for (let i = 1; i <= maxId; i++) {
-                    clearTimeout(i);
-                  }
-                  
-                  // Clear all intervals
-                  const maxIntervalId = setInterval(() => {}, 0);
-                  for (let i = 1; i <= maxIntervalId; i++) {
-                    clearInterval(i);
-                  }
-                }
-                
-                // Immediately close and signal completion
+                console.log('🔒 Print Dialog: Đóng popup - không in bill');
                 onClose();
-                
-                // Show completion message
-                if (typeof window !== 'undefined' && window.parent) {
-                  window.parent.postMessage({
-                    type: 'PAYMENT_COMPLETED',
-                    action: 'no_print_requested',
-                    success: true
-                  }, '*');
-                }
               }}
               className="flex-1"
             >
               <X className="w-4 h-4 mr-2" />
-              Hoàn thành
+              Đóng
             </Button>
           </div>
         </div>
