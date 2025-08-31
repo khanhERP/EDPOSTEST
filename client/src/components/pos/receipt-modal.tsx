@@ -465,11 +465,118 @@ export function ReceiptModal({
               <p>{t("pos.keepReceiptRecords")}</p>
             </div>
           </div>
+        ) : isPreview && cartItems && cartItems.length > 0 && total ? (
+          // Generate preview receipt from cartItems when in preview mode
+          <div
+            id="receipt-content"
+            className="receipt-print bg-white"
+            style={{ padding: "16px" }}
+          >
+            <div className="text-center mb-4">
+              <p className="text-xs font-semibold mb-1">
+                {storeSettings?.storeName || "Easy Digital Point Of Sale Service"}
+              </p>
+              <p className="text-xs mb-0.5">{t("pos.mainStoreLocation")}</p>
+              <p className="text-xs mb-0.5">
+                {storeSettings?.address || "123 Commerce St, City, State 12345"}
+              </p>
+              <p className="text-xs mb-2">
+                {t("pos.phone")} {storeSettings?.phone || "(555) 123-4567"}
+              </p>
+              <div className="flex items-center justify-center">
+                <img src={logoPath} alt="EDPOS Logo" className="h-6" />
+              </div>
+            </div>
+
+            <div className="border-t border-b border-gray-300 py-3 mb-3">
+              <div className="flex justify-between text-sm">
+                <span>{t("pos.transactionNumber")}</span>
+                <span>PREVIEW-{Date.now()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>{t("pos.date")}</span>
+                <span>{new Date().toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>{t("pos.cashier")}</span>
+                <span>Nhân viên</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 mb-3">
+              {cartItems.map((item) => (
+                <div key={item.id}>
+                  <div className="flex justify-between text-sm">
+                    <div className="flex-1">
+                      <div>{item.name}</div>
+                      <div className="text-xs text-gray-600">
+                        SKU: {item.sku || `FOOD${String(item.id).padStart(5, "0")}`}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {item.quantity} x{" "}
+                        {Math.floor(
+                          typeof item.price === "string" 
+                            ? parseFloat(item.price) 
+                            : item.price
+                        ).toLocaleString("vi-VN")} ₫
+                      </div>
+                    </div>
+                    <div>
+                      {Math.floor(
+                        (typeof item.price === "string" 
+                          ? parseFloat(item.price) 
+                          : item.price) * item.quantity
+                      ).toLocaleString("vi-VN")} ₫
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-gray-300 pt-3 space-y-1">
+              {(() => {
+                // Calculate preview values
+                const subtotal = cartItems.reduce((sum, item) => {
+                  const price = typeof item.price === "string" ? parseFloat(item.price) : item.price;
+                  return sum + (price * item.quantity);
+                }, 0);
+                
+                const tax = Math.max(0, total - subtotal);
+                
+                return (
+                  <>
+                    <div className="flex justify-between text-sm">
+                      <span>Tạm tính</span>
+                      <span>
+                        {Math.floor(subtotal).toLocaleString("vi-VN")} ₫
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Thuế:</span>
+                      <span>
+                        {Math.floor(tax).toLocaleString("vi-VN")} ₫
+                      </span>
+                    </div>
+                    <div className="flex justify-between font-bold">
+                      <span>{t("pos.total")}</span>
+                      <span>
+                        {Math.floor(total).toLocaleString("vi-VN")} ₫
+                      </span>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            <div className="text-center mt-4 text-xs text-gray-600">
+              <p>{t("pos.thankYouBusiness")}</p>
+              <p>{t("pos.keepReceiptRecords")}</p>
+            </div>
+          </div>
         ) : (
-          // This part renders if isPreview is true but receipt is null
+          // This part renders if no data available
           <div className="p-4 text-center">
-            <p>Chưa có dữ liệu hóa đơn cho bản xem trước.</p>
-            <p>Vui lòng thực hiện thanh toán để có dữ liệu.</p>
+            <p>Không có dữ liệu để hiển thị hóa đơn.</p>
             <Button onClick={onClose} className="mt-4">
               Đóng
             </Button>
