@@ -420,8 +420,9 @@ export function PaymentMethodModal({
         setQrLoading(false);
       }
     } else {
-      // Close payment method modal and let parent handle the flow
-      onSelectMethod(method);
+      // Lưu phương thức thanh toán và hiển thị E-Invoice modal
+      setSelectedPaymentMethod(method);
+      setShowEInvoice(true);
     }
   };
 
@@ -429,8 +430,9 @@ export function PaymentMethodModal({
     setShowQRCode(false);
     setQrCodeUrl("");
 
-    // Return to parent with QR payment method
-    onSelectMethod("qrCode");
+    // Lưu phương thức thanh toán và hiển thị E-Invoice modal
+    setSelectedPaymentMethod("qrCode");
+    setShowEInvoice(true);
   };
 
   const handleBack = () => {
@@ -504,11 +506,9 @@ export function PaymentMethodModal({
     setAmountReceived("");
     setCashAmountInput("");
 
-    // Trả về kết quả cho component cha
-    onSelectMethod("cash", {
-      amountReceived: receivedAmount,
-      change: finalChange,
-    });
+    // Lưu phương thức thanh toán và hiển thị E-Invoice modal
+    setSelectedPaymentMethod("cash");
+    setShowEInvoice(true);
   };
 
   const handleEInvoiceConfirm = (eInvoiceData: any) => {
@@ -524,6 +524,10 @@ export function PaymentMethodModal({
     onSelectMethod("einvoice", {
       ...eInvoiceData,
       originalPaymentMethod: selectedPaymentMethod,
+      paymentData: selectedPaymentMethod === "cash" ? {
+        amountReceived: parseFloat(cashAmountInput || "0"),
+        change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)
+      } : null
     });
   };
 
