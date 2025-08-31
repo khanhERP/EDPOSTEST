@@ -93,60 +93,19 @@ export function OrderManagement() {
   });
 
   const completePaymentMutation = useMutation({
-    mutationFn: async ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) => {
-      console.log('🔄 Order Management: Calling API to update order status to paid');
-      console.log('📋 Order Management: Payment details:', { orderId, paymentMethod });
-
-      const response = await apiRequest('PUT', `/api/orders/${orderId}/status`, {
-        status: 'paid',
-        paymentMethod,
-        einvoiceStatus: 0 // Set to draft initially
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Order Management: Failed to update order status:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorText
-        });
-        throw new Error(`Failed to update order status: ${response.status} ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ Order Management: Order status API response:', result);
-      return result;
-    },
+    mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) =>
+      apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod }),
     onSuccess: async (data, variables) => {
-      console.log('✅ Order Management: Order status updated to paid successfully');
-      console.log('📋 Order Management: Updated order data:', data);
+      console.log('🎯 Order Management completePaymentMutation.onSuccess called');
 
-      // Invalidate and refetch queries to ensure UI reflects changes
-      console.log('🔄 Order Management: Invalidating and refetching queries');
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
-        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
-        queryClient.invalidateQueries({ queryKey: ['/api/orders', variables.orderId] }),
-        queryClient.refetchQueries({ queryKey: ['/api/orders'] })
-      ]);
+      // Invalidate queries first
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
 
       toast({
         title: 'Thanh toán thành công',
-        description: 'Đơn hàng đã được cập nhật trạng thái thành công',
+        description: 'Đơn hàng đã được thanh toán',
       });
-
-      // Verify order was updated by checking the orders list
-      setTimeout(async () => {
-        try {
-          const updatedOrders = queryClient.getQueryData(['/api/orders']);
-          const updatedOrder = Array.isArray(updatedOrders)
-            ? updatedOrders.find((order: any) => order.id === variables.orderId)
-            : null;
-          console.log('🔍 Order Management: Verification - Updated order in cache:', updatedOrder);
-        } catch (error) {
-          console.error('❌ Order Management: Error verifying order update:', error);
-        }
-      }, 1000);
 
       // Fetch the completed order and its items for receipt
       try {
@@ -425,7 +384,7 @@ export function OrderManagement() {
 
       toast({
         title: 'Thành công',
-        description: invoiceData.publishLater
+        description: invoiceData.publishLater 
           ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
           : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
       });
@@ -497,8 +456,7 @@ export function OrderManagement() {
 
   const handlePaymentClick = (order: Order) => {
     setSelectedOrder(order);
-    setOrderForPayment(order);
-    setShowPaymentMethodModal(true);
+    setOrderDetailsOpen(true);
   };
 
   const handlePaymentMethodSelect = (method: any, data?: any) => {
@@ -984,7 +942,7 @@ export function OrderManagement() {
                               einvoiceStatus: selectedOrder.einvoiceStatus,
                               type: typeof selectedOrder.einvoiceStatus
                             });
-
+                            
                             if (selectedOrder.einvoiceStatus === 1) return "Đã phát hành";
                             if (selectedOrder.einvoiceStatus === 2) return "Lỗi phát hành";
                             return "Chưa phát hành";
