@@ -715,6 +715,9 @@ export function PaymentMethodModal({
               new CustomEvent('refreshOrders'),
               new CustomEvent('paymentCompleted', {
                 detail: { orderId: orderForPayment.id, tableId: orderForPayment.tableId }
+              }),
+              new CustomEvent('tableStatusUpdate', {
+                detail: { tableId: orderForPayment.tableId, checkForRelease: true }
               })
             ];
 

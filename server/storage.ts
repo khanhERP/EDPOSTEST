@@ -1176,7 +1176,7 @@ export class DatabaseStorage implements IStorage {
     if (order && status === "paid" && order.tableId) {
       console.log(`💳 Order paid - checking other orders on table ${order.tableId}`);
 
-      // Check for other active orders on the same table (excluding cancelled orders)
+      // Check for other active orders on the same table (excluding paid, cancelled, and completed orders)
       const otherActiveOrders = await database
         .select()
         .from(orders)

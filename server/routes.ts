@@ -1081,25 +1081,61 @@ export async function registerRoutes(app: Express): Promise < Server > {
         return res.status(400).json({ message: "Status is required" });
       }
 
+      // First get the current order to log its current state
+      const [currentOrder] = await db
+        .select()
+        .from(orders)
+        .where(eq(orders.id, id));
+
+      if (!currentOrder) {
+        console.error(`❌ Order not found for ID: ${id}`);
+        return res.status(404).json({ message: "Order not found" });
+      }
+
+      console.log(`📊 Current order state before update:`, {
+        orderId: currentOrder.id,
+        orderNumber: currentOrder.orderNumber,
+        tableId: currentOrder.tableId,
+        currentStatus: currentOrder.status,
+        requestedStatus: status
+      });
+
       const order = await storage.updateOrderStatus(id, status, tenantDb);
 
       if (!order) {
-        console.error(`❌ Order not found for ID: ${id}`);
-        return res.status(404).json({ message: "Order not found" });
+        console.error(`❌ Order update failed for ID: ${id}`);
+        return res.status(500).json({ message: "Failed to update order status" });
       }
 
       console.log(`✅ Order status updated via API:`, {
         orderId: order.id,
         orderNumber: order.orderNumber,
         tableId: order.tableId,
+        previousStatus: currentOrder.status,
         newStatus: order.status,
-        paymentMethod: order.paymentMethod
+        paymentMethod: order.paymentMethod,
+        paidAt: order.paidAt
       });
+
+      // If status was updated to 'paid', also check and log table status
+      if (status === 'paid' && order.tableId) {
+        const [tableAfterUpdate] = await db
+          .select()
+          .from(tables)
+          .where(eq(tables.id, order.tableId));
+        
+        console.log(`📋 Table status after order payment:`, {
+          tableId: order.tableId,
+          tableNumber: tableAfterUpdate?.tableNumber,
+          tableStatus: tableAfterUpdate?.status
+        });
+      }
 
       // Send additional response data to help with debugging
       res.json({
         ...order,
         updated: true,
+        previousStatus: currentOrder.status,
         timestamp: new Date().toISOString()
       });
     } catch (error) {
