@@ -39,6 +39,7 @@ import {
   lt,
   lte,
   ilike,
+  ne
 } from "drizzle-orm";
 import {
   sql
@@ -50,6 +51,7 @@ import {
   categories,
   transactions as transactionsTable,
   transactionItems as transactionItemsTable,
+  tables
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise < Server > {
@@ -1068,9 +1070,9 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const id = parseInt(req.params.id);
       const { status } = req.body;
       const tenantDb = await getTenantDatabase(req);
-      
+
       console.log(`📋 Order status update API called - Order ID: ${id}, New Status: ${status}`);
-      
+
       if (isNaN(id)) {
         console.error(`❌ Invalid order ID: ${req.params.id}`);
         return res.status(400).json({ message: "Invalid order ID" });
@@ -1132,7 +1134,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
             .select()
             .from(tables)
             .where(eq(tables.id, order.tableId));
-          
+
           console.log(`📋 API: Table status after order payment:`, {
             tableId: order.tableId,
             tableNumber: tableAfterUpdate?.tableNumber,
@@ -3643,95 +3645,67 @@ export async function registerRoutes(app: Express): Promise < Server > {
   app.put("/api/orders/:id", async (req: TenantRequest, res) => {
     try {
       const id = parseInt(req.params.id);
-      const updateData = req.body;
+      const orderData = req.body; // Use raw body to preserve all fields
       const tenantDb = await getTenantDatabase(req);
 
-      console.log("=== UPDATING ORDER ===");
-      console.log("Order ID:", id);
-      console.log("Update data:", JSON.stringify(updateData, null, 2));
+      console.log(`=== PUT ORDER API CALLED ===`);
+      console.log(`Order ID: ${id}`);
+      console.log(`Update data:`, JSON.stringify(orderData, null, 2));
 
       if (isNaN(id)) {
-        console.error("Invalid order ID:", req.params.id);
-        return res.status(400).json({ error: "Invalid order ID" });
+        console.error(`❌ Invalid order ID: ${req.params.id}`);
+        return res.status(400).json({ message: "Invalid order ID" });
       }
 
       // Check if order exists first
       const [existingOrder] = await db
         .select()
         .from(orders)
-        .where(eq(orders.id, id))
-        .limit(1);
+        .where(eq(orders.id, id));
 
       if (!existingOrder) {
-        console.error("Order not found:", id);
-        return res.status(404).json({ error: "Order not found" });
+        console.error(`❌ Order not found: ${id}`);
+        return res.status(404).json({ message: "Order not found" });
       }
 
-      console.log("Existing order:", existingOrder);
-
-      // Prepare fields to update with proper field mapping
-      const fieldsToUpdate: any = {};
-
-      // Handle einvoiceStatus mapping (frontend sends einvoiceStatus, database has einvoice_status)
-      if (updateData.einvoiceStatus !== undefined) {
-        fieldsToUpdate.einvoiceStatus = updateData.einvoiceStatus;
-      }
-
-      // Handle other standard fields including payment-related fields
-      const standardFields = ['status', 'paymentMethod', 'invoiceNumber', 'symbol', 'templateNumber', 'tradeNumber', 'paidAt', 'amountReceived', 'change'];
-      standardFields.forEach(field => {
-        if (updateData[field] !== undefined && updateData[field] !== null) {
-          fieldsToUpdate[field] = updateData[field];
-        }
+      console.log(`📋 Current order state:`, {
+        id: existingOrder.id,
+        orderNumber: existingOrder.orderNumber,
+        tableId: existingOrder.tableId,
+        currentStatus: existingOrder.status,
+        paymentMethod: existingOrder.paymentMethod
       });
 
-      // Handle payment status update when status becomes 'paid'
-      if (updateData.status === 'paid' && existingOrder.status !== 'paid') {
-        fieldsToUpdate.paymentStatus = 'paid';
-        if (!updateData.paidAt) {
-          fieldsToUpdate.paidAt = new Date();
-        }
-        console.log("🔄 Order status changing to 'paid', updating payment status and timestamp");
+      const order = await storage.updateOrder(id, orderData, tenantDb);
+
+      if (!order) {
+        console.error(`❌ Failed to update order ${id}`);
+        return res.status(500).json({ message: "Failed to update order" });
       }
 
-      // Add any other fields from updateData (excluding already processed ones)
-      Object.keys(updateData).forEach(key => {
-        if (!['einvoiceStatus', ...standardFields].includes(key) && updateData[key] !== undefined) {
-          fieldsToUpdate[key] = updateData[key];
-        }
+      console.log(`✅ Order update API completed successfully:`, {
+        orderId: order.id,
+        status: order.status,
+        paymentMethod: order.paymentMethod,
+        paidAt: order.paidAt,
+        einvoiceStatus: order.einvoiceStatus
       });
 
-      // Add updatedAt timestamp
-      fieldsToUpdate.updatedAt = new Date();
-
-      console.log("Fields to update:", JSON.stringify(fieldsToUpdate, null, 2));
-
-      const [updatedOrder] = await db
-        .update(orders)
-        .set(fieldsToUpdate)
-        .where(eq(orders.id, id))
-        .returning();
-
-      if (!updatedOrder) {
-        console.error("Failed to update order - no result returned");
-        return res.status(500).json({ error: "Failed to update order - no result returned" });
-      }
-
-      console.log("✅ Order updated successfully:", updatedOrder);
-      res.json(updatedOrder);
+      res.json({
+        ...order,
+        updated: true,
+        updateTimestamp: new Date().toISOString()
+      });
     } catch (error) {
-      console.error("=== ORDER UPDATE ERROR ===");
-      console.error("Error type:", error?.constructor?.name);
-      console.error("Error message:", error?.message);
-      console.error("Error details:", error);
-      console.error("Order ID:", req.params.id);
-      console.error("Update data:", req.body);
-
-      res.status(500).json({
-        error: "Failed to update order",
-        details: error instanceof Error ? error.message : "Unknown error",
-        orderID: req.params.id,
-        updateData: req.body
+      console.error(`❌ PUT Order API error:`, error);
+      if (error instanceof z.ZodError) {
+        return res
+          .status(400)
+          .json({ message: "Invalid order data", errors: error.errors });
+      }
+      res.status(500).json({ 
+        message: "Failed to update order",
+        error: error instanceof Error ? error.message : String(error)
       });
     }
   });
@@ -4584,7 +4558,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
         user: dbInfo.user_name,
         version: dbInfo.postgres_version,
         serverTime: dbInfo.server_time,
-        connectionString: DATABASE_URL?.replace(/:[^:@]*@/, ':****@'),
+        connectionString: process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@'),
         usingExternalDb: !!process.env.EXTERNAL_DB_URL
       });
     } catch (error) {
@@ -4594,7 +4568,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       res.status(500).json({
         status: "unhealthy",
         error: errorMessage,
-        connectionString: DATABASE_URL?.replace(/:[^:@]*@/, ':****@'),
+        connectionString: process.env.DATABASE_URL?.replace(/:[^:@]*@/, ':****@'),
         usingExternalDb: !!process.env.EXTERNAL_DB_URL,
         details: error
       });

@@ -1100,10 +1100,24 @@ export class DatabaseStorage implements IStorage {
   async updateOrder(
     id: number,
     order: Partial<InsertOrder>,
+    tenantDb?: any,
   ): Promise<Order | undefined> {
     console.log('=== UPDATING ORDER ===');
     console.log('Order ID:', id);
     console.log('Update data:', order);
+
+    const database = tenantDb || db;
+
+    // Get current order state before update
+    const [currentOrder] = await database
+      .select()
+      .from(orders)
+      .where(eq(orders.id, id));
+
+    if (!currentOrder) {
+      console.error(`❌ Order not found: ${id}`);
+      return undefined;
+    }
 
     // Handle field mapping - einvoiceStatus should map to einvoice_status in database
     const mappedData = { ...order };
@@ -1117,19 +1131,78 @@ export class DatabaseStorage implements IStorage {
 
     console.log('Final mapped data to update:', JSON.stringify(mappedData, null, 2));
 
-    const [updatedOrder] = await db
+    const [updatedOrder] = await database
       .update(orders)
       .set(mappedData)
       .where(eq(orders.id, id))
       .returning();
 
     if (updatedOrder) {
-      console.log('✅ Order updated successfully with einvoice status:', {
+      console.log('✅ Order updated successfully:', {
         orderId: updatedOrder.id,
         status: updatedOrder.status,
         einvoiceStatus: updatedOrder.einvoiceStatus,
-        paymentMethod: updatedOrder.paymentMethod
+        paymentMethod: updatedOrder.paymentMethod,
+        paidAt: updatedOrder.paidAt
       });
+
+      // If order status was updated to 'paid' or 'completed', check table status
+      if ((order.status === "paid" || order.status === "completed") && updatedOrder.tableId) {
+        console.log(`💳 Order ${order.status} - checking table ${updatedOrder.tableId} for release`);
+
+        try {
+          // Check for other unpaid orders on the same table
+          const unpaidStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
+          const otherUnpaidOrders = await database
+            .select()
+            .from(orders)
+            .where(
+              and(
+                eq(orders.tableId, updatedOrder.tableId),
+                not(eq(orders.id, id)), // Exclude current order
+                or(
+                  ...unpaidStatuses.map(unpaidStatus => eq(orders.status, unpaidStatus))
+                )
+              )
+            );
+
+          console.log(`🔍 Unpaid orders remaining on table ${updatedOrder.tableId}:`, {
+            count: otherUnpaidOrders.length,
+            orders: otherUnpaidOrders.map(o => ({ 
+              id: o.id, 
+              status: o.status, 
+              orderNumber: o.orderNumber 
+            }))
+          });
+
+          // Import tables from schema
+          const { tables } = await import("@shared/schema");
+
+          // Only update table status to available if no other unpaid orders exist
+          if (otherUnpaidOrders.length === 0) {
+            console.log(`🔓 No unpaid orders remaining - releasing table ${updatedOrder.tableId}`);
+            
+            const [updatedTable] = await database
+              .update(tables)
+              .set({ 
+                status: "available",
+                updatedAt: new Date()
+              })
+              .where(eq(tables.id, updatedOrder.tableId))
+              .returning();
+            
+            if (updatedTable) {
+              console.log(`✅ Table ${updatedOrder.tableId} released successfully`);
+            } else {
+              console.error(`❌ Failed to release table ${updatedOrder.tableId}`);
+            }
+          } else {
+            console.log(`🔒 Table ${updatedOrder.tableId} remains occupied due to ${otherUnpaidOrders.length} unpaid orders`);
+          }
+        } catch (tableError) {
+          console.error(`❌ Error processing table status for table ${updatedOrder.tableId}:`, tableError);
+        }
+      }
     } else {
       console.error('❌ No order returned after update');
     }
@@ -1197,14 +1270,14 @@ export class DatabaseStorage implements IStorage {
       paidAt: order.paidAt
     });
 
-    // Handle table status update when order is paid
-    if (status === "paid" && order.tableId) {
-      console.log(`💳 Order paid - processing table ${order.tableId} status update`);
+    // Handle table status update when order is paid or completed
+    if ((status === "paid" || status === "completed") && order.tableId) {
+      console.log(`💳 Order ${status} - processing table ${order.tableId} status update`);
 
       try {
-        // Check for other active orders on the same table (excluding this order and non-active statuses)
-        const activeStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
-        const otherActiveOrders = await database
+        // Check for other unpaid orders on the same table (excluding this order)
+        const unpaidStatuses = ["pending", "confirmed", "preparing", "ready", "served"];
+        const otherUnpaidOrders = await database
           .select()
           .from(orders)
           .where(
@@ -1212,14 +1285,14 @@ export class DatabaseStorage implements IStorage {
               eq(orders.tableId, order.tableId),
               not(eq(orders.id, id)), // Exclude current order
               or(
-                ...activeStatuses.map(activeStatus => eq(orders.status, activeStatus))
+                ...unpaidStatuses.map(unpaidStatus => eq(orders.status, unpaidStatus))
               )
             )
           );
 
-        console.log(`🔍 Active orders remaining on table ${order.tableId}:`, {
-          count: otherActiveOrders.length,
-          orders: otherActiveOrders.map(o => ({ 
+        console.log(`🔍 Unpaid orders remaining on table ${order.tableId}:`, {
+          count: otherUnpaidOrders.length,
+          orders: otherUnpaidOrders.map(o => ({ 
             id: o.id, 
             status: o.status, 
             orderNumber: o.orderNumber 
@@ -1244,9 +1317,9 @@ export class DatabaseStorage implements IStorage {
             status: currentTable.status
           });
 
-          // Only update table status to available if no other active orders exist
-          if (otherActiveOrders.length === 0) {
-            console.log(`🔓 No active orders remaining - updating table ${order.tableId} to available`);
+          // Only update table status to available if no other unpaid orders exist
+          if (otherUnpaidOrders.length === 0) {
+            console.log(`🔓 No unpaid orders remaining - updating table ${order.tableId} to available`);
             
             const [updatedTable] = await database
               .update(tables)
@@ -1268,9 +1341,9 @@ export class DatabaseStorage implements IStorage {
               console.error(`❌ Failed to update table ${order.tableId} - no table returned`);
             }
           } else {
-            console.log(`🔒 Table ${order.tableId} remains occupied due to ${otherActiveOrders.length} active orders:`);
-            otherActiveOrders.forEach((activeOrder, index) => {
-              console.log(`   ${index + 1}. Order ${activeOrder.orderNumber} (${activeOrder.status})`);
+            console.log(`🔒 Table ${order.tableId} remains occupied due to ${otherUnpaidOrders.length} unpaid orders:`);
+            otherUnpaidOrders.forEach((unpaidOrder, index) => {
+              console.log(`   ${index + 1}. Order ${unpaidOrder.orderNumber} (${unpaidOrder.status})`);
             });
           }
         }

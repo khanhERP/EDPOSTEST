@@ -522,29 +522,9 @@ export function PaymentMethodModal({
     try {
       console.log("🔄 Starting complete payment process for order:", orderForPayment.id);
       
-      // Step 1: Update order status to 'paid' using dedicated status endpoint
-      console.log("📤 Updating order status to 'paid'");
-      const statusUpdateResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: 'paid'
-        }),
-      });
-
-      if (!statusUpdateResponse.ok) {
-        const errorText = await statusUpdateResponse.text();
-        console.error("❌ Failed to update order status:", errorText);
-        throw new Error('Failed to update order status to paid');
-      }
-
-      const statusUpdateResult = await statusUpdateResponse.json();
-      console.log("✅ Order status updated successfully:", statusUpdateResult);
-
-      // Step 2: Update payment details and e-invoice status
-      const paymentUpdateData: any = {
+      // Combine all updates in a single API call to ensure consistency
+      const updateData: any = {
+        status: 'paid',
         paymentMethod: selectedPaymentMethod,
         paidAt: new Date().toISOString(),
         einvoiceStatus: eInvoiceData.publishLater ? 0 : 1,
@@ -553,31 +533,32 @@ export function PaymentMethodModal({
       // Add cash payment specific data if applicable
       if (selectedPaymentMethod === "cash" && cashAmountInput) {
         const orderTotal = receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0;
-        paymentUpdateData.amountReceived = parseFloat(cashAmountInput).toFixed(2);
-        paymentUpdateData.change = (parseFloat(cashAmountInput) - orderTotal).toFixed(2);
+        updateData.amountReceived = parseFloat(cashAmountInput).toFixed(2);
+        updateData.change = (parseFloat(cashAmountInput) - orderTotal).toFixed(2);
       }
 
-      console.log("📤 Updating payment details:", paymentUpdateData);
-      const paymentResponse = await fetch(`/api/orders/${orderForPayment.id}`, {
+      console.log("📤 Updating order with complete payment data:", updateData);
+      
+      const response = await fetch(`/api/orders/${orderForPayment.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(paymentUpdateData),
+        body: JSON.stringify(updateData),
       });
 
-      if (paymentResponse.ok) {
-        const paymentResult = await paymentResponse.json();
-        console.log("✅ Payment details updated successfully:", paymentResult);
-      } else {
-        const errorText = await paymentResponse.text();
-        console.warn("⚠️ Failed to update payment details:", errorText);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Failed to update order:", errorText);
+        throw new Error('Failed to update order with payment data');
       }
 
-      // Step 3: Force refresh queries and UI
-      console.log("🔄 Refreshing UI and dispatching events");
+      const updateResult = await response.json();
+      console.log("✅ Order updated successfully:", updateResult);
+
+      // Force refresh UI immediately after successful update
+      console.log("🔄 Dispatching UI refresh events");
       
-      // Dispatch comprehensive events for real-time updates
       if (typeof window !== 'undefined') {
         const events = [
           new CustomEvent('orderStatusUpdated', {
@@ -612,25 +593,23 @@ export function PaymentMethodModal({
         });
       }
 
-      // Step 4: Wait a bit for events to propagate, then close modals
-      setTimeout(() => {
-        console.log("🔄 Closing modals and completing payment flow");
-        setShowEInvoice(false);
-        onClose();
+      // Close modals and complete payment flow
+      console.log("🔄 Closing modals and completing payment flow");
+      setShowEInvoice(false);
+      onClose();
 
-        // Pass success data to parent component
-        onSelectMethod("einvoice", {
-          ...eInvoiceData,
-          originalPaymentMethod: selectedPaymentMethod,
-          orderId: orderForPayment.id,
-          tableId: orderForPayment.tableId,
-          success: true,
-          paymentData: selectedPaymentMethod === "cash" ? {
-            amountReceived: parseFloat(cashAmountInput || "0"),
-            change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)
-          } : null
-        });
-      }, 200);
+      // Pass success data to parent component
+      onSelectMethod("einvoice", {
+        ...eInvoiceData,
+        originalPaymentMethod: selectedPaymentMethod,
+        orderId: orderForPayment.id,
+        tableId: orderForPayment.tableId,
+        success: true,
+        paymentData: selectedPaymentMethod === "cash" ? {
+          amountReceived: parseFloat(cashAmountInput || "0"),
+          change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)
+        } : null
+      });
 
     } catch (error) {
       console.error("❌ Error in complete payment process:", error);
