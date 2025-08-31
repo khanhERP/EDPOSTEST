@@ -394,7 +394,33 @@ export function PrintDialog({
             <Button
               variant="outline"
               onClick={() => {
-                console.log('🔒 Print Dialog: Đóng popup - không in bill');
+                console.log('🔒 Print Dialog: Đóng popup - không in bill, ngăn hiển thị popup khác');
+                
+                // Set flag to prevent any further popups
+                if (typeof window !== 'undefined') {
+                  window.sessionStorage.setItem('preventPrintPopup', 'true');
+                  window.sessionStorage.setItem('userClosedPrint', 'true');
+                }
+                
+                // Send message to parent to stop any popup flows
+                try {
+                  fetch('/api/popup/close', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                      success: true, 
+                      action: 'user_closed_print_dialog',
+                      preventFurtherPopups: true,
+                      timestamp: new Date().toISOString()
+                    }),
+                  }).catch(console.error);
+                } catch (error) {
+                  console.error('Error sending close signal:', error);
+                }
+                
+                // Close immediately
                 onClose();
               }}
               className="flex-1"
