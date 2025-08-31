@@ -199,6 +199,20 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     refetchOnMount: true,
   });
 
+  // Filter customers based on search term
+  const filteredCustomers = Array.isArray(customers) 
+    ? customers.filter((customer: any) => {
+        if (!searchTerm) return true;
+        
+        const searchLower = searchTerm.toLowerCase();
+        return (
+          customer.name?.toLowerCase().includes(searchLower) ||
+          customer.customerId?.toLowerCase().includes(searchLower) ||
+          customer.phone?.includes(searchTerm)
+        );
+      })
+    : [];
+
   // Force refetch order items when dialog opens
   useEffect(() => {
     if (orderDetailsOpen && selectedOrder?.id) {
