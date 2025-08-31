@@ -98,6 +98,7 @@ export function OrderManagement() {
   const completePaymentMutation = useMutation({
     mutationFn: async ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) => {
       console.log('🎯 completePaymentMutation called - using centralized payment completion');
+      console.log('📋 Order Management: Starting payment completion for order:', orderId);
       return await completeOrderPayment(orderId, { paymentMethod });
     },
     onSuccess: async (result, variables) => {
@@ -342,11 +343,7 @@ export function OrderManagement() {
         body: JSON.stringify({ status: 'paid' })
       });
 
-      const statusResponse = await fetch(`/api/orders/${orderId}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'paid' })
-      });
+      const statusResponse = await apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid' });
 
       console.log('🔍 API Response Status:', statusResponse.status, statusResponse.statusText);
 
@@ -513,13 +510,7 @@ export function OrderManagement() {
     try {
       console.log(`🔄 Order Management: Updating order ${orderId} status to ${newStatus}`);
 
-      const response = await fetch(`/api/orders/${orderId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      });
+      const response = await apiRequest('PUT', `/api/orders/${orderId}/status`, { status: newStatus });
 
       if (response.ok) {
         const updatedOrder = await response.json();
@@ -527,6 +518,7 @@ export function OrderManagement() {
 
         // Force refresh the orders list
         queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+        queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
 
         toast({
           title: "Thành công",
