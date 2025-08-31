@@ -187,12 +187,12 @@ export function PrintDialog({
               const tax = parseFloat(receiptData.tax || "0");
               const subtotal = parseFloat(receiptData.subtotal || "0");
               
-              if (subtotal === 0) return "0.0";
+              if (subtotal === 0 || tax === 0) return "0.0";
               
               const taxRate = (tax / subtotal) * 100;
               return taxRate.toFixed(1);
             })()}%):</span>
-            <span>${parseFloat(receiptData.tax || "0").toLocaleString('vi-VN')} đ</span>
+            <span>${Math.round(parseFloat(receiptData.tax || "0")).toLocaleString('vi-VN')} đ</span>
           </div>
           <div class="total-row" style="font-size: 14px; border-top: 1px solid #000; padding-top: 5px;">
             <span>Tổng cộng:</span>
@@ -319,12 +319,12 @@ export function PrintDialog({
                 const tax = parseFloat(receiptData.tax || "0");
                 const subtotal = parseFloat(receiptData.subtotal || "0");
                 
-                if (subtotal === 0) return "0.0";
+                if (subtotal === 0 || tax === 0) return "0.0";
                 
                 const taxRate = (tax / subtotal) * 100;
                 return taxRate.toFixed(1);
               })()}%):</span>
-              <span>{parseFloat(receiptData.tax || "0").toLocaleString('vi-VN')} đ</span>
+              <span>{Math.round(parseFloat(receiptData.tax || "0")).toLocaleString('vi-VN')} đ</span>
             </div>
             <div className="flex justify-between font-bold border-t border-gray-400 pt-1">
               <span>Tổng cộng:</span>
