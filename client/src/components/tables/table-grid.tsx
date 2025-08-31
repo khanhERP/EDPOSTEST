@@ -203,7 +203,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const filteredCustomers = Array.isArray(customers) 
     ? customers.filter((customer: any) => {
         if (!searchTerm) return true;
-        
+
         const searchLower = searchTerm.toLowerCase();
         return (
           customer.name?.toLowerCase().includes(searchLower) ||
