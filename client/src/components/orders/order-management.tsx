@@ -519,83 +519,101 @@ export function OrderManagement() {
       setOrderForPayment(null);
       return;
     }
-            const updatePayload: any = {
-              paymentMethod: data.originalPaymentMethod,
-              paidAt: new Date().toISOString(),
-              einvoiceStatus: data.publishLater ? 0 : 1,
-            };
 
-            // Add cash payment specific data if applicable
-            if (data.originalPaymentMethod === "cash" && data.paymentData) {
-              updatePayload.amountReceived = data.paymentData.amountReceived?.toFixed(2);
-              updatePayload.change = data.paymentData.change?.toFixed(2);
-            }
+    // Handle other payment methods
+    if (data && data.orderId) {
+      try {
+        // Update order status to paid first
+        console.log("📤 Order Management: Updating order status to paid for order:", data.orderId);
+        
+        const statusUpdateResponse = await fetch(`/api/orders/${data.orderId}/status`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status: 'paid' }),
+        });
 
-            console.log("📤 Order Management: Sending payment details update:", updatePayload);
+        if (statusUpdateResponse.ok) {
+          console.log("✅ Order Management: Order status updated to paid successfully");
 
-            const paymentUpdateResponse = await fetch(`/api/orders/${data.orderId}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(updatePayload),
-            });
+          // Then update additional payment details
+          const updatePayload: any = {
+            paymentMethod: data.originalPaymentMethod,
+            paidAt: new Date().toISOString(),
+            einvoiceStatus: data.publishLater ? 0 : 1,
+          };
 
-            if (paymentUpdateResponse.ok) {
-              const updatedOrder = await paymentUpdateResponse.json();
-              console.log("✅ Order Management: Payment details updated successfully:", updatedOrder);
-            } else {
-              console.error("❌ Order Management: Failed to update payment details");
-            }
-
-            // Force refresh all relevant queries
-            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
-
-            // Dispatch events for real-time updates
-            if (typeof window !== 'undefined') {
-              const refreshEvents = [
-                new CustomEvent('orderStatusUpdated', {
-                  detail: {
-                    orderId: data.orderId,
-                    status: 'paid',
-                    tableId: data.tableId,
-                    paymentMethod: data.originalPaymentMethod
-                  }
-                }),
-                new CustomEvent('refreshTables'),
-                new CustomEvent('refreshOrders'),
-                new CustomEvent('paymentCompleted', {
-                  detail: { orderId: data.orderId, tableId: data.tableId }
-                }),
-                new CustomEvent('tableStatusUpdate', {
-                  detail: { tableId: data.tableId, checkForRelease: true }
-                })
-              ];
-
-              refreshEvents.forEach(event => {
-                window.dispatchEvent(event);
-              });
-            }
-          } else {
-            const errorText = await statusUpdateResponse.text();
-            console.error("❌ Order Management: Failed to update order status:", errorText);
-            toast({
-              title: 'Lỗi',
-              description: 'Không thể cập nhật trạng thái đơn hàng',
-              variant: 'destructive',
-            });
-            return;
+          // Add cash payment specific data if applicable
+          if (data.originalPaymentMethod === "cash" && data.paymentData) {
+            updatePayload.amountReceived = data.paymentData.amountReceived?.toFixed(2);
+            updatePayload.change = data.paymentData.change?.toFixed(2);
           }
-        } catch (error) {
-          console.error("❌ Order Management: Error updating order status:", error);
+
+          console.log("📤 Order Management: Sending payment details update:", updatePayload);
+
+          const paymentUpdateResponse = await fetch(`/api/orders/${data.orderId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(updatePayload),
+          });
+
+          if (paymentUpdateResponse.ok) {
+            const updatedOrder = await paymentUpdateResponse.json();
+            console.log("✅ Order Management: Payment details updated successfully:", updatedOrder);
+          } else {
+            console.error("❌ Order Management: Failed to update payment details");
+          }
+
+          // Force refresh all relevant queries
+          queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+
+          // Dispatch events for real-time updates
+          if (typeof window !== 'undefined') {
+            const refreshEvents = [
+              new CustomEvent('orderStatusUpdated', {
+                detail: {
+                  orderId: data.orderId,
+                  status: 'paid',
+                  tableId: data.tableId,
+                  paymentMethod: data.originalPaymentMethod
+                }
+              }),
+              new CustomEvent('refreshTables'),
+              new CustomEvent('refreshOrders'),
+              new CustomEvent('paymentCompleted', {
+                detail: { orderId: data.orderId, tableId: data.tableId }
+              }),
+              new CustomEvent('tableStatusUpdate', {
+                detail: { tableId: data.tableId, checkForRelease: true }
+              })
+            ];
+
+            refreshEvents.forEach(event => {
+              window.dispatchEvent(event);
+            });
+          }
+        } else {
+          const errorText = await statusUpdateResponse.text();
+          console.error("❌ Order Management: Failed to update order status:", errorText);
           toast({
             title: 'Lỗi',
-            description: 'Có lỗi xảy ra khi cập nhật trạng thái đơn hàng. Vui lòng thử lại.',
+            description: 'Không thể cập nhật trạng thái đơn hàng',
             variant: 'destructive',
           });
           return;
         }
+      } catch (error) {
+        console.error("❌ Order Management: Error updating order status:", error);
+        toast({
+          title: 'Lỗi',
+          description: 'Có lỗi xảy ra khi cập nhật trạng thái đơn hàng. Vui lòng thử lại.',
+          variant: 'destructive',
+        });
+        return;
       }
 
       // Save invoice data to database if needed
@@ -640,25 +658,14 @@ export function OrderManagement() {
       }
 
       // Show receipt modal with the data
-      const receiptData = data.receipt || {
-        transactionId: `TXN-${Date.now()}`,
-        items: cartItems, // Assuming cartItems is available in this scope
-        subtotal: (total * 0.9).toFixed(2), // Assuming total is available and represents the final amount
-        tax: (total * 0.1).toFixed(2),
-        total: total.toFixed(2),
-        paymentMethod: data.originalPaymentMethod || method,
-        amountReceived: data.paymentData?.amountReceived?.toFixed(2) || total.toFixed(2),
-        change: data.paymentData?.change?.toFixed(2) || "0.00",
-        cashierName: "System User",
-        createdAt: new Date().toISOString()
-      };
-
-      setSelectedReceipt(receiptData);
-      setShowReceiptModal(true);
+      if (data.receipt) {
+        setSelectedReceipt(data.receipt);
+        setShowReceiptModal(true);
+      }
     }
 
     // Reset payment state
-    setShowPaymentModal(false);
+    setShowPaymentMethodModal(false);
     setOrderForPayment(null);
   };
 
