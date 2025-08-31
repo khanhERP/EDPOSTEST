@@ -332,19 +332,37 @@ export function OrderManagement() {
       // Step 1: Update order status to 'paid' - THIS IS THE CRITICAL STEP
       console.log('📋 Step 1: Updating order status to PAID for order:', orderId);
       
+      console.log('🔍 API Call Details:', {
+        url: `/api/orders/${orderId}/status`,
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'paid' })
+      });
+      
       const statusResponse = await fetch(`/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'paid' })
       });
 
+      console.log('🔍 API Response Status:', statusResponse.status, statusResponse.statusText);
+
       if (!statusResponse.ok) {
         const errorText = await statusResponse.text();
+        console.error('❌ API Response Error:', errorText);
         throw new Error(`Failed to update order status: ${errorText}`);
       }
 
       const updatedOrder = await statusResponse.json();
-      console.log('✅ Step 1 COMPLETED: Order status updated to PAID:', updatedOrder);
+      console.log('✅ Step 1 COMPLETED: Order status updated to PAID:', {
+        orderId: updatedOrder.id,
+        orderNumber: updatedOrder.orderNumber,
+        tableId: updatedOrder.tableId,
+        status: updatedOrder.status,
+        paidAt: updatedOrder.paidAt,
+        updated: updatedOrder.updated,
+        previousStatus: updatedOrder.previousStatus
+      });
 
       // Step 2: Update additional payment details
       console.log('📋 Step 2: Updating payment details for order:', orderId);

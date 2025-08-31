@@ -1072,6 +1072,12 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const tenantDb = await getTenantDatabase(req);
 
       console.log(`📋 Order status update API called - Order ID: ${id}, New Status: ${status}`);
+      console.log(`🔍 Request details:`, {
+        params: req.params,
+        body: req.body,
+        headers: req.headers['content-type'],
+        tenantDbExists: !!tenantDb
+      });
 
       if (isNaN(id)) {
         console.error(`❌ Invalid order ID: ${req.params.id}`);
@@ -1079,7 +1085,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       }
 
       if (!status) {
-        console.error(`❌ Missing status in request body`);
+        console.error(`❌ Missing status in request body, received:`, req.body);
         return res.status(400).json({ message: "Status is required" });
       }
 

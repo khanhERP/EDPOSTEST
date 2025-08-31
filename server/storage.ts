@@ -1218,10 +1218,15 @@ export class DatabaseStorage implements IStorage {
   ): Promise<Order | undefined> {
     console.log(`=== UPDATING ORDER STATUS ===`);
     console.log(`Order ID: ${id}, New Status: ${status}`);
+    console.log(`🔍 Database info:`, {
+      usingTenantDb: !!tenantDb,
+      dbType: tenantDb ? 'tenant' : 'default'
+    });
     
     const database = tenantDb || db;
 
     // First, get the current order to know its table
+    console.log(`🔍 Fetching current order with ID: ${id}`);
     const [currentOrder] = await database
       .select()
       .from(orders)
@@ -1229,6 +1234,13 @@ export class DatabaseStorage implements IStorage {
 
     if (!currentOrder) {
       console.error(`❌ Order not found: ${id}`);
+      console.log(`🔍 Attempting to fetch all orders to debug...`);
+      try {
+        const allOrders = await database.select().from(orders).limit(5);
+        console.log(`🔍 Sample orders in database:`, allOrders.map(o => ({ id: o.id, orderNumber: o.orderNumber, status: o.status })));
+      } catch (debugError) {
+        console.error(`❌ Error fetching sample orders:`, debugError);
+      }
       return undefined;
     }
 
@@ -1237,7 +1249,9 @@ export class DatabaseStorage implements IStorage {
       orderNumber: currentOrder.orderNumber,
       tableId: currentOrder.tableId,
       currentStatus: currentOrder.status,
-      requestedStatus: status
+      requestedStatus: status,
+      paidAt: currentOrder.paidAt,
+      einvoiceStatus: currentOrder.einvoiceStatus
     });
 
     // Update the order status with additional paid timestamp if needed
@@ -1248,28 +1262,50 @@ export class DatabaseStorage implements IStorage {
 
     if (status === "paid") {
       updateData.paidAt = new Date();
-      console.log(`💳 Setting paidAt timestamp for order ${id}`);
+      console.log(`💳 Setting paidAt timestamp for order ${id}:`, updateData.paidAt);
     }
 
-    const [order] = await database
-      .update(orders)
-      .set(updateData)
-      .where(eq(orders.id, id))
-      .returning();
+    console.log(`🔍 Update data being sent:`, updateData);
+    console.log(`🔍 Update query targeting order ID: ${id}`);
 
-    if (!order) {
-      console.error(`❌ No order returned after status update for ID: ${id}`);
-      return undefined;
-    }
+    try {
+      const [order] = await database
+        .update(orders)
+        .set(updateData)
+        .where(eq(orders.id, id))
+        .returning();
 
-    console.log(`✅ Order status updated successfully:`, {
-      id: order.id,
-      orderNumber: order.orderNumber,
-      tableId: order.tableId,
-      previousStatus: currentOrder.status,
-      newStatus: order.status,
-      paidAt: order.paidAt
-    });
+      console.log(`🔍 Database update result:`, {
+        orderReturned: !!order,
+        orderData: order ? {
+          id: order.id,
+          status: order.status,
+          paidAt: order.paidAt,
+          updatedAt: order.updatedAt
+        } : null
+      });
+
+      if (!order) {
+        console.error(`❌ No order returned after status update for ID: ${id}`);
+        console.log(`🔍 Verifying order still exists...`);
+        const [verifyOrder] = await database
+          .select()
+          .from(orders)
+          .where(eq(orders.id, id));
+        console.log(`🔍 Order verification result:`, verifyOrder ? 'EXISTS' : 'NOT FOUND');
+        return undefined;
+      }
+
+      console.log(`✅ Order status updated successfully:`, {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        tableId: order.tableId,
+        previousStatus: currentOrder.status,
+        newStatus: order.status,
+        paidAt: order.paidAt,
+        updatedAt: order.updatedAt,
+        einvoiceStatus: order.einvoiceStatus
+      });
 
     // CRITICAL: Handle table status update when order is paid
     if (status === "paid" && order.tableId) {
