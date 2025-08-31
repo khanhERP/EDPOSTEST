@@ -394,9 +394,9 @@ export function PrintDialog({
             <Button
               variant="outline"
               onClick={() => {
-                console.log('🔒 Print Dialog: Đóng button clicked - force closing all popups');
+                console.log('✅ Print Dialog: Hoàn thành thanh toán - không in bill');
                 
-                // Send multiple clear messages to ensure all flows are stopped
+                // Send completion signal instead of close signal
                 try {
                   fetch('/api/popup/close', {
                     method: 'POST',
@@ -405,38 +405,49 @@ export function PrintDialog({
                     },
                     body: JSON.stringify({ 
                       success: true, 
-                      action: 'force_close_all',
-                      reason: 'print_dialog_close_button',
-                      timestamp: new Date().toISOString()
+                      action: 'payment_completed_no_print',
+                      reason: 'user_chose_complete_without_printing',
+                      timestamp: new Date().toISOString(),
+                      transactionId: receiptData.transactionId
                     }),
                   }).catch(error => {
-                    console.error('Error sending force close signal:', error);
+                    console.error('Error sending completion signal:', error);
                   });
                 } catch (error) {
-                  console.error('Error in force close:', error);
+                  console.error('Error in completion signal:', error);
                 }
                 
-                // Immediately close this dialog without any delays
+                // Clear any pending timeouts or intervals
+                if (typeof window !== 'undefined') {
+                  // Clear all timeouts
+                  const maxId = setTimeout(() => {}, 0);
+                  for (let i = 1; i <= maxId; i++) {
+                    clearTimeout(i);
+                  }
+                  
+                  // Clear all intervals
+                  const maxIntervalId = setInterval(() => {}, 0);
+                  for (let i = 1; i <= maxIntervalId; i++) {
+                    clearInterval(i);
+                  }
+                }
+                
+                // Immediately close and signal completion
                 onClose();
                 
-                // Additional cleanup to prevent any other popups from opening
-                setTimeout(() => {
-                  // Force close any remaining modals
-                  const dialogs = document.querySelectorAll('[role="dialog"]');
-                  dialogs.forEach(dialog => {
-                    const closeButton = dialog.querySelector('button[aria-label="Close"]') || 
-                                      dialog.querySelector('button:contains("Đóng")') ||
-                                      dialog.querySelector('[data-close-modal]');
-                    if (closeButton) {
-                      (closeButton as HTMLElement).click();
-                    }
-                  });
-                }, 100);
+                // Show completion message
+                if (typeof window !== 'undefined' && window.parent) {
+                  window.parent.postMessage({
+                    type: 'PAYMENT_COMPLETED',
+                    action: 'no_print_requested',
+                    success: true
+                  }, '*');
+                }
               }}
               className="flex-1"
             >
               <X className="w-4 h-4 mr-2" />
-              Đóng
+              Hoàn thành
             </Button>
           </div>
         </div>
