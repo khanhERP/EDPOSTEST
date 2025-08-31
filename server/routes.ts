@@ -3553,13 +3553,22 @@ export async function registerRoutes(app: Express): Promise < Server > {
         fieldsToUpdate.einvoiceStatus = updateData.einvoiceStatus;
       }
 
-      // Handle other standard fields
-      const standardFields = ['status', 'paymentMethod', 'invoiceNumber', 'symbol', 'templateNumber', 'tradeNumber'];
+      // Handle other standard fields including payment-related fields
+      const standardFields = ['status', 'paymentMethod', 'invoiceNumber', 'symbol', 'templateNumber', 'tradeNumber', 'paidAt', 'amountReceived', 'change'];
       standardFields.forEach(field => {
         if (updateData[field] !== undefined && updateData[field] !== null) {
           fieldsToUpdate[field] = updateData[field];
         }
       });
+
+      // Handle payment status update when status becomes 'paid'
+      if (updateData.status === 'paid' && existingOrder.status !== 'paid') {
+        fieldsToUpdate.paymentStatus = 'paid';
+        if (!updateData.paidAt) {
+          fieldsToUpdate.paidAt = new Date();
+        }
+        console.log("🔄 Order status changing to 'paid', updating payment status and timestamp");
+      }
 
       // Add any other fields from updateData (excluding already processed ones)
       Object.keys(updateData).forEach(key => {

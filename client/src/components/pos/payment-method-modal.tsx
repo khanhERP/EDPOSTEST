@@ -426,9 +426,36 @@ export function PaymentMethodModal({
     }
   };
 
-  const handleQRComplete = () => {
+  const handleQRComplete = async () => {
     setShowQRCode(false);
     setQrCodeUrl("");
+
+    // Update order status immediately for QR payment
+    if (orderForPayment?.id) {
+      try {
+        console.log("🔄 Updating order status to 'paid' for QR payment, order ID:", orderForPayment.id);
+        
+        const updateResponse = await fetch(`/api/orders/${orderForPayment.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'paid',
+            paymentMethod: 'qrCode',
+            paidAt: new Date().toISOString(),
+          }),
+        });
+
+        if (updateResponse.ok) {
+          console.log("✅ Order status updated successfully for QR payment");
+        } else {
+          console.error("❌ Failed to update order status for QR payment");
+        }
+      } catch (error) {
+        console.error("❌ Error updating order status for QR payment:", error);
+      }
+    }
 
     // Lưu phương thức thanh toán và hiển thị E-Invoice modal
     setSelectedPaymentMethod("qrCode");
@@ -474,7 +501,7 @@ export function PaymentMethodModal({
     }
   };
 
-  const handleCashPaymentComplete = () => {
+  const handleCashPaymentComplete = async () => {
     const receivedAmount = parseFloat(cashAmountInput || "0");
 
     // Sử dụng exact total with proper priority
@@ -501,6 +528,35 @@ export function PaymentMethodModal({
       return; // Không thực hiện nếu chưa đủ tiền
     }
 
+    // Update order status immediately for cash payment
+    if (orderForPayment?.id) {
+      try {
+        console.log("🔄 Updating order status to 'paid' for cash payment, order ID:", orderForPayment.id);
+        
+        const updateResponse = await fetch(`/api/orders/${orderForPayment.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'paid',
+            paymentMethod: 'cash',
+            paidAt: new Date().toISOString(),
+            amountReceived: receivedAmount.toFixed(2),
+            change: finalChange.toFixed(2),
+          }),
+        });
+
+        if (updateResponse.ok) {
+          console.log("✅ Order status updated successfully for cash payment");
+        } else {
+          console.error("❌ Failed to update order status for cash payment");
+        }
+      } catch (error) {
+        console.error("❌ Error updating order status for cash payment:", error);
+      }
+    }
+
     // Reset trạng thái và đóng form tiền mặt
     setShowCashPayment(false);
     setAmountReceived("");
@@ -511,8 +567,35 @@ export function PaymentMethodModal({
     setShowEInvoice(true);
   };
 
-  const handleEInvoiceConfirm = (eInvoiceData: any) => {
+  const handleEInvoiceConfirm = async (eInvoiceData: any) => {
     console.log("📧 E-Invoice confirmed from payment modal:", eInvoiceData);
+
+    // Update order status immediately after payment method confirmation
+    if (orderForPayment?.id) {
+      try {
+        console.log("🔄 Updating order status to 'paid' for order ID:", orderForPayment.id);
+        
+        const updateResponse = await fetch(`/api/orders/${orderForPayment.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'paid',
+            paymentMethod: selectedPaymentMethod,
+            paidAt: new Date().toISOString(),
+          }),
+        });
+
+        if (updateResponse.ok) {
+          console.log("✅ Order status updated successfully");
+        } else {
+          console.error("❌ Failed to update order status");
+        }
+      } catch (error) {
+        console.error("❌ Error updating order status:", error);
+      }
+    }
 
     // Close E-invoice modal
     setShowEInvoice(false);
