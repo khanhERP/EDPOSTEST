@@ -203,7 +203,13 @@ export function PrintDialog({
           </div>
           <div class="total-row" style="font-size: 14px; border-top: 1px solid #000; padding-top: 5px;">
             <span>Tổng cộng:</span>
-            <span>${parseFloat(receiptData.total).toLocaleString('vi-VN')} đ</span>
+            <span>${(() => {
+              const subtotal = parseFloat(receiptData.subtotal || "0");
+              const total = parseFloat(receiptData.total || "0");
+              const actualTax = total - subtotal;
+              const calculatedTotal = subtotal + actualTax;
+              return Math.round(calculatedTotal).toLocaleString('vi-VN');
+            })()} đ</span>
           </div>
 
           <div class="separator"></div>
@@ -342,7 +348,13 @@ export function PrintDialog({
             </div>
             <div className="flex justify-between font-bold border-t border-gray-400 pt-1">
               <span>Tổng cộng:</span>
-              <span>{parseFloat(receiptData.total).toLocaleString('vi-VN')} đ</span>
+              <span>{(() => {
+                const subtotal = parseFloat(receiptData.subtotal || "0");
+                const total = parseFloat(receiptData.total || "0");
+                const actualTax = total - subtotal;
+                const calculatedTotal = subtotal + actualTax;
+                return Math.round(calculatedTotal).toLocaleString('vi-VN');
+              })()} đ</span>
             </div>
 
             <div className="border-t border-dashed border-gray-400 my-2"></div>
