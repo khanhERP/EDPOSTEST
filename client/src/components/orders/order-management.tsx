@@ -46,6 +46,9 @@ export function OrderManagement() {
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
+    refetchInterval: 15000, // Refetch every 15 seconds for faster updates
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 5000, // Consider data stale after 5 seconds
   });
 
   const { data: tables } = useQuery({
@@ -331,14 +334,14 @@ export function OrderManagement() {
     try {
       // Step 1: Update order status to 'paid' - THIS IS THE CRITICAL STEP
       console.log('📋 Step 1: Updating order status to PAID for order:', orderId);
-      
+
       console.log('🔍 API Call Details:', {
         url: `/api/orders/${orderId}/status`,
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'paid' })
       });
-      
+
       const statusResponse = await fetch(`/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -366,7 +369,7 @@ export function OrderManagement() {
 
       // Step 2: Update additional payment details
       console.log('📋 Step 2: Updating payment details for order:', orderId);
-      
+
       const paymentDetailsResponse = await fetch(`/api/orders/${orderId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -388,7 +391,7 @@ export function OrderManagement() {
 
       // Step 3: Refresh UI and trigger events
       console.log('📋 Step 3: Refreshing UI and triggering events');
-      
+
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
         queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
@@ -506,8 +509,47 @@ export function OrderManagement() {
     setOrderDetailsOpen(true);
   };
 
-  const handleStatusUpdate = (orderId: number, newStatus: string) => {
-    updateOrderStatusMutation.mutate({ orderId, status: newStatus });
+  const handleStatusUpdate = async (orderId: number, newStatus: string) => {
+    try {
+      console.log(`🔄 Order Management: Updating order ${orderId} status to ${newStatus}`);
+
+      const response = await fetch(`/api/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        const updatedOrder = await response.json();
+        console.log(`✅ Order Management: Status updated successfully:`, updatedOrder);
+
+        // Force refresh the orders list
+        queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+
+        toast({
+          title: "Thành công",
+          description: `Trạng thái đơn hàng đã được cập nhật thành ${newStatus}`,
+        });
+      } else {
+        const errorText = await response.text();
+        console.error(`❌ Order Management: Failed to update status:`, errorText);
+
+        toast({
+          title: "Lỗi",
+          description: "Không thể cập nhật trạng thái đơn hàng: " + errorText,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('❌ Order Management: Error updating order status:', error);
+      toast({
+        title: "Lỗi",
+        description: "Có lỗi xảy ra khi cập nhật trạng thái đơn hàng",
+        variant: "destructive",
+      });
+    }
   };
 
   const handlePaymentClick = (order: Order) => {
@@ -557,7 +599,7 @@ export function OrderManagement() {
 
     if (method === "paymentError" && data) {
       console.error("❌ Order Management: Payment failed", data);
-      
+
       toast({
         title: 'Lỗi',
         description: data.error || 'Không thể hoàn tất thanh toán. Vui lòng thử lại.',
@@ -575,7 +617,7 @@ export function OrderManagement() {
       try {
         // Update order status to paid first
         console.log("📤 Order Management: Updating order status to paid for order:", data.orderId);
-        
+
         const statusUpdateResponse = await fetch(`/api/orders/${data.orderId}/status`, {
           method: 'PUT',
           headers: {

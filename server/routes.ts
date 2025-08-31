@@ -1076,7 +1076,8 @@ export async function registerRoutes(app: Express): Promise < Server > {
         params: req.params,
         body: req.body,
         headers: req.headers['content-type'],
-        tenantDbExists: !!tenantDb
+        tenantDbExists: !!tenantDb,
+        timestamp: new Date().toISOString()
       });
 
       if (isNaN(id)) {

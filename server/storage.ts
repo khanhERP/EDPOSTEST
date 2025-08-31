@@ -1220,7 +1220,8 @@ export class DatabaseStorage implements IStorage {
     console.log(`Order ID: ${id}, New Status: ${status}`);
     console.log(`🔍 Database info:`, {
       usingTenantDb: !!tenantDb,
-      dbType: tenantDb ? 'tenant' : 'default'
+      dbType: tenantDb ? 'tenant' : 'default',
+      timestamp: new Date().toISOString()
     });
     
     const database = tenantDb || db;
