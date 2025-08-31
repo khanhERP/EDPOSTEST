@@ -430,73 +430,7 @@ export function PaymentMethodModal({
     setShowQRCode(false);
     setQrCodeUrl("");
 
-    // Update order status immediately for QR payment with better error handling
-    if (orderForPayment?.id) {
-      try {
-        console.log("🔄 Updating order status to 'paid' for QR payment, order ID:", orderForPayment.id);
-        
-        const updateResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: 'paid',
-          }),
-        });
-
-        if (updateResponse.ok) {
-          const updatedOrder = await updateResponse.json();
-          console.log("✅ Order status updated successfully for QR payment:", updatedOrder);
-          
-          // Also update order with payment details
-          try {
-            const paymentUpdateResponse = await fetch(`/api/orders/${orderForPayment.id}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                paymentMethod: 'qrCode',
-                paidAt: new Date().toISOString(),
-              }),
-            });
-
-            if (paymentUpdateResponse.ok) {
-              console.log("✅ QR payment details updated successfully");
-            }
-          } catch (paymentError) {
-            console.error("❌ Error updating QR payment details:", paymentError);
-          }
-          
-          // Force refresh all relevant queries
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('orderStatusUpdated', { 
-              detail: { 
-                orderId: orderForPayment.id, 
-                status: 'paid',
-                tableId: orderForPayment.tableId,
-                paymentMethod: 'qrCode'
-              } 
-            }));
-            
-            // Trigger additional refresh events
-            window.dispatchEvent(new CustomEvent('refreshTables'));
-            window.dispatchEvent(new CustomEvent('refreshOrders'));
-          }
-        } else {
-          const errorText = await updateResponse.text();
-          console.error("❌ Failed to update order status for QR payment:", errorText);
-          throw new Error(`Failed to update order status: ${errorText}`);
-        }
-      } catch (error) {
-        console.error("❌ Error updating order status for QR payment:", error);
-        alert("Có lỗi xảy ra khi cập nhật trạng thái đơn hàng. Vui lòng thử lại.");
-        return;
-      }
-    }
-
-    // Lưu phương thức thanh toán và hiển thị E-Invoice modal
+    // Set payment method and show E-Invoice modal directly
     setSelectedPaymentMethod("qrCode");
     setShowEInvoice(true);
   };
@@ -567,75 +501,6 @@ export function PaymentMethodModal({
       return; // Không thực hiện nếu chưa đủ tiền
     }
 
-    // Update order status immediately for cash payment with better error handling
-    if (orderForPayment?.id) {
-      try {
-        console.log("🔄 Updating order status to 'paid' for cash payment, order ID:", orderForPayment.id);
-        
-        const updateResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: 'paid',
-          }),
-        });
-
-        if (updateResponse.ok) {
-          const updatedOrder = await updateResponse.json();
-          console.log("✅ Order status updated successfully for cash payment:", updatedOrder);
-          
-          // Also update order with payment details
-          try {
-            const paymentUpdateResponse = await fetch(`/api/orders/${orderForPayment.id}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                paymentMethod: 'cash',
-                paidAt: new Date().toISOString(),
-                amountReceived: receivedAmount.toFixed(2),
-                change: finalChange.toFixed(2),
-              }),
-            });
-
-            if (paymentUpdateResponse.ok) {
-              console.log("✅ Payment details updated successfully");
-            }
-          } catch (paymentError) {
-            console.error("❌ Error updating payment details:", paymentError);
-          }
-          
-          // Force refresh all relevant queries
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('orderStatusUpdated', { 
-              detail: { 
-                orderId: orderForPayment.id, 
-                status: 'paid',
-                tableId: orderForPayment.tableId,
-                paymentMethod: 'cash'
-              } 
-            }));
-            
-            // Trigger additional refresh events
-            window.dispatchEvent(new CustomEvent('refreshTables'));
-            window.dispatchEvent(new CustomEvent('refreshOrders'));
-          }
-        } else {
-          const errorText = await updateResponse.text();
-          console.error("❌ Failed to update order status for cash payment:", errorText);
-          throw new Error(`Failed to update order status: ${errorText}`);
-        }
-      } catch (error) {
-        console.error("❌ Error updating order status for cash payment:", error);
-        // Don't proceed to close modal if update failed
-        alert("Có lỗi xảy ra khi cập nhật trạng thái đơn hàng. Vui lòng thử lại.");
-        return;
-      }
-    }
-
     // Reset trạng thái và đóng form tiền mặt
     setShowCashPayment(false);
     setAmountReceived("");
@@ -649,104 +514,18 @@ export function PaymentMethodModal({
   const handleEInvoiceConfirm = async (eInvoiceData: any) => {
     console.log("📧 E-Invoice confirmed from payment modal:", eInvoiceData);
 
-    // Update order status immediately after payment method confirmation
-    if (orderForPayment?.id) {
-      try {
-        console.log("🔄 Updating order status to 'paid' for order ID:", orderForPayment.id);
-        
-        // First update the status using the dedicated status endpoint
-        const statusUpdateResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: 'paid',
-          }),
-        });
-
-        if (statusUpdateResponse.ok) {
-          console.log("✅ Order status updated to 'paid' successfully");
-          
-          // Then update payment details
-          const updatePayload = {
-            paymentMethod: selectedPaymentMethod,
-            paidAt: new Date().toISOString(),
-            einvoiceStatus: eInvoiceData.publishLater ? 0 : 1,
-          };
-
-          // Add cash payment specific data if applicable
-          if (selectedPaymentMethod === "cash" && cashAmountInput) {
-            const receivedAmount = parseFloat(cashAmountInput);
-            const orderTotal = receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0;
-            updatePayload.amountReceived = receivedAmount.toFixed(2);
-            updatePayload.change = (receivedAmount - orderTotal).toFixed(2);
-          }
-
-          console.log("📤 Sending payment details update:", updatePayload);
-          
-          const paymentUpdateResponse = await fetch(`/api/orders/${orderForPayment.id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updatePayload),
-          });
-
-          if (paymentUpdateResponse.ok) {
-            const updatedOrder = await paymentUpdateResponse.json();
-            console.log("✅ Payment details updated successfully:", updatedOrder);
-          } else {
-            console.error("❌ Failed to update payment details");
-          }
-          
-          // Force refresh all relevant queries with multiple events
-          if (typeof window !== 'undefined') {
-            const refreshEvents = [
-              new CustomEvent('orderStatusUpdated', { 
-                detail: { 
-                  orderId: orderForPayment.id, 
-                  status: 'paid',
-                  tableId: orderForPayment.tableId,
-                  paymentMethod: selectedPaymentMethod
-                } 
-              }),
-              new CustomEvent('refreshTables'),
-              new CustomEvent('refreshOrders'),
-              new CustomEvent('paymentCompleted', {
-                detail: { orderId: orderForPayment.id, tableId: orderForPayment.tableId }
-              }),
-              new CustomEvent('tableStatusUpdate', {
-                detail: { tableId: orderForPayment.tableId, checkForRelease: true }
-              })
-            ];
-
-            refreshEvents.forEach(event => {
-              window.dispatchEvent(event);
-            });
-          }
-        } else {
-          const errorText = await statusUpdateResponse.text();
-          console.error("❌ Failed to update order status:", errorText);
-          throw new Error(`Failed to update order status: ${errorText}`);
-        }
-      } catch (error) {
-        console.error("❌ Error updating order status:", error);
-        alert("Có lỗi xảy ra khi cập nhật trạng thái đơn hàng. Vui lòng thử lại.");
-        return;
-      }
-    }
-
-    // Close E-invoice modal
+    // Close E-invoice modal first
     setShowEInvoice(false);
 
     // Close Payment modal
     onClose();
 
-    // Pass e-invoice data back to parent component with original payment method
+    // Update order status and pass data to parent component
     onSelectMethod("einvoice", {
       ...eInvoiceData,
       originalPaymentMethod: selectedPaymentMethod,
+      orderId: orderForPayment?.id,
+      tableId: orderForPayment?.tableId,
       paymentData: selectedPaymentMethod === "cash" ? {
         amountReceived: parseFloat(cashAmountInput || "0"),
         change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)

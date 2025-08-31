@@ -384,7 +384,7 @@ export function OrderManagement() {
 
       toast({
         title: 'Thành công',
-        description: invoiceData.publishLater 
+        description: invoiceData.publishLater
           ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
           : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
       });
@@ -459,46 +459,173 @@ export function OrderManagement() {
     setOrderDetailsOpen(true);
   };
 
-  const handlePaymentMethodSelect = (method: any, data?: any) => {
-    console.log('🎯 Order Management payment method selected:', method, data);
-    setShowPaymentMethodModal(false);
+  const handlePaymentMethodSelect = async (method: string, data?: any) => {
+    console.log("🎯 Order Management payment method selected:", method, data);
 
-    // If payment method returns e-invoice data (like from "phát hành sau"), handle it
-    if (data && data.receipt) {
-      console.log('📄 Order Management: Payment method returned receipt data with E-invoice');
+    if (method === "einvoice" && data) {
+      console.log("📄 Order Management: Payment method returned receipt data, updating order status first");
 
-      // Create E-invoice data object for handleEInvoiceConfirm
-      const eInvoiceData = {
-        publishLater: data.publishLater || false,
-        customerName: data.customerName || 'Khách hàng lẻ',
-        taxCode: data.taxCode || '',
-        originalPaymentMethod: data.originalPaymentMethod || method.nameKey,
-        receipt: data.receipt,
-        invoiceNumber: data.invoiceNumber || null,
-        symbol: data.symbol || null,
-        templateNumber: data.templateNumber || null
-      };
+      // Update order status and payment details FIRST
+      if (data.orderId) {
+        try {
+          console.log("🔄 Order Management: Updating order status to 'paid' for order ID:", data.orderId);
 
-      console.log('🔄 Order Management: Calling handleEInvoiceConfirm with data:', eInvoiceData);
-
-      // Call handleEInvoiceConfirm to properly update order status and einvoice status
-      handleEInvoiceConfirm(eInvoiceData);
-    } else {
-      // Otherwise continue to E-invoice modal or complete payment
-      console.log('🔄 Order Management: Continuing to E-invoice modal or completing payment');
-      // If method.nameKey is 'einvoice', show E-invoice modal directly
-      if (method.nameKey === 'einvoice') {
-        setShowEInvoiceModal(true);
-      } else {
-        // For other payment methods, proceed with payment completion
-        if (orderForPayment) {
-          completePaymentMutation.mutate({
-            orderId: orderForPayment.id,
-            paymentMethod: method.nameKey,
+          // First update the status using the dedicated status endpoint
+          const statusUpdateResponse = await fetch(`/api/orders/${data.orderId}/status`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              status: 'paid',
+            }),
           });
+
+          if (statusUpdateResponse.ok) {
+            console.log("✅ Order Management: Order status updated to 'paid' successfully");
+
+            // Then update payment details and e-invoice status
+            const updatePayload: any = {
+              paymentMethod: data.originalPaymentMethod,
+              paidAt: new Date().toISOString(),
+              einvoiceStatus: data.publishLater ? 0 : 1,
+            };
+
+            // Add cash payment specific data if applicable
+            if (data.originalPaymentMethod === "cash" && data.paymentData) {
+              updatePayload.amountReceived = data.paymentData.amountReceived?.toFixed(2);
+              updatePayload.change = data.paymentData.change?.toFixed(2);
+            }
+
+            console.log("📤 Order Management: Sending payment details update:", updatePayload);
+
+            const paymentUpdateResponse = await fetch(`/api/orders/${data.orderId}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(updatePayload),
+            });
+
+            if (paymentUpdateResponse.ok) {
+              const updatedOrder = await paymentUpdateResponse.json();
+              console.log("✅ Order Management: Payment details updated successfully:", updatedOrder);
+            } else {
+              console.error("❌ Order Management: Failed to update payment details");
+            }
+
+            // Force refresh all relevant queries
+            queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
+            queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
+
+            // Dispatch events for real-time updates
+            if (typeof window !== 'undefined') {
+              const refreshEvents = [
+                new CustomEvent('orderStatusUpdated', {
+                  detail: {
+                    orderId: data.orderId,
+                    status: 'paid',
+                    tableId: data.tableId,
+                    paymentMethod: data.originalPaymentMethod
+                  }
+                }),
+                new CustomEvent('refreshTables'),
+                new CustomEvent('refreshOrders'),
+                new CustomEvent('paymentCompleted', {
+                  detail: { orderId: data.orderId, tableId: data.tableId }
+                }),
+                new CustomEvent('tableStatusUpdate', {
+                  detail: { tableId: data.tableId, checkForRelease: true }
+                })
+              ];
+
+              refreshEvents.forEach(event => {
+                window.dispatchEvent(event);
+              });
+            }
+          } else {
+            const errorText = await statusUpdateResponse.text();
+            console.error("❌ Order Management: Failed to update order status:", errorText);
+            toast({
+              title: 'Lỗi',
+              description: 'Không thể cập nhật trạng thái đơn hàng',
+              variant: 'destructive',
+            });
+            return;
+          }
+        } catch (error) {
+          console.error("❌ Order Management: Error updating order status:", error);
+          toast({
+            title: 'Lỗi',
+            description: 'Có lỗi xảy ra khi cập nhật trạng thái đơn hàng. Vui lòng thử lại.',
+            variant: 'destructive',
+          });
+          return;
         }
       }
+
+      // Save invoice data to database if needed
+      if (data.receipt) {
+        try {
+          const invoicePayload = {
+            customerName: data.customerName || "Khách hàng lẻ",
+            customerTaxCode: data.taxCode || "",
+            subtotal: data.receipt.subtotal,
+            tax: data.receipt.tax,
+            total: data.receipt.total,
+            paymentMethod: data.originalPaymentMethod === "cash" ? 1 : 2, // Assuming 1 for cash, 2 for others
+            invoiceDate: new Date(),
+            status: "draft",
+            einvoiceStatus: data.publishLater ? 0 : 1,
+            notes: `E-Invoice draft - MST: ${data.taxCode || "N/A"}, Template: ${data.template || "N/A"}, ${data.publishLater ? "Đợi phát hành sau" : "Phát hành ngay"}`,
+            items: data.receipt.items?.map((item: any) => ({
+              productId: item.productId || item.id,
+              productName: item.productName || item.name || `Product ${item.id}`,
+              quantity: item.quantity || 1,
+              unitPrice: (item.price || item.unitPrice || 0).toString(),
+              total: (parseFloat(item.total || "0") * 1.1).toFixed(2), // Add 10% tax
+              taxRate: (item.taxRate || 10).toString(),
+            })) || []
+          };
+
+          console.log("💾 Order Management: Saving invoice to database");
+          const invoiceResponse = await fetch('/api/invoices', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(invoicePayload),
+          });
+
+          if (invoiceResponse.ok) {
+            console.log("✅ Order Management: Invoice saved successfully");
+          }
+        } catch (error) {
+          console.error("❌ Order Management: Failed to save invoice:", error);
+        }
+      }
+
+      // Show receipt modal with the data
+      const receiptData = data.receipt || {
+        transactionId: `TXN-${Date.now()}`,
+        items: cartItems, // Assuming cartItems is available in this scope
+        subtotal: (total * 0.9).toFixed(2), // Assuming total is available and represents the final amount
+        tax: (total * 0.1).toFixed(2),
+        total: total.toFixed(2),
+        paymentMethod: data.originalPaymentMethod || method,
+        amountReceived: data.paymentData?.amountReceived?.toFixed(2) || total.toFixed(2),
+        change: data.paymentData?.change?.toFixed(2) || "0.00",
+        cashierName: "System User",
+        createdAt: new Date().toISOString()
+      };
+
+      setSelectedReceipt(receiptData);
+      setShowReceiptModal(true);
     }
+
+    // Reset payment state
+    setShowPaymentModal(false);
+    setOrderForPayment(null);
   };
 
   const getPaymentMethods = () => {
@@ -942,7 +1069,7 @@ export function OrderManagement() {
                               einvoiceStatus: selectedOrder.einvoiceStatus,
                               type: typeof selectedOrder.einvoiceStatus
                             });
-                            
+
                             if (selectedOrder.einvoiceStatus === 1) return "Đã phát hành";
                             if (selectedOrder.einvoiceStatus === 2) return "Lỗi phát hành";
                             return "Chưa phát hành";
@@ -1679,13 +1806,13 @@ export function OrderManagement() {
           }
 
           // Prepare complete order data for payment flow
-          const completeOrderData = {
+          const completeOrderForPayment = {
             ...selectedOrder,
             orderItems: previewReceipt.orderItems || orderItems || [],
           };
 
-          console.log('💾 Setting order for payment with complete data:', completeOrderData);
-          setOrderForPayment(completeOrderData);
+          console.log('💾 Setting order for payment with complete data:', completeOrderForPayment);
+          setOrderForPayment(completeOrderForPayment);
 
           // Close preview and show payment method modal
           setShowReceiptPreview(false);

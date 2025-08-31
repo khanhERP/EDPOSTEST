@@ -1176,7 +1176,7 @@ export class DatabaseStorage implements IStorage {
     if (order && status === "paid" && order.tableId) {
       console.log(`💳 Order paid - checking other orders on table ${order.tableId}`);
 
-      // Check for other active orders on the same table (excluding paid, cancelled, and completed orders)
+      // Check for other orders on the same table that are NOT paid, cancelled, or completed
       const otherActiveOrders = await database
         .select()
         .from(orders)
@@ -1199,12 +1199,19 @@ export class DatabaseStorage implements IStorage {
       if (otherActiveOrders.length === 0) {
         console.log(`🔓 No other active orders - updating table ${order.tableId} to available`);
         try {
-          const updatedTable = await this.updateTableStatus(order.tableId, "available", tenantDb);
-          console.log(`✅ Table ${order.tableId} status updated to available:`, {
-            id: updatedTable?.id,
-            tableNumber: updatedTable?.tableNumber,
-            status: updatedTable?.status
-          });
+          const [updatedTable] = await database
+            .update(tables)
+            .set({ status: "available" })
+            .where(eq(tables.id, order.tableId))
+            .returning();
+          
+          if (updatedTable) {
+            console.log(`✅ Table ${order.tableId} status updated to available:`, {
+              id: updatedTable.id,
+              tableNumber: updatedTable.tableNumber,
+              status: updatedTable.status
+            });
+          }
         } catch (tableError) {
           console.error(`❌ Failed to update table ${order.tableId} status:`, tableError);
         }
