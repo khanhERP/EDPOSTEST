@@ -468,29 +468,57 @@ export function OrderManagement() {
   const handlePaymentMethodSelect = async (method: string, data?: any) => {
     console.log("🎯 Order Management payment method selected:", method, data);
 
-    if (method === "einvoice" && data) {
-      console.log("📄 Order Management: Payment method returned receipt data, updating order status first");
+    if (method === "paymentCompleted" && data?.success) {
+      console.log("✅ Order Management: Payment completed successfully", data);
 
-      // Update order status and payment details FIRST
-      if (data.orderId) {
-        try {
-          console.log("🔄 Order Management: Updating order status to 'paid' for order ID:", data.orderId);
+      try {
+        // Invalidate queries to refresh the UI
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
+          queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
+          queryClient.refetchQueries({ queryKey: ['/api/orders'] })
+        ]);
 
-          // First update the status using the dedicated status endpoint
-          const statusUpdateResponse = await fetch(`/api/orders/${data.orderId}/status`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              status: 'paid',
-            }),
-          });
+        console.log('✅ Order Management: UI refreshed after payment');
 
-          if (statusUpdateResponse.ok) {
-            console.log("✅ Order Management: Order status updated to 'paid' successfully");
+        toast({
+          title: 'Thành công',
+          description: data.publishLater
+            ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
+            : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
+        });
 
-            // Then update payment details and e-invoice status
+        // Show receipt if available
+        if (data.receipt && data.shouldShowReceipt) {
+          console.log('📄 Order Management: Showing receipt modal after successful payment');
+          setSelectedReceipt(data.receipt);
+          setShowReceiptModal(true);
+        }
+
+      } catch (error) {
+        console.error('❌ Error refreshing UI after payment:', error);
+      }
+
+      // Reset payment state
+      setShowPaymentMethodModal(false);
+      setOrderForPayment(null);
+      return;
+    }
+
+    if (method === "paymentError" && data) {
+      console.error("❌ Order Management: Payment failed", data);
+      
+      toast({
+        title: 'Lỗi',
+        description: data.error || 'Không thể hoàn tất thanh toán. Vui lòng thử lại.',
+        variant: 'destructive',
+      });
+
+      // Reset payment state
+      setShowPaymentMethodModal(false);
+      setOrderForPayment(null);
+      return;
+    }
             const updatePayload: any = {
               paymentMethod: data.originalPaymentMethod,
               paidAt: new Date().toISOString(),

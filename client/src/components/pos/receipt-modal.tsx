@@ -255,7 +255,7 @@ export function ReceiptModal({
   const handleConfirmAndSelectPayment = () => {
     // Pass complete receipt data to parent for payment flow
     if (onConfirm) {
-      console.log('📄 Receipt Modal: Passing complete receipt data to payment flow');
+      console.log('📄 Receipt Modal: Confirming receipt and proceeding to payment method selection');
       console.log('🎯 Receipt data being passed:', {
         receipt,
         cartItems,
@@ -267,7 +267,7 @@ export function ReceiptModal({
         exactTax: receipt?.exactTax
       });
 
-      // Call onConfirm with receipt data
+      // Call onConfirm to proceed to payment method selection
       onConfirm();
     }
   };

@@ -70,7 +70,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const { t, currentLanguage } = useTranslation();
   const queryClient = useQueryClient();
 
-  const { data: tables, isLoading } = useQuery({
+  const { data: tables, isLoading, refetch: refetchTables } = useQuery({
     queryKey: ["/api/tables"],
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Remove from cache immediately after unmount
@@ -78,7 +78,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     refetchOnMount: true,
   });
 
-  const { data: orders } = useQuery({
+  const { data: orders, refetch: refetchOrders } = useQuery({
     queryKey: ["/api/orders"],
     staleTime: 0, // Always fetch fresh data
     gcTime: 0, // Remove from cache immediately after unmount
@@ -200,7 +200,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   });
 
   // Filter customers based on search term
-  const filteredCustomers = Array.isArray(customers) 
+  const filteredCustomers = Array.isArray(customers)
     ? customers.filter((customer: any) => {
         if (!searchTerm) return true;
 
@@ -512,7 +512,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
 
     if (customerPoints === 0) {
       toast({
-        title: "Lỗi", 
+        title: "Lỗi",
         description: "Khách hàng không có điểm",
         variant: "destructive",
       });
@@ -2399,7 +2399,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           };
 
           console.log(
-            "💾 Setting order for payment with complete data:",
+            "💾 Table: Setting order for payment with complete data:",
             completeOrderData,
           );
           setOrderForPayment(completeOrderData);
@@ -2422,88 +2422,79 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
         total={previewReceipt ? parseFloat(previewReceipt.total) : 0}
       />
 
-      {/* Payment Method Modal */}
-      {showPaymentMethodModal && orderForPayment && (
-        <PaymentMethodModal
-          isOpen={showPaymentMethodModal}
-          onClose={() => {
-            console.log(
-              "🔴 Table: Closing payment method modal and clearing states",
-            );
-            setShowPaymentMethodModal(false);
-            setOrderForPayment(null);
-          }}
-          onSelectMethod={handlePaymentMethodSelect}
-          total={(() => {
-            console.log("💰 Table payment modal total calculation:", {
-              orderForPayment,
-              hasExactTotal: orderForPayment?.exactTotal !== undefined,
-              exactTotal: orderForPayment?.exactTotal,
-              fallbackTotal:
-                orderForPayment?.orderItems?.reduce(
-                  (sum: number, item: any) => {
-                    const itemTotal = parseFloat(item.total || "0");
-                    return sum + itemTotal;
-                  },
-                ) || 0,
-            });
+      {/* Payment Method Modal - Step 2: Chọn phương thức thanh toán */}
+      <PaymentMethodModal
+        isOpen={showPaymentMethodModal}
+        onClose={() => {
+          console.log("🔴 Table: Closing payment method modal");
+          setShowPaymentMethodModal(false);
+          setOrderForPayment(null);
+        }}
+        onSelectMethod={async (method: string, data?: any) => {
+          console.log("🎯 Table: Payment method selected:", method, data);
 
-            if (
-              orderForPayment?.exactTotal !== undefined &&
-              orderForPayment.exactTotal !== null
-            ) {
-              return orderForPayment.exactTotal;
+          if (method === "paymentCompleted" && data?.success) {
+            console.log("✅ Table: Payment completed successfully", data);
+
+            try {
+              // Refresh data
+              await Promise.all([
+                refetchTables(),
+                refetchOrders()
+              ]);
+
+              console.log('✅ Table: Data refreshed after payment');
+
+              toast({
+                title: 'Thành công',
+                description: data.publishLater
+                  ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
+                  : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
+              });
+
+              // Show receipt if available
+              if (data.receipt && data.shouldShowReceipt) {
+                console.log('📄 Table: Showing receipt modal after successful payment');
+                setSelectedReceipt(data.receipt);
+                setShowReceiptModal(true);
+              }
+
+            } catch (error) {
+              console.error('❌ Error refreshing data after payment:', error);
             }
 
-            // Fallback to calculating from order items
-            const calculatedTotal =
-              orderForPayment?.orderItems?.reduce((sum: number, item: any) => {
-                const itemTotal = parseFloat(item.total || "0");
-                return sum + itemTotal;
-              }, 0) || 0;
+            // Close order details if open
+            setOrderDetailsOpen(false);
+            setSelectedOrder(null);
+          }
 
-            console.log(
-              "⚠️ Using calculated total as fallback:",
-              calculatedTotal,
-            );
-            return calculatedTotal;
-          })()}
-          cartItems={(() => {
-            console.log(
-              "📦 Table: Preparing cartItems for payment modal using exact Order Details data:",
-              orderForPayment?.orderItems?.length || 0,
-            );
+          if (method === "paymentError" && data) {
+            console.error("❌ Table: Payment failed", data);
 
-            if (
-              !orderForPayment?.orderItems ||
-              !Array.isArray(orderForPayment.orderItems)
-            ) {
-              console.warn("⚠️ No order items found in orderForPayment");
-              return [];
-            }
-
-            return orderForPayment.orderItems.map((item: any) => {
-              const product = Array.isArray(products)
-                ? products.find((p: any) => p.id === item.productId)
-                : null;
-
-              return {
-                id: item.productId,
-                name: item.productName || getProductName(item.productId),
-                price: parseFloat(item.unitPrice || "0"),
-                quantity: item.quantity,
-                sku: item.productSku || `SP${item.productId}`,
-                taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10,
-                afterTaxPrice: product?.afterTaxPrice || null, // Pass afterTaxPrice for exact calculation
-              };
+            toast({
+              title: 'Lỗi',
+              description: data.error || 'Không thể hoàn tất thanh toán. Vui lòng thử lại.',
+              variant: 'destructive',
             });
-          })()}
-          orderForPayment={orderForPayment} // Pass orderForPayment for exact values
-          products={products} // Pass products for tax rate lookup
-          getProductName={getProductName} // Pass getProductName function
-          receipt={previewReceipt} // Pass receipt data from receipt modal
-        />
-      )}
+          }
+
+          // Always close payment modal
+          setShowPaymentMethodModal(false);
+          setOrderForPayment(null);
+        }}
+        total={(() => {
+          const orderTotal =
+            orderForPayment?.exactTotal ??
+            orderForPayment?.total ??
+            selectedOrder?.total ??
+            0;
+          return Math.floor(parseFloat(orderTotal.toString()) || 0);
+        })()}
+        orderForPayment={orderForPayment}
+        products={products}
+        getProductName={getProductName}
+        receipt={previewReceipt}
+      />
 
       {/* E-Invoice Modal */}
       {showEInvoiceModal && orderForPayment && (
@@ -2515,75 +2506,40 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
           }}
           onConfirm={handleEInvoiceConfirm}
           total={(() => {
-            if (!orderForPayment) return 0;
-
-            // Sử dụng orderItems từ orderForPayment nếu có
-            const itemsToCalculate =
-              orderForPayment.orderItems || orderItems || [];
-            console.log(
-              "💰 E-invoice calculating total from items:",
-              itemsToCalculate.length,
-            );
-
-            if (
-              !Array.isArray(itemsToCalculate) ||
-              itemsToCalculate.length === 0
-            ) {
-              // Fallback to order total if no items
-              return Math.round(Number(orderForPayment.total || 0));
-            }
-
-            let itemsTotal = 0;
-            let itemsTax = 0;
-
-            if (Array.isArray(products)) {
-              itemsToCalculate.forEach((item: any) => {
-                const itemSubtotal = Number(item.total || 0);
-                itemsTotal += itemSubtotal;
-
-                const product = products.find(
-                  (p: any) => p.id === item.productId,
-                );
-                const taxRate = product?.taxRate
-                  ? parseFloat(product.taxRate)
-                  : 10;
-                itemsTax += (itemSubtotal * taxRate) / 100;
-              });
-            }
-
-            const calculatedTotal = Math.round(itemsTotal + itemsTax);
-            console.log("💰 E-invoice total calculation result:", {
-              itemsTotal,
-              itemsTax,
-              calculatedTotal,
-              fallbackTotal: Math.round(Number(orderForPayment.total || 0)),
-            });
-
-            return calculatedTotal > 0
-              ? calculatedTotal
-              : Math.round(Number(orderForPayment.total || 0));
+            const orderTotal =
+              orderForPayment?.exactTotal ??
+              orderForPayment?.total ??
+              selectedOrder?.total ??
+              0;
+            return Math.floor(parseFloat(orderTotal.toString()) || 0);
           })()}
           cartItems={(() => {
-            // Sử dụng orderItems từ orderForPayment nếu có
+            // Use orderItems from orderForPayment if available
             const itemsToMap = orderForPayment?.orderItems || orderItems || [];
             console.log(
               "📦 Mapping cart items for E-invoice modal:",
               itemsToMap.length,
             );
 
-            return itemsToMap.map((item: any) => ({
-              id: item.productId,
-              name: item.productName || getProductName(item.productId),
-              price: parseFloat(item.unitPrice || "0"),
-              quantity: item.quantity,
-              sku: item.productSku || `SP${item.productId}`,
-              taxRate: (() => {
-                const product = Array.isArray(products)
-                  ? products.find((p: any) => p.id === item.productId)
-                  : null;
-                return product?.taxRate ? parseFloat(product.taxRate) : 10;
-              })(),
-            }));
+            return itemsToMap.map((item: any) => {
+              const product = Array.isArray(products)
+                ? products.find((p: any) => p.id === item.productId)
+                : null;
+
+              return {
+                id: item.productId,
+                name: item.productName || getProductName(item.productId),
+                price: parseFloat(item.unitPrice || "0"),
+                quantity: item.quantity,
+                sku: item.productSku || `SP${item.productId}`,
+                taxRate: (() => {
+                  const product = Array.isArray(products)
+                    ? products.find((p: any) => p.id === item.productId)
+                    : null;
+                  return product?.taxRate ? parseFloat(product.taxRate) : 10;
+                })(),
+              };
+            });
           })()}
           source="table"
           orderId={orderForPayment.id}

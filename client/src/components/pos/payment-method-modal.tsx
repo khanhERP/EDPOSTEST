@@ -575,8 +575,30 @@ export function PaymentMethodModal({
         console.log("✅ Step 2 SUCCESS: Payment details added:", paymentResult);
       }
 
-      // STEP 3: Force refresh UI immediately after successful status update
-      console.log("🔄 Step 3: Dispatching UI refresh events");
+      // STEP 3: Create receipt data for printing
+      console.log("🔄 Step 3: Creating receipt data for printing");
+      const receiptData = {
+        ...orderForPayment,
+        transactionId: `ORDER-${orderForPayment.id}`,
+        items: orderForPayment.orderItems || [],
+        subtotal: orderForPayment.subtotal || "0",
+        tax: orderForPayment.tax || "0", 
+        total: orderForPayment.total || "0",
+        exactSubtotal: orderForPayment.exactSubtotal || 0,
+        exactTax: orderForPayment.exactTax || 0,
+        exactTotal: orderForPayment.exactTotal || 0,
+        paymentMethod: selectedPaymentMethod,
+        cashierName: eInvoiceData.cashierName || "System User",
+        createdAt: new Date().toISOString(),
+        paidAt: new Date().toISOString(),
+        einvoiceStatus: eInvoiceData.publishLater ? 0 : 1,
+        amountReceived: selectedPaymentMethod === "cash" && cashAmountInput ? parseFloat(cashAmountInput) : null,
+        change: selectedPaymentMethod === "cash" && cashAmountInput ? 
+          parseFloat(cashAmountInput) - (orderForPayment.exactTotal || orderForPayment.total || 0) : null
+      };
+
+      // STEP 4: Force refresh UI immediately after successful status update
+      console.log("🔄 Step 4: Dispatching UI refresh events");
       
       if (typeof window !== 'undefined') {
         const events = [
@@ -612,14 +634,14 @@ export function PaymentMethodModal({
         });
       }
 
-      // STEP 4: Close modals and complete payment flow
-      console.log("🔄 Step 4: Closing modals and completing payment flow");
+      // STEP 5: Close all modals and complete payment flow
+      console.log("🔄 Step 5: Closing all modals and completing payment flow");
       setShowEInvoice(false);
-      setSelectedPaymentMethod(""); // Clear payment method to prevent modal reopening
+      setSelectedPaymentMethod("");
       onClose();
 
-      // STEP 5: Pass success data to parent component
-      console.log("✅ Step 5: Payment process completed successfully");
+      // STEP 6: Pass complete success data to parent component with receipt
+      console.log("✅ Step 6: Payment process completed successfully");
       onSelectMethod("paymentCompleted", {
         ...eInvoiceData,
         originalPaymentMethod: selectedPaymentMethod,
@@ -627,6 +649,8 @@ export function PaymentMethodModal({
         tableId: orderForPayment.tableId,
         success: true,
         completed: true,
+        receipt: receiptData,
+        shouldShowReceipt: true,
         paymentData: selectedPaymentMethod === "cash" ? {
           amountReceived: parseFloat(cashAmountInput || "0"),
           change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)
@@ -638,7 +662,7 @@ export function PaymentMethodModal({
       
       // Close modals to prevent getting stuck
       setShowEInvoice(false);
-      setSelectedPaymentMethod(""); // Clear payment method
+      setSelectedPaymentMethod("");
       onClose();
       
       // Pass error data to parent component
@@ -658,18 +682,11 @@ export function PaymentMethodModal({
   };
 
   const handleEInvoiceClose = () => {
-    console.log("🔙 E-invoice modal closed - determining next action");
+    console.log("🔙 E-invoice modal closed - closing entire payment flow");
     
     setShowEInvoice(false);
     setSelectedPaymentMethod("");
-
-    // If we came from a completed payment flow, close completely instead of returning to payment selection
-    if (orderForPayment?.status === "paid") {
-      console.log("💳 Order already paid - closing payment modal completely");
-      onClose();
-    } else {
-      console.log("🔙 Returning to payment method selection");
-    }
+    onClose(); // Always close the entire payment modal when E-invoice is closed
   };
 
   // Virtual keyboard handlers
