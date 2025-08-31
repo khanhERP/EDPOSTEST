@@ -343,38 +343,61 @@ export function OrderManagement() {
     try {
       console.log('🔄 Starting payment completion for order:', orderForPayment.id);
 
-      // Close E-invoice modal first
-      setShowEInvoiceModal(false);
-
-      // Complete payment after e-invoice is created - this will update order status to "paid"
-      await completePaymentMutation.mutateAsync({
-        orderId: orderForPayment.id,
-        paymentMethod: invoiceData.originalPaymentMethod || 'einvoice'
+      // Update order status and einvoice status after e-invoice is created
+      const updateResponse = await apiRequest('PUT', `/api/orders/${orderForPayment.id}`, {
+        status: 'paid',
+        einvoiceStatus: invoiceData.publishLater ? 0 : 1, // 0 for draft, 1 for published
+        paymentMethod: invoiceData.originalPaymentMethod || 'einvoice',
+        invoiceNumber: invoiceData.invoiceNumber || null,
+        symbol: invoiceData.symbol || null,
+        templateNumber: invoiceData.templateNumber || null
       });
 
-      console.log('✅ Order Management payment completed successfully - order status updated to paid');
+      if (!updateResponse.ok) {
+        throw new Error('Failed to update order status');
+      }
 
-      // The completePaymentMutation.onSuccess will handle showing the receipt modal
-      // Reset order for payment to clear the state
+      // Invalidate queries to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+
+      console.log('✅ Order Management: Order status updated to paid with einvoice status');
+
+      toast({
+        title: 'Thành công',
+        description: invoiceData.publishLater 
+          ? 'Đơn hàng đã được thanh toán và lưu để phát hành hóa đơn sau'
+          : 'Đơn hàng đã được thanh toán và hóa đơn điện tử đã được phát hành',
+      });
+
+      // Close modals and show receipt if available
+      setShowEInvoiceModal(false);
       setOrderForPayment(null);
 
+      if (invoiceData.receipt) {
+        console.log('📄 Showing receipt modal after successful payment update');
+        setSelectedReceipt(invoiceData.receipt);
+        setShowReceiptModal(true);
+      }
+
     } catch (error) {
-      console.error('❌ Error completing payment from order management:', error);
+      console.error('❌ Error updating order after e-invoice creation:', error);
       toast({
         title: 'Lỗi',
-        description: 'Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán',
+        description: 'Hóa đơn điện tử đã tạo nhưng không thể cập nhật trạng thái đơn hàng',
         variant: 'destructive',
       });
 
-      // Still show receipt even if payment update fails
+      // Still show receipt even if order update fails
       if (invoiceData.receipt) {
-        console.log('📄 Showing receipt modal despite payment update error');
+        console.log('📄 Showing receipt modal despite order update error');
         setSelectedReceipt(invoiceData.receipt);
         setShowReceiptModal(true);
       }
 
       // Reset states
       setOrderForPayment(null);
+      setShowEInvoiceModal(false);
     }
   };
 

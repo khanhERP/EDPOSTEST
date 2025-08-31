@@ -3545,14 +3545,26 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
       console.log("Existing order:", existingOrder);
 
-      // Prepare fields to update with validation
+      // Prepare fields to update with proper field mapping
       const fieldsToUpdate: any = {};
 
-      // Map and validate each field
+      // Handle einvoiceStatus mapping (frontend sends einvoiceStatus, database has einvoice_status)
+      if (updateData.einvoiceStatus !== undefined) {
+        fieldsToUpdate.einvoiceStatus = updateData.einvoiceStatus;
+      }
+
+      // Handle other standard fields
+      const standardFields = ['status', 'paymentMethod', 'invoiceNumber', 'symbol', 'templateNumber', 'tradeNumber'];
+      standardFields.forEach(field => {
+        if (updateData[field] !== undefined && updateData[field] !== null) {
+          fieldsToUpdate[field] = updateData[field];
+        }
+      });
+
+      // Add any other fields from updateData (excluding already processed ones)
       Object.keys(updateData).forEach(key => {
-        const value = updateData[key];
-        if (value !== undefined && value !== null) {
-          fieldsToUpdate[key] = value;
+        if (!['einvoiceStatus', ...standardFields].includes(key) && updateData[key] !== undefined) {
+          fieldsToUpdate[key] = updateData[key];
         }
       });
 
