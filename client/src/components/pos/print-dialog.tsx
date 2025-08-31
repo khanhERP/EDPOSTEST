@@ -393,7 +393,27 @@ export function PrintDialog({
             </Button>
             <Button
               variant="outline"
-              onClick={onClose}
+              onClick={() => {
+                console.log('🔒 Print Dialog: Đóng button clicked - closing all popups');
+                
+                // Send clear message to close all popups
+                try {
+                  fetch('/api/popup/close', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ success: true, action: 'close_all_popups' }),
+                  }).catch(error => {
+                    console.error('Error sending close all popups signal:', error);
+                  });
+                } catch (error) {
+                  console.error('Error in close all popups:', error);
+                }
+                
+                // Close this dialog
+                onClose();
+              }}
               className="flex-1"
             >
               <X className="w-4 h-4 mr-2" />
