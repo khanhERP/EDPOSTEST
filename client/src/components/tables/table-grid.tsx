@@ -495,6 +495,52 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     },
   });
 
+  // Add the missing handlePointsPayment function
+  const handlePointsPayment = () => {
+    if (!selectedCustomer || !selectedOrder) {
+      toast({
+        title: "Lỗi",
+        description: "Vui lòng chọn khách hàng và đơn hàng",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const customerPoints = selectedCustomer.points || 0;
+    const orderTotal = Number(selectedOrder.total || 0);
+    const pointsValue = customerPoints * 1000; // 1 point = 1000 VND
+
+    if (customerPoints === 0) {
+      toast({
+        title: "Lỗi", 
+        description: "Khách hàng không có điểm",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (pointsValue >= orderTotal) {
+      // Full points payment
+      const pointsToUse = Math.ceil(orderTotal / 1000);
+      pointsPaymentMutation.mutate({
+        customerId: selectedCustomer.id,
+        points: pointsToUse,
+        orderId: selectedOrder.id,
+      });
+    } else {
+      // Mixed payment - use all available points + other payment method
+      const remainingAmount = orderTotal - pointsValue;
+      setMixedPaymentData({
+        customerId: selectedCustomer.id,
+        pointsToUse: customerPoints,
+        orderId: selectedOrder.id,
+        remainingAmount,
+      });
+      setPointsPaymentOpen(false);
+      setMixedPaymentOpen(true);
+    }
+  };
+
   const mixedPaymentMutation = useMutation({
     mutationFn: async ({
       customerId,
@@ -862,6 +908,69 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
     });
 
     return latestOrder;
+  };
+
+  // Helper function to get product name
+  const getProductName = (productId: number) => {
+    const product = Array.isArray(products)
+      ? products.find((p: any) => p.id === productId)
+      : null;
+    return product?.name || `Product #${productId}`;
+  };
+
+  // Helper function to get table info
+  const getTableInfo = (tableId: number) => {
+    const table = Array.isArray(tables)
+      ? tables.find((t: any) => t.id === tableId)
+      : null;
+    return table;
+  };
+
+  // Helper function to handle edit order
+  const handleEditOrder = (order: Order, table: Table) => {
+    setEditingOrder(order);
+    setEditingTable(table);
+    setEditOrderOpen(true);
+  };
+
+  // Helper function to handle delete order
+  const handleDeleteOrder = (order: Order) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa đơn hàng này?")) {
+      deleteOrderMutation.mutate(order.id);
+    }
+  };
+
+  // Helper function to handle QR payment close
+  const handleQRPaymentClose = () => {
+    setShowQRPayment(false);
+    setQrCodeUrl("");
+    setSelectedPaymentMethod("");
+    setMixedPaymentOpen(false);
+  };
+
+  // Helper function to handle QR payment confirm
+  const handleQRPaymentConfirm = () => {
+    if (!selectedOrder) return;
+
+    if (mixedPaymentData) {
+      // Mixed payment completion
+      mixedPaymentMutation.mutate({
+        customerId: mixedPaymentData.customerId,
+        points: mixedPaymentData.pointsToUse,
+        orderId: mixedPaymentData.orderId,
+        paymentMethod: selectedPaymentMethod?.method?.name || "transfer",
+      });
+    } else {
+      // Regular payment completion
+      completePaymentMutation.mutate({
+        orderId: selectedOrder.id,
+        paymentMethod: selectedPaymentMethod?.key || "qrCode",
+      });
+    }
+
+    setShowQRPayment(false);
+    setQrCodeUrl("");
+    setSelectedPaymentMethod("");
   };
 
   const handleTableClick = (table: Table) => {
