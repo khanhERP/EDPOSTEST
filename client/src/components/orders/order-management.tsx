@@ -93,31 +93,18 @@ export function OrderManagement() {
   });
 
   const completePaymentMutation = useMutation({
-    mutationFn: async ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) => {
-      console.log('🔄 Starting payment completion for order:', orderId, 'with method:', paymentMethod);
-      const response = await apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Payment completion failed:', errorText);
-        throw new Error(`Payment failed: ${response.status} ${response.statusText}`);
-      }
-      
-      return response.json();
-    },
+    mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) =>
+      apiRequest('PUT', `/api/orders/${orderId}/status`, { status: 'paid', paymentMethod }),
     onSuccess: async (data, variables) => {
-      console.log('🎯 Order Management completePaymentMutation.onSuccess called with data:', data);
+      console.log('🎯 Order Management completePaymentMutation.onSuccess called');
 
       // Invalidate queries first
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
-        queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
-        queryClient.refetchQueries({ queryKey: ['/api/orders'] })
-      ]);
+      queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
 
       toast({
         title: 'Thanh toán thành công',
-        description: 'Đơn hàng đã được cập nhật trạng thái thanh toán',
+        description: 'Đơn hàng đã được thanh toán',
       });
 
       // Fetch the completed order and its items for receipt
@@ -476,16 +463,6 @@ export function OrderManagement() {
     console.log('🎯 Order Management payment method selected:', method, data);
     setShowPaymentMethodModal(false);
 
-    if (!orderForPayment) {
-      console.error('❌ No order selected for payment');
-      toast({
-        title: 'Lỗi',
-        description: 'Không tìm thấy đơn hàng để thanh toán',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     // If payment method returns e-invoice data (like from "phát hành sau"), handle it
     if (data && data.receipt) {
       console.log('📄 Order Management: Payment method returned receipt data with E-invoice');
@@ -513,12 +490,13 @@ export function OrderManagement() {
       if (method.nameKey === 'einvoice') {
         setShowEInvoiceModal(true);
       } else {
-        // For other payment methods, proceed with payment completion immediately
-        console.log('💰 Completing payment for order:', orderForPayment.id, 'with method:', method.nameKey);
-        completePaymentMutation.mutate({
-          orderId: orderForPayment.id,
-          paymentMethod: method.nameKey,
-        });
+        // For other payment methods, proceed with payment completion
+        if (orderForPayment) {
+          completePaymentMutation.mutate({
+            orderId: orderForPayment.id,
+            paymentMethod: method.nameKey,
+          });
+        }
       }
     }
   };
@@ -880,12 +858,7 @@ export function OrderManagement() {
                       {order.status === 'served' && (
                         <Button
                           size="sm"
-                          onClick={() => {
-                            console.log('🎯 Direct payment button clicked for order:', order.id);
-                            setSelectedOrder(order);
-                            setOrderForPayment(order);
-                            setShowPaymentMethodModal(true);
-                          }}
+                          onClick={() => handlePaymentClick(order)}
                           className="flex-1 bg-green-600 hover:bg-green-700"
                         >
                           <CreditCard className="w-3 h-3 mr-1" />
