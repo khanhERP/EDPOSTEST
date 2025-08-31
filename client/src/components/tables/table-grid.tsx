@@ -52,7 +52,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   const [pointsAmount, setPointsAmount] = useState("");
   const [showQRPayment, setShowQRPayment] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<any>(null);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
   const [editOrderOpen, setEditOrderOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [editingTable, setEditingTable] = useState<Table | null>(null);
@@ -1044,156 +1044,114 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
   };
 
   // Define handlePaymentMethodSelect here
-  const handlePaymentMethodSelect = (method: any, data?: any) => {
-    console.log("🎯 Table payment method selected:", method, data);
-    setShowPaymentMethodModal(false);
+  const handlePaymentMethodSelect = async (
+    method: string,
+    paymentData?: any,
+  ) => {
+    console.log("💳 Payment method selected:", method, paymentData);
 
-    // If payment method returns e-invoice data (like from "phát hành sau"), handle it
-    if (data && data.receipt) {
-      console.log(
-        "📄 Table: Payment method returned receipt data, showing receipt",
-      );
-      setSelectedReceipt(data.receipt);
-      setShowReceiptModal(true);
-      setOrderForPayment(null);
-    } else {
-      // Otherwise continue to E-invoice modal
-      console.log("🔄 Table: Continuing to E-invoice modal");
-      // If method.nameKey is 'einvoice', show E-invoice modal directly
-      if (method.nameKey === "einvoice") {
-        setShowEInvoiceModal(true);
-      } else {
-        // For other payment methods, proceed with payment completion
-        if (selectedOrder) {
-          completePaymentMutation.mutate({
-            orderId: selectedOrder.id,
-            paymentMethod: method.nameKey,
-          });
-        }
-      }
-    }
-  };
-
-  const handleQRPaymentConfirm = () => {
-    if (selectedOrder && selectedPaymentMethod) {
-      // Check if this is a mixed payment (from mixed payment modal)
-      if (mixedPaymentData && selectedPaymentMethod.key === "transfer") {
-        mixedPaymentMutation.mutate({
-          customerId: mixedPaymentData.customerId,
-          points: mixedPaymentData.pointsToUse,
-          orderId: mixedPaymentData.orderId,
-          paymentMethod: "transfer",
-        });
-      } else {
-        // Regular payment
-        completePaymentMutation.mutate({
-          orderId: selectedOrder.id,
-          paymentMethod: selectedPaymentMethod.key,
-        });
-      }
-      setShowQRPayment(false);
-      setQrCodeUrl("");
-      setSelectedPaymentMethod(null);
-    }
-  };
-
-  const handleQRPaymentClose = () => {
-    setShowQRPayment(false);
-    setQrCodeUrl("");
-    setSelectedPaymentMethod(null);
-
-    // Check if this came from mixed payment modal
-    if (mixedPaymentData) {
-      setMixedPaymentOpen(true);
-    } else {
-      setPaymentMethodsOpen(true);
-    }
-  };
-
-  const handleEditOrder = (order: Order, table: Table) => {
-    setEditingOrder(order);
-    setEditingTable(table);
-    setEditOrderOpen(true);
-  };
-
-  const handleDeleteOrder = (order: Order) => {
-    if (
-      window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng ${order.orderNumber}?`)
-    ) {
-      deleteOrderMutation.mutate(order.id);
-    }
-  };
-
-  const filteredCustomers =
-    customers?.filter(
-      (customer: any) =>
-        customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        customer.phone?.includes(searchTerm) ||
-        customer.customerId?.toLowerCase().includes(searchTerm.toLowerCase()),
-    ) || [];
-
-  const handlePointsPayment = () => {
-    if (!selectedCustomer || !selectedOrder) {
+    if (!orderForPayment) {
+      console.error("❌ No order found for payment");
       toast({
         title: "Lỗi",
-        description: "Vui lòng chọn khách hàng",
+        description: "Không tìm thấy đơn hàng để thanh toán",
         variant: "destructive",
       });
       return;
     }
 
-    const currentPoints = selectedCustomer.points || 0;
-    const orderTotal = Number(selectedOrder.total);
-    const pointsValue = currentPoints * 1000; // 1 điểm = 1000đ
+    try {
+      if (method === "einvoice") {
+        console.log("📧 Opening E-invoice modal for table payment");
+        setShowPaymentMethodModal(false);
+        setShowEInvoiceModal(true);
+        return;
+      }
 
-    if (pointsValue >= orderTotal) {
-      // Đủ điểm để thanh toán toàn bộ
-      const pointsNeeded = Math.ceil(orderTotal / 1000);
-      pointsPaymentMutation.mutate({
-        customerId: selectedCustomer.id,
-        points: pointsNeeded,
-        orderId: selectedOrder.id,
-      });
-    } else if (currentPoints > 0) {
-      // Không đủ điểm, thanh toán hỗn hợp
-      const remainingAmount = orderTotal - pointsValue;
+      // Store payment method for receipt display
+      setSelectedPaymentMethod(method);
 
-      // Hiển thị dialog chọn phương thức thanh toán cho phần còn lại
-      setMixedPaymentData({
-        customerId: selectedCustomer.id,
-        pointsToUse: currentPoints,
-        remainingAmount: remainingAmount,
-        orderId: selectedOrder.id,
-      });
-      setPointsPaymentOpen(false);
-      setMixedPaymentOpen(true);
-    } else {
+      // Close payment method modal and show receipt preview
+      setShowPaymentMethodModal(false);
+
+      // Create receipt preview data
+      const receiptPreview = {
+        transactionId: `TXN-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        cashierName: "Nhân viên",
+        paymentMethod: method,
+        amountReceived: paymentData?.amountReceived?.toString(),
+        change: paymentData?.change?.toString(),
+        items: orderItems?.map((item: any) => ({
+          id: item.id,
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          price: item.unitPrice,
+          total: item.total,
+        })) || [],
+        subtotal: (orderForPayment.exactSubtotal || parseFloat(orderForPayment.subtotal || "0")).toString(),
+        tax: (orderForPayment.exactTax || parseFloat(orderForPayment.tax || "0")).toString(),
+        total: (orderForPayment.exactTotal || parseFloat(orderForPayment.total || "0")).toString(),
+        exactTotal: orderForPayment.exactTotal || parseFloat(orderForPayment.total || "0"),
+        exactSubtotal: orderForPayment.exactSubtotal || parseFloat(orderForPayment.subtotal || "0"),
+        exactTax: orderForPayment.exactTax || parseFloat(orderForPayment.tax || "0"),
+      };
+
+      setSelectedReceipt(receiptPreview);
+      setShowReceiptModal(true);
+
+      console.log("📄 Showing receipt preview for table payment confirmation");
+    } catch (error) {
+      console.error("❌ Error preparing receipt preview:", error);
       toast({
-        title: "Không có điểm",
-        description: "Khách hàng không có điểm để thanh toán",
+        title: "Lỗi",
+        description: "Không thể chuẩn bị hóa đơn",
         variant: "destructive",
       });
     }
   };
 
-  const getProductName = (productId: number) => {
-    if (!products || !Array.isArray(products)) return "Unknown Product";
-    const product = products.find((p: any) => p.id === productId);
-    return product ? product.name : "Unknown Product";
-  };
+  // Handle receipt confirmation and complete payment
+  const handleReceiptConfirm = async () => {
+    if (!orderForPayment) {
+      console.error("❌ No order for payment found");
+      return;
+    }
 
-  const getTableInfo = (tableId: number) => {
-    if (!tables || !Array.isArray(tables)) return null;
-    return tables.find((t: Table) => t.id === tableId);
+    try {
+      console.log("🔄 Completing payment for order:", orderForPayment.id);
+
+      // Complete payment with the selected method
+      await completePaymentMutation.mutateAsync({
+        orderId: orderForPayment.id,
+        paymentMethod: selectedPaymentMethod,
+      });
+
+      console.log("✅ Table payment completed successfully");
+
+      // Close receipt modal and clear state
+      setShowReceiptModal(false);
+      setOrderForPayment(null);
+      setSelectedPaymentMethod("");
+      setSelectedReceipt(null);
+
+      toast({
+        title: "Thành công",
+        description: "Thanh toán đã được hoàn thành",
+      });
+    } catch (error) {
+      console.error("❌ Error completing payment from table:", error);
+      toast({
+        title: "Lỗi",
+        description: "Không thể hoàn thành thanh toán",
+        variant: "destructive",
+      });
+    }
   };
 
   // Handle E-invoice confirmation and complete payment
   const handleEInvoiceConfirm = async (invoiceData: any) => {
-    console.log(
-      "🎯 Table handleEInvoiceConfirm called with data:",
-      invoiceData,
-    );
-
     if (!orderForPayment) {
       console.error("❌ No order for payment found");
       toast({
@@ -1232,8 +1190,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       console.error("❌ Error completing payment from table:", error);
       toast({
         title: "Lỗi",
-        description:
-          "Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán",
+        description: "Không thể hoàn thành thanh toán",
         variant: "destructive",
       });
     }
@@ -2036,7 +1993,7 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                         return;
                       }
 
-                      // Use EXACT same calculation logic as displayed in Order Details
+                      // Use EXACT SAME calculation logic as displayed in Order Details
                       let orderDetailsSubtotal = 0;
                       let orderDetailsTax = 0;
 
@@ -2082,20 +2039,19 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
                       const previewData = {
                         ...selectedOrder,
                         transactionId: `PREVIEW-${Date.now()}`,
+                        createdAt: new Date().toISOString(),
+                        cashierName: "Table Service",
+                        paymentMethod: "preview", // Placeholder method
                         items: processedItems,
                         subtotal: orderDetailsSubtotal.toString(),
                         tax: orderDetailsTax.toString(),
                         total: (
                           orderDetailsSubtotal + orderDetailsTax
                         ).toString(),
-                        paymentMethod: "preview",
-                        cashierName: "Table Service",
-                        createdAt: new Date().toISOString(),
-                        orderItems: orderItems, // Keep original order items for payment flow
-                        // Pass exact calculated values for next screens
+                        exactTotal: orderDetailsSubtotal + orderDetailsTax,
                         exactSubtotal: orderDetailsSubtotal,
                         exactTax: orderDetailsTax,
-                        exactTotal: orderDetailsSubtotal + orderDetailsTax,
+                        orderItems: orderItems, // Keep original order items for payment flow
                       };
 
                       console.log(
@@ -2512,39 +2468,44 @@ export function TableGrid({ onTableSelect, selectedTableId }: TableGridProps) {
       )}
 
       {/* Receipt Modal - Final receipt after payment */}
-      <ReceiptModal
-        isOpen={showReceiptModal}
-        onClose={() => {
-          console.log(
-            "🔴 Table: Closing final receipt modal and clearing all states",
-          );
-          setShowReceiptModal(false);
-          setSelectedReceipt(null);
-          setOrderForPayment(null);
-          setShowPaymentMethodModal(false);
-          setShowEInvoiceModal(false);
-          setShowReceiptPreview(false);
-          setPreviewReceipt(null);
-          setOrderDetailsOpen(false);
-          setSelectedOrder(null);
-        }}
-        receipt={selectedReceipt}
-        cartItems={
-          selectedReceipt?.items?.map((item: any) => ({
-            id: item.productId || item.id,
-            name: item.productName || item.name,
-            price: parseFloat(item.price || item.unitPrice || "0"),
-            quantity: item.quantity,
-            sku: item.sku || `SP${item.productId}`,
-            taxRate: (() => {
-              const product = Array.isArray(products)
-                ? products.find((p: any) => p.id === item.productId)
-                : null;
-              return product?.taxRate ? parseFloat(product.taxRate) : 10;
-            })(),
-          })) || []
-        }
-      />
+      {showReceiptModal && selectedReceipt && (
+        <ReceiptModal
+          isOpen={showReceiptModal}
+          onClose={() => {
+            console.log(
+              "🔴 Table: Closing final receipt modal and clearing all states",
+            );
+            setShowReceiptModal(false);
+            setSelectedReceipt(null);
+            setOrderForPayment(null);
+            setShowPaymentMethodModal(false);
+            setShowEInvoiceModal(false);
+            setShowReceiptPreview(false);
+            setPreviewReceipt(null);
+            setOrderDetailsOpen(false);
+            setSelectedOrder(null);
+            setSelectedPaymentMethod(""); // Clear selected payment method
+          }}
+          receipt={selectedReceipt}
+          cartItems={
+            selectedReceipt?.items?.map((item: any) => ({
+              id: item.productId || item.id,
+              name: item.productName || item.name,
+              price: parseFloat(item.price || item.unitPrice || "0"),
+              quantity: item.quantity,
+              sku: item.sku || `SP${item.productId}`,
+              taxRate: (() => {
+                const product = Array.isArray(products)
+                  ? products.find((p: any) => p.id === item.productId)
+                  : null;
+                return product?.taxRate ? parseFloat(product.taxRate) : 10;
+              })(),
+            })) || []
+          }
+          isPreview={!!orderForPayment} // Show as preview if there's an order waiting for payment
+          onConfirm={orderForPayment ? handleReceiptConfirm : undefined}
+        />
+      )}
 
       {/* Points Payment Dialog */}
       <Dialog open={pointsPaymentOpen} onOpenChange={setPointsPaymentOpen}>
