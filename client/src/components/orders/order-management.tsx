@@ -343,24 +343,21 @@ export function OrderManagement() {
     try {
       console.log('🔄 Starting payment completion for order:', orderForPayment.id);
 
-      // Complete payment after e-invoice is created
-      await completePaymentMutation.mutateAsync({
-        orderId: orderForPayment.id,
-        paymentMethod: 'einvoice'
-      });
-
-      console.log('✅ Order Management payment completed successfully');
-
       // Close E-invoice modal first
       setShowEInvoiceModal(false);
+
+      // Complete payment after e-invoice is created - this will update order status to "paid"
+      await completePaymentMutation.mutateAsync({
+        orderId: orderForPayment.id,
+        paymentMethod: invoiceData.originalPaymentMethod || 'einvoice'
+      });
+
+      console.log('✅ Order Management payment completed successfully - order status updated to paid');
+
+      // The completePaymentMutation.onSuccess will handle showing the receipt modal
+      // Reset order for payment to clear the state
       setOrderForPayment(null);
 
-      // Always show receipt modal after invoice processing
-      if (invoiceData.receipt) {
-        console.log('📄 Showing receipt modal after E-invoice processing');
-        setSelectedReceipt(invoiceData.receipt);
-        setShowReceiptModal(true);
-      }
     } catch (error) {
       console.error('❌ Error completing payment from order management:', error);
       toast({
@@ -368,6 +365,16 @@ export function OrderManagement() {
         description: 'Hóa đơn điện tử đã phát hành nhưng không thể hoàn tất thanh toán',
         variant: 'destructive',
       });
+
+      // Still show receipt even if payment update fails
+      if (invoiceData.receipt) {
+        console.log('📄 Showing receipt modal despite payment update error');
+        setSelectedReceipt(invoiceData.receipt);
+        setShowReceiptModal(true);
+      }
+
+      // Reset states
+      setOrderForPayment(null);
     }
   };
 
@@ -416,21 +423,30 @@ export function OrderManagement() {
 
     // If payment method returns e-invoice data (like from "phát hành sau"), handle it
     if (data && data.receipt) {
-      console.log('📄 Order Management: Payment method returned receipt data, showing receipt');
+      console.log('📄 Order Management: Payment method returned receipt data, completing payment first');
+
+      // Complete payment first to update order status to "paid"
+      if (orderForPayment) {
+        completePaymentMutation.mutate({
+          orderId: orderForPayment.id,
+          paymentMethod: data.originalPaymentMethod || method.nameKey,
+        });
+      }
+
+      // The completePaymentMutation.onSuccess will handle showing the receipt modal
+      // Store receipt data for later display
       setSelectedReceipt(data.receipt);
-      setShowReceiptModal(true);
-      setOrderForPayment(null);
     } else {
-      // Otherwise continue to E-invoice modal
-      console.log('🔄 Order Management: Continuing to E-invoice modal');
+      // Otherwise continue to E-invoice modal or complete payment
+      console.log('🔄 Order Management: Continuing to E-invoice modal or completing payment');
       // If method.nameKey is 'einvoice', show E-invoice modal directly
       if (method.nameKey === 'einvoice') {
         setShowEInvoiceModal(true);
       } else {
         // For other payment methods, proceed with payment completion
-        if (selectedOrder) {
+        if (orderForPayment) {
           completePaymentMutation.mutate({
-            orderId: selectedOrder.id,
+            orderId: orderForPayment.id,
             paymentMethod: method.nameKey,
           });
         }
