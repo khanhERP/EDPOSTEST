@@ -186,7 +186,7 @@ export function PrintDialog({
             <span>Thuế (${(() => {
               if (!receiptData.items || receiptData.items.length === 0) return "10.0";
 
-              // Calculate weighted average tax rate from items using shopping cart logic
+              // Calculate actual tax from items using afterTaxPrice
               let totalTaxableAmount = 0;
               let totalTaxAmount = 0;
 
@@ -216,7 +216,28 @@ export function PrintDialog({
               const avgTaxRate = (totalTaxAmount / totalTaxableAmount * 100);
               return avgTaxRate.toFixed(1);
             })()}%):</span>
-            <span>${parseFloat(receiptData.tax).toLocaleString('vi-VN')} đ</span>
+            <span>${(() => {
+              // Calculate actual tax amount from items
+              let actualTaxAmount = 0;
+              
+              receiptData.items.forEach(item => {
+                const basePrice = parseFloat(item.price);
+                const quantity = item.quantity;
+                const itemTaxRate = item.taxRate || 10;
+                
+                if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                  const afterTaxPrice = parseFloat(item.afterTaxPrice);
+                  // Tax = (afterTaxPrice - basePrice) * quantity
+                  actualTaxAmount += Math.floor((afterTaxPrice - basePrice) * quantity);
+                } else {
+                  // Fallback: calculate tax from tax rate
+                  const itemSubtotal = basePrice * quantity;
+                  actualTaxAmount += (itemSubtotal * itemTaxRate) / 100;
+                }
+              });
+              
+              return Math.round(actualTaxAmount).toLocaleString('vi-VN');
+            })())} đ</span>
           </div>
           <div class="total-row" style="font-size: 14px; border-top: 1px solid #000; padding-top: 5px;">
             <span>Tổng cộng:</span>
@@ -342,7 +363,7 @@ export function PrintDialog({
               <span>Thuế ({(() => {
                 if (!receiptData.items || receiptData.items.length === 0) return "10.0";
 
-                // Calculate weighted average tax rate from items using shopping cart logic
+                // Calculate actual tax from items using afterTaxPrice
                 let totalTaxableAmount = 0;
                 let totalTaxAmount = 0;
 
@@ -372,7 +393,28 @@ export function PrintDialog({
                 const avgTaxRate = (totalTaxAmount / totalTaxableAmount * 100);
                 return avgTaxRate.toFixed(1);
               })()}%):</span>
-              <span>{parseFloat(receiptData.tax).toLocaleString('vi-VN')} đ</span>
+              <span>{(() => {
+                // Calculate actual tax amount from items
+                let actualTaxAmount = 0;
+                
+                receiptData.items.forEach(item => {
+                  const basePrice = parseFloat(item.price);
+                  const quantity = item.quantity;
+                  const itemTaxRate = item.taxRate || 10;
+                  
+                  if (item.afterTaxPrice && item.afterTaxPrice !== null && item.afterTaxPrice !== "") {
+                    const afterTaxPrice = parseFloat(item.afterTaxPrice);
+                    // Tax = (afterTaxPrice - basePrice) * quantity
+                    actualTaxAmount += Math.floor((afterTaxPrice - basePrice) * quantity);
+                  } else {
+                    // Fallback: calculate tax from tax rate
+                    const itemSubtotal = basePrice * quantity;
+                    actualTaxAmount += (itemSubtotal * itemTaxRate) / 100;
+                  }
+                });
+                
+                return Math.round(actualTaxAmount).toLocaleString('vi-VN');
+              })())} đ</span>
             </div>
             <div className="flex justify-between font-bold border-t border-gray-400 pt-1">
               <span>Tổng cộng:</span>
