@@ -343,21 +343,49 @@ export function OrderManagement() {
     try {
       console.log('🔄 Starting payment completion for order:', orderForPayment.id);
 
-      // Update order status and einvoice status after e-invoice is created
-      const updateResponse = await apiRequest('PUT', `/api/orders/${orderForPayment.id}`, {
-        status: 'paid',
+      // First update the order status to 'paid' using the status endpoint
+      const statusUpdateResponse = await apiRequest('PUT', `/api/orders/${orderForPayment.id}/status`, {
+        status: 'paid'
+      });
+
+      if (!statusUpdateResponse.ok) {
+        throw new Error('Failed to update order status to paid');
+      }
+
+      console.log('✅ Order status updated to paid successfully');
+
+      // Then update additional payment details
+      const paymentUpdateResponse = await apiRequest('PUT', `/api/orders/${orderForPayment.id}`, {
         einvoiceStatus: invoiceData.publishLater ? 0 : 1, // 0 for draft, 1 for published
         paymentMethod: invoiceData.originalPaymentMethod || 'einvoice',
+        paidAt: new Date().toISOString(),
         invoiceNumber: invoiceData.invoiceNumber || null,
         symbol: invoiceData.symbol || null,
         templateNumber: invoiceData.templateNumber || null
       });
 
-      if (!updateResponse.ok) {
-        throw new Error('Failed to update order status');
+      if (!paymentUpdateResponse.ok) {
+        console.warn('⚠️ Failed to update payment details, but order is already paid');
       }
 
-      // Invalidate queries to refresh the UI with more comprehensive invalidation
+      // Dispatch events for real-time updates
+      if (typeof window !== 'undefined') {
+        const events = [
+          new CustomEvent('refreshOrders'),
+          new CustomEvent('paymentCompleted', {
+            detail: { orderId: orderForPayment.id, tableId: orderForPayment.tableId }
+          }),
+          new CustomEvent('tableStatusUpdate', {
+            detail: { tableId: orderForPayment.tableId, checkForRelease: true }
+          })
+        ];
+
+        events.forEach(event => {
+          window.dispatchEvent(event);
+        });
+      }
+
+      // Invalidate queries to refresh the UI
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['/api/orders'] }),
         queryClient.invalidateQueries({ queryKey: ['/api/tables'] }),
@@ -365,22 +393,7 @@ export function OrderManagement() {
         queryClient.refetchQueries({ queryKey: ['/api/orders'] })
       ]);
 
-      console.log('✅ Order Management: Order status updated to paid with einvoice status');
-      console.log('🔄 Order Management: All queries invalidated and refetched');
-
-      // Verify the order was actually updated by fetching it again
-      try {
-        const verifyResponse = await apiRequest('GET', `/api/orders/${orderForPayment.id}`);
-        const verifiedOrder = await verifyResponse.json();
-        console.log('🔍 Order Management: Verified updated order:', {
-          orderId: verifiedOrder.id,
-          status: verifiedOrder.status,
-          einvoiceStatus: verifiedOrder.einvoiceStatus,
-          paymentMethod: verifiedOrder.paymentMethod
-        });
-      } catch (verifyError) {
-        console.error('❌ Error verifying order update:', verifyError);
-      }
+      console.log('✅ Order Management: Payment completed and UI refreshed');
 
       toast({
         title: 'Thành công',
@@ -394,25 +407,18 @@ export function OrderManagement() {
       setOrderForPayment(null);
 
       if (invoiceData.receipt) {
-        console.log('📄 Showing receipt modal after successful payment update');
+        console.log('📄 Showing receipt modal after successful payment');
         setSelectedReceipt(invoiceData.receipt);
         setShowReceiptModal(true);
       }
 
     } catch (error) {
-      console.error('❌ Error updating order after e-invoice creation:', error);
+      console.error('❌ Error during payment completion:', error);
       toast({
         title: 'Lỗi',
-        description: 'Hóa đơn điện tử đã tạo nhưng không thể cập nhật trạng thái đơn hàng',
+        description: 'Không thể hoàn tất thanh toán. Vui lòng thử lại.',
         variant: 'destructive',
       });
-
-      // Still show receipt even if order update fails
-      if (invoiceData.receipt) {
-        console.log('📄 Showing receipt modal despite order update error');
-        setSelectedReceipt(invoiceData.receipt);
-        setShowReceiptModal(true);
-      }
 
       // Reset states
       setOrderForPayment(null);

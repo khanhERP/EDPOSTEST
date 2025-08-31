@@ -1199,6 +1199,9 @@ export class DatabaseStorage implements IStorage {
       if (otherActiveOrders.length === 0) {
         console.log(`🔓 No other active orders - updating table ${order.tableId} to available`);
         try {
+          // Import tables from schema
+          const { tables } = await import("@shared/schema");
+          
           const [updatedTable] = await database
             .update(tables)
             .set({ status: "available" })
@@ -1211,6 +1214,8 @@ export class DatabaseStorage implements IStorage {
               tableNumber: updatedTable.tableNumber,
               status: updatedTable.status
             });
+          } else {
+            console.error(`❌ No table returned after update for table ${order.tableId}`);
           }
         } catch (tableError) {
           console.error(`❌ Failed to update table ${order.tableId} status:`, tableError);

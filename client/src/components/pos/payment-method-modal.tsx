@@ -514,23 +514,106 @@ export function PaymentMethodModal({
   const handleEInvoiceConfirm = async (eInvoiceData: any) => {
     console.log("📧 E-Invoice confirmed from payment modal:", eInvoiceData);
 
-    // Close E-invoice modal first
-    setShowEInvoice(false);
+    if (!orderForPayment?.id) {
+      console.error("❌ No order ID found for payment update");
+      return;
+    }
 
-    // Close Payment modal
-    onClose();
+    try {
+      console.log("🔄 Updating order status to 'paid' after E-Invoice creation");
+      
+      // First, update the order status to 'paid'
+      const orderUpdateResponse = await fetch(`/api/orders/${orderForPayment.id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'paid'
+        }),
+      });
 
-    // Update order status and pass data to parent component
-    onSelectMethod("einvoice", {
-      ...eInvoiceData,
-      originalPaymentMethod: selectedPaymentMethod,
-      orderId: orderForPayment?.id,
-      tableId: orderForPayment?.tableId,
-      paymentData: selectedPaymentMethod === "cash" ? {
-        amountReceived: parseFloat(cashAmountInput || "0"),
-        change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)
-      } : null
-    });
+      if (!orderUpdateResponse.ok) {
+        throw new Error('Failed to update order status');
+      }
+
+      console.log("✅ Order status updated successfully to 'paid'");
+
+      // Then update payment details
+      const paymentUpdateData: any = {
+        paymentMethod: selectedPaymentMethod,
+        paidAt: new Date().toISOString(),
+        einvoiceStatus: eInvoiceData.publishLater ? 0 : 1,
+      };
+
+      // Add cash payment specific data if applicable
+      if (selectedPaymentMethod === "cash" && cashAmountInput) {
+        const orderTotal = receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0;
+        paymentUpdateData.amountReceived = parseFloat(cashAmountInput).toFixed(2);
+        paymentUpdateData.change = (parseFloat(cashAmountInput) - orderTotal).toFixed(2);
+      }
+
+      const paymentResponse = await fetch(`/api/orders/${orderForPayment.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(paymentUpdateData),
+      });
+
+      if (paymentResponse.ok) {
+        console.log("✅ Payment details updated successfully");
+      }
+
+      // Dispatch events for real-time updates
+      if (typeof window !== 'undefined') {
+        const events = [
+          new CustomEvent('refreshOrders'),
+          new CustomEvent('paymentCompleted', {
+            detail: { orderId: orderForPayment.id, tableId: orderForPayment.tableId }
+          }),
+          new CustomEvent('tableStatusUpdate', {
+            detail: { tableId: orderForPayment.tableId, checkForRelease: true }
+          })
+        ];
+
+        events.forEach(event => {
+          window.dispatchEvent(event);
+        });
+      }
+
+      // Close modals
+      setShowEInvoice(false);
+      onClose();
+
+      // Pass data to parent component
+      onSelectMethod("einvoice", {
+        ...eInvoiceData,
+        originalPaymentMethod: selectedPaymentMethod,
+        orderId: orderForPayment.id,
+        tableId: orderForPayment.tableId,
+        paymentData: selectedPaymentMethod === "cash" ? {
+          amountReceived: parseFloat(cashAmountInput || "0"),
+          change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)
+        } : null
+      });
+
+    } catch (error) {
+      console.error("❌ Error updating order after E-Invoice creation:", error);
+      // Still close modals and pass data even if update fails
+      setShowEInvoice(false);
+      onClose();
+      onSelectMethod("einvoice", {
+        ...eInvoiceData,
+        originalPaymentMethod: selectedPaymentMethod,
+        orderId: orderForPayment?.id,
+        tableId: orderForPayment?.tableId,
+        paymentData: selectedPaymentMethod === "cash" ? {
+          amountReceived: parseFloat(cashAmountInput || "0"),
+          change: parseFloat(cashAmountInput || "0") - (receipt?.exactTotal ?? orderForPayment?.exactTotal ?? orderForPayment?.total ?? total ?? 0)
+        } : null
+      });
+    }
   };
 
   const handleEInvoiceClose = () => {
