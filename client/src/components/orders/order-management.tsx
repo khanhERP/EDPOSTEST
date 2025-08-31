@@ -465,19 +465,24 @@ export function OrderManagement() {
 
     // If payment method returns e-invoice data (like from "phát hành sau"), handle it
     if (data && data.receipt) {
-      console.log('📄 Order Management: Payment method returned receipt data, completing payment first');
+      console.log('📄 Order Management: Payment method returned receipt data with E-invoice');
 
-      // Complete payment first to update order status to "paid"
-      if (orderForPayment) {
-        completePaymentMutation.mutate({
-          orderId: orderForPayment.id,
-          paymentMethod: data.originalPaymentMethod || method.nameKey,
-        });
-      }
+      // Create E-invoice data object for handleEInvoiceConfirm
+      const eInvoiceData = {
+        publishLater: data.publishLater || false,
+        customerName: data.customerName || 'Khách hàng lẻ',
+        taxCode: data.taxCode || '',
+        originalPaymentMethod: data.originalPaymentMethod || method.nameKey,
+        receipt: data.receipt,
+        invoiceNumber: data.invoiceNumber || null,
+        symbol: data.symbol || null,
+        templateNumber: data.templateNumber || null
+      };
 
-      // The completePaymentMutation.onSuccess will handle showing the receipt modal
-      // Store receipt data for later display
-      setSelectedReceipt(data.receipt);
+      console.log('🔄 Order Management: Calling handleEInvoiceConfirm with data:', eInvoiceData);
+
+      // Call handleEInvoiceConfirm to properly update order status and einvoice status
+      handleEInvoiceConfirm(eInvoiceData);
     } else {
       // Otherwise continue to E-invoice modal or complete payment
       console.log('🔄 Order Management: Continuing to E-invoice modal or completing payment');
