@@ -1067,59 +1067,72 @@ export async function registerRoutes(app: Express): Promise < Server > {
 
   app.put("/api/orders/:id/status", async (req: TenantRequest, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const { id } = req.params;
       const { status } = req.body;
-      const tenantDb = await getTenantDatabase(req);
 
       console.log(`🚀 ========================================`);
       console.log(`🚀 API ENDPOINT CALLED: PUT /api/orders/${id}/status`);
       console.log(`🚀 ========================================`);
       console.log(`📋 Order status update API called - Order ID: ${id}, New Status: ${status}`);
-      console.log(`🔍 Request details:`, {
-        method: req.method,
-        url: req.url,
-        originalUrl: req.originalUrl,
-        params: req.params,
-        body: req.body,
-        headers: req.headers['content-type'],
-        userAgent: req.headers['user-agent'],
-        tenantDbExists: !!tenantDb,
-        timestamp: new Date().toISOString()
-      });
 
-      console.log(`🚀 ABOUT TO CALL storage.updateOrderStatus(${id}, '${status}', tenantDb)`);
-      console.log(`🔍 Function call parameters:`, {
-        orderId: id,
-        orderIdType: typeof id,
-        status: status,
-        statusType: typeof status,
-        tenantDb: !!tenantDb
-      });
+      // Enhanced request logging
+      console.log(`🔍 Request details: {`);
+      console.log(`  method: '${req.method}',`);
+      console.log(`  url: '${req.url}',`);
+      console.log(`  originalUrl: '${req.originalUrl}',`);
+      console.log(`  params: ${JSON.stringify(req.params)},`);
+      console.log(`  body: ${JSON.stringify(req.body)},`);
+      console.log(`  headers: '${req.get('Content-Type')}',`);
+      console.log(`  userAgent: '${req.get('User-Agent')}',`);
+      console.log(`  tenantDbExists: ${!!tenantDb},`);
+      console.log(`  timestamp: '${new Date().toISOString()}'`);
+      console.log(`}`);
 
-      console.log(`🔍 DEBUG: API Request validation:`, {
-        originalId: req.params.id,
-        parsedId: id,
-        isValidId: !isNaN(id) && id > 0,
-        requestedStatus: status,
-        statusType: typeof status,
-        isValidStatus: status && typeof status === 'string' && status.trim().length > 0,
-        tenantDbType: tenantDb ? typeof tenantDb : 'undefined'
-      });
+      // Handle both numeric IDs and temporary string IDs
+      let orderId: number | string = id;
+      const isTemporaryId = id.startsWith('temp-');
 
-      // Add database connection test
-      try {
-        const testQuery = await db.execute(sql`SELECT 1 as test`);
-        console.log(`🔍 DEBUG: Database connection test successful:`, testQuery.rows?.[0]);
-      } catch (dbError) {
-        console.error(`❌ DEBUG: Database connection test failed:`, dbError);
-        return res.status(500).json({ 
-          message: "Database connection failed",
-          error: dbError instanceof Error ? dbError.message : String(dbError)
-        });
+      if (!isTemporaryId) {
+        const parsedId = parseInt(id);
+        if (isNaN(parsedId)) {
+          console.error(`❌ Invalid order ID: ${id}`);
+          return res.status(400).json({ message: "Invalid order ID" });
+        }
+        orderId = parsedId;
       }
 
-      if (isNaN(id)) {
-        console.error(`❌ Invalid order ID: ${req.params.id}`);
+      console.log(`🚀 ABOUT TO CALL storage.updateOrderStatus(${orderId}, '${status}', tenantDb)`);
+      console.log(`🔍 Function call parameters: {`);
+      console.log(`  orderId: ${orderId},`);
+      console.log(`  orderIdType: '${typeof orderId}',`);
+      console.log(`  isTemporaryId: ${isTemporaryId},`);
+      console.log(`  status: '${status}',`);
+      console.log(`  statusType: '${typeof status}',`);
+      console.log(`  tenantDb: ${!!tenantDb}`);
+      console.log(`}`);
+
+      // Add validation debug info
+      console.log(`🔍 DEBUG: API Request validation: {`);
+      console.log(`  originalId: '${id}',`);
+      console.log(`  processedId: ${orderId},`);
+      console.log(`  isTemporaryId: ${isTemporaryId},`);
+      console.log(`  requestedStatus: '${status}',`);
+      console.log(`  statusType: '${typeof status}',`);
+      console.log(`  isValidStatus: ${!!status},`);
+      console.log(`  tenantDbType: '${typeof tenantDb}'`);
+      console.log(`}`);
+
+      // Test database connection before proceeding
+      try {
+        const testResult = await tenantDb.execute(sql`SELECT 1 as test`);
+        console.log(`🔍 DEBUG: Database connection test successful:`, testResult.rows[0]);
+      } catch (dbError) {
+        console.error(`❌ DEBUG: Database connection test failed:`, dbError);
+        return res.status(500).json({ message: "Database connection failed", error: dbError.message });
+      }
+
+      if (isNaN(orderId as number) && !isTemporaryId) {
+        console.error(`❌ Invalid order ID: ${id}`);
         return res.status(400).json({ message: "Invalid order ID" });
       }
 
@@ -1132,7 +1145,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       const [currentOrder] = await db
         .select()
         .from(orders)
-        .where(eq(orders.id, id));
+        .where(eq(orders.id, orderId as number)); // Cast to number for query if not temporary
 
       if (!currentOrder) {
         console.error(`❌ Order not found for ID: ${id}`);
@@ -1149,7 +1162,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       });
 
       console.log(`🔍 DEBUG: About to call storage.updateOrderStatus with:`, {
-        id: id,
+        id: orderId,
         status: status,
         tenantDb: !!tenantDb
       });
@@ -1161,16 +1174,16 @@ export async function registerRoutes(app: Express): Promise < Server > {
       // Update order status using storage layer
       let order;
       try {
-        console.log(`🚀 CALLING storage.updateOrderStatus(${id}, '${status}', tenantDb)`);
+        console.log(`🚀 CALLING storage.updateOrderStatus(${orderId}, '${status}', tenantDb)`);
         console.log(`🔍 BEFORE CALL: Current thread state:`, {
           processId: process.pid,
           timestamp: new Date().toISOString(),
           memoryUsage: process.memoryUsage(),
           nodeVersion: process.version
         });
-        
-        order = await storage.updateOrderStatus(id, status, tenantDb);
-        
+
+        order = await storage.updateOrderStatus(orderId, status, tenantDb);
+
         const endTime = Date.now();
         console.log(`✅ STORAGE CALL COMPLETED: storage.updateOrderStatus returned after ${endTime - startTime}ms`);
         console.log(`🔍 AFTER CALL: storage.updateOrderStatus result:`, {
@@ -1189,7 +1202,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
           error: storageError,
           errorMessage: storageError instanceof Error ? storageError.message : String(storageError),
           errorStack: storageError instanceof Error ? storageError.stack : 'No stack trace',
-          orderId: id,
+          orderId: orderId,
           requestedStatus: status
         });
         throw storageError;
@@ -1211,13 +1224,13 @@ export async function registerRoutes(app: Express): Promise < Server > {
       if (!order) {
         console.error(`❌ API: Order update failed for ID: ${id}`);
         console.log(`🔍 DEBUG: Investigating why order update failed...`);
-        
+
         // Check if order exists at all
         const [checkOrder] = await db
           .select()
           .from(orders)
-          .where(eq(orders.id, id));
-        
+          .where(eq(orders.id, orderId as number)); // Cast to number for query if not temporary
+
         console.log(`🔍 DEBUG: Order existence check:`, {
           orderExists: !!checkOrder,
           orderData: checkOrder ? {
@@ -1228,7 +1241,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
           } : null
         });
 
-        return res.status(500).json({ 
+        return res.status(500).json({
           message: "Failed to update order status",
           orderId: id,
           requestedStatus: status,
@@ -1300,7 +1313,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       });
     } catch (error) {
       console.error(`❌ Error updating order status via API:`, error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to update order status",
         error: error instanceof Error ? error.message : String(error),
         timestamp: new Date().toISOString()
@@ -1350,7 +1363,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
       });
     } catch (error) {
       console.error("❌ Payment completion error:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to complete payment",
         error: error instanceof Error ? error.message : String(error)
       });
@@ -3827,7 +3840,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
           .status(400)
           .json({ message: "Invalid order data", errors: error.errors });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Failed to update order",
         error: error instanceof Error ? error.message : String(error)
       });
@@ -4648,7 +4661,7 @@ export async function registerRoutes(app: Express): Promise < Server > {
               return totalSpent >= 500000; // VIP customers with total spent >= 500k VND
             case 'new':
               const joinDate = customer.createdAt ? new Date(customer.createdAt) : null;
-              return joinDate && joinDate >= thirtyDaysAgo;
+              returnjoinDate && joinDate >= thirtyDaysAgo;
             default:
               return true;
           }
