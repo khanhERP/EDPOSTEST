@@ -1939,7 +1939,6 @@ export function OrderManagement() {
                       try {
                         setQrLoading(true);
                         const { createQRPosAsync, CreateQRPosRequest } = await import("@/lib/api");
-                        const { CreateQRPosRequest } = await import("@/lib/api");
 
                         const transactionUuid = `TXN-TRANSFER-${Date.now()}`;
                         const depositAmt = Number(mixedPaymentData.remainingAmount);
