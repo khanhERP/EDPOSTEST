@@ -40,19 +40,20 @@ export function OrderManagement() {
   const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [previewReceipt, setPreviewReceipt] = useState<any>(null);
-  const [shouldOpenReceiptPreview, setShouldOpenReceiptPreview] = useState(false);
+  
   const { toast } = useToast();
   const { t } = useTranslation();
   const queryClient = useQueryClient();
 
   // Effect to handle opening the receipt preview modal
   useEffect(() => {
-    if (shouldOpenReceiptPreview && previewReceipt && orderForPayment) {
-      console.log('🚀 Receipt preview modal should now be open');
+    if (previewReceipt && orderForPayment) {
+      console.log('🚀 Receipt preview modal opening - data available');
+      console.log('📄 Preview receipt data:', previewReceipt);
+      console.log('📋 Order for payment data:', orderForPayment);
       setShowReceiptPreview(true);
-      setShouldOpenReceiptPreview(false); // Reset the flag
     }
-  }, [shouldOpenReceiptPreview, previewReceipt, orderForPayment]);
+  }, [previewReceipt, orderForPayment]);
 
   const { data: orders, isLoading: ordersLoading } = useQuery({
     queryKey: ['/api/orders'],
@@ -1559,10 +1560,7 @@ export function OrderManagement() {
                           }
                         });
 
-                        // Close order details modal first
-                        setOrderDetailsOpen(false);
-
-                        // Set all data at once to prevent race conditions
+                        // Set all data first, then close order details and open preview
                         setOrderForPayment(completeOrderForPayment);
                         setPreviewReceipt(previewData);
 
@@ -1572,10 +1570,9 @@ export function OrderManagement() {
                           orderItemsCount: processedItems.length
                         });
 
-                        // Open modal immediately after data is set
-                        setTimeout(() => {
-                          setShowReceiptPreview(true);
-                        }, 50);
+                        // Close order details modal and open preview immediately
+                        setOrderDetailsOpen(false);
+                        setShowReceiptPreview(true);
                       }}
                       disabled={completePaymentMutation.isPending}
                       className="flex-1 bg-green-600 hover:bg-green-700"
@@ -2075,7 +2072,7 @@ export function OrderManagement() {
         return null;
       })()}
       <ReceiptModal
-        isOpen={showReceiptPreview}
+        isOpen={showReceiptPreview && !!previewReceipt && !!orderForPayment}
         onClose={() => {
           console.log("🔴 Order Management: Closing receipt preview modal");
           console.log("🔍 DEBUG: Modal close - current states:", {
