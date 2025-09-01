@@ -684,16 +684,8 @@ export function ShoppingCart({
             sku: String(item.id),
             taxRate: parseFloat(item.taxRate || "0"),
           }))}
-          orderForPayment={(() => {
-            console.log("🔍 SHOPPING CART: PaymentMethodModal props check:", {
-              currentOrderForPayment: currentOrderForPayment,
-              currentOrderForPaymentId: currentOrderForPayment?.id,
-              currentOrderForPaymentType: typeof currentOrderForPayment,
-              showPaymentModal: showPaymentModal,
-              timestamp: new Date().toISOString()
-            });
-            return currentOrderForPayment;
-          })()} // ✅ Pass created order with debug
+          orderForPayment={currentOrderForPayment} // ✅ Pass created order directly
+          products={[]} // Pass empty products array for now
         />
       )}
 
