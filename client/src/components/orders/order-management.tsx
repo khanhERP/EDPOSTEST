@@ -1534,16 +1534,21 @@ export function OrderManagement() {
                           timestamp: new Date().toISOString()
                         });
 
+                        // Set states in correct order to prevent race conditions
                         setOrderForPayment(completeOrderForPayment);
                         setPreviewReceipt(previewData);
-                        setOrderDetailsOpen(false);
-                        setShowReceiptPreview(true);
-
-                        console.log(`🔍 DEBUG: Modal states set - checking if modal should open:`, {
-                          showReceiptPreview: true,
-                          previewReceiptExists: !!previewData,
-                          timestamp: new Date().toISOString()
-                        });
+                        
+                        // Use setTimeout to ensure states are set before opening modal
+                        setTimeout(() => {
+                          setOrderDetailsOpen(false);
+                          setShowReceiptPreview(true);
+                          console.log(`✅ DEBUG: Receipt preview modal opened with states:`, {
+                            showReceiptPreview: true,
+                            previewReceiptExists: !!previewData,
+                            orderForPaymentExists: !!completeOrderForPayment,
+                            timestamp: new Date().toISOString()
+                          });
+                        }, 100);
                       }}
                       disabled={completePaymentMutation.isPending}
                       className="flex-1 bg-green-600 hover:bg-green-700"
@@ -2043,13 +2048,19 @@ export function OrderManagement() {
             return;
           }
 
-          // Prepare complete order data for payment flow
+          // Prepare complete order data for payment flow with order ID
           const completeOrderForPayment = {
             ...selectedOrder,
+            id: selectedOrder?.id, // Ensure order ID is explicitly set
             orderItems: previewReceipt.orderItems || orderItems || [],
           };
 
-          console.log('💾 Setting order for payment with complete data:', completeOrderForPayment);
+          console.log('💾 Setting order for payment with complete data including ID:', {
+            orderId: completeOrderForPayment.id,
+            orderNumber: completeOrderForPayment.orderNumber,
+            hasOrderItems: !!(completeOrderForPayment.orderItems?.length)
+          });
+          
           setOrderForPayment(completeOrderForPayment);
 
           // Close preview and show payment method modal
@@ -2057,29 +2068,56 @@ export function OrderManagement() {
           setShowPaymentMethodModal(true);
         }}
         isPreview={true}
-        cartItems={previewReceipt?.items?.map((item: any) => ({
-          id: item.productId || item.id,
-          name: item.productName || item.name,
-          price: parseFloat(item.price || item.unitPrice || '0'),
-          quantity: item.quantity,
-          sku: item.sku || `SP${item.productId}`,
-          taxRate: (() => {
+        cartItems={(() => {
+          console.log('🔍 DEBUG: Building cartItems for Receipt Preview Modal');
+          console.log('previewReceipt:', previewReceipt);
+          console.log('previewReceipt?.items:', previewReceipt?.items);
+          
+          if (!previewReceipt?.items || !Array.isArray(previewReceipt.items)) {
+            console.log('❌ No valid preview receipt items found');
+            return [];
+          }
+
+          const mappedItems = previewReceipt.items.map((item: any) => {
+            console.log('🔍 Mapping preview item:', item);
             const product = Array.isArray(products) ? products.find((p: any) => p.id === item.productId) : null;
-            return product?.taxRate ? parseFloat(product.taxRate) : 10;
-          })()
-        })) || []}
-        total={previewReceipt ? parseFloat(previewReceipt.total) : 0}
+            return {
+              id: item.productId || item.id,
+              name: item.productName || item.name,
+              price: parseFloat(item.price || item.unitPrice || '0'),
+              quantity: item.quantity,
+              sku: item.sku || `SP${item.productId}`,
+              taxRate: product?.taxRate ? parseFloat(product.taxRate) : 10
+            };
+          });
+
+          console.log('✅ Mapped cartItems for preview:', mappedItems);
+          return mappedItems;
+        })()}
+        total={(() => {
+          const total = previewReceipt ? parseFloat(previewReceipt.total) : 0;
+          console.log('💰 Receipt Preview Modal total:', total);
+          return total;
+        })()}
       />
 
       {/* Payment Method Modal */}
       <PaymentMethodModal
         isOpen={showPaymentMethodModal}
         onClose={() => {
+          console.log('🔴 Payment Method Modal closed');
           setShowPaymentMethodModal(false);
           setOrderForPayment(null);
         }}
         onSelectMethod={(method, data) => {
           console.log('🎯 Order Management payment method selected:', method, data);
+          console.log('🔍 Current orderForPayment state:', {
+            orderForPayment: !!orderForPayment,
+            orderForPaymentId: orderForPayment?.id,
+            selectedOrder: !!selectedOrder,
+            selectedOrderId: selectedOrder?.id
+          });
+
           setShowPaymentMethodModal(false);
 
           // If payment method returns e-invoice data (like from "phát hành sau"), handle it
@@ -2096,10 +2134,24 @@ export function OrderManagement() {
               setShowEInvoiceModal(true);
             } else {
               // For other payment methods, proceed with payment completion
-              if (selectedOrder) {
+              const orderToPayFor = orderForPayment || selectedOrder;
+              console.log('💳 Processing payment for order:', {
+                orderToPayFor: !!orderToPayFor,
+                orderToPayForId: orderToPayFor?.id,
+                paymentMethod: method.nameKey
+              });
+
+              if (orderToPayFor?.id) {
                 completePaymentMutation.mutate({
-                  orderId: selectedOrder.id,
+                  orderId: orderToPayFor.id,
                   paymentMethod: method.nameKey,
+                });
+              } else {
+                console.error('❌ No valid order ID found for payment');
+                toast({
+                  title: 'Lỗi',
+                  description: 'Không tìm thấy ID đơn hàng để thanh toán',
+                  variant: 'destructive',
                 });
               }
             }
